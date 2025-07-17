@@ -102,6 +102,7 @@ export default function EmailDetail({
     fromEmail: apiEmail.remetente, // Placeholder email
     subject: apiEmail.assunto,
     content: apiEmail.conteudo || DEFAULT_EMAIL_CONTENT,
+    date: formatDate(apiEmail.prazo_resposta) || formatDate(new Date().toISOString()), // Use prazo_resposta or current date
     attachments: [] as Anexo[], // API doesn't have attachments yet
     isStarred: false // API doesn't have this concept yet
   };
