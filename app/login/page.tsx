@@ -39,7 +39,7 @@ export default function LoginPage() {
       if (urlParams.get('registered') === 'true') {
         setShowRegistrationSuccess(true);
         // Remove the parameter from URL
-        window.history.replaceState({}, '', '/login');
+        // window.history.replaceState({}, '', '/login');
       }
     }
   }, []);
