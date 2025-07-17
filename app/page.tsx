@@ -25,7 +25,7 @@ export default function HomePage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<{ nm_responsavel: string; email: string; } | undefined>(undefined);
   const router = useRouter();
 
   useEffect(() => {
