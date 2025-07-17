@@ -38,7 +38,7 @@ export default function HomePage() {
     if (authStatus === 'true') {
       setIsAuthenticated(true);
     } else {
-      router.push('/login');
+      // router.push('/login');
     }
     setIsLoading(false);
   }, [router, mounted]);
