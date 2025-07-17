@@ -1,7 +1,6 @@
 'use client';
 
-import { Star, Archive, Trash2, Reply, ReplyAll, Forward, MoreHorizontal, Paperclip, Download, Maximize, Maximize2, Minimize2, StretchVertical } from 'lucide-react';
-import { X } from 'lucide-react';
+import { Star, Archive, Trash2, Reply, ReplyAll, Forward, MoreHorizontal, Paperclip, Download, Maximize, Maximize2, Minimize2, StretchVertical, Loader2, X, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -13,6 +12,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {LayoutMode} from "@/components/email/EmailClient";
+import { useEmail } from '@/lib/api/hooks';
+import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface EmailDetailProps {
   emailId: string;
@@ -21,179 +23,82 @@ interface EmailDetailProps {
   onLayoutChange?: (mode: LayoutMode) => void;
 }
 
-// Mock email data - in a real app, this would come from props or API
-const MOCK_EMAILS = [
-  {
-    id: '1',
-    from: 'Maria Silva',
-    fromEmail: 'maria.silva@waybrasil.com',
-    to: 'john.doe@waybrasil.com',
-    subject: 'Relatório mensal de compliance',
-    date: 'December 16, 2024 at 10:30 AM',
-    content: `
-      <p>Prezado João,</p>
-      
-      <p>Segue em anexo o relatório mensal de compliance referente ao mês de dezembro de 2024.</p>
-      
-      <p>Principais destaques do período:</p>
-      <ul>
-        <li>100% de conformidade com as normas regulatórias</li>
-        <li>Implementação de 3 novos processos de auditoria</li>
-        <li>Redução de 15% no tempo de processamento de documentos</li>
-        <li>Capacitação de 25 colaboradores em compliance</li>
-      </ul>
-      
-      <p>Caso tenha alguma dúvida ou precise de esclarecimentos adicionais, fico à disposição.</p>
-      
-      <p>Atenciosamente,<br>
-      Maria Silva<br>
-      Gerente de Compliance<br>
-      Way Brasil</p>
-    `,
-    attachments: [
-      { name: 'relatorio_compliance_dezembro_2024.pdf', size: '2.4 MB' },
-      { name: 'anexo_auditoria.xlsx', size: '1.2 MB' },
-    ],
-    isStarred: true,
-  },
-  {
-    id: '2',
-    from: 'João Santos',
-    fromEmail: 'joao.santos@waybrasil.com',
-    to: 'john.doe@waybrasil.com',
-    subject: 'Aprovação de novo processo regulatório',
-    date: 'December 16, 2024 at 9:15 AM',
-    content: `
-      <p>Prezado time,</p>
-      
-      <p>Preciso da aprovação de vocês para implementar o novo processo regulatório que desenvolvemos.</p>
-      
-      <p>O processo inclui:</p>
-      <ul>
-        <li>Validação automática de documentos</li>
-        <li>Workflow de aprovação em 3 etapas</li>
-        <li>Notificações em tempo real</li>
-        <li>Relatórios de conformidade</li>
-      </ul>
-      
-      <p>Por favor, revisem e me informem se podemos prosseguir com a implementação.</p>
-      
-      <p>Obrigado,<br>
-      João Santos</p>
-    `,
-    attachments: [],
-    isStarred: false,
-  },
-  {
-    id: '3',
-    from: 'Ana Costa',
-    fromEmail: 'ana.costa@waybrasil.com',
-    to: 'john.doe@waybrasil.com',
-    subject: 'Reunião de alinhamento - Projeto Way Brasil',
-    date: 'December 15, 2024 at 2:30 PM',
-    content: `
-      <p>Olá pessoal,</p>
-      
-      <p>Vamos marcar uma reunião para alinhar os próximos passos do projeto Way Brasil.</p>
-      
-      <p>Agenda proposta:</p>
-      <ul>
-        <li>Review do progresso atual</li>
-        <li>Definição de prioridades para o próximo sprint</li>
-        <li>Discussão sobre recursos necessários</li>
-        <li>Planejamento de testes</li>
-      </ul>
-      
-      <p>Estou disponível na próxima terça-feira às 14h. Confirmem a disponibilidade de vocês.</p>
-      
-      <p>Abraços,<br>
-      Ana Costa</p>
-    `,
-    attachments: [
-      { name: 'agenda_reuniao.pdf', size: '156 KB' },
-    ],
-    isStarred: false,
-  },
-  {
-    id: '4',
-    from: 'Carlos Oliveira',
-    fromEmail: 'carlos.oliveira@waybrasil.com',
-    to: 'john.doe@waybrasil.com',
-    subject: 'Documentação atualizada - Sistema de gestão',
-    date: 'December 15, 2024 at 11:45 AM',
-    content: `
-      <p>Prezados,</p>
-      
-      <p>A documentação do sistema de gestão foi atualizada com as novas funcionalidades implementadas no último sprint.</p>
-      
-      <p>Principais atualizações:</p>
-      <ul>
-        <li>Guia de instalação revisado</li>
-        <li>Documentação da nova API de relatórios</li>
-        <li>Exemplos de integração atualizados</li>
-        <li>FAQ expandido com casos de uso comuns</li>
-      </ul>
-      
-      <p>A documentação está disponível no portal interno. Qualquer dúvida, estou à disposição.</p>
-      
-      <p>Atenciosamente,<br>
-      Carlos Oliveira<br>
-      Analista de Sistemas</p>
-    `,
-    attachments: [],
-    labels: ['work'],
-    isStarred: true,
-  },
-  {
-    id: '5',
-    from: 'Fernanda Lima',
-    fromEmail: 'fernanda.lima@waybrasil.com',
-    to: 'john.doe@waybrasil.com',
-    subject: 'Feedback sobre implementação da nova funcionalidade',
-    date: 'December 14, 2024 at 4:20 PM',
-    content: `
-      <p>Olá,</p>
-      
-      <p>Gostaria de compartilhar algumas observações sobre a nova funcionalidade implementada.</p>
-      
-      <p>Pontos positivos:</p>
-      <ul>
-        <li>Interface intuitiva e fácil de usar</li>
-        <li>Performance excelente</li>
-        <li>Integração perfeita com o sistema existente</li>
-      </ul>
-      
-      <p>Sugestões de melhoria:</p>
-      <ul>
-        <li>Adicionar mais opções de filtro</li>
-        <li>Melhorar a responsividade em dispositivos móveis</li>
-        <li>Incluir tooltips explicativos</li>
-      </ul>
-      
-      <p>No geral, ficou muito bom! Parabéns à equipe.</p>
-      
-      <p>Abraços,<br>
-      Fernanda Lima</p>
-    `,
-    attachments: [],
-    isStarred: false,
-  },
-];
+// Helper function to format date
+const formatDate = (dateString?: string): string => {
+  if (!dateString) return '';
+  
+  const date = new Date(dateString);
+  const now = new Date();
+  
+  // Format as full date and time
+  return date.toLocaleDateString('pt-BR', { 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+// Sample HTML content for emails that don't have a response
+const DEFAULT_EMAIL_CONTENT = `
+  <p>Este email não possui conteúdo detalhado.</p>
+  <p>Em uma aplicação real, o conteúdo completo do email seria exibido aqui.</p>
+`;
 export default function EmailDetail({
   emailId,
   onClose,
   layoutMode = 'split',
   onLayoutChange
 }: EmailDetailProps) {
-  const email = MOCK_EMAILS.find(e => e.id === emailId);
-
-  if (!email) {
+  const { toast } = useToast();
+  const emailIdNumber = parseInt(emailId, 10);
+  
+  // Only fetch if we have a valid number
+  const { data: apiEmail, loading, error } = useEmail(
+    !isNaN(emailIdNumber) ? emailIdNumber : 0
+  );
+  
+  // Show error toast if API call fails
+  if (error) {
+    toast({
+      title: "Erro ao carregar email",
+      description: "Não foi possível carregar os detalhes do email. Tente novamente mais tarde.",
+      variant: "destructive",
+    });
+  }
+  
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex-1 bg-white flex flex-col h-full items-center justify-center">
+        <Loader2 className="h-8 w-8 text-blue-500 animate-spin mb-4" />
+        <p className="text-gray-500">Carregando email...</p>
+      </div>
+    );
+  }
+  
+  // Email not found state
+  if (!apiEmail || isNaN(emailIdNumber)) {
     return (
       <div className="flex-1 bg-white flex items-center justify-center">
         <p className="text-gray-500">Email não encontrado</p>
       </div>
     );
   }
+  
+  // Map API data to the format expected by the component
+  const email = {
+    id: apiEmail.id_email.toString(),
+    from: `Responsável ID: ${apiEmail.id_responsavel}`, // In a real app, you'd fetch the name
+    fromEmail: `responsavel.${apiEmail.id_responsavel}@waybrasil.com`, // Placeholder email
+    to: 'usuario@waybrasil.com', // Placeholder recipient
+    subject: apiEmail.titulo,
+    date: formatDate(apiEmail.prazo_resposta),
+    content: apiEmail.resposta || apiEmail.assunto || DEFAULT_EMAIL_CONTENT,
+    attachments: [], // API doesn't have attachments yet
+    isStarred: false // API doesn't have this concept yet
+  };
 
   return (
     <div className="flex-1 bg-white flex flex-col overflow-y-auto max-h-full">
@@ -201,6 +106,12 @@ export default function EmailDetail({
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-2">
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              {layoutMode === "split" ?
+                <X className="h-4 w-4" /> :
+                <ArrowLeft className="h-4 w-4" />
+              }
+            </Button>
             <Button variant="ghost" size="sm">
               <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
             </Button>
@@ -239,9 +150,6 @@ export default function EmailDetail({
                 <DropdownMenuItem>Reportar spam</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="h-4 w-4" />
-            </Button>
           </div>
         </div>
 
@@ -290,8 +198,8 @@ export default function EmailDetail({
                       <Paperclip className="h-4 w-4 text-blue-600" />
                     </div>
                     <div>
-                      <div className="font-medium text-sm">{attachment.name}</div>
-                      <div className="text-xs text-gray-500">{attachment.size}</div>
+                      <div className="font-medium text-sm">{attachment?.name}</div>
+                      <div className="text-xs text-gray-500">{attachment?.size}</div>
                     </div>
                   </div>
                   <Button variant="ghost" size="sm">
@@ -309,15 +217,15 @@ export default function EmailDetail({
         <div className="flex items-center gap-2 w-full">
           <Button className="bg-blue-600 hover:bg-blue-700">
             <Reply className="h-4 w-4 mr-2" />
-            Reply
+            Responder
           </Button>
-          <Button variant="secondary">
-            <ReplyAll className="h-4 w-4 mr-2" />
-            Reply All
-          </Button>
+          {/*<Button variant="secondary">*/}
+          {/*  <ReplyAll className="h-4 w-4 mr-2" />*/}
+          {/*  Responder Tudo*/}
+          {/*</Button>*/}
           <Button variant="secondary" className="ml-auto">
             <Forward className="h-4 w-4 mr-2" />
-            Forward
+            Encaminhar
           </Button>
         </div>
       </div>

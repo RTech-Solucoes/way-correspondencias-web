@@ -79,55 +79,56 @@ export default function EmailClient() {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Email Folders */}
-        <div className={cn(
-          "flex flex-col justify-between h-full bg-white border-r border-gray-200 overflow-y-auto flex-shrink-0 min-w-[80px]",
-          "transform transition-all duration-300 ease-in-out",
-          showFolders ? "w-64" : "w-[80px]"
-        )}>
-          <div className="space-y-2 p-4">
-            {folders.map((folder) => (
-              <Button
-                key={folder.id}
-                variant={activeFolder === folder.id ? "default" : "ghost"}
-                className="flex gap-3 w-full justify-start text-left h-10 px-4 overflow-x-hidden"
-                onClick={() => setActiveFolder(folder.id)}
-              >
-                <folder.icon className="h-4 w-4 flex-shrink-0" />
-                {showFolders && (
-                  <>
-                    <span className="flex-1 truncate">{folder.label}</span>
-                    {folder.count > 0 && (
-                      <Badge variant="secondary" className="ml-auto hover:bg-gray-100">
-                        {folder.count}
-                      </Badge>
-                    )}
-                  </>
-                )}
-              </Button>
-            ))}
-            <Button
-              variant="ghost"
-              onClick={() => setShowFolderManager(true)}
-              className="flex gap-3 w-full justify-start text-left h-10 px-4"
-            >
-              <Settings className="h-4 w-4"/>
-              {showFolders && <span className="flex-1 truncate">Gerenciar pastas</span>}
-            </Button>
-          </div>
-          <div className="border-t border-gray-200 hidden lg:flex">
-            <Button
-              variant="ghost"
-              className="w-full justify-start h-16 px-8 rounded-none"
-              onClick={() => setShowFolders(!showFolders)}
-            >
-              {showFolders ?
-                <PanelLeftClose className={cn("w-4 h-4 flex-shrink-0")} /> :
-                <PanelLeftOpen className={cn("w-4 h-4 flex-shrink-0")} />
-              }
-              {showFolders && <span className="ml-3">Ocultar</span>}
-            </Button>
-          </div>
-        </div>
+        {/*<div className={cn(*/}
+        {/*  "flex flex-col justify-between h-full bg-white border-r border-gray-200 overflow-y-auto flex-shrink-0 min-w-[80px]",*/}
+        {/*  "transform transition-all duration-300 ease-in-out",*/}
+        {/*  showFolders ? "w-64" : "w-[80px]"*/}
+        {/*)}>*/}
+        {/*  <div className="space-y-2 p-4">*/}
+        {/*    {folders.map((folder) => (*/}
+        {/*      <Button*/}
+        {/*        key={folder.id}*/}
+        {/*        variant={activeFolder === folder.id ? "default" : "ghost"}*/}
+        {/*        className="flex gap-3 w-full justify-start text-left h-10 px-4 overflow-x-hidden"*/}
+        {/*        disabled={folder.id != 'inbox'}*/}
+        {/*        onClick={() => setActiveFolder(folder.id)}*/}
+        {/*      >*/}
+        {/*        <folder.icon className="h-4 w-4 flex-shrink-0" />*/}
+        {/*        {showFolders && (*/}
+        {/*          <>*/}
+        {/*            <span className="flex-1 truncate">{folder.label}</span>*/}
+        {/*            {folder.count > 0 && (*/}
+        {/*              <Badge variant="secondary" className="ml-auto hover:bg-gray-100">*/}
+        {/*                {folder.count}*/}
+        {/*              </Badge>*/}
+        {/*            )}*/}
+        {/*          </>*/}
+        {/*        )}*/}
+        {/*      </Button>*/}
+        {/*    ))}*/}
+        {/*    <Button*/}
+        {/*      variant="ghost"*/}
+        {/*      onClick={() => setShowFolderManager(true)}*/}
+        {/*      className="flex gap-3 w-full justify-start text-left h-10 px-4"*/}
+        {/*    >*/}
+        {/*      <Settings className="h-4 w-4"/>*/}
+        {/*      {showFolders && <span className="flex-1 truncate">Gerenciar pastas</span>}*/}
+        {/*    </Button>*/}
+        {/*  </div>*/}
+        {/*  <div className="border-t border-gray-200 hidden lg:flex overflow-hidden">*/}
+        {/*    <Button*/}
+        {/*      variant="ghost"*/}
+        {/*      className="w-full justify-start h-16 px-8 rounded-none"*/}
+        {/*      onClick={() => setShowFolders(!showFolders)}*/}
+        {/*    >*/}
+        {/*      {showFolders ?*/}
+        {/*        <PanelLeftClose className={cn("w-4 h-4 flex-shrink-0")} /> :*/}
+        {/*        <PanelLeftOpen className={cn("w-4 h-4 flex-shrink-0")} />*/}
+        {/*      }*/}
+        {/*      {showFolders && <span className="ml-3">Ocultar</span>}*/}
+        {/*    </Button>*/}
+        {/*  </div>*/}
+        {/*</div>*/}
 
         {/* Email List */}
         <div className={`flex ${selectedEmail && layoutMode === 'full' ? 'hidden' : 'flex-1'} ${!selectedEmail ? 'flex-1' : ''}`}>

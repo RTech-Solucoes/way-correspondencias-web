@@ -43,37 +43,39 @@ export default function EmailComposer({ onClose }: EmailComposerProps) {
 
         {/* Recipients */}
         <div className="p-4 border-b border-gray-200 space-y-3">
-          <div className="flex items-center space-x-2">
-            <Label htmlFor="to" className="w-12 text-sm font-medium">To:</Label>
-            <Input
-              id="to"
-              value={to}
-              onChange={(e) => setTo(e.target.value)}
-              placeholder="Destinatários"
-              className="flex-1"
-            />
-            <div className="flex items-center space-x-2 text-sm">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setShowCc(!showCc)}
-                className="text-blue-600 hover:text-blue-700"
-              >
-                Cc
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setShowBcc(!showBcc)}
-                className="text-blue-600 hover:text-blue-700"
-              >
-                Cco
-              </Button>
+          <div className="flex flex-col items-start space-y-2">
+            <Label htmlFor="to" className="w-12 text-sm font-medium">Para:</Label>
+            <div className="flex w-full items-center space-x-2">
+              <Input
+                id="to"
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
+                placeholder="Destinatários"
+                className="w-full"
+              />
+              <div className="flex items-center space-x-2 text-sm">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowCc(!showCc)}
+                  className="text-blue-600 hover:text-blue-700"
+                >
+                  Cc
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowBcc(!showBcc)}
+                  className="text-blue-600 hover:text-blue-700"
+                >
+                  Cco
+                </Button>
+              </div>
             </div>
           </div>
 
           {showCc && (
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-col items-start space-y-2">
               <Label htmlFor="cc" className="w-12 text-sm font-medium">Cc:</Label>
               <Input
                 id="cc"
@@ -86,7 +88,7 @@ export default function EmailComposer({ onClose }: EmailComposerProps) {
           )}
 
           {showBcc && (
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-col items-start space-y-2">
               <Label htmlFor="bcc" className="w-12 text-sm font-medium">Cco:</Label>
               <Input
                 id="bcc"
@@ -98,7 +100,7 @@ export default function EmailComposer({ onClose }: EmailComposerProps) {
             </div>
           )}
 
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-col items-start space-y-2">
             <Label htmlFor="subject" className="w-12 text-sm font-medium">Assunto:</Label>
             <Input
               id="subject"
@@ -140,12 +142,12 @@ export default function EmailComposer({ onClose }: EmailComposerProps) {
         </div>
 
         {/* Content */}
-        <div className="flex-1 p-4">
+        <div className="flex-1">
           <Textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Escreva sua mensagem..."
-            className="w-full h-full resize-none border-none focus:ring-0 p-0 text-base"
+            className="w-full h-full resize-none border-none ring-0 text-base rounded-none"
           />
         </div>
 
@@ -153,18 +155,18 @@ export default function EmailComposer({ onClose }: EmailComposerProps) {
         <div className="p-4 border-t border-gray-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
+              <Button variant="secondary">
+                Salvar Rascunho
+              </Button>
               <Button onClick={handleSend} className="bg-blue-600 hover:bg-blue-700">
                 <Send className="h-4 w-4 mr-2" />
                 Enviar
               </Button>
-              <Button variant="secondary">
-                Salvar Rascunho
-              </Button>
             </div>
             
-            <div className="flex items-center space-x-2 text-sm text-gray-500">
-              <span>Ctrl + Enter para enviar</span>
-            </div>
+            {/*<div className="flex items-center space-x-2 text-sm text-gray-500">*/}
+            {/*  <span>Ctrl + Enter para enviar</span>*/}
+            {/*</div>*/}
           </div>
         </div>
       </div>

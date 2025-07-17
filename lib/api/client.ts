@@ -29,7 +29,11 @@ import {
 class ApiClient {
   private baseUrl: string;
 
-  constructor(baseUrl: string = process.env.NEXT_PUBLIC_API_URL || 'https://williancasagrandi.pythonanywhere.com/') {
+  constructor(
+    baseUrl: string =
+      process.env.NEXT_PUBLIC_API_URL ||
+      'https://127.0.0.1:5000'
+  ) {
     this.baseUrl = baseUrl;
   }
 
