@@ -14,6 +14,7 @@ import {
 import {LayoutMode} from "@/components/email/EmailClient";
 import { useEmail } from '@/lib/api/hooks';
 import { useToast } from '@/hooks/use-toast';
+import { Anexo } from '@/lib/api/types'
 import { cn } from '@/lib/utils';
 
 interface EmailDetailProps {
@@ -96,7 +97,7 @@ export default function EmailDetail({
     subject: apiEmail.titulo,
     date: formatDate(apiEmail.prazo_resposta),
     content: apiEmail.resposta || apiEmail.assunto || DEFAULT_EMAIL_CONTENT,
-    attachments: [], // API doesn't have attachments yet
+    attachments: [] as Anexo[], // API doesn't have attachments yet
     isStarred: false // API doesn't have this concept yet
   };
 
@@ -198,8 +199,8 @@ export default function EmailDetail({
                       <Paperclip className="h-4 w-4 text-blue-600" />
                     </div>
                     <div>
-                      <div className="font-medium text-sm">{attachment?.name}</div>
-                      <div className="text-xs text-gray-500">{attachment?.size}</div>
+                      <div className="font-medium text-sm">{attachment?.ds_nome_anexo || "Arquivo"}</div>
+                      <div className="text-xs text-gray-500">{attachment?.nm_tamanho_anexo || "20MB"}</div>
                     </div>
                   </div>
                   <Button variant="ghost" size="sm">

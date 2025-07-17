@@ -154,20 +154,18 @@ export default function EmailComposer({ onClose }: EmailComposerProps) {
         {/* Actions */}
         <div className="p-4 border-t border-gray-200">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Button variant="secondary">
-                Salvar Rascunho
-              </Button>
-              <Button onClick={handleSend} className="bg-blue-600 hover:bg-blue-700">
-                <Send className="h-4 w-4 mr-2" />
-                Enviar
-              </Button>
-            </div>
-            
+            <Button variant="secondary">
+              Salvar Rascunho
+            </Button>
+            <Button onClick={handleSend} className="bg-blue-600 hover:bg-blue-700">
+              Enviar
+              <Send className="h-4 w-4 ml-2" />
+            </Button>
             {/*<div className="flex items-center space-x-2 text-sm text-gray-500">*/}
             {/*  <span>Ctrl + Enter para enviar</span>*/}
             {/*</div>*/}
           </div>
+
         </div>
       </div>
     </div>

@@ -259,7 +259,7 @@ function EmailList({
                         <Paperclip className="h-3 w-3 text-gray-400" />
                       )}
                     </div>
-                    <span className="text-xs text-gray-500">{email.date}</span>
+                    <span className="text-xs text-gray-500">BANANA</span>
                   </div>
                   
                   <h3 className={cn(

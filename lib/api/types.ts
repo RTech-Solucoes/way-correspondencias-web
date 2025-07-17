@@ -116,6 +116,12 @@ export interface Email {
   tp_email: string;
 }
 
+export interface Anexo {
+  id_anexo: number,
+  ds_nome_anexo: string;
+  nm_tamanho_anexo: number;
+}
+
 export interface Obrigacao {
   id_obrigacao: number;
   nm_tarefa: string;
