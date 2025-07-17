@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Shield, Building2, CheckCircle } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import LoginForm from '@/components/auth/LoginForm';
+import { useLogin } from '@/lib/api/hooks';
 
 const FEATURES = [
   {
@@ -26,9 +27,9 @@ const FEATURES = [
 ];
 
 export default function LoginPage() {
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+  const { login, loading: isLoading, error: apiError } = useLogin();
 
   // Check for registration success message
   const [showRegistrationSuccess, setShowRegistrationSuccess] = useState(false);
@@ -44,29 +45,29 @@ export default function LoginPage() {
     }
   }, []);
 
+  // Update error state when API error changes
+  useEffect(() => {
+    if (apiError) {
+      setError(apiError);
+    }
+  }, [apiError]);
+
   const handleLogin = async (email: string, password: string, rememberMe: boolean) => {
-    setIsLoading(true);
     setError('');
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await login(email, password);
       
-      // Mock authentication - in real app, this would be an API call
-      if (email === 'admin@waybrasil.com' && password === 'admin123') {
-        // Store auth state (in real app, use proper auth tokens)
-        localStorage.setItem('isAuthenticated', 'true');
-        if (rememberMe) {
-          localStorage.setItem('rememberMe', 'true');
-        }
-        router.push('/');
-      } else {
-        setError('Email ou senha incorretos. Tente novamente.');
+      // Store remember me preference if checked
+      if (rememberMe) {
+        localStorage.setItem('rememberMe', 'true');
       }
+      
+      // Redirect to home page
+      router.push('/');
     } catch (err) {
-      setError('Erro ao conectar com o servidor. Tente novamente.');
-    } finally {
-      setIsLoading(false);
+      // Error is already set by the useLogin hook
+      console.error('Login failed:', err);
     }
   };
 
@@ -115,15 +116,6 @@ export default function LoginPage() {
             isLoading={isLoading}
             error={error}
           />
-
-          {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-800 font-medium mb-2">Credenciais de demonstração:</p>
-            <div className="text-sm text-blue-700 space-y-1">
-              <p><strong>Email:</strong> admin@waybrasil.com</p>
-              <p><strong>Senha:</strong> admin123</p>
-            </div>
-          </div>
 
           {/* Register Link */}
           <div className="mt-6 text-center">

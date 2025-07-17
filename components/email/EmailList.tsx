@@ -71,7 +71,7 @@ function EmailList({
   const { toast } = useToast();
   
   // Fetch emails from API
-  const { data, error, loading } = useEmails({
+  const { data, error, loading, refetch } = useEmails({
     // We'll handle filtering on the client side for now
     // In a real app, you might want to pass these as API parameters
     // status: folder === 'inbox' ? 'NOVO' : undefined
@@ -107,9 +107,9 @@ function EmailList({
   const filteredEmails = useMemo(() => {
     return emails.filter(email => {
       if (searchQuery) {
-        return email.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-               email.from.toLowerCase().includes(searchQuery.toLowerCase()) ||
-               email.preview.toLowerCase().includes(searchQuery.toLowerCase());
+        return email?.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+               email?.from?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+               email?.preview?.toLowerCase().includes(searchQuery.toLowerCase());
       }
       
       switch (folder) {
@@ -179,7 +179,7 @@ function EmailList({
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={() => window.location.reload()}
+                onClick={() => refetch()}
                 disabled={loading}
               >
                 {loading ? (
@@ -259,7 +259,7 @@ function EmailList({
                         <Paperclip className="h-3 w-3 text-gray-400" />
                       )}
                     </div>
-                    <span className="text-xs text-gray-500">BANANA</span>
+                    <span className="text-xs text-gray-500">{email.date}</span>
                   </div>
                   
                   <h3 className={cn(

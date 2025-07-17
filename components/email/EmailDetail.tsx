@@ -102,7 +102,7 @@ export default function EmailDetail({
   };
 
   return (
-    <div className="flex-1 bg-white flex flex-col overflow-y-auto max-h-full">
+    <div className="flex-1 bg-white flex flex-col overflow-y-auto h-full max-h-full">
       {/* Email Header */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center justify-between mb-4">
@@ -214,7 +214,7 @@ export default function EmailDetail({
       </div>
 
       {/* Email Actions */}
-      <div className="p-6 border-t border-gray-200">
+      <div className="p-6 border-t border-gray-200 mt-auto">
         <div className="flex items-center gap-2 w-full">
           <Button className="bg-blue-600 hover:bg-blue-700">
             <Reply className="h-4 w-4 mr-2" />

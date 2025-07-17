@@ -24,6 +24,10 @@ import {
   CreateResponse,
   MessageResponse,
   ProcessadosResponse,
+  LoginRequest,
+  LoginResponse,
+  RegisterRequest,
+  TipoPerfil,
 } from './types';
 
 class ApiClient {
@@ -249,6 +253,59 @@ class ApiClient {
     if (params.orgao) searchParams.append('orgao', params.orgao.toString());
 
     return this.request<SEIInteressadoResponse>(`/sei/interessado?${searchParams.toString()}`);
+  }
+
+  // Authentication endpoints
+  async login(data: LoginRequest): Promise<LoginResponse> {
+    try {
+      // Fetch all responsaveis
+      const response = await this.listarResponsaveis();
+      const responsaveis = response.items || [];
+      
+      // Find a responsavel that matches the email only
+      const user = responsaveis.find(resp => 
+        resp.email === data.email
+        // Password check removed as per requirement
+      );
+      
+      if (!user) {
+        throw new Error('Credenciais inválidas');
+      }
+      
+      // Create a simple token (in a real app, this would be a JWT)
+      const token = btoa(`${user.id_responsavel}:${user.email}:${Date.now()}`);
+      
+      // Return the login response
+      return {
+        token,
+        user: {
+          id_responsavel: user.id_responsavel,
+          nm_responsavel: user.nm_responsavel,
+          email: user.email,
+          tp_perfil: user.tp_perfil
+        }
+      };
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
+  }
+
+  async register(data: any): Promise<CreateResponse> {
+    // Map RegisterData or RegisterRequest to CreateResponsavelRequest
+    // Handle both interfaces by checking for required fields
+    const responsavelData: CreateResponsavelRequest = {
+      nm_responsavel: `${data.firstName} ${data.lastName}`,
+      email: data.email,
+      senha: data.password,
+      tp_perfil: data.role as TipoPerfil || 'VISUALIZADOR' // Use role from form data or default to VISUALIZADOR
+    };
+    
+    // Use the singular form '/responsavel' endpoint
+    return this.request<CreateResponse>('/responsaveis', {
+      method: 'POST',
+      body: JSON.stringify(responsavelData),
+    });
   }
 }
 

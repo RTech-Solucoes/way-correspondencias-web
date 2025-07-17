@@ -3,11 +3,9 @@ import { TipoPerfil, StatusEmail, StatusObrigacao, TipoItem } from './types';
 // Utility functions for API data transformation and validation
 
 export const PERFIL_LABELS: Record<TipoPerfil, string> = {
-  admin: 'Administrador',
-  manager: 'Gerente',
-  analyst: 'Analista',
-  auditor: 'Auditor',
-  consultant: 'Consultor',
+  VISUALIZADOR: 'VISUALIZADOR',
+  EDITOR: 'EDITOR',
+  APROVADOR: 'APROVADOR'
 };
 
 export const STATUS_EMAIL_LABELS: Record<StatusEmail, string> = {

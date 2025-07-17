@@ -1,38 +1,30 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Shield, Building2, CheckCircle, Users, ArrowLeft } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import RegisterForm from '@/components/auth/RegisterForm';
+import { useRegister } from '@/lib/api/hooks';
 
-const BENEFITS = [
+const FEATURES = [
   {
     icon: Shield,
-    title: 'Segurança Empresarial',
-    description: 'Proteção avançada de dados corporativos com criptografia de nível bancário'
+    title: 'Segurança Avançada',
+    description: 'Proteção de dados com criptografia de ponta'
   },
   {
     icon: Building2,
-    title: 'Compliance Automatizado',
-    description: 'Automatize processos regulatórios e mantenha-se sempre em conformidade'
-  },
-  {
-    icon: Users,
-    title: 'Colaboração em Equipe',
-    description: 'Gerencie equipes e permissões com controle granular de acesso'
+    title: 'Compliance Regulatório',
+    description: 'Conformidade com todas as normas brasileiras'
   },
   {
     icon: CheckCircle,
-    title: 'Auditoria Completa',
-    description: 'Rastree todas as ações e mantenha histórico completo para auditorias'
+    title: 'Gestão Eficiente',
+    description: 'Automatize processos e aumente a produtividade'
   }
-];
-
-const COMPANIES = [
-  'Petrobras', 'Vale', 'Itaú', 'Bradesco', 'Ambev', 'JBS'
 ];
 
 interface RegisterData {
@@ -48,23 +40,27 @@ interface RegisterData {
 }
 
 export default function RegisterPage() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const router = useRouter();
+  const { register, loading: isLoading, error: apiError } = useRegister();
+  const [error, setError] = useState('');
+
+  // Update error state when API error changes
+  useEffect(() => {
+    if (apiError) {
+      setError(apiError);
+    }
+  }, [apiError]);
 
   const handleRegister = async (userData: RegisterData) => {
-    setIsLoading(true);
     setError('');
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Call the register API with the raw form data
+      // The API client will handle mapping to the required format
+      await register(userData);
       
-      // Mock registration - in real app, this would be an API call
-      console.log('Registering user:', userData);
-      
-      // Simulate success
+      // Show success message
       setSuccess(true);
       
       // Redirect to login after success message
@@ -73,9 +69,8 @@ export default function RegisterPage() {
       }, 2000);
       
     } catch (err) {
-      setError('Erro ao criar conta. Tente novamente.');
-    } finally {
-      setIsLoading(false);
+      // Error is already set by the useRegister hook
+      console.error('Registration failed:', err);
     }
   };
 
@@ -138,7 +133,7 @@ export default function RegisterPage() {
               Crie sua conta
             </h2>
             <p className="text-gray-600">
-              Junte-se a centenas de empresas que confiam no Way Brasil
+              Digite suas credencias para se registrar na plataforma
             </p>
           </div>
 
@@ -170,38 +165,24 @@ export default function RegisterPage() {
       <div className="hidden lg:flex flex-1 bg-blue-600 text-white p-12 items-center">
         <div className="max-w-lg">
           <h2 className="text-4xl font-bold mb-6">
-            Junte-se às empresas líderes
+            Transforme sua gestão regulatória
           </h2>
-          <p className="text-xl text-blue-100 mb-8">
-            Mais de 500 empresas já confiam no Way Brasil para sua gestão regulatória.
+          <p className="text-xl text-blue-100 mb-12">
+            Uma solução completa para compliance, documentação e gestão de processos regulatórios.
           </p>
 
-          {/* Trusted Companies */}
-          <div className="mb-12">
-            <p className="text-blue-200 text-sm mb-4 uppercase tracking-wide">
-              Empresas que confiam em nós
-            </p>
-            <div className="grid grid-cols-3 gap-4">
-              {COMPANIES.map((company, index) => (
-                <div key={index} className="bg-blue-500 bg-opacity-50 rounded-lg p-3 text-center">
-                  <span className="text-sm font-medium">{company}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Benefits */}
-          <div className="space-y-6">
-            {BENEFITS.map((benefit, index) => (
+          {/* FEATURES */}
+          <div className="space-y-8">
+            {FEATURES.map((feature, index) => (
               <div key={index} className="flex items-start space-x-4">
                 <div className="flex-shrink-0">
                   <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
-                    <benefit.icon className="h-6 w-6" />
+                    <feature.icon className="h-6 w-6" />
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">{benefit.title}</h3>
-                  <p className="text-blue-100 text-sm">{benefit.description}</p>
+                  <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
+                  <p className="text-blue-100">{feature.description}</p>
                 </div>
               </div>
             ))}

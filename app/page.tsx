@@ -15,7 +15,6 @@ const NAVIGATION_ITEMS = [
   { id: 'email', label: 'Email', icon: Mail, count: 12 },
   { id: 'kanban', label: 'Obrigações Contratuais', icon: Kanban, count: 8 },
   { id: 'documents', label: 'Documentos', icon: FileText, count: 15 },
-  { id: 'api-test', label: 'API Test', icon: Settings, count: 0 },
   { id: 'team', label: 'Equipe', icon: Users, count: 0 },
   { id: 'settings', label: 'Configurações', icon: Settings, count: 0 },
 ];

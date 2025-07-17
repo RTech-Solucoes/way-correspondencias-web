@@ -19,6 +19,9 @@ import {
   UpdateEmailRequest,
   CreateObrigacaoRequest,
   UpdateObrigacaoRequest,
+  LoginRequest,
+  LoginResponse,
+  RegisterRequest,
 } from './types';
 
 // Generic hook for API calls
@@ -339,4 +342,54 @@ export function usePesquisarSEIInteressado() {
   };
 
   return { pesquisar, loading, error };
+}
+
+// Authentication hooks
+export function useLogin() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const login = async (email: string, password: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await apiClient.login({ email, password });
+      
+      // Store auth token in localStorage
+      localStorage.setItem('authToken', result.token);
+      localStorage.setItem('user', JSON.stringify(result.user));
+      
+      return result;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao fazer login';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { login, loading, error };
+}
+
+export function useRegister() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const register = async (data: RegisterRequest) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await apiClient.register(data);
+      return result;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao registrar usuário';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { register, loading, error };
 }

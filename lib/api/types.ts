@@ -1,8 +1,29 @@
 // Base types and enums
-export type TipoPerfil = 'admin' | 'manager' | 'analyst' | 'auditor' | 'consultant';
+export type TipoPerfil = 'VISUALIZADOR' | 'EDITOR' | 'APROVADOR';
 export type StatusEmail = 'NOVO' | 'LIDO' | 'RESPONDIDO' | 'ARQUIVADO';
 export type TipoItem = 'CONTRATO' | 'LICENCA' | 'AUDITORIA' | 'COMPLIANCE';
 export type StatusObrigacao = 'PENDENTE' | 'EM_ANDAMENTO' | 'CONCLUIDO' | 'ATRASADO';
+
+// Authentication types
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  token: string;
+  user: Responsavel;
+}
+
+export interface RegisterRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  company: string;
+  phone: string;
+  role: string;
+}
 
 // Request interfaces
 export interface CreateResponsavelRequest {
@@ -94,6 +115,7 @@ export interface Responsavel {
   id_responsavel: number;
   nm_responsavel: string;
   email: string;
+  senha?: string; // Added senha field as optional
   tp_perfil: TipoPerfil;
 }
 

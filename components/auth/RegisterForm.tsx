@@ -28,11 +28,9 @@ interface RegisterData {
 }
 
 const ROLES = [
-  { value: 'admin', label: 'Administrador' },
-  { value: 'manager', label: 'Gerente' },
-  { value: 'analyst', label: 'Analista' },
-  { value: 'auditor', label: 'Auditor' },
-  { value: 'consultant', label: 'Consultor' },
+  { value: 'VISUALIZADOR', label: 'Visualizador' },
+  { value: 'EDITOR', label: 'Editor' },
+  { value: 'APROVADOR', label: 'Aprovador' },
 ];
 
 export default function RegisterForm({ onRegister, isLoading = false, error }: RegisterFormProps) {

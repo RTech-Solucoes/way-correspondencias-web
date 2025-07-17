@@ -34,14 +34,14 @@ export default function ApiTestComponent() {
     nm_responsavel: '',
     email: '',
     senha: '',
-    tp_perfil: 'analyst'
+    tp_perfil: 'EDITOR'
   });
 
   const handleCreateResponsavel = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await createResponsavel(formData);
-      setFormData({ nm_responsavel: '', email: '', senha: '', tp_perfil: 'analyst' });
+      setFormData({ nm_responsavel: '', email: '', senha: '', tp_perfil: 'EDITOR' });
       refetchResp(); // Refresh the list
     } catch (error) {
       console.error('Failed to create responsavel:', error);
@@ -268,7 +268,7 @@ export default function ApiTestComponent() {
     <div className="max-w-4xl mx-auto p-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold mb-2">API Test Dashboard</h1>
-        <p className="text-gray-600">Teste da integração com Flask API em http://127.0.0.1:5000</p>
+        <p className="text-gray-600">Teste da integração com Flask API em {process.env.NEXT_PUBLIC_API_URL}</p>
       </div>
 
       {/* Navigation */}
