@@ -51,6 +51,17 @@ const formatDate = (dateString?: string): string => {
   return date.toLocaleDateString('pt-BR', { year: 'numeric', month: 'short', day: 'numeric' });
 };
 
+interface SentEmail {
+  id: string;
+  to: string;
+  cc?: string;
+  bcc?: string;
+  subject: string;
+  content: string;
+  date: string;
+  from: string;
+}
+
 interface EmailListProps {
   folder: string;
   searchQuery: string;
@@ -58,6 +69,8 @@ interface EmailListProps {
   onEmailSelect: (emailId: string) => void;
   layoutMode: LayoutMode;
   onLayoutChange: (mode: LayoutMode) => void;
+  sentEmails?: SentEmail[];
+  onUnreadCountChange?: (count: number) => void;
 }
 
 function EmailList({ 
@@ -66,7 +79,9 @@ function EmailList({
   selectedEmail, 
   onEmailSelect, 
   layoutMode,
-  onLayoutChange
+  onLayoutChange,
+  sentEmails = [],
+  onUnreadCountChange
 }: EmailListProps) {
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
   const [syncLoading, setSyncLoading] = useState(false);
@@ -138,8 +153,57 @@ function EmailList({
     })) || [];
   }, [data]);
   
+  // Calculate and report unread emails count for inbox
+  useEffect(() => {
+    // Only update count for inbox folder
+    if (onUnreadCountChange && folder === 'inbox') {
+      // Handle case where emails might be undefined or null
+      if (!emails || emails.length === 0) {
+        // Reset count to 0 when there are no emails
+        onUnreadCountChange(0);
+        return;
+      }
+      
+      // Calculate unread emails count
+      const unreadCount = emails.filter(email => !email.isRead).length;
+      
+      // Ensure count is not negative
+      const safeCount = Math.max(0, unreadCount);
+      
+      // Update the inbox count in the parent component
+      onUnreadCountChange(safeCount);
+    }
+  }, [emails, onUnreadCountChange, folder]);
+  
+  // Convert sent emails to the Email format
+  const sentEmailsFormatted: Email[] = useMemo(() => {
+    return sentEmails.map(email => ({
+      id: email.id,
+      from: 'You', // Since these are sent by the current user
+      subject: email.subject,
+      preview: email.content.replace(/<[^>]*>/g, ''), // Strip HTML tags for preview
+      date: formatDate(email.date),
+      isRead: true, // Sent emails are always read
+      isStarred: false,
+      hasAttachment: false,
+      labels: [],
+    }));
+  }, [sentEmails]);
+
   // Filter emails based on search query and folder
   const filteredEmails = useMemo(() => {
+    // For sent folder, use sent emails
+    if (folder === 'sent') {
+      return sentEmailsFormatted.filter(email => {
+        if (searchQuery) {
+          return email?.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                 email?.preview?.toLowerCase().includes(searchQuery.toLowerCase());
+        }
+        return true;
+      });
+    }
+
+    // For other folders, use API emails
     return emails.filter(email => {
       if (searchQuery) {
         return email?.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -152,15 +216,13 @@ function EmailList({
           return true;
         case 'starred':
           return email.isStarred;
-        case 'sent':
-          return false; // API doesn't include sent emails yet
         case 'drafts':
           return false; // API doesn't include drafts yet
         default:
           return true;
       }
     });
-  }, [emails, searchQuery, folder]);
+  }, [emails, sentEmailsFormatted, searchQuery, folder]);
 
   const toggleEmailSelection = useCallback((emailId: string) => {
     setSelectedEmails(prev => 

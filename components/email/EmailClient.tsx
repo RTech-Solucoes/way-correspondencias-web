@@ -1,6 +1,6 @@
 'use client';
 
-import {useState} from 'react';
+import {useState, useEffect} from 'react';
 import {
   Archive,
   File,
@@ -35,6 +35,18 @@ const EMAIL_FOLDERS = [
 
 export type LayoutMode = 'split' | 'full'
 
+// Interface for sent emails
+interface SentEmail {
+  id: string;
+  to: string;
+  cc?: string;
+  bcc?: string;
+  subject: string;
+  content: string;
+  date: string;
+  from: string;
+}
+
 export default function EmailClient() {
   const [activeFolder, setActiveFolder] = useState('inbox');
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
@@ -43,7 +55,60 @@ export default function EmailClient() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFolderManager, setShowFolderManager] = useState(false);
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('full');
-  const [folders, setFolders] = useState(EMAIL_FOLDERS);
+  const [sentEmails, setSentEmails] = useState<SentEmail[]>(() => {
+    // Load sent emails from localStorage if available
+    if (typeof window !== 'undefined') {
+      const savedEmails = localStorage.getItem('sentEmails');
+      return savedEmails ? JSON.parse(savedEmails) : [];
+    }
+    return [];
+  });
+  
+  // Initialize folders with correct counts
+  const [folders, setFolders] = useState(() => {
+    const initialFolders = [...EMAIL_FOLDERS];
+    
+    // Set sent count based on loaded sent emails
+    if (typeof window !== 'undefined') {
+      const savedEmails = localStorage.getItem('sentEmails');
+      const sentEmailsArray = savedEmails ? JSON.parse(savedEmails) : [];
+      
+      // Update sent folder count
+      const sentFolder = initialFolders.find(folder => folder.id === 'sent');
+      if (sentFolder) {
+        sentFolder.count = sentEmailsArray.length;
+      }
+    }
+    
+    return initialFolders;
+  });
+
+  // Save sent emails to localStorage whenever they change
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sentEmails', JSON.stringify(sentEmails));
+    }
+  }, [sentEmails]);
+
+  // Function to add a new sent email
+  const addSentEmail = (email: Omit<SentEmail, 'id' | 'from'>) => {
+    const newEmail: SentEmail = {
+      ...email,
+      id: Date.now().toString(), // Generate a unique ID
+      from: 'you@example.com', // Use the current user's email
+    };
+    
+    setSentEmails(prev => [newEmail, ...prev]);
+    
+    // Update the count in the folders
+    setFolders(prev => 
+      prev.map(folder => 
+        folder.id === 'sent' 
+          ? { ...folder, count: folder.count + 1 } 
+          : folder
+      )
+    );
+  };
 
   return (
     <div className="h-full flex flex-col">
@@ -79,21 +144,27 @@ export default function EmailClient() {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Email Folders */}
-        <div className={cn(
-          "flex flex-col justify-between h-full bg-white border-r border-gray-200 overflow-y-auto flex-shrink-0 min-w-[80px]",
-          "transform transition-all duration-300 ease-in-out",
-          showFolders ? "w-64" : "w-[80px]"
-        )}>
+        <div 
+          className={cn(
+            "flex flex-col justify-between h-full bg-white border-r border-gray-200 overflow-y-auto flex-shrink-0 min-w-[80px]",
+            "transform transition-all duration-300 ease-in-out",
+            showFolders ? "w-64" : "w-[80px]"
+          )}
+          onMouseEnter={() => setShowFolders(true)}
+          onMouseLeave={() => setShowFolders(false)}
+        >
           <div className="space-y-2 p-4">
             {folders.map((folder) => (
               <Button
                 key={folder.id}
                 variant={activeFolder === folder.id ? "default" : "ghost"}
                 className="flex gap-3 w-full justify-start text-left h-10 px-4 overflow-x-hidden"
-                disabled={folder.id != 'inbox' && folder.id != 'sent'}
+                disabled={false}
                 onClick={() => setActiveFolder(folder.id)}
               >
-                <folder.icon className="h-4 w-4 flex-shrink-0" />
+                <div className="relative">
+                  <folder.icon className="h-4 w-4 flex-shrink-0" />
+                </div>
                 {showFolders && (
                   <>
                     <span className="flex-1 truncate">{folder.label}</span>
@@ -115,19 +186,7 @@ export default function EmailClient() {
               {showFolders && <span className="flex-1 truncate">Gerenciar pastas</span>}
             </Button>
           </div>
-          <div className="border-t border-gray-200 hidden lg:flex overflow-hidden">
-            <Button
-              variant="ghost"
-              className="w-full justify-start h-16 px-8 rounded-none"
-              onClick={() => setShowFolders(!showFolders)}
-            >
-              {showFolders ?
-                <PanelLeftClose className={cn("w-4 h-4 flex-shrink-0")} /> :
-                <PanelLeftOpen className={cn("w-4 h-4 flex-shrink-0")} />
-              }
-              {showFolders && <span className="ml-3">Ocultar</span>}
-            </Button>
-          </div>
+          {/* Toggle button removed as hover functionality now handles expansion */}
         </div>
 
         {/* Email List */}
@@ -139,6 +198,24 @@ export default function EmailClient() {
             onEmailSelect={setSelectedEmail}
             layoutMode={layoutMode}
             onLayoutChange={setLayoutMode}
+            sentEmails={sentEmails}
+            onUnreadCountChange={(count) => {
+              // Update the inbox count in folders state
+              setFolders(prev => {
+                // Ensure prev is initialized
+                if (!prev || !Array.isArray(prev)) {
+                  return EMAIL_FOLDERS.map(folder => 
+                    folder.id === 'inbox' ? { ...folder, count } : folder
+                  );
+                }
+                
+                return prev.map(folder => 
+                  folder.id === 'inbox' 
+                    ? { ...folder, count } 
+                    : folder
+                );
+              });
+            }}
           />
 
           {/* Email Detail */}
@@ -167,7 +244,10 @@ export default function EmailClient() {
 
       {/* Email Composer */}
       {showComposer && (
-        <EmailComposer onClose={() => setShowComposer(false)} />
+        <EmailComposer 
+          onClose={() => setShowComposer(false)} 
+          onSend={addSentEmail}
+        />
       )}
 
       {/* Folder Manager */}

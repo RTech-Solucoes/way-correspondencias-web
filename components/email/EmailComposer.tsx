@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { X, Send, Paperclip, Smile, Bold, Italic, Underline, List, Link } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,14 @@ import { Separator } from '@/components/ui/separator';
 
 interface EmailComposerProps {
   onClose(): void;
+  onSend?: (email: {
+    to: string;
+    cc?: string;
+    bcc?: string;
+    subject: string;
+    content: string;
+    date: string;
+  }) => void;
   initialTo?: string;
   initialSubject?: string;
   initialContent?: string;
@@ -27,6 +35,7 @@ interface EmailComposerProps {
 
 export default function EmailComposer({ 
   onClose,
+  onSend,
   initialTo = '',
   initialSubject = '',
   initialContent = '',
@@ -52,10 +61,56 @@ export default function EmailComposer({
   const [content, setContent] = useState(getInitialContent());
   const [showCc, setShowCc] = useState(false);
   const [showBcc, setShowBcc] = useState(false);
+  const editorRef = useRef<HTMLDivElement>(null);
+
+  // Initialize editor with content
+  useEffect(() => {
+    if (editorRef.current) {
+      editorRef.current.innerHTML = content;
+    }
+  }, []);
+
+  // Format text functions
+  const formatText = (command: string, value: string = '') => {
+    document.execCommand(command, false, value);
+    if (editorRef.current) {
+      setContent(editorRef.current.innerHTML);
+    }
+    editorRef.current?.focus();
+  };
+
+  const handleBold = () => formatText('bold');
+  const handleItalic = () => formatText('italic');
+  const handleUnderline = () => formatText('underline');
+  const handleList = () => formatText('insertUnorderedList');
+  const handleLink = () => {
+    const url = prompt('Enter the URL:');
+    if (url) formatText('createLink', url);
+  };
+
+  const handleEditorChange = () => {
+    if (editorRef.current) {
+      setContent(editorRef.current.innerHTML);
+    }
+  };
 
   const handleSend = () => {
     // Logic to send email
-    console.log('Sending email:', { to, cc, bcc, subject, content });
+    const emailData = { 
+      to, 
+      cc, 
+      bcc, 
+      subject, 
+      content: editorRef.current?.innerHTML || content,
+      date: new Date().toISOString()
+    };
+    console.log('Sending email:', emailData);
+    
+    // Call onSend if provided
+    if (onSend) {
+      onSend(emailData);
+    }
+    
     onClose();
   };
 
@@ -147,27 +202,27 @@ export default function EmailComposer({
         {/* Formatting Toolbar */}
         <div className="p-2 border-b border-gray-200">
           <div className="flex items-center space-x-1">
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" onClick={handleBold} title="Bold">
               <Bold className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" onClick={handleItalic} title="Italic">
               <Italic className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" onClick={handleUnderline} title="Underline">
               <Underline className="h-4 w-4" />
             </Button>
             <Separator orientation="vertical" className="h-6" />
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" onClick={handleList} title="Bullet List">
               <List className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" onClick={handleLink} title="Insert Link">
               <Link className="h-4 w-4" />
             </Button>
             <Separator orientation="vertical" className="h-6" />
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" title="Attach File">
               <Paperclip className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" title="Insert Emoji">
               <Smile className="h-4 w-4" />
             </Button>
           </div>
@@ -175,11 +230,13 @@ export default function EmailComposer({
 
         {/* Content */}
         <div className="flex-1">
-          <Textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
+          <div
+            ref={editorRef}
+            contentEditable
+            onInput={handleEditorChange}
+            className="w-full h-full p-4 overflow-auto focus:outline-none"
+            style={{ minHeight: '200px' }}
             placeholder="Escreva sua mensagem..."
-            className="w-full h-full resize-none border-none ring-0 text-base rounded-none"
           />
         </div>
 
