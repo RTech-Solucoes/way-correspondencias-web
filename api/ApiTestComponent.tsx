@@ -22,7 +22,7 @@ export default function ApiTestComponent() {
   const [activeTab, setActiveTab] = useState<'responsaveis' | 'setores' | 'emails' | 'sync'>('responsaveis');
   
   // API hooks
-  const { data: responsaveis, loading: loadingResp, error: errorResp, refetch: refetchResp } = useResponsaveis();
+  const { data: responsaveis, loading: loadingResp, error: errorResp, refetch: refetchResp } = useResponsaveis({page: 1, size: 20});
   const { data: setores, loading: loadingSetores, error: errorSetores } = useSetores();
   const { data: emails, loading: loadingEmails, error: errorEmails } = useEmails();
   const { data: syncStatus, loading: loadingSyncStatus } = useSincronizacaoStatus();
