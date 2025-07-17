@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {FileText, Kanban, Mail, Plus, Settings, Users} from 'lucide-react';
+import {FileText, Kanban, Mail, Plus, Settings, Users, BarChart} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {cn} from '@/lib/utils';
 import EmailClient from '@/components/email/EmailClient';
@@ -10,8 +10,10 @@ import KanbanBoard from '@/components/kanban/KanbanBoard';
 import DocumentsList from '@/components/documents/DocumentsList';
 import Sidebar from '@/components/layout/Sidebar';
 import ApiTestComponent from '@/api/ApiTestComponent';
+import Dashboard from '@/components/dashboard/Dashboard';
 
 const NAVIGATION_ITEMS = [
+  { id: 'dashboard', label: 'Dashboard', icon: BarChart, count: 0 },
   { id: 'email', label: 'Email', icon: Mail, count: 12 },
   { id: 'kanban', label: 'Obrigações Contratuais', icon: Kanban, count: 8 },
   { id: 'documents', label: 'Documentos', icon: FileText, count: 15 },
@@ -23,6 +25,7 @@ export default function HomePage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [user, setUser] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -33,16 +36,22 @@ export default function HomePage() {
     if (!mounted) return;
     
     // Check authentication status
-    const authStatus = localStorage.getItem('isAuthenticated');
-    if (authStatus === 'true') {
+    const authStatus = localStorage.getItem('user');
+    if (authStatus) {
       setIsAuthenticated(true);
+      try {
+        const userData = JSON.parse(authStatus);
+        setUser(userData);
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
     } else {
       router.push('/login');
     }
     setIsLoading(false);
   }, [router, mounted]);
 
-  const [activeModule, setActiveModule] = useState<'email' | 'kanban' | 'documents' | 'api-test' | 'team' | 'settings'>('email');
+  const [activeModule, setActiveModule] = useState<'dashboard' | 'email' | 'kanban' | 'documents' | 'api-test' | 'team' | 'settings'>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   if (!mounted || isLoading) {
@@ -50,7 +59,7 @@ export default function HomePage() {
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Carregando</p>
+          <p className="text-gray-600">Carregando...</p>
         </div>
       </div>
     );
@@ -62,6 +71,8 @@ export default function HomePage() {
 
   const renderActiveModule = () => {
     switch (activeModule) {
+      case 'dashboard':
+        return <Dashboard />;
       case 'email':
         return <EmailClient />;
       case 'kanban':
@@ -108,7 +119,7 @@ export default function HomePage() {
           </div>
         );
       default:
-        return <EmailClient />;
+        return <Dashboard />;
     }
   };
 
@@ -126,6 +137,7 @@ export default function HomePage() {
           onModuleChange={setActiveModule}
           isOpen={sidebarOpen}
           onToggle={() => setSidebarOpen(!sidebarOpen)}
+          user={user}
         />
         <div className="flex flex-col w-full overflow-auto min-h-screen">
           {renderActiveModule()}

@@ -20,7 +20,6 @@ export interface RegisterRequest {
   lastName: string;
   email: string;
   password: string;
-  company: string;
   phone: string;
   role: string;
 }
@@ -54,6 +53,8 @@ export interface CreateEmailRequest {
   cd_sei?: string;
   titulo: string;
   assunto: string;
+  remetente: string;
+  conteudo: string;
   tp_status: StatusEmail;
   resposta?: string;
   prazo_resposta?: string; // ISO date string
@@ -66,6 +67,8 @@ export interface UpdateEmailRequest {
   cd_sei?: string;
   titulo?: string;
   assunto?: string;
+  conteudo?: string;
+  remetente?: string;
   tp_status?: StatusEmail;
   resposta?: string;
   prazo_resposta?: string; // ISO date string
@@ -130,6 +133,8 @@ export interface Email {
   cd_sei?: string;
   titulo: string;
   assunto: string;
+  conteudo: string;
+  remetente: string;
   tp_status: StatusEmail;
   resposta?: string;
   prazo_resposta?: string;

@@ -9,6 +9,7 @@ import {LayoutMode} from "@/components/email/EmailClient";
 import {useEmails} from '@/lib/api/hooks';
 import {Email as ApiEmail} from '@/lib/api/types';
 import {useToast} from '@/hooks/use-toast';
+import {apiClient} from '@/lib/api/client';
 
 interface Email {
   id: string;
@@ -68,6 +69,7 @@ function EmailList({
   onLayoutChange
 }: EmailListProps) {
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
+  const [syncLoading, setSyncLoading] = useState(false);
   const { toast } = useToast();
   
   // Fetch emails from API
@@ -76,6 +78,35 @@ function EmailList({
     // In a real app, you might want to pass these as API parameters
     // status: folder === 'inbox' ? 'NOVO' : undefined
   });
+  
+  // Function to sync emails before fetching
+  const syncAndFetchEmails = async () => {
+    try {
+      setSyncLoading(true);
+      
+      // Call the sincronizar-emails endpoint first
+      await apiClient.sincronizarEmails();
+      
+      // Then refetch the emails
+      await refetch();
+      
+      toast({
+        title: "Emails sincronizados",
+        description: "Seus emails foram sincronizados com sucesso.",
+      });
+    } catch (err) {
+      console.error('Error syncing emails:', err);
+      toast({
+        title: "Erro ao sincronizar emails",
+        description: "Não foi possível sincronizar seus emails. Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+    } finally {
+      setSyncLoading(false);
+    }
+  };
+
+
   
   // Show error toast if API call fails
   useEffect(() => {
@@ -87,14 +118,18 @@ function EmailList({
       });
     }
   }, [error, toast]);
+
+  useEffect(() => {
+    syncAndFetchEmails().then(r => {})
+  }, []);
   
   // Map API emails to the format expected by the component
   const emails: Email[] = useMemo(() => {
     return data?.items?.map((apiEmail: ApiEmail) => ({
       id: apiEmail.id_email.toString(),
-      from: `Responsável ID: ${apiEmail.id_responsavel}`, // In a real app, you'd fetch the name
-      subject: apiEmail.titulo,
-      preview: apiEmail.assunto,
+      from: apiEmail.remetente, // More user-friendly name
+      subject: apiEmail.assunto,
+      preview: apiEmail.conteudo,
       date: formatDate(apiEmail.prazo_resposta),
       isRead: apiEmail.tp_status !== 'NOVO',
       isStarred: false, // API doesn't have this concept yet
@@ -179,10 +214,10 @@ function EmailList({
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={() => refetch()}
-                disabled={loading}
+                onClick={() => syncAndFetchEmails()}
+                disabled={loading || syncLoading}
               >
-                {loading ? (
+                {loading || syncLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <RotateCw className="h-4 w-4" />
@@ -251,7 +286,7 @@ function EmailList({
                     <div className="flex items-center space-x-2">
                       <span className={cn(
                         "text-sm truncate",
-                        !email.isRead ? "font-semibold text-gray-900" : "text-gray-700"
+                        "font-semibold text-gray-700"
                       )}>
                         {email.from}
                       </span>
@@ -264,7 +299,7 @@ function EmailList({
                   
                   <h3 className={cn(
                     "text-sm mb-1 truncate",
-                    !email.isRead ? "font-semibold text-gray-900" : "text-gray-700"
+                    "font-bold text-gray-900"
                   )}>
                     {email.subject}
                   </h3>

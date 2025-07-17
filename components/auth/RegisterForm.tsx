@@ -21,7 +21,6 @@ interface RegisterData {
   email: string;
   password: string;
   confirmPassword: string;
-  company: string;
   phone: string;
   role: string;
   acceptTerms: boolean;
@@ -40,7 +39,6 @@ export default function RegisterForm({ onRegister, isLoading = false, error }: R
     email: '',
     password: '',
     confirmPassword: '',
-    company: '',
     phone: '',
     role: '',
     acceptTerms: false,
@@ -101,9 +99,6 @@ export default function RegisterForm({ onRegister, isLoading = false, error }: R
       newErrors.confirmPassword = 'Senhas não coincidem';
     }
 
-    if (!formData.company.trim()) {
-      newErrors.company = 'Empresa é obrigatória';
-    }
 
     if (!formData.phone) {
       newErrors.phone = 'Telefone é obrigatório';
@@ -330,55 +325,29 @@ export default function RegisterForm({ onRegister, isLoading = false, error }: R
         </div>
       </div>
 
-      {/* Company and Phone */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="company" className="text-sm font-medium text-gray-700">
-            Empresa *
-          </Label>
-          <div className="relative">
-            <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              id="company"
-              type="text"
-              value={formData.company}
-              onChange={(e) => handleInputChange('company', e.target.value)}
-              placeholder="Nome da empresa"
-              className={cn(
-                "pl-10 h-12 bg-gray-50 border-gray-200 focus:bg-white transition-colors",
-                errors.company && "border-red-500 focus:border-red-500"
-              )}
-              disabled={isLoading}
-            />
-          </div>
-          {errors.company && (
-            <p className="text-sm text-red-600">{errors.company}</p>
-          )}
+      {/* Phone */}
+      <div className="space-y-2">
+        <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
+          Telefone *
+        </Label>
+        <div className="relative">
+          <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            id="phone"
+            type="tel"
+            value={formData.phone}
+            onChange={(e) => handleInputChange('phone', formatPhone(e.target.value))}
+            placeholder="(11) 99999-9999"
+            className={cn(
+              "pl-10 h-12 bg-gray-50 border-gray-200 focus:bg-white transition-colors",
+              errors.phone && "border-red-500 focus:border-red-500"
+            )}
+            disabled={isLoading}
+          />
         </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
-            Telefone *
-          </Label>
-          <div className="relative">
-            <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              id="phone"
-              type="tel"
-              value={formData.phone}
-              onChange={(e) => handleInputChange('phone', formatPhone(e.target.value))}
-              placeholder="(11) 99999-9999"
-              className={cn(
-                "pl-10 h-12 bg-gray-50 border-gray-200 focus:bg-white transition-colors",
-                errors.phone && "border-red-500 focus:border-red-500"
-              )}
-              disabled={isLoading}
-            />
-          </div>
-          {errors.phone && (
-            <p className="text-sm text-red-600">{errors.phone}</p>
-          )}
-        </div>
+        {errors.phone && (
+          <p className="text-sm text-red-600">{errors.phone}</p>
+        )}
       </div>
 
       {/* Role Selection */}

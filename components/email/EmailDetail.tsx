@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Star, Archive, Trash2, Reply, ReplyAll, Forward, MoreHorizontal, Paperclip, Download, Maximize, Maximize2, Minimize2, StretchVertical, Loader2, X, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +13,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {LayoutMode} from "@/components/email/EmailClient";
-import { useEmail } from '@/lib/api/hooks';
+import EmailComposer from './EmailComposer';
+import { useEmail, useResponderEmail } from '@/lib/api/hooks';
 import { useToast } from '@/hooks/use-toast';
 import { Anexo } from '@/lib/api/types'
 import { cn } from '@/lib/utils';
@@ -54,11 +56,16 @@ export default function EmailDetail({
 }: EmailDetailProps) {
   const { toast } = useToast();
   const emailIdNumber = parseInt(emailId, 10);
+  const [showReplyComposer, setShowReplyComposer] = useState(false);
+  const [showForwardComposer, setShowForwardComposer] = useState(false);
   
   // Only fetch if we have a valid number
   const { data: apiEmail, loading, error } = useEmail(
     !isNaN(emailIdNumber) ? emailIdNumber : 0
   );
+  
+  // Get the responder email hook
+  const { responder, loading: replyLoading, error: replyError } = useResponderEmail();
   
   // Show error toast if API call fails
   if (error) {
@@ -91,12 +98,10 @@ export default function EmailDetail({
   // Map API data to the format expected by the component
   const email = {
     id: apiEmail.id_email.toString(),
-    from: `Responsável ID: ${apiEmail.id_responsavel}`, // In a real app, you'd fetch the name
-    fromEmail: `responsavel.${apiEmail.id_responsavel}@waybrasil.com`, // Placeholder email
-    to: 'usuario@waybrasil.com', // Placeholder recipient
-    subject: apiEmail.titulo,
-    date: formatDate(apiEmail.prazo_resposta),
-    content: apiEmail.resposta || apiEmail.assunto || DEFAULT_EMAIL_CONTENT,
+    from: apiEmail.remetente.split("@")[0], // More user-friendly name
+    fromEmail: apiEmail.remetente, // Placeholder email
+    subject: apiEmail.assunto,
+    content: apiEmail.conteudo || DEFAULT_EMAIL_CONTENT,
     attachments: [] as Anexo[], // API doesn't have attachments yet
     isStarred: false // API doesn't have this concept yet
   };
@@ -156,7 +161,7 @@ export default function EmailDetail({
 
         <h1 className="text-2xl font-bold text-gray-900 mb-2">{email.subject}</h1>
 
-        <div className="flex items-center space-x-4 text-sm text-gray-600 mb-4">
+        <div className="flex items-center space-x-4 text-sm text-gray-600">
           <div className="flex items-center space-x-2">
             <Avatar className="h-8 w-8">
               <AvatarImage src="/placeholder-avatar.jpg" alt={email.from} />
@@ -167,13 +172,6 @@ export default function EmailDetail({
               <div className="text-gray-500">{email.fromEmail}</div>
             </div>
           </div>
-          <div className="text-gray-500">•</div>
-          <div>{email.date}</div>
-        </div>
-
-        <div className="flex items-center space-x-2 mb-4">
-          <span className="text-sm text-gray-600">To:</span>
-          <span className="text-sm text-gray-900">{email.to}</span>
         </div>
       </div>
 
@@ -216,20 +214,59 @@ export default function EmailDetail({
       {/* Email Actions */}
       <div className="p-6 border-t border-gray-200 mt-auto">
         <div className="flex items-center gap-2 w-full">
-          <Button className="bg-blue-600 hover:bg-blue-700">
-            <Reply className="h-4 w-4 mr-2" />
+          <Button 
+            className="bg-blue-600 hover:bg-blue-700"
+            onClick={() => {
+              // Open reply composer
+              setShowReplyComposer(true);
+            }}
+            disabled={replyLoading}
+          >
+            {replyLoading ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Reply className="h-4 w-4 mr-2" />
+            )}
             Responder
           </Button>
           {/*<Button variant="secondary">*/}
           {/*  <ReplyAll className="h-4 w-4 mr-2" />*/}
           {/*  Responder Tudo*/}
           {/*</Button>*/}
-          <Button variant="secondary" className="ml-auto">
+          <Button 
+            variant="secondary" 
+            className="ml-auto"
+            onClick={() => {
+              // Open forward composer
+              setShowForwardComposer(true);
+            }}
+          >
             <Forward className="h-4 w-4 mr-2" />
             Encaminhar
           </Button>
         </div>
       </div>
+      
+      {/* Reply Composer */}
+      {showReplyComposer && (
+        <EmailComposer 
+          onClose={() => setShowReplyComposer(false)}
+          initialTo={email.fromEmail}
+          initialSubject={email.subject}
+          isReply={true}
+          originalEmail={email}
+        />
+      )}
+      
+      {/* Forward Composer */}
+      {showForwardComposer && (
+        <EmailComposer 
+          onClose={() => setShowForwardComposer(false)}
+          initialSubject={email.subject}
+          isForward={true}
+          originalEmail={email}
+        />
+      )}
     </div>
   );
 }

@@ -33,7 +33,6 @@ interface RegisterData {
   email: string;
   password: string;
   confirmPassword: string;
-  company: string;
   phone: string;
   role: string;
   acceptTerms: boolean;
@@ -189,14 +188,14 @@ export default function RegisterPage() {
           </div>
 
           {/* Stats */}
-          <div className="flex w-full justify-between mt-12">
+          <div className="flex w-full justify-around mt-12">
             <div className="text-center">
               <div className="text-4xl font-bold">100%</div>
               <div className="text-blue-200 text-sm">Uptime</div>
             </div>
             <div className="text-center">
               <div className="text-4xl font-bold">150%+</div>
-              <div className="text-blue-200 text-sm">Empresas</div>
+              <div className="text-blue-200 text-sm">Produtividade</div>
             </div>
             <div className="text-center">
               <div className="text-4xl font-bold">24/7</div>

@@ -105,7 +105,7 @@ export default function TaskModal({ task, onClose, onSave }: TaskModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-3xl shadow-xl w-full max-w-4xl max-h-[90vh] flex">
+      <div className="bg-white rounded-3xl shadow-xl w-full max-w-4xl max-h-[95vh] flex overflow-hidden">
         {/* Main Content */}
         <div className="flex-1 p-6 overflow-y-auto">
           {/* Header */}

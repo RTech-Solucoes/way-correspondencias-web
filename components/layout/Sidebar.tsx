@@ -29,6 +29,10 @@ interface SidebarProps {
   onModuleChange(module: any): void;
   isOpen: boolean;
   onToggle(): void;
+  user?: {
+    nm_responsavel: string;
+    email: string;
+  };
 }
 
 const MOCK_NOTIFICATIONS = [
@@ -60,7 +64,8 @@ export default function Sidebar({
   activeModule,
   onModuleChange,
   isOpen,
-  onToggle
+  onToggle,
+  user
 }: SidebarProps) {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const unreadCount = MOCK_NOTIFICATIONS.filter(n => n.unread).length;
@@ -237,8 +242,8 @@ export default function Sidebar({
                       </Avatar>
                       {isOpen &&
                         <div className="flex-1">
-                          <h1 className="w-fit text-md font-bold text-gray-900">John Doe</h1>
-                          <p className="w-fit text-xs text-gray-500">john.doe@waybrasil.com</p>
+                          <h1 className="w-fit text-md font-bold text-gray-900">{user?.nm_responsavel || "John Doe"}</h1>
+                          <p className="w-fit text-xs text-gray-500">{user?.email || "john.doe@waybrasil.com"}</p>
                         </div>
                       }
                     </div>
@@ -248,9 +253,9 @@ export default function Sidebar({
               <DropdownMenuContent className="w-72 mx-4" align="center" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">John Doe</p>
+                    <p className="text-sm font-medium leading-none">{user?.nm_responsavel || "John Doe"}</p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      john.doe@waybrasil.com
+                      {user?.email || "john.doe@waybrasil.com"}
                     </p>
                   </div>
                 </DropdownMenuLabel>

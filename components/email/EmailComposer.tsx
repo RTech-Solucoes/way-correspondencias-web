@@ -10,14 +10,46 @@ import { Separator } from '@/components/ui/separator';
 
 interface EmailComposerProps {
   onClose(): void;
+  initialTo?: string;
+  initialSubject?: string;
+  initialContent?: string;
+  isReply?: boolean;
+  isForward?: boolean;
+  originalEmail?: {
+    id: string;
+    from: string;
+    fromEmail: string;
+    subject: string;
+    content: string;
+    date: string;
+  };
 }
 
-export default function EmailComposer({ onClose }: EmailComposerProps) {
-  const [to, setTo] = useState('');
+export default function EmailComposer({ 
+  onClose,
+  initialTo = '',
+  initialSubject = '',
+  initialContent = '',
+  isReply = false,
+  isForward = false,
+  originalEmail
+}: EmailComposerProps) {
+  const [to, setTo] = useState(initialTo);
   const [cc, setCc] = useState('');
   const [bcc, setBcc] = useState('');
-  const [subject, setSubject] = useState('');
-  const [content, setContent] = useState('');
+  const [subject, setSubject] = useState(isReply ? `Re: ${initialSubject}` : isForward ? `Fwd: ${initialSubject}` : initialSubject);
+  
+  // Format content based on whether it's a reply or forward
+  const getInitialContent = () => {
+    if (isReply && originalEmail) {
+      return `\n\n-------- Mensagem Original --------\nDe: ${originalEmail.from} <${originalEmail.fromEmail}>\nData: ${originalEmail.date}\nAssunto: ${originalEmail.subject}\n\n${originalEmail.content}`;
+    } else if (isForward && originalEmail) {
+      return `\n\n-------- Mensagem Encaminhada --------\nDe: ${originalEmail.from} <${originalEmail.fromEmail}>\nData: ${originalEmail.date}\nAssunto: ${originalEmail.subject}\n\n${originalEmail.content}`;
+    }
+    return initialContent;
+  };
+  
+  const [content, setContent] = useState(getInitialContent());
   const [showCc, setShowCc] = useState(false);
   const [showBcc, setShowBcc] = useState(false);
 
@@ -29,7 +61,7 @@ export default function EmailComposer({ onClose }: EmailComposerProps) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-3xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+      <div className="bg-white rounded-3xl shadow-xl w-full max-w-6xl h-full max-h-[95vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold flex items-center">

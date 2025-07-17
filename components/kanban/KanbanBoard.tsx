@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import KanbanColumn from './KanbanColumn';
 import TaskModal from './TaskModal';
 import ColumnSettingsModal from './ColumnSettingsModal';
+import ImportSpreadsheetModal from './ImportSpreadsheetModal';
 
 interface Task {
   id: string;
@@ -130,6 +131,7 @@ export default function KanbanBoard() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showColumnSettings, setShowColumnSettings] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [editingColumn, setEditingColumn] = useState<Column | null>(null);
 
   const handleDragStart = (e: React.DragEvent, taskId: string) => {
@@ -251,10 +253,19 @@ export default function KanbanBoard() {
               </Badge>
             </div>
           </div>
-          <Button onClick={() => setShowTaskModal(true)} className="bg-blue-600 hover:bg-blue-700">
-            <Plus className="h-4 w-4 mr-2" />
-            Adicionar Tarefa
-          </Button>
+          <div className="flex space-x-2">
+            <Button
+              onClick={() => setShowImportModal(true)}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Importar Planilha
+            </Button>
+            <Button onClick={() => setShowTaskModal(true)} className="bg-blue-600 hover:bg-blue-700">
+              <Plus className="h-4 w-4 mr-2" />
+              Adicionar Tarefa
+            </Button>
+          </div>
         </div>
         
         <div className="flex items-center justify-between">
@@ -335,6 +346,20 @@ export default function KanbanBoard() {
           onClose={() => { setShowColumnSettings(false); setEditingColumn(null); }}
           onSave={handleSaveColumn}
           onDelete={handleDeleteColumn}
+        />
+      )}
+
+      {/* Import Spreadsheet Modal */}
+      {showImportModal && (
+        <ImportSpreadsheetModal
+          onClose={() => setShowImportModal(false)}
+          onImport={(file) => {
+            // Logic to handle the imported file would go here
+            console.log('Imported file:', file);
+            // In a real implementation, you would parse the file and create tasks
+            alert(`Arquivo "${file.name}" importado com sucesso! Em uma implementação real, as tarefas seriam criadas a partir dos dados da planilha.`);
+            setShowImportModal(false);
+          }}
         />
       )}
     </div>
