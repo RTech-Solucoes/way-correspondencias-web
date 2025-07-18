@@ -289,7 +289,7 @@ function EmailList({
       </div>
 
       {/* Email List */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex flex-col-reverse overflow-y-auto">
         {loading ? (
           <div className="flex flex-col items-center justify-center h-full p-8">
             <Loader2 className="h-8 w-8 text-blue-500 animate-spin mb-4" />
