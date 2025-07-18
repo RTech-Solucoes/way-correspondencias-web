@@ -19,7 +19,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 
 export default function Dashboard() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -81,7 +80,9 @@ export default function Dashboard() {
                   </div>
                   <span className="font-medium">8 (44%)</span>
                 </div>
-                <Progress value={44} className="h-2 bg-gray-100" indicatorClassName="bg-green-500" />
+                <div className="h-2 bg-gray-100 w-full rounded-full overflow-hidden">
+                  <div className="h-full bg-green-500" style={{ width: "44%" }}></div>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -92,7 +93,9 @@ export default function Dashboard() {
                   </div>
                   <span className="font-medium">5 (28%)</span>
                 </div>
-                <Progress value={28} className="h-2 bg-gray-100" indicatorClassName="bg-blue-500" />
+                <div className="h-2 bg-gray-100 w-full rounded-full overflow-hidden">
+                  <div className="h-full bg-blue-500" style={{ width: "28%" }}></div>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -103,7 +106,9 @@ export default function Dashboard() {
                   </div>
                   <span className="font-medium">3 (17%)</span>
                 </div>
-                <Progress value={17} className="h-2 bg-gray-100" indicatorClassName="bg-yellow-500" />
+                <div className="h-2 bg-gray-100 w-full rounded-full overflow-hidden">
+                  <div className="h-full bg-yellow-500" style={{ width: "17%" }}></div>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -114,7 +119,9 @@ export default function Dashboard() {
                   </div>
                   <span className="font-medium">2 (11%)</span>
                 </div>
-                <Progress value={11} className="h-2 bg-gray-100" indicatorClassName="bg-red-500" />
+                <div className="h-2 bg-gray-100 w-full rounded-full overflow-hidden">
+                  <div className="h-full bg-red-500" style={{ width: "11%" }}></div>
+                </div>
               </div>
             </div>
 
