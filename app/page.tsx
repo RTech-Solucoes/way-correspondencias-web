@@ -35,16 +35,21 @@ export default function HomePage() {
     if (!mounted) return;
     
     // Check authentication status
-    const authStatus = localStorage.getItem('user');
-    if (authStatus) {
-      setIsAuthenticated(true);
-      try {
-        const userData = JSON.parse(authStatus);
-        setUser(userData);
-      } catch (error) {
-        console.error('Error parsing user data:', error);
+    try {
+      const authStatus = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+      if (authStatus) {
+        setIsAuthenticated(true);
+        try {
+          const userData = JSON.parse(authStatus);
+          setUser(userData);
+        } catch (error) {
+          console.error('Error parsing user data:', error);
+        }
+      } else {
+        router.push('/login');
       }
-    } else {
+    } catch (error) {
+      console.error('Error accessing localStorage:', error);
       router.push('/login');
     }
     setIsLoading(false);
