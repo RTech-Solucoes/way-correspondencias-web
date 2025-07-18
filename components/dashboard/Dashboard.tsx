@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   BarChart, 
   Calendar, 
@@ -22,7 +22,12 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 
 export default function Dashboard() {
-  const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  
+  // Initialize lastUpdated on client side only
+  useEffect(() => {
+    setLastUpdated(new Date());
+  }, []);
   const [calendarView, setCalendarView] = useState<'month' | 'week' | 'year'>('month');
 
   const refreshData = () => {
@@ -44,7 +49,7 @@ export default function Dashboard() {
         </div>
         <div className="flex items-center space-x-2">
           <span className="text-sm text-gray-500">
-            Última atualização: {lastUpdated.toLocaleTimeString()}
+            Última atualização: {lastUpdated ? lastUpdated.toLocaleTimeString() : '--:--:--'}
           </span>
           <Button variant="outline" size="sm" onClick={refreshData}>
             <RefreshCw className="h-4 w-4 mr-2" />
