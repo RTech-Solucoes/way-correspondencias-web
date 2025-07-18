@@ -63,6 +63,8 @@ export default function EmailComposer({
   const [bcc, setBcc] = useState('');
   const [subject, setSubject] = useState(isReply ? `Re: ${initialSubject}` : isForward ? `Fwd: ${initialSubject}` : initialSubject);
   const [toError, setToError] = useState<string | null>(null);
+  const [ccError, setCcError] = useState<string | null>(null);
+  const [bccError, setBccError] = useState<string | null>(null);
   const [subjectError, setSubjectError] = useState<string | null>(null);
   
   // Format content based on whether it's a reply or forward
@@ -158,17 +160,49 @@ export default function EmailComposer({
     }
   };
 
+  // Function to validate email address format
+  const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  // Function to validate multiple email addresses (comma-separated)
+  const validateEmails = (emails: string): boolean => {
+    if (!emails.trim()) return false;
+    
+    // Split by comma and validate each email
+    const emailList = emails.split(',').map(email => email.trim());
+    return emailList.every(email => isValidEmail(email));
+  };
+
   const handleSend = () => {
     // Reset previous errors
     setToError(null);
+    setCcError(null);
+    setBccError(null);
     setSubjectError(null);
     
     // Validate required fields
     let isValid = true;
     
-    // Check if "to" field is filled
+    // Check if "to" field is filled and contains valid email(s)
     if (!to.trim()) {
       setToError("O campo destinatário é obrigatório");
+      isValid = false;
+    } else if (!validateEmails(to)) {
+      setToError("Por favor, insira um endereço de email válido");
+      isValid = false;
+    }
+    
+    // Validate CC field if it's not empty
+    if (cc.trim() && !validateEmails(cc)) {
+      setCcError("Por favor, insira endereços de email válidos");
+      isValid = false;
+    }
+    
+    // Validate BCC field if it's not empty
+    if (bcc.trim() && !validateEmails(bcc)) {
+      setBccError("Por favor, insira endereços de email válidos");
       isValid = false;
     }
     
@@ -262,26 +296,42 @@ export default function EmailComposer({
           {showCc && (
             <div className="flex flex-col items-start space-y-2">
               <Label htmlFor="cc" className="w-12 text-sm font-medium">Cc:</Label>
-              <Input
-                id="cc"
-                value={cc}
-                onChange={(e) => setCc(e.target.value)}
-                placeholder="Cópia"
-                className="flex-1"
-              />
+              <div className="w-full">
+                <Input
+                  id="cc"
+                  value={cc}
+                  onChange={(e) => {
+                    setCc(e.target.value);
+                    if (ccError) setCcError(null);
+                  }}
+                  placeholder="Cópia"
+                  className={`flex-1 ${ccError ? 'border-red-500 focus:ring-red-500' : ''}`}
+                />
+                {ccError && (
+                  <p className="text-red-500 text-sm mt-1">{ccError}</p>
+                )}
+              </div>
             </div>
           )}
 
           {showBcc && (
             <div className="flex flex-col items-start space-y-2">
               <Label htmlFor="bcc" className="w-12 text-sm font-medium">Cco:</Label>
-              <Input
-                id="bcc"
-                value={bcc}
-                onChange={(e) => setBcc(e.target.value)}
-                placeholder="Cópia oculta"
-                className="flex-1"
-              />
+              <div className="w-full">
+                <Input
+                  id="bcc"
+                  value={bcc}
+                  onChange={(e) => {
+                    setBcc(e.target.value);
+                    if (bccError) setBccError(null);
+                  }}
+                  placeholder="Cópia oculta"
+                  className={`flex-1 ${bccError ? 'border-red-500 focus:ring-red-500' : ''}`}
+                />
+                {bccError && (
+                  <p className="text-red-500 text-sm mt-1">{bccError}</p>
+                )}
+              </div>
             </div>
           )}
 
