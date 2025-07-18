@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Star, Archive, Trash2, Reply, ReplyAll, Forward, MoreHorizontal, Paperclip, Download, Maximize, Maximize2, Minimize2, StretchVertical, Loader2, X, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +24,20 @@ interface EmailDetailProps {
   onClose(): void;
   layoutMode?: LayoutMode;
   onLayoutChange?: (mode: LayoutMode) => void;
+  onSend?: (email: {
+    to: string;
+    cc?: string;
+    bcc?: string;
+    subject: string;
+    content: string;
+    date: string;
+  }) => void;
+  emailConfig?: {
+    defaultMessages: {
+      [key: string]: string;
+    };
+    defaultFooter: string;
+  };
 }
 
 // Helper function to format date
@@ -52,32 +66,55 @@ export default function EmailDetail({
   emailId,
   onClose,
   layoutMode = 'split',
-  onLayoutChange
+  onLayoutChange,
+  onSend,
+  emailConfig
 }: EmailDetailProps) {
   const { toast } = useToast();
+  const [sentEmail, setSentEmail] = useState<any>(null);
+  const [isSentEmail, setIsSentEmail] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const emailIdNumber = parseInt(emailId, 10);
   const [showReplyComposer, setShowReplyComposer] = useState(false);
   const [showForwardComposer, setShowForwardComposer] = useState(false);
   
-  // Only fetch if we have a valid number
-  const { data: apiEmail, loading, error } = useEmail(
-    !isNaN(emailIdNumber) ? emailIdNumber : 0
+  // Check if this is a sent email from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedEmails = localStorage.getItem('sentEmails');
+      if (savedEmails) {
+        const sentEmails = JSON.parse(savedEmails);
+        const foundEmail = sentEmails.find((email: any) => email.id === emailId);
+        if (foundEmail) {
+          setSentEmail(foundEmail);
+          setIsSentEmail(true);
+        }
+      }
+      setIsLoading(false);
+    }
+  }, [emailId]);
+  
+  // Only fetch from API if not a sent email and we have a valid number
+  const { data: apiEmail, loading: apiLoading, error } = useEmail(
+    !isSentEmail && !isNaN(emailIdNumber) ? emailIdNumber : 0
   );
   
   // Get the responder email hook
   const { responder, loading: replyLoading, error: replyError } = useResponderEmail();
   
   // Show error toast if API call fails
-  if (error) {
-    toast({
-      title: "Erro ao carregar email",
-      description: "Não foi possível carregar os detalhes do email. Tente novamente mais tarde.",
-      variant: "destructive",
-    });
-  }
+  useEffect(() => {
+    if (error && !isSentEmail) {
+      toast({
+        title: "Erro ao carregar email",
+        description: "Não foi possível carregar os detalhes do email. Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+    }
+  }, [error, toast, isSentEmail]);
   
   // Loading state
-  if (loading) {
+  if ((apiLoading && !isSentEmail) || isLoading) {
     return (
       <div className="flex-1 bg-white flex flex-col h-full items-center justify-center">
         <Loader2 className="h-8 w-8 text-blue-500 animate-spin mb-4" />
@@ -87,7 +124,7 @@ export default function EmailDetail({
   }
   
   // Email not found state
-  if (!apiEmail || isNaN(emailIdNumber)) {
+  if ((!apiEmail && !isSentEmail) || (isNaN(emailIdNumber) && !isSentEmail)) {
     return (
       <div className="flex-1 bg-white flex items-center justify-center">
         <p className="text-gray-500">Email não encontrado</p>
@@ -95,14 +132,23 @@ export default function EmailDetail({
     );
   }
   
-  // Map API data to the format expected by the component
-  const email = {
-    id: apiEmail.id_email.toString(),
-    from: apiEmail.remetente.split("@")[0], // More user-friendly name
-    fromEmail: apiEmail.remetente, // Placeholder email
-    subject: apiEmail.assunto,
-    content: apiEmail.conteudo || DEFAULT_EMAIL_CONTENT,
-    date: formatDate(apiEmail.prazo_resposta) || formatDate(new Date().toISOString()), // Use prazo_resposta or current date
+  // Map data to the format expected by the component
+  const email = isSentEmail ? {
+    id: sentEmail.id,
+    from: 'voce',
+    fromEmail: sentEmail.from || 'voce@example.com',
+    subject: sentEmail.subject,
+    content: sentEmail.content,
+    date: formatDate(sentEmail.date) || formatDate(new Date().toISOString()),
+    attachments: [] as Anexo[],
+    isStarred: false
+  } : {
+    id: apiEmail?.id_email.toString(),
+    from: apiEmail?.remetente.split("@")[0], // More user-friendly name
+    fromEmail: apiEmail?.remetente, // Placeholder email
+    subject: apiEmail?.assunto,
+    content: apiEmail?.conteudo || DEFAULT_EMAIL_CONTENT,
+    date: formatDate(apiEmail?.prazo_resposta) || formatDate(new Date().toISOString()), // Use prazo_resposta or current date
     attachments: [] as Anexo[], // API doesn't have attachments yet
     isStarred: false // API doesn't have this concept yet
   };
@@ -256,6 +302,8 @@ export default function EmailDetail({
           initialSubject={email.subject}
           isReply={true}
           originalEmail={email}
+          onSend={onSend}
+          emailConfig={emailConfig}
         />
       )}
       
@@ -266,6 +314,8 @@ export default function EmailDetail({
           initialSubject={email.subject}
           isForward={true}
           originalEmail={email}
+          onSend={onSend}
+          emailConfig={emailConfig}
         />
       )}
     </div>

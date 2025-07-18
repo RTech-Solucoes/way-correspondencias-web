@@ -13,11 +13,23 @@ import {
   Search,
   Send,
   Settings,
-  Star
+  Star,
+  Cog
 } from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Badge} from '@/components/ui/badge';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from '@/hooks/use-toast';
 import EmailList from './EmailList';
 import EmailComposer from './EmailComposer';
 import EmailDetail from './EmailDetail';
@@ -47,7 +59,16 @@ interface SentEmail {
   from: string;
 }
 
+// Interface for email configuration
+interface EmailConfig {
+  defaultMessages: {
+    [key: string]: string;
+  };
+  defaultFooter: string;
+}
+
 export default function EmailClient() {
+  const { toast } = useToast();
   const [activeFolder, setActiveFolder] = useState('inbox');
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
   const [showComposer, setShowComposer] = useState(false);
@@ -55,6 +76,29 @@ export default function EmailClient() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFolderManager, setShowFolderManager] = useState(false);
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('full');
+  const [showConfigDialog, setShowConfigDialog] = useState(false);
+  const [emailConfig, setEmailConfig] = useState<EmailConfig>(() => {
+    // Load email configuration from localStorage if available
+    if (typeof window !== 'undefined') {
+      const savedConfig = localStorage.getItem('emailConfig');
+      return savedConfig ? JSON.parse(savedConfig) : {
+        defaultMessages: {
+          'Saudação': 'Olá,\n\nEspero que esteja bem.',
+          'Agradecimento': 'Obrigado pelo seu email.\n\nAgradeço o seu contato.',
+          'Despedida': 'Atenciosamente,\n\nEquipe de Suporte'
+        },
+        defaultFooter: 'Atenciosamente,\n\nSeu Nome\nSeu Cargo\nSeu Telefone'
+      };
+    }
+    return {
+      defaultMessages: {
+        'Saudação': 'Olá,\n\nEspero que esteja bem.',
+        'Agradecimento': 'Obrigado pelo seu email.\n\nAgradeço o seu contato.',
+        'Despedida': 'Atenciosamente,\n\nEquipe de Suporte'
+      },
+      defaultFooter: 'Atenciosamente,\n\nSeu Nome\nSeu Cargo\nSeu Telefone'
+    };
+  });
   const [sentEmails, setSentEmails] = useState<SentEmail[]>(() => {
     // Load sent emails from localStorage if available
     if (typeof window !== 'undefined') {
@@ -95,7 +139,7 @@ export default function EmailClient() {
     const newEmail: SentEmail = {
       ...email,
       id: Date.now().toString(), // Generate a unique ID
-      from: 'you@example.com', // Use the current user's email
+      from: 'voce@example.com', // Use the current user's email
     };
     
     setSentEmails(prev => [newEmail, ...prev]);
@@ -119,10 +163,19 @@ export default function EmailClient() {
             <Mail className="h-7 w-7 mr-3" />
             Email
           </h1>
-          <Button onClick={() => setShowComposer(true)} className="bg-blue-600 hover:bg-blue-700">
-            <Plus className="h-4 w-4 mr-2" />
-            Escrever
-          </Button>
+          <div className="flex space-x-2">
+            <Button 
+              onClick={() => setShowConfigDialog(true)} 
+              variant="secondary"
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Configurar
+            </Button>
+            <Button onClick={() => setShowComposer(true)} className="bg-blue-600 hover:bg-blue-700">
+              <Plus className="h-4 w-4 mr-2" />
+              Escrever
+            </Button>
+          </div>
         </div>
 
         <div className="flex items-center space-x-4">
@@ -225,6 +278,8 @@ export default function EmailClient() {
               onClose={() => setSelectedEmail('')}
               layoutMode={layoutMode}
               onLayoutChange={setLayoutMode}
+              onSend={addSentEmail}
+              emailConfig={emailConfig}
             />
           )}
         </div>
@@ -237,6 +292,8 @@ export default function EmailClient() {
               onClose={() => setSelectedEmail('')}
               layoutMode={layoutMode}
               onLayoutChange={setLayoutMode}
+              onSend={addSentEmail}
+              emailConfig={emailConfig}
             />
           </div>
         )}
@@ -247,6 +304,7 @@ export default function EmailClient() {
         <EmailComposer 
           onClose={() => setShowComposer(false)} 
           onSend={addSentEmail}
+          emailConfig={emailConfig}
         />
       )}
 
@@ -258,6 +316,122 @@ export default function EmailClient() {
           onSave={setFolders}
         />
       )}
+
+      {/* Email Configuration Dialog */}
+      <Dialog open={showConfigDialog} onOpenChange={setShowConfigDialog}>
+        <DialogContent className="flex flex-col sm:max-w-[600px] max-h-[95vh]">
+          <DialogHeader>
+            <DialogTitle>Configurações de Email</DialogTitle>
+            <DialogDescription>
+              Configure mensagens padrão e assinatura para seus emails.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4 max-h-full overflow-auto">
+            <div className="space-y-2">
+              <Label htmlFor="defaultFooter" className="font-medium">Assinatura Padrão</Label>
+              <Textarea
+                id="defaultFooter"
+                value={emailConfig.defaultFooter}
+                onChange={(e) => setEmailConfig({
+                  ...emailConfig,
+                  defaultFooter: e.target.value
+                })}
+                placeholder="Digite sua assinatura padrão..."
+                className="min-h-[100px]"
+              />
+              <p className="text-sm text-gray-500">
+                Esta assinatura será adicionada ao final dos seus emails.
+              </p>
+            </div>
+            
+            <div className="flex flex-col space-y-2">
+              <Label className="font-medium">Mensagens Padrão</Label>
+              <p className="text-sm text-gray-500 mb-2">
+                Configure mensagens padrão que podem ser rapidamente inseridas nos seus emails.
+              </p>
+              
+              {Object.entries(emailConfig.defaultMessages).map(([key, value], index) => (
+                <div key={index} className="grid grid-rows-[1fr,3fr] gap-2 mb-3">
+                  <Input
+                    value={key}
+                    onChange={(e) => {
+                      const newMessages = { ...emailConfig.defaultMessages };
+                      const oldValue = newMessages[key];
+                      delete newMessages[key];
+                      newMessages[e.target.value] = oldValue;
+                      setEmailConfig({
+                        ...emailConfig,
+                        defaultMessages: newMessages
+                      });
+                    }}
+                    placeholder="Nome da mensagem"
+                  />
+                  <Textarea
+                    value={value}
+                    onChange={(e) => {
+                      const newMessages = { ...emailConfig.defaultMessages };
+                      newMessages[key] = e.target.value;
+                      setEmailConfig({
+                        ...emailConfig,
+                        defaultMessages: newMessages
+                      });
+                    }}
+                    placeholder="Conteúdo da mensagem"
+                    className="min-h-[80px]"
+                  />
+                  <div className="flex-grow-1 h-px bg-gray-200 my-2" />
+                </div>
+              ))}
+              
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  const newMessages = { ...emailConfig.defaultMessages };
+                  newMessages[`Nova Mensagem ${Object.keys(newMessages).length + 1}`] = '';
+                  setEmailConfig({
+                    ...emailConfig,
+                    defaultMessages: newMessages
+                  });
+                }}
+                className="mt-2 flex-grow-1"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar Mensagem
+              </Button>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowConfigDialog(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                // Save configuration to localStorage
+                if (typeof window !== 'undefined') {
+                  localStorage.setItem('emailConfig', JSON.stringify(emailConfig));
+                }
+                setShowConfigDialog(false);
+                
+                // Show success toast
+                toast({
+                  title: "Configurações salvas",
+                  description: "Suas configurações de email foram salvas com sucesso.",
+                });
+              }}
+            >
+              Salvar Configurações
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

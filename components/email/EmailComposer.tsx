@@ -1,12 +1,18 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { X, Send, Paperclip, Smile, Bold, Italic, Underline, List, Link } from 'lucide-react';
+import { X, Send, Paperclip, Smile, Bold, Italic, Underline, List, Link, FileText, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface EmailComposerProps {
   onClose(): void;
@@ -24,12 +30,20 @@ interface EmailComposerProps {
   isReply?: boolean;
   isForward?: boolean;
   originalEmail?: {
-    id: string;
-    from: string;
-    fromEmail: string;
-    subject: string;
+    id: string | undefined;
+    from: string | undefined;
+    fromEmail: string | undefined;
+    subject: string | undefined;
     content: string;
     date: string;
+    attachments?: any[];
+    isStarred?: boolean;
+  };
+  emailConfig?: {
+    defaultMessages: {
+      [key: string]: string;
+    };
+    defaultFooter: string;
   };
 }
 
@@ -41,19 +55,22 @@ export default function EmailComposer({
   initialContent = '',
   isReply = false,
   isForward = false,
-  originalEmail
+  originalEmail,
+  emailConfig
 }: EmailComposerProps) {
   const [to, setTo] = useState(initialTo);
   const [cc, setCc] = useState('');
   const [bcc, setBcc] = useState('');
   const [subject, setSubject] = useState(isReply ? `Re: ${initialSubject}` : isForward ? `Fwd: ${initialSubject}` : initialSubject);
+  const [toError, setToError] = useState<string | null>(null);
+  const [subjectError, setSubjectError] = useState<string | null>(null);
   
   // Format content based on whether it's a reply or forward
   const getInitialContent = () => {
     if (isReply && originalEmail) {
-      return `\n\n-------- Mensagem Original --------\nDe: ${originalEmail.from} <${originalEmail.fromEmail}>\nData: ${originalEmail.date}\nAssunto: ${originalEmail.subject}\n\n${originalEmail.content}`;
+      return `<br><br>-------- Mensagem Original --------<br>De: ${originalEmail.from} &lt;${originalEmail.fromEmail}&gt;<br>Data: ${originalEmail.date}<br>Assunto: ${originalEmail.subject}<br><br>${originalEmail.content}`;
     } else if (isForward && originalEmail) {
-      return `\n\n-------- Mensagem Encaminhada --------\nDe: ${originalEmail.from} <${originalEmail.fromEmail}>\nData: ${originalEmail.date}\nAssunto: ${originalEmail.subject}\n\n${originalEmail.content}`;
+      return `<br><br>-------- Mensagem Encaminhada --------<br>De: ${originalEmail.from} &lt;${originalEmail.fromEmail}&gt;<br>Data: ${originalEmail.date}<br>Assunto: ${originalEmail.subject}<br><br>${originalEmail.content}`;
     }
     return initialContent;
   };
@@ -93,8 +110,79 @@ export default function EmailComposer({
       setContent(editorRef.current.innerHTML);
     }
   };
+  
+  // Function to insert default message
+  const insertDefaultMessage = (messageText: string) => {
+    if (editorRef.current) {
+      // Convert newlines to <br> tags for HTML display
+      const formattedText = messageText.replace(/\n/g, '<br>');
+      
+      // Insert at cursor position or at the beginning
+      document.execCommand('insertHTML', false, formattedText);
+      
+      // Update content state
+      setContent(editorRef.current.innerHTML);
+      
+      // Focus back on editor
+      editorRef.current.focus();
+    }
+  };
+  
+  // Function to insert default footer
+  const insertDefaultFooter = () => {
+    if (editorRef.current && emailConfig?.defaultFooter) {
+      // Convert newlines to <br> tags for HTML display
+      const formattedFooter = emailConfig.defaultFooter.replace(/\n/g, '<br>');
+      
+      // Add two line breaks before footer
+      const footerWithBreaks = '<br><br>' + formattedFooter;
+      
+      // Insert at the end of the content
+      editorRef.current.focus();
+      
+      // Move cursor to end
+      const range = document.createRange();
+      range.selectNodeContents(editorRef.current);
+      range.collapse(false);
+      const selection = window.getSelection();
+      if (selection) {
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+      
+      // Insert footer
+      document.execCommand('insertHTML', false, footerWithBreaks);
+      
+      // Update content state
+      setContent(editorRef.current.innerHTML);
+    }
+  };
 
   const handleSend = () => {
+    // Reset previous errors
+    setToError(null);
+    setSubjectError(null);
+    
+    // Validate required fields
+    let isValid = true;
+    
+    // Check if "to" field is filled
+    if (!to.trim()) {
+      setToError("O campo destinatário é obrigatório");
+      isValid = false;
+    }
+    
+    // Check if "subject" field is filled
+    if (!subject.trim()) {
+      setSubjectError("O campo assunto é obrigatório");
+      isValid = false;
+    }
+    
+    // Only proceed if validation passes
+    if (!isValid) {
+      return;
+    }
+    
     // Logic to send email
     const emailData = { 
       to, 
@@ -133,13 +221,23 @@ export default function EmailComposer({
           <div className="flex flex-col items-start space-y-2">
             <Label htmlFor="to" className="w-12 text-sm font-medium">Para:</Label>
             <div className="flex w-full items-center space-x-2">
-              <Input
-                id="to"
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
-                placeholder="Destinatários"
-                className="w-full"
-              />
+              <div className="w-full">
+                <Input
+                  id="to"
+                  value={to}
+                  onChange={(e) => {
+                    setTo(e.target.value);
+                    if (e.target.value.trim()) {
+                      setToError(null);
+                    }
+                  }}
+                  placeholder="Destinatários"
+                  className={`w-full ${toError ? 'border-red-500 focus:ring-red-500' : ''}`}
+                />
+                {toError && (
+                  <p className="text-red-500 text-sm mt-1">{toError}</p>
+                )}
+              </div>
               <div className="flex items-center space-x-2 text-sm">
                 <Button
                   variant="ghost"
@@ -189,13 +287,23 @@ export default function EmailComposer({
 
           <div className="flex flex-col items-start space-y-2">
             <Label htmlFor="subject" className="w-12 text-sm font-medium">Assunto:</Label>
-            <Input
-              id="subject"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              placeholder="Assunto"
-              className="flex-1"
-            />
+            <div className="w-full">
+              <Input
+                id="subject"
+                value={subject}
+                onChange={(e) => {
+                  setSubject(e.target.value);
+                  if (e.target.value.trim()) {
+                    setSubjectError(null);
+                  }
+                }}
+                placeholder="Assunto"
+                className={`flex-1 ${subjectError ? 'border-red-500 focus:ring-red-500' : ''}`}
+              />
+              {subjectError && (
+                <p className="text-red-500 text-sm mt-1">{subjectError}</p>
+              )}
+            </div>
           </div>
         </div>
 
@@ -218,6 +326,41 @@ export default function EmailComposer({
             <Button variant="ghost" size="sm" onClick={handleLink} title="Insert Link">
               <Link className="h-4 w-4" />
             </Button>
+            <Separator orientation="vertical" className="h-6" />
+            
+            {/* Default Messages Dropdown */}
+            {emailConfig && Object.keys(emailConfig.defaultMessages).length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" title="Inserir Mensagem Padrão">
+                    <MessageSquare className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  {Object.entries(emailConfig.defaultMessages).map(([name, text], index) => (
+                    <DropdownMenuItem 
+                      key={index}
+                      onClick={() => insertDefaultMessage(text)}
+                    >
+                      {name}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            
+            {/* Default Footer Button */}
+            {emailConfig?.defaultFooter && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={insertDefaultFooter}
+                title="Inserir Assinatura Padrão"
+              >
+                <FileText className="h-4 w-4" />
+              </Button>
+            )}
+            
             <Separator orientation="vertical" className="h-6" />
             <Button variant="ghost" size="sm" title="Attach File">
               <Paperclip className="h-4 w-4" />

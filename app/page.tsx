@@ -13,9 +13,9 @@ import Dashboard from '@/components/dashboard/Dashboard';
 
 const NAVIGATION_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: BarChart, count: 0 },
-  { id: 'email', label: 'Email', icon: Mail, count: 12 },
-  { id: 'kanban', label: 'Obrigações Contratuais', icon: Kanban, count: 8 },
-  { id: 'documents', label: 'Documentos', icon: FileText, count: 15 },
+  { id: 'email', label: 'Email', icon: Mail, count: 3 },
+  { id: 'kanban', label: 'Obrigações Contratuais', icon: Kanban, count: 4 },
+  { id: 'documents', label: 'Documentos', icon: FileText, count: 3 },
   { id: 'team', label: 'Equipe', icon: Users, count: 0 },
   { id: 'settings', label: 'Configurações', icon: Settings, count: 0 },
 ];

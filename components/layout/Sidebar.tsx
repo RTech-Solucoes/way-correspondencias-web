@@ -72,7 +72,7 @@ export default function Sidebar({
   const router = useRouter();
 
   const handleLogout = () => {
-    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('user');
     localStorage.removeItem('rememberMe');
     router.push('/login');
   };

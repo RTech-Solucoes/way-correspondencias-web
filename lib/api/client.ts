@@ -151,6 +151,8 @@ class ApiClient {
   }
 
   async listarEmails(params?: ListEmailsParams): Promise<{ items: Email[] }> {
+
+
     const searchParams = new URLSearchParams();
     if (params?.status) searchParams.append('status', params.status);
     if (params?.responsavel) searchParams.append('responsavel', params.responsavel.toString());

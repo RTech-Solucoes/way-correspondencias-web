@@ -93,18 +93,18 @@ function EmailList({
     // In a real app, you might want to pass these as API parameters
     // status: folder === 'inbox' ? 'NOVO' : undefined
   });
-  
+
   // Function to sync emails before fetching
   const syncAndFetchEmails = async () => {
     try {
       setSyncLoading(true);
-      
+
       // Call the sincronizar-emails endpoint first
       await apiClient.sincronizarEmails();
-      
+
       // Then refetch the emails
       await refetch();
-      
+
       toast({
         title: "Emails sincronizados",
         description: "Seus emails foram sincronizados com sucesso.",
@@ -121,8 +121,6 @@ function EmailList({
     }
   };
 
-
-  
   // Show error toast if API call fails
   useEffect(() => {
     if (error) {
@@ -179,7 +177,7 @@ function EmailList({
   const sentEmailsFormatted: Email[] = useMemo(() => {
     return sentEmails.map(email => ({
       id: email.id,
-      from: 'You', // Since these are sent by the current user
+      from: 'Você', // Since these are sent by the current user
       subject: email.subject,
       preview: email.content.replace(/<[^>]*>/g, ''), // Strip HTML tags for preview
       date: formatDate(email.date),
