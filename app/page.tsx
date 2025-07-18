@@ -9,7 +9,6 @@ import EmailClient from '@/components/email/EmailClient';
 import KanbanBoard from '@/components/kanban/KanbanBoard';
 import DocumentsList from '@/components/documents/DocumentsList';
 import Sidebar from '@/components/layout/Sidebar';
-import ApiTestComponent from '@/api/ApiTestComponent';
 import Dashboard from '@/components/dashboard/Dashboard';
 
 const NAVIGATION_ITEMS = [
@@ -51,7 +50,7 @@ export default function HomePage() {
     setIsLoading(false);
   }, [router, mounted]);
 
-  const [activeModule, setActiveModule] = useState<'dashboard' | 'email' | 'kanban' | 'documents' | 'api-test' | 'team' | 'settings'>('dashboard');
+  const [activeModule, setActiveModule] = useState<'dashboard' | 'email' | 'kanban' | 'documents' | 'team' | 'settings'>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   if (!mounted || isLoading) {
@@ -79,8 +78,6 @@ export default function HomePage() {
         return <KanbanBoard />;
       case 'documents':
         return <DocumentsList />;
-      case 'api-test':
-        return <ApiTestComponent />;
       case 'team':
         return (
           <div className="p-6">
