@@ -21,8 +21,6 @@ const NAVIGATION_ITEMS = [
 ];
 
 export default function HomePage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<{ nm_responsavel: string; email: string; } | undefined>(undefined);
   const router = useRouter();
@@ -31,34 +29,10 @@ export default function HomePage() {
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    if (!mounted) return;
-    
-    // Check authentication status
-    try {
-      const authStatus = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
-      if (authStatus) {
-        setIsAuthenticated(true);
-        try {
-          const userData = JSON.parse(authStatus);
-          setUser(userData);
-        } catch (error) {
-          console.error('Error parsing user data:', error);
-        }
-      } else {
-        router.push('/login');
-      }
-    } catch (error) {
-      console.error('Error accessing localStorage:', error);
-      router.push('/login');
-    }
-    setIsLoading(false);
-  }, [router, mounted]);
-
   const [activeModule, setActiveModule] = useState<'dashboard' | 'email' | 'kanban' | 'documents' | 'team' | 'settings'>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  if (!mounted || isLoading) {
+  if (!mounted) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
@@ -69,9 +43,6 @@ export default function HomePage() {
     );
   }
 
-  if (!isAuthenticated) {
-    return null;
-  }
 
   const renderActiveModule = () => {
     switch (activeModule) {
