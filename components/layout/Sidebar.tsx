@@ -183,7 +183,7 @@ export default function Sidebar({
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="flex items-center justify-start w-full h-16 px-4 rounded-none group"
+                className="flex items-center justify-start w-full min-h-fit p-6 border-t border-gray-200 rounded-none group"
               >
                 <div className="flex items-center">
                   <div className="flex items-center justify-start space-x-3">
@@ -192,8 +192,8 @@ export default function Sidebar({
                       <AvatarFallback className="w-12 h-12 group-hover:bg-white">JD</AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                      <h1 className="w-fit text-md font-bold text-gray-900">{user?.nm_responsavel || "John Doe"}</h1>
-                      <p className="w-fit text-xs text-gray-500">{user?.email || "john.doe@waybrasil.com"}</p>
+                      <h1 className="w-fit text-md font-bold text-gray-900">{user?.nm_responsavel || "João Silva"}</h1>
+                      <p className="w-fit text-xs text-gray-500">{user?.email || "joao.silva@waybrasil.com"}</p>
                     </div>
                   </div>
                 </div>
@@ -202,7 +202,7 @@ export default function Sidebar({
             <DropdownMenuContent className="w-72 mx-4" align="center" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{user?.nm_responsavel || "John Doe"}</p>
+                  <p className="text-sm font-medium leading-none">{user?.nm_responsavel || "João Silva"}</p>
                   <p className="text-xs leading-none text-muted-foreground">
                     {user?.email || "john.doe@waybrasil.com"}
                   </p>

@@ -275,7 +275,7 @@ export default function EmailClient() {
         sentFolder.count = sentEmailsArray.length;
       }
     }
-    
+
     return initialFolders;
   });
 
@@ -291,7 +291,7 @@ export default function EmailClient() {
       id: Date.now().toString(),
       from: 'voce@example.com',
     };
-    
+
     setSentEmails(prev => [newEmail, ...prev]);
 
     setFolders(prev => 
@@ -311,19 +311,6 @@ export default function EmailClient() {
             <Mail className="h-7 w-7 mr-3" />
             Email
           </h1>
-          <div className="flex space-x-2">
-            <Button 
-              onClick={() => setShowConfigDialog(true)} 
-              variant="secondary"
-            >
-              <Settings className="h-4 w-4 mr-2" />
-              Configurar
-            </Button>
-            <Button onClick={() => setShowComposer(true)} className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="h-4 w-4 mr-2" />
-              Escrever
-            </Button>
-          </div>
         </div>
 
         <div className="flex items-center space-x-4">
@@ -421,7 +408,7 @@ export default function EmailClient() {
               Configure mensagens padrão e assinatura para seus emails.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="grid gap-4 py-4 max-h-full overflow-auto">
             <div className="space-y-2">
               <Label htmlFor="defaultFooter" className="font-medium">Assinatura Padrão</Label>
@@ -439,13 +426,13 @@ export default function EmailClient() {
                 Esta assinatura será adicionada ao final dos seus emails.
               </p>
             </div>
-            
+
             <div className="flex flex-col space-y-2">
               <Label className="font-medium">Mensagens Padrão</Label>
               <p className="text-sm text-gray-500 mb-2">
                 Configure mensagens padrão que podem ser rapidamente inseridas nos seus emails.
               </p>
-              
+
               {Object.entries(emailConfig.defaultMessages).map(([key, value], index) => (
                 <div key={index} className="grid grid-rows-[1fr,3fr] gap-2 mb-3">
                   <Input
@@ -478,7 +465,7 @@ export default function EmailClient() {
                   <div className="flex-grow-1 h-px bg-gray-200 my-2" />
                 </div>
               ))}
-              
+
               <Button
                 type="button"
                 variant="outline"
@@ -497,7 +484,7 @@ export default function EmailClient() {
               </Button>
             </div>
           </div>
-          
+
           <DialogFooter>
             <Button
               type="button"
@@ -513,7 +500,7 @@ export default function EmailClient() {
                   localStorage.setItem('emailConfig', JSON.stringify(emailConfig));
                 }
                 setShowConfigDialog(false);
-                
+
                 toast({
                   title: "Configurações salvas",
                   description: "Suas configurações de email foram salvas com sucesso.",

@@ -1,0 +1,275 @@
+'use client';
+
+import { useState } from 'react';
+import { Plus, Filter, Users, Calendar, Search, ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Solicitacao } from '@/lib/types';
+import { mockSolicitacoes } from '@/lib/mockData';
+import { getResponsavelNameById } from '@/lib/mockData';
+import SolicitacaoModal from './SolicitacaoModal';
+import Link from 'next/link';
+
+interface Column {
+  id: Solicitacao['status'];
+  title: string;
+  tasks: Solicitacao[];
+  color: string;
+}
+
+export default function SolicitacoesKanban() {
+  // Initialize columns with mock data
+  const initialColumns: Column[] = [
+    {
+      id: 'pendente',
+      title: 'Pendente',
+      color: 'bg-yellow-500',
+      tasks: mockSolicitacoes.filter(s => s.status === 'pendente'),
+    },
+    {
+      id: 'em_andamento',
+      title: 'Em Andamento',
+      color: 'bg-blue-500',
+      tasks: mockSolicitacoes.filter(s => s.status === 'em_andamento'),
+    },
+    {
+      id: 'concluido',
+      title: 'Concluído',
+      color: 'bg-green-500',
+      tasks: mockSolicitacoes.filter(s => s.status === 'concluido'),
+    },
+    {
+      id: 'atrasado',
+      title: 'Atrasado',
+      color: 'bg-red-500',
+      tasks: mockSolicitacoes.filter(s => s.status === 'atrasado'),
+    },
+  ];
+
+  const [columns, setColumns] = useState<Column[]>(initialColumns);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTask, setSelectedTask] = useState<Solicitacao | null>(null);
+  const [showTaskModal, setShowTaskModal] = useState(false);
+
+  const handleDragStart = (e: React.DragEvent, taskId: string) => {
+    e.dataTransfer.setData('text/plain', taskId);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent, targetColumnId: Solicitacao['status']) => {
+    e.preventDefault();
+    const taskId = e.dataTransfer.getData('text/plain');
+
+    setColumns(prevColumns => {
+      const newColumns = [...prevColumns];
+      let task: Solicitacao | null = null;
+
+      // Find and remove task from source column
+      for (let column of newColumns) {
+        const taskIndex = column.tasks.findIndex(t => t.id_solicitacao === taskId);
+        if (taskIndex > -1) {
+          task = column.tasks[taskIndex];
+          column.tasks.splice(taskIndex, 1);
+          break;
+        }
+      }
+
+      // Add task to target column and update status
+      if (task) {
+        const targetColumn = newColumns.find(col => col.id === targetColumnId);
+        if (targetColumn) {
+          task.status = targetColumnId;
+          targetColumn.tasks.push(task);
+        }
+      }
+
+      return newColumns;
+    });
+  };
+
+  const handleCreateTask = () => {
+    setSelectedTask(null);
+    setShowTaskModal(true);
+  };
+
+  const handleSaveTask = (task: Solicitacao) => {
+    if (selectedTask) {
+      // Update existing task
+      setColumns(prevColumns => {
+        return prevColumns.map(column => {
+          return {
+            ...column,
+            tasks: column.tasks.map(t => 
+              t.id_solicitacao === task.id_solicitacao ? task : t
+            )
+          };
+        });
+      });
+    } else {
+      // Add new task to the appropriate column
+      setColumns(prevColumns => {
+        return prevColumns.map(column => {
+          if (column.id === task.status) {
+            return {
+              ...column,
+              tasks: [...column.tasks, task]
+            };
+          }
+          return column;
+        });
+      });
+    }
+    setShowTaskModal(false);
+    setSelectedTask(null);
+  };
+
+  // Filter tasks based on search query
+  const filteredColumns = columns.map(column => ({
+    ...column,
+    tasks: column.tasks.filter(task =>
+      task.ds_assunto.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      task.ds_descricao.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      task.cd_identificacao.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (task.id_responsavel && 
+        getResponsavelNameById(task.id_responsavel).toLowerCase().includes(searchQuery.toLowerCase()))
+    ),
+  }));
+
+  const totalTasks = columns.reduce((sum, column) => sum + column.tasks.length, 0);
+
+  return (
+    <div className="h-full flex flex-col bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex space-x-4">
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center">
+              Solicitações - Quadro Kanban
+            </h1>
+            <div className="flex items-center space-x-4">
+              <Badge variant="secondary" className="text-sm hover:bg-gray-100">
+                {totalTasks} solicitações
+              </Badge>
+            </div>
+          </div>
+          <div className="flex space-x-2">
+            <Button
+              variant="outline"
+              className="bg-white hover:bg-gray-50"
+              onClick={() => {
+                // This would be handled by a router in a real implementation
+                window.location.href = "/solicitacoes";
+              }}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Voltar para Lista
+            </Button>
+            <Button onClick={handleCreateTask} className="bg-blue-600 hover:bg-blue-700">
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Solicitação
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="flex-1 flex flex-row items-center space-x-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Pesquisar por assunto, descrição, identificação ou responsável..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 h-10 bg-gray-50 border-gray-200 focus:bg-white"
+              />
+            </div>
+            <Button variant="secondary" className="h-10 px-4">
+              <Filter className="h-4 w-4 mr-2" />
+              Filtrar
+            </Button>
+            <Button variant="secondary" className="h-10 px-4">
+              <Users className="h-4 w-4 mr-2" />
+              Responsáveis
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Kanban Board */}
+      <div className="flex-1 overflow-x-auto p-6">
+        <div className="flex space-x-6 min-w-max">
+          {filteredColumns.map((column) => (
+            <div
+              key={column.id}
+              className="w-80 flex flex-col bg-gray-100 rounded-md"
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, column.id)}
+            >
+              <div 
+                className={`p-3 font-medium text-white rounded-t-md ${column.color} flex justify-between items-center`}
+              >
+                <span>{column.title}</span>
+                <Badge variant="secondary" className="bg-white text-gray-800">
+                  {column.tasks.length}
+                </Badge>
+              </div>
+              <div className="p-2 flex-1 overflow-y-auto max-h-[calc(100vh-250px)]">
+                {column.tasks.length === 0 ? (
+                  <div className="p-3 text-center text-gray-500 text-sm">
+                    Nenhuma solicitação nesta coluna
+                  </div>
+                ) : (
+                  column.tasks.map((task) => (
+                    <div
+                      key={task.id_solicitacao}
+                      className="bg-white p-3 rounded-md shadow-sm mb-2 cursor-pointer hover:shadow-md"
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, task.id_solicitacao)}
+                      onClick={() => setSelectedTask(task)}
+                    >
+                      <div className="text-sm font-medium mb-1">{task.ds_assunto}</div>
+                      <div className="text-xs text-gray-500 mb-2">{task.cd_identificacao}</div>
+                      <div className="text-xs text-gray-600 line-clamp-2 mb-2">
+                        {task.ds_descricao}
+                      </div>
+                      {task.id_responsavel && (
+                        <div className="flex items-center mt-2">
+                          <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-xs mr-2">
+                            {getResponsavelNameById(task.id_responsavel).charAt(0)}
+                          </div>
+                          <span className="text-xs">{getResponsavelNameById(task.id_responsavel)}</span>
+                        </div>
+                      )}
+                      {task.ds_anexos.length > 0 && (
+                        <div className="mt-2">
+                          <Badge variant="outline" className="text-xs">
+                            {task.ds_anexos.length} anexo(s)
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Task Modal */}
+      {showTaskModal && (
+        <SolicitacaoModal
+          solicitacao={selectedTask}
+          onClose={() => {
+            setShowTaskModal(false);
+            setSelectedTask(null);
+          }}
+          onSave={handleSaveTask}
+        />
+      )}
+    </div>
+  );
+}

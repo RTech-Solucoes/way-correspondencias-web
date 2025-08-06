@@ -1,14 +1,16 @@
 'use client';
 
 import {useEffect, useState} from 'react';
-import {ArrowLeft, Download, Forward, Loader2, MoreHorizontal, Paperclip, Reply, Trash2} from 'lucide-react';
+import {ArrowLeft, Download, Loader2, MoreHorizontal, Paperclip, Trash2, FileText} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {Avatar, AvatarFallback, AvatarImage} from '@/components/ui/avatar';
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,} from '@/components/ui/dropdown-menu';
-import EmailComposer from './EmailComposer';
-import {useEmail, useResponderEmail} from '@/lib/api/hooks';
+import {useEmail} from '@/lib/api/hooks';
 import {useToast} from '@/hooks/use-toast';
-import {Anexo} from '@/lib/api/types'
+import {Anexo} from '@/lib/api/types';
+import SolicitacaoModal from '@/components/solicitacoes/SolicitacaoModal';
+import { Solicitacao } from '@/lib/types';
+import { v4 as uuidv4 } from 'uuid';
 
 interface EmailDetailProps {
   emailId: string;
@@ -32,7 +34,7 @@ interface EmailDetailProps {
 // Helper function to format date
 const formatDate = (dateString?: string): string => {
   if (!dateString) return '';
-  
+
   const date = new Date(dateString);
 
   // Format as full date and time
@@ -226,9 +228,9 @@ export default function EmailDetail({
   const [isMockEmail, setIsMockEmail] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const emailIdNumber = parseInt(emailId, 10);
-  const [showReplyComposer, setShowReplyComposer] = useState(false);
-  const [showForwardComposer, setShowForwardComposer] = useState(false);
-  
+  const [showSolicitacaoModal, setShowSolicitacaoModal] = useState(false);
+  const [newSolicitacao, setNewSolicitacao] = useState<Solicitacao | null>(null);
+
   // Check if this is a mock email
   useEffect(() => {
     const foundMockEmail = MOCK_EMAILS.find(email => email.id === emailId);
@@ -253,14 +255,28 @@ export default function EmailDetail({
       setIsLoading(false);
     }
   }, [emailId]);
-  
+
   // Only fetch from API if not a sent email, not a mock email, and we have a valid number
   const { data: apiEmail, loading: apiLoading, error } = useEmail(
     !isSentEmail && !isMockEmail && !isNaN(emailIdNumber) ? emailIdNumber : 0
   );
-  
-  // Get the responder email hook - only use loading state
-  const { loading: replyLoading } = useResponderEmail();
+
+  // Function to create a new solicitation from email
+  const createSolicitacaoFromEmail = () => {
+    const today = new Date().toISOString().split('T')[0];
+    const newSolicitacao: Solicitacao = {
+      id_solicitacao: uuidv4(),
+      cd_solicitante: [email.fromEmail],
+      ds_assunto: `Solicitação baseada em email: ${email.subject}`,
+      cd_identificacao: `EMAIL-${email.id}`,
+      ds_descricao: `Este email requer atenção:\n\nDe: ${email.from} <${email.fromEmail}>\nData: ${email.date}\nAssunto: ${email.subject}\n\nConteúdo do email:\n${email.content.replace(/<[^>]*>/g, '')}`,
+      ds_anexos: email.attachments.map(attachment => attachment?.ds_nome_anexo || 'Anexo'),
+      status: 'pendente',
+      dt_criacao: today,
+      id_responsavel: undefined
+    };
+    return newSolicitacao;
+  };
 
   // Show error toast if API call fails
   useEffect(() => {
@@ -272,7 +288,7 @@ export default function EmailDetail({
       });
     }
   }, [error, toast, isSentEmail]);
-  
+
   // Loading state
   if ((apiLoading && !isSentEmail && !isMockEmail) || (isLoading && !isMockEmail)) {
     return (
@@ -282,7 +298,7 @@ export default function EmailDetail({
       </div>
     );
   }
-  
+
   // Email not found state - only show if it's not a mock email and not a sent email
   if (!isMockEmail && !isSentEmail && (!apiEmail || (isNaN(emailIdNumber)))) {
     return (
@@ -291,7 +307,7 @@ export default function EmailDetail({
       </div>
     );
   }
-  
+
   // Map data to the format expected by the component
   const email = isSentEmail ? {
     id: sentEmail.id,
@@ -402,57 +418,37 @@ export default function EmailDetail({
         )}
       </div>
 
-      <div className="p-6 border-t border-gray-200 mt-auto">
+      <div className="p-6 mt-auto">
         <div className="flex items-center gap-2 w-full">
           <Button 
             className="bg-blue-600 hover:bg-blue-700"
             onClick={() => {
-              // Open reply composer
-              setShowReplyComposer(true);
-            }}
-            disabled={replyLoading}
-          >
-            {replyLoading ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Reply className="h-4 w-4 mr-2" />
-            )}
-            Responder
-          </Button>
-          <Button 
-            variant="secondary" 
-            className="ml-auto"
-            onClick={() => {
-              // Open forward composer
-              setShowForwardComposer(true);
+              const solicitation = createSolicitacaoFromEmail();
+              setNewSolicitacao(solicitation);
+              setShowSolicitacaoModal(true);
             }}
           >
-            <Forward className="h-4 w-4 mr-2" />
-            Encaminhar
+            <FileText className="h-4 w-4 mr-2" />
+            Criar Solicitação
           </Button>
         </div>
       </div>
 
-      {showReplyComposer && (
-        <EmailComposer 
-          onClose={() => setShowReplyComposer(false)}
-          initialTo={email.fromEmail}
-          initialSubject={email.subject}
-          isReply={true}
-          originalEmail={email}
-          onSend={onSend}
-          emailConfig={emailConfig}
-        />
-      )}
-
-      {showForwardComposer && (
-        <EmailComposer 
-          onClose={() => setShowForwardComposer(false)}
-          initialSubject={email.subject}
-          isForward={true}
-          originalEmail={email}
-          onSend={onSend}
-          emailConfig={emailConfig}
+      {showSolicitacaoModal && (
+        <SolicitacaoModal
+          solicitacao={newSolicitacao}
+          onClose={() => {
+            setShowSolicitacaoModal(false);
+            setNewSolicitacao(null);
+          }}
+          onSave={(solicitacao) => {
+            toast({
+              title: "Solicitação criada",
+              description: "A solicitação foi criada com sucesso.",
+            });
+            setShowSolicitacaoModal(false);
+            setNewSolicitacao(null);
+          }}
         />
       )}
     </div>
