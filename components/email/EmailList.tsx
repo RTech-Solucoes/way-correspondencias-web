@@ -1,11 +1,10 @@
 'use client';
 
 import React, {useState, useCallback, useMemo, useEffect} from 'react';
-import {Archive, Paperclip, RotateCw, Star, Trash2, Loader2, Mail} from 'lucide-react';
+import {Archive, Paperclip, RotateCw, Trash2, Loader2, Mail} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {Checkbox} from '@/components/ui/checkbox';
 import {cn} from '@/lib/utils';
-import {LayoutMode} from "@/components/email/EmailClient";
 import {useEmails} from '@/lib/api/hooks';
 import {Email as ApiEmail} from '@/lib/api/types';
 import {useToast} from '@/hooks/use-toast';
@@ -18,13 +17,12 @@ interface Email {
   preview: string;
   date: string;
   isRead: boolean;
-  isStarred: boolean;
   hasAttachment: boolean;
   labels: string[];
   content?: string;
 }
 
-// Mock emails data
+
 const MOCK_EMAILS = [
   {
     id: 'mock-1',
@@ -33,7 +31,6 @@ const MOCK_EMAILS = [
     preview: 'Segue em anexo o relatório mensal de vendas referente ao mês de novembro. Os resultados mostram um crescimento de 15% em relação ao mês anterior...',
     date: new Date().toISOString(),
     isRead: false,
-    isStarred: true,
     hasAttachment: true,
     labels: ['importante', 'trabalho'],
     content: `Prezado(a),
@@ -62,9 +59,8 @@ Gerente Comercial
     from: 'Maria Santos <maria@consultoria.com>',
     subject: 'Proposta de consultoria em marketing digital',
     preview: 'Espero que esteja bem! Gostaria de apresentar nossa proposta de consultoria em marketing digital para sua empresa...',
-    date: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+    date: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
     isRead: false,
-    isStarred: false,
     hasAttachment: true,
     labels: ['proposta'],
     content: `Olá!
@@ -95,9 +91,8 @@ maria@consultoria.com
     from: 'Carlos Oliveira <carlos@fornecedor.com>',
     subject: 'Confirmação do pedido #2024-1156',
     preview: 'Confirmamos o recebimento do seu pedido #2024-1156. Prazo de entrega estimado: 5 dias úteis...',
-    date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+    date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
     isRead: true,
-    isStarred: false,
     hasAttachment: false,
     labels: ['pedido'],
     content: `Prezado Cliente,
@@ -129,9 +124,8 @@ carlos@fornecedor.com
     from: 'Ana Costa <ana@juridico.com>',
     subject: 'Revisão do contrato de prestação de serviços',
     preview: 'Conforme solicitado, segue a revisão do contrato de prestação de serviços. Identifiquei alguns pontos que precisam de atenção...',
-    date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+    date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
     isRead: true,
-    isStarred: true,
     hasAttachment: true,
     labels: ['jurídico', 'urgente'],
     content: `Prezado(a),
@@ -164,9 +158,8 @@ ana@juridico.com
     from: 'Ricardo Ferreira <ricardo@ti.com>',
     subject: 'Manutenção programada do sistema - Sábado 09/12',
     preview: 'Informamos que será realizada manutenção programada no sistema no sábado, 09/12, das 02h às 06h...',
-    date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
+    date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
     isRead: true,
-    isStarred: false,
     hasAttachment: false,
     labels: ['sistema', 'manutenção'],
     content: `Prezados usuários,
@@ -197,32 +190,20 @@ ricardo@ti.com`
   }
 ];
 
-// Helper function to format date
+
 const formatDate = (dateString?: string): string => {
   if (!dateString) return '';
 
   const date = new Date(dateString);
-  const now = new Date();
-  const yesterday = new Date(now);
-  yesterday.setDate(yesterday.getDate() - 1);
 
-  // Today
-  if (date.toDateString() === now.toDateString()) {
-    return date.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
-  }
+  // Format as dd/MM/yyyy HH:mm
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
 
-  // Yesterday
-  if (date.toDateString() === yesterday.toDateString()) {
-    return 'Ontem';
-  }
-
-  // This year
-  if (date.getFullYear() === now.getFullYear()) {
-    return date.toLocaleDateString('pt-BR', {month: 'short', day: 'numeric'});
-  }
-
-  // Other years
-  return date.toLocaleDateString('pt-BR', {year: 'numeric', month: 'short', day: 'numeric'});
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
 };
 
 interface SentEmail {
@@ -241,42 +222,34 @@ interface EmailListProps {
   searchQuery: string;
   selectedEmail: string | null;
   onEmailSelect: (emailId: string) => void;
-  layoutMode: LayoutMode;
-  onLayoutChange: (mode: LayoutMode) => void;
   sentEmails?: SentEmail[];
   onUnreadCountChange?: (count: number) => void;
 }
 
 function EmailList({
-                     folder,
-                     searchQuery,
-                     selectedEmail,
-                     onEmailSelect,
-                     layoutMode,
-                     onLayoutChange,
-                     sentEmails = [],
-                     onUnreadCountChange
-                   }: EmailListProps) {
+  folder,
+  searchQuery,
+  selectedEmail,
+  onEmailSelect,
+  sentEmails = [],
+  onUnreadCountChange
+}: EmailListProps) {
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
   const [syncLoading, setSyncLoading] = useState(false);
   const {toast} = useToast();
 
-  // Fetch emails from API
-  const {data, error, loading, refetch} = useEmails({
-    // We'll handle filtering on the client side for now
-    // In a real app, you might want to pass these as API parameters
-    // status: folder === 'inbox' ? 'NOVO' : undefined
-  });
 
-  // Function to sync emails before fetching
+  const {data, error, loading, refetch} = useEmails({});
+
+
   const syncAndFetchEmails = async () => {
     try {
       setSyncLoading(true);
 
-      // Call the sincronizar-emails endpoint first
+
       await apiClient.sincronizarEmails();
 
-      // Then refetch the emails
+
       await refetch();
 
       toast({
@@ -295,7 +268,7 @@ function EmailList({
     }
   };
 
-  // Show error toast if API call fails
+
   useEffect(() => {
     if (error) {
       toast({
@@ -311,7 +284,7 @@ function EmailList({
     })
   }, []);
 
-  // Map API emails to the format expected by the component
+
   const apiEmails: Email[] = useMemo(() => {
     return data?.items?.map((apiEmail: ApiEmail) => ({
       id: apiEmail.id_email.toString(),
@@ -320,21 +293,26 @@ function EmailList({
       preview: apiEmail.conteudo,
       date: formatDate(apiEmail.prazo_resposta),
       isRead: apiEmail.tp_status !== 'NOVO',
-      isStarred: false,
       hasAttachment: false,
       labels: [],
     })) || [];
   }, [data]);
 
-  // Combine API emails with mock emails for inbox
+
   const emails: Email[] = useMemo(() => {
+    // Format mock emails dates
+    const formattedMockEmails = MOCK_EMAILS.map(email => ({
+      ...email,
+      date: formatDate(email.date)
+    }));
+
     if (folder === 'inbox') {
-      return [...MOCK_EMAILS, ...apiEmails];
+      return [...formattedMockEmails, ...apiEmails];
     }
     return apiEmails;
   }, [apiEmails, folder]);
 
-  // Calculate and report unread emails count for inbox
+
   useEffect(() => {
     if (onUnreadCountChange && folder === 'inbox') {
       const allEmails = [...MOCK_EMAILS, ...apiEmails];
@@ -344,24 +322,23 @@ function EmailList({
     }
   }, [apiEmails, onUnreadCountChange, folder]);
 
-  // Convert sent emails to the Email format
+
   const sentEmailsFormatted: Email[] = useMemo(() => {
     return sentEmails.map(email => ({
       id: email.id,
-      from: 'Você', // Since these are sent by the current user
+      from: 'Você',
       subject: email.subject,
-      preview: email.content.replace(/<[^>]*>/g, ''), // Strip HTML tags for preview
+      preview: email.content.replace(/<[^>]*>/g, ''),
       date: formatDate(email.date),
-      isRead: true, // Sent emails are always read
-      isStarred: false,
+      isRead: true,
       hasAttachment: false,
       labels: [],
     }));
   }, [sentEmails]);
 
-  // Filter emails based on search query and folder
+
   const filteredEmails = useMemo(() => {
-    // For sent folder, use sent emails
+    // If showing sent emails folder
     if (folder === 'sent') {
       return sentEmailsFormatted.filter(email => {
         if (searchQuery) {
@@ -372,7 +349,7 @@ function EmailList({
       });
     }
 
-    // For other folders, use API emails
+    // Filter all other emails
     return emails.filter(email => {
       if (searchQuery) {
         return email?.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -383,10 +360,8 @@ function EmailList({
       switch (folder) {
         case 'inbox':
           return true;
-        case 'starred':
-          return email.isStarred;
         case 'drafts':
-          return false; // API doesn't include drafts yet
+          return false;
         default:
           return true;
       }
@@ -410,8 +385,7 @@ function EmailList({
   }, [selectedEmails.length, filteredEmails]);
 
   return (
-    <div
-      className={`${selectedEmail && layoutMode === 'split' ? 'w-96' : 'flex-1'} bg-white ${selectedEmail && layoutMode === 'split' ? 'border-r border-gray-200' : ''} flex flex-col`}>
+    <div className="flex-1 bg-white flex flex-col">
       {/* Email Actions */}
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between min-h-[2rem]">
@@ -434,14 +408,9 @@ function EmailList({
 
           <div className="flex items-center space-x-1">
             {selectedEmails.length > 0 ? (
-              <>
-                <Button variant="ghost" size="sm">
-                  <Archive className="h-4 w-4"/>
-                </Button>
-                <Button variant="ghost" size="sm">
-                  <Trash2 className="h-4 w-4"/>
-                </Button>
-              </>
+              <Button variant="ghost" size="sm">
+                <Trash2 className="h-4 w-4"/>
+              </Button>
             ) : (
               <Button
                 variant="ghost"
@@ -488,7 +457,7 @@ function EmailList({
               )}
               onClick={() => {
                 if (selectedEmail === email.id) {
-                  onEmailSelect(''); // Close if already selected
+                  onEmailSelect('');
                 } else {
                   onEmailSelect(email.id);
                 }
@@ -501,17 +470,6 @@ function EmailList({
                   onClick={(e) => e.stopPropagation()}
                 />
 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="p-0 h-5 w-5 text-gray-400 hover:text-yellow-500"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    // Toggle star logic here
-                  }}
-                >
-                  <Star className={cn("h-4 w-4", email.isStarred && "fill-yellow-500 text-yellow-500")}/>
-                </Button>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
@@ -549,5 +507,5 @@ function EmailList({
   );
 }
 
-// Export the memoized component to prevent unnecessary rerenders
+
 export default React.memo(EmailList);

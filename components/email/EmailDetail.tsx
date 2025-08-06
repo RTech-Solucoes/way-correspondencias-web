@@ -1,27 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Star, Archive, Trash2, Reply, Forward, MoreHorizontal, Paperclip, Download, Maximize, StretchVertical, Loader2, X, ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {LayoutMode} from "@/components/email/EmailClient";
+import {useEffect, useState} from 'react';
+import {ArrowLeft, Download, Forward, Loader2, MoreHorizontal, Paperclip, Reply, Trash2} from 'lucide-react';
+import {Button} from '@/components/ui/button';
+import {Avatar, AvatarFallback, AvatarImage} from '@/components/ui/avatar';
+import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,} from '@/components/ui/dropdown-menu';
 import EmailComposer from './EmailComposer';
-import { useEmail, useResponderEmail } from '@/lib/api/hooks';
-import { useToast } from '@/hooks/use-toast';
-import { Anexo } from '@/lib/api/types'
-import { cn } from '@/lib/utils';
+import {useEmail, useResponderEmail} from '@/lib/api/hooks';
+import {useToast} from '@/hooks/use-toast';
+import {Anexo} from '@/lib/api/types'
 
 interface EmailDetailProps {
   emailId: string;
   onClose(): void;
-  layoutMode?: LayoutMode;
-  onLayoutChange?: (mode: LayoutMode) => void;
   onSend?: (email: {
     to: string;
     cc?: string;
@@ -225,8 +216,6 @@ const DEFAULT_EMAIL_CONTENT = `
 export default function EmailDetail({
   emailId,
   onClose,
-  layoutMode = 'split',
-  onLayoutChange,
   onSend,
   emailConfig
 }: EmailDetailProps) {
@@ -340,16 +329,7 @@ export default function EmailDetail({
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-2">
             <Button variant="ghost" size="sm" onClick={onClose}>
-              {layoutMode === "split" ?
-                <X className="h-4 w-4" /> :
-                <ArrowLeft className="h-4 w-4" />
-              }
-            </Button>
-            <Button variant="ghost" size="sm">
-              <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-            </Button>
-            <Button variant="ghost" size="sm">
-              <Archive className="h-4 w-4" />
+              <ArrowLeft className="h-4 w-4" />
             </Button>
             <Button variant="ghost" size="sm">
               <Trash2 className="h-4 w-4" />
@@ -388,14 +368,12 @@ export default function EmailDetail({
         </div>
       </div>
 
-      {/* Email Content */}
       <div className="flex-1 p-6">
         <div
           className="prose max-w-none"
           dangerouslySetInnerHTML={{ __html: email.content }}
         />
 
-        {/* Attachments */}
         {email.attachments.length > 0 && (
           <div className="mt-8 p-4 bg-gray-50 rounded-3xl">
             <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
@@ -424,7 +402,6 @@ export default function EmailDetail({
         )}
       </div>
 
-      {/* Email Actions */}
       <div className="p-6 border-t border-gray-200 mt-auto">
         <div className="flex items-center gap-2 w-full">
           <Button 
@@ -442,10 +419,6 @@ export default function EmailDetail({
             )}
             Responder
           </Button>
-          {/*<Button variant="secondary">*/}
-          {/*  <ReplyAll className="h-4 w-4 mr-2" />*/}
-          {/*  Responder Tudo*/}
-          {/*</Button>*/}
           <Button 
             variant="secondary" 
             className="ml-auto"
@@ -459,8 +432,7 @@ export default function EmailDetail({
           </Button>
         </div>
       </div>
-      
-      {/* Reply Composer */}
+
       {showReplyComposer && (
         <EmailComposer 
           onClose={() => setShowReplyComposer(false)}
@@ -472,8 +444,7 @@ export default function EmailDetail({
           emailConfig={emailConfig}
         />
       )}
-      
-      {/* Forward Composer */}
+
       {showForwardComposer && (
         <EmailComposer 
           onClose={() => setShowForwardComposer(false)}

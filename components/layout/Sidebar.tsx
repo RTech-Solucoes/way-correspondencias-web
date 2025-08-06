@@ -75,15 +75,15 @@ export default function Sidebar({
   };
 
   return (
-    <div className="bg-white border-r border-gray-200 rounded-r-3xl overflow-hidden w-80 min-w-80 max-w-80">
+    <div className="flex-shrink-0 bg-white border-r border-gray-200 overflow-hidden w-[20rem]">
       <div className="flex flex-col h-full">
-        <div className="flex justify-start space-x-3 p-6 border-b border-gray-200">
+        <div className="flex justify-start gap-3 p-6 border-b border-gray-200">
           <Image
             src="/images/logo.png"
             alt="Logo"
             width={400}
             height={221}
-            className="h-12 w-auto"
+            className="h-11 w-auto"
           />
           <div className="items-start whitespace-nowrap">
             <h1 className="w-fit text-xl font-bold text-gray-900">Way 262</h1>
@@ -91,8 +91,7 @@ export default function Sidebar({
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex flex-col grow gap-2 p-2">
+        <nav className="flex flex-col grow gap-3 px-2 py-3">
           {navigationItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeModule === item.id;

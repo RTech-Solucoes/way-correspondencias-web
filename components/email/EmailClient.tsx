@@ -13,10 +13,7 @@ import {
   Search,
   Send,
   Settings,
-  Star,
-  Cog,
-  Maximize,
-  StretchVertical
+  Cog
 } from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
@@ -41,10 +38,6 @@ import {cn} from "@/lib/utils";
 const EMAIL_FOLDERS = [
   { id: 'inbox', icon: Inbox, label: 'Caixa de Entrada', count: 0 },
   { id: 'sent', icon: Send, label: 'Enviados', count: 0 },
-  // { id: 'drafts', icon: File, label: 'Rascunhos', count: 0 },
-  // { id: 'archive', icon: Archive, label: 'Arquivo', count: 0 },
-  // { id: 'starred', icon: Star, label: 'Favoritos', count: 0 },
-  // { id: 'spam', icon: OctagonAlert, label: 'Spam', count: 0 },
 ];
 
 // Mock emails data
@@ -56,7 +49,6 @@ const MOCK_EMAILS = [
     preview: 'Segue em anexo o relatório mensal de vendas referente ao mês de novembro. Os resultados mostram um crescimento de 15% em relação ao mês anterior...',
     date: new Date().toISOString(),
     isRead: false,
-    isStarred: true,
     hasAttachment: true,
     labels: ['importante', 'trabalho'],
     content: `Prezado(a),
@@ -87,7 +79,6 @@ Gerente Comercial
     preview: 'Espero que esteja bem! Gostaria de apresentar nossa proposta de consultoria em marketing digital para sua empresa...',
     date: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
     isRead: false,
-    isStarred: false,
     hasAttachment: true,
     labels: ['proposta'],
     content: `Olá!
@@ -120,7 +111,6 @@ maria@consultoria.com
     preview: 'Confirmamos o recebimento do seu pedido #2024-1156. Prazo de entrega estimado: 5 dias úteis...',
     date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
     isRead: true,
-    isStarred: false,
     hasAttachment: false,
     labels: ['pedido'],
     content: `Prezado Cliente,
@@ -154,7 +144,6 @@ carlos@fornecedor.com
     preview: 'Conforme solicitado, segue a revisão do contrato de prestação de serviços. Identifiquei alguns pontos que precisam de atenção...',
     date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
     isRead: true,
-    isStarred: true,
     hasAttachment: true,
     labels: ['jurídico', 'urgente'],
     content: `Prezado(a),
@@ -189,7 +178,6 @@ ana@juridico.com
     preview: 'Informamos que será realizada manutenção programada no sistema no sábado, 09/12, das 02h às 06h...',
     date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
     isRead: true,
-    isStarred: false,
     hasAttachment: false,
     labels: ['sistema', 'manutenção'],
     content: `Prezados usuários,
@@ -220,9 +208,6 @@ ricardo@ti.com`
   }
 ];
 
-export type LayoutMode = 'split' | 'full'
-
-// Interface for sent emails
 interface SentEmail {
   id: string;
   to: string;
@@ -234,7 +219,6 @@ interface SentEmail {
   from: string;
 }
 
-// Interface for email configuration
 interface EmailConfig {
   defaultMessages: {
     [key: string]: string;
@@ -249,10 +233,8 @@ export default function EmailClient() {
   const [showComposer, setShowComposer] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFolderManager, setShowFolderManager] = useState(false);
-  const [layoutMode, setLayoutMode] = useState<LayoutMode>('full');
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [emailConfig, setEmailConfig] = useState<EmailConfig>(() => {
-    // Load email configuration from localStorage if available
     if (typeof window !== 'undefined') {
       const savedConfig = localStorage.getItem('emailConfig');
       return savedConfig ? JSON.parse(savedConfig) : {
@@ -274,24 +256,20 @@ export default function EmailClient() {
     };
   });
   const [sentEmails, setSentEmails] = useState<SentEmail[]>(() => {
-    // Load sent emails from localStorage if available
     if (typeof window !== 'undefined') {
       const savedEmails = localStorage.getItem('sentEmails');
       return savedEmails ? JSON.parse(savedEmails) : [];
     }
     return [];
   });
-  
-  // Initialize folders with correct counts
+
   const [folders, setFolders] = useState(() => {
     const initialFolders = [...EMAIL_FOLDERS];
-    
-    // Set sent count based on loaded sent emails
+
     if (typeof window !== 'undefined') {
       const savedEmails = localStorage.getItem('sentEmails');
       const sentEmailsArray = savedEmails ? JSON.parse(savedEmails) : [];
-      
-      // Update sent folder count
+
       const sentFolder = initialFolders.find(folder => folder.id === 'sent');
       if (sentFolder) {
         sentFolder.count = sentEmailsArray.length;
@@ -301,24 +279,21 @@ export default function EmailClient() {
     return initialFolders;
   });
 
-  // Save sent emails to localStorage whenever they change
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('sentEmails', JSON.stringify(sentEmails));
     }
   }, [sentEmails]);
 
-  // Function to add a new sent email
   const addSentEmail = (email: Omit<SentEmail, 'id' | 'from'>) => {
     const newEmail: SentEmail = {
       ...email,
-      id: Date.now().toString(), // Generate a unique ID
-      from: 'voce@example.com', // Use the current user's email
+      id: Date.now().toString(),
+      from: 'voce@example.com',
     };
     
     setSentEmails(prev => [newEmail, ...prev]);
-    
-    // Update the count in the folders
+
     setFolders(prev => 
       prev.map(folder => 
         folder.id === 'sent' 
@@ -351,7 +326,7 @@ export default function EmailClient() {
           </div>
         </div>
 
-        <div className="flex items-center space-x-4 mb-4">
+        <div className="flex items-center space-x-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
@@ -385,36 +360,16 @@ export default function EmailClient() {
             )}
           </Button>
         ))}
-        {selectedEmail && (
-          <div className="flex flex-row rounded-full">
-            <Button
-              variant="ghost"
-              onClick={() => setLayoutMode(layoutMode === 'split' ? 'full' : 'split')}
-              className={cn(
-                "flex items-center gap-2 h-10 px-4 ml-auto ronded-none",
-
-              )}
-            >
-              {layoutMode === 'split' ? (
-                <Maximize className="h-4 w-4"/>
-              ) : (
-                <StretchVertical className="h-4 w-4"/>
-              )}
-            </Button>
-          </div>
-        )}
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-
-        <div className={`flex ${selectedEmail && layoutMode === 'full' ? 'hidden' : 'flex-1'} ${!selectedEmail ? 'flex-1' : ''}`}>
+        {/* Show email list when no email is selected, or email detail when one is selected */}
+        {!selectedEmail ? (
           <EmailList
             folder={activeFolder}
             searchQuery={searchQuery}
             selectedEmail={selectedEmail || null}
             onEmailSelect={setSelectedEmail}
-            layoutMode={layoutMode}
-            onLayoutChange={setLayoutMode}
             sentEmails={sentEmails}
             onUnreadCountChange={(count) => {
               setFolders(prev => {
@@ -432,30 +387,13 @@ export default function EmailClient() {
               });
             }}
           />
-
-          {selectedEmail && layoutMode === 'split' && (
-            <EmailDetail
-              emailId={selectedEmail}
-              onClose={() => setSelectedEmail('')}
-              layoutMode={layoutMode}
-              onLayoutChange={setLayoutMode}
-              onSend={addSentEmail}
-              emailConfig={emailConfig}
-            />
-          )}
-        </div>
-
-        {selectedEmail && layoutMode === 'full' && (
-          <div className="flex-1">
-            <EmailDetail
-              emailId={selectedEmail}
-              onClose={() => setSelectedEmail('')}
-              layoutMode={layoutMode}
-              onLayoutChange={setLayoutMode}
-              onSend={addSentEmail}
-              emailConfig={emailConfig}
-            />
-          </div>
+        ) : (
+          <EmailDetail
+            emailId={selectedEmail}
+            onClose={() => setSelectedEmail('')}
+            onSend={addSentEmail}
+            emailConfig={emailConfig}
+          />
         )}
       </div>
 
