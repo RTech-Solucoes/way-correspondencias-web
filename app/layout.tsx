@@ -1,10 +1,23 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import { Figtree } from 'next/font/google';
+import { Lexend as Font } from 'next/font/google';
 import { ApiProvider } from '@/api/ApiProvider';
 import { ReactNode } from 'react'
 
-const figtree = Figtree({ subsets: ['latin'] });
+const defaultFont = Font({
+  weight: [
+    '100',
+    '200',
+    '300',
+    '400',
+    '500',
+    '600',
+    '700',
+    '800',
+    '900'
+  ],
+  subsets: ['latin']
+});
 
 export const metadata: Metadata = {
   title: 'Way Brasil - Software Regulatório',
@@ -18,7 +31,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={figtree.className}>
+      <body className={defaultFont.className}>
         <ApiProvider>
           {children}
           <div/>

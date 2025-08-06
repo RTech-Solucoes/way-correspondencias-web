@@ -1,11 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Star, Archive, Trash2, Reply, ReplyAll, Forward, MoreHorizontal, Paperclip, Download, Maximize, Maximize2, Minimize2, StretchVertical, Loader2, X, ArrowLeft } from 'lucide-react';
+import { Star, Archive, Trash2, Reply, Forward, MoreHorizontal, Paperclip, Download, Maximize, StretchVertical, Loader2, X, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,8 +43,7 @@ const formatDate = (dateString?: string): string => {
   if (!dateString) return '';
   
   const date = new Date(dateString);
-  const now = new Date();
-  
+
   // Format as full date and time
   return date.toLocaleDateString('pt-BR', { 
     year: 'numeric', 
@@ -56,6 +53,169 @@ const formatDate = (dateString?: string): string => {
     minute: '2-digit'
   });
 };
+
+// Mock emails data - same as in EmailList
+const MOCK_EMAILS = [
+  {
+    id: 'mock-1',
+    from: 'João Silva',
+    fromEmail: 'joao@empresa.com',
+    subject: 'Relatório mensal de vendas - Novembro 2024',
+    content: `Prezado(a),
+
+Segue em anexo o relatório mensal de vendas referente ao mês de novembro de 2024.
+
+Os principais destaques são:
+• Crescimento de 15% em relação ao mês anterior
+• Aumento de 8% no número de novos clientes
+• Melhoria na taxa de conversão para 12%
+
+Principais produtos vendidos:
+1. Produto A - R$ 45.000
+2. Produto B - R$ 32.000  
+3. Produto C - R$ 28.500
+
+Gostaria de agendar uma reunião para discutir estes resultados e planejar as estratégias para dezembro.
+
+Atenciosamente,
+João Silva
+Gerente Comercial
+(11) 9999-8888`,
+    date: new Date().toISOString(),
+    isStarred: true,
+    attachments: []
+  },
+  {
+    id: 'mock-2',
+    from: 'Maria Santos',
+    fromEmail: 'maria@consultoria.com',
+    subject: 'Proposta de consultoria em marketing digital',
+    content: `Olá!
+
+Espero que esteja bem!
+
+Gostaria de apresentar nossa proposta de consultoria em marketing digital para sua empresa.
+
+Nossa experiência inclui:
+• Gestão de redes sociais
+• Campanhas no Google Ads
+• SEO e marketing de conteúdo
+• E-mail marketing
+• Análise de métricas e ROI
+
+Temos cases de sucesso com empresas do seu segmento e gostaríamos de agendar uma conversa para entender melhor suas necessidades.
+
+Quando seria um bom momento para conversarmos?
+
+Abraços,
+Maria Santos
+Consultora em Marketing Digital
+maria@consultoria.com
+(11) 8888-7777`,
+    date: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    isStarred: false,
+    attachments: []
+  },
+  {
+    id: 'mock-3',
+    from: 'Carlos Oliveira',
+    fromEmail: 'carlos@fornecedor.com',
+    subject: 'Confirmação do pedido #2024-1156',
+    content: `Prezado Cliente,
+
+Confirmamos o recebimento do seu pedido #2024-1156.
+
+Detalhes do pedido:
+• Data do pedido: ${new Date(Date.now() - 24 * 60 * 60 * 1000).toLocaleDateString('pt-BR')}
+• Valor total: R$ 2.850,00
+• Prazo de entrega: 5 dias úteis
+• Forma de pagamento: Boleto bancário
+
+Itens do pedido:
+1. Item A - Qtd: 10 - R$ 150,00 cada
+2. Item B - Qtd: 5 - R$ 300,00 cada
+
+Você receberá o código de rastreamento assim que o pedido for despachado.
+
+Em caso de dúvidas, entre em contato conosco.
+
+Atenciosamente,
+Carlos Oliveira
+Departamento de Vendas
+carlos@fornecedor.com
+(11) 7777-6666`,
+    date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+    isStarred: false,
+    attachments: []
+  },
+  {
+    id: 'mock-4',
+    from: 'Ana Costa',
+    fromEmail: 'ana@juridico.com',
+    subject: 'Revisão do contrato de prestação de serviços',
+    content: `Prezado(a),
+
+Conforme solicitado, realizei a revisão do contrato de prestação de serviços.
+
+Pontos que precisam de atenção:
+1. Cláusula 5.2 - Prazo de pagamento
+2. Cláusula 8.1 - Rescisão contratual  
+3. Cláusula 12 - Foro de eleição
+
+Recomendações:
+• Incluir cláusula de reajuste anual
+• Especificar melhor as penalidades por atraso
+• Definir critérios objetivos para avaliação de performance
+
+O documento revisado está em anexo com todas as sugestões destacadas.
+
+Podemos agendar uma reunião para discutir estas alterações?
+
+Cordialmente,
+Ana Costa
+Advogada
+OAB/SP 123.456
+ana@juridico.com
+(11) 6666-5555`,
+    date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    isStarred: true,
+    attachments: []
+  },
+  {
+    id: 'mock-5',
+    from: 'Ricardo Ferreira',
+    fromEmail: 'ricardo@ti.com',
+    subject: 'Manutenção programada do sistema - Sábado 09/12',
+    content: `Prezados usuários,
+
+Informamos que será realizada manutenção programada no sistema no sábado, 09/12/2024, das 02h às 06h.
+
+Durante este período:
+• O sistema ficará indisponível
+• Não será possível acessar dados
+• Funcionalidades estarão offline
+
+Melhorias que serão implementadas:
+• Otimização da performance
+• Correção de bugs reportados
+• Atualização de segurança
+• Nova funcionalidade de relatórios
+
+Recomendamos que finalizem suas atividades até sexta-feira às 18h.
+
+Em caso de emergência durante a manutenção, entrar em contato pelo telefone (11) 5555-4444.
+
+Obrigado pela compreensão.
+
+Equipe de TI
+Ricardo Ferreira
+Coordenador de Sistemas
+ricardo@ti.com`,
+    date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    isStarred: false,
+    attachments: []
+  }
+];
 
 // Sample HTML content for emails that don't have a response
 const DEFAULT_EMAIL_CONTENT = `
@@ -73,13 +233,24 @@ export default function EmailDetail({
   const { toast } = useToast();
   const [sentEmail, setSentEmail] = useState<any>(null);
   const [isSentEmail, setIsSentEmail] = useState(false);
+  const [mockEmail, setMockEmail] = useState<any>(null);
+  const [isMockEmail, setIsMockEmail] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const emailIdNumber = parseInt(emailId, 10);
   const [showReplyComposer, setShowReplyComposer] = useState(false);
   const [showForwardComposer, setShowForwardComposer] = useState(false);
   
-  // Check if this is a sent email from localStorage
+  // Check if this is a mock email
   useEffect(() => {
+    const foundMockEmail = MOCK_EMAILS.find(email => email.id === emailId);
+    if (foundMockEmail) {
+      setMockEmail(foundMockEmail);
+      setIsMockEmail(true);
+      setIsLoading(false);
+      return;
+    }
+
+    // Check if this is a sent email from localStorage
     if (typeof window !== 'undefined') {
       const savedEmails = localStorage.getItem('sentEmails');
       if (savedEmails) {
@@ -94,14 +265,14 @@ export default function EmailDetail({
     }
   }, [emailId]);
   
-  // Only fetch from API if not a sent email and we have a valid number
+  // Only fetch from API if not a sent email, not a mock email, and we have a valid number
   const { data: apiEmail, loading: apiLoading, error } = useEmail(
-    !isSentEmail && !isNaN(emailIdNumber) ? emailIdNumber : 0
+    !isSentEmail && !isMockEmail && !isNaN(emailIdNumber) ? emailIdNumber : 0
   );
   
-  // Get the responder email hook
-  const { responder, loading: replyLoading, error: replyError } = useResponderEmail();
-  
+  // Get the responder email hook - only use loading state
+  const { loading: replyLoading } = useResponderEmail();
+
   // Show error toast if API call fails
   useEffect(() => {
     if (error && !isSentEmail) {
@@ -114,7 +285,7 @@ export default function EmailDetail({
   }, [error, toast, isSentEmail]);
   
   // Loading state
-  if ((apiLoading && !isSentEmail) || isLoading) {
+  if ((apiLoading && !isSentEmail && !isMockEmail) || (isLoading && !isMockEmail)) {
     return (
       <div className="flex-1 bg-white flex flex-col h-full items-center justify-center">
         <Loader2 className="h-8 w-8 text-blue-500 animate-spin mb-4" />
@@ -123,8 +294,8 @@ export default function EmailDetail({
     );
   }
   
-  // Email not found state
-  if ((!apiEmail && !isSentEmail) || (isNaN(emailIdNumber) && !isSentEmail)) {
+  // Email not found state - only show if it's not a mock email and not a sent email
+  if (!isMockEmail && !isSentEmail && (!apiEmail || (isNaN(emailIdNumber)))) {
     return (
       <div className="flex-1 bg-white flex items-center justify-center">
         <p className="text-gray-500">Email não encontrado</p>
@@ -140,6 +311,15 @@ export default function EmailDetail({
     subject: sentEmail.subject,
     content: sentEmail.content,
     date: formatDate(sentEmail.date) || formatDate(new Date().toISOString()),
+    attachments: [] as Anexo[],
+    isStarred: false
+  } : isMockEmail ? {
+    id: mockEmail.id,
+    from: mockEmail.from,
+    fromEmail: mockEmail.fromEmail,
+    subject: mockEmail.subject,
+    content: mockEmail.content,
+    date: formatDate(mockEmail.date) || formatDate(new Date().toISOString()),
     attachments: [] as Anexo[],
     isStarred: false
   } : {
@@ -174,20 +354,6 @@ export default function EmailDetail({
             <Button variant="ghost" size="sm">
               <Trash2 className="h-4 w-4" />
             </Button>
-            {onLayoutChange && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onLayoutChange(layoutMode === 'split' ? 'full' : 'split')}
-                title={layoutMode === 'split' ? 'Expandir' : 'Dividir'}
-              >
-                {layoutMode === 'split' ? (
-                  <Maximize className="h-4 w-4" />
-                ) : (
-                  <StretchVertical className="h-4 w-4" />
-                )}
-              </Button>
-            )}
           </div>
           <div>
             <DropdownMenu>
