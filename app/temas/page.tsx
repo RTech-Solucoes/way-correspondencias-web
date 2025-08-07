@@ -1,7 +1,260 @@
-'use client';
+'use client'
 
-import TemasTable from '@/components/temas/TemasTable';
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { 
+  Plus, 
+  Search, 
+  Edit, 
+  Trash2, 
+  Filter, 
+  ArrowUpDown 
+} from 'lucide-react'
+import { Tema } from '@/lib/types'
+import { mockTemas, mockAreas } from '@/lib/mockData'
+import { TemaModal } from '@/components/temas/TemaModal'
 
 export default function TemasPage() {
-  return <TemasTable />;
+  const [temas, setTemas] = useState<Tema[]>(mockTemas)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedTema, setSelectedTema] = useState<Tema | null>(null)
+  const [showTemaModal, setShowTemaModal] = useState(false)
+  const [sortField, setSortField] = useState<keyof Tema | null>(null)
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
+
+  const handleSort = (field: keyof Tema) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDirection('asc')
+    }
+  }
+
+  const sortedTemas = [...temas].sort((a, b) => {
+    if (!sortField) return 0
+    
+    const aValue = a[sortField]
+    const bValue = b[sortField]
+    
+    if (aValue === bValue) return 0
+    
+    const direction = sortDirection === 'asc' ? 1 : -1
+    
+    if (typeof aValue === 'string' && typeof bValue === 'string') {
+      return aValue.localeCompare(bValue) * direction
+    }
+    
+    if (Array.isArray(aValue) && Array.isArray(bValue)) {
+      return (aValue.length - bValue.length) * direction
+    }
+    
+    if (aValue < bValue) return -1 * direction
+    return 1 * direction
+  })
+
+  const filteredTemas = sortedTemas.filter(tema =>
+    tema.nmTema.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    tema.dsTema.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  const getAreasForTema = (idAreas: string[]) => {
+    return mockAreas.filter(area => idAreas.includes(area.idArea))
+  }
+
+  const handleCreateTema = () => {
+    setSelectedTema(null)
+    setShowTemaModal(true)
+  }
+
+  const handleEditTema = (tema: Tema) => {
+    setSelectedTema(tema)
+    setShowTemaModal(true)
+  }
+
+  const handleDeleteTema = (temaId: string) => {
+    if (window.confirm('Tem certeza que deseja excluir este tema?')) {
+      setTemas(prev => prev.filter(tema => tema.idTema !== temaId))
+    }
+  }
+
+  const handleSaveTema = (tema: Tema) => {
+    if (selectedTema) {
+      // Update existing tema
+      setTemas(prev => prev.map(t => t.idTema === tema.idTema ? tema : t))
+    } else {
+      // Add new tema
+      setTemas(prev => [...prev, tema])
+    }
+    setShowTemaModal(false)
+    setSelectedTema(null)
+  }
+
+  return (
+    <div className="flex flex-col min-h-0 flex-1">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-2xl font-bold text-gray-900">
+            Cadastro de Temas
+          </h1>
+          <Button 
+            onClick={handleCreateTema} 
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Tema
+          </Button>
+        </div>
+        
+        <div className="flex items-center space-x-4">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Pesquisar por nome ou descrição..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 h-10 bg-gray-50 border-gray-200 focus:bg-white"
+            />
+          </div>
+          <Button variant="secondary" className="h-10 px-4">
+            <Filter className="h-4 w-4 mr-2" />
+            Filtrar
+          </Button>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="flex-1 overflow-auto">
+        <Table>
+          <TableHeader className="bg-gray-50">
+            <TableRow>
+              <TableHead className="cursor-pointer" onClick={() => handleSort('nmTema')}>
+                <div className="flex items-center">
+                  Nome
+                  <ArrowUpDown className="ml-2 h-4 w-4" />
+                </div>
+              </TableHead>
+              <TableHead className="cursor-pointer" onClick={() => handleSort('dsTema')}>
+                <div className="flex items-center">
+                  Descrição
+                  <ArrowUpDown className="ml-2 h-4 w-4" />
+                </div>
+              </TableHead>
+              <TableHead className="cursor-pointer" onClick={() => handleSort('idAreas')}>
+                <div className="flex items-center">
+                  Áreas Relacionadas
+                  <ArrowUpDown className="ml-2 h-4 w-4" />
+                </div>
+              </TableHead>
+              <TableHead className="cursor-pointer" onClick={() => handleSort('nrDiasPrazo')}>
+                <div className="flex items-center">
+                  Prazo (dias)
+                  <ArrowUpDown className="ml-2 h-4 w-4" />
+                </div>
+              </TableHead>
+              <TableHead className="cursor-pointer" onClick={() => handleSort('tpContagem')}>
+                <div className="flex items-center">
+                  Tipo de Contagem
+                  <ArrowUpDown className="ml-2 h-4 w-4" />
+                </div>
+              </TableHead>
+              <TableHead className="cursor-pointer" onClick={() => handleSort('dtCadastro')}>
+                <div className="flex items-center">
+                  Data de Cadastro
+                  <ArrowUpDown className="ml-2 h-4 w-4" />
+                </div>
+              </TableHead>
+              <TableHead className="w-24 text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredTemas.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                  Nenhum tema encontrado
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredTemas.map((tema) => {
+                const areas = getAreasForTema(tema.idAreas)
+                return (
+                  <TableRow key={tema.idTema} className="hover:bg-gray-50">
+                    <TableCell className="font-medium">{tema.nmTema}</TableCell>
+                    <TableCell className="max-w-xs">
+                      <div className="truncate" title={tema.dsTema}>
+                        {tema.dsTema}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1 max-w-sm">
+                        {areas.length === 0 ? (
+                          <span className="text-gray-400 text-sm">Nenhuma área</span>
+                        ) : (
+                          areas.map((area) => (
+                            <Badge key={area.idArea} variant="outline" className="text-xs">
+                              {area.nmArea}
+                            </Badge>
+                          ))
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>{tema.nrDiasPrazo}</TableCell>
+                    <TableCell>
+                      <Badge variant={tema.tpContagem === 'UTEIS' ? 'default' : 'secondary'}>
+                        {tema.tpContagem === 'UTEIS' ? 'Úteis' : 'Corridos'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{new Date(tema.dtCadastro).toLocaleDateString('pt-BR')}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end space-x-2">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => handleEditTema(tema)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => handleDeleteTema(tema.idTema)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )
+              })
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Tema Modal */}
+      {showTemaModal && (
+        <TemaModal
+          isOpen={showTemaModal}
+          onClose={() => {
+            setShowTemaModal(false)
+            setSelectedTema(null)
+          }}
+          onSave={handleSaveTema}
+          tema={selectedTema}
+        />
+      )}
+    </div>
+  )
 }

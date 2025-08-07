@@ -22,10 +22,10 @@ interface ResponsavelModalProps {
 
 export default function ResponsavelModal({ responsavel, onClose, onSave }: ResponsavelModalProps) {
   const [formData, setFormData] = useState<Responsavel>({
-    id_responsavel: '',
-    ds_nome: '',
-    ds_email: '',
-    nm_telefone: ''
+    idResponsavel: '',
+    dsNome: '',
+    dsEmail: '',
+    nmTelefone: ''
   });
 
   useEffect(() => {
@@ -34,10 +34,10 @@ export default function ResponsavelModal({ responsavel, onClose, onSave }: Respo
     } else {
       // Initialize with default values for new responsavel
       setFormData({
-        id_responsavel: uuidv4(),
-        ds_nome: '',
-        ds_email: '',
-        nm_telefone: ''
+        idResponsavel: uuidv4(),
+        dsNome: '',
+        dsEmail: '',
+        nmTelefone: ''
       });
     }
   }, [responsavel]);
@@ -66,11 +66,11 @@ export default function ResponsavelModal({ responsavel, onClose, onSave }: Respo
 
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="ds_nome">Nome</Label>
+            <Label htmlFor="dsNome">Nome</Label>
             <Input
-              id="ds_nome"
-              name="ds_nome"
-              value={formData.ds_nome}
+              id="dsNome"
+              name="dsNome"
+              value={formData.dsNome}
               onChange={handleChange}
               required
               autoFocus
@@ -78,24 +78,24 @@ export default function ResponsavelModal({ responsavel, onClose, onSave }: Respo
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="ds_email">Email</Label>
+            <Label htmlFor="dsEmail">Email</Label>
             <Input
-              id="ds_email"
-              name="ds_email"
+              id="dsEmail"
+              name="dsEmail"
               type="email"
-              value={formData.ds_email}
+              value={formData.dsEmail}
               onChange={handleChange}
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="nm_telefone">Telefone</Label>
+            <Label htmlFor="nmTelefone">Telefone</Label>
             <Input
-              id="nm_telefone"
-              name="nm_telefone"
+              id="nmTelefone"
+              name="nmTelefone"
               type="tel"
-              value={formData.nm_telefone}
+              value={formData.nmTelefone}
               onChange={handleChange}
               placeholder="(00) 00000-0000"
               required

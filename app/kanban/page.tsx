@@ -6,10 +6,10 @@ import { Kanban } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import KanbanColumn from './KanbanColumn';
-import TaskModal from './TaskModal';
-import ColumnSettingsModal from './ColumnSettingsModal';
-import ImportSpreadsheetModal from './ImportSpreadsheetModal';
+import KanbanColumn from '../../components/kanban/KanbanColumn';
+import TaskModal from '../../components/kanban/TaskModal';
+import ColumnSettingsModal from '../../components/kanban/ColumnSettingsModal';
+import ImportSpreadsheetModal from '../../components/kanban/ImportSpreadsheetModal';
 
 interface Task {
   id: string;
@@ -125,7 +125,7 @@ const INITIAL_COLUMNS: Column[] = [
   },
 ];
 
-export default function KanbanBoard() {
+export default function KanbanPage() {
   const [columns, setColumns] = useState<Column[]>(INITIAL_COLUMNS);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -238,7 +238,7 @@ export default function KanbanBoard() {
   const totalTasks = columns.reduce((sum, column) => sum + column.tasks.length, 0);
 
   return (
-    <div className="h-full flex flex-col bg-gray-50">
+    <div className="flex flex-col min-h-0 flex-1">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">

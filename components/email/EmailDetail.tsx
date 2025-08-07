@@ -265,15 +265,15 @@ export default function EmailDetail({
   const createSolicitacaoFromEmail = () => {
     const today = new Date().toISOString().split('T')[0];
     const newSolicitacao: Solicitacao = {
-      id_solicitacao: uuidv4(),
-      cd_solicitante: [email.fromEmail],
-      ds_assunto: `Solicitação baseada em email: ${email.subject}`,
-      cd_identificacao: `EMAIL-${email.id}`,
-      ds_descricao: `Este email requer atenção:\n\nDe: ${email.from} <${email.fromEmail}>\nData: ${email.date}\nAssunto: ${email.subject}\n\nConteúdo do email:\n${email.content.replace(/<[^>]*>/g, '')}`,
-      ds_anexos: email.attachments.map(attachment => attachment?.ds_nome_anexo || 'Anexo'),
+      idSolicitacao: uuidv4(),
+      cdSolicitante: [email.fromEmail],
+      dsAssunto: `Solicitação baseada em email: ${email.subject}`,
+      cdIdentificacao: `EMAIL-${email.id}`,
+      dsDescricao: `Este email requer atenção:\n\nDe: ${email.from} <${email.fromEmail}>\nData: ${email.date}\nAssunto: ${email.subject}\n\nConteúdo do email:\n${email.content.replace(/<[^>]*>/g, '')}`,
+      dsAnexos: email.attachments.map(attachment => attachment?.ds_nome_anexo || 'Anexo'),
       status: 'pendente',
-      dt_criacao: today,
-      id_responsavel: undefined
+      dtCriacao: today,
+      idResponsavel: undefined
     };
     return newSolicitacao;
   };

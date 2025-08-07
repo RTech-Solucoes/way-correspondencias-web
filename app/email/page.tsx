@@ -29,183 +29,15 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from '@/hooks/use-toast';
-import EmailList from './EmailList';
-import EmailComposer from './EmailComposer';
-import EmailDetail from './EmailDetail';
-import FolderManager from './FolderManager';
+import EmailList from '../../components/email/EmailList';
+import EmailComposer from '../../components/email/EmailComposer';
+import EmailDetail from '../../components/email/EmailDetail';
+import FolderManager from '../../components/email/FolderManager';
 import {cn} from "@/lib/utils";
 
 const EMAIL_FOLDERS = [
   { id: 'inbox', icon: Inbox, label: 'Caixa de Entrada', count: 0 },
   { id: 'sent', icon: Send, label: 'Enviados', count: 0 },
-];
-
-// Mock emails data
-const MOCK_EMAILS = [
-  {
-    id: '1',
-    from: 'João Silva <joao@empresa.com>',
-    subject: 'Relatório mensal de vendas - Novembro 2024',
-    preview: 'Segue em anexo o relatório mensal de vendas referente ao mês de novembro. Os resultados mostram um crescimento de 15% em relação ao mês anterior...',
-    date: new Date().toISOString(),
-    isRead: false,
-    hasAttachment: true,
-    labels: ['importante', 'trabalho'],
-    content: `Prezado(a),
-
-Segue em anexo o relatório mensal de vendas referente ao mês de novembro de 2024.
-
-Os principais destaques são:
-• Crescimento de 15% em relação ao mês anterior
-• Aumento de 8% no número de novos clientes
-• Melhoria na taxa de conversão para 12%
-
-Principais produtos vendidos:
-1. Produto A - R$ 45.000
-2. Produto B - R$ 32.000  
-3. Produto C - R$ 28.500
-
-Gostaria de agendar uma reunião para discutir estes resultados e planejar as estratégias para dezembro.
-
-Atenciosamente,
-João Silva
-Gerente Comercial
-(11) 9999-8888`
-  },
-  {
-    id: '2',
-    from: 'Maria Santos <maria@consultoria.com>',
-    subject: 'Proposta de consultoria em marketing digital',
-    preview: 'Espero que esteja bem! Gostaria de apresentar nossa proposta de consultoria em marketing digital para sua empresa...',
-    date: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-    isRead: false,
-    hasAttachment: true,
-    labels: ['proposta'],
-    content: `Olá!
-
-Espero que esteja bem!
-
-Gostaria de apresentar nossa proposta de consultoria em marketing digital para sua empresa.
-
-Nossa experiência inclui:
-• Gestão de redes sociais
-• Campanhas no Google Ads
-• SEO e marketing de conteúdo
-• E-mail marketing
-• Análise de métricas e ROI
-
-Temos cases de sucesso com empresas do seu segmento e gostaríamos de agendar uma conversa para entender melhor suas necessidades.
-
-Quando seria um bom momento para conversarmos?
-
-Abraços,
-Maria Santos
-Consultora em Marketing Digital
-maria@consultoria.com
-(11) 8888-7777`
-  },
-  {
-    id: '3',
-    from: 'Carlos Oliveira <carlos@fornecedor.com>',
-    subject: 'Confirmação do pedido #2024-1156',
-    preview: 'Confirmamos o recebimento do seu pedido #2024-1156. Prazo de entrega estimado: 5 dias úteis...',
-    date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
-    isRead: true,
-    hasAttachment: false,
-    labels: ['pedido'],
-    content: `Prezado Cliente,
-
-Confirmamos o recebimento do seu pedido #2024-1156.
-
-Detalhes do pedido:
-• Data do pedido: ${new Date(Date.now() - 24 * 60 * 60 * 1000).toLocaleDateString('pt-BR')}
-• Valor total: R$ 2.850,00
-• Prazo de entrega: 5 dias úteis
-• Forma de pagamento: Boleto bancário
-
-Itens do pedido:
-1. Item A - Qtd: 10 - R$ 150,00 cada
-2. Item B - Qtd: 5 - R$ 300,00 cada
-
-Você receberá o código de rastreamento assim que o pedido for despachado.
-
-Em caso de dúvidas, entre em contato conosco.
-
-Atenciosamente,
-Carlos Oliveira
-Departamento de Vendas
-carlos@fornecedor.com
-(11) 7777-6666`
-  },
-  {
-    id: '4',
-    from: 'Ana Costa <ana@juridico.com>',
-    subject: 'Revisão do contrato de prestação de serviços',
-    preview: 'Conforme solicitado, segue a revisão do contrato de prestação de serviços. Identifiquei alguns pontos que precisam de atenção...',
-    date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
-    isRead: true,
-    hasAttachment: true,
-    labels: ['jurídico', 'urgente'],
-    content: `Prezado(a),
-
-Conforme solicitado, realizei a revisão do contrato de prestação de serviços.
-
-Pontos que precisam de atenção:
-1. Cláusula 5.2 - Prazo de pagamento
-2. Cláusula 8.1 - Rescisão contratual  
-3. Cláusula 12 - Foro de eleição
-
-Recomendações:
-• Incluir cláusula de reajuste anual
-• Especificar melhor as penalidades por atraso
-• Definir critérios objetivos para avaliação de performance
-
-O documento revisado está em anexo com todas as sugestões destacadas.
-
-Podemos agendar uma reunião para discutir estas alterações?
-
-Cordialmente,
-Ana Costa
-Advogada
-OAB/SP 123.456
-ana@juridico.com
-(11) 6666-5555`
-  },
-  {
-    id: '5',
-    from: 'Ricardo Ferreira <ricardo@ti.com>',
-    subject: 'Manutenção programada do sistema - Sábado 09/12',
-    preview: 'Informamos que será realizada manutenção programada no sistema no sábado, 09/12, das 02h às 06h...',
-    date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
-    isRead: true,
-    hasAttachment: false,
-    labels: ['sistema', 'manutenção'],
-    content: `Prezados usuários,
-
-Informamos que será realizada manutenção programada no sistema no sábado, 09/12/2024, das 02h às 06h.
-
-Durante este período:
-• O sistema ficará indisponível
-• Não será possível acessar dados
-• Funcionalidades estarão offline
-
-Melhorias que serão implementadas:
-• Otimização da performance
-• Correção de bugs reportados
-• Atualização de segurança
-• Nova funcionalidade de relatórios
-
-Recomendamos que finalizem suas atividades até sexta-feira às 18h.
-
-Em caso de emergência durante a manutenção, entrar em contato pelo telefone (11) 5555-4444.
-
-Obrigado pela compreensão.
-
-Equipe de TI
-Ricardo Ferreira
-Coordenador de Sistemas
-ricardo@ti.com`
-  }
 ];
 
 interface SentEmail {
@@ -226,7 +58,7 @@ interface EmailConfig {
   defaultFooter: string;
 }
 
-export default function EmailClient() {
+export default function EmailPage() {
   const { toast } = useToast();
   const [activeFolder, setActiveFolder] = useState('inbox');
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
@@ -304,7 +136,7 @@ export default function EmailClient() {
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex flex-col min-h-0 flex-1">
       <div className="bg-white border-b border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold text-gray-900 flex items-center">

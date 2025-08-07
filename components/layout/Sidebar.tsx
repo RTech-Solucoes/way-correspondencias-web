@@ -3,7 +3,7 @@
 import {cn} from '@/lib/utils';
 import {Button} from '@/components/ui/button';
 import {Badge} from '@/components/ui/badge';
-import {Bell, LucideIcon, User} from 'lucide-react';
+import {Bell, Building2, ClipboardList, LayoutDashboard, FileText, LucideIcon, Mail, User, Users} from 'lucide-react';
 import {Avatar, AvatarFallback, AvatarImage} from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {useState} from "react";
-import {useRouter} from 'next/navigation';
+import {usePathname, useRouter} from 'next/navigation';
 import Image from 'next/image';
 
 interface NavigationItem {
@@ -26,12 +26,6 @@ interface NavigationItem {
 
 interface SidebarProps {
   navigationItems: NavigationItem[];
-  activeModule: string;
-  onModuleChange(module: any): void;
-  user?: {
-    nm_responsavel: string;
-    email: string;
-  };
 }
 
 const MOCK_NOTIFICATIONS = [
@@ -58,14 +52,20 @@ const MOCK_NOTIFICATIONS = [
   },
 ];
 
-export default function Sidebar({
-  navigationItems,
-  activeModule,
-  onModuleChange,
-  user
-}: SidebarProps) {
+const NAVIGATION_ITEMS = [
+  { id: "/", label: "Dashboard", icon: LayoutDashboard },
+  { id: "/email", label: "Email", icon: Mail },
+  { id: "/areas", label: "Áreas", icon: Building2 },
+  { id: "/temas", label: "Temas", icon: FileText },
+  { id: "/responsaveis", label: "Responsáveis", icon: Users },
+  { id: "/solicitacoes", label: "Solicitações", icon: ClipboardList },
+];
+
+export default function Sidebar() {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const navigationItems = NAVIGATION_ITEMS
   const unreadCount = MOCK_NOTIFICATIONS.filter(n => n.unread).length;
+  const pathname = usePathname();
   const router = useRouter();
 
   const handleLogout = () => {
@@ -74,8 +74,12 @@ export default function Sidebar({
     router.push('/login');
   };
 
+  const handleNavigation = (id: string) => {
+    router.push(id);
+  }
+
   return (
-    <div className="flex-shrink-0 bg-white border-r border-gray-200 overflow-hidden w-[20rem]">
+    <div className="flex-shrink-0 bg-white border-r border-gray-200 overflow-hidden w-72">
       <div className="flex flex-col h-full">
         <div className="flex justify-start gap-3 p-6 border-b border-gray-200">
           <Image
@@ -94,7 +98,7 @@ export default function Sidebar({
         <nav className="flex flex-col grow gap-3 px-2 py-3">
           {navigationItems.map((item) => {
             const Icon = item.icon;
-            const isActive = activeModule === item.id;
+            const isActive = pathname === item.id;
 
             return (
               <Button
@@ -104,21 +108,10 @@ export default function Sidebar({
                   "flex justify-start w-full text-left h-11 text-sm px-4",
                   isActive && "bg-blue-600 text-white"
                 )}
-                onClick={() => onModuleChange(item.id)}
+                onClick={() => handleNavigation(item.id)}
               >
                 <Icon className="h-4 w-4 flex-shrink-0 mr-3" />
                 <span className="flex-1">{item.label}</span>
-                {item.count > 0 && (
-                  <Badge
-                    variant={isActive ? "secondary" : "default"}
-                    className={cn(
-                      "ml-auto",
-                      isActive ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-800"
-                    )}
-                  >
-                    {item.count}
-                  </Badge>
-                )}
               </Button>
             );
           })}
@@ -192,8 +185,18 @@ export default function Sidebar({
                       <AvatarFallback className="w-12 h-12 group-hover:bg-white">JD</AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                      <h1 className="w-fit text-md font-bold text-gray-900">{user?.nm_responsavel || "João Silva"}</h1>
-                      <p className="w-fit text-xs text-gray-500">{user?.email || "joao.silva@waybrasil.com"}</p>
+                      <h1 className="w-fit text-md font-bold text-gray-900 overflow-ellipsis">
+                        {
+                          // user?.nmResponsavel ||
+                          "João Silva"
+                        }
+                      </h1>
+                      <p className="w-fit text-xs text-gray-500 overflow-ellipsis">
+                        {
+                          // user?.email ||
+                          "joao.silva@waybrasil.com"
+                        }
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -202,9 +205,17 @@ export default function Sidebar({
             <DropdownMenuContent className="w-72 mx-4" align="center" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{user?.nm_responsavel || "João Silva"}</p>
+                  <p className="text-sm font-medium leading-none">
+                    {
+                      // user?.nmResponsavel ||
+                      "João Silva"
+                    }
+                  </p>
                   <p className="text-xs leading-none text-muted-foreground">
-                    {user?.email || "john.doe@waybrasil.com"}
+                    {
+                      // user?.email ||
+                      "john.doe@waybrasil.com"
+                    }
                   </p>
                 </div>
               </DropdownMenuLabel>

@@ -70,7 +70,7 @@ export default function SolicitacoesKanban() {
 
       // Find and remove task from source column
       for (let column of newColumns) {
-        const taskIndex = column.tasks.findIndex(t => t.id_solicitacao === taskId);
+        const taskIndex = column.tasks.findIndex(t => t.idSolicitacao === taskId);
         if (taskIndex > -1) {
           task = column.tasks[taskIndex];
           column.tasks.splice(taskIndex, 1);
@@ -104,7 +104,7 @@ export default function SolicitacoesKanban() {
           return {
             ...column,
             tasks: column.tasks.map(t => 
-              t.id_solicitacao === task.id_solicitacao ? task : t
+              t.idSolicitacao === task.idSolicitacao ? task : t
             )
           };
         });
@@ -131,18 +131,18 @@ export default function SolicitacoesKanban() {
   const filteredColumns = columns.map(column => ({
     ...column,
     tasks: column.tasks.filter(task =>
-      task.ds_assunto.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      task.ds_descricao.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      task.cd_identificacao.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (task.id_responsavel && 
-        getResponsavelNameById(task.id_responsavel).toLowerCase().includes(searchQuery.toLowerCase()))
+      task.dsAssunto.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      task.dsDescricao.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      task.cdIdentificacao.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (task.idResponsavel && 
+        getResponsavelNameById(task.idResponsavel).toLowerCase().includes(searchQuery.toLowerCase()))
     ),
   }));
 
   const totalTasks = columns.reduce((sum, column) => sum + column.tasks.length, 0);
 
   return (
-    <div className="h-full flex flex-col bg-gray-50">
+    <div className="flex flex-col min-h-0 flex-1">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
@@ -224,29 +224,29 @@ export default function SolicitacoesKanban() {
                 ) : (
                   column.tasks.map((task) => (
                     <div
-                      key={task.id_solicitacao}
+                      key={task.idSolicitacao}
                       className="bg-white p-3 rounded-md shadow-sm mb-2 cursor-pointer hover:shadow-md"
                       draggable
-                      onDragStart={(e) => handleDragStart(e, task.id_solicitacao)}
+                      onDragStart={(e) => handleDragStart(e, task.idSolicitacao)}
                       onClick={() => setSelectedTask(task)}
                     >
-                      <div className="text-sm font-medium mb-1">{task.ds_assunto}</div>
-                      <div className="text-xs text-gray-500 mb-2">{task.cd_identificacao}</div>
+                      <div className="text-sm font-medium mb-1">{task.dsAssunto}</div>
+                      <div className="text-xs text-gray-500 mb-2">{task.cdIdentificacao}</div>
                       <div className="text-xs text-gray-600 line-clamp-2 mb-2">
-                        {task.ds_descricao}
+                        {task.dsDescricao}
                       </div>
-                      {task.id_responsavel && (
+                      {task.idResponsavel && (
                         <div className="flex items-center mt-2">
                           <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-xs mr-2">
-                            {getResponsavelNameById(task.id_responsavel).charAt(0)}
+                            {getResponsavelNameById(task.idResponsavel).charAt(0)}
                           </div>
-                          <span className="text-xs">{getResponsavelNameById(task.id_responsavel)}</span>
+                          <span className="text-xs">{getResponsavelNameById(task.idResponsavel)}</span>
                         </div>
                       )}
-                      {task.ds_anexos.length > 0 && (
+                      {task.dsAnexos.length > 0 && (
                         <div className="mt-2">
                           <Badge variant="outline" className="text-xs">
-                            {task.ds_anexos.length} anexo(s)
+                            {task.dsAnexos.length} anexo(s)
                           </Badge>
                         </div>
                       )}

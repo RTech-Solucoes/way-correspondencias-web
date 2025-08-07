@@ -42,15 +42,15 @@ interface SolicitacaoModalProps {
 
 export default function SolicitacaoModal({ solicitacao, onClose, onSave }: SolicitacaoModalProps) {
   const [formData, setFormData] = useState<Solicitacao>({
-    id_solicitacao: '',
-    cd_solicitante: [],
-    ds_assunto: '',
-    cd_identificacao: '',
-    ds_descricao: '',
-    ds_anexos: [],
+    idSolicitacao: '',
+    cdSolicitante: [],
+    dsAssunto: '',
+    cdIdentificacao: '',
+    dsDescricao: '',
+    dsAnexos: [],
     status: 'pendente',
-    dt_criacao: '',
-    id_responsavel: undefined
+    dtCriacao: '',
+    idResponsavel: undefined
   });
 
   const [selectedSolicitante, setSelectedSolicitante] = useState('');
@@ -63,15 +63,15 @@ export default function SolicitacaoModal({ solicitacao, onClose, onSave }: Solic
       // Initialize with default values for new solicitacao
       const today = new Date().toISOString().split('T')[0];
       setFormData({
-        id_solicitacao: uuidv4(),
-        cd_solicitante: [],
-        ds_assunto: '',
-        cd_identificacao: '',
-        ds_descricao: '',
-        ds_anexos: [],
+        idSolicitacao: uuidv4(),
+        cdSolicitante: [],
+        dsAssunto: '',
+        cdIdentificacao: '',
+        dsDescricao: '',
+        dsAnexos: [],
         status: 'pendente',
-        dt_criacao: today,
-        id_responsavel: undefined
+        dtCriacao: today,
+        idResponsavel: undefined
       });
     }
   }, [solicitacao]);
@@ -85,10 +85,10 @@ export default function SolicitacaoModal({ solicitacao, onClose, onSave }: Solic
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    if (name === 'id_responsavel' && value === 'none') {
+    if (name === 'idResponsavel' && value === 'none') {
       setFormData(prev => ({
         ...prev,
-        id_responsavel: undefined
+        idResponsavel: undefined
       }));
     } else {
       setFormData(prev => ({
@@ -102,7 +102,7 @@ export default function SolicitacaoModal({ solicitacao, onClose, onSave }: Solic
     if (selectedSolicitante) {
       setFormData(prev => ({
         ...prev,
-        cd_solicitante: [...prev.cd_solicitante, selectedSolicitante]
+        cdSolicitante: [...prev.cdSolicitante, selectedSolicitante]
       }));
       setSelectedSolicitante('');
     }
@@ -111,7 +111,7 @@ export default function SolicitacaoModal({ solicitacao, onClose, onSave }: Solic
   const handleRemoveSolicitante = (index: number) => {
     setFormData(prev => ({
       ...prev,
-      cd_solicitante: prev.cd_solicitante.filter((_, i) => i !== index)
+      cdSolicitante: prev.cdSolicitante.filter((_, i) => i !== index)
     }));
   };
 
@@ -119,7 +119,7 @@ export default function SolicitacaoModal({ solicitacao, onClose, onSave }: Solic
     if (selectedFile) {
       setFormData(prev => ({
         ...prev,
-        ds_anexos: [...prev.ds_anexos, selectedFile.name]
+        dsAnexos: [...prev.dsAnexos, selectedFile.name]
       }));
       setSelectedFile(null);
     }
@@ -128,7 +128,7 @@ export default function SolicitacaoModal({ solicitacao, onClose, onSave }: Solic
   const handleRemoveAnexo = (index: number) => {
     setFormData(prev => ({
       ...prev,
-      ds_anexos: prev.ds_anexos.filter((_, i) => i !== index)
+      dsAnexos: prev.dsAnexos.filter((_, i) => i !== index)
     }));
   };
 
@@ -149,11 +149,11 @@ export default function SolicitacaoModal({ solicitacao, onClose, onSave }: Solic
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="cd_identificacao">Identificação</Label>
+              <Label htmlFor="cdIdentificacao">Identificação</Label>
               <Input
-                id="cd_identificacao"
-                name="cd_identificacao"
-                value={formData.cd_identificacao}
+                id="cdIdentificacao"
+                name="cdIdentificacao"
+                value={formData.cdIdentificacao}
                 onChange={handleChange}
                 required
               />
@@ -179,22 +179,22 @@ export default function SolicitacaoModal({ solicitacao, onClose, onSave }: Solic
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="ds_assunto">Assunto</Label>
+            <Label htmlFor="dsAssunto">Assunto</Label>
             <Input
-              id="ds_assunto"
-              name="ds_assunto"
-              value={formData.ds_assunto}
+              id="dsAssunto"
+              name="dsAssunto"
+              value={formData.dsAssunto}
               onChange={handleChange}
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="ds_descricao">Descrição</Label>
+            <Label htmlFor="dsDescricao">Descrição</Label>
             <Textarea
-              id="ds_descricao"
-              name="ds_descricao"
-              value={formData.ds_descricao}
+              id="dsDescricao"
+              name="dsDescricao"
+              value={formData.dsDescricao}
               onChange={handleChange}
               rows={3}
               required
@@ -202,10 +202,10 @@ export default function SolicitacaoModal({ solicitacao, onClose, onSave }: Solic
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="id_responsavel">Responsável</Label>
+            <Label htmlFor="idResponsavel">Responsável</Label>
             <Select
-              value={formData.id_responsavel || 'none'}
-              onValueChange={(value) => handleSelectChange('id_responsavel', value)}
+              value={formData.idResponsavel || 'none'}
+              onValueChange={(value) => handleSelectChange('idResponsavel', value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione um responsável" />
@@ -213,8 +213,8 @@ export default function SolicitacaoModal({ solicitacao, onClose, onSave }: Solic
               <SelectContent>
                 <SelectItem value="none">Não atribuído</SelectItem>
                 {mockResponsaveis.map((responsavel) => (
-                  <SelectItem key={responsavel.id_responsavel} value={responsavel.id_responsavel}>
-                    {responsavel.ds_nome}
+                  <SelectItem key={responsavel.idResponsavel} value={responsavel.idResponsavel}>
+                    {responsavel.dsNome}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -249,7 +249,7 @@ export default function SolicitacaoModal({ solicitacao, onClose, onSave }: Solic
               </Button>
             </div>
             <div className="flex flex-wrap gap-2 mt-2">
-              {formData.cd_solicitante.map((solicitante, index) => (
+              {formData.cdSolicitante.map((solicitante, index) => (
                 <Badge key={index} variant="secondary" className="flex items-center gap-1">
                   {solicitante}
                   <button
@@ -282,7 +282,7 @@ export default function SolicitacaoModal({ solicitacao, onClose, onSave }: Solic
               </Button>
             </div>
             <div className="flex flex-wrap gap-2 mt-2">
-              {formData.ds_anexos.map((anexo, index) => (
+              {formData.dsAnexos.map((anexo, index) => (
                 <Badge key={index} variant="secondary" className="flex items-center gap-1">
                   {anexo}
                   <button

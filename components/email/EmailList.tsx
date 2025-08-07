@@ -1,7 +1,7 @@
 'use client';
 
-import React, {useState, useCallback, useMemo, useEffect} from 'react';
-import {Archive, Paperclip, RotateCw, Trash2, Loader2, Mail} from 'lucide-react';
+import React, {useState, useCallback, useEffect, useMemo} from 'react';
+import {Paperclip, RotateCw, Trash2, Loader2, Mail} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {Checkbox} from '@/components/ui/checkbox';
 import {cn} from '@/lib/utils';
@@ -21,7 +21,6 @@ interface Email {
   labels: string[];
   content?: string;
 }
-
 
 const MOCK_EMAILS = [
   {
@@ -190,20 +189,25 @@ ricardo@ti.com`
   }
 ];
 
-
 const formatDate = (dateString?: string): string => {
   if (!dateString) return '';
 
-  const date = new Date(dateString);
+  try {
+    const date = new Date(dateString);
 
-  // Format as dd/MM/yyyy HH:mm
-  const day = date.getDate().toString().padStart(2, '0');
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const year = date.getFullYear();
-  const hours = date.getHours().toString().padStart(2, '0');
-  const minutes = date.getMinutes().toString().padStart(2, '0');
+    if (isNaN(date.getTime())) return '';
 
-  return `${day}/${month}/${year} ${hours}:${minutes}`;
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
+  } catch (error) {
+    console.warn('Invalid date:', dateString);
+    return '';
+  }
 };
 
 interface SentEmail {
@@ -226,6 +230,66 @@ interface EmailListProps {
   onUnreadCountChange?: (count: number) => void;
 }
 
+const EmailItem = React.memo<{
+  email: Email;
+  isSelected: boolean;
+  isChecked: boolean;
+  onSelect: () => void;
+  onToggleCheck: () => void;
+}>(({ email, isSelected, isChecked, onSelect, onToggleCheck }) => {
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    onSelect();
+  }, [onSelect]);
+
+  const handleCheckboxClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    onToggleCheck();
+  }, [onToggleCheck]);
+
+  return (
+    <div
+      className={cn(
+        "p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors",
+        isSelected && "bg-blue-100",
+        !email.isRead && "bg-blue-50/30"
+      )}
+      onClick={handleClick}
+    >
+      <div className="flex items-start space-x-3">
+        <Checkbox
+          checked={isChecked}
+          onCheckedChange={onToggleCheck}
+          onClick={handleCheckboxClick}
+        />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm truncate font-semibold text-gray-700">
+                {email.from}
+              </span>
+              {email.hasAttachment && (
+                <Paperclip className="h-3 w-3 text-gray-400"/>
+              )}
+            </div>
+            <span className="text-xs text-gray-500">{email.date}</span>
+          </div>
+
+          <h3 className="text-sm mb-1 truncate font-bold text-gray-900">
+            {email.subject}
+          </h3>
+
+          <p className="text-xs text-gray-500 line-clamp-2">
+            {email.preview}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+EmailItem.displayName = 'EmailItem';
+
 function EmailList({
   folder,
   searchQuery,
@@ -238,18 +302,70 @@ function EmailList({
   const [syncLoading, setSyncLoading] = useState(false);
   const {toast} = useToast();
 
+  const {data, error, loading, refetch} = useEmails();
 
-  const {data, error, loading, refetch} = useEmails({});
+  const apiEmails = useMemo((): Email[] => {
+    if (!data?.items) return [];
 
+    return data.items.map((apiEmail: ApiEmail) => ({
+      id: apiEmail.id_email.toString(),
+      from: apiEmail.remetente || 'Remetente desconhecido',
+      subject: apiEmail.assunto || 'Sem assunto',
+      preview: apiEmail.conteudo || '',
+      date: formatDate(apiEmail.prazo_resposta),
+      isRead: apiEmail.tp_status !== 'NOVO',
+      hasAttachment: false,
+      labels: [],
+    }));
+  }, [data?.items]);
 
-  const syncAndFetchEmails = async () => {
+  const formattedMockEmails = useMemo(() => {
+    return MOCK_EMAILS.map(email => ({
+      ...email,
+      date: formatDate(email.date)
+    }));
+  }, []);
+
+  const emails = useMemo((): Email[] => {
+    if (folder === 'sent') {
+      return sentEmails.map(email => ({
+        id: email.id,
+        from: 'Você',
+        subject: email.subject || 'Sem assunto',
+        preview: email.content?.replace(/<[^>]*>/g, '') || '',
+        date: formatDate(email.date),
+        isRead: true,
+        hasAttachment: false,
+        labels: [],
+      }));
+    }
+
+    if (folder === 'inbox') {
+      return [...formattedMockEmails, ...apiEmails];
+    }
+
+    return apiEmails;
+  }, [folder, sentEmails, formattedMockEmails, apiEmails]);
+
+  const filteredEmails = useMemo(() => {
+    if (!searchQuery?.trim()) {
+      return emails;
+    }
+
+    const query = searchQuery.toLowerCase().trim();
+    return emails.filter(email =>
+      email?.subject?.toLowerCase().includes(query) ||
+      email?.from?.toLowerCase().includes(query) ||
+      email?.preview?.toLowerCase().includes(query)
+    );
+  }, [emails, searchQuery]);
+
+  const syncAndFetchEmails = useCallback(async () => {
+    if (syncLoading) return;
+
     try {
       setSyncLoading(true);
-
-
       await apiClient.sincronizarEmails();
-
-
       await refetch();
 
       toast({
@@ -266,126 +382,61 @@ function EmailList({
     } finally {
       setSyncLoading(false);
     }
-  };
+  }, [refetch, toast, syncLoading]);
 
+  const toggleEmailSelection = useCallback((emailId: string) => {
+    setSelectedEmails(prev => {
+      const newSelection = prev.includes(emailId)
+        ? prev.filter(id => id !== emailId)
+        : [...prev, emailId];
+      return newSelection;
+    });
+  }, []);
+
+  const selectAllEmails = useCallback(() => {
+    const allIds = filteredEmails.map(email => email.id);
+    setSelectedEmails(prev =>
+      prev.length === allIds.length ? [] : allIds
+    );
+  }, [filteredEmails]);
+
+  const handleEmailSelect = useCallback((emailId: string) => {
+    if (selectedEmail === emailId) {
+      onEmailSelect('');
+    } else {
+      onEmailSelect(emailId);
+    }
+  }, [selectedEmail, onEmailSelect]);
 
   useEffect(() => {
-    if (error) {
+    if (!onUnreadCountChange || folder !== 'inbox') return;
+
+    const updateCount = () => {
+      const allEmails = [...MOCK_EMAILS, ...apiEmails];
+      const unreadCount = allEmails.filter(email => !email.isRead).length;
+      const safeCount = Math.max(0, unreadCount);
+      onUnreadCountChange(safeCount);
+    };
+
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(updateCount);
+    } else {
+      setTimeout(updateCount, 0);
+    }
+  }, [apiEmails, onUnreadCountChange, folder]);
+
+  useEffect(() => {
+    if (error && !loading) {
       toast({
         title: "Erro ao carregar emails",
         description: "Não foi possível carregar os emails. Tente novamente mais tarde.",
         variant: "destructive",
       });
     }
-  }, [error, toast]);
-
-  useEffect(() => {
-    syncAndFetchEmails().then(r => {
-    })
-  }, []);
-
-
-  const apiEmails: Email[] = useMemo(() => {
-    return data?.items?.map((apiEmail: ApiEmail) => ({
-      id: apiEmail.id_email.toString(),
-      from: apiEmail.remetente,
-      subject: apiEmail.assunto,
-      preview: apiEmail.conteudo,
-      date: formatDate(apiEmail.prazo_resposta),
-      isRead: apiEmail.tp_status !== 'NOVO',
-      hasAttachment: false,
-      labels: [],
-    })) || [];
-  }, [data]);
-
-
-  const emails: Email[] = useMemo(() => {
-    // Format mock emails dates
-    const formattedMockEmails = MOCK_EMAILS.map(email => ({
-      ...email,
-      date: formatDate(email.date)
-    }));
-
-    if (folder === 'inbox') {
-      return [...formattedMockEmails, ...apiEmails];
-    }
-    return apiEmails;
-  }, [apiEmails, folder]);
-
-
-  useEffect(() => {
-    if (onUnreadCountChange && folder === 'inbox') {
-      const allEmails = [...MOCK_EMAILS, ...apiEmails];
-      const unreadCount = allEmails.filter(email => !email.isRead).length;
-      const safeCount = Math.max(0, unreadCount);
-      onUnreadCountChange(safeCount);
-    }
-  }, [apiEmails, onUnreadCountChange, folder]);
-
-
-  const sentEmailsFormatted: Email[] = useMemo(() => {
-    return sentEmails.map(email => ({
-      id: email.id,
-      from: 'Você',
-      subject: email.subject,
-      preview: email.content.replace(/<[^>]*>/g, ''),
-      date: formatDate(email.date),
-      isRead: true,
-      hasAttachment: false,
-      labels: [],
-    }));
-  }, [sentEmails]);
-
-
-  const filteredEmails = useMemo(() => {
-    // If showing sent emails folder
-    if (folder === 'sent') {
-      return sentEmailsFormatted.filter(email => {
-        if (searchQuery) {
-          return email?.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            email?.preview?.toLowerCase().includes(searchQuery.toLowerCase());
-        }
-        return true;
-      });
-    }
-
-    // Filter all other emails
-    return emails.filter(email => {
-      if (searchQuery) {
-        return email?.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          email?.from?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          email?.preview?.toLowerCase().includes(searchQuery.toLowerCase());
-      }
-
-      switch (folder) {
-        case 'inbox':
-          return true;
-        case 'drafts':
-          return false;
-        default:
-          return true;
-      }
-    });
-  }, [emails, sentEmailsFormatted, searchQuery, folder]);
-
-  const toggleEmailSelection = useCallback((emailId: string) => {
-    setSelectedEmails(prev =>
-      prev.includes(emailId)
-        ? prev.filter(id => id !== emailId)
-        : [...prev, emailId]
-    );
-  }, []);
-
-  const selectAllEmails = useCallback(() => {
-    setSelectedEmails(
-      selectedEmails.length === filteredEmails.length
-        ? []
-        : filteredEmails.map(email => email.id)
-    );
-  }, [selectedEmails.length, filteredEmails]);
+  }, [error, loading, toast]);
 
   return (
-    <div className="flex-1 bg-white flex flex-col">
+    <div className="flex-1 flex flex-col">
       {/* Email Actions */}
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between min-h-[2rem]">
@@ -415,7 +466,7 @@ function EmailList({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => syncAndFetchEmails()}
+                onClick={syncAndFetchEmails}
                 disabled={loading || syncLoading}
               >
                 {loading || syncLoading ? (
@@ -448,58 +499,14 @@ function EmailList({
           </div>
         ) : (
           filteredEmails.map((email) => (
-            <div
+            <EmailItem
               key={email.id}
-              className={cn(
-                "p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors",
-                selectedEmail === email.id && "bg-blue-100",
-                !email.isRead && "bg-blue-50/30"
-              )}
-              onClick={() => {
-                if (selectedEmail === email.id) {
-                  onEmailSelect('');
-                } else {
-                  onEmailSelect(email.id);
-                }
-              }}
-            >
-              <div className="flex items-start space-x-3">
-                <Checkbox
-                  checked={selectedEmails.includes(email.id)}
-                  onCheckedChange={() => toggleEmailSelection(email.id)}
-                  onClick={(e) => e.stopPropagation()}
-                />
-
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center space-x-2">
-                      <span className={cn(
-                        "text-sm truncate",
-                        "font-semibold text-gray-700"
-                      )}>
-                        {email.from}
-                      </span>
-                      {email.hasAttachment && (
-                        <Paperclip className="h-3 w-3 text-gray-400"/>
-                      )}
-                    </div>
-                    <span className="text-xs text-gray-500">{email.date}</span>
-                  </div>
-
-                  <h3 className={cn(
-                    "text-sm mb-1 truncate",
-                    "font-bold text-gray-900"
-                  )}>
-                    {email.subject}
-                  </h3>
-
-                  <p className="text-xs text-gray-500 line-clamp-2">
-                    {email.preview}
-                  </p>
-                </div>
-              </div>
-            </div>
+              email={email}
+              isSelected={selectedEmail === email.id}
+              isChecked={selectedEmails.includes(email.id)}
+              onSelect={() => handleEmailSelect(email.id)}
+              onToggleCheck={() => toggleEmailSelection(email.id)}
+            />
           ))
         )}
       </div>
@@ -507,5 +514,4 @@ function EmailList({
   );
 }
 
-
-export default React.memo(EmailList);
+export default EmailList;

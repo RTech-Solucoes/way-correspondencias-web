@@ -9,12 +9,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
-interface RegisterFormProps {
-  onRegister: (userData: RegisterData) => void;
-  isLoading?: boolean;
-  error?: string;
-}
-
 interface RegisterData {
   firstName: string;
   lastName: string;
@@ -32,7 +26,7 @@ const ROLES = [
   { value: 'APROVADOR', label: 'Aprovador' },
 ];
 
-export default function RegisterForm({ onRegister, isLoading = false, error }: RegisterFormProps) {
+export default function CadastroPage() {
   const [formData, setFormData] = useState<RegisterData>({
     firstName: '',
     lastName: '',
@@ -47,6 +41,7 @@ export default function RegisterForm({ onRegister, isLoading = false, error }: R
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<Partial<RegisterData>>({});
+  const [isLoading, setIsLoading] = useState(false);
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -119,11 +114,36 @@ export default function RegisterForm({ onRegister, isLoading = false, error }: R
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (validateForm()) {
-      onRegister(formData);
+      setIsLoading(true);
+      try {
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Standalone page behavior
+        console.log('Cadastro realizado:', formData);
+        alert('Cadastro realizado com sucesso!');
+        
+        // Reset form
+        setFormData({
+          firstName: '',
+          lastName: '',
+          email: '',
+          password: '',
+          confirmPassword: '',
+          phone: '',
+          role: '',
+          acceptTerms: false,
+        });
+      } catch (error) {
+        console.error('Erro no cadastro:', error);
+        alert('Erro ao realizar cadastro. Tente novamente.');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -407,12 +427,6 @@ export default function RegisterForm({ onRegister, isLoading = false, error }: R
         </div>
       </div>
 
-      {/* Error Message */}
-      {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-600">{error}</p>
-        </div>
-      )}
 
       {/* Submit Button */}
       <Button

@@ -146,7 +146,6 @@ export function useCreateSetor() {
   return { create, loading, error };
 }
 
-// Emails hooks
 export function useEmails(params?: ListEmailsParams) {
   return useApiCall(
     () => apiClient.listarEmails(params),
