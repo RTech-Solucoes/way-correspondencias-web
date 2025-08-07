@@ -18,8 +18,18 @@ import {
   Edit, 
   Trash2, 
   Filter, 
-  ArrowUpDown 
+  ArrowUpDown,
+  X
 } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
+} from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tema } from '@/lib/types'
 import { mockTemas, mockAreas } from '@/lib/mockData'
 import { TemaModal } from '@/components/temas/TemaModal'
@@ -31,6 +41,9 @@ export default function TemasPage() {
   const [showTemaModal, setShowTemaModal] = useState(false)
   const [sortField, setSortField] = useState<keyof Tema | null>(null)
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
+  const [showFilterModal, setShowFilterModal] = useState(false)
+  const [filterAreas, setFilterAreas] = useState<string[]>([])
+  const [filterTpContagem, setFilterTpContagem] = useState<'UTEIS' | 'CORRIDOS' | null>(null)
 
   const handleSort = (field: keyof Tema) => {
     if (sortField === field) {
@@ -63,14 +76,20 @@ export default function TemasPage() {
     return 1 * direction
   })
 
-  const filteredTemas = sortedTemas.filter(tema =>
-    tema.nmTema.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    tema.dsTema.toLowerCase().includes(searchQuery.toLowerCase())
-  )
-
   const getAreasForTema = (idAreas: string[]) => {
     return mockAreas.filter(area => idAreas.includes(area.idArea))
   }
+
+  const filteredTemas = sortedTemas.filter(tema =>
+    tema.nmTema.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    tema.dsTema.toLowerCase().includes(searchQuery.toLowerCase())
+  ).filter(tema => {
+    const areas = getAreasForTema(tema.idAreas)
+    const areaMatch = filterAreas.length === 0 || areas.some(area => filterAreas.includes(area.idArea))
+    const tpContagemMatch = !filterTpContagem || tema.tpContagem === filterTpContagem
+    return areaMatch && tpContagemMatch
+  })
+
 
   const handleCreateTema = () => {
     setSelectedTema(null)
@@ -100,6 +119,10 @@ export default function TemasPage() {
     setSelectedTema(null)
   }
 
+  const handleFilterSubmit = () => {
+    setShowFilterModal(false)
+  }
+
   return (
     <div className="flex flex-col min-h-0 flex-1">
       {/* Header */}
@@ -127,7 +150,11 @@ export default function TemasPage() {
               className="pl-10 h-10 bg-gray-50 border-gray-200 focus:bg-white"
             />
           </div>
-          <Button variant="secondary" className="h-10 px-4">
+          <Button
+            variant="secondary"
+            className="h-10 px-4"
+            onClick={() => setShowFilterModal(true)}
+          >
             <Filter className="h-4 w-4 mr-2" />
             Filtrar
           </Button>
@@ -254,6 +281,72 @@ export default function TemasPage() {
           onSave={handleSaveTema}
           tema={selectedTema}
         />
+      )}
+
+      {/* Filter Modal */}
+      {showFilterModal && (
+        <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
+          <DialogContent className="max-w-sm p-6">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-bold">
+                Filtrar Temas
+              </DialogTitle>
+            </DialogHeader>
+
+            <div>
+              <Label htmlFor="areas" className="block text-sm font-medium text-gray-700">
+                Áreas Relacionadas
+              </Label>
+              <Select
+                id="areas"
+                value={filterAreas}
+                onValueChange={setFilterAreas}
+                multiple
+                className="mt-2"
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione as áreas" />
+                </SelectTrigger>
+                <SelectContent>
+                  {mockAreas.map(area => (
+                    <SelectItem key={area.idArea} value={area.idArea}>
+                      {area.nmArea}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="tpContagem" className="block text-sm font-medium text-gray-700">
+                Tipo de Contagem
+              </Label>
+              <Select
+                id="tpContagem"
+                value={filterTpContagem}
+                onValueChange={setFilterTpContagem}
+                className="mt-2"
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo de contagem" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="UTEIS">Úteis</SelectItem>
+                  <SelectItem value="CORRIDOS">Corridos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <DialogFooter>
+              <Button
+                onClick={handleFilterSubmit}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                Aplicar Filtros
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   )

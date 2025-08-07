@@ -1,30 +1,18 @@
-import { useState, useEffect, useCallback } from 'react';
-import { apiClient } from './client';
+import {useCallback, useEffect, useState} from 'react';
+import {apiClient} from './client';
 import {
-  Responsavel,
-  Setor,
-  Email,
-  Obrigacao,
-  Correspondencia,
-  SincronizacaoStatus,
-  PaginatedResponse,
-  ListResponsaveisParams,
+  CreateEmailRequest,
+  CreateObrigacaoRequest,
+  CreateResponsavelRequest,
+  CreateSetorRequest,
   ListEmailsParams,
   ListObrigacoesParams,
-  CreateResponsavelRequest,
-  UpdateResponsavelRequest,
-  CreateSetorRequest,
-  UpdateSetorRequest,
-  CreateEmailRequest,
-  UpdateEmailRequest,
-  CreateObrigacaoRequest,
-  UpdateObrigacaoRequest,
-  LoginRequest,
-  LoginResponse,
+  ListResponsaveisParams,
   RegisterRequest,
+  UpdateObrigacaoRequest,
+  UpdateResponsavelRequest,
 } from './types';
 
-// Generic hook for API calls
 export function useApiCall<T>(
   apiCall: () => Promise<T>,
   dependencies: any[] = []
@@ -53,7 +41,6 @@ export function useApiCall<T>(
   return { data, loading, error, refetch: execute };
 }
 
-// Responsáveis hooks
 export function useResponsaveis(params?: ListResponsaveisParams) {
   return useApiCall(
     () => apiClient.listarResponsaveis(params),
@@ -76,8 +63,7 @@ export function useCreateResponsavel() {
     try {
       setLoading(true);
       setError(null);
-      const result = await apiClient.criarResponsavel(data);
-      return result;
+      return await apiClient.criarResponsavel(data);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao criar responsável';
       setError(errorMessage);
@@ -98,8 +84,7 @@ export function useUpdateResponsavel() {
     try {
       setLoading(true);
       setError(null);
-      const result = await apiClient.atualizarResponsavel(id, data);
-      return result;
+      return await apiClient.atualizarResponsavel(id, data);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao atualizar responsável';
       setError(errorMessage);
@@ -112,7 +97,6 @@ export function useUpdateResponsavel() {
   return { update, loading, error };
 }
 
-// Setores hooks
 export function useSetores() {
   return useApiCall(() => apiClient.listarSetores());
 }
@@ -132,8 +116,7 @@ export function useCreateSetor() {
     try {
       setLoading(true);
       setError(null);
-      const result = await apiClient.criarSetor(data);
-      return result;
+      return await apiClient.criarSetor(data);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao criar setor';
       setError(errorMessage);
@@ -168,8 +151,7 @@ export function useCreateEmail() {
     try {
       setLoading(true);
       setError(null);
-      const result = await apiClient.criarEmail(data);
-      return result;
+      return await apiClient.criarEmail(data);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao criar email';
       setError(errorMessage);
@@ -190,8 +172,7 @@ export function useResponderEmail() {
     try {
       setLoading(true);
       setError(null);
-      const result = await apiClient.responderEmail(id, { resposta });
-      return result;
+      return await apiClient.responderEmail(id, {resposta});
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao responder email';
       setError(errorMessage);
@@ -204,7 +185,6 @@ export function useResponderEmail() {
   return { responder, loading, error };
 }
 
-// Obrigações hooks
 export function useObrigacoes(params?: ListObrigacoesParams) {
   return useApiCall(
     () => apiClient.listarObrigacoes(params),
@@ -227,8 +207,7 @@ export function useCreateObrigacao() {
     try {
       setLoading(true);
       setError(null);
-      const result = await apiClient.criarObrigacao(data);
-      return result;
+      return await apiClient.criarObrigacao(data);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao criar obrigação';
       setError(errorMessage);
@@ -249,8 +228,7 @@ export function useUpdateObrigacao() {
     try {
       setLoading(true);
       setError(null);
-      const result = await apiClient.atualizarObrigacao(id, data);
-      return result;
+      return await apiClient.atualizarObrigacao(id, data);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao atualizar obrigação';
       setError(errorMessage);
@@ -263,7 +241,6 @@ export function useUpdateObrigacao() {
   return { update, loading, error };
 }
 
-// Correspondências hooks
 export function useCorrespondencias(obrigacaoId: number) {
   return useApiCall(
     () => apiClient.listarCorrespondencias(obrigacaoId),
@@ -279,8 +256,7 @@ export function useVincularCorrespondencias() {
     try {
       setLoading(true);
       setError(null);
-      const result = await apiClient.vincularCorrespondencias(obrigacaoId, { emails: emailIds });
-      return result;
+      return await apiClient.vincularCorrespondencias(obrigacaoId, {emails: emailIds});
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao vincular correspondências';
       setError(errorMessage);
@@ -293,7 +269,6 @@ export function useVincularCorrespondencias() {
   return { vincular, loading, error };
 }
 
-// Sincronização hooks
 export function useSincronizacaoStatus() {
   return useApiCall(() => apiClient.statusSincronizacao());
 }
@@ -306,8 +281,7 @@ export function useSincronizarEmails() {
     try {
       setLoading(true);
       setError(null);
-      const result = await apiClient.sincronizarEmails();
-      return result;
+      return await apiClient.sincronizarEmails();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao sincronizar emails';
       setError(errorMessage);
@@ -320,7 +294,6 @@ export function useSincronizarEmails() {
   return { sincronizar, loading, error };
 }
 
-// SEI hooks
 export function usePesquisarSEIInteressado() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -329,8 +302,7 @@ export function usePesquisarSEIInteressado() {
     try {
       setLoading(true);
       setError(null);
-      const result = await apiClient.pesquisarSEIInteressado({ nome, orgao });
-      return result;
+      return await apiClient.pesquisarSEIInteressado({nome, orgao});
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao pesquisar no SEI';
       setError(errorMessage);
@@ -343,7 +315,6 @@ export function usePesquisarSEIInteressado() {
   return { pesquisar, loading, error };
 }
 
-// Authentication hooks
 export function useLogin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -354,7 +325,6 @@ export function useLogin() {
       setError(null);
       const result = await apiClient.login({ email, password });
       
-      // Store auth token in localStorage
       localStorage.setItem('authToken', result.token);
       localStorage.setItem('user', JSON.stringify(result.user));
       
@@ -379,8 +349,7 @@ export function useRegister() {
     try {
       setLoading(true);
       setError(null);
-      const result = await apiClient.register(data);
-      return result;
+      return await apiClient.register(data);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao registrar usuário';
       setError(errorMessage);

@@ -8,8 +8,11 @@ import {
   Folder,
   Inbox,
   Mail,
-  OctagonAlert, PanelLeftClose, PanelLeftOpen,
-  Plus, RotateCw,
+  OctagonAlert,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Plus,
+  RotateCw,
   Search,
   Send,
   Settings,
@@ -26,9 +29,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from '@/hooks/use-toast';
+import {Label} from "@/components/ui/label";
+import {Textarea} from "@/components/ui/textarea";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {useToast} from '@/hooks/use-toast';
 import EmailList from '../../components/email/EmailList';
 import EmailComposer from '../../components/email/EmailComposer';
 import EmailDetail from '../../components/email/EmailDetail';
@@ -66,6 +70,17 @@ export default function EmailPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFolderManager, setShowFolderManager] = useState(false);
   const [showConfigDialog, setShowConfigDialog] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+
+  // Filter states for emails
+  const [emailFilters, setEmailFilters] = useState({
+    isRead: '',
+    hasAttachment: '',
+    dateFrom: '',
+    dateTo: '',
+    sender: ''
+  });
+
   const [emailConfig, setEmailConfig] = useState<EmailConfig>(() => {
     if (typeof window !== 'undefined') {
       const savedConfig = localStorage.getItem('emailConfig');
@@ -87,6 +102,7 @@ export default function EmailPage() {
       defaultFooter: 'Atenciosamente,\n\nSeu Nome\nSeu Cargo\nSeu Telefone'
     };
   });
+
   const [sentEmails, setSentEmails] = useState<SentEmail[]>(() => {
     if (typeof window !== 'undefined') {
       const savedEmails = localStorage.getItem('sentEmails');
@@ -126,10 +142,10 @@ export default function EmailPage() {
 
     setSentEmails(prev => [newEmail, ...prev]);
 
-    setFolders(prev => 
-      prev.map(folder => 
-        folder.id === 'sent' 
-          ? { ...folder, count: folder.count + 1 } 
+    setFolders(prev =>
+      prev.map(folder =>
+        folder.id === 'sent'
+          ? { ...folder, count: folder.count + 1 }
           : folder
       )
     );
@@ -140,14 +156,14 @@ export default function EmailPage() {
       <div className="bg-white border-b border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-            <Mail className="h-7 w-7 mr-3" />
+            <Mail className="h-7 w-7 mr-3"/>
             Email
           </h1>
         </div>
 
         <div className="flex items-center space-x-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400"/>
             <Input
               placeholder="Pesquisar emails..."
               value={searchQuery}
@@ -155,8 +171,12 @@ export default function EmailPage() {
               className="pl-10 bg-gray-50 border-gray-200 focus:bg-white"
             />
           </div>
-          <Button variant="secondary" className="h-10 px-4">
-            <Filter className="h-4 w-4 mr-2" />
+          <Button
+            variant="secondary"
+            className="h-10 px-4"
+            onClick={() => setShowFilterModal(true)}
+          >
+            <Filter className="h-4 w-4 mr-2"/>
             Filtrar
           </Button>
         </div>
@@ -170,7 +190,7 @@ export default function EmailPage() {
             className="flex items-center gap-2 h-10 px-4"
             onClick={() => setActiveFolder(folder.id)}
           >
-            <folder.icon className="h-4 w-4" />
+            <folder.icon className="h-4 w-4"/>
             <span>{folder.label}</span>
             {folder.count > 0 && (
               <Badge variant="secondary" className="ml-1">
@@ -194,13 +214,13 @@ export default function EmailPage() {
               setFolders(prev => {
                 if (!prev || !Array.isArray(prev)) {
                   return EMAIL_FOLDERS.map(folder =>
-                    folder.id === 'inbox' ? { ...folder, count } : folder
+                    folder.id === 'inbox' ? {...folder, count} : folder
                   );
                 }
 
                 return prev.map(folder =>
                   folder.id === 'inbox'
-                    ? { ...folder, count }
+                    ? {...folder, count}
                     : folder
                 );
               });
@@ -217,8 +237,8 @@ export default function EmailPage() {
       </div>
 
       {showComposer && (
-        <EmailComposer 
-          onClose={() => setShowComposer(false)} 
+        <EmailComposer
+          onClose={() => setShowComposer(false)}
           onSend={addSentEmail}
           emailConfig={emailConfig}
         />
@@ -270,7 +290,7 @@ export default function EmailPage() {
                   <Input
                     value={key}
                     onChange={(e) => {
-                      const newMessages = { ...emailConfig.defaultMessages };
+                      const newMessages = {...emailConfig.defaultMessages};
                       const oldValue = newMessages[key];
                       delete newMessages[key];
                       newMessages[e.target.value] = oldValue;
@@ -284,7 +304,7 @@ export default function EmailPage() {
                   <Textarea
                     value={value}
                     onChange={(e) => {
-                      const newMessages = { ...emailConfig.defaultMessages };
+                      const newMessages = {...emailConfig.defaultMessages};
                       newMessages[key] = e.target.value;
                       setEmailConfig({
                         ...emailConfig,
@@ -294,7 +314,7 @@ export default function EmailPage() {
                     placeholder="Conteúdo da mensagem"
                     className="min-h-[80px]"
                   />
-                  <div className="flex-grow-1 h-px bg-gray-200 my-2" />
+                  <div className="flex-grow-1 h-px bg-gray-200 my-2"/>
                 </div>
               ))}
 
@@ -302,7 +322,7 @@ export default function EmailPage() {
                 type="button"
                 variant="outline"
                 onClick={() => {
-                  const newMessages = { ...emailConfig.defaultMessages };
+                  const newMessages = {...emailConfig.defaultMessages};
                   newMessages[`Nova Mensagem ${Object.keys(newMessages).length + 1}`] = '';
                   setEmailConfig({
                     ...emailConfig,
@@ -311,7 +331,7 @@ export default function EmailPage() {
                 }}
                 className="mt-2 flex-grow-1"
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-4 w-4 mr-2"/>
                 Adicionar Mensagem
               </Button>
             </div>
@@ -344,6 +364,100 @@ export default function EmailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Email Filter Modal */}
+      {showFilterModal && (
+        <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Filtrar Emails</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4">
+              <div>
+                <Label htmlFor="sender">Remetente</Label>
+                <Input
+                  id="sender"
+                  value={emailFilters.sender}
+                  onChange={(e) => setEmailFilters({...emailFilters, sender: e.target.value})}
+                  placeholder="Filtrar por remetente"
+                />
+              </div>
+              <div>
+                <Label htmlFor="isRead">Status de Leitura</Label>
+                <Select
+                  value={emailFilters.isRead}
+                  onValueChange={(value) => setEmailFilters({...emailFilters, isRead: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="read">Lidos</SelectItem>
+                    <SelectItem value="unread">Não Lidos</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="hasAttachment">Anexos</Label>
+                <Select
+                  value={emailFilters.hasAttachment}
+                  onValueChange={(value) => setEmailFilters({...emailFilters, hasAttachment: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione anexos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="true">Com Anexo</SelectItem>
+                    <SelectItem value="false">Sem Anexo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="dateFrom">Data Início</Label>
+                  <Input
+                    id="dateFrom"
+                    type="date"
+                    value={emailFilters.dateFrom}
+                    onChange={(e) => setEmailFilters({...emailFilters, dateFrom: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="dateTo">Data Fim</Label>
+                  <Input
+                    id="dateTo"
+                    type="date"
+                    value={emailFilters.dateTo}
+                    onChange={(e) => setEmailFilters({...emailFilters, dateTo: e.target.value})}
+                  />
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setEmailFilters({
+                    isRead: '',
+                    hasAttachment: '',
+                    dateFrom: '',
+                    dateTo: '',
+                    sender: ''
+                  });
+                  setShowFilterModal(false);
+                }}
+              >
+                Limpar Filtros
+              </Button>
+              <Button onClick={() => setShowFilterModal(false)}>
+                Aplicar Filtros
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

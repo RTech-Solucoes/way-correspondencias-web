@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import {useState, useEffect} from 'react';
 import {
   Dialog,
   DialogContent,
@@ -8,18 +8,17 @@ import {
   DialogTitle,
   DialogFooter
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { X } from 'lucide-react';
-import { Tema, TipoContagem } from '@/lib/types';
-import { mockAreas } from '@/lib/mockData';
-import { v4 as uuidv4 } from 'uuid';
+import {Button} from '@/components/ui/button';
+import {Input} from '@/components/ui/input';
+import {Label} from '@/components/ui/label';
+import {Textarea} from '@/components/ui/textarea';
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
+import {Badge} from '@/components/ui/badge';
+import {X, Check} from 'lucide-react';
+import {Tema, TipoContagem} from '@/lib/types';
+import {mockAreas} from '@/lib/mockData';
+import {v4 as uuidv4} from 'uuid';
+import {cn} from '@/lib/utils';
 
 interface TemaModalProps {
   isOpen: boolean;
@@ -28,7 +27,7 @@ interface TemaModalProps {
   tema?: Tema | null;
 }
 
-export function TemaModal({ isOpen, onClose, onSave, tema }: TemaModalProps) {
+export function TemaModal({isOpen, onClose, onSave, tema}: TemaModalProps) {
   const [nmTema, setNmTema] = useState('');
   const [dsTema, setDsTema] = useState('');
   const [nrDiasPrazo, setNrDiasPrazo] = useState(0);
@@ -43,7 +42,6 @@ export function TemaModal({ isOpen, onClose, onSave, tema }: TemaModalProps) {
       setTpContagem(tema.tpContagem);
       setSelectedAreaIds(tema.idAreas);
     } else {
-      // Reset form for new tema
       setNmTema('');
       setDsTema('');
       setNrDiasPrazo(0);
@@ -72,7 +70,7 @@ export function TemaModal({ isOpen, onClose, onSave, tema }: TemaModalProps) {
     if (!nmTema || !dsTema || selectedAreaIds.length === 0) return;
 
     const currentDate = new Date().toISOString().split('T')[0];
-    const currentUser = '12345678901'; // Mock user CPF
+    const currentUser = '12345678901';
 
     const novoTema: Tema = {
       idTema: tema?.idTema || uuidv4(),
@@ -143,7 +141,7 @@ export function TemaModal({ isOpen, onClose, onSave, tema }: TemaModalProps) {
             <Label htmlFor="tpContagem">Tipo de Contagem</Label>
             <Select value={tpContagem} onValueChange={(value) => setTpContagem(value as TipoContagem)}>
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue/>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={TipoContagem.UTEIS}>Dias Úteis</SelectItem>
@@ -154,55 +152,33 @@ export function TemaModal({ isOpen, onClose, onSave, tema }: TemaModalProps) {
 
           <div className="space-y-4">
             <Label>Áreas Relacionadas *</Label>
-
-            {/* Selected Areas Display */}
-            {selectedAreaIds.length > 0 && (
-              <div className="space-y-2">
-                <Label className="text-sm text-muted-foreground">Áreas Selecionadas:</Label>
-                <div className="flex flex-wrap gap-2">
-                  {getSelectedAreas().map((area) => (
-                    <Badge key={area.idArea} variant="secondary" className="flex items-center gap-2">
-                      {area.nmArea}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-4 w-4 p-0 hover:bg-transparent"
-                        onClick={() => removeArea(area.idArea)}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Areas Selection */}
-            <Card>
-              <CardContent className="p-4">
-                <Label className="text-sm font-medium mb-3 block">Selecione as áreas:</Label>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {mockAreas.map((area) => (
-                    <div key={area.idArea} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`area-${area.idArea}`}
-                        checked={selectedAreaIds.includes(area.idArea)}
-                        onCheckedChange={() => handleAreaToggle(area.idArea)}
-                      />
-                      <Label
-                        htmlFor={`area-${area.idArea}`}
-                        className="flex-1 cursor-pointer"
-                      >
-                        <div>
-                          <div className="font-medium">{area.nmArea}</div>
-                          <div className="text-sm text-muted-foreground">{area.dsArea}</div>
-                        </div>
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
+              {mockAreas.map((area) => (
+                <button
+                  key={area.idArea}
+                  type="button"
+                  onClick={() => handleAreaToggle(area.idArea)}
+                  className={cn(
+                    "flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium transition-all hover:shadow-sm",
+                    selectedAreaIds.includes(area.idArea)
+                      ? "bg-blue-500 text-white border-blue-500"
+                      : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
+                  )}
+                >
+                  <div className={cn(
+                    "w-4 h-4 rounded-full border flex items-center justify-center transition-all",
+                    selectedAreaIds.includes(area.idArea)
+                      ? "border-white bg-white"
+                      : "border-gray-400 bg-transparent"
+                  )}>
+                    {selectedAreaIds.includes(area.idArea) && (
+                      <Check className="w-2.5 h-2.5 text-blue-500"/>
+                    )}
+                  </div>
+                  {area.nmArea}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

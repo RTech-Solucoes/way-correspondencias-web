@@ -17,8 +17,17 @@ import {
   Edit, 
   Trash2, 
   Filter, 
-  ArrowUpDown 
+  ArrowUpDown,
+  X
 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { Area } from '@/lib/types';
 import { mockAreas } from '@/lib/mockData';
 import AreaModal from '../../components/areas/AreaModal';
@@ -28,8 +37,19 @@ export default function AreasPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedArea, setSelectedArea] = useState<Area | null>(null);
   const [showAreaModal, setShowAreaModal] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
   const [sortField, setSortField] = useState<keyof Area | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+  // Filter states
+  const [filters, setFilters] = useState({
+    codigo: '',
+    nome: '',
+    descricao: '',
+    dataInicio: '',
+    dataFim: ''
+  });
+  const [activeFilters, setActiveFilters] = useState(filters);
 
   const handleSort = (field: keyof Area) => {
     if (sortField === field) {
@@ -58,11 +78,50 @@ export default function AreasPage() {
     return 1 * direction;
   });
 
-  const filteredAreas = sortedAreas.filter(area => 
-    area.nmArea.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    area.dsArea.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    area.cdArea.toString().includes(searchQuery)
-  );
+  const handleClearFilters = () => {
+    const emptyFilters = {
+      codigo: '',
+      nome: '',
+      descricao: '',
+      dataInicio: '',
+      dataFim: ''
+    };
+    setFilters(emptyFilters);
+    setActiveFilters(emptyFilters);
+  };
+
+  const handleApplyFilters = () => {
+    setActiveFilters(filters);
+    setShowFilterModal(false);
+  };
+
+  const filteredAreas = sortedAreas.filter(area => {
+    // Search query filter
+    const matchesSearch = area.nmArea.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      area.dsArea.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      area.cdArea.toString().includes(searchQuery);
+
+    // Advanced filters
+    const matchesCodigo = !activeFilters.codigo ||
+      area.cdArea.toString().includes(activeFilters.codigo);
+
+    const matchesNome = !activeFilters.nome ||
+      area.nmArea.toLowerCase().includes(activeFilters.nome.toLowerCase());
+
+    const matchesDescricao = !activeFilters.descricao ||
+      area.dsArea.toLowerCase().includes(activeFilters.descricao.toLowerCase());
+
+    const matchesDataInicio = !activeFilters.dataInicio ||
+      new Date(area.dtCadastro) >= new Date(activeFilters.dataInicio);
+
+    const matchesDataFim = !activeFilters.dataFim ||
+      new Date(area.dtCadastro) <= new Date(activeFilters.dataFim);
+
+    return matchesSearch && matchesCodigo && matchesNome && matchesDescricao &&
+           matchesDataInicio && matchesDataFim;
+  });
+
+  const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
 
   const handleCreateArea = () => {
     setSelectedArea(null);
@@ -119,7 +178,11 @@ export default function AreasPage() {
               className="pl-10 h-10 bg-gray-50 border-gray-200 focus:bg-white"
             />
           </div>
-          <Button variant="secondary" className="h-10 px-4">
+          <Button
+            variant="secondary"
+            className="h-10 px-4"
+            onClick={() => setShowFilterModal(true)}
+          >
             <Filter className="h-4 w-4 mr-2" />
             Filtrar
           </Button>
@@ -208,6 +271,88 @@ export default function AreasPage() {
           }}
           onSave={handleSaveArea}
         />
+      )}
+
+      {/* Filter Modal */}
+      {showFilterModal && (
+        <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
+          <DialogContent className="max-w-2xl p-6">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-semibold">
+                Filtrar Áreas
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <Label htmlFor="codigo">Código</Label>
+                <Input
+                  id="codigo"
+                  value={filters.codigo}
+                  onChange={(e) => setFilters({ ...filters, codigo: e.target.value })}
+                  placeholder="Filtrar por código"
+                />
+              </div>
+              <div>
+                <Label htmlFor="nome">Nome</Label>
+                <Input
+                  id="nome"
+                  value={filters.nome}
+                  onChange={(e) => setFilters({ ...filters, nome: e.target.value })}
+                  placeholder="Filtrar por nome"
+                />
+              </div>
+              <div>
+                <Label htmlFor="descricao">Descrição</Label>
+                <Input
+                  id="descricao"
+                  value={filters.descricao}
+                  onChange={(e) => setFilters({ ...filters, descricao: e.target.value })}
+                  placeholder="Filtrar por descrição"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="dataInicio">Data Início</Label>
+                  <Input
+                    id="dataInicio"
+                    type="date"
+                    value={filters.dataInicio}
+                    onChange={(e) => setFilters({ ...filters, dataInicio: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="dataFim">Data Fim</Label>
+                  <Input
+                    id="dataFim"
+                    type="date"
+                    value={filters.dataFim}
+                    onChange={(e) => setFilters({ ...filters, dataFim: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 mt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowFilterModal(false);
+                  handleClearFilters();
+                }}
+              >
+                <X className="h-4 w-4 mr-2" />
+                Limpar Filtros
+              </Button>
+              <Button
+                onClick={handleApplyFilters}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                Aplicar Filtros
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

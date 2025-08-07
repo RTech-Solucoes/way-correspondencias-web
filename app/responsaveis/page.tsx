@@ -17,8 +17,18 @@ import {
   Edit, 
   Trash2, 
   Filter, 
-  ArrowUpDown 
+  ArrowUpDown,
+  X
 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Responsavel } from '@/lib/types';
 import { mockResponsaveis } from '@/lib/mockData';
 import ResponsavelModal from '../../components/responsaveis/ResponsavelModal';
@@ -28,8 +38,18 @@ export default function ResponsaveisPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedResponsavel, setSelectedResponsavel] = useState<Responsavel | null>(null);
   const [showResponsavelModal, setShowResponsavelModal] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
   const [sortField, setSortField] = useState<keyof Responsavel | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+  // Filter states
+  const [filters, setFilters] = useState({
+    nome: '',
+    email: '',
+    telefone: '',
+    perfil: ''
+  });
+  const [activeFilters, setActiveFilters] = useState(filters);
 
   const handleSort = (field: keyof Responsavel) => {
     if (sortField === field) {
@@ -57,11 +77,45 @@ export default function ResponsaveisPage() {
     return 0;
   });
 
-  const filteredResponsaveis = sortedResponsaveis.filter(responsavel => 
-    responsavel.dsNome.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    responsavel.dsEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    responsavel.nmTelefone.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleClearFilters = () => {
+    const emptyFilters = {
+      nome: '',
+      email: '',
+      telefone: '',
+      perfil: ''
+    };
+    setFilters(emptyFilters);
+    setActiveFilters(emptyFilters);
+  };
+
+  const handleApplyFilters = () => {
+    setActiveFilters(filters);
+    setShowFilterModal(false);
+  };
+
+  const filteredResponsaveis = sortedResponsaveis.filter(responsavel => {
+    // Search query filter
+    const matchesSearch = responsavel.dsNome.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      responsavel.dsEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      responsavel.nmTelefone.toLowerCase().includes(searchQuery.toLowerCase());
+
+    // Advanced filters
+    const matchesNome = !activeFilters.nome ||
+      responsavel.dsNome.toLowerCase().includes(activeFilters.nome.toLowerCase());
+
+    const matchesEmail = !activeFilters.email ||
+      responsavel.dsEmail.toLowerCase().includes(activeFilters.email.toLowerCase());
+
+    const matchesTelefone = !activeFilters.telefone ||
+      responsavel.nmTelefone.includes(activeFilters.telefone);
+
+    const matchesPerfil = !activeFilters.perfil ||
+      responsavel.dsPerfil === activeFilters.perfil;
+
+    return matchesSearch && matchesNome && matchesEmail && matchesTelefone && matchesPerfil;
+  });
+
+  const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
 
   const handleCreateResponsavel = () => {
     setSelectedResponsavel(null);
@@ -118,7 +172,11 @@ export default function ResponsaveisPage() {
               className="pl-10 h-10 bg-gray-50 border-gray-200 focus:bg-white"
             />
           </div>
-          <Button variant="secondary" className="h-10 px-4">
+          <Button
+            variant="secondary"
+            className="h-10 px-4"
+            onClick={() => setShowFilterModal(true)}
+          >
             <Filter className="h-4 w-4 mr-2" />
             Filtrar
           </Button>
@@ -200,6 +258,80 @@ export default function ResponsaveisPage() {
           }}
           onSave={handleSaveResponsavel}
         />
+      )}
+
+      {/* Filter Modal */}
+      {showFilterModal && (
+        <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Filtrar Responsáveis</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4">
+              <div>
+                <Label htmlFor="nome">Nome</Label>
+                <Input
+                  id="nome"
+                  value={filters.nome}
+                  onChange={(e) => setFilters({ ...filters, nome: e.target.value })}
+                  placeholder="Filtrar por nome"
+                />
+              </div>
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  value={filters.email}
+                  onChange={(e) => setFilters({ ...filters, email: e.target.value })}
+                  placeholder="Filtrar por email"
+                />
+              </div>
+              <div>
+                <Label htmlFor="telefone">Telefone</Label>
+                <Input
+                  id="telefone"
+                  value={filters.telefone}
+                  onChange={(e) => setFilters({ ...filters, telefone: e.target.value })}
+                  placeholder="Filtrar por telefone"
+                />
+              </div>
+              <div>
+                <Label htmlFor="perfil">Perfil</Label>
+                <Select
+                  id="perfil"
+                  value={filters.perfil}
+                  onValueChange={(value) => setFilters({ ...filters, perfil: value })}
+                  placeholder="Selecione um perfil"
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um perfil" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="user">User</SelectItem>
+                    <SelectItem value="manager">Manager</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </DialogContent>
+          <DialogFooter>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setShowFilterModal(false);
+                handleClearFilters();
+              }}
+              className="mr-2"
+            >
+              <X className="h-4 w-4 mr-2" />
+              Limpar Filtros
+            </Button>
+            <Button onClick={handleApplyFilters}>
+              Aplicar Filtros
+            </Button>
+          </DialogFooter>
+        </Dialog>
       )}
     </div>
   );
