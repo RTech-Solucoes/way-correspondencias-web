@@ -36,8 +36,8 @@ const mockSolicitantes = [
 
 interface SolicitacaoModalProps {
   solicitacao: Solicitacao | null;
-  onClose: () => void;
-  onSave: (solicitacao: Solicitacao) => void;
+  onClose(): void;
+  onSave(solicitacao: Solicitacao): void;
 }
 
 export default function SolicitacaoModal({ solicitacao, onClose, onSave }: SolicitacaoModalProps) {

@@ -40,6 +40,7 @@ export interface Responsavel {
   dsNome: string;
   dsEmail: string;
   nmTelefone: string;
+  dsPerfil: string;
 }
 
 // SOLICITAÇÕES entity

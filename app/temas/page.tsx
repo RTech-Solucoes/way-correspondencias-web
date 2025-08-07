@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Table,
   TableBody,
@@ -297,24 +298,27 @@ export default function TemasPage() {
               <Label htmlFor="areas" className="block text-sm font-medium text-gray-700">
                 Áreas Relacionadas
               </Label>
-              <Select
-                id="areas"
-                value={filterAreas}
-                onValueChange={setFilterAreas}
-                multiple
-                className="mt-2"
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione as áreas" />
-                </SelectTrigger>
-                <SelectContent>
-                  {mockAreas.map(area => (
-                    <SelectItem key={area.idArea} value={area.idArea}>
+              <div className="mt-2">
+                {mockAreas.map(area => (
+                  <div key={area.idArea} className="flex items-center">
+                    <Checkbox
+                      id={`area-${area.idArea}`}
+                      checked={filterAreas.includes(area.idArea)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setFilterAreas(prev => [...prev, area.idArea])
+                        } else {
+                          setFilterAreas(prev => prev.filter(id => id !== area.idArea))
+                        }
+                      }}
+                      className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                    />
+                    <Label htmlFor={`area-${area.idArea}`} className="ml-2 text-sm cursor-pointer">
                       {area.nmArea}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    </Label>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div>
@@ -322,12 +326,10 @@ export default function TemasPage() {
                 Tipo de Contagem
               </Label>
               <Select
-                id="tpContagem"
                 value={filterTpContagem?.toString()}
                 onValueChange={setFilterTpContagem}
-                className="mt-2"
               >
-                <SelectTrigger>
+                <SelectTrigger className="mt-2">
                   <SelectValue placeholder="Selecione o tipo de contagem" />
                 </SelectTrigger>
                 <SelectContent>

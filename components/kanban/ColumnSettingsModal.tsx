@@ -18,8 +18,8 @@ interface ColumnSettingsModalProps {
   column: Column | null;
   availableColors: string[];
   onClose(): void;
-  onSave: (column: Column) => void;
-  onDelete: (columnId: string) => void;
+  onSave(column: Column): void;
+  onDelete(columnId: string): void;
 }
 
 export default function ColumnSettingsModal({

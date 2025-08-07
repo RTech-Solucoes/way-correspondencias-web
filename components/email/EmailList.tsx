@@ -234,8 +234,8 @@ const EmailItem = React.memo<{
   email: Email;
   isSelected: boolean;
   isChecked: boolean;
-  onSelect: () => void;
-  onToggleCheck: () => void;
+  onSelect(): void;
+  onToggleCheck(): void;
 }>(({ email, isSelected, isChecked, onSelect, onToggleCheck }) => {
   const handleClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();

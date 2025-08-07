@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 
 interface ImportSpreadsheetModalProps {
   onClose(): void;
-  onImport: (file: File) => void;
+  onImport(file: File): void;
 }
 
 export default function ImportSpreadsheetModal({

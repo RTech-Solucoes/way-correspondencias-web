@@ -298,10 +298,8 @@ export default function ResponsaveisPage() {
               <div>
                 <Label htmlFor="perfil">Perfil</Label>
                 <Select
-                  id="perfil"
                   value={filters.perfil}
                   onValueChange={(value) => setFilters({ ...filters, perfil: value })}
-                  placeholder="Selecione um perfil"
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um perfil" />

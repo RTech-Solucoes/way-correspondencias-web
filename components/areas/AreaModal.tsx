@@ -17,8 +17,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 interface AreaModalProps {
   area: Area | null;
-  onClose: () => void;
-  onSave: (area: Area) => void;
+  onClose(): void;
+  onSave(area: Area): void;
 }
 
 export default function AreaModal({ area, onClose, onSave }: AreaModalProps) {

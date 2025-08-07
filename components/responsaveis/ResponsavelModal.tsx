@@ -16,8 +16,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 interface ResponsavelModalProps {
   responsavel: Responsavel | null;
-  onClose: () => void;
-  onSave: (responsavel: Responsavel) => void;
+  onClose(): void;
+  onSave(responsavel: Responsavel): void;
 }
 
 export default function ResponsavelModal({ responsavel, onClose, onSave }: ResponsavelModalProps) {
@@ -25,7 +25,8 @@ export default function ResponsavelModal({ responsavel, onClose, onSave }: Respo
     idResponsavel: '',
     dsNome: '',
     dsEmail: '',
-    nmTelefone: ''
+    nmTelefone: '',
+    dsPerfil: ''
   });
 
   useEffect(() => {
@@ -37,7 +38,8 @@ export default function ResponsavelModal({ responsavel, onClose, onSave }: Respo
         idResponsavel: uuidv4(),
         dsNome: '',
         dsEmail: '',
-        nmTelefone: ''
+        nmTelefone: '',
+        dsPerfil: ''
       });
     }
   }, [responsavel]);

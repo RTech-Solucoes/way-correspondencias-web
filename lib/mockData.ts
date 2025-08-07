@@ -66,31 +66,36 @@ export const mockResponsaveis: Responsavel[] = [
     idResponsavel: uuidv4(),
     dsNome: 'João Silva',
     dsEmail: 'joao.silva@empresa.com',
-    nmTelefone: '(11) 98765-4321'
+    nmTelefone: '(11) 98765-4321',
+    dsPerfil: 'admin'
   },
   {
     idResponsavel: uuidv4(),
     dsNome: 'Maria Oliveira',
     dsEmail: 'maria.oliveira@empresa.com',
-    nmTelefone: '(21) 99876-5432'
+    nmTelefone: '(21) 99876-5432',
+    dsPerfil: 'manager'
   },
   {
     idResponsavel: uuidv4(),
     dsNome: 'Carlos Santos',
     dsEmail: 'carlos.santos@empresa.com',
-    nmTelefone: '(31) 97654-3210'
+    nmTelefone: '(31) 97654-3210',
+    dsPerfil: 'user'
   },
   {
     idResponsavel: uuidv4(),
     dsNome: 'Ana Pereira',
     dsEmail: 'ana.pereira@empresa.com',
-    nmTelefone: '(41) 96543-2109'
+    nmTelefone: '(41) 96543-2109',
+    dsPerfil: 'user'
   },
   {
     idResponsavel: uuidv4(),
     dsNome: 'Lucas Costa',
     dsEmail: 'lucas.costa@empresa.com',
-    nmTelefone: '(51) 95432-1098'
+    nmTelefone: '(51) 95432-1098',
+    dsPerfil: 'manager'
   }
 ];
 

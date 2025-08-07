@@ -22,8 +22,8 @@ import {cn} from '@/lib/utils';
 
 interface TemaModalProps {
   isOpen: boolean;
-  onClose: () => void;
-  onSave: (tema: Tema) => void;
+  onClose(): void;
+  onSave(tema: Tema): void;
   tema?: Tema | null;
 }
 

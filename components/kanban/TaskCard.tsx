@@ -22,7 +22,7 @@ interface Task {
 
 interface TaskCardProps {
   task: Task;
-  onDragStart: (e: React.DragEvent, taskId: string) => void;
+  onDragStart(e: React.DragEvent, taskId: string): void;
   onClick(): void;
 }
 

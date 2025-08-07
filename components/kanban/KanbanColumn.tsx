@@ -31,14 +31,14 @@ interface Column {
 interface KanbanColumnProps {
   column: Column;
   index: number;
-  onDragStart: (e: React.DragEvent, taskId: string) => void;
-  onDragOver: (e: React.DragEvent) => void;
-  onDrop: (e: React.DragEvent, columnId: string) => void;
-  onColumnDragStart: (e: React.DragEvent, columnId: string) => void;
-  onColumnDragOver: (e: React.DragEvent) => void;
-  onColumnDrop: (e: React.DragEvent, index: number) => void;
-  onTaskClick: (task: Task) => void;
-  onEditColumn: (column: Column) => void;
+  onDragStart(e: React.DragEvent, taskId: string): void;
+  onDragOver(e: React.DragEvent): void;
+  onDrop(e: React.DragEvent, columnId: string): void;
+  onColumnDragStart(e: React.DragEvent, columnId: string): void;
+  onColumnDragOver(e: React.DragEvent): void;
+  onColumnDrop(e: React.DragEvent, index: number): void;
+  onTaskClick(task: Task): void;
+  onEditColumn(column: Column): void;
 }
 
 export default function KanbanColumn({

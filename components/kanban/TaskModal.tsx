@@ -29,7 +29,7 @@ interface Task {
 interface TaskModalProps {
   task: Task | null;
   onClose(): void;
-  onSave: (task: Task) => void;
+  onSave(task: Task): void;
 }
 
 const RESPONSAVEIS = [
