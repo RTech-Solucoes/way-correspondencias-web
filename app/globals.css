@@ -80,6 +80,39 @@
   body {
     @apply bg-background text-foreground subpixel-antialiased;
     overflow-x: hidden;
+
+    &::after {
+      @apply
+      absolute
+      min-h-screen
+      w-4
+      bg-gradient-to-t
+      from-gray-50
+      via-transparent
+      to-gray-50
+      right-0
+      top-0
+      pointer-events-none;
+      content: '';
+    }
+  }
+
+  *::-webkit-scrollbar {
+    @apply w-5 ;
+  }
+
+  *::-webkit-scrollbar-track {
+    @apply bg-transparent my-4;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    @apply
+    bg-primary
+    rounded-full
+    border-4
+    border-solid
+    border-transparent;
+    background-clip: content-box;
   }
 }
 

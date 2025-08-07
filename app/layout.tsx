@@ -1,6 +1,6 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import { Lexend as Font } from 'next/font/google';
+import { Poppins as Font } from 'next/font/google';
 import { ApiProvider } from '@/api/ApiProvider';
 import { ReactNode } from 'react'
 import {cn} from "@/lib/utils";
@@ -23,6 +23,11 @@ const defaultFont = Font({
 export const metadata: Metadata = {
   title: 'Way Brasil - Software Regulatório',
   description: 'Solução moderna de software regulatório com cliente de email e quadro kanban',
+  icons: {
+    icon: '/images/favicon.png',
+    shortcut: '/images/favicon.png',
+    apple: '/images/favicon.png',
+  },
 };
 
 export default function RootLayout({
