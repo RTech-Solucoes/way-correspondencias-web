@@ -43,7 +43,7 @@ export default function TemasPage() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   const [showFilterModal, setShowFilterModal] = useState(false)
   const [filterAreas, setFilterAreas] = useState<string[]>([])
-  const [filterTpContagem, setFilterTpContagem] = useState<'UTEIS' | 'CORRIDOS' | null>(null)
+  const [filterTpContagem, setFilterTpContagem] = useState<string | null>(null)
 
   const handleSort = (field: keyof Tema) => {
     if (sortField === field) {
@@ -323,7 +323,7 @@ export default function TemasPage() {
               </Label>
               <Select
                 id="tpContagem"
-                value={filterTpContagem}
+                value={filterTpContagem?.toString()}
                 onValueChange={setFilterTpContagem}
                 className="mt-2"
               >
