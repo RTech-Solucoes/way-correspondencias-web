@@ -12,14 +12,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
-  Plus, 
-  Search, 
-  Edit, 
-  Trash2, 
-  Filter, 
-  ArrowUpDown,
-  X
-} from 'lucide-react';
+  PlusIcon,
+  MagnifyingGlassIcon,
+  PencilSimpleIcon,
+  TrashIcon,
+  FunnelSimpleIcon,
+  ArrowsDownUpIcon,
+  XIcon
+} from '@phosphor-icons/react';
 import {
   Dialog,
   DialogContent,
@@ -157,14 +157,14 @@ export default function ResponsaveisPage() {
             onClick={handleCreateResponsavel} 
             className="bg-blue-600 hover:bg-blue-700"
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <PlusIcon className="h-4 w-4 mr-2" />
             Novo Responsável
           </Button>
         </div>
 
         <div className="flex items-center space-x-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               placeholder="Pesquisar por nome, email ou telefone..."
               value={searchQuery}
@@ -177,7 +177,7 @@ export default function ResponsaveisPage() {
             className="h-10 px-4"
             onClick={() => setShowFilterModal(true)}
           >
-            <Filter className="h-4 w-4 mr-2" />
+            <FunnelSimpleIcon className="h-4 w-4 mr-2" />
             Filtrar
           </Button>
         </div>
@@ -191,19 +191,19 @@ export default function ResponsaveisPage() {
               <TableHead className="cursor-pointer" onClick={() => handleSort('dsNome')}>
                 <div className="flex items-center">
                   Nome
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
               <TableHead className="cursor-pointer" onClick={() => handleSort('dsEmail')}>
                 <div className="flex items-center">
                   Email
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
               <TableHead className="cursor-pointer" onClick={() => handleSort('nmTelefone')}>
                 <div className="flex items-center">
                   Telefone
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
               <TableHead className="w-24 text-right">Ações</TableHead>
@@ -229,7 +229,7 @@ export default function ResponsaveisPage() {
                         size="icon" 
                         onClick={() => handleEditResponsavel(responsavel)}
                       >
-                        <Edit className="h-4 w-4" />
+                        <PencilSimpleIcon className="h-4 w-4" />
                       </Button>
                       <Button 
                         variant="ghost" 
@@ -237,7 +237,7 @@ export default function ResponsaveisPage() {
                         onClick={() => handleDeleteResponsavel(responsavel.idResponsavel)}
                         className="text-red-500 hover:text-red-700"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <TrashIcon className="h-4 w-4" />
                       </Button>
                     </div>
                   </TableCell>
@@ -323,7 +323,7 @@ export default function ResponsaveisPage() {
               }}
               className="mr-2"
             >
-              <X className="h-4 w-4 mr-2" />
+              <XIcon className="h-4 w-4 mr-2" />
               Limpar Filtros
             </Button>
             <Button onClick={handleApplyFilters}>

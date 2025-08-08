@@ -1,7 +1,7 @@
 'use client';
 
 import {useEffect, useState} from 'react';
-import {ArrowLeft, Download, Loader2, MoreHorizontal, Paperclip, Trash2, FileText} from 'lucide-react';
+import {ArrowLeftIcon, DownloadIcon, SpinnerIcon, DotsThreeVerticalIcon, PaperclipIcon, TrashIcon, FileTextIcon} from '@phosphor-icons/react';
 import {Button} from '@/components/ui/button';
 import {Avatar, AvatarFallback, AvatarImage} from '@/components/ui/avatar';
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,} from '@/components/ui/dropdown-menu';
@@ -293,7 +293,7 @@ export default function EmailDetail({
   if ((apiLoading && !isSentEmail && !isMockEmail) || (isLoading && !isMockEmail)) {
     return (
       <div className="flex-1 bg-white flex flex-col h-full items-center justify-center">
-        <Loader2 className="h-8 w-8 text-blue-500 animate-spin mb-4" />
+        <SpinnerIcon className="h-8 w-8 text-blue-500 animate-spin mb-4" />
         <p className="text-gray-500">Carregando email...</p>
       </div>
     );
@@ -345,17 +345,17 @@ export default function EmailDetail({
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-2">
             <Button variant="ghost" size="sm" onClick={onClose}>
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeftIcon className="h-4 w-4" />
             </Button>
             <Button variant="ghost" size="sm">
-              <Trash2 className="h-4 w-4" />
+              <TrashIcon className="h-4 w-4" />
             </Button>
           </div>
           <div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm">
-                  <MoreHorizontal className="h-4 w-4" />
+                  <DotsThreeVerticalIcon className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
@@ -392,7 +392,7 @@ export default function EmailDetail({
         {email.attachments.length > 0 && (
           <div className="mt-8 p-4 bg-gray-50 rounded-3xl">
             <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
-              <Paperclip className="h-4 w-4 mr-2" />
+              <PaperclipIcon className="h-4 w-4 mr-2" />
               Anexos ({email.attachments.length})
             </h3>
             <div className="space-y-2">
@@ -400,7 +400,7 @@ export default function EmailDetail({
                 <div key={index} className="flex items-center justify-between p-2 bg-white rounded border">
                   <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
-                      <Paperclip className="h-4 w-4 text-blue-600" />
+                      <PaperclipIcon className="h-4 w-4 text-blue-600" />
                     </div>
                     <div>
                       <div className="font-medium text-sm">{attachment?.ds_nome_anexo || "Arquivo"}</div>
@@ -408,7 +408,7 @@ export default function EmailDetail({
                     </div>
                   </div>
                   <Button variant="ghost" size="sm">
-                    <Download className="h-4 w-4" />
+                    <DownloadIcon className="h-4 w-4" />
                   </Button>
                 </div>
               ))}
@@ -427,7 +427,7 @@ export default function EmailDetail({
               setShowSolicitacaoModal(true);
             }}
           >
-            <FileText className="h-4 w-4 mr-2" />
+            <FileTextIcon className="h-4 w-4 mr-2" />
             Criar Solicitação
           </Button>
         </div>

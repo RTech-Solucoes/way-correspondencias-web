@@ -1,6 +1,7 @@
 'use client';
 
-import { Calendar, MessageCircle, Paperclip, User, Clock, AlertTriangle } from 'lucide-react';
+import React from 'react';
+import { ChatCircleIcon, ClockIcon, WarningIcon } from '@phosphor-icons/react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -82,7 +83,7 @@ export default function TaskCard({ task, onDragStart, onClick }: TaskCardProps) 
           {statusLabels[task.status]}
         </Badge>
         {isOverdue && (
-          <AlertTriangle className="h-4 w-4 text-red-500" />
+          <WarningIcon className="h-4 w-4 text-red-500" />
         )}
       </div>
 
@@ -122,7 +123,7 @@ export default function TaskCard({ task, onDragStart, onClick }: TaskCardProps) 
 
       {/* Duration */}
       <div className="flex items-center space-x-1 mb-3 text-xs text-gray-600">
-        <Clock className="h-3 w-3" />
+        <ClockIcon className="h-3 w-3" />
         <span>{task.duracao} dias</span>
       </div>
 
@@ -140,7 +141,7 @@ export default function TaskCard({ task, onDragStart, onClick }: TaskCardProps) 
         <div className="flex items-center space-x-2">
           {task.comentarios && (
             <div className="flex items-center space-x-1 text-gray-500">
-              <MessageCircle className="h-3 w-3" />
+              <ChatCircleIcon className="h-3 w-3" />
             </div>
           )}
         </div>

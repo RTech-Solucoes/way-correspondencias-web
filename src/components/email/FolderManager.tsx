@@ -1,14 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import {X, Plus, Trash2, Folder, Edit2, Tag, LucideIcon} from 'lucide-react';
+import {XIcon, PlusIcon, TrashIcon, FolderIcon, PencilIcon, TagIcon, Icon} from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 interface Folder {
   id: string;
-  icon: LucideIcon;
+  icon: Icon;
   label: string;
   count: number;
 }
@@ -29,7 +29,7 @@ export default function FolderManager({ folders, onClose, onSave }: FolderManage
     if (newFolderName.trim()) {
       const newFolder: Folder = {
         id: Date.now().toString(),
-        icon: Tag,
+        icon: TagIcon,
         label: newFolderName.trim(),
         count: 0,
       };
@@ -79,11 +79,11 @@ export default function FolderManager({ folders, onClose, onSave }: FolderManage
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-lg font-semibold flex items-center">
-            <Folder className="h-5 w-5 mr-2" />
+            <FolderIcon className="h-5 w-5 mr-2" />
             Gerenciar Pastas
           </h2>
           <Button variant="ghost" size="sm" onClick={onClose}>
-            <X className="h-4 w-4" />
+            <XIcon className="h-4 w-4" />
           </Button>
         </div>
 
@@ -103,7 +103,7 @@ export default function FolderManager({ folders, onClose, onSave }: FolderManage
                 onKeyPress={(e) => e.key === 'Enter' && handleAddFolder()}
               />
               <Button onClick={handleAddFolder} disabled={!newFolderName.trim()}>
-                <Plus className="h-4 w-4" />
+                <PlusIcon className="h-4 w-4" />
               </Button>
             </div>
           </div>
@@ -115,7 +115,7 @@ export default function FolderManager({ folders, onClose, onSave }: FolderManage
               {localFolders.map((folder) => (
                 <div key={folder.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-3xl">
                   <div className="flex items-center space-x-3">
-                    <Folder className="h-4 w-4 text-gray-500" />
+                    <FolderIcon className="h-4 w-4 text-gray-500" />
                     {editingFolder === folder.id ? (
                       <div className="flex items-center space-x-2">
                         <Input
@@ -147,7 +147,7 @@ export default function FolderManager({ folders, onClose, onSave }: FolderManage
                         size="sm"
                         onClick={() => handleEditFolder(folder)}
                       >
-                        <Edit2 className="h-3 w-3" />
+                        <PencilIcon className="h-3 w-3" />
                       </Button>
                       {!defaultFolders.includes(folder.id) && (
                         <Button 
@@ -156,7 +156,7 @@ export default function FolderManager({ folders, onClose, onSave }: FolderManage
                           onClick={() => handleDeleteFolder(folder.id)}
                           className="text-red-600 hover:text-red-700"
                         >
-                          <Trash2 className="h-3 w-3" />
+                          <TrashIcon className="h-3 w-3" />
                         </Button>
                       )}
                     </div>

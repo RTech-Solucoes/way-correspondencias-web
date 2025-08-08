@@ -3,7 +3,7 @@
 import {cn} from '@/lib/utils';
 import {Button} from '@/components/ui/button';
 import {Badge} from '@/components/ui/badge';
-import {Bell, Building2, ClipboardList, LayoutDashboard, FileText, LucideIcon, Mail, User, Users} from 'lucide-react';
+import {BellIcon, BuildingIcon, ClipboardTextIcon, PresentationChartIcon, FileTextIcon, EnvelopeIcon, UserIcon, UsersIcon, Icon} from '@phosphor-icons/react';
 import {Avatar, AvatarFallback, AvatarImage} from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -20,12 +20,8 @@ import Image from 'next/image';
 interface NavigationItem {
   id: string;
   label: string;
-  icon: LucideIcon;
+  icon: Icon;
   count: number;
-}
-
-interface SidebarProps {
-  navigationItems: NavigationItem[];
 }
 
 const MOCK_NOTIFICATIONS = [
@@ -53,12 +49,12 @@ const MOCK_NOTIFICATIONS = [
 ];
 
 const NAVIGATION_ITEMS = [
-  { id: "/", label: "Dashboard", icon: LayoutDashboard },
-  { id: "/email", label: "Email", icon: Mail },
-  { id: "/areas", label: "Áreas", icon: Building2 },
-  { id: "/temas", label: "Temas", icon: FileText },
-  { id: "/responsaveis", label: "Responsáveis", icon: Users },
-  { id: "/solicitacoes", label: "Solicitações", icon: ClipboardList },
+  { id: "/", label: "Dashboard", icon: PresentationChartIcon },
+  { id: "/email", label: "Email", icon: EnvelopeIcon },
+  { id: "/areas", label: "Áreas", icon: BuildingIcon },
+  { id: "/temas", label: "Temas", icon: FileTextIcon },
+  { id: "/responsaveis", label: "Responsáveis", icon: UsersIcon },
+  { id: "/solicitacoes", label: "Solicitações", icon: ClipboardTextIcon },
 ];
 
 export default function Sidebar() {
@@ -127,7 +123,7 @@ export default function Sidebar() {
                   variant="ghost"
                   className="flex justify-start w-full text-left h-11 text-sm relative px-4"
                 >
-                  <Bell className="h-4 w-4 flex-shrink-0 mr-3" />
+                  <BellIcon className="h-4 w-4 flex-shrink-0 mr-3" />
                   <span className="flex-1 text-start">Notificações</span>
                   {unreadCount > 0 && (
                     <Badge variant="destructive" className="ml-auto">
@@ -225,7 +221,7 @@ export default function Sidebar() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem>
-                <User className="mr-2 h-4 w-4" />
+                <UserIcon className="mr-2 h-4 w-4" />
                 Perfil
               </DropdownMenuItem>
               <DropdownMenuItem>

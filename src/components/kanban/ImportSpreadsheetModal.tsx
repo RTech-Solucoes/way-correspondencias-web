@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { X, Upload, FileSpreadsheet, AlertCircle, Check } from 'lucide-react';
+import { XIcon, UploadIcon, MicrosoftExcelLogoIcon, WarningCircleIcon, CheckIcon } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
@@ -85,11 +85,11 @@ export default function ImportSpreadsheetModal({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-lg font-semibold flex items-center">
-            <FileSpreadsheet className="h-5 w-5 mr-2" />
+            <MicrosoftExcelLogoIcon className="h-5 w-5 mr-2" />
             Importar Planilha
           </h2>
           <Button variant="ghost" size="sm" onClick={onClose}>
-            <X className="h-4 w-4" />
+            <XIcon className="h-4 w-4" />
           </Button>
         </div>
 
@@ -119,7 +119,7 @@ export default function ImportSpreadsheetModal({
               {file ? (
                 <div className="flex flex-col items-center">
                   <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-3">
-                    <Check className="h-6 w-6 text-green-600" />
+                    <CheckIcon className="h-6 w-6 text-green-600" />
                   </div>
                   <p className="text-sm font-medium text-gray-900 mb-1">{file.name}</p>
                   <p className="text-xs text-gray-500">
@@ -129,7 +129,7 @@ export default function ImportSpreadsheetModal({
               ) : (
                 <div className="flex flex-col items-center">
                   <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
-                    <Upload className="h-6 w-6 text-gray-600" />
+                    <UploadIcon className="h-6 w-6 text-gray-600" />
                   </div>
                   <p className="text-sm font-medium text-gray-900 mb-1">
                     Arraste e solte seu arquivo aqui ou clique para selecionar
@@ -143,7 +143,7 @@ export default function ImportSpreadsheetModal({
             
             {error && (
               <div className="mt-3 flex items-start space-x-2 text-red-600">
-                <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                <WarningCircleIcon className="h-4 w-4 mt-0.5 flex-shrink-0" />
                 <p className="text-sm">{error}</p>
               </div>
             )}

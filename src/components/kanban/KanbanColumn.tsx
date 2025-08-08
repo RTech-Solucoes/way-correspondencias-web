@@ -1,6 +1,7 @@
 'use client';
 
-import { Plus, GripVertical, Edit } from 'lucide-react';
+import React from 'react';
+import { PlusIcon, DotsNineIcon, PencilIcon } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import TaskCard from './TaskCard';
@@ -70,7 +71,7 @@ export default function KanbanColumn({
       {/* Column Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-2">
-          <GripVertical className="h-4 w-4 text-gray-400 cursor-grab" />
+          <DotsNineIcon className="h-4 w-4 text-gray-400 cursor-grab" />
           <div className={cn("w-3 h-3 rounded-full", column.color)} />
           <h3 className="font-semibold text-gray-900">{column.title}</h3>
           <Badge variant="secondary" className="text-xs">
@@ -79,7 +80,7 @@ export default function KanbanColumn({
         </div>
         <div className="flex items-center space-x-1">
           <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700">
-            <Plus className="h-4 w-4" />
+            <PlusIcon className="h-4 w-4" />
           </Button>
           <Button 
             variant="ghost" 
@@ -87,7 +88,7 @@ export default function KanbanColumn({
             className="text-gray-500 hover:text-gray-700"
             onClick={() => onEditColumn(column)}
           >
-            <Edit className="h-4 w-4" />
+            <PencilIcon className="h-4 w-4" />
           </Button>
         </div>
       </div>

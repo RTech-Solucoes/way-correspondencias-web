@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Trash2, Settings } from 'lucide-react';
+import { XIcon, TrashIcon, GearIcon } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -64,11 +64,11 @@ export default function ColumnSettingsModal({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-lg font-semibold flex items-center">
-            <Settings className="h-5 w-5 mr-2" />
+            <GearIcon className="h-5 w-5 mr-2" />
             {column ? 'Editar Seção' : 'Nova Seção'}
           </h2>
           <Button variant="ghost" size="sm" onClick={onClose}>
-            <X className="h-4 w-4" />
+            <XIcon className="h-4 w-4" />
           </Button>
         </div>
 
@@ -108,7 +108,7 @@ export default function ColumnSettingsModal({
           <div>
             {column && (
               <Button variant="destructive" size="sm" onClick={handleDelete}>
-                <Trash2 className="h-4 w-4 mr-2" />
+                <TrashIcon className="h-4 w-4 mr-2" />
                 Excluir Seção
               </Button>
             )}

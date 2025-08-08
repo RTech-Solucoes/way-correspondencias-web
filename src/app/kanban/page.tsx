@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { PlusIcon, FilterIcon, UsersIcon, CalendarIcon, SearchIcon, SettingsIcon, GripVerticalIcon } from 'lucide-react';
-import { KanbanIcon } from 'lucide-react';
+import { PlusIcon, FilterIcon, UsersIcon, CalendarIcon, SearchIcon, SettingsIcon, GripVerticalIcon } from '@phosphor-icons/react';
+import { KanbanIcon } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';

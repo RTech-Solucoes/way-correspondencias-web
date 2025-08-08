@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { RefreshCw, Wifi, WifiOff, Clock } from 'lucide-react';
+import { ArrowClockwiseIcon, WifiHighIcon, WifiSlashIcon, ClockIcon } from '@phosphor-icons/react';
 import { useSincronizacaoStatus, useSincronizarEmails } from '@/api/hooks';
 
 export default function ApiStatus() {
@@ -34,9 +34,9 @@ export default function ApiStatus() {
   };
 
   const getStatusIcon = () => {
-    if (error || syncError) return <WifiOff className="h-4 w-4" />;
-    if (loading || syncLoading) return <RefreshCw className="h-4 w-4 animate-spin" />;
-    return <Wifi className="h-4 w-4" />;
+    if (error || syncError) return <WifiSlashIcon className="h-4 w-4" />;
+    if (loading || syncLoading) return <ArrowClockwiseIcon className="h-4 w-4 animate-spin" />;
+    return <WifiHighIcon className="h-4 w-4" />;
   };
 
   return (
@@ -60,7 +60,7 @@ export default function ApiStatus() {
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">Última sincronização:</span>
               <div className="flex items-center space-x-1 text-sm">
-                <Clock className="h-3 w-3" />
+                <ClockIcon className="h-3 w-3" />
                 <span>{lastSync || 'Nunca'}</span>
               </div>
             </div>
@@ -81,12 +81,12 @@ export default function ApiStatus() {
           >
             {syncLoading ? (
               <>
-                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                <ArrowClockwiseIcon className="h-4 w-4 mr-2 animate-spin" />
                 Sincronizando...
               </>
             ) : (
               <>
-                <RefreshCw className="h-4 w-4 mr-2" />
+                <ArrowClockwiseIcon className="h-4 w-4 mr-2" />
                 Sincronizar Emails
               </>
             )}

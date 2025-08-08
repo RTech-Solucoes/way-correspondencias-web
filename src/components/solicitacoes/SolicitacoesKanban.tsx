@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Filter, Users, Calendar, Search, ArrowLeft } from 'lucide-react';
+import { PlusIcon, FunnelIcon, UsersIcon, CalendarIcon, MagnifyingGlassIcon, ArrowLeftIcon } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -165,11 +165,11 @@ export default function SolicitacoesKanban() {
                 window.location.href = "/solicitacoes";
               }}
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <ArrowLeftIcon className="h-4 w-4 mr-2" />
               Voltar para Lista
             </Button>
             <Button onClick={handleCreateTask} className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="h-4 w-4 mr-2" />
+              <PlusIcon className="h-4 w-4 mr-2" />
               Nova Solicitação
             </Button>
           </div>
@@ -178,7 +178,7 @@ export default function SolicitacoesKanban() {
         <div className="flex items-center justify-between">
           <div className="flex-1 flex flex-row items-center space-x-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 placeholder="Pesquisar por assunto, descrição, identificação ou responsável..."
                 value={searchQuery}
@@ -187,11 +187,11 @@ export default function SolicitacoesKanban() {
               />
             </div>
             <Button variant="secondary" className="h-10 px-4">
-              <Filter className="h-4 w-4 mr-2" />
+              <FunnelIcon className="h-4 w-4 mr-2" />
               Filtrar
             </Button>
             <Button variant="secondary" className="h-10 px-4">
-              <Users className="h-4 w-4 mr-2" />
+              <UsersIcon className="h-4 w-4 mr-2" />
               Responsáveis
             </Button>
           </div>

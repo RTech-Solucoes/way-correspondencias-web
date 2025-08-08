@@ -1,7 +1,7 @@
 'use client';
 
 import {useEffect, useState} from 'react';
-import {AlertCircleIcon, BarChartIcon, CheckCircleIcon, ClockIcon, Clock3Icon, MoreHorizontalIcon, RefreshCwIcon, XCircleIcon} from 'lucide-react';
+import {WarningCircleIcon, ChartBarIcon, CheckCircleIcon, ClockIcon, DotsThreeIcon, ArrowClockwiseIcon, XCircleIcon} from '@phosphor-icons/react';
 import {Button} from '@/components/ui/button';
 import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from '@/components/ui/card';
 import {Avatar, AvatarFallback, AvatarImage} from '@/components/ui/avatar';
@@ -24,7 +24,7 @@ export default function DashboardPage() {
 			<div className="flex items-center justify-between">
 				<div>
 						<h1 className="text-3xl font-bold text-gray-900 flex items-center">
-							<BarChartIcon className="h-8 w-8 mr-3" />
+							<ChartBarIcon className="h-8 w-8 mr-3" />
 						Dashboard
 					</h1>
 					<p className="text-gray-500 mt-1">
@@ -36,7 +36,7 @@ export default function DashboardPage() {
             Última atualização: {lastUpdated ? lastUpdated.toLocaleTimeString() : '--:--:--'}
           </span>
 						<Button variant="outline" size="sm" onClick={refreshData}>
-							<RefreshCwIcon className="h-4 w-4 mr-2" />
+							<ArrowClockwiseIcon className="h-4 w-4 mr-2" />
 						Atualizar
 					</Button>
 				</div>
@@ -50,7 +50,7 @@ export default function DashboardPage() {
 						<div className="flex items-center justify-between">
 							<CardTitle>Visão Geral de Obrigações</CardTitle>
 							<Button variant="ghost" size="sm">
-								<MoreHorizontalIcon className="h-4 w-4" />
+								<DotsThreeIcon className="h-4 w-4" />
 							</Button>
 						</div>
 						<CardDescription>Status de todas as obrigações contratuais</CardDescription>
@@ -73,7 +73,7 @@ export default function DashboardPage() {
 							<div className="space-y-2">
 								<div className="flex items-center justify-between text-sm">
  								<div className="flex items-center">
- 									<Clock3Icon className="h-4 w-4 text-blue-500 mr-2" />
+ 									<ClockIcon className="h-4 w-4 text-blue-500 mr-2" />
 										<span>Em Andamento</span>
 									</div>
 									<span className="font-medium">5 (28%)</span>
@@ -86,7 +86,7 @@ export default function DashboardPage() {
 							<div className="space-y-2">
 								<div className="flex items-center justify-between text-sm">
  								<div className="flex items-center">
- 									<AlertCircleIcon className="h-4 w-4 text-yellow-500 mr-2" />
+ 									<WarningCircleIcon className="h-4 w-4 text-yellow-500 mr-2" />
 										<span>Pendentes</span>
 									</div>
 									<span className="font-medium">3 (17%)</span>
@@ -147,7 +147,7 @@ export default function DashboardPage() {
 						<div className="flex items-center justify-between">
 							<CardTitle>Atividade Recente</CardTitle>
 							<Button variant="ghost" size="sm">
-								<MoreHorizontalIcon className="h-4 w-4" />
+								<DotsThreeIcon className="h-4 w-4" />
 							</Button>
 						</div>
 						<CardDescription>Últimas ações no sistema</CardDescription>
@@ -221,7 +221,7 @@ export default function DashboardPage() {
 						<div className="flex items-center justify-between">
 							<CardTitle>Próximos Prazos</CardTitle>
 							<Button variant="ghost" size="sm">
-								<MoreHorizontalIcon className="h-4 w-4" />
+								<DotsThreeIcon className="h-4 w-4" />
 							</Button>
 						</div>
 						<CardDescription>Obrigações com vencimento próximo</CardDescription>

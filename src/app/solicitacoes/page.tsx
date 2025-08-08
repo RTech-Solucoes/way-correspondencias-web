@@ -11,15 +11,6 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { 
-  Plus, 
-  Search, 
-  Edit, 
-  Trash2, 
-  Filter, 
-  ArrowUpDown,
-  Kanban
-} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Solicitacao } from '@/lib/types';
 import { mockSolicitacoes } from '@/lib/mockData';
@@ -27,6 +18,23 @@ import { getResponsavelNameById } from '@/lib/mockData';
 import SolicitacaoModal from '../../components/solicitacoes/SolicitacaoModal';
 import Link from 'next/link';
 import {useRouter} from "next/navigation";
+import {
+  PlusIcon,
+  MagnifyingGlassIcon,
+  PencilIcon,
+  TrashIcon,
+  DotsThreeVerticalIcon,
+  FunnelIcon,
+  DownloadIcon,
+  UploadIcon,
+  ClockIcon,
+  FileTextIcon,
+  UsersIcon,
+  CalendarIcon,
+  ListBulletsIcon,
+  MicrosoftExcelLogoIcon,
+  EyeIconIcon
+} from '@phosphor-icons/react';
 
 export default function SolicitacoesPage() {
   const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>(mockSolicitacoes);
@@ -132,7 +140,7 @@ export default function SolicitacoesPage() {
               onClick={handleCreateSolicitacao} 
               className="bg-blue-600 hover:bg-blue-700"
             >
-              <Plus className="h-4 w-4 mr-2" />
+              <PlusIcon className="h-4 w-4 mr-2" />
               Nova Solicitação
             </Button>
           </div>
@@ -140,7 +148,7 @@ export default function SolicitacoesPage() {
 
         <div className="flex items-center space-x-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               placeholder="Pesquisar por assunto, descrição, identificação ou responsável..."
               value={searchQuery}
@@ -149,7 +157,7 @@ export default function SolicitacoesPage() {
             />
           </div>
           <Button variant="secondary" className="h-10 px-4">
-            <Filter className="h-4 w-4 mr-2" />
+            <FunnelIcon className="h-4 w-4 mr-2" />
             Filtrar
           </Button>
         </div>
@@ -163,31 +171,31 @@ export default function SolicitacoesPage() {
               <TableHead className="cursor-pointer" onClick={() => handleSort('cdIdentificacao')}>
                 <div className="flex items-center">
                   Identificação
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
+                  <DotsThreeVerticalIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
               <TableHead className="cursor-pointer" onClick={() => handleSort('dsAssunto')}>
                 <div className="flex items-center">
                   Assunto
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
+                  <DotsThreeVerticalIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
               <TableHead className="cursor-pointer" onClick={() => handleSort('status')}>
                 <div className="flex items-center">
                   Status
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
+                  <DotsThreeVerticalIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
               <TableHead className="cursor-pointer" onClick={() => handleSort('idResponsavel')}>
                 <div className="flex items-center">
                   Responsável
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
+                  <DotsThreeVerticalIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
               <TableHead className="cursor-pointer" onClick={() => handleSort('dtCriacao')}>
                 <div className="flex items-center">
                   Data de Criação
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
+                  <DotsThreeVerticalIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
               <TableHead className="w-24 text-right">Ações</TableHead>
@@ -220,7 +228,7 @@ export default function SolicitacoesPage() {
                         size="icon" 
                         onClick={() => handleEditSolicitacao(solicitacao)}
                       >
-                        <Edit className="h-4 w-4" />
+                        <PencilIcon className="h-4 w-4" />
                       </Button>
                       <Button 
                         variant="ghost" 
@@ -228,7 +236,7 @@ export default function SolicitacoesPage() {
                         onClick={() => handleDeleteSolicitacao(solicitacao.idSolicitacao)}
                         className="text-red-500 hover:text-red-700"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <TrashIcon className="h-4 w-4" />
                       </Button>
                     </div>
                   </TableCell>

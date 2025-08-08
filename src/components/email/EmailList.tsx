@@ -1,7 +1,7 @@
 'use client';
 
 import React, {useState, useCallback, useEffect, useMemo} from 'react';
-import {Paperclip, RotateCw, Trash2, Loader2, Mail} from 'lucide-react';
+import {PaperclipIcon, ArrowClockwiseIcon, TrashIcon, SpinnerIcon, EnvelopeIcon} from '@phosphor-icons/react';
 import {Button} from '@/components/ui/button';
 import {Checkbox} from '@/components/ui/checkbox';
 import {cn} from '@/lib/utils';
@@ -269,7 +269,7 @@ const EmailItem = React.memo<{
                 {email.from}
               </span>
               {email.hasAttachment && (
-                <Paperclip className="h-3 w-3 text-gray-400"/>
+                <PaperclipIcon className="h-3 w-3 text-gray-400"/>
               )}
             </div>
             <span className="text-xs text-gray-500">{email.date}</span>
@@ -460,7 +460,7 @@ function EmailList({
           <div className="flex items-center space-x-1">
             {selectedEmails.length > 0 ? (
               <Button variant="ghost" size="sm">
-                <Trash2 className="h-4 w-4"/>
+                <TrashIcon className="h-4 w-4"/>
               </Button>
             ) : (
               <Button
@@ -470,9 +470,9 @@ function EmailList({
                 disabled={loading || syncLoading}
               >
                 {loading || syncLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin"/>
+                  <SpinnerIcon className="h-4 w-4 animate-spin"/>
                 ) : (
-                  <RotateCw className="h-4 w-4"/>
+                  <ArrowClockwiseIcon className="h-4 w-4"/>
                 )}
               </Button>
             )}
@@ -484,12 +484,12 @@ function EmailList({
       <div className="flex flex-col-reverse overflow-y-auto">
         {loading ? (
           <div className="flex flex-col items-center justify-center h-full p-8">
-            <Loader2 className="h-8 w-8 text-blue-500 animate-spin mb-4"/>
+            <SpinnerIcon className="h-8 w-8 text-blue-500 animate-spin mb-4"/>
             <p className="text-gray-500">Carregando emails...</p>
           </div>
         ) : filteredEmails.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full p-8">
-            <Mail className="h-12 w-12 text-gray-300 mb-4"/>
+            <EnvelopeIcon className="h-12 w-12 text-gray-300 mb-4"/>
             <h3 className="text-lg font-medium text-gray-900 mb-1">Nenhum email encontrado</h3>
             <p className="text-gray-500 text-center">
               {searchQuery ?

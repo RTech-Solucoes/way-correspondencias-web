@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Checkbox } from '@/components/ui/checkbox'
 import {
   Table,
   TableBody,
@@ -13,15 +12,19 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { 
-  Plus, 
-  Search, 
-  Edit, 
-  Trash2, 
-  Filter, 
-  ArrowUpDown,
-  X
-} from 'lucide-react'
+import {
+  PlusIcon,
+  MagnifyingGlassIcon,
+  PencilIcon,
+  TrashIcon,
+  DotsThreeVerticalIcon,
+  FunnelIcon,
+  DownloadIcon,
+  UploadIcon,
+  ClockIcon,
+  FileTextIcon,
+  BuildingIcon
+} from '@phosphor-icons/react'
 import {
   Dialog,
   DialogContent,
@@ -34,6 +37,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tema } from '@/lib/types'
 import { mockTemas, mockAreas } from '@/lib/mockData'
 import { TemaModal } from '@/components/temas/TemaModal'
+import {Checkbox} from "@/components/ui/checkbox";
 
 export default function TemasPage() {
   const [temas, setTemas] = useState<Tema[]>(mockTemas)
@@ -136,14 +140,14 @@ export default function TemasPage() {
             onClick={handleCreateTema} 
             className="bg-blue-600 hover:bg-blue-700"
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <PlusIcon className="h-4 w-4 mr-2" />
             Novo Tema
           </Button>
         </div>
         
         <div className="flex items-center space-x-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               placeholder="Pesquisar por nome ou descrição..."
               value={searchQuery}
@@ -156,7 +160,7 @@ export default function TemasPage() {
             className="h-10 px-4"
             onClick={() => setShowFilterModal(true)}
           >
-            <Filter className="h-4 w-4 mr-2" />
+            <FunnelIcon className="h-4 w-4 mr-2" />
             Filtrar
           </Button>
         </div>
@@ -170,37 +174,37 @@ export default function TemasPage() {
               <TableHead className="cursor-pointer" onClick={() => handleSort('nmTema')}>
                 <div className="flex items-center">
                   Nome
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
+                  <DotsThreeVerticalIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
               <TableHead className="cursor-pointer" onClick={() => handleSort('dsTema')}>
                 <div className="flex items-center">
                   Descrição
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
+                  <DotsThreeVerticalIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
               <TableHead className="cursor-pointer" onClick={() => handleSort('idAreas')}>
                 <div className="flex items-center">
                   Áreas Relacionadas
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
+                  <DotsThreeVerticalIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
               <TableHead className="cursor-pointer" onClick={() => handleSort('nrDiasPrazo')}>
                 <div className="flex items-center">
                   Prazo (dias)
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
+                  <DotsThreeVerticalIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
               <TableHead className="cursor-pointer" onClick={() => handleSort('tpContagem')}>
                 <div className="flex items-center">
                   Tipo de Contagem
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
+                  <DotsThreeVerticalIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
               <TableHead className="cursor-pointer" onClick={() => handleSort('dtCadastro')}>
                 <div className="flex items-center">
                   Data de Cadastro
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
+                  <DotsThreeVerticalIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
               <TableHead className="w-24 text-right">Ações</TableHead>
@@ -251,7 +255,7 @@ export default function TemasPage() {
                           size="icon" 
                           onClick={() => handleEditTema(tema)}
                         >
-                          <Edit className="h-4 w-4" />
+                          <PencilIcon className="h-4 w-4" />
                         </Button>
                         <Button 
                           variant="ghost" 
@@ -259,7 +263,7 @@ export default function TemasPage() {
                           onClick={() => handleDeleteTema(tema.idTema)}
                           className="text-red-500 hover:text-red-700"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <TrashIcon className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Eye, EyeOff, Lock, Mail, User, Building, Phone, Shield } from 'lucide-react';
+import { EyeIcon, EyeClosedIcon, LockIcon, EnvelopeIcon, UserIcon, PhoneIcon } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -194,7 +194,7 @@ export default function CadastroPage() {
             Nome *
           </Label>
           <div className="relative">
-            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               id="firstName"
               type="text"
@@ -241,7 +241,7 @@ export default function CadastroPage() {
           Email Corporativo *
         </Label>
         <div className="relative">
-          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <EnvelopeIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             id="email"
             type="email"
@@ -267,7 +267,7 @@ export default function CadastroPage() {
             Senha *
           </Label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <LockIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               id="password"
               type={showPassword ? 'text' : 'password'}
@@ -289,9 +289,9 @@ export default function CadastroPage() {
               disabled={isLoading}
             >
               {showPassword ? (
-                <EyeOff className="h-4 w-4 text-gray-400" />
+                <EyeClosedIcon className="h-4 w-4 text-gray-400" />
               ) : (
-                <Eye className="h-4 w-4 text-gray-400" />
+                <EyeIcon className="h-4 w-4 text-gray-400" />
               )}
             </Button>
           </div>
@@ -326,7 +326,7 @@ export default function CadastroPage() {
             Confirmar Senha *
           </Label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <LockIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               id="confirmPassword"
               type={showConfirmPassword ? 'text' : 'password'}
@@ -348,9 +348,9 @@ export default function CadastroPage() {
               disabled={isLoading}
             >
               {showConfirmPassword ? (
-                <EyeOff className="h-4 w-4 text-gray-400" />
+                <EyeClosedIcon className="h-4 w-4 text-gray-400" />
               ) : (
-                <Eye className="h-4 w-4 text-gray-400" />
+                <EyeIcon className="h-4 w-4 text-gray-400" />
               )}
             </Button>
           </div>
@@ -366,7 +366,7 @@ export default function CadastroPage() {
           Telefone *
         </Label>
         <div className="relative">
-          <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <PhoneIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             id="phone"
             type="tel"

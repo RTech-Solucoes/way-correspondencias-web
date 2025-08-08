@@ -2,22 +2,13 @@
 
 import {useState, useEffect} from 'react';
 import {
-  Archive,
-  File,
-  Filter,
-  Folder,
-  Inbox,
-  Mail,
-  OctagonAlert,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Plus,
-  RotateCw,
-  Search,
-  Send,
-  Settings,
-  Cog
-} from 'lucide-react';
+  FunnelSimpleIcon,
+  TrayIcon,
+  EnvelopeIcon,
+  PlusIcon,
+  MagnifyingGlassIcon,
+  PaperPlaneRightIcon
+} from '@phosphor-icons/react';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Badge} from '@/components/ui/badge';
@@ -37,11 +28,10 @@ import EmailList from '../../components/email/EmailList';
 import EmailComposer from '../../components/email/EmailComposer';
 import EmailDetail from '../../components/email/EmailDetail';
 import FolderManager from '../../components/email/FolderManager';
-import {cn} from "@/lib/utils";
 
 const EMAIL_FOLDERS = [
-  { id: 'inbox', icon: Inbox, label: 'Caixa de Entrada', count: 0 },
-  { id: 'sent', icon: Send, label: 'Enviados', count: 0 },
+  { id: 'inbox', icon: TrayIcon, label: 'Caixa de Entrada', count: 0 },
+  { id: 'sent', icon: PaperPlaneRightIcon, label: 'Enviados', count: 0 },
 ];
 
 interface SentEmail {
@@ -156,14 +146,14 @@ export default function EmailPage() {
       <div className="bg-white border-b border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-            <Mail className="h-7 w-7 mr-3"/>
+            <EnvelopeIcon className="h-7 w-7 mr-3"/>
             Email
           </h1>
         </div>
 
         <div className="flex items-center space-x-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400"/>
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400"/>
             <Input
               placeholder="Pesquisar emails..."
               value={searchQuery}
@@ -176,7 +166,7 @@ export default function EmailPage() {
             className="h-10 px-4"
             onClick={() => setShowFilterModal(true)}
           >
-            <Filter className="h-4 w-4 mr-2"/>
+            <FunnelSimpleIcon className="h-4 w-4 mr-2"/>
             Filtrar
           </Button>
         </div>
@@ -331,7 +321,7 @@ export default function EmailPage() {
                 }}
                 className="mt-2 flex-grow-1"
               >
-                <Plus className="h-4 w-4 mr-2"/>
+                <PlusIcon className="h-4 w-4 mr-2"/>
                 Adicionar Mensagem
               </Button>
             </div>
