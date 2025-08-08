@@ -7,7 +7,7 @@ import {Input} from '@/components/ui/input';
 import {Label} from '@/components/ui/label';
 import {Textarea} from '@/components/ui/textarea';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
-import {Check} from 'lucide-react';
+import {CheckIcon} from '@phosphor-icons/react';
 import {Tema, TipoContagem} from '@/lib/types';
 import {mockAreas} from '@/lib/mockData';
 import {v4 as uuidv4} from 'uuid';
@@ -165,7 +165,7 @@ export function TemaModal({isOpen, onClose, onSave, tema}: TemaModalProps) {
                       : "border-gray-400 bg-transparent"
                   )}>
                     {selectedAreaIds.includes(area.idArea) && (
-                      <Check className="w-2.5 h-2.5 text-blue-500"/>
+                      <CheckIcon className="w-2.5 h-2.5 text-blue-500"/>
                     )}
                   </div>
                   {area.nmArea}

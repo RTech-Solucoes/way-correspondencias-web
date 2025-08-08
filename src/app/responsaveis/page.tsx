@@ -42,7 +42,6 @@ export default function ResponsaveisPage() {
   const [sortField, setSortField] = useState<keyof Responsavel | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
-  // Filter states
   const [filters, setFilters] = useState({
     nome: '',
     email: '',
@@ -94,12 +93,10 @@ export default function ResponsaveisPage() {
   };
 
   const filteredResponsaveis = sortedResponsaveis.filter(responsavel => {
-    // Search query filter
     const matchesSearch = responsavel.dsNome.toLowerCase().includes(searchQuery.toLowerCase()) ||
       responsavel.dsEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
       responsavel.nmTelefone.toLowerCase().includes(searchQuery.toLowerCase());
 
-    // Advanced filters
     const matchesNome = !activeFilters.nome ||
       responsavel.dsNome.toLowerCase().includes(activeFilters.nome.toLowerCase());
 
@@ -135,10 +132,8 @@ export default function ResponsaveisPage() {
 
   const handleSaveResponsavel = (responsavel: Responsavel) => {
     if (selectedResponsavel) {
-      // Update existing responsavel
       setResponsaveis(responsaveis.map(r => r.idResponsavel === responsavel.idResponsavel ? responsavel : r));
     } else {
-      // Add new responsavel
       setResponsaveis([...responsaveis, responsavel]);
     }
     setShowResponsavelModal(false);

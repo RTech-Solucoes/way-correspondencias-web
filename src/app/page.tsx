@@ -300,11 +300,10 @@ export default function DashboardPage() {
 									</div>
 									<div className="grid grid-cols-7 gap-1">
 										{Array.from({ length: 35 }).map((_, index) => {
-											const day = index - 5; // Start from previous month
+											const day = index - 5;
 											const isCurrentMonth = day > 0 && day <= 31;
-											const isToday = day === 17; // Assuming today is the 17th
+											const isToday = day === 17;
 
-											// Sample obligations data
 											const obligations = [
 												{ day: 17, title: "5.2 - Contrato", status: "pendente" },
 												{ day: 18, title: "Ofício SEI n. 714/2025", status: "em_andamento" },
@@ -354,8 +353,8 @@ export default function DashboardPage() {
 								<div className="space-y-2">
 									<div className="grid grid-cols-7 gap-1 text-center mb-2">
 										{['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day, index) => {
-											const date = 14 + index; // Starting from Sunday, July 14
-											const isToday = date === 17; // Assuming today is the 17th
+											const date = 14 + index;
+											const isToday = date === 17;
 											return (
 												<div
 													key={day}
@@ -371,9 +370,8 @@ export default function DashboardPage() {
 									</div>
 									<div className="grid grid-cols-7 gap-1">
 										{['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day, index) => {
-											const date = 14 + index; // Starting from Sunday, July 14
+											const date = 14 + index;
 
-											// Sample obligations data
 											const obligations = [
 												{ day: 17, title: "5.2 - Contrato", status: "pendente", time: "10:00" },
 												{ day: 18, title: "Ofício SEI n. 714/2025", status: "em_andamento", time: "14:30" },
@@ -419,9 +417,8 @@ export default function DashboardPage() {
 								<div className="grid grid-cols-4 gap-4">
 									{['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
 										'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'].map((month, index) => {
-										const isCurrentMonth = index === 6; // July is the current month (0-indexed)
+										const isCurrentMonth = index === 6;
 
-										// Sample data for number of obligations per month
 										const obligationCounts = [3, 5, 2, 4, 6, 3, 8, 2, 0, 0, 0, 0];
 
 										return (

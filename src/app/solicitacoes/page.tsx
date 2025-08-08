@@ -1,39 +1,20 @@
 'use client';
 
-import { useState } from 'react';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Solicitacao } from '@/lib/types';
-import { mockSolicitacoes } from '@/lib/mockData';
-import { getResponsavelNameById } from '@/lib/mockData';
+import {useState} from 'react';
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
+import {Button} from '@/components/ui/button';
+import {Input} from '@/components/ui/input';
+import {Badge} from '@/components/ui/badge';
+import {Solicitacao} from '@/lib/types';
+import {getResponsavelNameById, mockSolicitacoes} from '@/lib/mockData';
 import SolicitacaoModal from '../../components/solicitacoes/SolicitacaoModal';
-import Link from 'next/link';
-import {useRouter} from "next/navigation";
 import {
-  PlusIcon,
-  MagnifyingGlassIcon,
-  PencilIcon,
-  TrashIcon,
   DotsThreeVerticalIcon,
   FunnelIcon,
-  DownloadIcon,
-  UploadIcon,
-  ClockIcon,
-  FileTextIcon,
-  UsersIcon,
-  CalendarIcon,
-  ListBulletsIcon,
-  MicrosoftExcelLogoIcon,
-  EyeIconIcon
+  MagnifyingGlassIcon,
+  PencilIcon,
+  PlusIcon,
+  TrashIcon
 } from '@phosphor-icons/react';
 
 export default function SolicitacoesPage() {
@@ -43,8 +24,6 @@ export default function SolicitacoesPage() {
   const [showSolicitacaoModal, setShowSolicitacaoModal] = useState(false);
   const [sortField, setSortField] = useState<keyof Solicitacao | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-
-  const router = useRouter();
 
   const handleSort = (field: keyof Solicitacao) => {
     if (sortField === field) {
@@ -102,10 +81,8 @@ export default function SolicitacoesPage() {
 
   const handleSaveSolicitacao = (solicitacao: Solicitacao) => {
     if (selectedSolicitacao) {
-      // Update existing solicitacao
       setSolicitacoes(solicitacoes.map(s => s.idSolicitacao === solicitacao.idSolicitacao ? solicitacao : s));
     } else {
-      // Add new solicitacao
       setSolicitacoes([...solicitacoes, solicitacao]);
     }
     setShowSolicitacaoModal(false);

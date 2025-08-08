@@ -38,7 +38,6 @@ export default function AreaModal({ area, onClose, onSave }: AreaModalProps) {
     if (area) {
       setFormData(area);
     } else {
-      // Initialize with default values for new area
       const today = new Date().toISOString().split('T')[0];
       setFormData({
         idArea: uuidv4(),
@@ -46,10 +45,10 @@ export default function AreaModal({ area, onClose, onSave }: AreaModalProps) {
         nmArea: '',
         dsArea: '',
         dtCadastro: today,
-        nrCpfCadastro: '12345678901', // Mock CPF
+        nrCpfCadastro: '12345678901',
         vsVersao: 1,
         dtAlteracao: today,
-        nrCpfAlteracao: '12345678901' // Mock CPF
+        nrCpfAlteracao: '12345678901'
       });
     }
   }, [area]);
@@ -64,8 +63,7 @@ export default function AreaModal({ area, onClose, onSave }: AreaModalProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Update modification date if editing
+
     if (area) {
       const today = new Date().toISOString().split('T')[0];
       formData.dtAlteracao = today;

@@ -1,6 +1,5 @@
 import { TipoPerfil, StatusEmail, StatusObrigacao, TipoItem } from './types';
 
-// Utility functions for API data transformation and validation
 
 export const PERFIL_LABELS: Record<TipoPerfil, string> = {
   VISUALIZADOR: 'VISUALIZADOR',
@@ -29,7 +28,6 @@ export const TIPO_ITEM_LABELS: Record<TipoItem, string> = {
   COMPLIANCE: 'Compliance',
 };
 
-// Color mappings for status badges
 export const STATUS_EMAIL_COLORS: Record<StatusEmail, string> = {
   NOVO: 'bg-blue-100 text-blue-800',
   LIDO: 'bg-gray-100 text-gray-800',
@@ -44,7 +42,6 @@ export const STATUS_OBRIGACAO_COLORS: Record<StatusObrigacao, string> = {
   ATRASADO: 'bg-red-100 text-red-800',
 };
 
-// Date formatting utilities
 export function formatDate(dateString: string | undefined): string {
   if (!dateString) return '-';
   return new Date(dateString).toLocaleDateString('pt-BR');
@@ -55,7 +52,6 @@ export function formatDateTime(dateString: string | undefined): string {
   return new Date(dateString).toLocaleString('pt-BR');
 }
 
-// Validation utilities
 export function isValidEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
@@ -66,7 +62,6 @@ export function isValidDate(dateString: string): boolean {
   return !isNaN(date.getTime());
 }
 
-// Data transformation utilities
 export function transformApiError(error: any): string {
   if (typeof error === 'string') return error;
   if (error?.message) return error.message;
@@ -84,7 +79,6 @@ export function parseDateString(dateString: string): Date | null {
   return isNaN(date.getTime()) ? null : date;
 }
 
-// Pagination utilities
 export function calculateTotalPages(total: number, pageSize: number): number {
   return Math.ceil(total / pageSize);
 }
@@ -96,7 +90,6 @@ export function getPageRange(currentPage: number, totalPages: number, maxVisible
   return Array.from({ length: end - start + 1 }, (_, i) => start + i);
 }
 
-// Search and filter utilities
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number
@@ -129,7 +122,6 @@ export function createSearchFilter<T>(
   );
 }
 
-// Export all utilities
 export default {
   PERFIL_LABELS,
   STATUS_EMAIL_LABELS,
@@ -137,15 +129,4 @@ export default {
   TIPO_ITEM_LABELS,
   STATUS_EMAIL_COLORS,
   STATUS_OBRIGACAO_COLORS,
-  formatDate,
-  formatDateTime,
-  isValidEmail,
-  isValidDate,
-  transformApiError,
-  createDateString,
-  parseDateString,
-  calculateTotalPages,
-  getPageRange,
-  debounce,
-  createSearchFilter,
 };

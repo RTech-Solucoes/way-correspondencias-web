@@ -22,10 +22,9 @@ import {
 import { Solicitacao } from '@/lib/types';
 import { mockResponsaveis } from '@/lib/mockData';
 import { v4 as uuidv4 } from 'uuid';
-import { X, Plus, Paperclip } from 'lucide-react';
+import { X, Plus, Paperclip } from '@phosphor-icons/react';
 import { Badge } from '@/components/ui/badge';
 
-// Mock solicitantes for demonstration
 const mockSolicitantes = [
   { id: '1', nome: 'Ana Silva' },
   { id: '2', nome: 'Bruno Costa' },
@@ -60,7 +59,6 @@ export default function SolicitacaoModal({ solicitacao, onClose, onSave }: Solic
     if (solicitacao) {
       setFormData(solicitacao);
     } else {
-      // Initialize with default values for new solicitacao
       const today = new Date().toISOString().split('T')[0];
       setFormData({
         idSolicitacao: uuidv4(),

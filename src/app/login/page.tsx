@@ -26,12 +26,10 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Reset errors
+
     setEmailError('');
     setPasswordError('');
 
-    // Validate form
     let hasErrors = false;
 
     if (!email) {
@@ -53,21 +51,17 @@ export default function LoginPage() {
     if (!hasErrors) {
       setIsLoading(true);
       try {
-        // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Standalone page behavior
+
         console.log('Login realizado:', { email, rememberMe });
-        
-        // Store user data if remember me is checked
+
         if (rememberMe) {
           localStorage.setItem('rememberMe', 'true');
           localStorage.setItem('userEmail', email);
         }
         
         setDialog({ open: true, title: 'Sucesso', description: 'Login realizado com sucesso!' });
-        
-        // Reset form
+
         setEmail('');
         setPassword('');
         setRememberMe(false);

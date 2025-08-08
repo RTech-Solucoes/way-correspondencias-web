@@ -62,7 +62,6 @@ export default function EmailPage() {
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
 
-  // Filter states for emails
   const [emailFilters, setEmailFilters] = useState({
     isRead: '',
     hasAttachment: '',

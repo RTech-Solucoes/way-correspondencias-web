@@ -47,12 +47,11 @@ export default function TaskCard({ task, onDragStart, onClick }: TaskCardProps) 
   const today = new Date();
   const daysDiff = Math.ceil((dataLimite.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
-  // Determine date color based on proximity
   const getDateColor = () => {
-    if (daysDiff < 0) return "text-red-600"; // Overdue
-    if (daysDiff === 0) return "text-red-600"; // Due today
-    if (daysDiff <= 2) return "text-yellow-600"; // Due soon
-    return "text-gray-600"; // Normal
+    if (daysDiff < 0) return "text-red-600";
+    if (daysDiff === 0) return "text-red-600";
+    if (daysDiff <= 2) return "text-yellow-600";
+    return "text-gray-600";
   };
 
   const getPeriodicidadeColor = () => {

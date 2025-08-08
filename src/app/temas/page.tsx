@@ -114,10 +114,8 @@ export default function TemasPage() {
 
   const handleSaveTema = (tema: Tema) => {
     if (selectedTema) {
-      // Update existing tema
       setTemas(prev => prev.map(t => t.idTema === tema.idTema ? tema : t))
     } else {
-      // Add new tema
       setTemas(prev => [...prev, tema])
     }
     setShowTemaModal(false)

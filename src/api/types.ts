@@ -1,10 +1,9 @@
-// Base types and enums
+
 export type TipoPerfil = 'VISUALIZADOR' | 'EDITOR' | 'APROVADOR';
 export type StatusEmail = 'NOVO' | 'LIDO' | 'RESPONDIDO' | 'ARQUIVADO';
 export type TipoItem = 'CONTRATO' | 'LICENCA' | 'AUDITORIA' | 'COMPLIANCE';
 export type StatusObrigacao = 'PENDENTE' | 'EM_ANDAMENTO' | 'CONCLUIDO' | 'ATRASADO';
 
-// Authentication types
 export interface LoginRequest {
   email: string;
   password: string;
@@ -24,7 +23,6 @@ export interface RegisterRequest {
   role: string;
 }
 
-// Request interfaces
 export interface CreateResponsavelRequest {
   nmResponsavel: string;
   email: string;
@@ -57,7 +55,7 @@ export interface CreateEmailRequest {
   conteudo: string;
   tp_status: StatusEmail;
   resposta?: string;
-  prazo_resposta?: string; // ISO date string
+  prazo_resposta?: string;
   id_setor: number;
   id_responsavel: number;
   tp_email: string;
@@ -71,7 +69,7 @@ export interface UpdateEmailRequest {
   remetente?: string;
   tp_status?: StatusEmail;
   resposta?: string;
-  prazo_resposta?: string; // ISO date string
+  prazo_resposta?: string;
   id_setor?: number;
   id_responsavel?: number;
   tp_email?: string;
@@ -88,10 +86,10 @@ export interface CreateObrigacaoRequest {
   id_setor_atribuido: number;
   id_area_condicionamento?: number;
   periodicidade: string;
-  dt_inicio?: string; // ISO date string
-  dt_termino?: string; // ISO date string
+  dt_inicio?: string;
+  dt_termino?: string;
   duracao?: number;
-  dt_limite?: string; // ISO date string
+  dt_limite?: string;
   id_email?: number;
 }
 
@@ -102,10 +100,10 @@ export interface UpdateObrigacaoRequest {
   id_setor_atribuido?: number;
   id_area_condicionamento?: number;
   periodicidade?: string;
-  dt_inicio?: string; // ISO date string
-  dt_termino?: string; // ISO date string
+  dt_inicio?: string;
+  dt_termino?: string;
   duracao?: number;
-  dt_limite?: string; // ISO date string
+  dt_limite?: string;
   id_email?: number;
 }
 
@@ -113,12 +111,11 @@ export interface VincularCorrespondenciasRequest {
   emails: number[];
 }
 
-// Response interfaces
 export interface Responsavel {
   id_responsavel: number;
   nmResponsavel: string;
   email: string;
-  senha?: string; // Added senha field as optional
+  senha?: string;
   tp_perfil: TipoPerfil;
 }
 
@@ -174,7 +171,6 @@ export interface SincronizacaoStatus {
   count: number;
 }
 
-// Pagination interfaces
 export interface PaginatedResponse<T> {
   page: number;
   total: number;
@@ -207,7 +203,6 @@ export interface SEIInteressadoResponse {
   interessados: string[];
 }
 
-// API Response wrappers
 export interface ApiResponse<T = any> {
   data?: T;
   error?: string;

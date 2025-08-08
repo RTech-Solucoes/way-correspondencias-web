@@ -1,35 +1,22 @@
 'use client';
 
-import { useState } from 'react';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { 
-  Plus, 
-  Search, 
-  Edit, 
-  Trash2, 
-  Filter, 
-  ArrowUpDown,
-  X
-} from '@phosphor-icons/react';
+import {useState} from 'react';
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
+import {Button} from '@/components/ui/button';
+import {Input} from '@/components/ui/input';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Area } from '@/lib/types';
-import { mockAreas } from '@/lib/mockData';
+  ArrowsDownUpIcon,
+  FunnelSimpleIcon,
+  MagnifyingGlassIcon,
+  PencilSimpleIcon,
+  PlusIcon,
+  TrashIcon,
+  XIcon,
+} from '@phosphor-icons/react';
+import {Dialog, DialogContent, DialogHeader, DialogTitle} from '@/components/ui/dialog';
+import {Label} from '@/components/ui/label';
+import {Area} from '@/lib/types';
+import {mockAreas} from '@/lib/mockData';
 import AreaModal from '../../components/areas/AreaModal';
 
 export default function AreasPage() {
@@ -41,7 +28,6 @@ export default function AreasPage() {
   const [sortField, setSortField] = useState<keyof Area | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
-  // Filter states
   const [filters, setFilters] = useState({
     codigo: '',
     nome: '',
@@ -96,12 +82,10 @@ export default function AreasPage() {
   };
 
   const filteredAreas = sortedAreas.filter(area => {
-    // Search query filter
     const matchesSearch = area.nmArea.toLowerCase().includes(searchQuery.toLowerCase()) ||
       area.dsArea.toLowerCase().includes(searchQuery.toLowerCase()) ||
       area.cdArea.toString().includes(searchQuery);
 
-    // Advanced filters
     const matchesCodigo = !activeFilters.codigo ||
       area.cdArea.toString().includes(activeFilters.codigo);
 
@@ -141,10 +125,8 @@ export default function AreasPage() {
 
   const handleSaveArea = (area: Area) => {
     if (selectedArea) {
-      // Update existing area
       setAreas(areas.map(a => a.idArea === area.idArea ? area : a));
     } else {
-      // Add new area
       setAreas([...areas, area]);
     }
     setShowAreaModal(false);
@@ -163,14 +145,14 @@ export default function AreasPage() {
             onClick={handleCreateArea} 
             className="bg-blue-600 hover:bg-blue-700"
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <PlusIcon className="h-4 w-4 mr-2" />
             Nova Área
           </Button>
         </div>
         
         <div className="flex items-center space-x-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               placeholder="Pesquisar por nome, código ou descrição..."
               value={searchQuery}
@@ -183,7 +165,7 @@ export default function AreasPage() {
             className="h-10 px-4"
             onClick={() => setShowFilterModal(true)}
           >
-            <Filter className="h-4 w-4 mr-2" />
+            <FunnelSimpleIcon className="h-4 w-4 mr-2" />
             Filtrar
           </Button>
         </div>
@@ -197,25 +179,25 @@ export default function AreasPage() {
               <TableHead className="w-24 cursor-pointer" onClick={() => handleSort('cdArea')}>
                 <div className="flex items-center">
                   Código
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
               <TableHead className="cursor-pointer" onClick={() => handleSort('nmArea')}>
                 <div className="flex items-center">
                   Nome
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
               <TableHead className="cursor-pointer" onClick={() => handleSort('dsArea')}>
                 <div className="flex items-center">
                   Descrição
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
               <TableHead className="cursor-pointer" onClick={() => handleSort('dtCadastro')}>
                 <div className="flex items-center">
                   Data de Cadastro
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
               <TableHead className="w-24 text-right">Ações</TableHead>
@@ -242,7 +224,7 @@ export default function AreasPage() {
                         size="icon" 
                         onClick={() => handleEditArea(area)}
                       >
-                        <Edit className="h-4 w-4" />
+                        <PencilSimpleIcon className="h-4 w-4" />
                       </Button>
                       <Button 
                         variant="ghost" 
@@ -250,7 +232,7 @@ export default function AreasPage() {
                         onClick={() => handleDeleteArea(area.idArea)}
                         className="text-red-500 hover:text-red-700"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <TrashIcon className="h-4 w-4" />
                       </Button>
                     </div>
                   </TableCell>
@@ -341,7 +323,7 @@ export default function AreasPage() {
                   handleClearFilters();
                 }}
               >
-                <X className="h-4 w-4 mr-2" />
+                <XIcon className="h-4 w-4 mr-2" />
                 Limpar Filtros
               </Button>
               <Button

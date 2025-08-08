@@ -42,13 +42,13 @@ export default function RootLayout({
     <html lang="en">
       <body className={defaultFont.className}>
         <ApiProvider>
-          <IconContext.Provider
-            value={{
-              size: 32,
-              weight: "bold",
-              "aria-hidden": true,
-            }}
-          >
+          {/*<IconContext.Provider*/}
+          {/*  value={{*/}
+          {/*    size: 32,*/}
+          {/*    weight: "bold",*/}
+          {/*    "aria-hidden": true,*/}
+          {/*  }}*/}
+          {/*>*/}
             <div className="min-h-screen bg-gray-50 flex flex-col">
               <main
                 className={cn(
@@ -62,7 +62,7 @@ export default function RootLayout({
                 </div>
               </main>
             </div>
-          </IconContext.Provider>
+          {/*</IconContext.Provider>*/}
         </ApiProvider>
       </body>
     </html>

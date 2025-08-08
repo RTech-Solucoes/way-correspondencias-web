@@ -40,7 +40,6 @@ export default function ColumnSettingsModal({
         color,
       });
     } else {
-      // Create new column
       const newColumn: Column = {
         id: Date.now().toString(),
         title,

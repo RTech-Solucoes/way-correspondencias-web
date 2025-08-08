@@ -60,7 +60,6 @@ class ApiClient {
         throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
       }
 
-      // Handle 204 No Content responses
       if (response.status === 204) {
         return {} as T;
       }
@@ -72,7 +71,6 @@ class ApiClient {
     }
   }
 
-  // Responsáveis endpoints
   async criarResponsavel(data: CreateResponsavelRequest): Promise<CreateResponse> {
     return this.request<CreateResponse>('/responsaveis', {
       method: 'POST',
@@ -110,7 +108,6 @@ class ApiClient {
     });
   }
 
-  // Setores endpoints
   async criarSetor(data: CreateSetorRequest): Promise<CreateResponse> {
     return this.request<CreateResponse>('/setores', {
       method: 'POST',
@@ -139,7 +136,6 @@ class ApiClient {
     });
   }
 
-  // Emails endpoints
   async criarEmail(data: CreateEmailRequest): Promise<CreateResponse> {
     return this.request<CreateResponse>('/emails', {
       method: 'POST',
@@ -182,7 +178,6 @@ class ApiClient {
     });
   }
 
-  // Obrigações endpoints
   async criarObrigacao(data: CreateObrigacaoRequest): Promise<CreateResponse> {
     return this.request<CreateResponse>('/obrigacoes', {
       method: 'POST',
@@ -216,7 +211,6 @@ class ApiClient {
     });
   }
 
-  // Correspondências endpoints
   async vincularCorrespondencias(id: number, data: VincularCorrespondenciasRequest): Promise<MessageResponse> {
     return this.request<MessageResponse>(`/obrigacoes/${id}/correspondencias`, {
       method: 'POST',
@@ -234,7 +228,6 @@ class ApiClient {
     });
   }
 
-  // Sincronização endpoints
   async sincronizarEmails(): Promise<ProcessadosResponse> {
     return this.request<ProcessadosResponse>('/sincronizar-emails', {
       method: 'POST',
@@ -245,7 +238,6 @@ class ApiClient {
     return this.request<SincronizacaoStatus>('/sincronizar-emails/status');
   }
 
-  // SEI endpoints
   async pesquisarSEIInteressado(params: SEIInteressadoParams): Promise<SEIInteressadoResponse> {
     const searchParams = new URLSearchParams();
     searchParams.append('nome', params.nome);
@@ -254,27 +246,21 @@ class ApiClient {
     return this.request<SEIInteressadoResponse>(`/sei/interessado?${searchParams.toString()}`);
   }
 
-  // Authentication endpoints
   async login(data: LoginRequest): Promise<LoginResponse> {
     try {
-      // Fetch all responsaveis
       const response = await this.listarResponsaveis();
       const responsaveis = response.items || [];
-      
-      // Find a responsavel that matches the email only
+
       const user = responsaveis.find(resp => 
         resp.email === data.email
-        // Password check removed as per requirement
       );
       
       if (!user) {
         throw new Error('Credenciais inválidas');
       }
-      
-      // Create a simple token (in a real app, this would be a JWT)
+
       const token = btoa(`${user.id_responsavel}:${user.email}:${Date.now()}`);
-      
-      // Return the login response
+
       return {
         token,
         user: {
@@ -291,16 +277,13 @@ class ApiClient {
   }
 
   async register(data: any): Promise<CreateResponse> {
-    // Map RegisterData or RegisterRequest to CreateResponsavelRequest
-    // Handle both interfaces by checking for required fields
     const responsavelData: CreateResponsavelRequest = {
       nmResponsavel: `${data.firstName} ${data.lastName}`,
       email: data.email,
       senha: data.password,
-      tp_perfil: data.role as TipoPerfil || 'VISUALIZADOR' // Use role from form data or default to VISUALIZADOR
+      tp_perfil: data.role as TipoPerfil || 'VISUALIZADOR'
     };
-    
-    // Use the singular form '/responsavel' endpoint
+
     return this.request<CreateResponse>('/responsaveis', {
       method: 'POST',
       body: JSON.stringify(responsavelData),
@@ -308,6 +291,5 @@ class ApiClient {
   }
 }
 
-// Create singleton instance
 export const apiClient = new ApiClient();
 export default apiClient;

@@ -40,7 +40,6 @@ export default function ImportSpreadsheetModal({
       return;
     }
 
-    // Check file extension
     const fileExtension = selectedFile.name.split('.').pop()?.toLowerCase();
     const validExtensions = ['csv', 'xlsx', 'xls'];
     
@@ -49,8 +48,7 @@ export default function ImportSpreadsheetModal({
       return;
     }
 
-    // Check file size (max 10MB)
-    const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+    const maxSize = 10 * 1024 * 1024;
     if (selectedFile.size > maxSize) {
       setError(`O arquivo é muito grande. O tamanho máximo permitido é 10MB.`);
       return;

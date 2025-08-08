@@ -31,13 +31,11 @@ interface EmailDetailProps {
   };
 }
 
-// Helper function to format date
 const formatDate = (dateString?: string): string => {
   if (!dateString) return '';
 
   const date = new Date(dateString);
 
-  // Format as full date and time
   return date.toLocaleDateString('pt-BR', { 
     year: 'numeric', 
     month: 'long', 
@@ -47,7 +45,6 @@ const formatDate = (dateString?: string): string => {
   });
 };
 
-// Mock emails data - same as in EmailList
 const MOCK_EMAILS = [
   {
     id: 'mock-1',
@@ -210,7 +207,6 @@ ricardo@ti.com`,
   }
 ];
 
-// Sample HTML content for emails that don't have a response
 const DEFAULT_EMAIL_CONTENT = `
   <p>Este email não possui conteúdo detalhado.</p>
   <p>Em uma aplicação real, o conteúdo completo do email seria exibido aqui.</p>
@@ -231,7 +227,6 @@ export default function EmailDetail({
   const [showSolicitacaoModal, setShowSolicitacaoModal] = useState(false);
   const [newSolicitacao, setNewSolicitacao] = useState<Solicitacao | null>(null);
 
-  // Check if this is a mock email
   useEffect(() => {
     const foundMockEmail = MOCK_EMAILS.find(email => email.id === emailId);
     if (foundMockEmail) {
@@ -241,7 +236,6 @@ export default function EmailDetail({
       return;
     }
 
-    // Check if this is a sent email from localStorage
     if (typeof window !== 'undefined') {
       const savedEmails = localStorage.getItem('sentEmails');
       if (savedEmails) {
@@ -256,12 +250,10 @@ export default function EmailDetail({
     }
   }, [emailId]);
 
-  // Only fetch from API if not a sent email, not a mock email, and we have a valid number
   const { data: apiEmail, loading: apiLoading, error } = useEmail(
     !isSentEmail && !isMockEmail && !isNaN(emailIdNumber) ? emailIdNumber : 0
   );
 
-  // Function to create a new solicitation from email
   const createSolicitacaoFromEmail = () => {
     const today = new Date().toISOString().split('T')[0];
     const newSolicitacao: Solicitacao = {
@@ -278,7 +270,6 @@ export default function EmailDetail({
     return newSolicitacao;
   };
 
-  // Show error toast if API call fails
   useEffect(() => {
     if (error && !isSentEmail) {
       toast({
@@ -289,7 +280,6 @@ export default function EmailDetail({
     }
   }, [error, toast, isSentEmail]);
 
-  // Loading state
   if ((apiLoading && !isSentEmail && !isMockEmail) || (isLoading && !isMockEmail)) {
     return (
       <div className="flex-1 bg-white flex flex-col h-full items-center justify-center">
@@ -299,7 +289,6 @@ export default function EmailDetail({
     );
   }
 
-  // Email not found state - only show if it's not a mock email and not a sent email
   if (!isMockEmail && !isSentEmail && (!apiEmail || (isNaN(emailIdNumber)))) {
     return (
       <div className="flex-1 bg-white flex items-center justify-center">
@@ -308,7 +297,6 @@ export default function EmailDetail({
     );
   }
 
-  // Map data to the format expected by the component
   const email = isSentEmail ? {
     id: sentEmail.id,
     from: 'voce',
@@ -329,13 +317,13 @@ export default function EmailDetail({
     isStarred: false
   } : {
     id: apiEmail?.id_email.toString(),
-    from: apiEmail?.remetente.split("@")[0], // More user-friendly name
-    fromEmail: apiEmail?.remetente, // Placeholder email
+    from: apiEmail?.remetente.split("@")[0],
+    fromEmail: apiEmail?.remetente,
     subject: apiEmail?.assunto,
     content: apiEmail?.conteudo || DEFAULT_EMAIL_CONTENT,
-    date: formatDate(apiEmail?.prazo_resposta) || formatDate(new Date().toISOString()), // Use prazo_resposta or current date
-    attachments: [] as Anexo[], // API doesn't have attachments yet
-    isStarred: false // API doesn't have this concept yet
+    date: formatDate(apiEmail?.prazo_resposta) || formatDate(new Date().toISOString()),
+    attachments: [] as Anexo[],
+    isStarred: false
   };
 
   return (

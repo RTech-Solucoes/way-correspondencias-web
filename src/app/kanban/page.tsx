@@ -1,12 +1,25 @@
 'use client';
 
-import { useState } from 'react';
-import { PlusIcon, FilterIcon, UsersIcon, CalendarIcon, SearchIcon, SettingsIcon, GripVerticalIcon } from '@phosphor-icons/react';
-import { KanbanIcon } from '@phosphor-icons/react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import {useState, DragEvent} from 'react';
+import {
+  PlusIcon,
+  FunnelSimpleIcon,
+  UsersIcon,
+  MagnifyingGlassIcon
+} from '@phosphor-icons/react';
+import {KanbanIcon} from '@phosphor-icons/react';
+import {Button} from '@/components/ui/button';
+import {Input} from '@/components/ui/input';
+import {Badge} from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog';
 import KanbanColumn from '../../components/kanban/KanbanColumn';
 import TaskModal from '../../components/kanban/TaskModal';
 import ColumnSettingsModal from '../../components/kanban/ColumnSettingsModal';
@@ -35,8 +48,8 @@ interface Column {
 }
 
 const AVAILABLE_COLORS = [
-  'bg-gray-500', 'bg-red-500', 'bg-orange-500', 'bg-yellow-500', 
-  'bg-green-500', 'bg-blue-500', 'bg-indigo-500', 'bg-purple-500', 
+  'bg-gray-500', 'bg-red-500', 'bg-orange-500', 'bg-yellow-500',
+  'bg-green-500', 'bg-blue-500', 'bg-indigo-500', 'bg-purple-500',
   'bg-pink-500', 'bg-teal-500'
 ];
 
@@ -134,26 +147,29 @@ export default function KanbanPage() {
   const [showColumnSettings, setShowColumnSettings] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [editingColumn, setEditingColumn] = useState<Column | null>(null);
-  const [dialog, setDialog] = useState<{ open: boolean; title: string; description: string }>({ open: false, title: '', description: '' });
+  const [dialog, setDialog] = useState<{ open: boolean; title: string; description: string }>({
+    open: false,
+    title: '',
+    description: ''
+  });
 
-  const handleDragStart = (e: React.DragEvent, taskId: string) => {
+  const handleDragStart = (e: DragEvent, taskId: string) => {
     e.dataTransfer.setData('text/plain', taskId);
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: DragEvent) => {
     e.preventDefault();
   };
 
-  const handleDrop = (e: React.DragEvent, targetColumnId: string) => {
+  const handleDrop = (e: DragEvent, targetColumnId: string) => {
     e.preventDefault();
     const taskId = e.dataTransfer.getData('text/plain');
-    
+
     setColumns(prevColumns => {
       const newColumns = [...prevColumns];
       let task: Task | null = null;
-      
-      // Find and remove task from source column
-      for (let column of newColumns) {
+
+      for (const column of newColumns) {
         const taskIndex = column.tasks.findIndex(t => t.id === taskId);
         if (taskIndex > -1) {
           task = column.tasks[taskIndex];
@@ -161,8 +177,7 @@ export default function KanbanPage() {
           break;
         }
       }
-      
-      // Add task to target column and update status
+
       if (task) {
         const targetColumn = newColumns.find(col => col.id === targetColumnId);
         if (targetColumn) {
@@ -170,32 +185,32 @@ export default function KanbanPage() {
           targetColumn.tasks.push(task);
         }
       }
-      
+
       return newColumns;
     });
   };
 
-  const handleColumnDragStart = (e: React.DragEvent, columnId: string) => {
+  const handleColumnDragStart = (e: DragEvent, columnId: string) => {
     e.dataTransfer.setData('column', columnId);
   };
 
-  const handleColumnDragOver = (e: React.DragEvent) => {
+  const handleColumnDragOver = (e: DragEvent) => {
     e.preventDefault();
   };
 
-  const handleColumnDrop = (e: React.DragEvent, targetIndex: number) => {
+  const handleColumnDrop = (e: DragEvent, targetIndex: number) => {
     e.preventDefault();
     const columnId = e.dataTransfer.getData('column');
-    
+
     setColumns(prevColumns => {
       const newColumns = [...prevColumns];
       const sourceIndex = newColumns.findIndex(col => col.id === columnId);
-      
+
       if (sourceIndex !== -1 && sourceIndex !== targetIndex) {
         const [movedColumn] = newColumns.splice(sourceIndex, 1);
         newColumns.splice(targetIndex, 0, movedColumn);
       }
-      
+
       return newColumns;
     });
   };
@@ -246,7 +261,7 @@ export default function KanbanPage() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex space-x-4">
             <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-              <KanbanIcon className="h-7 w-7 mr-3" />
+              <KanbanIcon className="h-7 w-7 mr-3"/>
               Obrigações Contratuais
             </h1>
             <div className="flex items-center space-x-4">
@@ -256,24 +271,25 @@ export default function KanbanPage() {
             </div>
           </div>
           <div className="flex space-x-2">
-      						<Button
-							onClick={() => setShowImportModal(true)}
-							className="bg-green-600 hover:bg-green-700 text-white"
-						>
-							<PlusIcon className="h-4 w-4 mr-2" />
+            <Button
+              onClick={() => setShowImportModal(true)}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <PlusIcon className="h-4 w-4 mr-2"/>
               Importar Planilha
             </Button>
-      						<Button onClick={() => setShowTaskModal(true)} className="bg-blue-600 hover:bg-blue-700">
-							<PlusIcon className="h-4 w-4 mr-2" />
+            <Button onClick={() => setShowTaskModal(true)} className="bg-blue-600 hover:bg-blue-700">
+              <PlusIcon className="h-4 w-4 mr-2"/>
               Adicionar Tarefa
             </Button>
           </div>
         </div>
-        
+
         <div className="flex items-center justify-between">
           <div className="flex-1 flex flex-row items-center space-x-4">
-     							<div className="flex-1 relative">
-								<SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <div className="flex-1 relative">
+              <MagnifyingGlassIcon
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400"/>
               <Input
                 placeholder="Pesquisar por nome, item, responsável ou área..."
                 value={searchQuery}
@@ -281,12 +297,12 @@ export default function KanbanPage() {
                 className="pl-10 h-10 bg-gray-50 border-gray-200 focus:bg-white"
               />
             </div>
-      						<Button variant="secondary" className="h-10 px-4">
-							<FilterIcon className="h-4 w-4 mr-2" />
+            <Button variant="secondary" className="h-10 px-4">
+              <FunnelSimpleIcon className="h-4 w-4 mr-2"/>
               Filtrar
             </Button>
-      						<Button variant="secondary" className="h-10 px-4">
-							<UsersIcon className="h-4 w-4 mr-2" />
+            <Button variant="secondary" className="h-10 px-4">
+              <UsersIcon className="h-4 w-4 mr-2"/>
               Responsáveis
             </Button>
           </div>
@@ -311,13 +327,13 @@ export default function KanbanPage() {
               onEditColumn={handleEditColumn}
             />
           ))}
-          
-   							<Button
-								variant="outline"
-								className="w-80 h-12 border-dashed border-gray-300 hover:border-gray-400"
-								onClick={handleCreateColumn}
-							>
-								<PlusIcon className="h-4 w-4 mr-2" />
+
+          <Button
+            variant="outline"
+            className="w-80 h-12 border-dashed border-gray-300 hover:border-gray-400"
+            onClick={handleCreateColumn}
+          >
+            <PlusIcon className="h-4 w-4 mr-2"/>
             Adicionar Seção
           </Button>
         </div>
@@ -332,7 +348,6 @@ export default function KanbanPage() {
             setSelectedTask(null);
           }}
           onSave={(task) => {
-            // Logic to save task
             console.log('Saving task:', task);
             setShowTaskModal(false);
             setSelectedTask(null);
@@ -345,7 +360,10 @@ export default function KanbanPage() {
         <ColumnSettingsModal
           column={editingColumn}
           availableColors={AVAILABLE_COLORS}
-          onClose={() => { setShowColumnSettings(false); setEditingColumn(null); }}
+          onClose={() => {
+            setShowColumnSettings(false);
+            setEditingColumn(null);
+          }}
           onSave={handleSaveColumn}
           onDelete={handleDeleteColumn}
         />
@@ -356,23 +374,25 @@ export default function KanbanPage() {
         <ImportSpreadsheetModal
           onClose={() => setShowImportModal(false)}
           onImport={(file) => {
-            // Logic to handle the imported file would go here
             console.log('Imported file:', file);
-            // In a real implementation, you would parse the file and create tasks
-            setDialog({ open: true, title: 'Importação concluída', description: `Arquivo "${file.name}" importado com sucesso! Em uma implementação real, as tarefas seriam criadas a partir dos dados da planilha.` });
+            setDialog({
+              open: true,
+              title: 'Importação concluída',
+              description: `Arquivo "${file.name}" importado com sucesso! Em uma implementação real, as tarefas seriam criadas a partir dos dados da planilha.`
+            });
             setShowImportModal(false);
           }}
         />
       )}
       {/* Global Alert Dialog */}
-      <AlertDialog open={dialog.open} onOpenChange={(open) => setDialog(prev => ({ ...prev, open }))}>
+      <AlertDialog open={dialog.open} onOpenChange={(open) => setDialog(prev => ({...prev, open}))}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{dialog.title}</AlertDialogTitle>
             <AlertDialogDescription>{dialog.description}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction onClick={() => setDialog(prev => ({ ...prev, open: false }))}>OK</AlertDialogAction>
+            <AlertDialogAction onClick={() => setDialog(prev => ({...prev, open: false}))}>OK</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

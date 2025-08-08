@@ -108,7 +108,6 @@ export default function CadastroPage() {
     }
 
     if (!formData.acceptTerms) {
-      // newErrors.acceptTerms = 'Você deve aceitar os termos de uso';
       newErrors.acceptTerms = false;
     }
 
@@ -122,14 +121,11 @@ export default function CadastroPage() {
     if (validateForm()) {
       setIsLoading(true);
       try {
-        // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Standalone page behavior
+
         console.log('Cadastro realizado:', formData);
         setDialog({ open: true, title: 'Sucesso', description: 'Cadastro realizado com sucesso!' });
-        
-        // Reset form
+
         setFormData({
           firstName: '',
           lastName: '',
@@ -151,8 +147,7 @@ export default function CadastroPage() {
 
   const handleInputChange = (field: keyof RegisterData, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    
-    // Clear error when user starts typing
+
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }

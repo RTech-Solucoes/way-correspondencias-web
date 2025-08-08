@@ -1,15 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Calendar, User, Tag, MessageCircle, Paperclip, Plus, Trash2, Edit, Clock } from 'lucide-react';
+import { XIcon, CalendarIcon, ChatCircleIcon, PaperclipIcon, TrashIcon, PencilSimpleIcon, ClockIcon } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
 
 interface Task {
   id: string;
@@ -92,7 +90,6 @@ export default function TaskModal({ task, onClose, onSave }: TaskModalProps) {
     onSave(savedTask);
   };
 
-  // Calculate duration when dates change
   const calculateDuration = () => {
     if (dataInicio && dataTermino) {
       const inicio = new Date(dataInicio);
@@ -111,11 +108,11 @@ export default function TaskModal({ task, onClose, onSave }: TaskModalProps) {
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-gray-900 flex items-center">
-              <Edit className="h-5 w-5 mr-2" />
+              <PencilSimpleIcon className="h-5 w-5 mr-2" />
               {task ? 'Editar Obrigação' : 'Nova Obrigação'}
             </h2>
             <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="h-4 w-4" />
+              <XIcon className="h-4 w-4" />
             </Button>
           </div>
 
@@ -253,7 +250,7 @@ export default function TaskModal({ task, onClose, onSave }: TaskModalProps) {
 
             <div>
               <Label htmlFor="duracao" className="text-sm font-medium flex items-center">
-                <Clock className="h-4 w-4 mr-1" />
+                <ClockIcon className="h-4 w-4 mr-1" />
                 Duração (dias)
               </Label>
               <Input
@@ -292,7 +289,7 @@ export default function TaskModal({ task, onClose, onSave }: TaskModalProps) {
             
             {task && (
               <Button variant="destructive" size="sm">
-                <Trash2 className="h-4 w-4 mr-2" />
+                <TrashIcon className="h-4 w-4 mr-2" />
                 Excluir Obrigação
               </Button>
             )}
@@ -333,15 +330,15 @@ export default function TaskModal({ task, onClose, onSave }: TaskModalProps) {
           {/* Quick Actions */}
           <div className="space-y-2">
             <Button variant="secondary" size="sm" className="w-full justify-start">
-              <Calendar className="h-4 w-4 mr-2" />
+              <CalendarIcon className="h-4 w-4 mr-2" />
               Agendar Lembrete
             </Button>
             <Button variant="secondary" size="sm" className="w-full justify-start">
-              <Paperclip className="h-4 w-4 mr-2" />
+              <PaperclipIcon className="h-4 w-4 mr-2" />
               Adicionar Anexo
             </Button>
             <Button variant="secondary" size="sm" className="w-full justify-start">
-              <MessageCircle className="h-4 w-4 mr-2" />
+              <ChatCircleIcon className="h-4 w-4 mr-2" />
               Adicionar Nota
             </Button>
           </div>

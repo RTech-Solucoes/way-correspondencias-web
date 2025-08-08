@@ -1,7 +1,6 @@
 import { Area, Responsavel, Solicitacao, Tema, TipoContagem } from './types';
 import { v4 as uuidv4 } from 'uuid';
 
-// Mock Areas
 export const mockAreas: Area[] = [
   {
     idArea: uuidv4(),
@@ -60,7 +59,6 @@ export const mockAreas: Area[] = [
   }
 ];
 
-// Mock Responsaveis
 export const mockResponsaveis: Responsavel[] = [
   {
     idResponsavel: uuidv4(),
@@ -99,13 +97,12 @@ export const mockResponsaveis: Responsavel[] = [
   }
 ];
 
-// Mock Temas
 export const mockTemas: Tema[] = [
   {
     idTema: uuidv4(),
     nmTema: 'Jurídico',
     dsTema: 'Contratos Jurídicos',
-    idAreas: [mockAreas[0].idArea, mockAreas[1].idArea], // Múltiplas áreas
+    idAreas: [mockAreas[0].idArea, mockAreas[1].idArea],
     nrDiasPrazo: 30,
     tpContagem: TipoContagem.UTEIS,
     dtCadastro: '2025-01-20',
@@ -118,7 +115,7 @@ export const mockTemas: Tema[] = [
     idTema: uuidv4(),
     nmTema: 'Financeiro',
     dsTema: 'Relatórios Financeiros',
-    idAreas: [mockAreas[1].idArea, mockAreas[3].idArea, mockAreas[4].idArea], // Múltiplas áreas
+    idAreas: [mockAreas[1].idArea, mockAreas[3].idArea, mockAreas[4].idArea],
     nrDiasPrazo: 15,
     tpContagem: TipoContagem.CORRIDOS,
     dtCadastro: '2025-01-20',
@@ -144,7 +141,7 @@ export const mockTemas: Tema[] = [
     idTema: uuidv4(),
     nmTema: 'TI',
     dsTema: 'Infraestrutura de TI',
-    idAreas: [mockAreas[3].idArea, mockAreas[0].idArea], // Múltiplas áreas
+    idAreas: [mockAreas[3].idArea, mockAreas[0].idArea],
     nrDiasPrazo: 20,
     tpContagem: TipoContagem.CORRIDOS,
     dtCadastro: '2025-01-20',
@@ -157,7 +154,7 @@ export const mockTemas: Tema[] = [
     idTema: uuidv4(),
     nmTema: 'Operações',
     dsTema: 'Processos Operacionais',
-    idAreas: [mockAreas[4].idArea, mockAreas[2].idArea, mockAreas[1].idArea], // Múltiplas áreas
+    idAreas: [mockAreas[4].idArea, mockAreas[2].idArea, mockAreas[1].idArea],
     nrDiasPrazo: 25,
     tpContagem: TipoContagem.UTEIS,
     dtCadastro: '2025-01-20',
@@ -168,7 +165,6 @@ export const mockTemas: Tema[] = [
   }
 ];
 
-// Mock Solicitacoes
 export const mockSolicitacoes: Solicitacao[] = [
   {
     idSolicitacao: uuidv4(),
@@ -227,25 +223,21 @@ export const mockSolicitacoes: Solicitacao[] = [
   }
 ];
 
-// Helper function to get area name by id
 export const getAreaNameById = (id: string): string => {
   const area = mockAreas.find(area => area.idArea === id);
   return area ? area.nmArea : 'Área não encontrada';
 };
 
-// Helper function to get responsavel name by id
 export const getResponsavelNameById = (id: string): string => {
   const responsavel = mockResponsaveis.find(resp => resp.idResponsavel === id);
   return responsavel ? responsavel.dsNome : 'Responsável não encontrado';
 };
 
-// Helper function to get responsavel email by id
 export const getResponsavelEmailById = (id: string): string => {
   const responsavel = mockResponsaveis.find(resp => resp.idResponsavel === id);
   return responsavel ? responsavel.dsEmail : '';
 };
 
-// Helper function to get responsavel phone number by id
 export const getResponsavelTelefoneById = (id: string): string => {
   const responsavel = mockResponsaveis.find(resp => resp.idResponsavel === id);
   return responsavel ? responsavel.nmTelefone : '';

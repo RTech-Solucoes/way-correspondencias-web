@@ -19,7 +19,6 @@ interface Column {
 }
 
 export default function SolicitacoesKanban() {
-  // Initialize columns with mock data
   const initialColumns: Column[] = [
     {
       id: 'pendente',
@@ -68,7 +67,6 @@ export default function SolicitacoesKanban() {
       const newColumns = [...prevColumns];
       let task: Solicitacao | null = null;
 
-      // Find and remove task from source column
       for (let column of newColumns) {
         const taskIndex = column.tasks.findIndex(t => t.idSolicitacao === taskId);
         if (taskIndex > -1) {
@@ -78,7 +76,6 @@ export default function SolicitacoesKanban() {
         }
       }
 
-      // Add task to target column and update status
       if (task) {
         const targetColumn = newColumns.find(col => col.id === targetColumnId);
         if (targetColumn) {
@@ -98,7 +95,6 @@ export default function SolicitacoesKanban() {
 
   const handleSaveTask = (task: Solicitacao) => {
     if (selectedTask) {
-      // Update existing task
       setColumns(prevColumns => {
         return prevColumns.map(column => {
           return {
@@ -110,7 +106,6 @@ export default function SolicitacoesKanban() {
         });
       });
     } else {
-      // Add new task to the appropriate column
       setColumns(prevColumns => {
         return prevColumns.map(column => {
           if (column.id === task.status) {
@@ -127,7 +122,6 @@ export default function SolicitacoesKanban() {
     setSelectedTask(null);
   };
 
-  // Filter tasks based on search query
   const filteredColumns = columns.map(column => ({
     ...column,
     tasks: column.tasks.filter(task =>
@@ -161,7 +155,6 @@ export default function SolicitacoesKanban() {
               variant="outline"
               className="bg-white hover:bg-gray-50"
               onClick={() => {
-                // This would be handled by a router in a real implementation
                 window.location.href = "/solicitacoes";
               }}
             >

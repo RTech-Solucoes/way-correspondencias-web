@@ -21,7 +21,7 @@ export default function ApiStatus() {
   const handleSyncEmails = async () => {
     try {
       await sincronizar();
-      refetch(); // Refresh status after sync
+      refetch();
     } catch (err) {
       console.error('Sync failed:', err);
     }

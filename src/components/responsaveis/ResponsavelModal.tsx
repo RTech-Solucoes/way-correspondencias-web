@@ -33,7 +33,6 @@ export default function ResponsavelModal({ responsavel, onClose, onSave }: Respo
     if (responsavel) {
       setFormData(responsavel);
     } else {
-      // Initialize with default values for new responsavel
       setFormData({
         idResponsavel: uuidv4(),
         dsNome: '',
