@@ -26,7 +26,6 @@ import {
   ProcessadosResponse,
   LoginRequest,
   LoginResponse,
-  RegisterRequest,
   TipoPerfil,
 } from './types';
 
@@ -34,9 +33,7 @@ class ApiClient {
   private baseUrl: string;
 
   constructor(
-    baseUrl: string =
-      process.env.NEXT_PUBLIC_API_URL ||
-      'https://williancasagrandi.pythonanywhere.com/'
+    baseUrl: string = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
   ) {
     this.baseUrl = baseUrl;
   }
@@ -282,7 +279,7 @@ class ApiClient {
         token,
         user: {
           id_responsavel: user.id_responsavel,
-          nm_responsavel: user.nm_responsavel,
+          nmResponsavel: user.nmResponsavel,
           email: user.email,
           tp_perfil: user.tp_perfil
         }
@@ -297,7 +294,7 @@ class ApiClient {
     // Map RegisterData or RegisterRequest to CreateResponsavelRequest
     // Handle both interfaces by checking for required fields
     const responsavelData: CreateResponsavelRequest = {
-      nm_responsavel: `${data.firstName} ${data.lastName}`,
+      nmResponsavel: `${data.firstName} ${data.lastName}`,
       email: data.email,
       senha: data.password,
       tp_perfil: data.role as TipoPerfil || 'VISUALIZADOR' // Use role from form data or default to VISUALIZADOR

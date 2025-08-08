@@ -181,8 +181,12 @@ export default function Sidebar() {
                 <div className="flex items-center">
                   <div className="flex items-center justify-start space-x-3">
                     <Avatar className="h-12 w-12">
-                      <AvatarImage src="/placeholder-avatar.jpg" alt="Profile Picture"/>
-                      <AvatarFallback className="w-12 h-12 group-hover:bg-white">JD</AvatarFallback>
+                      <AvatarFallback className="w-12 h-12 group-hover:bg-white">
+                        {
+                          // user?.nmResponsavel[0].toUpperCase() ||
+                          "JS"
+                        }
+                      </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
                       <h1 className="w-fit text-md font-bold text-gray-900 overflow-ellipsis">

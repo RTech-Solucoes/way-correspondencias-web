@@ -5,10 +5,10 @@ import {Paperclip, RotateCw, Trash2, Loader2, Mail} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {Checkbox} from '@/components/ui/checkbox';
 import {cn} from '@/lib/utils';
-import {useEmails} from '@/lib/api/hooks';
-import {Email as ApiEmail} from '@/lib/api/types';
+import {useEmails} from '@/api/hooks';
+import {Email as ApiEmail} from '@/api/types';
 import {useToast} from '@/hooks/use-toast';
-import {apiClient} from '@/lib/api/client';
+import {apiClient} from '@/api/client';
 
 interface Email {
   id: string;

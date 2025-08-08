@@ -193,7 +193,6 @@ export default function DashboardPage() {
 							].map((activity) => (
 								<div key={activity.id} className="flex items-start space-x-3">
 									<Avatar className="h-8 w-8">
-										<AvatarImage src={`/placeholder-avatar-${activity.id}.jpg`} alt={activity.user.name} />
 										<AvatarFallback>{activity.user.avatar}</AvatarFallback>
 									</Avatar>
 									<div>

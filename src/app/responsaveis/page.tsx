@@ -299,12 +299,13 @@ export default function ResponsaveisPage() {
                 <Label htmlFor="perfil">Perfil</Label>
                 <Select
                   value={filters.perfil}
-                  onValueChange={(value) => setFilters({ ...filters, perfil: value })}
+                  onValueChange={(value: string) => setFilters({ ...filters, perfil: value })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um perfil" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="">Todos</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
                     <SelectItem value="user">User</SelectItem>
                     <SelectItem value="manager">Manager</SelectItem>

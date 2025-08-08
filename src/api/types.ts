@@ -26,26 +26,26 @@ export interface RegisterRequest {
 
 // Request interfaces
 export interface CreateResponsavelRequest {
-  nm_responsavel: string;
+  nmResponsavel: string;
   email: string;
   senha: string;
   tp_perfil: TipoPerfil;
 }
 
 export interface UpdateResponsavelRequest {
-  nm_responsavel?: string;
+  nmResponsavel?: string;
   email?: string;
   senha?: string;
   tp_perfil?: TipoPerfil;
 }
 
 export interface CreateSetorRequest {
-  nm_setor: string;
+  nmSetor: string;
   id_responsavel: number;
 }
 
 export interface UpdateSetorRequest {
-  nm_setor?: string;
+  nmSetor?: string;
   id_responsavel?: number;
 }
 
@@ -116,7 +116,7 @@ export interface VincularCorrespondenciasRequest {
 // Response interfaces
 export interface Responsavel {
   id_responsavel: number;
-  nm_responsavel: string;
+  nmResponsavel: string;
   email: string;
   senha?: string; // Added senha field as optional
   tp_perfil: TipoPerfil;
@@ -124,7 +124,7 @@ export interface Responsavel {
 
 export interface Setor {
   id_setor: number;
-  nm_setor: string;
+  nmSetor: string;
   id_responsavel: number;
 }
 

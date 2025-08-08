@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RefreshCw, Wifi, WifiOff, Clock } from 'lucide-react';
-import { useSincronizacaoStatus, useSincronizarEmails } from '@/lib/api/hooks';
+import { useSincronizacaoStatus, useSincronizarEmails } from '@/api/hooks';
 
 export default function ApiStatus() {
   const { data: status, loading, error, refetch } = useSincronizacaoStatus();

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, ReactNode } from 'react';
-import { apiClient } from '@/lib/api/client';
+import { apiClient } from '@/api/client';
 
 interface ApiContextType {
   client: typeof apiClient;

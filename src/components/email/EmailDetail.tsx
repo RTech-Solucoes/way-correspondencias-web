@@ -5,9 +5,9 @@ import {ArrowLeft, Download, Loader2, MoreHorizontal, Paperclip, Trash2, FileTex
 import {Button} from '@/components/ui/button';
 import {Avatar, AvatarFallback, AvatarImage} from '@/components/ui/avatar';
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,} from '@/components/ui/dropdown-menu';
-import {useEmail} from '@/lib/api/hooks';
+import {useEmail} from '@/api/hooks';
 import {useToast} from '@/hooks/use-toast';
-import {Anexo} from '@/lib/api/types';
+import {Anexo} from '@/api/types';
 import SolicitacaoModal from '@/components/solicitacoes/SolicitacaoModal';
 import { Solicitacao } from '@/lib/types';
 import { v4 as uuidv4 } from 'uuid';
@@ -373,7 +373,6 @@ export default function EmailDetail({
         <div className="flex items-center space-x-4 text-sm text-gray-600">
           <div className="flex items-center space-x-2">
             <Avatar className="h-8 w-8">
-              <AvatarImage src="/placeholder-avatar.jpg" alt={email.from} />
               <AvatarFallback>MS</AvatarFallback>
             </Avatar>
             <div>
