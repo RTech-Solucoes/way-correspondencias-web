@@ -101,7 +101,7 @@ export default function Sidebar() {
                 key={item.id}
                 variant={isActive ? "default" : "ghost"}
                 className={cn(
-                  "flex justify-start w-full text-left h-11 text-sm px-4",
+                  "flex justify-start w-full text-left h-11 text-sm px-4 transition-colors duration-200",
                   isActive && "bg-blue-600 text-white"
                 )}
                 onClick={() => handleNavigation(item.id)}
@@ -116,8 +116,7 @@ export default function Sidebar() {
             <DropdownMenuTrigger asChild>
               <div
                 className="mt-auto"
-                onMouseEnter={() => setNotificationsOpen(true)}
-                onMouseLeave={() => setNotificationsOpen(false)}
+                onClick={() => setNotificationsOpen(true)}
               >
                 <Button
                   variant="ghost"
@@ -136,8 +135,7 @@ export default function Sidebar() {
             <DropdownMenuContent
               className="w-full m-4 mb-0"
               align="end"
-              onMouseEnter={() => setNotificationsOpen(true)}
-              onMouseLeave={() => setNotificationsOpen(false)}
+              onClick={() => setNotificationsOpen(false)}
             >
               <DropdownMenuLabel>Notificações</DropdownMenuLabel>
               <DropdownMenuSeparator />
