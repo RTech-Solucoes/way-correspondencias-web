@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface RegisterData {
   firstName: string;
@@ -42,6 +43,7 @@ export default function CadastroPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<Partial<RegisterData>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [dialog, setDialog] = useState<{ open: boolean; title: string; description: string }>({ open: false, title: '', description: '' });
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -125,7 +127,7 @@ export default function CadastroPage() {
         
         // Standalone page behavior
         console.log('Cadastro realizado:', formData);
-        alert('Cadastro realizado com sucesso!');
+        setDialog({ open: true, title: 'Sucesso', description: 'Cadastro realizado com sucesso!' });
         
         // Reset form
         setFormData({
@@ -140,7 +142,7 @@ export default function CadastroPage() {
         });
       } catch (error) {
         console.error('Erro no cadastro:', error);
-        alert('Erro ao realizar cadastro. Tente novamente.');
+        setDialog({ open: true, title: 'Erro', description: 'Erro ao realizar cadastro. Tente novamente.' });
       } finally {
         setIsLoading(false);
       }
@@ -171,7 +173,20 @@ export default function CadastroPage() {
   const strengthLabels = ['Muito fraca', 'Fraca', 'Regular', 'Boa', 'Muito forte'];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <>
+      <AlertDialog open={dialog.open} onOpenChange={(open) => setDialog(prev => ({ ...prev, open }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{dialog.title}</AlertDialogTitle>
+            <AlertDialogDescription>{dialog.description}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setDialog(prev => ({ ...prev, open: false }))}>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
       {/* Name Fields */}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -444,5 +459,6 @@ export default function CadastroPage() {
         )}
       </Button>
     </form>
+    </>
   );
 }

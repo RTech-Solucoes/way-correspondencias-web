@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Filter, Users, Calendar, Search, Settings, GripVertical } from 'lucide-react';
-import { Kanban } from 'lucide-react';
+import { PlusIcon, FilterIcon, UsersIcon, CalendarIcon, SearchIcon, SettingsIcon, GripVerticalIcon } from 'lucide-react';
+import { KanbanIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import KanbanColumn from '../../components/kanban/KanbanColumn';
 import TaskModal from '../../components/kanban/TaskModal';
 import ColumnSettingsModal from '../../components/kanban/ColumnSettingsModal';
@@ -133,6 +134,7 @@ export default function KanbanPage() {
   const [showColumnSettings, setShowColumnSettings] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [editingColumn, setEditingColumn] = useState<Column | null>(null);
+  const [dialog, setDialog] = useState<{ open: boolean; title: string; description: string }>({ open: false, title: '', description: '' });
 
   const handleDragStart = (e: React.DragEvent, taskId: string) => {
     e.dataTransfer.setData('text/plain', taskId);
@@ -244,7 +246,7 @@ export default function KanbanPage() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex space-x-4">
             <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-              <Kanban className="h-7 w-7 mr-3" />
+              <KanbanIcon className="h-7 w-7 mr-3" />
               Obrigações Contratuais
             </h1>
             <div className="flex items-center space-x-4">
@@ -254,15 +256,15 @@ export default function KanbanPage() {
             </div>
           </div>
           <div className="flex space-x-2">
-            <Button
-              onClick={() => setShowImportModal(true)}
-              className="bg-green-600 hover:bg-green-700 text-white"
-            >
-              <Plus className="h-4 w-4 mr-2" />
+      						<Button
+							onClick={() => setShowImportModal(true)}
+							className="bg-green-600 hover:bg-green-700 text-white"
+						>
+							<PlusIcon className="h-4 w-4 mr-2" />
               Importar Planilha
             </Button>
-            <Button onClick={() => setShowTaskModal(true)} className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="h-4 w-4 mr-2" />
+      						<Button onClick={() => setShowTaskModal(true)} className="bg-blue-600 hover:bg-blue-700">
+							<PlusIcon className="h-4 w-4 mr-2" />
               Adicionar Tarefa
             </Button>
           </div>
@@ -270,8 +272,8 @@ export default function KanbanPage() {
         
         <div className="flex items-center justify-between">
           <div className="flex-1 flex flex-row items-center space-x-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+     							<div className="flex-1 relative">
+								<SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 placeholder="Pesquisar por nome, item, responsável ou área..."
                 value={searchQuery}
@@ -279,12 +281,12 @@ export default function KanbanPage() {
                 className="pl-10 h-10 bg-gray-50 border-gray-200 focus:bg-white"
               />
             </div>
-            <Button variant="secondary" className="h-10 px-4">
-              <Filter className="h-4 w-4 mr-2" />
+      						<Button variant="secondary" className="h-10 px-4">
+							<FilterIcon className="h-4 w-4 mr-2" />
               Filtrar
             </Button>
-            <Button variant="secondary" className="h-10 px-4">
-              <Users className="h-4 w-4 mr-2" />
+      						<Button variant="secondary" className="h-10 px-4">
+							<UsersIcon className="h-4 w-4 mr-2" />
               Responsáveis
             </Button>
           </div>
@@ -310,12 +312,12 @@ export default function KanbanPage() {
             />
           ))}
           
-          <Button
-            variant="outline"
-            className="w-80 h-12 border-dashed border-gray-300 hover:border-gray-400"
-            onClick={handleCreateColumn}
-          >
-            <Plus className="h-4 w-4 mr-2" />
+   							<Button
+								variant="outline"
+								className="w-80 h-12 border-dashed border-gray-300 hover:border-gray-400"
+								onClick={handleCreateColumn}
+							>
+								<PlusIcon className="h-4 w-4 mr-2" />
             Adicionar Seção
           </Button>
         </div>
@@ -357,11 +359,23 @@ export default function KanbanPage() {
             // Logic to handle the imported file would go here
             console.log('Imported file:', file);
             // In a real implementation, you would parse the file and create tasks
-            alert(`Arquivo "${file.name}" importado com sucesso! Em uma implementação real, as tarefas seriam criadas a partir dos dados da planilha.`);
+            setDialog({ open: true, title: 'Importação concluída', description: `Arquivo "${file.name}" importado com sucesso! Em uma implementação real, as tarefas seriam criadas a partir dos dados da planilha.` });
             setShowImportModal(false);
           }}
         />
       )}
+      {/* Global Alert Dialog */}
+      <AlertDialog open={dialog.open} onOpenChange={(open) => setDialog(prev => ({ ...prev, open }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{dialog.title}</AlertDialogTitle>
+            <AlertDialogDescription>{dialog.description}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setDialog(prev => ({ ...prev, open: false }))}>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

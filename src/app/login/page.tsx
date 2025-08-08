@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -16,6 +17,7 @@ export default function LoginPage() {
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [dialog, setDialog] = useState<{ open: boolean; title: string; description: string }>({ open: false, title: '', description: '' });
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -63,7 +65,7 @@ export default function LoginPage() {
           localStorage.setItem('userEmail', email);
         }
         
-        alert('Login realizado com sucesso!');
+        setDialog({ open: true, title: 'Sucesso', description: 'Login realizado com sucesso!' });
         
         // Reset form
         setEmail('');
@@ -71,7 +73,7 @@ export default function LoginPage() {
         setRememberMe(false);
       } catch (error) {
         console.error('Erro no login:', error);
-        alert('Erro ao realizar login. Tente novamente.');
+        setDialog({ open: true, title: 'Erro', description: 'Erro ao realizar login. Tente novamente.' });
       } finally {
         setIsLoading(false);
       }
@@ -79,7 +81,20 @@ export default function LoginPage() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <>
+      <AlertDialog open={dialog.open} onOpenChange={(open) => setDialog(prev => ({ ...prev, open }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{dialog.title}</AlertDialogTitle>
+            <AlertDialogDescription>{dialog.description}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setDialog(prev => ({ ...prev, open: false }))}>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
       {/* Email Field */}
       <div className="space-y-2">
         <Label htmlFor="email" className="text-sm font-medium text-gray-700">
@@ -193,5 +208,6 @@ export default function LoginPage() {
         )}
       </Button>
     </form>
+    </>
   );
 }
