@@ -21,7 +21,6 @@ interface NavigationItem {
   id: string;
   label: string;
   icon: Icon;
-  count: number;
 }
 
 const MOCK_NOTIFICATIONS = [
@@ -48,7 +47,7 @@ const MOCK_NOTIFICATIONS = [
   },
 ];
 
-const NAVIGATION_ITEMS = [
+const NAVIGATION_ITEMS: NavigationItem[] = [
   { id: "/", label: "Dashboard", icon: PresentationChartIcon },
   { id: "/email", label: "Email", icon: EnvelopeIcon },
   { id: "/areas", label: "Áreas", icon: BuildingIcon },
