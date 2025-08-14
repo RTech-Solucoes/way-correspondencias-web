@@ -284,9 +284,9 @@ export default function CadastroPage() {
               disabled={isLoading}
             >
               {showPassword ? (
-                <EyeClosedIcon className="h-4 w-4 text-gray-400" />
-              ) : (
                 <EyeIcon className="h-4 w-4 text-gray-400" />
+              ) : (
+                <EyeClosedIcon className="h-4 w-4 text-gray-400" />
               )}
             </Button>
           </div>
@@ -343,9 +343,9 @@ export default function CadastroPage() {
               disabled={isLoading}
             >
               {showConfirmPassword ? (
-                <EyeClosedIcon className="h-4 w-4 text-gray-400" />
-              ) : (
                 <EyeIcon className="h-4 w-4 text-gray-400" />
+              ) : (
+                <EyeClosedIcon className="h-4 w-4 text-gray-400" />
               )}
             </Button>
           </div>

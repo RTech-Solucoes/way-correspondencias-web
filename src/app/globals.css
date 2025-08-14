@@ -96,27 +96,27 @@
 }
 
 * {
-  @apply border-border scroll-smooth;
+  @apply scroll-smooth;
 }
 
 body {
   @apply bg-background text-foreground subpixel-antialiased;
   overflow-x: hidden;
 
-  &::after {
-    @apply
-    absolute
-    min-h-screen
-    w-4
-    bg-gradient-to-t
-    from-gray-50
-    via-transparent
-    to-gray-50
-    right-0
-    top-0
-    pointer-events-none;
-    content: '';
-  }
+  /*&::after {*/
+  /*  @apply*/
+  /*  absolute*/
+  /*  min-h-screen*/
+  /*  w-4*/
+  /*  bg-gradient-to-t*/
+  /*  from-gray-50*/
+  /*  via-transparent*/
+  /*  to-gray-50*/
+  /*  right-0*/
+  /*  top-0*/
+  /*  pointer-events-none;*/
+  /*  content: '';*/
+  /*}*/
 }
 
 *::-webkit-scrollbar {
@@ -135,6 +135,10 @@ body {
   border-solid
   border-transparent;
   background-clip: content-box;
+}
+
+.font-display {
+  font-family: var(--font-display), sans-serif;
 }
 
 .line-clamp-2 {
@@ -164,7 +168,33 @@ body {
   @apply font-semibold text-gray-900;
 }
 
+.glass {
+  @apply
+  bg-gray-200/50
+  backdrop-blur-lg
+}
+
 button, input[type="file"] {
   @apply cursor-pointer;
 }
 
+.bg-landscape {
+  background-image: url('/images/background.jpg');
+  object-fit: cover;
+}
+
+.pop-in {
+  animation: pop-in .5s ease-in-out;
+}
+
+@keyframes pop-in {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}

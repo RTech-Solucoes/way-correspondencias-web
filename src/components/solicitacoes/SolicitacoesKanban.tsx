@@ -9,7 +9,6 @@ import { Solicitacao } from '@/types/solicitacoes/types';
 import { mockSolicitacoes } from '@/lib/mockData';
 import { getResponsavelNameById } from '@/lib/mockData';
 import SolicitacaoModal from './SolicitacaoModal';
-import Link from 'next/link';
 
 interface Column {
   id: Solicitacao['status'];

@@ -17,7 +17,7 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
 
   if (isPublicRoute) {
     return (
-      <main className="min-h-screen bg-gray-50">
+      <main className="flex flex-col min-h-screen bg-gray-50">
         {children}
       </main>
     );
@@ -26,8 +26,9 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
   return (
     <main
       className={cn(
-        "min-h-screen bg-gray-50 flex flex-row min-w-0 transition-all duration-300 ease-in-out max-h-screen",
-        "w-full h-full"
+        "flex flex-col",
+        "min-h-screen max-h-screen w-full h-full scrollbar",
+        "bg-gray-50 flex flex-row min-w-0 transition-all duration-300 ease-in-out",
       )}
     >
       <Sidebar/>
