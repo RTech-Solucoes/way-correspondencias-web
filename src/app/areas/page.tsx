@@ -43,7 +43,6 @@ export default function AreasPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [areaToDelete, setAreaToDelete] = useState<number | null>(null);
 
-  // Load areas from API
   useEffect(() => {
     loadAreas();
   }, [currentPage, activeFilters, searchQuery]);
@@ -52,7 +51,6 @@ export default function AreasPage() {
     try {
       setLoading(true);
 
-      // Build filter string for API
       const filterParts = [];
       if (searchQuery) filterParts.push(searchQuery);
       if (activeFilters.codigo) filterParts.push(activeFilters.codigo);
@@ -73,7 +71,6 @@ export default function AreasPage() {
       setTotalElements(response.totalElements);
     } catch (error) {
       console.error('Erro ao carregar áreas:', error);
-      // Could add toast notification here
     } finally {
       setLoading(false);
     }
@@ -167,10 +164,9 @@ export default function AreasPage() {
     if (areaToDelete) {
       try {
         await areasClient.deletar(areaToDelete);
-        loadAreas(); // Reload areas after deletion
+        loadAreas();
       } catch (error) {
         console.error('Erro ao excluir área:', error);
-        // Could add toast notification here
       }
     }
     setAreaToDelete(null);
@@ -185,10 +181,9 @@ export default function AreasPage() {
       }
       setShowAreaModal(false);
       setSelectedArea(null);
-      loadAreas(); // Reload areas after save
+      loadAreas();
     } catch (error) {
       console.error('Erro ao salvar área:', error);
-      // Could add toast notification here
     }
   };
 

@@ -6,7 +6,7 @@ import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Badge} from '@/components/ui/badge';
 import {Solicitacao} from '@/types/solicitacoes/types';
-import {mockSolicitacoes} from '@/lib/mockData';
+import {mockSolicitacoes, mockResponsaveis} from '@/lib/mockData';
 import SolicitacaoModal from '../../components/solicitacoes/SolicitacaoModal';
 import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
 import {
@@ -27,6 +27,11 @@ export default function SolicitacoesPage() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [solicitacaoToDelete, setSolicitacaoToDelete] = useState<string | null>(null);
+
+  const getResponsavelNameById = (idResponsavel: string): string => {
+    const responsavel = mockResponsaveis.find(r => r.idResponsavel === idResponsavel);
+    return responsavel ? responsavel.dsNome : 'Não atribuído';
+  };
 
   const handleSort = (field: keyof Solicitacao) => {
     if (sortField === field) {
@@ -51,8 +56,8 @@ export default function SolicitacoesPage() {
       return aValue.localeCompare(bValue) * direction;
     }
 
-    if (Array.isArray(aValue) && Array.isArray(bValue)) {
-      return aValue.length - bValue.length * direction;
+    if (typeof aValue === 'number' && typeof bValue === 'number') {
+      return (aValue - bValue) * direction;
     }
 
     return 0;

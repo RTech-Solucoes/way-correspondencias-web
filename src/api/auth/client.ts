@@ -14,8 +14,9 @@ class AuthClient {
       body: JSON.stringify(data),
     });
 
-    if (response.token) {
-      localStorage.setItem('authToken', response.token);
+    if (response.accessToken) {
+      localStorage.setItem('authToken', response.accessToken);
+      localStorage.setItem('tokenType', response.tokenType);
     }
 
     return response;

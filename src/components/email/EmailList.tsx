@@ -299,7 +299,6 @@ function EmailList({
   const [loading, setLoading] = useState(false);
   const {toast} = useToast();
 
-  // Use only mock emails (no sent emails)
   const allEmails = useMemo(() => {
     return MOCK_EMAILS.map(email => ({
       ...email,
@@ -307,32 +306,26 @@ function EmailList({
     }));
   }, []);
 
-  // Filter emails based on search query and filters
   const filteredEmails = useMemo(() => {
     return allEmails.filter(email => {
-      // Search query filter
       const matchesSearch = !searchQuery ||
         email.from.toLowerCase().includes(searchQuery.toLowerCase()) ||
         email.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
         email.preview.toLowerCase().includes(searchQuery.toLowerCase());
 
-      // Read status filter
       const matchesReadStatus = !emailFilters.isRead ||
         emailFilters.isRead === 'all' ||
         (emailFilters.isRead === 'read' && email.isRead) ||
         (emailFilters.isRead === 'unread' && !email.isRead);
 
-      // Attachment filter
       const matchesAttachment = !emailFilters.hasAttachment ||
         emailFilters.hasAttachment === 'all' ||
         (emailFilters.hasAttachment === 'true' && email.hasAttachment) ||
         (emailFilters.hasAttachment === 'false' && !email.hasAttachment);
 
-      // Sender filter
       const matchesSender = !emailFilters.sender ||
         email.from.toLowerCase().includes(emailFilters.sender.toLowerCase());
 
-      // Date filters
       const emailDate = new Date(email.date);
       const matchesDateFrom = !emailFilters.dateFrom ||
         emailDate >= new Date(emailFilters.dateFrom);
@@ -390,7 +383,6 @@ function EmailList({
               variant="ghost"
               size="sm"
               onClick={() => {
-                // Handle delete selected emails
                 setSelectedEmails([]);
                 toast({
                   title: "Emails excluídos",
@@ -409,7 +401,6 @@ function EmailList({
             size="sm"
             onClick={() => {
               setSyncLoading(true);
-              // Simulate sync
               setTimeout(() => {
                 setSyncLoading(false);
                 toast({

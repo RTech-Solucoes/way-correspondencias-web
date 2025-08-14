@@ -1,21 +1,12 @@
 'use client';
 
 import {useEffect, useState} from 'react';
-import {
-  ArrowLeftIcon,
-  DownloadIcon,
-  DotsThreeVerticalIcon,
-  PaperclipIcon,
-  TrashIcon,
-  FileTextIcon
-} from '@phosphor-icons/react';
+import {ArrowLeftIcon, DownloadIcon, FileTextIcon, PaperclipIcon} from '@phosphor-icons/react';
 import {Button} from '@/components/ui/button';
 import {Avatar, AvatarFallback} from '@/components/ui/avatar';
-import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,} from '@/components/ui/dropdown-menu';
 import {useToast} from '@/hooks/use-toast';
 import SolicitacaoModal from '@/components/solicitacoes/SolicitacaoModal';
 import {Solicitacao} from '@/types/solicitacoes/types';
-import {v4 as uuidv4} from 'uuid';
 
 interface EmailDetailProps {
   emailId: string;
@@ -219,7 +210,6 @@ export default function EmailDetail({
   const [showSolicitacaoModal, setShowSolicitacaoModal] = useState(false);
 
   useEffect(() => {
-    // Find email in mock data
     const foundEmail = MOCK_EMAILS.find(e => e.id === emailId);
     if (foundEmail) {
       setEmail(foundEmail);
@@ -340,10 +330,6 @@ export default function EmailDetail({
           solicitacao={null}
           onClose={() => setShowSolicitacaoModal(false)}
           onSave={handleSaveSolicitacao}
-          prefilledData={{
-            dsAssunto: email.subject,
-            dsDescricao: `Solicitação criada a partir do email de ${email.from}:\n\n${email.content.slice(0, 500)}...`
-          }}
         />
       )}
     </div>
