@@ -3,7 +3,7 @@
 import {cn} from '@/utils/utils';
 import {Button} from '@/components/ui/button';
 import {Badge} from '@/components/ui/badge';
-import {BellIcon, BuildingIcon, ClipboardTextIcon, PresentationChartIcon, FileTextIcon, EnvelopeIcon, UserIcon, UsersIcon, Icon} from '@phosphor-icons/react';
+import {BellIcon, BuildingIcon, ClipboardTextIcon, PresentationChartIcon, FileTextIcon, EnvelopeIcon, UserIcon, UsersIcon, Icon, SignOutIcon} from '@phosphor-icons/react';
 import {Avatar, AvatarFallback, AvatarImage} from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -16,6 +16,7 @@ import {
 import {useState} from "react";
 import {usePathname, useRouter} from 'next/navigation';
 import Image from 'next/image';
+import {authClient} from '@/api/auth/client';
 
 interface NavigationItem {
   id: string;
@@ -64,9 +65,7 @@ export default function Sidebar() {
   const router = useRouter();
 
   const handleLogout = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('rememberMe');
-    router.push('/login');
+    authClient.logout();
   };
 
   const handleNavigation = (id: string) => {
@@ -166,6 +165,7 @@ export default function Sidebar() {
           </nav>
 
           <div className="flex-col justify-end space-y-2">
+            {/* User Profile Section */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -176,61 +176,35 @@ export default function Sidebar() {
                     <div className="flex items-center justify-start space-x-3">
                       <Avatar className="h-12 w-12">
                         <AvatarFallback className="w-12 h-12 group-hover:bg-white">
-                          {
-                            // user?.nmResponsavel[0].toUpperCase() ||
-                            "JS"
-                          }
+                          JS
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
                         <h1 className="w-fit text-md font-bold text-gray-900 overflow-ellipsis">
-                          {
-                            // user?.nmResponsavel ||
-                            "João Silva"
-                          }
+                          João Silva
                         </h1>
                         <p className="w-fit text-xs text-gray-500 overflow-ellipsis">
-                          {
-                            // user?.email ||
-                            "joao.silva@waybrasil.com"
-                          }
+                          joao.silva@waybrasil.com
                         </p>
                       </div>
                     </div>
                   </div>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-72 mx-4" align="center" forceMount>
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      {
-                        // user?.nmResponsavel ||
-                        "João Silva"
-                      }
-                    </p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      {
-                        // user?.email ||
-                        "john.doe@waybrasil.com"
-                      }
-                    </p>
-                  </div>
-                </DropdownMenuLabel>
+              <DropdownMenuContent className="w-56" align="end">
+                <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer">
                   <UserIcon className="mr-2 h-4 w-4" />
-                  Perfil
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  Configurações
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  Suporte
+                  <span>Perfil</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
-                  Sair
+                <DropdownMenuItem
+                  className="cursor-pointer text-red-600 focus:text-red-600"
+                  onClick={handleLogout}
+                >
+                  <SignOutIcon className="mr-2 h-4 w-4" />
+                  <span>Sair</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -239,4 +213,6 @@ export default function Sidebar() {
       </div>
     );
   }
+
+  return null;
 }

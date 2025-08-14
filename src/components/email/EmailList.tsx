@@ -207,23 +207,17 @@ const formatDate = (dateString?: string): string => {
   }
 };
 
-interface SentEmail {
-  id: string;
-  to: string;
-  cc?: string;
-  bcc?: string;
-  subject: string;
-  content: string;
-  date: string;
-  from: string;
-}
-
 interface EmailListProps {
-  folder: string;
   searchQuery: string;
   selectedEmail: string | null;
   onEmailSelect: (emailId: string) => void;
-  sentEmails?: SentEmail[];
+  emailFilters?: {
+    isRead: string;
+    hasAttachment: string;
+    dateFrom: string;
+    dateTo: string;
+    sender: string;
+  };
   onUnreadCountChange?: (count: number) => void;
 }
 
@@ -288,11 +282,16 @@ const EmailItem = React.memo<{
 EmailItem.displayName = 'EmailItem';
 
 function EmailList({
-  folder,
   searchQuery,
   selectedEmail,
   onEmailSelect,
-  sentEmails = [],
+  emailFilters = {
+    isRead: '',
+    hasAttachment: '',
+    dateFrom: '',
+    dateTo: '',
+    sender: ''
+  },
   onUnreadCountChange
 }: EmailListProps) {
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
@@ -300,12 +299,50 @@ function EmailList({
   const [loading, setLoading] = useState(false);
   const {toast} = useToast();
 
-  const formattedMockEmails = useMemo(() => {
+  // Use only mock emails (no sent emails)
+  const allEmails = useMemo(() => {
     return MOCK_EMAILS.map(email => ({
       ...email,
       date: formatDate(email.date)
     }));
   }, []);
+
+  // Filter emails based on search query and filters
+  const filteredEmails = useMemo(() => {
+    return allEmails.filter(email => {
+      // Search query filter
+      const matchesSearch = !searchQuery ||
+        email.from.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        email.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        email.preview.toLowerCase().includes(searchQuery.toLowerCase());
+
+      // Read status filter
+      const matchesReadStatus = !emailFilters.isRead ||
+        emailFilters.isRead === 'all' ||
+        (emailFilters.isRead === 'read' && email.isRead) ||
+        (emailFilters.isRead === 'unread' && !email.isRead);
+
+      // Attachment filter
+      const matchesAttachment = !emailFilters.hasAttachment ||
+        emailFilters.hasAttachment === 'all' ||
+        (emailFilters.hasAttachment === 'true' && email.hasAttachment) ||
+        (emailFilters.hasAttachment === 'false' && !email.hasAttachment);
+
+      // Sender filter
+      const matchesSender = !emailFilters.sender ||
+        email.from.toLowerCase().includes(emailFilters.sender.toLowerCase());
+
+      // Date filters
+      const emailDate = new Date(email.date);
+      const matchesDateFrom = !emailFilters.dateFrom ||
+        emailDate >= new Date(emailFilters.dateFrom);
+      const matchesDateTo = !emailFilters.dateTo ||
+        emailDate <= new Date(emailFilters.dateTo);
+
+      return matchesSearch && matchesReadStatus && matchesAttachment &&
+             matchesSender && matchesDateFrom && matchesDateTo;
+    });
+  }, [allEmails, searchQuery, emailFilters]);
 
   const toggleEmailSelection = useCallback((emailId: string) => {
     setSelectedEmails(prev => {
@@ -325,59 +362,111 @@ function EmailList({
   }, [selectedEmail, onEmailSelect]);
 
   return (
-    <div className="flex-1 flex flex-col">
-      {/* Email Actions */}
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center justify-between min-h-[2rem]">
-          <div className="flex items-center space-x-1">
-            {selectedEmails.length > 0 ? (
-              <Button variant="ghost" size="sm">
-                <TrashIcon className="h-4 w-4"/>
-              </Button>
+    <div className="flex-1 flex flex-col bg-white">
+      {/* Header with actions */}
+      <div className="flex items-center justify-between p-4 border-b border-gray-200">
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            checked={selectedEmails.length === filteredEmails.length && filteredEmails.length > 0}
+            onCheckedChange={(checked) => {
+              if (checked) {
+                setSelectedEmails(filteredEmails.map(email => email.id));
+              } else {
+                setSelectedEmails([]);
+              }
+            }}
+          />
+          <span className="text-sm text-gray-500">
+            {selectedEmails.length > 0
+              ? `${selectedEmails.length} selecionado(s)`
+              : `${filteredEmails.length} email(s)`
+            }
+          </span>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          {selectedEmails.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                // Handle delete selected emails
+                setSelectedEmails([]);
+                toast({
+                  title: "Emails excluídos",
+                  description: `${selectedEmails.length} email(s) foram excluídos.`,
+                });
+              }}
+              className="text-red-600 hover:text-red-700"
+            >
+              <TrashIcon className="h-4 w-4 mr-1" />
+              Excluir
+            </Button>
+          )}
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setSyncLoading(true);
+              // Simulate sync
+              setTimeout(() => {
+                setSyncLoading(false);
+                toast({
+                  title: "Emails sincronizados",
+                  description: "Seus emails foram atualizados com sucesso.",
+                });
+              }, 2000);
+            }}
+            disabled={syncLoading}
+          >
+            {syncLoading ? (
+              <SpinnerIcon className="h-4 w-4 mr-1 animate-spin" />
             ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {}}
-                disabled={loading || syncLoading}
-              >
-                {loading || syncLoading ? (
-                  <SpinnerIcon className="h-4 w-4 animate-spin"/>
-                ) : (
-                  <ArrowClockwiseIcon className="h-4 w-4"/>
-                )}
-              </Button>
+              <ArrowClockwiseIcon className="h-4 w-4 mr-1" />
             )}
-          </div>
+            Atualizar
+          </Button>
         </div>
       </div>
 
-      {/* Email List */}
-      <div className="flex flex-col-reverse overflow-y-auto">
+      {/* Email list */}
+      <div className="flex-1 overflow-y-auto">
         {loading ? (
-          <div className="flex flex-col items-center justify-center h-full p-8">
-            <SpinnerIcon className="h-8 w-8 text-blue-500 animate-spin mb-4"/>
-            <p className="text-gray-500">Carregando emails...</p>
+          <div className="flex items-center justify-center py-8">
+            <SpinnerIcon className="h-6 w-6 animate-spin text-gray-400" />
+            <span className="ml-2 text-gray-500">Carregando emails...</span>
           </div>
-        ) : formattedMockEmails.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full p-8">
-            <EnvelopeIcon className="h-12 w-12 text-gray-300 mb-4"/>
-            <h3 className="text-lg font-medium text-gray-900 mb-1">Nenhum email encontrado</h3>
-            <p className="text-gray-500 text-center">
-              {searchQuery ?
-                "Não encontramos emails correspondentes à sua pesquisa." :
-                "Não há emails nesta pasta no momento."}
-            </p>
+        ) : filteredEmails.length === 0 ? (
+          <div className="flex items-center justify-center py-16">
+            <div className="text-center">
+              <EnvelopeIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-600 mb-2">
+                Nenhum email encontrado
+              </h3>
+              <p className="text-gray-500">
+                {searchQuery
+                  ? `Não há emails correspondentes à pesquisa "${searchQuery}"`
+                  : "Sua caixa de entrada está vazia"
+                }
+              </p>
+            </div>
           </div>
         ) : (
-          formattedMockEmails.map((email) => (
+          filteredEmails.map((email) => (
             <EmailItem
               key={email.id}
               email={email}
               isSelected={selectedEmail === email.id}
               isChecked={selectedEmails.includes(email.id)}
-              onSelect={() => handleEmailSelect(email.id)}
-              onToggleCheck={() => toggleEmailSelection(email.id)}
+              onSelect={() => onEmailSelect(email.id)}
+              onToggleCheck={() => {
+                setSelectedEmails(prev =>
+                  prev.includes(email.id)
+                    ? prev.filter(id => id !== email.id)
+                    : [...prev, email.id]
+                );
+              }}
             />
           ))
         )}

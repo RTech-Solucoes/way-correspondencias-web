@@ -86,7 +86,7 @@ export default function AreasPage() {
       setSortField(field);
       setSortDirection('asc');
     }
-    setCurrentPage(0); // Reset to first page when sorting
+    setCurrentPage(0);
   };
 
   const sortedAreas = [...areas].sort((a, b) => {

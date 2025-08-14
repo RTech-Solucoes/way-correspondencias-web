@@ -22,7 +22,7 @@ import {
 import { Solicitacao } from '@/types/solicitacoes/types';
 import { mockResponsaveis } from '@/lib/mockData';
 import { v4 as uuidv4 } from 'uuid';
-import { X, Plus, Paperclip } from '@phosphor-icons/react';
+import { XIcon, PlusIcon, PaperclipIcon } from '@phosphor-icons/react';
 import { Badge } from '@/components/ui/badge';
 
 const mockSolicitantes = [
@@ -243,7 +243,7 @@ export default function SolicitacaoModal({ solicitacao, onClose, onSave }: Solic
                 variant="secondary"
                 disabled={!selectedSolicitante}
               >
-                <Plus className="h-4 w-4" />
+                <PlusIcon className="h-4 w-4" />
               </Button>
             </div>
             <div className="flex flex-wrap gap-2 mt-2">
@@ -255,7 +255,7 @@ export default function SolicitacaoModal({ solicitacao, onClose, onSave }: Solic
                     onClick={() => handleRemoveSolicitante(index)}
                     className="text-gray-500 hover:text-gray-700"
                   >
-                    <X className="h-3 w-3" />
+                    <XIcon className="h-3 w-3" />
                   </button>
                 </Badge>
               ))}
@@ -276,7 +276,7 @@ export default function SolicitacaoModal({ solicitacao, onClose, onSave }: Solic
                 variant="secondary"
                 disabled={!selectedFile}
               >
-                <Paperclip className="h-4 w-4" />
+                <PaperclipIcon className="h-4 w-4" />
               </Button>
             </div>
             <div className="flex flex-wrap gap-2 mt-2">
@@ -288,7 +288,7 @@ export default function SolicitacaoModal({ solicitacao, onClose, onSave }: Solic
                     onClick={() => handleRemoveAnexo(index)}
                     className="text-gray-500 hover:text-gray-700"
                   >
-                    <X className="h-3 w-3" />
+                    <XIcon className="h-3 w-3" />
                   </button>
                 </Badge>
               ))}

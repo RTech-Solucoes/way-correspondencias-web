@@ -14,9 +14,8 @@ class AuthClient {
       body: JSON.stringify(data),
     });
 
-    if (response.accessToken) {
-      localStorage.setItem('authToken', response.accessToken);
-      localStorage.setItem('tokenType', response.tokenType);
+    if (response.token) {
+      localStorage.setItem('authToken', response.token);
     }
 
     return response;
@@ -24,6 +23,15 @@ class AuthClient {
 
   logout(): void {
     localStorage.removeItem('authToken');
+    window.location.href = '/login';
+  }
+
+  isAuthenticated(): boolean {
+    return !!localStorage.getItem('authToken');
+  }
+
+  getToken(): string | null {
+    return localStorage.getItem('authToken');
   }
 }
 

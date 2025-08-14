@@ -164,6 +164,7 @@ body {
   @apply font-semibold text-gray-900;
 }
 
-button {
+button, input[type="file"] {
   @apply cursor-pointer;
 }
+
