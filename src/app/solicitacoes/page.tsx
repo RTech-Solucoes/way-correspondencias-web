@@ -6,8 +6,9 @@ import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Badge} from '@/components/ui/badge';
 import {Solicitacao} from '@/types/solicitacoes/types';
-import {getResponsavelNameById, mockSolicitacoes} from '@/lib/mockData';
+import {mockSolicitacoes} from '@/lib/mockData';
 import SolicitacaoModal from '../../components/solicitacoes/SolicitacaoModal';
+import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
 import {
   DotsThreeVerticalIcon,
   FunnelIcon,
@@ -24,6 +25,8 @@ export default function SolicitacoesPage() {
   const [showSolicitacaoModal, setShowSolicitacaoModal] = useState(false);
   const [sortField, setSortField] = useState<keyof Solicitacao | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [solicitacaoToDelete, setSolicitacaoToDelete] = useState<string | null>(null);
 
   const handleSort = (field: keyof Solicitacao) => {
     if (sortField === field) {
@@ -74,9 +77,15 @@ export default function SolicitacoesPage() {
   };
 
   const handleDeleteSolicitacao = (id: string) => {
-    if (window.confirm('Tem certeza que deseja excluir esta solicitação?')) {
-      setSolicitacoes(solicitacoes.filter(solicitacao => solicitacao.idSolicitacao !== id));
+    setSolicitacaoToDelete(id);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDeleteSolicitacao = () => {
+    if (solicitacaoToDelete) {
+      setSolicitacoes(solicitacoes.filter(solicitacao => solicitacao.idSolicitacao !== solicitacaoToDelete));
     }
+    setSolicitacaoToDelete(null);
   };
 
   const handleSaveSolicitacao = (solicitacao: Solicitacao) => {
@@ -235,6 +244,18 @@ export default function SolicitacoesPage() {
           onSave={handleSaveSolicitacao}
         />
       )}
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        title="Excluir Solicitação"
+        description="Tem certeza que deseja excluir esta solicitação? Esta ação não pode ser desfeita."
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        variant="destructive"
+        onConfirm={confirmDeleteSolicitacao}
+      />
     </div>
   );
 }

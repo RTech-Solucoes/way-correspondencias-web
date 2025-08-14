@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/utils/utils';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 
 interface Column {
   id: string;
@@ -31,6 +32,7 @@ export default function ColumnSettingsModal({
 }: ColumnSettingsModalProps) {
   const [title, setTitle] = useState(column?.title || 'Nova Seção');
   const [color, setColor] = useState(column?.color || 'bg-gray-500');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const handleSave = () => {
     if (column) {
@@ -51,7 +53,11 @@ export default function ColumnSettingsModal({
   };
 
   const handleDelete = () => {
-    if (column && window.confirm('Tem certeza que deseja excluir esta seção? Todas as tarefas serão perdidas.')) {
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = () => {
+    if (column) {
       onDelete(column.id);
       onClose();
     }
@@ -123,6 +129,18 @@ export default function ColumnSettingsModal({
           </div>
         </div>
       </div>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        title="Excluir Seção"
+        description="Tem certeza que deseja excluir esta seção? Todas as tarefas serão perdidas."
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        variant="destructive"
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

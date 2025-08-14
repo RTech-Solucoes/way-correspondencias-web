@@ -18,6 +18,7 @@ import {Label} from '@/components/ui/label';
 import {AreaResponse} from '@/api/areas/types';
 import {areasClient} from '@/api/areas/client';
 import AreaModal from '../../components/areas/AreaModal';
+import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
 
 export default function AreasPage() {
   const [areas, setAreas] = useState<AreaResponse[]>([]);
@@ -39,6 +40,8 @@ export default function AreasPage() {
     ativo: ''
   });
   const [activeFilters, setActiveFilters] = useState(filters);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [areaToDelete, setAreaToDelete] = useState<number | null>(null);
 
   // Load areas from API
   useEffect(() => {
@@ -155,16 +158,22 @@ export default function AreasPage() {
     setShowAreaModal(true);
   };
 
-  const handleDeleteArea = async (id: number) => {
-    if (window.confirm('Tem certeza que deseja excluir esta área?')) {
+  const handleDeleteArea = (id: number) => {
+    setAreaToDelete(id);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDeleteArea = async () => {
+    if (areaToDelete) {
       try {
-        await areasClient.deletar(id);
+        await areasClient.deletar(areaToDelete);
         loadAreas(); // Reload areas after deletion
       } catch (error) {
         console.error('Erro ao excluir área:', error);
         // Could add toast notification here
       }
     }
+    setAreaToDelete(null);
   };
 
   const handleSaveArea = async (areaData: any) => {
@@ -432,6 +441,18 @@ export default function AreasPage() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        title="Excluir Área"
+        description="Tem certeza que deseja excluir esta área? Esta ação não pode ser desfeita."
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        variant="destructive"
+        onConfirm={confirmDeleteArea}
+      />
     </div>
   );
 }

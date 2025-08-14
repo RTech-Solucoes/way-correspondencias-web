@@ -38,6 +38,7 @@ import { Tema } from '@/types/temas/types'
 import { mockTemas, mockAreas } from '@/lib/mockData'
 import { TemaModal } from '@/components/temas/TemaModal'
 import {Checkbox} from "@/components/ui/checkbox";
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
 
 export default function TemasPage() {
   const [temas, setTemas] = useState<Tema[]>(mockTemas)
@@ -49,6 +50,8 @@ export default function TemasPage() {
   const [showFilterModal, setShowFilterModal] = useState(false)
   const [filterAreas, setFilterAreas] = useState<string[]>([])
   const [filterTpContagem, setFilterTpContagem] = useState<string | null>(null)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [temaToDelete, setTemaToDelete] = useState<string | null>(null)
 
   const handleSort = (field: keyof Tema) => {
     if (sortField === field) {
@@ -106,10 +109,16 @@ export default function TemasPage() {
     setShowTemaModal(true)
   }
 
-  const handleDeleteTema = (temaId: string) => {
-    if (window.confirm('Tem certeza que deseja excluir este tema?')) {
-      setTemas(prev => prev.filter(tema => tema.idTema !== temaId))
+  const handleDeleteTema = (id: string) => {
+    setTemaToDelete(id)
+    setShowDeleteDialog(true)
+  }
+
+  const confirmDeleteTema = () => {
+    if (temaToDelete) {
+      setTemas(temas.filter(tema => tema.idTema !== temaToDelete))
     }
+    setTemaToDelete(null)
   }
 
   const handleSaveTema = (tema: Tema) => {
@@ -352,6 +361,18 @@ export default function TemasPage() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        title="Excluir Tema"
+        description="Tem certeza que deseja excluir este tema? Esta ação não pode ser desfeita."
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        variant="destructive"
+        onConfirm={confirmDeleteTema}
+      />
     </div>
   )
 }

@@ -4,7 +4,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="98226f2c-f64e-43be-946e-e89028627d5c" name="Changes" comment="" />
+    <list default="true" id="98226f2c-f64e-43be-946e-e89028627d5c" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/src/components/ui/confirmation-dialog.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/areas/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/areas/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/responsaveis/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/responsaveis/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/solicitacoes/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/solicitacoes/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/temas/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/temas/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/email/FolderManager.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/email/FolderManager.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/kanban/ColumnSettingsModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/kanban/ColumnSettingsModal.tsx" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -139,7 +148,7 @@
       <workItem from="1755168696281" duration="6000" />
       <workItem from="1755180454323" duration="3748000" />
       <workItem from="1755185181479" duration="4117000" />
-      <workItem from="1755191783823" duration="4437000" />
+      <workItem from="1755191783823" duration="5125000" />
     </task>
     <task id="LOCAL-00001" summary="Alteração biblioteca de Ícones&#10;lucide-react -&gt; @phosphor-icons/react">
       <option name="closed" value="true" />

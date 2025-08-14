@@ -5,6 +5,7 @@ import {XIcon, PlusIcon, TrashIcon, FolderIcon, PencilIcon, TagIcon, Icon} from 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
 
 interface Folder {
   id: string;
@@ -24,6 +25,8 @@ export default function FolderManager({ folders, onClose, onSave }: FolderManage
   const [newFolderName, setNewFolderName] = useState('');
   const [editingFolder, setEditingFolder] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [folderToDelete, setFolderToDelete] = useState<string | null>(null);
 
   const handleAddFolder = () => {
     if (newFolderName.trim()) {
@@ -39,9 +42,15 @@ export default function FolderManager({ folders, onClose, onSave }: FolderManage
   };
 
   const handleDeleteFolder = (folderId: string) => {
-    if (window.confirm('Tem certeza que deseja excluir esta pasta?')) {
-      setLocalFolders(localFolders.filter(folder => folder.id !== folderId));
+    setFolderToDelete(folderId);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDeleteFolder = () => {
+    if (folderToDelete) {
+      setLocalFolders(localFolders.filter(folder => folder.id !== folderToDelete));
     }
+    setFolderToDelete(null);
   };
 
   const handleEditFolder = (folder: Folder) => {
@@ -177,6 +186,18 @@ export default function FolderManager({ folders, onClose, onSave }: FolderManage
           </Button>
         </div>
       </div>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        title="Excluir Pasta"
+        description="Tem certeza que deseja excluir esta pasta? Esta ação não pode ser desfeita."
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        variant="destructive"
+        onConfirm={confirmDeleteFolder}
+      />
     </div>
   );
 }

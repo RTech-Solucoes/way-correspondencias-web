@@ -32,6 +32,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Responsavel } from '@/types/responsaveis/types';
 import { mockResponsaveis } from '@/lib/mockData';
 import ResponsavelModal from '../../components/responsaveis/ResponsavelModal';
+import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
 
 export default function ResponsaveisPage() {
   const [responsaveis, setResponsaveis] = useState<Responsavel[]>(mockResponsaveis);
@@ -49,6 +50,8 @@ export default function ResponsaveisPage() {
     perfil: ''
   });
   const [activeFilters, setActiveFilters] = useState(filters);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [responsavelToDelete, setResponsavelToDelete] = useState<string | null>(null);
 
   const handleSort = (field: keyof Responsavel) => {
     if (sortField === field) {
@@ -125,9 +128,15 @@ export default function ResponsaveisPage() {
   };
 
   const handleDeleteResponsavel = (id: string) => {
-    if (window.confirm('Tem certeza que deseja excluir este responsável?')) {
-      setResponsaveis(responsaveis.filter(responsavel => responsavel.idResponsavel !== id));
+    setResponsavelToDelete(id);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDeleteResponsavel = () => {
+    if (responsavelToDelete) {
+      setResponsaveis(responsaveis.filter(responsavel => responsavel.idResponsavel !== responsavelToDelete));
     }
+    setResponsavelToDelete(null);
   };
 
   const handleSaveResponsavel = (responsavel: Responsavel) => {
@@ -327,6 +336,18 @@ export default function ResponsaveisPage() {
           </DialogFooter>
         </Dialog>
       )}
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        title="Excluir Responsável"
+        description="Tem certeza que deseja excluir este responsável? Esta ação não pode ser desfeita."
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        variant="destructive"
+        onConfirm={confirmDeleteResponsavel}
+      />
     </div>
   );
 }
