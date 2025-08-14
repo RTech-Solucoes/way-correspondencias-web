@@ -25,7 +25,7 @@ export default function AreaModal({ area, onClose, onSave }: AreaModalProps) {
     cdArea: '',
     nmArea: '',
     dsArea: '',
-    stAtivo: 'S'
+    flAtivo: 'S'
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -36,14 +36,14 @@ export default function AreaModal({ area, onClose, onSave }: AreaModalProps) {
         cdArea: area.cdArea,
         nmArea: area.nmArea,
         dsArea: area.dsArea,
-        stAtivo: area.stAtivo
+        flAtivo: area.flAtivo
       });
     } else {
       setFormData({
         cdArea: '',
         nmArea: '',
         dsArea: '',
-        stAtivo: 'S'
+        flAtivo: 'S'
       });
     }
   }, [area]);
@@ -144,11 +144,11 @@ export default function AreaModal({ area, onClose, onSave }: AreaModalProps) {
           </div>
 
           <div>
-            <Label htmlFor="stAtivo">Status *</Label>
+            <Label htmlFor="flAtivo">Status *</Label>
             <select
-              id="stAtivo"
-              value={formData.stAtivo}
-              onChange={(e) => handleChange('stAtivo', e.target.value)}
+              id="flAtivo"
+              value={formData.flAtivo}
+              onChange={(e) => handleChange('flAtivo', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="S">Ativo</option>

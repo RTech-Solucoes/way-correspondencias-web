@@ -137,7 +137,7 @@ export default function AreasPage() {
       area.dsArea.toLowerCase().includes(activeFilters.descricao.toLowerCase());
 
     const matchesAtivo = !activeFilters.ativo ||
-      area.stAtivo === activeFilters.ativo;
+      area.flAtivo === activeFilters.ativo;
 
     return matchesSearch && matchesCodigo && matchesNome && matchesDescricao &&
            matchesAtivo;
@@ -258,7 +258,7 @@ export default function AreasPage() {
                   <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
-              <TableHead className="cursor-pointer" onClick={() => handleSort('stAtivo')}>
+              <TableHead className="cursor-pointer" onClick={() => handleSort('flAtivo')}>
                 <div className="flex items-center">
                   Status
                   <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
@@ -288,11 +288,11 @@ export default function AreasPage() {
                   <TableCell>{area.dsArea}</TableCell>
                   <TableCell>
                     <span className={`px-2 py-1 rounded-full text-xs ${
-                      area.stAtivo === 'S' 
+                      area.flAtivo === 'S' 
                         ? 'bg-green-100 text-green-800' 
                         : 'bg-red-100 text-red-800'
                     }`}>
-                      {area.stAtivo === 'S' ? 'Ativo' : 'Inativo'}
+                      {area.flAtivo === 'S' ? 'Ativo' : 'Inativo'}
                     </span>
                   </TableCell>
                   <TableCell className="text-right">

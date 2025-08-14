@@ -3,14 +3,14 @@ export interface AreaResponse {
   cdArea: string;
   nmArea: string;
   dsArea: string;
-  stAtivo: string;
+  flAtivo: string;
 }
 
 export interface AreaRequest {
   cdArea: string;
   nmArea: string;
   dsArea: string;
-  stAtivo: string;
+  flAtivo: string;
 }
 
 export interface PagedResponse<T> {
