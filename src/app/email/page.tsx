@@ -219,8 +219,6 @@ export default function EmailPage() {
           <EmailDetail
             emailId={selectedEmail}
             onClose={() => setSelectedEmail('')}
-            onSend={addSentEmail}
-            emailConfig={emailConfig}
           />
         )}
       </div>

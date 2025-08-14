@@ -19,7 +19,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import { Solicitacao } from '@/lib/types';
+import { Solicitacao } from '@/types/solicitacoes/types';
 import { mockResponsaveis } from '@/lib/mockData';
 import { v4 as uuidv4 } from 'uuid';
 import { X, Plus, Paperclip } from '@phosphor-icons/react';

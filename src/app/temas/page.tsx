@@ -34,7 +34,7 @@ import {
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Tema } from '@/lib/types'
+import { Tema } from '@/types/temas/types'
 import { mockTemas, mockAreas } from '@/lib/mockData'
 import { TemaModal } from '@/components/temas/TemaModal'
 import {Checkbox} from "@/components/ui/checkbox";

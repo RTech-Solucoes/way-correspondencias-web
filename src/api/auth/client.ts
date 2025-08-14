@@ -1,0 +1,31 @@
+import ApiClient from "../client";
+import {LoginRequest, LoginResponse} from "./types";
+
+class AuthClient {
+  private client: ApiClient;
+
+  constructor() {
+    this.client = new ApiClient('/auth');
+  }
+
+  async login(data: LoginRequest): Promise<LoginResponse> {
+    const response = await this.client.request<LoginResponse>('/login', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+
+    if (response.accessToken) {
+      localStorage.setItem('authToken', response.accessToken);
+      localStorage.setItem('tokenType', response.tokenType);
+    }
+
+    return response;
+  }
+
+  logout(): void {
+    localStorage.removeItem('authToken');
+  }
+}
+
+export const authClient = new AuthClient();
+export default authClient;

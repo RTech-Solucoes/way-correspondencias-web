@@ -1,34 +1,20 @@
 'use client';
 
 import {useEffect, useState} from 'react';
-import {ArrowLeftIcon, DownloadIcon, SpinnerIcon, DotsThreeVerticalIcon, PaperclipIcon, TrashIcon, FileTextIcon} from '@phosphor-icons/react';
+import {ArrowLeftIcon, DownloadIcon, DotsThreeVerticalIcon, PaperclipIcon, TrashIcon, FileTextIcon} from '@phosphor-icons/react';
 import {Button} from '@/components/ui/button';
-import {Avatar, AvatarFallback, AvatarImage} from '@/components/ui/avatar';
+import {Avatar, AvatarFallback} from '@/components/ui/avatar';
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,} from '@/components/ui/dropdown-menu';
-import {useEmail} from '@/api/hooks';
 import {useToast} from '@/hooks/use-toast';
-import {Anexo} from '@/api/types';
 import SolicitacaoModal from '@/components/solicitacoes/SolicitacaoModal';
-import { Solicitacao } from '@/lib/types';
+import {Solicitacao} from '@/types/solicitacoes/types';
 import { v4 as uuidv4 } from 'uuid';
+import {Anexo} from "@/api/email/types";
+import {EmailDisplay, SentEmail} from "@/types/email/types";
 
 interface EmailDetailProps {
   emailId: string;
   onClose(): void;
-  onSend?: (email: {
-    to: string;
-    cc?: string;
-    bcc?: string;
-    subject: string;
-    content: string;
-    date: string;
-  }) => void;
-  emailConfig?: {
-    defaultMessages: {
-      [key: string]: string;
-    };
-    defaultFooter: string;
-  };
 }
 
 const formatDate = (dateString?: string): string => {
@@ -45,7 +31,7 @@ const formatDate = (dateString?: string): string => {
   });
 };
 
-const MOCK_EMAILS = [
+const MOCK_EMAILS: EmailDisplay[] = [
   {
     id: 'mock-1',
     from: 'João Silva',
@@ -207,23 +193,14 @@ ricardo@ti.com`,
   }
 ];
 
-const DEFAULT_EMAIL_CONTENT = `
-  <p>Este email não possui conteúdo detalhado.</p>
-  <p>Em uma aplicação real, o conteúdo completo do email seria exibido aqui.</p>
-`;
 export default function EmailDetail({
   emailId,
-  onClose,
-  onSend,
-  emailConfig
+  onClose
 }: EmailDetailProps) {
   const { toast } = useToast();
-  const [sentEmail, setSentEmail] = useState<any>(null);
+  const [sentEmail, setSentEmail] = useState<SentEmail | null>(null);
   const [isSentEmail, setIsSentEmail] = useState(false);
-  const [mockEmail, setMockEmail] = useState<any>(null);
-  const [isMockEmail, setIsMockEmail] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const emailIdNumber = parseInt(emailId, 10);
+  const [mockEmail, setMockEmail] = useState<EmailDisplay | null>(null);
   const [showSolicitacaoModal, setShowSolicitacaoModal] = useState(false);
   const [newSolicitacao, setNewSolicitacao] = useState<Solicitacao | null>(null);
 
@@ -231,30 +208,23 @@ export default function EmailDetail({
     const foundMockEmail = MOCK_EMAILS.find(email => email.id === emailId);
     if (foundMockEmail) {
       setMockEmail(foundMockEmail);
-      setIsMockEmail(true);
-      setIsLoading(false);
       return;
     }
 
     if (typeof window !== 'undefined') {
       const savedEmails = localStorage.getItem('sentEmails');
       if (savedEmails) {
-        const sentEmails = JSON.parse(savedEmails);
-        const foundEmail = sentEmails.find((email: any) => email.id === emailId);
+        const sentEmails = JSON.parse(savedEmails) as SentEmail[];
+        const foundEmail = sentEmails.find((email) => email.id === emailId);
         if (foundEmail) {
           setSentEmail(foundEmail);
           setIsSentEmail(true);
         }
       }
-      setIsLoading(false);
     }
   }, [emailId]);
 
-  const { data: apiEmail, loading: apiLoading, error } = useEmail(
-    !isSentEmail && !isMockEmail && !isNaN(emailIdNumber) ? emailIdNumber : 0
-  );
-
-  const createSolicitacaoFromEmail = () => {
+  const createSolicitacaoFromEmail = (email: EmailDisplay) => {
     const today = new Date().toISOString().split('T')[0];
     const newSolicitacao: Solicitacao = {
       idSolicitacao: uuidv4(),
@@ -270,61 +240,33 @@ export default function EmailDetail({
     return newSolicitacao;
   };
 
-  useEffect(() => {
-    if (error && !isSentEmail) {
-      toast({
-        title: "Erro ao carregar email",
-        description: "Não foi possível carregar os detalhes do email. Tente novamente mais tarde.",
-        variant: "destructive",
-      });
+  const email: EmailDisplay | null = (() => {
+    if (isSentEmail && sentEmail) {
+      return {
+        id: sentEmail.id,
+        from: 'você',
+        fromEmail: sentEmail.from || 'voce@example.com',
+        subject: sentEmail.subject,
+        content: sentEmail.content,
+        date: formatDate(sentEmail.date) || formatDate(new Date().toISOString()),
+        attachments: [] as Anexo[],
+        isStarred: false
+      };
     }
-  }, [error, toast, isSentEmail]);
+    return mockEmail;
+  })();
 
-  if ((apiLoading && !isSentEmail && !isMockEmail) || (isLoading && !isMockEmail)) {
+  if (!email) {
     return (
-      <div className="flex-1 bg-white flex flex-col h-full items-center justify-center">
-        <SpinnerIcon className="h-8 w-8 text-blue-500 animate-spin mb-4" />
-        <p className="text-gray-500">Carregando email...</p>
-      </div>
-    );
-  }
-
-  if (!isMockEmail && !isSentEmail && (!apiEmail || (isNaN(emailIdNumber)))) {
-    return (
-      <div className="flex-1 bg-white flex items-center justify-center">
+      <div className="flex-1 bg-white flex flex-col justify-center items-center h-full">
         <p className="text-gray-500">Email não encontrado</p>
+        <Button variant="ghost" onClick={onClose} className="mt-4">
+          <ArrowLeftIcon className="h-4 w-4 mr-2" />
+          Voltar
+        </Button>
       </div>
     );
   }
-
-  const email = isSentEmail ? {
-    id: sentEmail.id,
-    from: 'voce',
-    fromEmail: sentEmail.from || 'voce@example.com',
-    subject: sentEmail.subject,
-    content: sentEmail.content,
-    date: formatDate(sentEmail.date) || formatDate(new Date().toISOString()),
-    attachments: [] as Anexo[],
-    isStarred: false
-  } : isMockEmail ? {
-    id: mockEmail.id,
-    from: mockEmail.from,
-    fromEmail: mockEmail.fromEmail,
-    subject: mockEmail.subject,
-    content: mockEmail.content,
-    date: formatDate(mockEmail.date) || formatDate(new Date().toISOString()),
-    attachments: [] as Anexo[],
-    isStarred: false
-  } : {
-    id: apiEmail?.id_email.toString(),
-    from: apiEmail?.remetente.split("@")[0],
-    fromEmail: apiEmail?.remetente,
-    subject: apiEmail?.assunto,
-    content: apiEmail?.conteudo || DEFAULT_EMAIL_CONTENT,
-    date: formatDate(apiEmail?.prazo_resposta) || formatDate(new Date().toISOString()),
-    attachments: [] as Anexo[],
-    isStarred: false
-  };
 
   return (
     <div className="flex-1 bg-white flex flex-col overflow-y-auto h-full max-h-full">
@@ -410,7 +352,7 @@ export default function EmailDetail({
           <Button 
             className="bg-blue-600 hover:bg-blue-700"
             onClick={() => {
-              const solicitation = createSolicitacaoFromEmail();
+              const solicitation = createSolicitacaoFromEmail(email);
               setNewSolicitacao(solicitation);
               setShowSolicitacaoModal(true);
             }}
@@ -428,7 +370,7 @@ export default function EmailDetail({
             setShowSolicitacaoModal(false);
             setNewSolicitacao(null);
           }}
-          onSave={(solicitacao) => {
+          onSave={() => {
             toast({
               title: "Solicitação criada",
               description: "A solicitação foi criada com sucesso.",

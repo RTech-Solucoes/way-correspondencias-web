@@ -1,0 +1,1 @@
+export type StatusEmail = 'NOVO' | 'LIDO' | 'RESPONDIDO' | 'ARQUIVADO';

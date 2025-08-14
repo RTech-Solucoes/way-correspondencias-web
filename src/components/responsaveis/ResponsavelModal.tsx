@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Responsavel } from '@/lib/types';
+import { Responsavel } from '@/types/responsaveis/types';
 import { v4 as uuidv4 } from 'uuid';
 
 interface ResponsavelModalProps {

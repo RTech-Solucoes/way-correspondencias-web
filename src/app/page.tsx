@@ -23,7 +23,7 @@ export default function DashboardPage() {
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div>
-						<h1 className="text-3xl font-bold text-gray-900 flex items-center">
+					<h1 className="text-3xl font-bold text-gray-900 flex items-center">
 							<ChartBarIcon className="h-8 w-8 mr-3" />
 						Dashboard
 					</h1>

@@ -5,12 +5,89 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="98226f2c-f64e-43be-946e-e89028627d5c" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/src/api/areas/client.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/api/areas/types.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/api/auth/client.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/api/auth/types.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/api/email/client.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/api/email/types.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/api/responsaveis/client.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/api/responsaveis/types.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/api/solicitacoes/client.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/api/solicitacoes/types.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/api/temas/client.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/api/temas/types.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/types/areas/enums.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/types/areas/types.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/types/email/enums.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/types/email/types.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/types/responsaveis/enums.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/types/responsaveis/types.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/types/solicitacoes/enums.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/types/solicitacoes/types.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/types/temas/enums.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/types/temas/types.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/api/ApiProvider.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/api/ApiProvider.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/api/ApiStatus.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/api/client.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/api/client.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/api/hooks.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/api/index.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/api/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/api/types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/api/utils.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils/utils.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/areas/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/areas/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/cadastro/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/cadastro/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/email/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/email/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/layout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/login/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/login/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/responsaveis/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/responsaveis/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/solicitacoes/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/solicitacoes/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/temas/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/temas/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/areas/AreaModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/areas/AreaModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/email/EmailDetail.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/email/EmailDetail.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/email/EmailList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/email/EmailList.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/kanban/ColumnSettingsModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/kanban/ColumnSettingsModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/kanban/ImportSpreadsheetModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/kanban/ImportSpreadsheetModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/kanban/KanbanColumn.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/kanban/KanbanColumn.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/kanban/TaskCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/kanban/TaskCard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/layout/Sidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/layout/Sidebar.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/responsaveis/ResponsavelModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/responsaveis/ResponsavelModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/solicitacoes/SolicitacaoModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/solicitacoes/SolicitacaoModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/solicitacoes/SolicitacoesKanban.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/solicitacoes/SolicitacoesKanban.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/temas/TemaModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/temas/TemaModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/ui/alert-dialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ui/alert-dialog.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/ui/alert.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ui/alert.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/ui/avatar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ui/avatar.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/ui/badge.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ui/badge.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/ui/button.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ui/button.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/ui/card.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ui/card.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/ui/checkbox.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ui/checkbox.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/ui/dialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ui/dialog.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/ui/dropdown-menu.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ui/dropdown-menu.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/ui/input.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ui/input.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/ui/label.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ui/label.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/ui/select.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ui/select.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/ui/separator.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ui/separator.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/ui/table.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ui/table.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/ui/tabs.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ui/tabs.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/ui/textarea.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ui/textarea.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/ui/toast.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ui/toast.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/mockData.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/mockData.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/types.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/utils.ts" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="TypeScript File" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -31,7 +108,7 @@
     <dismissed value="$PROJECT_DIR$/package.json" />
   </component>
   <component name="ProblemsViewState">
-    <option name="selectedTabId" value="CurrentFile" />
+    <option name="selectedTabId" value="ProjectErrors" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 0
@@ -49,12 +126,13 @@
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;develop&quot;,
     &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/Work/projetos/rtech/way-correspondencias-web&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/Work/projetos/rtech/way-correspondencias-web/src/types/solicitacoes&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;bun&quot;,
+    &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;,
     &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
     &quot;ts.external.directory.path&quot;: &quot;D:\\Work\\projetos\\rtech\\way-correspondencias-web\\node_modules\\typescript\\lib&quot;,
@@ -72,13 +150,18 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="D:\work\projetos\rtech\way-correspondencias-web" />
+      <recent name="D:\Work\projetos\rtech\way-correspondencias-web\src\types\solicitacoes" />
+      <recent name="D:\Work\projetos\rtech\way-correspondencias-web\src\api\areas" />
+      <recent name="D:\Work\projetos\rtech\way-correspondencias-web\src\api\temas" />
+      <recent name="D:\Work\projetos\rtech\way-correspondencias-web\src\api\solicitacoes" />
+      <recent name="D:\Work\projetos\rtech\way-correspondencias-web\src\api\responsaveis" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\Work\projetos\rtech\way-correspondencias-web\src\types" />
+      <recent name="D:\Work\projetos\rtech\way-correspondencias-web\src\utils" />
       <recent name="D:\work\projetos\rtech\way-correspondencias-web\src" />
       <recent name="D:\work\projetos\rtech\way-correspondencias-web\api" />
       <recent name="D:\work\projetos\rtech\way-correspondencias-web" />
-      <recent name="D:\work\projetos\rtech\way-correspondencias-web\lib\api" />
     </key>
   </component>
   <component name="RunManager" selected="npm.Next.js: server-side">
@@ -126,6 +209,9 @@
       <workItem from="1755104660931" duration="3163000" />
       <workItem from="1755110041017" duration="61000" />
       <workItem from="1755168696281" duration="6000" />
+      <workItem from="1755180454323" duration="3748000" />
+      <workItem from="1755185181479" duration="4117000" />
+      <workItem from="1755191783823" duration="4078000" />
     </task>
     <task id="LOCAL-00001" summary="Alteração biblioteca de Ícones&#10;lucide-react -&gt; @phosphor-icons/react">
       <option name="closed" value="true" />

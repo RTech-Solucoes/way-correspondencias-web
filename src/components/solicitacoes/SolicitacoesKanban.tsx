@@ -5,7 +5,7 @@ import { PlusIcon, FunnelIcon, UsersIcon, CalendarIcon, MagnifyingGlassIcon, Arr
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Solicitacao } from '@/lib/types';
+import { Solicitacao } from '@/types/solicitacoes/types';
 import { mockSolicitacoes } from '@/lib/mockData';
 import { getResponsavelNameById } from '@/lib/mockData';
 import SolicitacaoModal from './SolicitacaoModal';

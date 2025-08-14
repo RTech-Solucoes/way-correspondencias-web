@@ -6,8 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/utils';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import authClient from "@/api/auth/client";
+import {useRouter} from "next/navigation";
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -18,6 +20,8 @@ export default function LoginPage() {
   const [passwordError, setPasswordError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [dialog, setDialog] = useState<{ open: boolean; title: string; description: string }>({ open: false, title: '', description: '' });
+
+  const router = useRouter();
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -51,17 +55,17 @@ export default function LoginPage() {
     if (!hasErrors) {
       setIsLoading(true);
       try {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        console.log('Login realizado:', { email, rememberMe });
+        const response = await authClient.login({
+          username: email,
+          password: password
+        });
 
         if (rememberMe) {
           localStorage.setItem('rememberMe', 'true');
           localStorage.setItem('userEmail', email);
         }
-        
-        setDialog({ open: true, title: 'Sucesso', description: 'Login realizado com sucesso!' });
 
+        router.push('/');
         setEmail('');
         setPassword('');
         setRememberMe(false);

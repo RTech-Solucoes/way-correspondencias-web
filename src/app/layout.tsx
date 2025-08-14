@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { Poppins as Font } from 'next/font/google';
 import { ApiProvider } from '@/api/ApiProvider';
 import { ReactNode } from 'react'
-import {cn} from "@/lib/utils";
+import {cn} from "@/utils/utils";
 import Sidebar from "@/components/layout/Sidebar";
 import IconProvider from "@/components/providers/IconProvider";
 

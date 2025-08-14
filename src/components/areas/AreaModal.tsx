@@ -1,155 +1,174 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogFooter 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Area } from '@/lib/types';
-import { v4 as uuidv4 } from 'uuid';
+import { AreaResponse, AreaRequest } from '@/api/areas/types';
 
 interface AreaModalProps {
-  area: Area | null;
+  area: AreaResponse | null;
   onClose(): void;
-  onSave(area: Area): void;
+  onSave(area: AreaRequest): void;
 }
 
 export default function AreaModal({ area, onClose, onSave }: AreaModalProps) {
-  const [formData, setFormData] = useState<Area>({
-    idArea: '',
-    cdArea: 0,
+  const [formData, setFormData] = useState<AreaRequest>({
+    cdArea: '',
     nmArea: '',
     dsArea: '',
-    dtCadastro: '',
-    nrCpfCadastro: '',
-    vsVersao: 1,
-    dtAlteracao: '',
-    nrCpfAlteracao: ''
+    stAtivo: 'S'
   });
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (area) {
-      setFormData(area);
-    } else {
-      const today = new Date().toISOString().split('T')[0];
       setFormData({
-        idArea: uuidv4(),
-        cdArea: 0,
+        cdArea: area.cdArea,
+        nmArea: area.nmArea,
+        dsArea: area.dsArea,
+        stAtivo: area.stAtivo
+      });
+    } else {
+      setFormData({
+        cdArea: '',
         nmArea: '',
         dsArea: '',
-        dtCadastro: today,
-        nrCpfCadastro: '12345678901',
-        vsVersao: 1,
-        dtAlteracao: today,
-        nrCpfAlteracao: '12345678901'
+        stAtivo: 'S'
       });
     }
   }, [area]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: name === 'cdArea' ? Number(value) : value
-    }));
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.cdArea.trim()) {
+      newErrors.cdArea = 'Código é obrigatório';
+    }
+
+    if (!formData.nmArea.trim()) {
+      newErrors.nmArea = 'Nome é obrigatório';
+    }
+
+    if (!formData.dsArea.trim()) {
+      newErrors.dsArea = 'Descrição é obrigatória';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (area) {
-      const today = new Date().toISOString().split('T')[0];
-      formData.dtAlteracao = today;
-      formData.vsVersao += 1;
+    if (validateForm()) {
+      onSave(formData);
     }
-    
-    onSave(formData);
+  };
+
+  const handleChange = (field: keyof AreaRequest, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: ''
+      }));
+    }
   };
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>
             {area ? 'Editar Área' : 'Nova Área'}
           </DialogTitle>
         </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4 py-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="cdArea">Código</Label>
-              <Input
-                id="cdArea"
-                name="cdArea"
-                type="number"
-                value={formData.cdArea}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="nmArea">Nome</Label>
-              <Input
-                id="nmArea"
-                name="nmArea"
-                value={formData.nmArea}
-                onChange={handleChange}
-                required
-              />
-            </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="cdArea">Código *</Label>
+            <Input
+              id="cdArea"
+              value={formData.cdArea}
+              onChange={(e) => handleChange('cdArea', e.target.value)}
+              placeholder="Digite o código da área"
+              className={errors.cdArea ? 'border-red-500' : ''}
+            />
+            {errors.cdArea && (
+              <p className="text-red-500 text-sm mt-1">{errors.cdArea}</p>
+            )}
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="dsArea">Descrição</Label>
+
+          <div>
+            <Label htmlFor="nmArea">Nome *</Label>
+            <Input
+              id="nmArea"
+              value={formData.nmArea}
+              onChange={(e) => handleChange('nmArea', e.target.value)}
+              placeholder="Digite o nome da área"
+              className={errors.nmArea ? 'border-red-500' : ''}
+            />
+            {errors.nmArea && (
+              <p className="text-red-500 text-sm mt-1">{errors.nmArea}</p>
+            )}
+          </div>
+
+          <div>
+            <Label htmlFor="dsArea">Descrição *</Label>
             <Textarea
               id="dsArea"
-              name="dsArea"
               value={formData.dsArea}
-              onChange={handleChange}
+              onChange={(e) => handleChange('dsArea', e.target.value)}
+              placeholder="Digite a descrição da área"
+              className={errors.dsArea ? 'border-red-500' : ''}
               rows={3}
-              required
             />
+            {errors.dsArea && (
+              <p className="text-red-500 text-sm mt-1">{errors.dsArea}</p>
+            )}
           </div>
-          
-          {area && (
-            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
-              <div className="space-y-1">
-                <Label className="text-xs text-gray-500">Data de Cadastro</Label>
-                <p className="text-sm">{new Date(formData.dtCadastro).toLocaleDateString('pt-BR')}</p>
-              </div>
-              
-              <div className="space-y-1">
-                <Label className="text-xs text-gray-500">Última Alteração</Label>
-                <p className="text-sm">{new Date(formData.dtAlteracao).toLocaleDateString('pt-BR')}</p>
-              </div>
-              
-              <div className="space-y-1">
-                <Label className="text-xs text-gray-500">Versão</Label>
-                <p className="text-sm">{formData.vsVersao}</p>
-              </div>
-              
-              <div className="space-y-1">
-                <Label className="text-xs text-gray-500">CPF Cadastro</Label>
-                <p className="text-sm">{formData.nrCpfCadastro}</p>
-              </div>
-            </div>
-          )}
-          
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+
+          <div>
+            <Label htmlFor="stAtivo">Status *</Label>
+            <select
+              id="stAtivo"
+              value={formData.stAtivo}
+              onChange={(e) => handleChange('stAtivo', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="S">Ativo</option>
+              <option value="N">Inativo</option>
+            </select>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+            >
               Cancelar
             </Button>
-            <Button type="submit">
-              {area ? 'Salvar Alterações' : 'Criar Área'}
+            <Button
+              type="submit"
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {area ? 'Atualizar' : 'Criar'}
             </Button>
           </DialogFooter>
         </form>

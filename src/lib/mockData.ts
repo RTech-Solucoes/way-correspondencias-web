@@ -1,5 +1,9 @@
-import { Area, Responsavel, Solicitacao, Tema, TipoContagem } from './types';
 import { v4 as uuidv4 } from 'uuid';
+import {Area} from "@/types/areas/types";
+import {Responsavel} from "@/types/responsaveis/types";
+import {Tema} from "@/types/temas/types";
+import {TipoContagem} from "@/types/temas/enums";
+import {Solicitacao} from "@/types/solicitacoes/types";
 
 export const mockAreas: Area[] = [
   {

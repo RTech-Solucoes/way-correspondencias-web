@@ -4,7 +4,7 @@ import { useState, useRef } from 'react';
 import { XIcon, UploadIcon, MicrosoftExcelLogoIcon, WarningCircleIcon, CheckIcon } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/utils';
 
 interface ImportSpreadsheetModalProps {
   onClose(): void;

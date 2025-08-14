@@ -1,6 +1,6 @@
 'use client';
 
-import {useState} from 'react';
+import {useState, useEffect} from 'react';
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
@@ -15,35 +15,75 @@ import {
 } from '@phosphor-icons/react';
 import {Dialog, DialogContent, DialogHeader, DialogTitle} from '@/components/ui/dialog';
 import {Label} from '@/components/ui/label';
-import {Area} from '@/lib/types';
-import {mockAreas} from '@/lib/mockData';
+import {AreaResponse} from '@/api/areas/types';
+import {areasClient} from '@/api/areas/client';
 import AreaModal from '../../components/areas/AreaModal';
 
 export default function AreasPage() {
-  const [areas, setAreas] = useState<Area[]>(mockAreas);
+  const [areas, setAreas] = useState<AreaResponse[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedArea, setSelectedArea] = useState<Area | null>(null);
+  const [selectedArea, setSelectedArea] = useState<AreaResponse | null>(null);
   const [showAreaModal, setShowAreaModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [sortField, setSortField] = useState<keyof Area | null>(null);
+  const [sortField, setSortField] = useState<keyof AreaResponse | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
 
   const [filters, setFilters] = useState({
     codigo: '',
     nome: '',
     descricao: '',
-    dataInicio: '',
-    dataFim: ''
+    ativo: ''
   });
   const [activeFilters, setActiveFilters] = useState(filters);
 
-  const handleSort = (field: keyof Area) => {
+  // Load areas from API
+  useEffect(() => {
+    loadAreas();
+  }, [currentPage, activeFilters, searchQuery]);
+
+  const loadAreas = async () => {
+    try {
+      setLoading(true);
+
+      // Build filter string for API
+      const filterParts = [];
+      if (searchQuery) filterParts.push(searchQuery);
+      if (activeFilters.codigo) filterParts.push(activeFilters.codigo);
+      if (activeFilters.nome) filterParts.push(activeFilters.nome);
+      if (activeFilters.descricao) filterParts.push(activeFilters.descricao);
+
+      const filtro = filterParts.join(' ');
+
+      const response = await areasClient.buscarPorFiltro({
+        filtro: filtro || undefined,
+        page: currentPage,
+        size: 10,
+        sort: sortField ? `${sortField},${sortDirection}` : undefined
+      });
+
+      setAreas(response.content);
+      setTotalPages(response.totalPages);
+      setTotalElements(response.totalElements);
+    } catch (error) {
+      console.error('Erro ao carregar áreas:', error);
+      // Could add toast notification here
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSort = (field: keyof AreaResponse) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
       setSortField(field);
       setSortDirection('asc');
     }
+    setCurrentPage(0); // Reset to first page when sorting
   };
 
   const sortedAreas = [...areas].sort((a, b) => {
@@ -69,16 +109,17 @@ export default function AreasPage() {
       codigo: '',
       nome: '',
       descricao: '',
-      dataInicio: '',
-      dataFim: ''
+      ativo: ''
     };
     setFilters(emptyFilters);
     setActiveFilters(emptyFilters);
+    setCurrentPage(0);
   };
 
   const handleApplyFilters = () => {
     setActiveFilters(filters);
     setShowFilterModal(false);
+    setCurrentPage(0);
   };
 
   const filteredAreas = sortedAreas.filter(area => {
@@ -95,14 +136,11 @@ export default function AreasPage() {
     const matchesDescricao = !activeFilters.descricao ||
       area.dsArea.toLowerCase().includes(activeFilters.descricao.toLowerCase());
 
-    const matchesDataInicio = !activeFilters.dataInicio ||
-      new Date(area.dtCadastro) >= new Date(activeFilters.dataInicio);
-
-    const matchesDataFim = !activeFilters.dataFim ||
-      new Date(area.dtCadastro) <= new Date(activeFilters.dataFim);
+    const matchesAtivo = !activeFilters.ativo ||
+      area.stAtivo === activeFilters.ativo;
 
     return matchesSearch && matchesCodigo && matchesNome && matchesDescricao &&
-           matchesDataInicio && matchesDataFim;
+           matchesAtivo;
   });
 
   const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
@@ -112,25 +150,41 @@ export default function AreasPage() {
     setShowAreaModal(true);
   };
 
-  const handleEditArea = (area: Area) => {
+  const handleEditArea = (area: AreaResponse) => {
     setSelectedArea(area);
     setShowAreaModal(true);
   };
 
-  const handleDeleteArea = (id: string) => {
+  const handleDeleteArea = async (id: number) => {
     if (window.confirm('Tem certeza que deseja excluir esta área?')) {
-      setAreas(areas.filter(area => area.idArea !== id));
+      try {
+        await areasClient.deletar(id);
+        loadAreas(); // Reload areas after deletion
+      } catch (error) {
+        console.error('Erro ao excluir área:', error);
+        // Could add toast notification here
+      }
     }
   };
 
-  const handleSaveArea = (area: Area) => {
-    if (selectedArea) {
-      setAreas(areas.map(a => a.idArea === area.idArea ? area : a));
-    } else {
-      setAreas([...areas, area]);
+  const handleSaveArea = async (areaData: any) => {
+    try {
+      if (selectedArea) {
+        await areasClient.atualizar(selectedArea.idArea, areaData);
+      } else {
+        await areasClient.criar(areaData);
+      }
+      setShowAreaModal(false);
+      setSelectedArea(null);
+      loadAreas(); // Reload areas after save
+    } catch (error) {
+      console.error('Erro ao salvar área:', error);
+      // Could add toast notification here
     }
-    setShowAreaModal(false);
-    setSelectedArea(null);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
   };
 
   return (
@@ -168,6 +222,16 @@ export default function AreasPage() {
             <FunnelSimpleIcon className="h-4 w-4 mr-2" />
             Filtrar
           </Button>
+          {hasActiveFilters && (
+            <Button
+              variant="outline"
+              className="h-10 px-4"
+              onClick={handleClearFilters}
+            >
+              <XIcon className="h-4 w-4 mr-2" />
+              Limpar Filtros
+            </Button>
+          )}
         </div>
       </div>
 
@@ -194,9 +258,9 @@ export default function AreasPage() {
                   <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
-              <TableHead className="cursor-pointer" onClick={() => handleSort('dtCadastro')}>
+              <TableHead className="cursor-pointer" onClick={() => handleSort('stAtivo')}>
                 <div className="flex items-center">
-                  Data de Cadastro
+                  Status
                   <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
@@ -204,9 +268,15 @@ export default function AreasPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredAreas.length === 0 ? (
+            {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                  Carregando áreas...
+                </TableCell>
+              </TableRow>
+            ) : areas.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8 text-gray-500">
                   Nenhuma área encontrada
                 </TableCell>
               </TableRow>
@@ -216,7 +286,15 @@ export default function AreasPage() {
                   <TableCell className="font-medium">{area.cdArea}</TableCell>
                   <TableCell>{area.nmArea}</TableCell>
                   <TableCell>{area.dsArea}</TableCell>
-                  <TableCell>{new Date(area.dtCadastro).toLocaleDateString('pt-BR')}</TableCell>
+                  <TableCell>
+                    <span className={`px-2 py-1 rounded-full text-xs ${
+                      area.stAtivo === 'S' 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {area.stAtivo === 'S' ? 'Ativo' : 'Inativo'}
+                    </span>
+                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end space-x-2">
                       <Button 
@@ -242,6 +320,35 @@ export default function AreasPage() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="bg-white border-t border-gray-200 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-700">
+              Mostrando {currentPage * 10 + 1} até {Math.min((currentPage + 1) * 10, totalElements)} de {totalElements} resultados
+            </div>
+            <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 0}
+              >
+                Anterior
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage >= totalPages - 1}
+              >
+                Próxima
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Area Modal */}
       {showAreaModal && (
@@ -293,38 +400,27 @@ export default function AreasPage() {
                   placeholder="Filtrar por descrição"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="dataInicio">Data Início</Label>
-                  <Input
-                    id="dataInicio"
-                    type="date"
-                    value={filters.dataInicio}
-                    onChange={(e) => setFilters({ ...filters, dataInicio: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="dataFim">Data Fim</Label>
-                  <Input
-                    id="dataFim"
-                    type="date"
-                    value={filters.dataFim}
-                    onChange={(e) => setFilters({ ...filters, dataFim: e.target.value })}
-                  />
-                </div>
+              <div>
+                <Label htmlFor="ativo">Status</Label>
+                <select
+                  id="ativo"
+                  value={filters.ativo}
+                  onChange={(e) => setFilters({ ...filters, ativo: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Todos</option>
+                  <option value="S">Ativo</option>
+                  <option value="N">Inativo</option>
+                </select>
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 mt-4">
+            <div className="flex justify-end space-x-2 mt-6">
               <Button
                 variant="outline"
-                onClick={() => {
-                  setShowFilterModal(false);
-                  handleClearFilters();
-                }}
+                onClick={handleClearFilters}
               >
-                <XIcon className="h-4 w-4 mr-2" />
-                Limpar Filtros
+                Limpar
               </Button>
               <Button
                 onClick={handleApplyFilters}

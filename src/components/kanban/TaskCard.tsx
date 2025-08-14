@@ -4,7 +4,7 @@ import React from 'react';
 import { ChatCircleIcon, ClockIcon, WarningIcon } from '@phosphor-icons/react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/utils';
 
 interface Task {
   id: string;

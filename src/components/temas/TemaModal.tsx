@@ -8,10 +8,11 @@ import {Label} from '@/components/ui/label';
 import {Textarea} from '@/components/ui/textarea';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
 import {CheckIcon} from '@phosphor-icons/react';
-import {Tema, TipoContagem} from '@/lib/types';
+import {Tema} from '@/types/temas/types';
+import {TipoContagem} from '@/types/temas/enums';
 import {mockAreas} from '@/lib/mockData';
 import {v4 as uuidv4} from 'uuid';
-import {cn} from '@/lib/utils';
+import {cn} from '@/utils/utils';
 
 interface TemaModalProps {
   isOpen: boolean;

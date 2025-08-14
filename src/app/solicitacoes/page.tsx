@@ -5,7 +5,7 @@ import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/c
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Badge} from '@/components/ui/badge';
-import {Solicitacao} from '@/lib/types';
+import {Solicitacao} from '@/types/solicitacoes/types';
 import {getResponsavelNameById, mockSolicitacoes} from '@/lib/mockData';
 import SolicitacaoModal from '../../components/solicitacoes/SolicitacaoModal';
 import {

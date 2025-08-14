@@ -5,7 +5,7 @@ import { PlusIcon, DotsNineIcon, PencilIcon } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import TaskCard from './TaskCard';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/utils';
 
 interface Task {
   id: string;
