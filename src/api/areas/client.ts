@@ -14,6 +14,12 @@ class AreasClient {
     });
   }
 
+  async buscarPorCdArea(cdArea: string): Promise<AreaResponse> {
+    return this.client.request<AreaResponse>(`/cdArea/${cdArea}`, {
+      method: 'GET',
+    });
+  }
+
   async buscarPorFiltro(params: AreaFilterParams = {}): Promise<PagedResponse<AreaResponse>> {
     const queryParams = new URLSearchParams();
 

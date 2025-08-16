@@ -96,7 +96,7 @@
 }
 
 * {
-  @apply scroll-smooth;
+  @apply scroll-smooth border-border;
 }
 
 body {
@@ -117,6 +117,10 @@ body {
   /*  pointer-events-none;*/
   /*  content: '';*/
   /*}*/
+}
+
+select {
+  @apply rounded-4xl
 }
 
 *::-webkit-scrollbar {

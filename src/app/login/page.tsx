@@ -214,14 +214,14 @@ export default function LoginPage() {
                 Lembrar de mim
               </Label>
             </div>
-            <Button
-              type="button"
-              variant="link"
-              className="text-sm text-white p-0 h-auto"
-              disabled={isLoading}
-            >
-              Esqueceu a senha?
-            </Button>
+            {/*<Button*/}
+            {/*  type="button"*/}
+            {/*  variant="link"*/}
+            {/*  className="text-sm text-white p-0 h-auto"*/}
+            {/*  disabled={isLoading}*/}
+            {/*>*/}
+            {/*  Esqueceu a senha?*/}
+            {/*</Button>*/}
           </div>
 
           <Button
