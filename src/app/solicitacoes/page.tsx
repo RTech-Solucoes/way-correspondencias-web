@@ -10,13 +10,15 @@ import {mockSolicitacoes, mockResponsaveis} from '@/lib/mockData';
 import SolicitacaoModal from '../../components/solicitacoes/SolicitacaoModal';
 import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
 import {
-  DotsThreeVerticalIcon,
+  ArrowsDownUpIcon,
   FunnelIcon,
   MagnifyingGlassIcon,
   PencilIcon,
   PlusIcon,
-  TrashIcon
+  TrashIcon,
+  FileIcon
 } from '@phosphor-icons/react';
+import PageTitle from '@/components/ui/page-title';
 
 export default function SolicitacoesPage() {
   const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>(mockSolicitacoes);
@@ -123,9 +125,7 @@ export default function SolicitacoesPage() {
       {/* Header */}
       <div className="bg-white border-b border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Cadastro de Solicitações
-          </h1>
+          <PageTitle title="Solicitações" icon={FileIcon} />
           <div className="flex space-x-2">
             <Button 
               onClick={handleCreateSolicitacao} 
@@ -162,31 +162,31 @@ export default function SolicitacoesPage() {
               <TableHead className="cursor-pointer" onClick={() => handleSort('cdIdentificacao')}>
                 <div className="flex items-center">
                   Identificação
-                  <DotsThreeVerticalIcon className="ml-2 h-4 w-4" />
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
               <TableHead className="cursor-pointer" onClick={() => handleSort('dsAssunto')}>
                 <div className="flex items-center">
                   Assunto
-                  <DotsThreeVerticalIcon className="ml-2 h-4 w-4" />
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
               <TableHead className="cursor-pointer" onClick={() => handleSort('status')}>
                 <div className="flex items-center">
                   Status
-                  <DotsThreeVerticalIcon className="ml-2 h-4 w-4" />
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
               <TableHead className="cursor-pointer" onClick={() => handleSort('idResponsavel')}>
                 <div className="flex items-center">
                   Responsável
-                  <DotsThreeVerticalIcon className="ml-2 h-4 w-4" />
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
               <TableHead className="cursor-pointer" onClick={() => handleSort('dtCriacao')}>
                 <div className="flex items-center">
                   Data de Criação
-                  <DotsThreeVerticalIcon className="ml-2 h-4 w-4" />
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
               <TableHead className="w-24 text-right">Ações</TableHead>

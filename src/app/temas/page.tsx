@@ -1,44 +1,28 @@
 'use client'
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
+import {useState} from 'react'
+import {Button} from '@/components/ui/button'
+import {Input} from '@/components/ui/input'
+import {Badge} from '@/components/ui/badge'
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow,} from '@/components/ui/table'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
-  PlusIcon,
+  ArrowsDownUpIcon,
+  FileTextIcon,
+  FunnelIcon,
   MagnifyingGlassIcon,
   PencilIcon,
-  TrashIcon,
-  DotsThreeVerticalIcon,
-  FunnelIcon,
-  DownloadIcon,
-  UploadIcon,
-  ClockIcon,
-  FileTextIcon,
-  BuildingIcon
+  PlusIcon,
+  TrashIcon
 } from '@phosphor-icons/react'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter
-} from '@/components/ui/dialog'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Tema } from '@/types/temas/types'
-import { mockTemas, mockAreas } from '@/lib/mockData'
-import { TemaModal } from '@/components/temas/TemaModal'
+import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog'
+import {Label} from '@/components/ui/label'
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
+import {Tema} from '@/types/temas/types'
+import {mockAreas, mockTemas} from '@/lib/mockData'
+import {TemaModal} from '@/components/temas/TemaModal'
 import {Checkbox} from "@/components/ui/checkbox";
-import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
+import {ConfirmationDialog} from '@/components/ui/confirmation-dialog'
+import PageTitle from '@/components/ui/page-title';
 
 export default function TemasPage() {
   const [temas, setTemas] = useState<Tema[]>(mockTemas)
@@ -140,10 +124,8 @@ export default function TemasPage() {
       {/* Header */}
       <div className="bg-white border-b border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Cadastro de Temas
-          </h1>
-          <Button 
+          <PageTitle title="Temas" icon={FileTextIcon} />
+          <Button
             onClick={handleCreateTema} 
             className="bg-blue-600 hover:bg-blue-700"
           >
@@ -181,37 +163,37 @@ export default function TemasPage() {
               <TableHead className="cursor-pointer" onClick={() => handleSort('nmTema')}>
                 <div className="flex items-center">
                   Nome
-                  <DotsThreeVerticalIcon className="ml-2 h-4 w-4" />
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
               <TableHead className="cursor-pointer" onClick={() => handleSort('dsTema')}>
                 <div className="flex items-center">
                   Descrição
-                  <DotsThreeVerticalIcon className="ml-2 h-4 w-4" />
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
               <TableHead className="cursor-pointer" onClick={() => handleSort('idAreas')}>
                 <div className="flex items-center">
                   Áreas Relacionadas
-                  <DotsThreeVerticalIcon className="ml-2 h-4 w-4" />
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
               <TableHead className="cursor-pointer" onClick={() => handleSort('nrDiasPrazo')}>
                 <div className="flex items-center">
                   Prazo (dias)
-                  <DotsThreeVerticalIcon className="ml-2 h-4 w-4" />
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
               <TableHead className="cursor-pointer" onClick={() => handleSort('tpContagem')}>
                 <div className="flex items-center">
                   Tipo de Contagem
-                  <DotsThreeVerticalIcon className="ml-2 h-4 w-4" />
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
               <TableHead className="cursor-pointer" onClick={() => handleSort('dtCadastro')}>
                 <div className="flex items-center">
                   Data de Cadastro
-                  <DotsThreeVerticalIcon className="ml-2 h-4 w-4" />
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
               <TableHead className="w-24 text-right">Ações</TableHead>

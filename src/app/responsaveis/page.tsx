@@ -18,7 +18,8 @@ import {
   TrashIcon,
   FunnelSimpleIcon,
   ArrowsDownUpIcon,
-  XIcon
+  XIcon,
+  UserIcon
 } from '@phosphor-icons/react';
 import {
   Dialog,
@@ -33,6 +34,7 @@ import { Responsavel } from '@/types/responsaveis/types';
 import { mockResponsaveis } from '@/lib/mockData';
 import ResponsavelModal from '../../components/responsaveis/ResponsavelModal';
 import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
+import PageTitle from '@/components/ui/page-title';
 
 export default function ResponsaveisPage() {
   const [responsaveis, setResponsaveis] = useState<Responsavel[]>(mockResponsaveis);
@@ -154,10 +156,8 @@ export default function ResponsaveisPage() {
       {/* Header */}
       <div className="bg-white border-b border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Cadastro de Responsáveis
-          </h1>
-          <Button 
+          <PageTitle title="Responsáveis" icon={UserIcon} />
+          <Button
             onClick={handleCreateResponsavel} 
             className="bg-blue-600 hover:bg-blue-700"
           >

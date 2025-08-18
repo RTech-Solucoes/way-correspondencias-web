@@ -19,6 +19,7 @@ import {Label} from "@/components/ui/label";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import EmailList from '../../components/email/EmailList';
 import EmailDetail from '../../components/email/EmailDetail';
+import PageTitle from '@/components/ui/page-title';
 
 export default function EmailPage() {
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
@@ -37,10 +38,7 @@ export default function EmailPage() {
     <div className="flex flex-col min-h-0 flex-1">
       <div className="bg-white border-b border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-            <EnvelopeSimpleIcon className="h-7 w-7 mr-3"/>
-            Email
-          </h1>
+          <PageTitle title="Email" icon={EnvelopeSimpleIcon} />
         </div>
 
         <div className="flex items-center space-x-4">

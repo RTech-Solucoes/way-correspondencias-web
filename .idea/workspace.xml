@@ -5,23 +5,19 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="98226f2c-f64e-43be-946e-e89028627d5c" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/src/components/ui/page-title.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/components/ui/text-field.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bun.lock" beforeDir="false" afterPath="$PROJECT_DIR$/bun.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/app/areas/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/areas/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/cadastro/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/cadastro/page.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/app/email/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/email/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/kanban/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/kanban/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/layout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/login/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/login/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/globals.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/globals.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/app/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/responsaveis/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/responsaveis/page.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/app/solicitacoes/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/solicitacoes/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/areas/AreaModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/areas/AreaModal.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/email/EmailList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/email/EmailList.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/layout/Sidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/layout/Sidebar.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/temas/TemaModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/temas/TemaModal.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/ui/alert.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/types/email/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/types/email/types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/temas/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/temas/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/layout/ConditionalLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/layout/ConditionalLayout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/ui/input.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ui/input.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/ui/textarea.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ui/textarea.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -32,6 +28,7 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="TypeScript File" />
+        <option value="TypeScript JSX File" />
       </list>
     </option>
   </component>
@@ -164,7 +161,7 @@
       <workItem from="1755516852705" duration="332000" />
       <workItem from="1755517846118" duration="2625000" />
       <workItem from="1755520507989" duration="735000" />
-      <workItem from="1755521322913" duration="743000" />
+      <workItem from="1755521322913" duration="3889000" />
     </task>
     <task id="LOCAL-00001" summary="Alteração biblioteca de Ícones&#10;lucide-react -&gt; @phosphor-icons/react">
       <option name="closed" value="true" />

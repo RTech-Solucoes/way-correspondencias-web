@@ -1,10 +1,14 @@
 'use client';
 
 import {useEffect, useState} from 'react';
-import {WarningCircleIcon, ChartBarIcon, CheckCircleIcon, ClockIcon, DotsThreeIcon, ArrowClockwiseIcon, XCircleIcon} from '@phosphor-icons/react';
+import {
+  WarningCircleIcon, ChartBarIcon, CheckCircleIcon, ClockIcon, DotsThreeIcon, ArrowClockwiseIcon, XCircleIcon,
+  EnvelopeSimpleIcon
+} from '@phosphor-icons/react';
 import {Button} from '@/components/ui/button';
 import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from '@/components/ui/card';
 import {Avatar, AvatarFallback, AvatarImage} from '@/components/ui/avatar';
+import PageTitle from '@/components/ui/page-title';
 
 export default function DashboardPage() {
 	const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -23,10 +27,7 @@ export default function DashboardPage() {
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-3xl font-bold text-gray-900 flex items-center">
-							<ChartBarIcon className="h-8 w-8 mr-3" />
-						Dashboard
-					</h1>
+          <PageTitle title="Dashboard" icon={ChartBarIcon} />
 					<p className="text-gray-500 mt-1">
 						Visão geral do sistema e métricas importantes
 					</p>

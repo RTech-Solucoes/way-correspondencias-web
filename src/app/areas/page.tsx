@@ -12,6 +12,7 @@ import {
   PlusIcon,
   TrashIcon,
   XIcon,
+  BuildingIcon,
 } from '@phosphor-icons/react';
 import {Dialog, DialogContent, DialogHeader, DialogTitle} from '@/components/ui/dialog';
 import {Label} from '@/components/ui/label';
@@ -19,6 +20,7 @@ import {AreaResponse} from '@/api/areas/types';
 import {areasClient} from '@/api/areas/client';
 import AreaModal from '../../components/areas/AreaModal';
 import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
+import PageTitle from '@/components/ui/page-title';
 
 export default function AreasPage() {
   const [areas, setAreas] = useState<AreaResponse[]>([]);
@@ -196,10 +198,8 @@ export default function AreasPage() {
       {/* Header */}
       <div className="bg-white border-b border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Cadastro de Áreas
-          </h1>
-          <Button 
+          <PageTitle title="Áreas" icon={BuildingIcon} />
+          <Button
             onClick={handleCreateArea} 
             className="bg-blue-600 hover:bg-blue-700"
           >

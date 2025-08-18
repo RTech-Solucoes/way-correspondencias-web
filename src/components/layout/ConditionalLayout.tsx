@@ -32,9 +32,9 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
       )}
     >
       <Sidebar/>
-      <div className="flex flex-col w-full overflow-auto min-h-screen">
+      <article>
         {children}
-      </div>
+      </article>
     </main>
   );
 }
