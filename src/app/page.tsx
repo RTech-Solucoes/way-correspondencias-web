@@ -20,6 +20,7 @@ import authClient from "@/api/auth/client";
 import {useRouter} from "next/navigation";
 import Image from "next/image";
 import { Separator } from "@/components/ui/separator";
+import {PAGES_DEF} from "@/constants/pages";
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -78,7 +79,7 @@ export default function LoginPage() {
           localStorage.setItem('userEmail', email);
         }
 
-        router.push('/');
+        router.push(PAGES_DEF[0].path);
         setEmail('');
         setPassword('');
         setRememberMe(false);

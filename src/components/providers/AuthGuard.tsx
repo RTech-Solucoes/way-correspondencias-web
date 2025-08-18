@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 
 import { Quantum as Loading } from 'ldrs/react'
 import 'ldrs/react/Quantum.css'
-import {PUBLIC_ROUTES} from "@/constants/pages";
+import {PAGES_DEF, PUBLIC_ROUTES} from "@/constants/pages";
 
 export default function AuthGuard({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -21,13 +21,13 @@ const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
       if (authToken) {
 
         if (isPublicRoute) {
-          router.push('/');
+          router.push(PAGES_DEF[0].path);
           return;
         }
       } else {
 
         if (!isPublicRoute) {
-          router.push('/login');
+          router.push('/');
           return;
         }
       }

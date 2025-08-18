@@ -1,7 +1,7 @@
 'use client';
 
-import {useState, useEffect, FormEvent, ChangeEvent} from 'react';
-import { 
+import {useState, useEffect, FormEvent} from 'react';
+import {
   Dialog, 
   DialogContent, 
   DialogHeader, 
@@ -19,289 +19,246 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import { Solicitacao } from '@/types/solicitacoes/types';
-import { mockResponsaveis } from '@/lib/mockData';
-import { v4 as uuidv4 } from 'uuid';
-import { XIcon, PlusIcon, PaperclipIcon } from '@phosphor-icons/react';
-import { Badge } from '@/components/ui/badge';
-
-const mockSolicitantes = [
-  { id: '1', nome: 'Ana Silva' },
-  { id: '2', nome: 'Bruno Costa' },
-  { id: '3', nome: 'Carla Mendes' },
-  { id: '4', nome: 'Daniel Oliveira' },
-  { id: '5', nome: 'Eduarda Santos' }
-];
+import { SolicitacaoResponse, SolicitacaoRequest } from '@/api/solicitacoes/types';
+import { ResponsavelResponse } from '@/api/responsaveis/types';
+import { TemaResponse } from '@/api/temas/types';
+import { AreaResponse } from '@/api/areas/types';
+import { solicitacoesClient } from '@/api/solicitacoes/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface SolicitacaoModalProps {
-  solicitacao: Solicitacao | null;
-  onClose(): void;
-  onSave(solicitacao: Solicitacao): void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  solicitacao: SolicitacaoResponse | null;
+  responsaveis: ResponsavelResponse[];
+  temas: TemaResponse[];
+  areas: AreaResponse[];
+  onSave: () => void;
 }
 
-export default function SolicitacaoModal({ solicitacao, onClose, onSave }: SolicitacaoModalProps) {
-  const [formData, setFormData] = useState<Solicitacao>({
-    idSolicitacao: '',
-    cdSolicitante: [],
+export default function SolicitacaoModal({
+  open,
+  onOpenChange,
+  solicitacao,
+  responsaveis,
+  temas,
+  areas,
+  onSave
+}: SolicitacaoModalProps) {
+  const [formData, setFormData] = useState<SolicitacaoRequest>({
     dsAssunto: '',
-    cdIdentificacao: '',
-    dsDescricao: '',
-    dsAnexos: [],
-    status: 'pendente',
-    dtCriacao: '',
-    idResponsavel: undefined
+    txConteudo: '',
+    flStatus: 'PENDENTE',
+    dtPrazoResposta: '',
+    txResposta: '',
+    idResponsavel: 0,
+    idTema: 0,
+    idArea: 0,
   });
-
-  const [selectedSolicitante, setSelectedSolicitante] = useState('');
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (solicitacao) {
-      setFormData(solicitacao);
-    } else {
-      const today = new Date().toISOString().split('T')[0];
       setFormData({
-        idSolicitacao: uuidv4(),
-        cdSolicitante: [],
+        dsAssunto: solicitacao.dsAssunto,
+        txConteudo: solicitacao.txConteudo,
+        flStatus: solicitacao.flStatus,
+        dtPrazoResposta: solicitacao.dtPrazoResposta || '',
+        txResposta: solicitacao.txResposta || '',
+        idResponsavel: solicitacao.responsavel.id,
+        idTema: solicitacao.tema.id,
+        idArea: solicitacao.area.id,
+      });
+    } else {
+      setFormData({
         dsAssunto: '',
-        cdIdentificacao: '',
-        dsDescricao: '',
-        dsAnexos: [],
-        status: 'pendente',
-        dtCriacao: today,
-        idResponsavel: undefined
+        txConteudo: '',
+        flStatus: 'PENDENTE',
+        dtPrazoResposta: '',
+        txResposta: '',
+        idResponsavel: 0,
+        idTema: 0,
+        idArea: 0,
       });
     }
-  }, [solicitacao]);
+  }, [solicitacao, open]);
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    if (name === 'idResponsavel' && value === 'none') {
-      setFormData(prev => ({
-        ...prev,
-        idResponsavel: undefined
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    }
-  };
-
-  const handleAddSolicitante = () => {
-    if (selectedSolicitante) {
-      setFormData(prev => ({
-        ...prev,
-        cdSolicitante: [...prev.cdSolicitante, selectedSolicitante]
-      }));
-      setSelectedSolicitante('');
-    }
-  };
-
-  const handleRemoveSolicitante = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      cdSolicitante: prev.cdSolicitante.filter((_, i) => i !== index)
-    }));
-  };
-
-  const handleAddAnexo = () => {
-    if (selectedFile) {
-      setFormData(prev => ({
-        ...prev,
-        dsAnexos: [...prev.dsAnexos, selectedFile.name]
-      }));
-      setSelectedFile(null);
-    }
-  };
-
-  const handleRemoveAnexo = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      dsAnexos: prev.dsAnexos.filter((_, i) => i !== index)
-    }));
-  };
-
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    setLoading(true);
+
+    try {
+      if (solicitacao) {
+        await solicitacoesClient.atualizar(solicitacao.id, formData);
+        toast({
+          title: "Sucesso",
+          description: "Solicitação atualizada com sucesso",
+        });
+      } else {
+        await solicitacoesClient.criar(formData);
+        toast({
+          title: "Sucesso",
+          description: "Solicitação criada com sucesso",
+        });
+      }
+      onSave();
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: `Erro ao ${solicitacao ? 'atualizar' : 'criar'} solicitação`,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>
             {solicitacao ? 'Editar Solicitação' : 'Nova Solicitação'}
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 py-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="cdIdentificacao">Identificação</Label>
+            <div>
+              <Label htmlFor="dsAssunto">Assunto</Label>
               <Input
-                id="cdIdentificacao"
-                name="cdIdentificacao"
-                value={formData.cdIdentificacao}
-                onChange={handleChange}
+                id="dsAssunto"
+                value={formData.dsAssunto}
+                onChange={(e) => setFormData({...formData, dsAssunto: e.target.value})}
+                placeholder="Assunto da solicitação"
                 required
               />
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
+            <div>
+              <Label htmlFor="flStatus">Status</Label>
               <Select
-                value={formData.status}
-                onValueChange={(value) => handleSelectChange('status', value)}
+                value={formData.flStatus}
+                onValueChange={(value) => setFormData({...formData, flStatus: value})}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="pendente">Pendente</SelectItem>
-                  <SelectItem value="em_andamento">Em Andamento</SelectItem>
-                  <SelectItem value="concluido">Concluído</SelectItem>
-                  <SelectItem value="atrasado">Atrasado</SelectItem>
+                  <SelectItem value="PENDENTE">Pendente</SelectItem>
+                  <SelectItem value="EM_ANDAMENTO">Em Andamento</SelectItem>
+                  <SelectItem value="CONCLUIDA">Concluída</SelectItem>
+                  <SelectItem value="CANCELADA">Cancelada</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="dsAssunto">Assunto</Label>
-            <Input
-              id="dsAssunto"
-              name="dsAssunto"
-              value={formData.dsAssunto}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="dsDescricao">Descrição</Label>
+          <div>
+            <Label htmlFor="txConteudo">Conteúdo</Label>
             <Textarea
-              id="dsDescricao"
-              name="dsDescricao"
-              value={formData.dsDescricao}
-              onChange={handleChange}
-              rows={3}
+              id="txConteudo"
+              value={formData.txConteudo}
+              onChange={(e) => setFormData({...formData, txConteudo: e.target.value})}
+              placeholder="Descreva o conteúdo da solicitação"
+              rows={4}
               required
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="idResponsavel">Responsável</Label>
-            <Select
-              value={formData.idResponsavel || 'none'}
-              onValueChange={(value) => handleSelectChange('idResponsavel', value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione um responsável" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Não atribuído</SelectItem>
-                {mockResponsaveis.map((responsavel) => (
-                  <SelectItem key={responsavel.idResponsavel} value={responsavel.idResponsavel}>
-                    {responsavel.dsNome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Solicitantes</Label>
-            <div className="flex space-x-2">
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="idResponsavel">Responsável</Label>
               <Select
-                value={selectedSolicitante}
-                onValueChange={setSelectedSolicitante}
+                value={formData.idResponsavel.toString()}
+                onValueChange={(value) => setFormData({...formData, idResponsavel: parseInt(value)})}
               >
-                <SelectTrigger className="flex-1">
-                  <SelectValue placeholder="Selecione um solicitante" />
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o responsável" />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockSolicitantes.map((solicitante) => (
-                    <SelectItem key={solicitante.id} value={solicitante.nome}>
-                      {solicitante.nome}
+                  {responsaveis.map((resp) => (
+                    <SelectItem key={resp.id} value={resp.id.toString()}>
+                      {resp.nmResponsavel}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <Button 
-                type="button" 
-                onClick={handleAddSolicitante}
-                variant="secondary"
-                disabled={!selectedSolicitante}
-              >
-                <PlusIcon className="h-4 w-4" />
-              </Button>
             </div>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {formData.cdSolicitante.map((solicitante, index) => (
-                <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                  {solicitante}
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveSolicitante(index)}
-                    className="text-gray-500 hover:text-gray-700"
-                  >
-                    <XIcon className="h-3 w-3" />
-                  </button>
-                </Badge>
-              ))}
+            <div>
+              <Label htmlFor="idTema">Tema</Label>
+              <Select
+                value={formData.idTema.toString()}
+                onValueChange={(value) => setFormData({...formData, idTema: parseInt(value)})}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tema" />
+                </SelectTrigger>
+                <SelectContent>
+                  {temas.map((tema) => (
+                    <SelectItem key={tema.id} value={tema.id.toString()}>
+                      {tema.nmTema}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="idArea">Área</Label>
+              <Select
+                value={formData.idArea.toString()}
+                onValueChange={(value) => setFormData({...formData, idArea: parseInt(value)})}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a área" />
+                </SelectTrigger>
+                <SelectContent>
+                  {areas.map((area) => (
+                    <SelectItem key={area.idArea} value={area.idArea.toString()}>
+                      {area.nmArea}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>Anexos</Label>
-            <div className="flex space-x-2">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="dtPrazoResposta">Prazo de Resposta</Label>
               <Input
-                type="file"
-                onChange={(e) => setSelectedFile(e.target.files ? e.target.files[0] : null)}
-                className="flex-1"
+                id="dtPrazoResposta"
+                type="datetime-local"
+                value={formData.dtPrazoResposta}
+                onChange={(e) => setFormData({...formData, dtPrazoResposta: e.target.value})}
               />
-              <Button 
-                type="button" 
-                onClick={handleAddAnexo}
-                variant="secondary"
-                disabled={!selectedFile}
-              >
-                <PaperclipIcon className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {formData.dsAnexos.map((anexo, index) => (
-                <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                  {anexo}
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveAnexo(index)}
-                    className="text-gray-500 hover:text-gray-700"
-                  >
-                    <XIcon className="h-3 w-3" />
-                  </button>
-                </Badge>
-              ))}
             </div>
           </div>
 
+          {formData.flStatus !== 'PENDENTE' && (
+            <div>
+              <Label htmlFor="txResposta">Resposta</Label>
+              <Textarea
+                id="txResposta"
+                value={formData.txResposta}
+                onChange={(e) => setFormData({...formData, txResposta: e.target.value})}
+                placeholder="Resposta da solicitação"
+                rows={3}
+              />
+            </div>
+          )}
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={loading}
+            >
               Cancelar
             </Button>
-            <Button type="submit">
-              {solicitacao ? 'Salvar Alterações' : 'Criar Solicitação'}
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Salvando...' : (solicitacao ? 'Atualizar' : 'Criar')}
             </Button>
           </DialogFooter>
         </form>

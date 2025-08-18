@@ -24,7 +24,7 @@ class AuthClient {
 
   logout(): void {
     localStorage.removeItem('authToken');
-    window.location.href = '/login';
+    window.location.href = '/';
   }
 
   isAuthenticated(): boolean {

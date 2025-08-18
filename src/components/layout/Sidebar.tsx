@@ -58,7 +58,7 @@ export default function Sidebar() {
     router.push(id);
   }
 
-  if (pathname !== '/login' && pathname !== '/register') {
+  if (pathname !== '/') {
     return (
       <div className="flex-shrink-0 bg-white border-r border-gray-200 overflow-hidden w-72">
         <div className="flex flex-col h-full">

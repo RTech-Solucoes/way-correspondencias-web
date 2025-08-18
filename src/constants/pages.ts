@@ -41,4 +41,4 @@ export const PAGES_DEF: PageDef[] = [
   },
 ];
 
-export const PUBLIC_ROUTES: string[] = ["/login"]
+export const PUBLIC_ROUTES: string[] = ["/"]

@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { 
-  Table, 
+import { useState, useEffect } from 'react';
+import {
+  Table,
   TableBody, 
   TableCell, 
   TableHead, 
@@ -17,8 +17,6 @@ import {
   PencilSimpleIcon,
   TrashIcon,
   FunnelSimpleIcon,
-  ArrowsDownUpIcon,
-  XIcon,
   UserIcon
 } from '@phosphor-icons/react';
 import {
@@ -30,150 +28,176 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Responsavel } from '@/types/responsaveis/types';
-import { mockResponsaveis } from '@/lib/mockData';
 import ResponsavelModal from '../../components/responsaveis/ResponsavelModal';
 import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
 import PageTitle from '@/components/ui/page-title';
+import { responsaveisClient } from '@/api/responsaveis/client';
+import { ResponsavelResponse, ResponsavelFilterParams } from '@/api/responsaveis/types';
+import { areasClient } from '@/api/areas/client';
+import { AreaResponse } from '@/api/areas/types';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ResponsaveisPage() {
-  const [responsaveis, setResponsaveis] = useState<Responsavel[]>(mockResponsaveis);
+  const [responsaveis, setResponsaveis] = useState<ResponsavelResponse[]>([]);
+  const [areas, setAreas] = useState<AreaResponse[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedResponsavel, setSelectedResponsavel] = useState<Responsavel | null>(null);
+  const [selectedResponsavel, setSelectedResponsavel] = useState<ResponsavelResponse | null>(null);
   const [showResponsavelModal, setShowResponsavelModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [sortField, setSortField] = useState<keyof Responsavel | null>(null);
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [responsavelToDelete, setResponsavelToDelete] = useState<ResponsavelResponse | null>(null);
+  const { toast } = useToast();
 
   const [filters, setFilters] = useState({
-    nome: '',
+    usuario: '',
     email: '',
-    telefone: '',
-    perfil: ''
-  });
-  const [activeFilters, setActiveFilters] = useState(filters);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [responsavelToDelete, setResponsavelToDelete] = useState<string | null>(null);
-
-  const handleSort = (field: keyof Responsavel) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  };
-
-  const sortedResponsaveis = [...responsaveis].sort((a, b) => {
-    if (!sortField) return 0;
-
-    const aValue = a[sortField];
-    const bValue = b[sortField];
-
-    if (aValue === bValue) return 0;
-
-    const direction = sortDirection === 'asc' ? 1 : -1;
-
-    if (typeof aValue === 'string' && typeof bValue === 'string') {
-      return aValue.localeCompare(bValue) * direction;
-    }
-
-    return 0;
+    area: '',
   });
 
-  const handleClearFilters = () => {
-    const emptyFilters = {
-      nome: '',
-      email: '',
-      telefone: '',
-      perfil: ''
+  // Carregar dados na inicialização
+  useEffect(() => {
+    const loadData = async () => {
+      await Promise.all([loadResponsaveis(), loadAreas()]);
     };
-    setFilters(emptyFilters);
-    setActiveFilters(emptyFilters);
+    loadData();
+  }, []);
+
+  const loadResponsaveis = async () => {
+    try {
+      setLoading(true);
+      const params: ResponsavelFilterParams = {
+        filtro: searchQuery || undefined,
+        page: 0,
+        size: 100,
+      };
+      const response = await responsaveisClient.buscarPorFiltro(params);
+      setResponsaveis(response.content);
+    } catch {
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar responsáveis",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleApplyFilters = () => {
-    setActiveFilters(filters);
-    setShowFilterModal(false);
+  const loadAreas = async () => {
+    try {
+      const response = await areasClient.buscarPorFiltro({ size: 100 });
+      setAreas(response.content);
+    } catch (error) {
+      console.error('Erro ao carregar áreas:', error);
+    }
   };
 
-  const filteredResponsaveis = sortedResponsaveis.filter(responsavel => {
-    const matchesSearch = responsavel.dsNome.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      responsavel.dsEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      responsavel.nmTelefone.toLowerCase().includes(searchQuery.toLowerCase());
+  // Buscar responsáveis por filtros específicos
+  const handleSearch = async () => {
+    try {
+      setLoading(true);
+      let results: ResponsavelResponse[];
 
-    const matchesNome = !activeFilters.nome ||
-      responsavel.dsNome.toLowerCase().includes(activeFilters.nome.toLowerCase());
+      if (filters.usuario) {
+        const result = await responsaveisClient.buscarPorNmUsuario(filters.usuario);
+        results = [result];
+      } else if (filters.email) {
+        const result = await responsaveisClient.buscarPorDsEmail(filters.email);
+        results = [result];
+      } else if (filters.area) {
+        results = await responsaveisClient.buscarPorArea(parseInt(filters.area));
+      } else {
+        const params: ResponsavelFilterParams = {
+          filtro: searchQuery || undefined,
+        };
+        const response = await responsaveisClient.buscarPorFiltro(params);
+        results = response.content;
+      }
 
-    const matchesEmail = !activeFilters.email ||
-      responsavel.dsEmail.toLowerCase().includes(activeFilters.email.toLowerCase());
-
-    const matchesTelefone = !activeFilters.telefone ||
-      responsavel.nmTelefone.includes(activeFilters.telefone);
-
-    const matchesPerfil = !activeFilters.perfil ||
-      responsavel.dsPerfil === activeFilters.perfil;
-
-    return matchesSearch && matchesNome && matchesEmail && matchesTelefone && matchesPerfil;
-  });
-
-  const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
-
-  const handleCreateResponsavel = () => {
-    setSelectedResponsavel(null);
-    setShowResponsavelModal(true);
+      setResponsaveis(results);
+      setShowFilterModal(false);
+    } catch {
+      toast({
+        title: "Erro",
+        description: "Erro ao buscar responsáveis",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleEditResponsavel = (responsavel: Responsavel) => {
+  const handleEdit = (responsavel: ResponsavelResponse) => {
     setSelectedResponsavel(responsavel);
     setShowResponsavelModal(true);
   };
 
-  const handleDeleteResponsavel = (id: string) => {
-    setResponsavelToDelete(id);
+  const handleDelete = (responsavel: ResponsavelResponse) => {
+    setResponsavelToDelete(responsavel);
     setShowDeleteDialog(true);
   };
 
-  const confirmDeleteResponsavel = () => {
+  const confirmDelete = async () => {
     if (responsavelToDelete) {
-      setResponsaveis(responsaveis.filter(responsavel => responsavel.idResponsavel !== responsavelToDelete));
+      try {
+        await responsaveisClient.deletar(responsavelToDelete.id);
+        toast({
+          title: "Sucesso",
+          description: "Responsável excluído com sucesso",
+        });
+        loadResponsaveis();
+      } catch {
+        toast({
+          title: "Erro",
+          description: "Erro ao excluir responsável",
+          variant: "destructive",
+        });
+      } finally {
+        setShowDeleteDialog(false);
+        setResponsavelToDelete(null);
+      }
     }
-    setResponsavelToDelete(null);
   };
 
-  const handleSaveResponsavel = (responsavel: Responsavel) => {
-    if (selectedResponsavel) {
-      setResponsaveis(responsaveis.map(r => r.idResponsavel === responsavel.idResponsavel ? responsavel : r));
-    } else {
-      setResponsaveis([...responsaveis, responsavel]);
-    }
+  const handleResponsavelSaved = () => {
     setShowResponsavelModal(false);
     setSelectedResponsavel(null);
+    loadResponsaveis();
   };
+
+  const getAreaName = (area: { id: number; nmArea: string; cdArea: string } | undefined) => {
+    return area ? area.nmArea : 'N/A';
+  };
+
+  const filteredResponsaveis = responsaveis.filter(responsavel =>
+    responsavel.nmResponsavel.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    responsavel.dsEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    responsavel.nmUsuario.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
-      {/* Header */}
       <div className="bg-white border-b border-gray-200 p-6">
         <div className="flex items-start justify-between mb-4">
           <PageTitle />
-          <Button
-            onClick={handleCreateResponsavel}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <PlusIcon className="h-4 w-4 mr-2" />
+          <Button onClick={() => {
+            setSelectedResponsavel(null);
+            setShowResponsavelModal(true);
+          }}>
+            <PlusIcon className="h-4 w-4 mr-2"/>
             Novo Responsável
           </Button>
         </div>
 
         <div className="flex items-center space-x-4">
           <div className="flex-1 relative">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400"/>
             <Input
-              placeholder="Pesquisar por nome, email ou telefone..."
+              placeholder="Pesquisar responsáveis..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-10 bg-gray-50 border-gray-200 focus:bg-white"
+              className="pl-10 bg-gray-50 border-gray-200 focus:bg-white"
             />
           </div>
           <Button
@@ -181,67 +205,82 @@ export default function ResponsaveisPage() {
             className="h-10 px-4"
             onClick={() => setShowFilterModal(true)}
           >
-            <FunnelSimpleIcon className="h-4 w-4 mr-2" />
+            <FunnelSimpleIcon className="h-4 w-4 mr-2"/>
             Filtrar
+          </Button>
+          <Button
+            variant="outline"
+            className="h-10 px-4"
+            onClick={handleSearch}
+          >
+            <MagnifyingGlassIcon className="h-4 w-4 mr-2"/>
+            Buscar
           </Button>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto bg-white">
         <Table>
-          <TableHeader className="bg-gray-50">
+          <TableHeader>
             <TableRow>
-              <TableHead className="cursor-pointer" onClick={() => handleSort('dsNome')}>
-                <div className="flex items-center">
-                  Nome
-                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
-                </div>
-              </TableHead>
-              <TableHead className="cursor-pointer" onClick={() => handleSort('dsEmail')}>
-                <div className="flex items-center">
-                  Email
-                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
-                </div>
-              </TableHead>
-              <TableHead className="cursor-pointer" onClick={() => handleSort('nmTelefone')}>
-                <div className="flex items-center">
-                  Telefone
-                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
-                </div>
-              </TableHead>
-              <TableHead className="w-24 text-right">Ações</TableHead>
+              <TableHead>Nome</TableHead>
+              <TableHead>Usuário</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Área</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Criado em</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredResponsaveis.length === 0 ? (
+            {loading ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-8 text-gray-500">
-                  Nenhum responsável encontrado
+                <TableCell colSpan={7} className="text-center py-8">
+                  Carregando responsáveis...
+                </TableCell>
+              </TableRow>
+            ) : filteredResponsaveis.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-8">
+                  <div className="flex flex-col items-center space-y-2">
+                    <UserIcon className="h-8 w-8 text-gray-400"/>
+                    <p className="text-sm text-gray-500">Nenhum responsável encontrado</p>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (
               filteredResponsaveis.map((responsavel) => (
-                <TableRow key={responsavel.idResponsavel} className="hover:bg-gray-50">
-                  <TableCell className="font-medium">{responsavel.dsNome}</TableCell>
+                <TableRow key={responsavel.id}>
+                  <TableCell className="font-medium">{responsavel.nmResponsavel}</TableCell>
+                  <TableCell>{responsavel.nmUsuario}</TableCell>
                   <TableCell>{responsavel.dsEmail}</TableCell>
-                  <TableCell>{responsavel.nmTelefone}</TableCell>
+                  <TableCell>{getAreaName(responsavel.area)}</TableCell>
+                  <TableCell>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      responsavel.flAtivo 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {responsavel.flAtivo ? 'Ativo' : 'Inativo'}
+                    </span>
+                  </TableCell>
+                  <TableCell>{new Date(responsavel.dtCriacao).toLocaleDateString('pt-BR')}</TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end space-x-2">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => handleEditResponsavel(responsavel)}
+                    <div className="flex items-center justify-end space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(responsavel)}
                       >
-                        <PencilSimpleIcon className="h-4 w-4" />
+                        <PencilSimpleIcon className="h-4 w-4"/>
                       </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => handleDeleteResponsavel(responsavel.idResponsavel)}
-                        className="text-red-500 hover:text-red-700"
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDelete(responsavel)}
+                        className="text-red-600 hover:text-red-700"
                       >
-                        <TrashIcon className="h-4 w-4" />
+                        <TrashIcon className="h-4 w-4"/>
                       </Button>
                     </div>
                   </TableCell>
@@ -252,18 +291,6 @@ export default function ResponsaveisPage() {
         </Table>
       </div>
 
-      {/* Responsavel Modal */}
-      {showResponsavelModal && (
-        <ResponsavelModal
-          responsavel={selectedResponsavel}
-          onClose={() => {
-            setShowResponsavelModal(false);
-            setSelectedResponsavel(null);
-          }}
-          onSave={handleSaveResponsavel}
-        />
-      )}
-
       {/* Filter Modal */}
       {showFilterModal && (
         <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
@@ -273,12 +300,12 @@ export default function ResponsaveisPage() {
             </DialogHeader>
             <div className="grid gap-4">
               <div>
-                <Label htmlFor="nome">Nome</Label>
+                <Label htmlFor="usuario">Usuário</Label>
                 <Input
-                  id="nome"
-                  value={filters.nome}
-                  onChange={(e) => setFilters({ ...filters, nome: e.target.value })}
-                  placeholder="Filtrar por nome"
+                  id="usuario"
+                  value={filters.usuario}
+                  onChange={(e) => setFilters({...filters, usuario: e.target.value})}
+                  placeholder="Filtrar por usuário"
                 />
               </div>
               <div>
@@ -286,67 +313,66 @@ export default function ResponsaveisPage() {
                 <Input
                   id="email"
                   value={filters.email}
-                  onChange={(e) => setFilters({ ...filters, email: e.target.value })}
+                  onChange={(e) => setFilters({...filters, email: e.target.value})}
                   placeholder="Filtrar por email"
                 />
               </div>
               <div>
-                <Label htmlFor="telefone">Telefone</Label>
-                <Input
-                  id="telefone"
-                  value={filters.telefone}
-                  onChange={(e) => setFilters({ ...filters, telefone: e.target.value })}
-                  placeholder="Filtrar por telefone"
-                />
-              </div>
-              <div>
-                <Label htmlFor="perfil">Perfil</Label>
+                <Label htmlFor="area">Área</Label>
                 <Select
-                  value={filters.perfil}
-                  onValueChange={(value: string) => setFilters({ ...filters, perfil: value })}
+                  value={filters.area}
+                  onValueChange={(value) => setFilters({...filters, area: value})}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione um perfil" />
+                    <SelectValue placeholder="Selecione a área" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="user">User</SelectItem>
-                    <SelectItem value="manager">Manager</SelectItem>
+                    <SelectItem value="">Todas as áreas</SelectItem>
+                    {areas.map((area) => (
+                      <SelectItem key={area.idArea} value={area.idArea.toString()}>
+                        {area.nmArea}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setFilters({
+                    usuario: '',
+                    email: '',
+                    area: '',
+                  });
+                  setShowFilterModal(false);
+                }}
+              >
+                Limpar Filtros
+              </Button>
+              <Button onClick={handleSearch}>
+                Aplicar Filtros
+              </Button>
+            </DialogFooter>
           </DialogContent>
-          <DialogFooter>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setShowFilterModal(false);
-                handleClearFilters();
-              }}
-              className="mr-2"
-            >
-              <XIcon className="h-4 w-4 mr-2" />
-              Limpar Filtros
-            </Button>
-            <Button onClick={handleApplyFilters}>
-              Aplicar Filtros
-            </Button>
-          </DialogFooter>
         </Dialog>
       )}
 
-      {/* Confirmation Dialog */}
+      {/* Responsavel Modal */}
+      <ResponsavelModal
+        responsavel={null}
+        onClose={() => setShowResponsavelModal(false)}
+        onSave={handleResponsavelSaved}
+      />
+
+      {/* Delete Confirmation Dialog */}
       <ConfirmationDialog
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
+        onConfirm={confirmDelete}
         title="Excluir Responsável"
-        description="Tem certeza que deseja excluir este responsável? Esta ação não pode ser desfeita."
-        confirmText="Excluir"
-        cancelText="Cancelar"
-        variant="destructive"
-        onConfirm={confirmDeleteResponsavel}
+        description={`Tem certeza que deseja excluir o responsável "${responsavelToDelete?.nmResponsavel}"? Esta ação não pode ser desfeita.`}
       />
     </div>
   );
