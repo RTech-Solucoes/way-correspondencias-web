@@ -3,6 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 
+import { Quantum as Loading } from 'ldrs/react'
+import 'ldrs/react/Quantum.css'
+
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -50,7 +53,11 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="flex relative animate-spin rounded-full h-16 w-16 border-8 border-border border-b-blue-600"/>
+        <Loading
+          size="120"
+          speed="1.5"
+          color="#2b7fff"
+        />
       </div>
     );
   } else {
