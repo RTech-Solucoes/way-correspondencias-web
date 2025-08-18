@@ -17,3 +17,45 @@ export interface EmailAPI {
   id_responsavel: number;
   tp_email: string;
 }
+
+export interface EmailResponse {
+  id: number;
+  nmUsuario: string;
+  dsRemetente: string;
+  dsDestinatario: string;
+  dsAssunto: string;
+  txConteudo: string;
+  dtEnvio: string;
+  dtResposta?: string;
+  flStatus: string;
+  anexos?: Anexo[];
+}
+
+export interface EmailRequest {
+  nmUsuario: string;
+  dsRemetente: string;
+  dsDestinatario: string;
+  dsAssunto: string;
+  txConteudo: string;
+  dtEnvio: string;
+  flStatus: string;
+}
+
+export interface PagedResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+  numberOfElements: number;
+  first: boolean;
+  last: boolean;
+  empty: boolean;
+}
+
+export interface EmailFilterParams {
+  filtro?: string;
+  page?: number;
+  size?: number;
+  sort?: string;
+}
