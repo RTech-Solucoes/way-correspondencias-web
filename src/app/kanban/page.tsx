@@ -258,7 +258,7 @@ export default function KanbanPage() {
     <div className="flex flex-col min-h-0 flex-1">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-start justify-between mb-4">
           <div className="flex space-x-4">
             <h1 className="text-2xl font-bold text-gray-900 flex items-center">
               <KanbanIcon className="h-7 w-7 mr-3"/>

@@ -37,8 +37,8 @@ export default function EmailPage() {
   return (
     <div className="flex flex-col min-h-0 flex-1">
       <div className="bg-white border-b border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <PageTitle title="Email" icon={EnvelopeSimpleIcon} />
+        <div className="flex items-start justify-between mb-4">
+          <PageTitle />
         </div>
 
         <div className="flex items-center space-x-4">

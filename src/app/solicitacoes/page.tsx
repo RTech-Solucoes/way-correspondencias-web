@@ -124,8 +124,8 @@ export default function SolicitacoesPage() {
     <div className="flex flex-col min-h-0 flex-1">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <PageTitle title="Solicitações" icon={FileIcon} />
+        <div className="flex items-start justify-between mb-4">
+          <PageTitle />
           <div className="flex space-x-2">
             <Button 
               onClick={handleCreateSolicitacao} 

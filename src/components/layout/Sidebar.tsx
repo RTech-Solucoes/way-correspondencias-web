@@ -3,20 +3,8 @@
 import {cn} from '@/utils/utils';
 import {Button} from '@/components/ui/button';
 import {Badge} from '@/components/ui/badge';
-import {
-  BellIcon,
-  BuildingIcon,
-  ClipboardTextIcon,
-  PresentationChartIcon,
-  FileTextIcon,
-  EnvelopeSimpleIcon,
-  UserIcon,
-  UsersIcon,
-  Icon,
-  SignOutIcon,
-  ArrowClockwiseIcon, XIcon
-} from '@phosphor-icons/react';
-import {Avatar, AvatarFallback, AvatarImage} from '@/components/ui/avatar';
+import {BellIcon, Icon, SignOutIcon, UserIcon, XIcon} from '@phosphor-icons/react';
+import {Avatar, AvatarFallback} from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,12 +17,7 @@ import {useState} from "react";
 import {usePathname, useRouter} from 'next/navigation';
 import Image from 'next/image';
 import {authClient} from '@/api/auth/client';
-
-interface NavigationItem {
-  id: string;
-  label: string;
-  icon: Icon;
-}
+import { PAGES_DEF } from '@/constants/pages';
 
 const MOCK_NOTIFICATIONS = [
   {
@@ -60,18 +43,9 @@ const MOCK_NOTIFICATIONS = [
   },
 ];
 
-const NAVIGATION_ITEMS: NavigationItem[] = [
-  { id: "/", label: "Dashboard", icon: PresentationChartIcon },
-  { id: "/email", label: "Email", icon: EnvelopeSimpleIcon },
-  { id: "/areas", label: "Áreas", icon: BuildingIcon },
-  { id: "/temas", label: "Temas", icon: FileTextIcon },
-  { id: "/responsaveis", label: "Responsáveis", icon: UsersIcon },
-  { id: "/solicitacoes", label: "Solicitações", icon: ClipboardTextIcon },
-];
-
 export default function Sidebar() {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const navigationItems = NAVIGATION_ITEMS
+  const navigationItems = PAGES_DEF
   const unreadCount = MOCK_NOTIFICATIONS.filter(n => n.unread).length;
   const pathname = usePathname();
   const router = useRouter();
@@ -105,17 +79,17 @@ export default function Sidebar() {
           <nav className="flex flex-col grow gap-3 px-2 py-3">
             {navigationItems.map((item) => {
               const Icon = item.icon;
-              const isActive = pathname === item.id;
+              const isActive = pathname === item.path;
 
               return (
                 <Button
-                  key={item.id}
+                  key={item.path}
                   variant={isActive ? "default" : "ghost"}
                   className={cn(
                     "flex justify-start w-full text-left h-11 text-sm px-4 transition-colors duration-200",
                     isActive && "bg-blue-600 text-white"
                   )}
-                  onClick={() => handleNavigation(item.id)}
+                  onClick={() => handleNavigation(item.path)}
                 >
                   <Icon
                     weight={isActive ? "fill" : "bold"}

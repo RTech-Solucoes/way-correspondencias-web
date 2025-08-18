@@ -123,8 +123,8 @@ export default function TemasPage() {
     <div className="flex flex-col min-h-0 flex-1">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <PageTitle title="Temas" icon={FileTextIcon} />
+        <div className="flex items-start justify-between mb-4">
+          <PageTitle />
           <Button
             onClick={handleCreateTema} 
             className="bg-blue-600 hover:bg-blue-700"

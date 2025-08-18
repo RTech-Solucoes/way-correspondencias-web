@@ -27,7 +27,7 @@ export default function DashboardPage() {
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div>
-          <PageTitle title="Dashboard" icon={ChartBarIcon} />
+          <PageTitle />
 					<p className="text-gray-500 mt-1">
 						Visão geral do sistema e métricas importantes
 					</p>

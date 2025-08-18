@@ -1,18 +1,20 @@
-import {Icon as IconType} from "@phosphor-icons/react";
+import {usePathname} from "next/navigation";
+import {PAGES_DEF} from "@/constants/pages";
+import {PageDef} from "@/types/pages/pages";
 
-export default function PageTitle ({
-  title,
-  icon
-}: {
-  title: string,
-  icon: IconType
-}) {
-  const Icon = icon
+export default function PageTitle () {
+  const pathname = usePathname();
 
-  return (
-    <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-      <Icon className="h-7 w-7 mr-3"/>
-      {title}
-    </h1>
-  )
+  const currentPage = PAGES_DEF.find((page: PageDef) => page.path === pathname);
+
+  if (currentPage) {
+    return (
+      <div className="flex flex-row gap-3 items-center text-gray-900">
+        <currentPage.icon className="h-9 w-9"/>
+        <h1 className="text-3xl font-bold">
+          {currentPage.label}
+        </h1>
+      </div>
+    )
+  }
 }

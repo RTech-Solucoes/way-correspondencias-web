@@ -155,10 +155,10 @@ export default function ResponsaveisPage() {
     <div className="flex flex-col min-h-0 flex-1">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <PageTitle title="Responsáveis" icon={UserIcon} />
+        <div className="flex items-start justify-between mb-4">
+          <PageTitle />
           <Button
-            onClick={handleCreateResponsavel} 
+            onClick={handleCreateResponsavel}
             className="bg-blue-600 hover:bg-blue-700"
           >
             <PlusIcon className="h-4 w-4 mr-2" />
