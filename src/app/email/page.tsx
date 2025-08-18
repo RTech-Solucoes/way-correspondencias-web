@@ -51,7 +51,6 @@ export default function EmailPage() {
     flStatus: 'PENDENTE',
   });
 
-  // Carregar emails na inicialização
   useEffect(() => {
     const loadEmails = async () => {
       try {
@@ -77,7 +76,6 @@ export default function EmailPage() {
     loadEmails();
   }, [searchQuery, toast]);
 
-  // Buscar emails por filtros específicos
   const handleSearch = async () => {
     try {
       setLoading(true);

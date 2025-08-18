@@ -62,7 +62,6 @@ export default function AreaModal({area, onClose, onSave}: AreaModalProps) {
       return;
     }
 
-    // Don't check if we're editing and the code is the same as the original
     if (area && area.cdArea === cdArea) {
       setCodeExistsWarning('');
       setHasValidationError(false);
@@ -80,7 +79,6 @@ export default function AreaModal({area, onClose, onSave}: AreaModalProps) {
         setHasValidationError(false);
       }
     } catch (error) {
-      console.error('Erro ao verificar código:', error);
       setCodeExistsWarning('');
       setHasValidationError(false);
     } finally {
@@ -128,7 +126,6 @@ export default function AreaModal({area, onClose, onSave}: AreaModalProps) {
       }));
     }
 
-    // Clear code warning when user starts typing
     if (field === 'cdArea') {
       setCodeExistsWarning('');
       setHasValidationError(false);

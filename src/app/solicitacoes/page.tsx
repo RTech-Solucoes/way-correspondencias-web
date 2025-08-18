@@ -53,7 +53,6 @@ export default function SolicitacoesPage() {
     dateTo: '',
   });
 
-  // Carregar dados na inicialização
   useEffect(() => {
     loadSolicitacoes();
     loadResponsaveis();
@@ -87,7 +86,6 @@ export default function SolicitacoesPage() {
       const response = await responsaveisClient.buscarPorFiltro({ size: 100 });
       setResponsaveis(response.content);
     } catch (error) {
-      console.error('Erro ao carregar responsáveis:', error);
     }
   };
 
@@ -96,7 +94,6 @@ export default function SolicitacoesPage() {
       const response = await temasClient.buscarPorFiltro({ size: 100 });
       setTemas(response.content);
     } catch (error) {
-      console.error('Erro ao carregar temas:', error);
     }
   };
 
@@ -105,11 +102,9 @@ export default function SolicitacoesPage() {
       const response = await areasClient.buscarPorFiltro({ size: 100 });
       setAreas(response.content);
     } catch (error) {
-      console.error('Erro ao carregar áreas:', error);
     }
   };
 
-  // Buscar solicitações por filtros específicos
   const handleSearch = async () => {
     try {
       setLoading(true);

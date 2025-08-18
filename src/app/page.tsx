@@ -19,7 +19,6 @@ import {
 import authClient from "@/api/auth/client";
 import {useRouter} from "next/navigation";
 import Image from "next/image";
-import { Separator } from "@/components/ui/separator";
 import {PAGES_DEF} from "@/constants/pages";
 
 export default function LoginPage() {
@@ -84,8 +83,11 @@ export default function LoginPage() {
         setPassword('');
         setRememberMe(false);
       } catch (error) {
-        console.error('Erro no login:', error);
-        setDialog({open: true, title: 'Erro', description: 'Erro ao realizar login. Tente novamente.'});
+        setDialog({
+          open: true,
+          title: 'Erro de Login',
+          description: 'CPF ou senha inválidos'
+        });
       } finally {
         setIsLoading(false);
       }
@@ -121,54 +123,60 @@ export default function LoginPage() {
             <span className="flex-1 h-0.5 rounded-full bg-gray-200/20"/>
           </div>
 
-          <TextField
-            id="email"
-            type="email"
-            label="Email"
-            value={email}
-            onChange={(value) => {
-              setEmail(value);
-              if (emailError) setEmailError('');
-            }}
-            placeholder="seu.email@waybrasil.com"
-            startIcon={EnvelopeSimpleIcon}
-            error={emailError}
-            disabled={isLoading}
-            size="lg"
-            labelClassName="text-md font-medium text-white"
-            inputClassName={cn(
-              "h-12 border-none",
-              "bg-gradient-to-r from-gray-200/20 via-gray-200/20 to-gray-200/20",
-              "focus-visible:via-blue-200/50 focus-visible:to-blue-300/20",
-              "transition-colors duration-200"
-            )}
-            className="text-white"
-          />
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-md font-medium text-white">
+              Email
+            </Label>
+            <div className="relative">
+              <EnvelopeSimpleIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <TextField
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (emailError) setEmailError('');
+                }}
+                placeholder="seu.email@waybrasil.com"
+                error={emailError}
+                disabled={isLoading}
+                className={cn(
+                  "h-12 border-none pl-10 text-white placeholder-gray-400",
+                  "bg-gradient-to-r from-gray-200/20 via-gray-200/20 to-gray-200/20",
+                  "focus-visible:via-blue-200/50 focus-visible:to-blue-300/20",
+                  "transition-colors duration-200"
+                )}
+              />
+            </div>
+          </div>
 
           {/* Password Field */}
-          <TextField
-            id="password"
-            type="password"
-            label="Senha"
-            value={password}
-            onChange={(value) => {
-              setPassword(value);
-              if (passwordError) setPasswordError('');
-            }}
-            placeholder="Digite sua senha"
-            startIcon={LockIcon}
-            error={passwordError}
-            disabled={isLoading}
-            size="lg"
-            labelClassName="text-md font-medium text-white"
-            inputClassName={cn(
-              "h-12 border-none",
-              "bg-gradient-to-r from-gray-200/20 via-gray-200/20 to-gray-200/20",
-              "focus-visible:via-blue-200/50 focus-visible:to-blue-300/20",
-              "transition-colors duration-200"
-            )}
-            className="text-white"
-          />
+          <div className="space-y-2">
+            <Label htmlFor="password" className="text-md font-medium text-white">
+              Senha
+            </Label>
+            <div className="relative">
+              <LockIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <TextField
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (passwordError) setPasswordError('');
+                }}
+                placeholder="Digite sua senha"
+                error={passwordError}
+                disabled={isLoading}
+                className={cn(
+                  "h-12 border-none pl-10 pr-10 text-white placeholder-gray-400",
+                  "bg-gradient-to-r from-gray-200/20 via-gray-200/20 to-gray-200/20",
+                  "focus-visible:via-blue-200/50 focus-visible:to-blue-300/20",
+                  "transition-colors duration-200"
+                )}
+              />
+            </div>
+          </div>
 
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">

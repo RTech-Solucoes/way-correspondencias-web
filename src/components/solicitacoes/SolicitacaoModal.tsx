@@ -9,11 +9,11 @@ import {
   DialogFooter 
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { TextField } from '@/components/ui/text-field';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Select, 
+import { Label } from '@/components/ui/label';
+import {
+  Select,
   SelectContent, 
   SelectItem, 
   SelectTrigger, 
@@ -25,6 +25,7 @@ import { TemaResponse } from '@/api/temas/types';
 import { AreaResponse } from '@/api/areas/types';
 import { solicitacoesClient } from '@/api/solicitacoes/client';
 import { useToast } from '@/hooks/use-toast';
+import { capitalize } from '@/utils/utils';
 
 interface SolicitacaoModalProps {
   open: boolean;
@@ -49,11 +50,9 @@ export default function SolicitacaoModal({
     dsAssunto: '',
     txConteudo: '',
     flStatus: 'PENDENTE',
-    dtPrazoResposta: '',
-    txResposta: '',
     idResponsavel: 0,
     idTema: 0,
-    idArea: 0,
+    idArea: 0
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -64,31 +63,60 @@ export default function SolicitacaoModal({
         dsAssunto: solicitacao.dsAssunto,
         txConteudo: solicitacao.txConteudo,
         flStatus: solicitacao.flStatus,
-        dtPrazoResposta: solicitacao.dtPrazoResposta || '',
-        txResposta: solicitacao.txResposta || '',
         idResponsavel: solicitacao.responsavel.id,
         idTema: solicitacao.tema.id,
-        idArea: solicitacao.area.id,
+        idArea: solicitacao.area.id
       });
     } else {
       setFormData({
         dsAssunto: '',
         txConteudo: '',
         flStatus: 'PENDENTE',
-        dtPrazoResposta: '',
-        txResposta: '',
         idResponsavel: 0,
         idTema: 0,
-        idArea: 0,
+        idArea: 0
       });
     }
   }, [solicitacao, open]);
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    let processedValue = value;
+
+    // Apply capitalize to subject field
+    if (name === 'dsAssunto') {
+      processedValue = capitalize(value);
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      [name]: processedValue
+    }));
+  };
+
+  const handleSelectChange = (field: keyof SolicitacaoRequest, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: field.includes('id') ? parseInt(value) : value
+    }));
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+
+    if (!formData.dsAssunto.trim() || !formData.txConteudo.trim() ||
+        !formData.idResponsavel || !formData.idTema || !formData.idArea) {
+      toast({
+        title: "Erro",
+        description: "Por favor, preencha todos os campos obrigatórios",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
+      setLoading(true);
+
       if (solicitacao) {
         await solicitacoesClient.atualizar(solicitacao.id, formData);
         toast({
@@ -102,11 +130,13 @@ export default function SolicitacaoModal({
           description: "Solicitação criada com sucesso",
         });
       }
+
       onSave();
-    } catch (error) {
+      onOpenChange(false);
+    } catch {
       toast({
         title: "Erro",
-        description: `Erro ao ${solicitacao ? 'atualizar' : 'criar'} solicitação`,
+        description: solicitacao ? "Erro ao atualizar solicitação" : "Erro ao criar solicitação",
         variant: "destructive",
       });
     } finally {
@@ -114,32 +144,68 @@ export default function SolicitacaoModal({
     }
   };
 
+  const handleClose = () => {
+    onOpenChange(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {solicitacao ? 'Editar Solicitação' : 'Nova Solicitação'}
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 py-4">
+          <TextField
+            label="Assunto *"
+            name="dsAssunto"
+            value={formData.dsAssunto}
+            onChange={handleInputChange}
+            placeholder="Digite o assunto da solicitação"
+            required
+            autoFocus
+          />
+
+          <div className="space-y-2">
+            <Label htmlFor="txConteudo">Conteúdo *</Label>
+            <Textarea
+              id="txConteudo"
+              name="txConteudo"
+              value={formData.txConteudo}
+              onChange={handleInputChange}
+              placeholder="Descreva detalhadamente sua solicitação..."
+              rows={4}
+              required
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="dsAssunto">Assunto</Label>
-              <Input
-                id="dsAssunto"
-                value={formData.dsAssunto}
-                onChange={(e) => setFormData({...formData, dsAssunto: e.target.value})}
-                placeholder="Assunto da solicitação"
-                required
-              />
+            <div className="space-y-2">
+              <Label htmlFor="responsavel">Responsável *</Label>
+              <Select
+                value={formData.idResponsavel.toString()}
+                onValueChange={(value) => handleSelectChange('idResponsavel', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o responsável" />
+                </SelectTrigger>
+                <SelectContent>
+                  {responsaveis.map((responsavel) => (
+                    <SelectItem key={responsavel.id} value={responsavel.id.toString()}>
+                      {responsavel.nmResponsavel}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <div>
-              <Label htmlFor="flStatus">Status</Label>
+
+            <div className="space-y-2">
+              <Label htmlFor="status">Status</Label>
               <Select
                 value={formData.flStatus}
-                onValueChange={(value) => setFormData({...formData, flStatus: value})}
+                onValueChange={(value) => handleSelectChange('flStatus', value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o status" />
@@ -154,42 +220,12 @@ export default function SolicitacaoModal({
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="txConteudo">Conteúdo</Label>
-            <Textarea
-              id="txConteudo"
-              value={formData.txConteudo}
-              onChange={(e) => setFormData({...formData, txConteudo: e.target.value})}
-              placeholder="Descreva o conteúdo da solicitação"
-              rows={4}
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="idResponsavel">Responsável</Label>
-              <Select
-                value={formData.idResponsavel.toString()}
-                onValueChange={(value) => setFormData({...formData, idResponsavel: parseInt(value)})}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o responsável" />
-                </SelectTrigger>
-                <SelectContent>
-                  {responsaveis.map((resp) => (
-                    <SelectItem key={resp.id} value={resp.id.toString()}>
-                      {resp.nmResponsavel}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="idTema">Tema</Label>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="tema">Tema *</Label>
               <Select
                 value={formData.idTema.toString()}
-                onValueChange={(value) => setFormData({...formData, idTema: parseInt(value)})}
+                onValueChange={(value) => handleSelectChange('idTema', value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o tema" />
@@ -203,11 +239,12 @@ export default function SolicitacaoModal({
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label htmlFor="idArea">Área</Label>
+
+            <div className="space-y-2">
+              <Label htmlFor="area">Área *</Label>
               <Select
                 value={formData.idArea.toString()}
-                onValueChange={(value) => setFormData({...formData, idArea: parseInt(value)})}
+                onValueChange={(value) => handleSelectChange('idArea', value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a área" />
@@ -223,42 +260,12 @@ export default function SolicitacaoModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="dtPrazoResposta">Prazo de Resposta</Label>
-              <Input
-                id="dtPrazoResposta"
-                type="datetime-local"
-                value={formData.dtPrazoResposta}
-                onChange={(e) => setFormData({...formData, dtPrazoResposta: e.target.value})}
-              />
-            </div>
-          </div>
-
-          {formData.flStatus !== 'PENDENTE' && (
-            <div>
-              <Label htmlFor="txResposta">Resposta</Label>
-              <Textarea
-                id="txResposta"
-                value={formData.txResposta}
-                onChange={(e) => setFormData({...formData, txResposta: e.target.value})}
-                placeholder="Resposta da solicitação"
-                rows={3}
-              />
-            </div>
-          )}
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={loading}
-            >
+          <DialogFooter className="flex gap-2 pt-4">
+            <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
               Cancelar
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Salvando...' : (solicitacao ? 'Atualizar' : 'Criar')}
+              {loading ? 'Salvando...' : solicitacao ? 'Salvar Alterações' : 'Criar Solicitação'}
             </Button>
           </DialogFooter>
         </form>

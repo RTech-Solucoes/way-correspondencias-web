@@ -55,7 +55,6 @@ export default function ResponsaveisPage() {
     area: '',
   });
 
-  // Carregar dados na inicialização
   useEffect(() => {
     const loadData = async () => {
       await Promise.all([loadResponsaveis(), loadAreas()]);
@@ -89,11 +88,9 @@ export default function ResponsaveisPage() {
       const response = await areasClient.buscarPorFiltro({ size: 100 });
       setAreas(response.content);
     } catch (error) {
-      console.error('Erro ao carregar áreas:', error);
     }
   };
 
-  // Buscar responsáveis por filtros específicos
   const handleSearch = async () => {
     try {
       setLoading(true);
@@ -359,14 +356,18 @@ export default function ResponsaveisPage() {
         </Dialog>
       )}
 
-      {/* Responsavel Modal */}
-      <ResponsavelModal
-        responsavel={null}
-        onClose={() => setShowResponsavelModal(false)}
-        onSave={handleResponsavelSaved}
-      />
+      {showResponsavelModal && (
+        <ResponsavelModal
+          responsavel={selectedResponsavel}
+          open={showResponsavelModal}
+          onClose={() => {
+            setShowResponsavelModal(false);
+            setSelectedResponsavel(null);
+          }}
+          onSave={handleResponsavelSaved}
+        />
+      )}
 
-      {/* Delete Confirmation Dialog */}
       <ConfirmationDialog
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}

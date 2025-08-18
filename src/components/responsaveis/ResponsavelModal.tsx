@@ -9,55 +9,105 @@ import {
   DialogFooter 
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Responsavel } from '@/types/responsaveis/types';
-import { v4 as uuidv4 } from 'uuid';
+import { TextField } from '@/components/ui/text-field';
+import { ResponsavelResponse, ResponsavelRequest } from '@/api/responsaveis/types';
+import { responsaveisClient } from '@/api/responsaveis/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface ResponsavelModalProps {
-  responsavel: Responsavel | null;
+  responsavel: ResponsavelResponse | null;
+  open: boolean;
   onClose(): void;
-  onSave(responsavel: Responsavel): void;
+  onSave(): void;
 }
 
-export default function ResponsavelModal({ responsavel, onClose, onSave }: ResponsavelModalProps) {
-  const [formData, setFormData] = useState<Responsavel>({
-    idResponsavel: '',
-    dsNome: '',
+export default function ResponsavelModal({ responsavel, open, onClose, onSave }: ResponsavelModalProps) {
+  const [formData, setFormData] = useState<ResponsavelRequest>({
+    nmUsuario: '',
     dsEmail: '',
-    nmTelefone: '',
-    dsPerfil: ''
+    nmResponsavel: '',
+    flAtivo: true,
+    idArea: undefined
   });
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (responsavel) {
-      setFormData(responsavel);
+      setFormData({
+        nmUsuario: responsavel.nmUsuario,
+        dsEmail: responsavel.dsEmail,
+        nmResponsavel: responsavel.nmResponsavel,
+        flAtivo: responsavel.flAtivo,
+        idArea: responsavel.area?.id
+      });
     } else {
       setFormData({
-        idResponsavel: uuidv4(),
-        dsNome: '',
+        nmUsuario: '',
         dsEmail: '',
-        nmTelefone: '',
-        dsPerfil: ''
+        nmResponsavel: '',
+        flAtivo: true,
+        idArea: undefined
       });
     }
-  }, [responsavel]);
+  }, [responsavel, open]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }));
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+
+    if (!formData.nmResponsavel.trim() || !formData.dsEmail.trim() || !formData.nmUsuario.trim()) {
+      toast({
+        title: "Erro",
+        description: "Por favor, preencha todos os campos obrigatórios",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      if (responsavel) {
+        await responsaveisClient.atualizar(responsavel.id, formData);
+        toast({
+          title: "Sucesso",
+          description: "Responsável atualizado com sucesso",
+        });
+      } else {
+        await responsaveisClient.criar(formData);
+        toast({
+          title: "Sucesso",
+          description: "Responsável criado com sucesso",
+        });
+      }
+
+      onSave();
+      onClose();
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: responsavel ? "Erro ao atualizar responsável" : "Erro ao criar responsável",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClose = () => {
+    onClose();
   };
 
   return (
-    <Dialog open={true} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={(newOpen) => !newOpen && onClose()}>
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
           <DialogTitle>
@@ -66,49 +116,52 @@ export default function ResponsavelModal({ responsavel, onClose, onSave }: Respo
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="dsNome">Nome</Label>
-            <Input
-              id="dsNome"
-              name="dsNome"
-              value={formData.dsNome}
+          <TextField
+            label="Nome *"
+            name="nmResponsavel"
+            value={formData.nmResponsavel}
+            onChange={handleChange}
+            required
+            autoFocus
+          />
+
+          <TextField
+            label="Usuário *"
+            name="nmUsuario"
+            value={formData.nmUsuario}
+            onChange={handleChange}
+            required
+          />
+
+          <TextField
+            label="Email *"
+            name="dsEmail"
+            type="email"
+            value={formData.dsEmail}
+            onChange={handleChange}
+            required
+          />
+
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="flAtivo"
+              name="flAtivo"
+              checked={formData.flAtivo}
               onChange={handleChange}
-              required
-              autoFocus
+              className="rounded"
             />
+            <label htmlFor="flAtivo" className="text-sm font-medium">
+              Ativo
+            </label>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="dsEmail">Email</Label>
-            <Input
-              id="dsEmail"
-              name="dsEmail"
-              type="email"
-              value={formData.dsEmail}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="nmTelefone">Telefone</Label>
-            <Input
-              id="nmTelefone"
-              name="nmTelefone"
-              type="tel"
-              value={formData.nmTelefone}
-              onChange={handleChange}
-              placeholder="(00) 00000-0000"
-              required
-            />
-          </div>
-
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+          <DialogFooter className="flex gap-2">
+            <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
               Cancelar
             </Button>
-            <Button type="submit">
-              {responsavel ? 'Salvar Alterações' : 'Criar Responsável'}
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Salvando...' : responsavel ? 'Salvar Alterações' : 'Criar Responsável'}
             </Button>
           </DialogFooter>
         </form>

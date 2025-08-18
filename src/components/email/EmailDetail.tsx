@@ -6,7 +6,13 @@ import {Button} from '@/components/ui/button';
 import {Avatar, AvatarFallback} from '@/components/ui/avatar';
 import {useToast} from '@/hooks/use-toast';
 import SolicitacaoModal from '@/components/solicitacoes/SolicitacaoModal';
-import {Solicitacao} from '@/types/solicitacoes/types';
+import { ResponsavelResponse } from '@/api/responsaveis/types';
+import { TemaResponse } from '@/api/temas/types';
+import { AreaResponse } from '@/api/areas/types';
+import { responsaveisClient } from '@/api/responsaveis/client';
+import { temasClient } from '@/api/temas/client';
+import { areasClient } from '@/api/areas/client';
+import {Anexo} from "@/api/email/types";
 
 interface EmailDetailProps {
   emailId: string;
@@ -36,7 +42,7 @@ interface EmailDisplay {
   content: string;
   date: string;
   isStarred: boolean;
-  attachments: any[];
+  attachments: Anexo[];
 }
 
 const MOCK_EMAILS: EmailDisplay[] = [
@@ -202,12 +208,15 @@ ricardo@ti.com`,
 ];
 
 export default function EmailDetail({
-                                      emailId,
-                                      onBack
-                                    }: EmailDetailProps) {
+  emailId,
+  onBack
+}: EmailDetailProps) {
   const {toast} = useToast();
   const [email, setEmail] = useState<EmailDisplay | null>(null);
   const [showSolicitacaoModal, setShowSolicitacaoModal] = useState(false);
+  const [responsaveis, setResponsaveis] = useState<ResponsavelResponse[]>([]);
+  const [temas, setTemas] = useState<TemaResponse[]>([]);
+  const [areas, setAreas] = useState<AreaResponse[]>([]);
 
   useEffect(() => {
     const foundEmail = MOCK_EMAILS.find(e => e.id === emailId);
@@ -216,11 +225,38 @@ export default function EmailDetail({
     }
   }, [emailId]);
 
+  const loadModalData = async () => {
+    try {
+      const [responsaveisResponse, temasResponse, areasResponse] = await Promise.all([
+        responsaveisClient.buscarPorFiltro({ size: 100 }),
+        temasClient.buscarPorFiltro({ size: 100 }),
+        areasClient.buscarPorFiltro({ size: 100 })
+      ]);
+
+      setResponsaveis(responsaveisResponse.content);
+      setTemas(temasResponse.content);
+      setAreas(areasResponse.content);
+    } catch {
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar dados do formulário",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Load data for the modal when it's opened
+  useEffect(() => {
+    if (showSolicitacaoModal) {
+      loadModalData();
+    }
+  }, [showSolicitacaoModal, loadModalData]);
+
   const handleCreateSolicitacao = () => {
     setShowSolicitacaoModal(true);
   };
 
-  const handleSaveSolicitacao = (solicitacao: Solicitacao) => {
+  const handleSaveSolicitacao = () => {
     toast({
       title: "Solicitação criada",
       description: "A solicitação foi criada com sucesso a partir do email.",
@@ -300,10 +336,10 @@ export default function EmailDetail({
                     <PaperclipIcon className="h-5 w-5 text-gray-400"/>
                     <div>
                       <p className="text-sm font-medium text-gray-900">
-                        {attachment.nome}
+                        {attachment.ds_nome_anexo}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {attachment.tamanho}
+                        {attachment.nm_tamanho_anexo}
                       </p>
                     </div>
                   </div>
@@ -325,13 +361,15 @@ export default function EmailDetail({
       </div>
 
       {/* Solicitacao Modal */}
-      {showSolicitacaoModal && (
-        <SolicitacaoModal
-          solicitacao={null}
-          onClose={() => setShowSolicitacaoModal(false)}
-          onSave={handleSaveSolicitacao}
-        />
-      )}
+      <SolicitacaoModal
+        open={showSolicitacaoModal}
+        onOpenChange={(open) => setShowSolicitacaoModal(open)}
+        solicitacao={null}
+        responsaveis={responsaveis}
+        temas={temas}
+        areas={areas}
+        onSave={handleSaveSolicitacao}
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import {useEffect, useState} from 'react';
+import {useEffect, useState, useCallback} from 'react';
 import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog';
 import {Button} from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,16 +9,18 @@ import {Textarea} from '@/components/ui/textarea';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
 import {CheckIcon} from '@phosphor-icons/react';
 import {Tema} from '@/types/temas/types';
+import {TemaResponse} from '@/api/temas/types';
 import {TipoContagem} from '@/types/temas/enums';
-import {mockAreas} from '@/lib/mockData';
 import {v4 as uuidv4} from 'uuid';
 import {cn} from '@/utils/utils';
+import areasClient from '@/api/areas/client';
+import {AreaResponse} from '@/api/areas/types';
 
 interface TemaModalProps {
   isOpen: boolean;
   onClose(): void;
   onSave(tema: Tema): void;
-  tema?: Tema | null;
+  tema?: TemaResponse | null;
 }
 
 export function TemaModal({isOpen, onClose, onSave, tema}: TemaModalProps) {
@@ -27,14 +29,37 @@ export function TemaModal({isOpen, onClose, onSave, tema}: TemaModalProps) {
   const [nrDiasPrazo, setNrDiasPrazo] = useState(0);
   const [tpContagem, setTpContagem] = useState<TipoContagem>(TipoContagem.UTEIS);
   const [selectedAreaIds, setSelectedAreaIds] = useState<string[]>([]);
+  const [areas, setAreas] = useState<AreaResponse[]>([]);
+  const [loadingAreas, setLoadingAreas] = useState(false);
+
+  const buscarAreas = useCallback(async () => {
+    try {
+      setLoadingAreas(true);
+      const response = await areasClient.buscarPorFiltro({
+        size: 1000
+      });
+      const areasAtivas = response.content.filter((area: AreaResponse) => area.flAtivo === 'S');
+      setAreas(areasAtivas);
+    } catch (error) {
+      setAreas([]);
+    } finally {
+      setLoadingAreas(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      buscarAreas();
+    }
+  }, [isOpen, buscarAreas]);
 
   useEffect(() => {
     if (tema) {
       setNmTema(tema.nmTema);
       setDsTema(tema.dsTema);
-      setNrDiasPrazo(tema.nrDiasPrazo);
-      setTpContagem(tema.tpContagem);
-      setSelectedAreaIds(tema.idAreas);
+      setNrDiasPrazo(30);
+      setTpContagem(TipoContagem.UTEIS);
+      setSelectedAreaIds([]);
     } else {
       setNmTema('');
       setDsTema('');
@@ -52,39 +77,30 @@ export function TemaModal({isOpen, onClose, onSave, tema}: TemaModalProps) {
     );
   };
 
-  const removeArea = (areaId: string) => {
-    setSelectedAreaIds(prev => prev.filter(id => id !== areaId));
-  };
-
-  const getSelectedAreas = () => {
-    return mockAreas.filter(area => selectedAreaIds.includes(area.idArea));
-  };
-
   const handleSave = () => {
-    if (!nmTema || !dsTema || selectedAreaIds.length === 0) return;
+    if (!nmTema || !dsTema) return;
 
     const currentDate = new Date().toISOString().split('T')[0];
     const currentUser = '12345678901';
 
     const novoTema: Tema = {
-      idTema: tema?.idTema || uuidv4(),
+      idTema: tema?.id.toString() || uuidv4(),
       nmTema,
       dsTema,
       idAreas: selectedAreaIds,
       nrDiasPrazo,
       tpContagem,
-      dtCadastro: tema?.dtCadastro || currentDate,
-      nrCpfCadastro: tema?.nrCpfCadastro || currentUser,
-      vsVersao: tema ? tema.vsVersao + 1 : 1,
+      dtCadastro: currentDate,
+      nrCpfCadastro: currentUser,
+      vsVersao: 1,
       dtAlteracao: currentDate,
       nrCpfAlteracao: currentUser
     };
 
     onSave(novoTema);
-    onClose();
   };
 
-  const isFormValid = nmTema && dsTema && selectedAreaIds.length > 0 && nrDiasPrazo > 0;
+  const isFormValid = nmTema && dsTema;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -146,33 +162,44 @@ export function TemaModal({isOpen, onClose, onSave, tema}: TemaModalProps) {
 
           <div className="space-y-4">
             <Label>Áreas Relacionadas *</Label>
-            <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
-              {mockAreas.map((area) => (
-                <button
-                  key={area.idArea}
-                  type="button"
-                  onClick={() => handleAreaToggle(area.idArea)}
-                  className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium transition-all hover:shadow-sm",
-                    selectedAreaIds.includes(area.idArea)
-                      ? "bg-blue-500 text-white border-blue-500"
-                      : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
-                  )}
-                >
-                  <div className={cn(
-                    "w-4 h-4 rounded-full border flex items-center justify-center transition-all",
-                    selectedAreaIds.includes(area.idArea)
-                      ? "border-white bg-white"
-                      : "border-gray-400 bg-transparent"
-                  )}>
-                    {selectedAreaIds.includes(area.idArea) && (
-                      <CheckIcon className="w-2.5 h-2.5 text-blue-500"/>
+            {loadingAreas ? (
+              <div className="flex items-center justify-center p-8">
+                <div className="text-sm text-gray-500">Carregando áreas...</div>
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
+                {areas.map((area) => (
+                  <button
+                    key={area.idArea}
+                    type="button"
+                    onClick={() => handleAreaToggle(area.idArea.toString())}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium transition-all hover:shadow-sm",
+                      selectedAreaIds.includes(area.idArea.toString())
+                        ? "bg-blue-500 text-white border-blue-500"
+                        : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
                     )}
+                  >
+                    <div className={cn(
+                      "w-4 h-4 rounded-full border flex items-center justify-center transition-all",
+                      selectedAreaIds.includes(area.idArea.toString())
+                        ? "border-white bg-white"
+                        : "border-gray-400 bg-transparent"
+                    )}>
+                      {selectedAreaIds.includes(area.idArea.toString()) && (
+                        <CheckIcon className="w-2.5 h-2.5 text-blue-500"/>
+                      )}
+                    </div>
+                    {area.nmArea}
+                  </button>
+                ))}
+                {areas.length === 0 && !loadingAreas && (
+                  <div className="text-sm text-gray-500 p-4">
+                    Nenhuma área encontrada
                   </div>
-                  {area.nmArea}
-                </button>
-              ))}
-            </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -180,7 +207,7 @@ export function TemaModal({isOpen, onClose, onSave, tema}: TemaModalProps) {
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-          <Button onClick={handleSave} disabled={!isFormValid}>
+          <Button onClick={handleSave} disabled={!isFormValid || loadingAreas}>
             {tema ? 'Salvar Alterações' : 'Criar Tema'}
           </Button>
         </DialogFooter>

@@ -202,7 +202,6 @@ const formatDate = (dateString?: string): string => {
 
     return `${day}/${month}/${year} ${hours}:${minutes}`;
   } catch {
-    console.warn('Invalid date:', dateString);
     return '';
   }
 };

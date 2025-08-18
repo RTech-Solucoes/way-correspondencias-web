@@ -85,11 +85,27 @@ export function createSearchFilter<T>(
   );
 }
 
+/**
+ * Capitalizes the first letter of each word in a string
+ * @param str - The string to capitalize
+ * @returns The capitalized string
+ */
 export function capitalize(str: string): string {
   if (!str) return '';
+
   return str
     .toLowerCase()
     .split(' ')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
+}
+
+/**
+ * Capitalizes only the first letter of the entire string
+ * @param str - The string to capitalize
+ * @returns The capitalized string
+ */
+export function capitalizeFirst(str: string): string {
+  if (!str) return '';
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }

@@ -21,6 +21,7 @@ import {areasClient} from '@/api/areas/client';
 import AreaModal from '../../components/areas/AreaModal';
 import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
 import PageTitle from '@/components/ui/page-title';
+import { useToast } from '@/hooks/use-toast';
 
 export default function AreasPage() {
   const [areas, setAreas] = useState<AreaResponse[]>([]);
@@ -44,6 +45,7 @@ export default function AreasPage() {
   const [activeFilters, setActiveFilters] = useState(filters);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [areaToDelete, setAreaToDelete] = useState<number | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     loadAreas();
@@ -72,7 +74,11 @@ export default function AreasPage() {
       setTotalPages(response.totalPages);
       setTotalElements(response.totalElements);
     } catch (error) {
-      console.error('Erro ao carregar áreas:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar áreas",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -168,10 +174,15 @@ export default function AreasPage() {
         await areasClient.deletar(areaToDelete);
         loadAreas();
       } catch (error) {
-        console.error('Erro ao excluir área:', error);
+        toast({
+          title: "Erro",
+          description: "Erro ao excluir área",
+          variant: "destructive",
+        });
+      } finally {
+        setAreaToDelete(null);
       }
     }
-    setAreaToDelete(null);
   };
 
   const handleSaveArea = async (areaData: any) => {
@@ -185,7 +196,11 @@ export default function AreasPage() {
       setSelectedArea(null);
       loadAreas();
     } catch (error) {
-      console.error('Erro ao salvar área:', error);
+      toast({
+        title: "Erro",
+        description: selectedArea ? "Erro ao atualizar área" : "Erro ao criar área",
+        variant: "destructive",
+      });
     }
   };
 

@@ -19,8 +19,9 @@ import { TemaModal } from '@/components/temas/TemaModal';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import PageTitle from '@/components/ui/page-title';
 import { temasClient } from '@/api/temas/client';
-import { TemaResponse, TemaFilterParams } from '@/api/temas/types';
+import { TemaResponse, TemaFilterParams, TemaRequest } from '@/api/temas/types';
 import { useToast } from '@/hooks/use-toast';
+import { Tema } from '@/types/temas/types';
 
 export default function TemasPage() {
   const [temas, setTemas] = useState<TemaResponse[]>([]);
@@ -38,7 +39,6 @@ export default function TemasPage() {
     ativo: '',
   });
 
-  // Carregar temas na inicialização
   useEffect(() => {
     const loadTemas = async () => {
       try {
@@ -64,7 +64,6 @@ export default function TemasPage() {
     loadTemas();
   }, [searchQuery, toast]);
 
-  // Buscar temas por filtros específicos
   const handleSearch = async () => {
     try {
       setLoading(true);
@@ -81,7 +80,6 @@ export default function TemasPage() {
         results = response.content;
       }
 
-      // Filtrar por status ativo se especificado
       if (filters.ativo) {
         const isAtivo = filters.ativo === 'true';
         results = results.filter(tema => tema.flAtivo === isAtivo);
@@ -138,11 +136,31 @@ export default function TemasPage() {
     }
   };
 
-  const handleTemaSaved = () => {
-    setShowTemaModal(false);
-    setSelectedTema(null);
-    // Reload temas
-    const loadTemas = async () => {
+  const handleTemaSave = async (tema: Tema) => {
+    try {
+      const temaRequest: TemaRequest = {
+        nmTema: tema.nmTema,
+        dsTema: tema.dsTema,
+        flAtivo: true
+      };
+
+      if (selectedTema) {
+        await temasClient.atualizar(selectedTema.id, temaRequest);
+        toast({
+          title: "Sucesso",
+          description: "Tema atualizado com sucesso",
+        });
+      } else {
+        await temasClient.criar(temaRequest);
+        toast({
+          title: "Sucesso",
+          description: "Tema criado com sucesso",
+        });
+      }
+
+      setShowTemaModal(false);
+      setSelectedTema(null);
+
       const params: TemaFilterParams = {
         filtro: searchQuery || undefined,
         page: 0,
@@ -150,8 +168,14 @@ export default function TemasPage() {
       };
       const response = await temasClient.buscarPorFiltro(params);
       setTemas(response.content);
-    };
-    loadTemas();
+
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: selectedTema ? "Erro ao atualizar tema" : "Erro ao criar tema",
+        variant: "destructive",
+      });
+    }
   };
 
   const filteredTemas = temas.filter(tema =>
@@ -329,8 +353,8 @@ export default function TemasPage() {
       <TemaModal
         isOpen={showTemaModal}
         onClose={() => setShowTemaModal(false)}
-        tema={null}
-        onSave={handleTemaSaved}
+        tema={selectedTema}
+        onSave={handleTemaSave}
       />
 
       <ConfirmationDialog
