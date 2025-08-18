@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { ReactNode } from 'react';
 import { cn } from "@/utils/utils";
 import Sidebar from "@/components/layout/Sidebar";
+import {PUBLIC_ROUTES} from "@/constants/pages";
 
 interface ConditionalLayoutProps {
   children: ReactNode;
@@ -12,8 +13,7 @@ interface ConditionalLayoutProps {
 export default function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const pathname = usePathname();
 
-  const publicRoutes = ['/login', '/cadastro'];
-  const isPublicRoute = publicRoutes.includes(pathname);
+const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
 
   if (isPublicRoute) {
     return (

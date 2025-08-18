@@ -107,7 +107,7 @@ export default function AreaModal({area, onClose, onSave}: AreaModalProps) {
     return Object.keys(newErrors).length === 0 && !hasValidationError;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
 
     if (validateForm()) {

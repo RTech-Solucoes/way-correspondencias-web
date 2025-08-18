@@ -13,7 +13,7 @@ const defaultFont = DefaultFont({
 
 export const metadata: Metadata = {
   title: 'Way 262 - Software Regulatório',
-  description: 'Solução moderna de software regulatório com cliente de email e quadro kanban',
+  description: 'Software Regulatório de tramitações Way 262',
   icons: {
     icon: '/images/favicon.png',
     shortcut: '/images/favicon.png',

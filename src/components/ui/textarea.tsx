@@ -1,7 +1,8 @@
 import * as React from 'react';
-import { cva, type VariantProps } from 'class-variance-authority';
+import {forwardRef, TextareaHTMLAttributes} from 'react';
+import {cva, type VariantProps} from 'class-variance-authority';
 
-import { cn } from '@/utils/utils';
+import {cn} from '@/utils/utils';
 
 const textareaVariants = cva(
   'flex w-full rounded-3xl ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors duration-200',
@@ -27,10 +28,10 @@ const textareaVariants = cva(
 );
 
 export interface TextareaProps
-  extends React.TextareaHTMLAttributes<HTMLTextAreaElement>,
+  extends TextareaHTMLAttributes<HTMLTextAreaElement>,
     VariantProps<typeof textareaVariants> {}
 
-const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
+const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ className, variant, inputSize, ...props }, ref) => {
     return (
       <textarea

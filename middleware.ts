@@ -1,12 +1,11 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import type {NextRequest} from 'next/server';
+import {NextResponse} from 'next/server';
+import {PUBLIC_ROUTES} from "@/constants/pages";
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-
-  const publicRoutes = ['/login', '/cadastro'];
-
-  const isPublicRoute = publicRoutes.includes(pathname);
+  
+  const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
 
   const authToken = request.cookies.get('authToken')?.value;
 
@@ -15,8 +14,7 @@ export function middleware(request: NextRequest) {
   }
 
   if (!isPublicRoute && !authToken) {
-    const response = NextResponse.redirect(new URL('/login', request.url));
-    return response;
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
   return NextResponse.next();

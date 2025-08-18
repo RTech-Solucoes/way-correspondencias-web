@@ -5,14 +5,14 @@ import { useRouter, usePathname } from 'next/navigation';
 
 import { Quantum as Loading } from 'ldrs/react'
 import 'ldrs/react/Quantum.css'
+import {PUBLIC_ROUTES} from "@/constants/pages";
 
-export default function AuthGuard({ children }: { children: React.ReactNode }) {
+export default function AuthGuard({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(true);
 
-  const publicRoutes = ['/login', '/cadastro'];
-  const isPublicRoute = publicRoutes.includes(pathname);
+const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
 
   useEffect(() => {
     const checkAuth = () => {
@@ -56,7 +56,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         <Loading
           size="120"
           speed="1.5"
-          color="#2b7fff"
+          color="#155dfc"
         />
       </div>
     );

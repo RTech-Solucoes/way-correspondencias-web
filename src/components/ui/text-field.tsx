@@ -2,13 +2,22 @@
 
 import * as React from 'react';
 import { cn } from '@/utils/utils';
+import {
+  forwardRef,
+  ComponentPropsWithoutRef,
+  ElementRef,
+  ComponentType,
+  useId,
+  useState,
+  ChangeEvent,
+  Ref
+} from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { SpinnerIcon, WarningCircleIcon, WarningIcon } from '@phosphor-icons/react';
+import { SpinnerIcon, WarningCircleIcon, WarningIcon, EyeIcon, EyeClosedIcon } from '@phosphor-icons/react';
 
 export interface TextFieldProps {
-  // Basic props
   label?: string;
   placeholder?: string;
   value?: string;
@@ -16,31 +25,25 @@ export interface TextFieldProps {
   onBlur?: () => void;
   onFocus?: () => void;
 
-  // Field type
   type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'search';
   as?: 'input' | 'textarea';
-  rows?: number; // For textarea
+  rows?: number;
 
-  // States
   disabled?: boolean;
   readOnly?: boolean;
   required?: boolean;
   loading?: boolean;
 
-  // Messages
   error?: string;
   warning?: string;
   helperText?: string;
 
-  // Icons
-  startIcon?: React.ComponentType<{ className?: string }>;
-  endIcon?: React.ComponentType<{ className?: string }>;
+  startIcon?: ComponentType<{ className?: string }>;
+  endIcon?: ComponentType<{ className?: string }>;
 
-  // Style variations
   variant?: 'default' | 'filled' | 'outlined' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
 
-  // HTML props
   id?: string;
   name?: string;
   autoComplete?: string;
@@ -48,14 +51,13 @@ export interface TextFieldProps {
   maxLength?: number;
   minLength?: number;
 
-  // Custom styling
   className?: string;
   labelClassName?: string;
   inputClassName?: string;
   containerClassName?: string;
 }
 
-const TextField = React.forwardRef<HTMLInputElement | HTMLTextAreaElement, TextFieldProps>(
+const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, TextFieldProps>(
   ({
     label,
     placeholder,
@@ -88,17 +90,27 @@ const TextField = React.forwardRef<HTMLInputElement | HTMLTextAreaElement, TextF
     inputClassName,
     containerClassName,
   }, ref) => {
-    const reactId = React.useId();
+    const reactId = useId();
     const fieldId = id || reactId;
 
+    // Password visibility state (only for password inputs)
+    const [showPassword, setShowPassword] = useState(false);
+    const isPasswordType = type === 'password';
+    const actualInputType = isPasswordType && showPassword ? 'text' : type;
+
     // Handle input changes
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       onChange?.(e.target.value);
+    };
+
+    // Toggle password visibility
+    const togglePasswordVisibility = () => {
+      setShowPassword(!showPassword);
     };
 
     // Determine if we need icon spacing
     const hasStartIcon = StartIcon || loading;
-    const hasEndIcon = EndIcon || loading;
+    const hasEndIcon = EndIcon || loading || isPasswordType;
 
     const iconSpacing = {
       sm: hasStartIcon ? 'pl-8' : '',
@@ -169,7 +181,7 @@ const TextField = React.forwardRef<HTMLInputElement | HTMLTextAreaElement, TextF
           {/* Input/Textarea */}
           {as === 'textarea' ? (
             <Textarea
-              ref={ref as React.Ref<HTMLTextAreaElement>}
+              ref={ref as Ref<HTMLTextAreaElement>}
               id={fieldId}
               name={name}
               placeholder={placeholder}
@@ -189,8 +201,8 @@ const TextField = React.forwardRef<HTMLInputElement | HTMLTextAreaElement, TextF
             />
           ) : (
             <Input
-              ref={ref as React.Ref<HTMLInputElement>}
-              type={type}
+              ref={ref as Ref<HTMLInputElement>}
+              type={actualInputType}
               id={fieldId}
               name={name}
               placeholder={placeholder}
@@ -210,22 +222,47 @@ const TextField = React.forwardRef<HTMLInputElement | HTMLTextAreaElement, TextF
             />
           )}
 
-          {/* End Icon */}
-          {EndIcon && !loading && (
+          {/* End Icon or Password Toggle */}
+          {!loading && (
             <div className={cn(
               'absolute right-0 top-0 h-full flex items-center justify-center',
               size === 'sm' ? 'w-8' : size === 'md' ? 'w-10' : 'w-12',
               disabled && 'opacity-50'
             )}>
-              <EndIcon className={cn(
-                'text-gray-500',
-                size === 'sm' ? 'h-3 w-3' : size === 'md' ? 'h-4 w-4' : 'h-5 w-5'
-              )} />
+              {isPasswordType ? (
+                <button
+                  type="button"
+                  className={cn(
+                    'p-1 rounded transition-colors',
+                    disabled && 'cursor-not-allowed opacity-50'
+                  )}
+                  onClick={togglePasswordVisibility}
+                  disabled={disabled || loading}
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    <EyeIcon className={cn(
+                      'text-gray-500',
+                      size === 'sm' ? 'h-3 w-3' : size === 'md' ? 'h-4 w-4' : 'h-5 w-5'
+                    )} />
+                  ) : (
+                    <EyeClosedIcon className={cn(
+                      'text-gray-500',
+                      size === 'sm' ? 'h-3 w-3' : size === 'md' ? 'h-4 w-4' : 'h-5 w-5'
+                    )} />
+                  )}
+                </button>
+              ) : EndIcon ? (
+                <EndIcon className={cn(
+                  'text-gray-500',
+                  size === 'sm' ? 'h-3 w-3' : size === 'md' ? 'h-4 w-4' : 'h-5 w-5'
+                )} />
+              ) : null}
             </div>
           )}
 
           {/* Loading Spinner (End Position) */}
-          {loading && !StartIcon && (
+          {loading && (
             <div className={cn(
               'absolute right-0 top-0 h-full flex items-center justify-center',
               size === 'sm' ? 'w-8' : size === 'md' ? 'w-10' : 'w-12'

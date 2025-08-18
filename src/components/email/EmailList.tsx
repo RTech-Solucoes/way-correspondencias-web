@@ -221,19 +221,19 @@ interface EmailListProps {
   onUnreadCountChange?: (count: number) => void;
 }
 
-const EmailItem = React.memo<{
+const EmailItem = memo<{
   email: Email;
   isSelected: boolean;
   isChecked: boolean;
   onSelect(): void;
   onToggleCheck(): void;
 }>(({ email, isSelected, isChecked, onSelect, onToggleCheck }) => {
-  const handleClick = useCallback((e: React.MouseEvent) => {
+  const handleClick = useCallback((e: MouseEvent) => {
     e.preventDefault();
     onSelect();
   }, [onSelect]);
 
-  const handleCheckboxClick = useCallback((e: React.MouseEvent) => {
+  const handleCheckboxClick = useCallback((e: MouseEvent) => {
     e.stopPropagation();
     onToggleCheck();
   }, [onToggleCheck]);

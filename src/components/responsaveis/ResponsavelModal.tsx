@@ -43,7 +43,7 @@ export default function ResponsavelModal({ responsavel, onClose, onSave }: Respo
     }
   }, [responsavel]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -51,7 +51,7 @@ export default function ResponsavelModal({ responsavel, onClose, onSave }: Respo
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     onSave(formData);
   };

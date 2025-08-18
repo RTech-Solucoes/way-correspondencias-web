@@ -40,3 +40,5 @@ export const PAGES_DEF: PageDef[] = [
     icon: ClipboardTextIcon
   },
 ];
+
+export const PUBLIC_ROUTES: string[] = ["/login"]

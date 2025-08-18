@@ -74,7 +74,7 @@ export default function SolicitacaoModal({ solicitacao, onClose, onSave }: Solic
     }
   }, [solicitacao]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -130,7 +130,7 @@ export default function SolicitacaoModal({ solicitacao, onClose, onSave }: Solic
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     onSave(formData);
   };
