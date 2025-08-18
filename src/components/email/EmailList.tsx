@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useCallback, useMemo, useState} from 'react';
+import React, {memo, useCallback, useMemo, useState} from 'react';
 import {ArrowClockwiseIcon, EnvelopeSimpleIcon, PaperclipIcon, SpinnerIcon, TrashIcon} from '@phosphor-icons/react';
 import {Button} from '@/components/ui/button';
 import {Checkbox} from '@/components/ui/checkbox';
@@ -201,7 +201,7 @@ const formatDate = (dateString?: string): string => {
     const minutes = date.getMinutes().toString().padStart(2, '0');
 
     return `${day}/${month}/${year} ${hours}:${minutes}`;
-  } catch (error) {
+  } catch {
     console.warn('Invalid date:', dateString);
     return '';
   }
@@ -218,7 +218,6 @@ interface EmailListProps {
     dateTo: string;
     sender: string;
   };
-  onUnreadCountChange?: (count: number) => void;
 }
 
 const EmailItem = memo<{
@@ -228,12 +227,12 @@ const EmailItem = memo<{
   onSelect(): void;
   onToggleCheck(): void;
 }>(({ email, isSelected, isChecked, onSelect, onToggleCheck }) => {
-  const handleClick = useCallback((e: MouseEvent) => {
+  const handleClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
     onSelect();
   }, [onSelect]);
 
-  const handleCheckboxClick = useCallback((e: MouseEvent) => {
+  const handleCheckboxClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     onToggleCheck();
   }, [onToggleCheck]);
@@ -291,12 +290,11 @@ function EmailList({
     dateFrom: '',
     dateTo: '',
     sender: ''
-  },
-  onUnreadCountChange
+  }
 }: EmailListProps) {
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
   const [syncLoading, setSyncLoading] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const {toast} = useToast();
 
   const allEmails = useMemo(() => {
@@ -337,22 +335,6 @@ function EmailList({
     });
   }, [allEmails, searchQuery, emailFilters]);
 
-  const toggleEmailSelection = useCallback((emailId: string) => {
-    setSelectedEmails(prev => {
-      const newSelection = prev.includes(emailId)
-        ? prev.filter(id => id !== emailId)
-        : [...prev, emailId];
-      return newSelection;
-    });
-  }, []);
-
-  const handleEmailSelect = useCallback((emailId: string) => {
-    if (selectedEmail === emailId) {
-      onEmailSelect('');
-    } else {
-      onEmailSelect(emailId);
-    }
-  }, [selectedEmail, onEmailSelect]);
 
   return (
     <div className="flex-1 flex flex-col bg-white">

@@ -1,6 +1,6 @@
 'use client';
 
-import {useState} from 'react';
+import {FormEvent, useState} from 'react';
 import {LockIcon, EnvelopeSimpleIcon} from '@phosphor-icons/react';
 import {Button} from '@/components/ui/button';
 import {TextField} from '@/components/ui/text-field';
@@ -115,9 +115,9 @@ export default function LoginPage() {
             className="h-auto max-w-1/5 mx-auto [filter:brightness(0)_invert(1)]"
           />
           <div className="flex gap-6 items-center ">
-            <span>
-              <h2 className="text-white font-semibold text-3xl">Log In</h2>
-            </span>
+            <span className="flex-1 h-0.5 rounded-full bg-gray-200/20"/>
+            <h2 className="text-white font-semibold text-3xl">Log In</h2>
+            <span className="flex-1 h-0.5 rounded-full bg-gray-200/20"/>
           </div>
 
           <TextField

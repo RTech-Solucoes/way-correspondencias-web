@@ -139,7 +139,7 @@ const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, TextFieldPr
     );
 
     return (
-      <div className={cn('space-y-2', containerClassName, className)}>
+      <div className={cn('flex flex-col gap-1', containerClassName, className)}>
         {/* Label */}
         {label && (
           <Label
