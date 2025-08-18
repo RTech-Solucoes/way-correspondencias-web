@@ -3,11 +3,11 @@
 import {useState} from 'react';
 import {
   FunnelSimpleIcon,
-  EnvelopeIcon,
+  EnvelopeSimpleIcon,
   MagnifyingGlassIcon,
 } from '@phosphor-icons/react';
 import {Button} from '@/components/ui/button';
-import {Input} from '@/components/ui/input';
+import { Input } from '@/components/ui/input';
 import {
   Dialog,
   DialogContent,
@@ -38,7 +38,7 @@ export default function EmailPage() {
       <div className="bg-white border-b border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-            <EnvelopeIcon className="h-7 w-7 mr-3"/>
+            <EnvelopeSimpleIcon className="h-7 w-7 mr-3"/>
             Email
           </h1>
         </div>

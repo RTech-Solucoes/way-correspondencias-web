@@ -35,10 +35,10 @@ export default function DashboardPage() {
           <span className="text-sm text-gray-500">
             Última atualização: {lastUpdated ? lastUpdated.toLocaleTimeString() : '--:--:--'}
           </span>
-						<Button variant="outline" size="sm" onClick={refreshData}>
-							<ArrowClockwiseIcon className="h-4 w-4 mr-2" />
-						Atualizar
-					</Button>
+          <Button variant="ghost" size="sm" onClick={refreshData}>
+            <ArrowClockwiseIcon className="h-4 w-4 mr-2" />
+            Atualizar
+          </Button>
 				</div>
 			</div>
 

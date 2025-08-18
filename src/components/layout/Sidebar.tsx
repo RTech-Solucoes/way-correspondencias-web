@@ -3,7 +3,19 @@
 import {cn} from '@/utils/utils';
 import {Button} from '@/components/ui/button';
 import {Badge} from '@/components/ui/badge';
-import {BellIcon, BuildingIcon, ClipboardTextIcon, PresentationChartIcon, FileTextIcon, EnvelopeIcon, UserIcon, UsersIcon, Icon, SignOutIcon} from '@phosphor-icons/react';
+import {
+  BellIcon,
+  BuildingIcon,
+  ClipboardTextIcon,
+  PresentationChartIcon,
+  FileTextIcon,
+  EnvelopeSimpleIcon,
+  UserIcon,
+  UsersIcon,
+  Icon,
+  SignOutIcon,
+  ArrowClockwiseIcon, XIcon
+} from '@phosphor-icons/react';
 import {Avatar, AvatarFallback, AvatarImage} from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -50,7 +62,7 @@ const MOCK_NOTIFICATIONS = [
 
 const NAVIGATION_ITEMS: NavigationItem[] = [
   { id: "/", label: "Dashboard", icon: PresentationChartIcon },
-  { id: "/email", label: "Email", icon: EnvelopeIcon },
+  { id: "/email", label: "Email", icon: EnvelopeSimpleIcon },
   { id: "/areas", label: "Áreas", icon: BuildingIcon },
   { id: "/temas", label: "Temas", icon: FileTextIcon },
   { id: "/responsaveis", label: "Responsáveis", icon: UsersIcon },
@@ -105,7 +117,10 @@ export default function Sidebar() {
                   )}
                   onClick={() => handleNavigation(item.id)}
                 >
-                  <Icon className="h-4 w-4 flex-shrink-0 mr-3" />
+                  <Icon
+                    weight={isActive ? "fill" : "bold"}
+                    className="h-4 w-4 flex-shrink-0 mr-3"
+                  />
                   <span className="flex-1">{item.label}</span>
                 </Button>
               );
@@ -136,7 +151,18 @@ export default function Sidebar() {
                 align="end"
                 onClick={() => setNotificationsOpen(false)}
               >
-                <DropdownMenuLabel>Notificações</DropdownMenuLabel>
+                <DropdownMenuLabel className="flex justify-between items-center">
+                  <span>
+                    Notificações
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setNotificationsOpen(false)}
+                  >
+                    <XIcon className="h-4 w-4"/>
+                  </Button>
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <div className="max-h-96 overflow-y-auto">
                   {MOCK_NOTIFICATIONS.map((notification) => (

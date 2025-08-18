@@ -1,7 +1,7 @@
 'use client';
 
 import React, {useCallback, useMemo, useState} from 'react';
-import {ArrowClockwiseIcon, EnvelopeIcon, PaperclipIcon, SpinnerIcon, TrashIcon} from '@phosphor-icons/react';
+import {ArrowClockwiseIcon, EnvelopeSimpleIcon, PaperclipIcon, SpinnerIcon, TrashIcon} from '@phosphor-icons/react';
 import {Button} from '@/components/ui/button';
 import {Checkbox} from '@/components/ui/checkbox';
 import {cn} from '@/utils/utils';
@@ -431,7 +431,7 @@ function EmailList({
         ) : filteredEmails.length === 0 ? (
           <div className="flex items-center justify-center py-16">
             <div className="text-center">
-              <EnvelopeIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+              <EnvelopeSimpleIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-600 mb-2">
                 Nenhum email encontrado
               </h3>

@@ -17,22 +17,3 @@ export interface Anexo {
   ds_nome_anexo: string;
   nm_tamanho_anexo: number;
 }
-
-export interface EmailDisplay {
-  id: string;
-  from: string;
-  fromEmail: string;
-  subject: string;
-  content: string;
-  date: string;
-  attachments: Anexo[];
-  isStarred: boolean;
-}
-
-export interface SentEmail {
-  id: string;
-  from: string;
-  subject: string;
-  content: string;
-  date: string;
-}

@@ -1,9 +1,9 @@
 'use client';
 
 import {useState} from 'react';
-import {EyeIcon, EyeClosedIcon, LockIcon, EnvelopeIcon, WarningCircleIcon} from '@phosphor-icons/react';
+import {EyeIcon, EyeClosedIcon, LockIcon, EnvelopeSimpleIcon, WarningCircleIcon} from '@phosphor-icons/react';
 import {Button} from '@/components/ui/button';
-import {Input} from '@/components/ui/input';
+import { Input } from '@/components/ui/input';
 import {Label} from '@/components/ui/label';
 import {Checkbox} from '@/components/ui/checkbox';
 import {cn} from '@/utils/utils';
@@ -124,7 +124,7 @@ export default function LoginPage() {
               Email
             </Label>
             <div className="relative">
-              <EnvelopeIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white"/>
+              <EnvelopeSimpleIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white"/>
               <Input
                 id="email"
                 type="email"

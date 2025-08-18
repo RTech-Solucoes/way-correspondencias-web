@@ -1,34 +1,14 @@
 import './globals.css';
-import type { Metadata } from 'next';
-import {
-  Outfit as DefaultFont,
-  Paytone_One as DisplayFont,
-} from 'next/font/google';
-import { ApiProvider } from '@/api/ApiProvider';
-import { ReactNode } from 'react'
+import type {Metadata} from 'next';
+import {Outfit as DefaultFont} from 'next/font/google';
+import {ApiProvider} from '@/api/ApiProvider';
+import {ReactNode} from 'react'
 import IconProvider from "@/components/providers/IconProvider";
 import AuthGuard from "@/components/providers/AuthGuard";
 import ConditionalLayout from "@/components/layout/ConditionalLayout";
 
 const defaultFont = DefaultFont({
-  weight: [
-    '100',
-    '200',
-    '300',
-    '400',
-    '500',
-    '600',
-    '700',
-    '800',
-    '900'
-  ],
   subsets: ['latin']
-});
-
-const displayFont = DisplayFont({
-  weight: ['400'],
-  subsets: ['latin'],
-  variable: '--font-display',
 });
 
 export const metadata: Metadata = {
@@ -49,7 +29,7 @@ export default function RootLayout({
 
   return (
     <html lang="en">
-      <body className={`${defaultFont.className} ${displayFont.variable}`}>
+      <body className={defaultFont.className}>
         <ApiProvider>
           <IconProvider>
             <AuthGuard>
