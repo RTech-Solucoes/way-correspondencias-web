@@ -21,7 +21,7 @@ import {areasClient} from '@/api/areas/client';
 import AreaModal from '../../components/areas/AreaModal';
 import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
 import PageTitle from '@/components/ui/page-title';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Pagination } from '@/components/ui/pagination';
 

@@ -5,7 +5,7 @@ import {ArrowClockwiseIcon, EnvelopeSimpleIcon, PaperclipIcon, SpinnerIcon, Tras
 import {Button} from '@/components/ui/button';
 import {Checkbox} from '@/components/ui/checkbox';
 import {cn} from '@/utils/utils';
-import {toast} from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { emailClient } from '@/api/email/client';
 import { EmailResponse } from '@/api/email/types';
 import { useDebounce } from '@/hooks/use-debounce';

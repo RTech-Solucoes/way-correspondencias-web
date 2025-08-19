@@ -21,7 +21,7 @@ import EmailList from '../../components/email/EmailList';
 import EmailDetail from '../../components/email/EmailDetail';
 import PageTitle from '@/components/ui/page-title';
 import { emailClient } from '@/api/email/client';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 export default function EmailPage() {
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null);

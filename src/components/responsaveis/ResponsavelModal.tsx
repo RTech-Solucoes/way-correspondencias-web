@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { TextField } from '@/components/ui/text-field';
 import { ResponsavelResponse, ResponsavelRequest } from '@/api/responsaveis/types';
 import { responsaveisClient } from '@/api/responsaveis/client';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface ResponsavelModalProps {
   responsavel: ResponsavelResponse | null;

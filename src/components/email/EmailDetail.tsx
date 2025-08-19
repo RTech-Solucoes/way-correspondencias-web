@@ -4,16 +4,16 @@ import {useEffect, useState} from 'react';
 import {ArrowLeftIcon, DownloadIcon, FileTextIcon, PaperclipIcon} from '@phosphor-icons/react';
 import {Button} from '@/components/ui/button';
 import {Avatar, AvatarFallback} from '@/components/ui/avatar';
-import {toast} from '@/hooks/use-toast';
+import {toast} from 'sonner';
 import SolicitacaoModal from '@/components/solicitacoes/SolicitacaoModal';
-import { ResponsavelResponse } from '@/api/responsaveis/types';
-import { TemaResponse } from '@/api/temas/types';
-import { AreaResponse } from '@/api/areas/types';
-import { responsaveisClient } from '@/api/responsaveis/client';
-import { temasClient } from '@/api/temas/client';
-import { areasClient } from '@/api/areas/client';
-import { emailClient } from '@/api/email/client';
-import { EmailResponse, Anexo } from "@/api/email/types";
+import {ResponsavelResponse} from '@/api/responsaveis/types';
+import {TemaResponse} from '@/api/temas/types';
+import {AreaResponse} from '@/api/areas/types';
+import {responsaveisClient} from '@/api/responsaveis/client';
+import {temasClient} from '@/api/temas/client';
+import {areasClient} from '@/api/areas/client';
+import {emailClient} from '@/api/email/client';
+import {EmailResponse} from "@/api/email/types";
 
 interface EmailDetailProps {
   emailId: string;

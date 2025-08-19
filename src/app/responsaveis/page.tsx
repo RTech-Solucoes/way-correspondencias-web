@@ -33,7 +33,7 @@ import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
 import PageTitle from '@/components/ui/page-title';
 import { responsaveisClient } from '@/api/responsaveis/client';
 import { ResponsavelResponse, ResponsavelFilterParams } from '@/api/responsaveis/types';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Pagination } from '@/components/ui/pagination';
 

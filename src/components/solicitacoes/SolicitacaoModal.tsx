@@ -24,7 +24,7 @@ import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { TemaResponse } from '@/api/temas/types';
 import { AreaResponse } from '@/api/areas/types';
 import { solicitacoesClient } from '@/api/solicitacoes/client';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { capitalize } from '@/utils/utils';
 
 interface SolicitacaoModalProps {
