@@ -44,7 +44,6 @@ export default function TemasPage() {
   });
   const [activeFilters, setActiveFilters] = useState(filters);
 
-  // Aplicar debounce na busca
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   useEffect(() => {
@@ -55,7 +54,6 @@ export default function TemasPage() {
     try {
       setLoading(true);
 
-      // Se há filtro específico de nome e não há outros filtros, usar busca por nome
       if (activeFilters.nome && !activeFilters.descricao && !debouncedSearchQuery) {
         const result = await temasClient.buscarPorNmTema(activeFilters.nome);
         setTemas([result]);

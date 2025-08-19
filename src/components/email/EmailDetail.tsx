@@ -54,7 +54,6 @@ export default function EmailDetail({
   const [temas, setTemas] = useState<TemaResponse[]>([]);
   const [areas, setAreas] = useState<AreaResponse[]>([]);
 
-  // Carregar dados do email da API
   useEffect(() => {
     const loadEmail = async () => {
       try {
@@ -98,7 +97,6 @@ export default function EmailDetail({
     }
   };
 
-  // Load data for the modal when it's opened
   useEffect(() => {
     if (showSolicitacaoModal) {
       loadModalData();
@@ -146,7 +144,6 @@ export default function EmailDetail({
 
   return (
     <div className="flex-1 flex flex-col bg-white">
-      {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200">
         <div className="flex items-center space-x-3">
           <Button
@@ -169,9 +166,7 @@ export default function EmailDetail({
         </Button>
       </div>
 
-      {/* Email content */}
       <div className="flex-1 overflow-y-auto p-6">
-        {/* Sender info */}
         <div className="flex items-start space-x-4 mb-6">
           <Avatar className="h-12 w-12">
             <AvatarFallback>
@@ -201,7 +196,6 @@ export default function EmailDetail({
           </div>
         </div>
 
-        {/* Attachments */}
         {email.anexos && email.anexos.length > 0 && (
           <div className="mb-6">
             <h4 className="text-sm font-medium text-gray-700 mb-2">
@@ -233,7 +227,6 @@ export default function EmailDetail({
           </div>
         )}
 
-        {/* Email body */}
         <div className="prose max-w-none">
           <div className="whitespace-pre-wrap text-gray-900 leading-relaxed">
             {email.txConteudo}
@@ -241,7 +234,6 @@ export default function EmailDetail({
         </div>
       </div>
 
-      {/* Solicitacao Modal */}
       <SolicitacaoModal
         open={showSolicitacaoModal}
         onOpenChange={(open) => setShowSolicitacaoModal(open)}

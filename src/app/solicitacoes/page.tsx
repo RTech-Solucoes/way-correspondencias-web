@@ -59,7 +59,6 @@ export default function SolicitacoesPage() {
   });
   const [activeFilters, setActiveFilters] = useState(filters);
 
-  // Aplicar debounce na busca
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   useEffect(() => {
@@ -73,7 +72,6 @@ export default function SolicitacoesPage() {
     try {
       setLoading(true);
 
-      // Se há filtros específicos, usar métodos específicos
       if (activeFilters.identificacao && !activeFilters.responsavel && !activeFilters.tema && !activeFilters.status && !debouncedSearchQuery) {
         const result = await solicitacoesClient.buscarPorCdIdentificacao(activeFilters.identificacao);
         setSolicitacoes([result]);

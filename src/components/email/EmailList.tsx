@@ -43,7 +43,6 @@ const formatDate = (dateString?: string): string => {
   }
 };
 
-// Função para converter EmailResponse da API para formato usado no componente
 const convertEmailResponse = (email: EmailResponse): Email => {
   return {
     id: email.id.toString(),
@@ -152,10 +151,8 @@ function EmailList({
   const [totalElements, setTotalElements] = useState(0);
   const {toast} = useToast();
 
-  // Aplicar debounce na busca
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
-  // Função para carregar emails da API
   const loadEmails = useCallback(async () => {
     try {
       setLoading(true);
@@ -180,7 +177,6 @@ function EmailList({
     }
   }, [debouncedSearchQuery, currentPage, toast]);
 
-  // Carregar emails ao montar o componente ou quando debouncedSearchQuery ou currentPage mudarem
   useEffect(() => {
     loadEmails();
   }, [loadEmails]);
@@ -239,7 +235,7 @@ function EmailList({
       await Promise.all(deletePromises);
 
       setSelectedEmails([]);
-      await loadEmails(); // Recarregar a lista após exclusão
+      await loadEmails();
 
       toast({
         title: "Emails excluídos",
@@ -256,7 +252,6 @@ function EmailList({
 
   return (
     <div className="flex-1 flex flex-col bg-white">
-      {/* Header with actions */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200">
         <div className="flex items-center space-x-2">
           <Checkbox
@@ -306,7 +301,6 @@ function EmailList({
         </div>
       </div>
 
-      {/* Email list */}
       <div className="flex-1 overflow-y-auto">
         {loading ? (
           <div className="flex items-center justify-center py-8">
@@ -361,4 +355,3 @@ function EmailList({
 }
 
 export default EmailList;
-

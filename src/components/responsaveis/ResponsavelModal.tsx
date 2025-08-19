@@ -106,7 +106,6 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
     onClose();
   };
 
-  // Função para verificar se todos os campos obrigatórios estão preenchidos
   const isFormValid = useCallback(() => {
     return formData.nmResponsavel.trim() !== '' &&
            formData.dsEmail.trim() !== '' &&

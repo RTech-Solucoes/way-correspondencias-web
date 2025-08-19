@@ -83,7 +83,6 @@ export default function SolicitacaoModal({
     const { name, value } = e.target;
     let processedValue = value;
 
-    // Apply capitalize to subject field
     if (name === 'dsAssunto') {
       processedValue = capitalize(value);
     }
@@ -148,7 +147,6 @@ export default function SolicitacaoModal({
     onOpenChange(false);
   };
 
-  // Função para verificar se todos os campos obrigatórios estão preenchidos
   const isFormValid = useCallback(() => {
     return formData.dsAssunto.trim() !== '' &&
            formData.txConteudo.trim() !== '' &&

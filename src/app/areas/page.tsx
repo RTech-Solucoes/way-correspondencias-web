@@ -49,7 +49,6 @@ export default function AreasPage() {
   const [areaToDelete, setAreaToDelete] = useState<number | null>(null);
   const { toast } = useToast();
 
-  // Aplicar debounce na busca
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   useEffect(() => {

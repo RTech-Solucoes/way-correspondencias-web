@@ -57,7 +57,6 @@ export default function ResponsaveisPage() {
   });
   const [activeFilters, setActiveFilters] = useState(filters);
 
-  // Aplicar debounce na busca
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   useEffect(() => {
@@ -68,7 +67,6 @@ export default function ResponsaveisPage() {
     try {
       setLoading(true);
 
-      // Se há filtros ativos específicos, usar métodos específicos, senão usar busca geral
       if (activeFilters.usuario && !activeFilters.email && !debouncedSearchQuery) {
         const result = await responsaveisClient.buscarPorNmUsuarioLogin(activeFilters.usuario);
         setResponsaveis([result]);

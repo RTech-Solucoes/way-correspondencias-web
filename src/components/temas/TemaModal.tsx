@@ -77,7 +77,6 @@ export function TemaModal({isOpen, onClose, onSave, tema}: TemaModalProps) {
     );
   };
 
-  // Função para verificar se todos os campos obrigatórios estão preenchidos
   const isFormValid = useCallback(() => {
     return nmTema.trim() !== '' &&
            dsTema.trim() !== '' &&
