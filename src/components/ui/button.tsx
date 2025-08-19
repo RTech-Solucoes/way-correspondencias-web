@@ -43,7 +43,7 @@ export interface ButtonProps
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, isLoading, variant, label, size, asChild = false, ...props }, ref) => {
+  ({ className, isLoading, variant, label, size, asChild = false, children, ...props }, ref) => {
     const Comp = asChild ? Slot : 'button';
 
     return (
@@ -59,7 +59,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             <span>Carregando...</span>
           </div>
         ) : (
-          label
+          (label ? label : children)
         )}
       </Comp>
     );
