@@ -16,7 +16,6 @@ import { toast } from 'sonner';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -52,16 +51,11 @@ export default function LoginPage() {
           password: password
         });
 
-        if (rememberMe) {
-          localStorage.setItem('rememberMe', 'true');
-          localStorage.setItem('userEmail', email);
-        }
 
         toast.success("Login Realizado com Sucesso.")
         router.push(PAGES_DEF[0].path);
         setEmail('');
         setPassword('');
-        setRememberMe(false);
       } catch (error) {
         toast.warning("CPF ou senha inválidos")
       } finally {
@@ -134,23 +128,6 @@ export default function LoginPage() {
               "transition-colors duration-200"
             )}
           />
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="remember"
-              checked={rememberMe}
-              onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-              disabled={isLoading}
-            />
-            <Label
-              htmlFor="remember"
-              className="text-sm text-white cursor-pointer"
-            >
-              Lembrar de mim
-            </Label>
-          </div>
         </div>
 
         <Button
