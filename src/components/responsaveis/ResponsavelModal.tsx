@@ -1,7 +1,7 @@
 'use client';
 
-import {useState, useEffect, ChangeEvent, FormEvent} from 'react';
-import { 
+import {useState, useEffect, ChangeEvent, FormEvent, useCallback} from 'react';
+import {
   Dialog, 
   DialogContent, 
   DialogHeader, 
@@ -106,6 +106,13 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
     onClose();
   };
 
+  // Função para verificar se todos os campos obrigatórios estão preenchidos
+  const isFormValid = useCallback(() => {
+    return formData.nmResponsavel.trim() !== '' &&
+           formData.dsEmail.trim() !== '' &&
+           formData.nmUsuario.trim() !== '';
+  }, [formData]);
+
   return (
     <Dialog open={open} onOpenChange={(newOpen) => !newOpen && onClose()}>
       <DialogContent className="sm:max-w-[400px]">
@@ -160,7 +167,11 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
             <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button
+              type="submit"
+              disabled={loading || !isFormValid()}
+              className="disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               {loading ? 'Salvando...' : responsavel ? 'Salvar Alterações' : 'Criar Responsável'}
             </Button>
           </DialogFooter>

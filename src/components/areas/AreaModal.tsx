@@ -105,6 +105,16 @@ export default function AreaModal({area, onClose, onSave}: AreaModalProps) {
     return Object.keys(newErrors).length === 0 && !hasValidationError;
   };
 
+  // Função para verificar se todos os campos obrigatórios estão preenchidos
+  const isFormValid = useCallback(() => {
+    const requiredFields = ['cdArea', 'nmArea', 'dsArea'];
+    const allFieldsFilled = requiredFields.every(field =>
+      formData[field as keyof AreaRequest]?.toString().trim() !== ''
+    );
+
+    return allFieldsFilled && !hasValidationError && !isCheckingCdArea;
+  }, [formData, hasValidationError, isCheckingCdArea]);
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
 
@@ -138,7 +148,7 @@ export default function AreaModal({area, onClose, onSave}: AreaModalProps) {
     }
   };
 
-  const isSubmitDisabled = hasValidationError || isCheckingCdArea || Object.keys(errors).length > 0;
+  const isSubmitDisabled = !isFormValid();
 
   return (
     <Dialog open={true} onOpenChange={onClose}>

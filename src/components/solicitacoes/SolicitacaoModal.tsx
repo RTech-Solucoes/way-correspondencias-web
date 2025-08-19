@@ -1,6 +1,6 @@
 'use client';
 
-import {useState, useEffect, FormEvent} from 'react';
+import {useState, useEffect, FormEvent, useCallback} from 'react';
 import {
   Dialog, 
   DialogContent, 
@@ -148,6 +148,15 @@ export default function SolicitacaoModal({
     onOpenChange(false);
   };
 
+  // Função para verificar se todos os campos obrigatórios estão preenchidos
+  const isFormValid = useCallback(() => {
+    return formData.dsAssunto.trim() !== '' &&
+           formData.txConteudo.trim() !== '' &&
+           formData.idResponsavel > 0 &&
+           formData.idTema > 0 &&
+           formData.idArea > 0;
+  }, [formData]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
@@ -264,7 +273,11 @@ export default function SolicitacaoModal({
             <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button
+              type="submit"
+              disabled={loading || !isFormValid()}
+              className="disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               {loading ? 'Salvando...' : solicitacao ? 'Salvar Alterações' : 'Criar Solicitação'}
             </Button>
           </DialogFooter>

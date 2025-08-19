@@ -17,7 +17,8 @@ import {
   PencilSimpleIcon,
   TrashIcon,
   FunnelSimpleIcon,
-  UserIcon
+  UsersIcon,
+  XIcon
 } from '@phosphor-icons/react';
 import {
   Dialog,
@@ -33,6 +34,8 @@ import PageTitle from '@/components/ui/page-title';
 import { responsaveisClient } from '@/api/responsaveis/client';
 import { ResponsavelResponse, ResponsavelFilterParams } from '@/api/responsaveis/types';
 import { useToast } from '@/hooks/use-toast';
+import { useDebounce } from '@/hooks/use-debounce';
+import { Pagination } from '@/components/ui/pagination';
 
 export default function ResponsaveisPage() {
   const [responsaveis, setResponsaveis] = useState<ResponsavelResponse[]>([]);
@@ -43,66 +46,59 @@ export default function ResponsaveisPage() {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [responsavelToDelete, setResponsavelToDelete] = useState<ResponsavelResponse | null>(null);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
   const { toast } = useToast();
 
   const [filters, setFilters] = useState({
     usuario: '',
     email: '',
   });
+  const [activeFilters, setActiveFilters] = useState(filters);
+
+  // Aplicar debounce na busca
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   useEffect(() => {
-    const loadData = async () => {
-      await Promise.all([loadResponsaveis()]);
-    };
-    loadData();
-  }, []);
+    loadResponsaveis();
+  }, [currentPage, activeFilters, debouncedSearchQuery]);
 
   const loadResponsaveis = async () => {
     try {
       setLoading(true);
-      const params: ResponsavelFilterParams = {
-        filtro: searchQuery || undefined,
-        page: 0,
-        size: 100,
-      };
-      const response = await responsaveisClient.buscarPorFiltro(params);
-      setResponsaveis(response.content);
+
+      // Se há filtros ativos específicos, usar métodos específicos, senão usar busca geral
+      if (activeFilters.usuario && !activeFilters.email && !debouncedSearchQuery) {
+        const result = await responsaveisClient.buscarPorNmUsuarioLogin(activeFilters.usuario);
+        setResponsaveis([result]);
+        setTotalPages(1);
+        setTotalElements(1);
+      } else if (activeFilters.email && !activeFilters.usuario && !debouncedSearchQuery) {
+        const result = await responsaveisClient.buscarPorDsEmail(activeFilters.email);
+        setResponsaveis([result]);
+        setTotalPages(1);
+        setTotalElements(1);
+      } else {
+        const filterParts = [];
+        if (debouncedSearchQuery) filterParts.push(debouncedSearchQuery);
+        if (activeFilters.usuario) filterParts.push(activeFilters.usuario);
+        if (activeFilters.email) filterParts.push(activeFilters.email);
+
+        const params: ResponsavelFilterParams = {
+          filtro: filterParts.join(' ') || undefined,
+          page: currentPage,
+          size: 50,
+        };
+        const response = await responsaveisClient.buscarPorFiltro(params);
+        setResponsaveis(response.content);
+        setTotalPages(response.totalPages);
+        setTotalElements(response.totalElements);
+      }
     } catch {
       toast({
         title: "Erro",
         description: "Erro ao carregar responsáveis",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSearch = async () => {
-    try {
-      setLoading(true);
-      let results: ResponsavelResponse[];
-
-      if (filters.usuario) {
-        const result = await responsaveisClient.buscarPorNmUsuarioLogin(filters.usuario);
-        results = [result];
-      } else if (filters.email) {
-        const result = await responsaveisClient.buscarPorDsEmail(filters.email);
-        results = [result];
-      } else {
-        const params: ResponsavelFilterParams = {
-          filtro: searchQuery || undefined,
-        };
-        const response = await responsaveisClient.buscarPorFiltro(params);
-        results = response.content;
-      }
-
-      setResponsaveis(results);
-      setShowFilterModal(false);
-    } catch {
-      toast({
-        title: "Erro",
-        description: "Erro ao buscar responsáveis",
         variant: "destructive",
       });
     } finally {
@@ -148,6 +144,25 @@ export default function ResponsaveisPage() {
     loadResponsaveis();
   };
 
+  const applyFilters = () => {
+    setActiveFilters(filters);
+    setCurrentPage(0);
+    setShowFilterModal(false);
+  };
+
+  const clearFilters = () => {
+    const clearedFilters = {
+      usuario: '',
+      email: '',
+    };
+    setFilters(clearedFilters);
+    setActiveFilters(clearedFilters);
+    setCurrentPage(0);
+    setShowFilterModal(false);
+  };
+
+  const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
+
   const getAreaName = (area: { id: number; nmArea: string; cdArea: string } | undefined) => {
     return area ? area.nmArea : 'N/A';
   };
@@ -190,14 +205,16 @@ export default function ResponsaveisPage() {
             <FunnelSimpleIcon className="h-4 w-4 mr-2"/>
             Filtrar
           </Button>
-          <Button
-            variant="outline"
-            className="h-10 px-4"
-            onClick={handleSearch}
-          >
-            <MagnifyingGlassIcon className="h-4 w-4 mr-2"/>
-            Buscar
-          </Button>
+          {hasActiveFilters && (
+            <Button
+              variant="outline"
+              className="h-10 px-4"
+              onClick={clearFilters}
+            >
+              <XIcon className="h-4 w-4 mr-2"/>
+              Limpar Filtros
+            </Button>
+          )}
         </div>
       </div>
 
@@ -221,17 +238,17 @@ export default function ResponsaveisPage() {
                   Carregando responsáveis...
                 </TableCell>
               </TableRow>
-            ) : filteredResponsaveis.length === 0 ? (
+            ) : responsaveis.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8">
                   <div className="flex flex-col items-center space-y-2">
-                    <UserIcon className="h-8 w-8 text-gray-400"/>
+                    <UsersIcon className="h-8 w-8 text-gray-400"/>
                     <p className="text-sm text-gray-500">Nenhum responsável encontrado</p>
                   </div>
                 </TableCell>
               </TableRow>
             ) : (
-              filteredResponsaveis.map((responsavel) => (
+              responsaveis.map((responsavel) => (
                 <TableRow key={responsavel.id}>
                   <TableCell className="font-medium">{responsavel.nmResponsavel}</TableCell>
                   <TableCell>{responsavel.nmUsuario}</TableCell>
@@ -273,6 +290,15 @@ export default function ResponsaveisPage() {
         </Table>
       </div>
 
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalElements={totalElements}
+        pageSize={50}
+        onPageChange={setCurrentPage}
+        loading={loading}
+      />
+
       {/* Filter Modal */}
       {showFilterModal && (
         <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
@@ -301,19 +327,10 @@ export default function ResponsaveisPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setFilters({
-                    usuario: '',
-                    email: '',
-                  });
-                  setShowFilterModal(false);
-                }}
-              >
+              <Button variant="outline" onClick={clearFilters}>
                 Limpar Filtros
               </Button>
-              <Button onClick={handleSearch}>
+              <Button onClick={applyFilters}>
                 Aplicar Filtros
               </Button>
             </DialogFooter>

@@ -13,7 +13,8 @@ import {
   PencilSimpleIcon,
   PlusIcon,
   TrashIcon,
-  FileTextIcon
+  ClipboardTextIcon,
+  XIcon
 } from '@phosphor-icons/react';
 import PageTitle from '@/components/ui/page-title';
 import { solicitacoesClient } from '@/api/solicitacoes/client';
@@ -28,6 +29,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { useDebounce } from '@/hooks/use-debounce';
+import { Pagination } from '@/components/ui/pagination';
 
 export default function SolicitacoesPage() {
   const [solicitacoes, setSolicitacoes] = useState<SolicitacaoResponse[]>([]);
@@ -41,35 +44,84 @@ export default function SolicitacoesPage() {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [solicitacaoToDelete, setSolicitacaoToDelete] = useState<SolicitacaoResponse | null>(null);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
   const { toast } = useToast();
 
   const [filters, setFilters] = useState({
     identificacao: '',
     responsavel: '',
     tema: '',
-    area: '',
     status: '',
     dateFrom: '',
     dateTo: '',
   });
+  const [activeFilters, setActiveFilters] = useState(filters);
+
+  // Aplicar debounce na busca
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   useEffect(() => {
     loadSolicitacoes();
     loadResponsaveis();
     loadTemas();
     loadAreas();
-  }, []);
+  }, [currentPage, activeFilters, debouncedSearchQuery]);
 
   const loadSolicitacoes = async () => {
     try {
       setLoading(true);
-      const params: SolicitacaoFilterParams = {
-        filtro: searchQuery || undefined,
-        page: 0,
-        size: 100,
-      };
-      const response = await solicitacoesClient.buscarPorFiltro(params);
-      setSolicitacoes(response.content);
+
+      // Se há filtros específicos, usar métodos específicos
+      if (activeFilters.identificacao && !activeFilters.responsavel && !activeFilters.tema && !activeFilters.status && !debouncedSearchQuery) {
+        const result = await solicitacoesClient.buscarPorCdIdentificacao(activeFilters.identificacao);
+        setSolicitacoes([result]);
+        setTotalPages(1);
+        setTotalElements(1);
+      } else if (activeFilters.responsavel && !activeFilters.identificacao && !activeFilters.tema && !activeFilters.status && !debouncedSearchQuery) {
+        const results = await solicitacoesClient.buscarPorResponsavel(parseInt(activeFilters.responsavel));
+        setSolicitacoes(results);
+        setTotalPages(1);
+        setTotalElements(results.length);
+      } else if (activeFilters.tema && !activeFilters.identificacao && !activeFilters.responsavel && !activeFilters.status && !debouncedSearchQuery) {
+        const results = await solicitacoesClient.buscarPorTema(parseInt(activeFilters.tema));
+        setSolicitacoes(results);
+        setTotalPages(1);
+        setTotalElements(results.length);
+      } else if (activeFilters.status && !activeFilters.identificacao && !activeFilters.responsavel && !activeFilters.tema && !debouncedSearchQuery) {
+        const results = await solicitacoesClient.buscarPorStatus(activeFilters.status);
+        setSolicitacoes(results);
+        setTotalPages(1);
+        setTotalElements(results.length);
+      } else if (activeFilters.responsavel && activeFilters.status && !activeFilters.identificacao && !activeFilters.tema && !debouncedSearchQuery) {
+        const results = await solicitacoesClient.buscarPorResponsavelEStatus(parseInt(activeFilters.responsavel), activeFilters.status);
+        setSolicitacoes(results);
+        setTotalPages(1);
+        setTotalElements(results.length);
+      } else if (activeFilters.dateFrom && activeFilters.dateTo && !activeFilters.identificacao && !activeFilters.responsavel && !activeFilters.tema && !activeFilters.status && !debouncedSearchQuery) {
+        const results = await solicitacoesClient.buscarPorPeriodo(
+          activeFilters.dateFrom + 'T00:00:00',
+          activeFilters.dateTo + 'T23:59:59'
+        );
+        setSolicitacoes(results);
+        setTotalPages(1);
+        setTotalElements(results.length);
+      } else {
+        const filterParts = [];
+        if (debouncedSearchQuery) filterParts.push(debouncedSearchQuery);
+        if (activeFilters.identificacao) filterParts.push(activeFilters.identificacao);
+
+        const params: SolicitacaoFilterParams = {
+          filtro: filterParts.join(' ') || undefined,
+          page: currentPage,
+          size: 50,
+        };
+        const response = await solicitacoesClient.buscarPorFiltro(params);
+        setSolicitacoes(response.content);
+        setTotalPages(response.totalPages);
+        setTotalElements(response.totalElements);
+      }
     } catch (error) {
       toast({
         title: "Erro",
@@ -102,50 +154,6 @@ export default function SolicitacoesPage() {
       const response = await areasClient.buscarPorFiltro({ size: 100 });
       setAreas(response.content);
     } catch (error) {
-    }
-  };
-
-  const handleSearch = async () => {
-    try {
-      setLoading(true);
-      let results: SolicitacaoResponse[];
-
-      if (filters.identificacao) {
-        const result = await solicitacoesClient.buscarPorCdIdentificacao(filters.identificacao);
-        results = [result];
-      } else if (filters.responsavel) {
-        results = await solicitacoesClient.buscarPorResponsavel(parseInt(filters.responsavel));
-      } else if (filters.tema) {
-        results = await solicitacoesClient.buscarPorTema(parseInt(filters.tema));
-      } else if (filters.status) {
-        if (filters.responsavel) {
-          results = await solicitacoesClient.buscarPorResponsavelEStatus(parseInt(filters.responsavel), filters.status);
-        } else {
-          results = await solicitacoesClient.buscarPorStatus(filters.status);
-        }
-      } else if (filters.dateFrom && filters.dateTo) {
-        results = await solicitacoesClient.buscarPorPeriodo(
-          filters.dateFrom + 'T00:00:00',
-          filters.dateTo + 'T23:59:59'
-        );
-      } else {
-        const params: SolicitacaoFilterParams = {
-          filtro: searchQuery || undefined,
-        };
-        const response = await solicitacoesClient.buscarPorFiltro(params);
-        results = response.content;
-      }
-
-      setSolicitacoes(results);
-      setShowFilterModal(false);
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Erro ao buscar solicitações",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -187,6 +195,29 @@ export default function SolicitacoesPage() {
     loadSolicitacoes();
   };
 
+  const applyFilters = () => {
+    setActiveFilters(filters);
+    setCurrentPage(0);
+    setShowFilterModal(false);
+  };
+
+  const clearFilters = () => {
+    const clearedFilters = {
+      identificacao: '',
+      responsavel: '',
+      tema: '',
+      status: '',
+      dateFrom: '',
+      dateTo: '',
+    };
+    setFilters(clearedFilters);
+    setActiveFilters(clearedFilters);
+    setCurrentPage(0);
+    setShowFilterModal(false);
+  };
+
+  const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
+
   const getStatusBadgeVariant = (status: string) => {
     switch (status.toUpperCase()) {
       case 'PENDENTE':
@@ -216,12 +247,6 @@ export default function SolicitacoesPage() {
         return status;
     }
   };
-
-  const filteredSolicitacoes = solicitacoes.filter(solicitacao =>
-    solicitacao.dsAssunto.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    solicitacao.cdIdentificacao.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    solicitacao.txConteudo.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
@@ -255,14 +280,16 @@ export default function SolicitacoesPage() {
             <FunnelSimpleIcon className="h-4 w-4 mr-2"/>
             Filtrar
           </Button>
-          <Button
-            variant="outline"
-            className="h-10 px-4"
-            onClick={handleSearch}
-          >
-            <MagnifyingGlassIcon className="h-4 w-4 mr-2"/>
-            Buscar
-          </Button>
+          {hasActiveFilters && (
+            <Button
+              variant="outline"
+              className="h-10 px-4"
+              onClick={clearFilters}
+            >
+              <XIcon className="h-4 w-4 mr-2"/>
+              Limpar Filtros
+            </Button>
+          )}
         </div>
       </div>
 
@@ -287,17 +314,17 @@ export default function SolicitacoesPage() {
                   Carregando solicitações...
                 </TableCell>
               </TableRow>
-            ) : filteredSolicitacoes.length === 0 ? (
+            ) : solicitacoes.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8">
                   <div className="flex flex-col items-center space-y-2">
-                    <FileTextIcon className="h-8 w-8 text-gray-400"/>
+                    <ClipboardTextIcon className="h-8 w-8 text-gray-400"/>
                     <p className="text-sm text-gray-500">Nenhuma solicitação encontrada</p>
                   </div>
                 </TableCell>
               </TableRow>
             ) : (
-              filteredSolicitacoes.map((solicitacao) => (
+              solicitacoes.map((solicitacao) => (
                 <TableRow key={solicitacao.id}>
                   <TableCell className="font-medium">{solicitacao.cdIdentificacao}</TableCell>
                   <TableCell className="max-w-xs truncate">{solicitacao.dsAssunto}</TableCell>
@@ -336,6 +363,15 @@ export default function SolicitacoesPage() {
         </Table>
       </div>
 
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalElements={totalElements}
+        pageSize={50}
+        onPageChange={setCurrentPage}
+        loading={loading}
+      />
+
       {/* Filter Modal */}
       {showFilterModal && (
         <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
@@ -373,7 +409,7 @@ export default function SolicitacoesPage() {
                   </Select>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="responsavel">Responsável</Label>
                   <Select
@@ -412,25 +448,6 @@ export default function SolicitacoesPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <Label htmlFor="area">Área</Label>
-                  <Select
-                    value={filters.area}
-                    onValueChange={(value) => setFilters({...filters, area: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a área" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">Todas</SelectItem>
-                      {areas.map((area) => (
-                        <SelectItem key={area.idArea} value={area.idArea.toString()}>
-                          {area.nmArea}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -454,24 +471,10 @@ export default function SolicitacoesPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setFilters({
-                    identificacao: '',
-                    responsavel: '',
-                    tema: '',
-                    area: '',
-                    status: '',
-                    dateFrom: '',
-                    dateTo: '',
-                  });
-                  setShowFilterModal(false);
-                }}
-              >
+              <Button variant="outline" onClick={clearFilters}>
                 Limpar Filtros
               </Button>
-              <Button onClick={handleSearch}>
+              <Button onClick={applyFilters}>
                 Aplicar Filtros
               </Button>
             </DialogFooter>
@@ -479,7 +482,6 @@ export default function SolicitacoesPage() {
         </Dialog>
       )}
 
-      {/* Solicitacao Modal */}
       <SolicitacaoModal
         open={showSolicitacaoModal}
         onOpenChange={setShowSolicitacaoModal}
@@ -490,7 +492,6 @@ export default function SolicitacoesPage() {
         onSave={handleSolicitacaoSaved}
       />
 
-      {/* Delete Confirmation Dialog */}
       <ConfirmationDialog
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}

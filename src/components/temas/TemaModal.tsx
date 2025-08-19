@@ -77,8 +77,16 @@ export function TemaModal({isOpen, onClose, onSave, tema}: TemaModalProps) {
     );
   };
 
+  // Função para verificar se todos os campos obrigatórios estão preenchidos
+  const isFormValid = useCallback(() => {
+    return nmTema.trim() !== '' &&
+           dsTema.trim() !== '' &&
+           nrDiasPrazo > 0 &&
+           selectedAreaIds.length > 0;
+  }, [nmTema, dsTema, nrDiasPrazo, selectedAreaIds]);
+
   const handleSave = () => {
-    if (!nmTema || !dsTema) return;
+    if (!isFormValid()) return;
 
     const currentDate = new Date().toISOString().split('T')[0];
     const currentUser = '12345678901';
@@ -99,8 +107,6 @@ export function TemaModal({isOpen, onClose, onSave, tema}: TemaModalProps) {
 
     onSave(novoTema);
   };
-
-  const isFormValid = nmTema && dsTema;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -161,7 +167,7 @@ export function TemaModal({isOpen, onClose, onSave, tema}: TemaModalProps) {
           </div>
 
           <div className="space-y-4">
-            <Label>Áreas Relacionadas *</Label>
+            <Label>Áreas Relacionadas * (selecione pelo menos uma)</Label>
             {loadingAreas ? (
               <div className="flex items-center justify-center p-8">
                 <div className="text-sm text-gray-500">Carregando áreas...</div>
@@ -200,6 +206,11 @@ export function TemaModal({isOpen, onClose, onSave, tema}: TemaModalProps) {
                 )}
               </div>
             )}
+            {selectedAreaIds.length === 0 && (
+              <p className="text-sm text-gray-500">
+                Nenhuma área selecionada
+              </p>
+            )}
           </div>
         </div>
 
@@ -207,7 +218,11 @@ export function TemaModal({isOpen, onClose, onSave, tema}: TemaModalProps) {
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-          <Button onClick={handleSave} disabled={!isFormValid || loadingAreas}>
+          <Button
+            onClick={handleSave}
+            disabled={!isFormValid() || loadingAreas}
+            className="disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             {tema ? 'Salvar Alterações' : 'Criar Tema'}
           </Button>
         </DialogFooter>

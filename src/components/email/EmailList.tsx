@@ -8,6 +8,8 @@ import {cn} from '@/utils/utils';
 import {useToast} from '@/hooks/use-toast';
 import { emailClient } from '@/api/email/client';
 import { EmailResponse } from '@/api/email/types';
+import { useDebounce } from '@/hooks/use-debounce';
+import { Pagination } from '@/components/ui/pagination';
 
 interface Email {
   id: string;
@@ -145,20 +147,28 @@ function EmailList({
   const [syncLoading, setSyncLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [emails, setEmails] = useState<Email[]>([]);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
   const {toast} = useToast();
+
+  // Aplicar debounce na busca
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   // Função para carregar emails da API
   const loadEmails = useCallback(async () => {
     try {
       setLoading(true);
       const response = await emailClient.buscarPorFiltro({
-        filtro: searchQuery || undefined,
-        page: 0,
+        filtro: debouncedSearchQuery || undefined,
+        page: currentPage,
         size: 50
       });
 
       const convertedEmails = response.content.map(convertEmailResponse);
       setEmails(convertedEmails);
+      setTotalPages(response.totalPages);
+      setTotalElements(response.totalElements);
     } catch (error) {
       toast({
         title: "Erro",
@@ -168,20 +178,15 @@ function EmailList({
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, toast]);
+  }, [debouncedSearchQuery, currentPage, toast]);
 
-  // Carregar emails ao montar o componente ou quando searchQuery mudar
+  // Carregar emails ao montar o componente ou quando debouncedSearchQuery ou currentPage mudarem
   useEffect(() => {
     loadEmails();
   }, [loadEmails]);
 
   const filteredEmails = useMemo(() => {
     return emails.filter(email => {
-      const matchesSearch = !searchQuery ||
-        email.from.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        email.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        email.preview.toLowerCase().includes(searchQuery.toLowerCase());
-
       const matchesReadStatus = !emailFilters.isRead ||
         emailFilters.isRead === 'all' ||
         (emailFilters.isRead === 'read' && email.isRead) ||
@@ -201,10 +206,10 @@ function EmailList({
       const matchesDateTo = !emailFilters.dateTo ||
         emailDate <= new Date(emailFilters.dateTo);
 
-      return matchesSearch && matchesReadStatus && matchesAttachment &&
+      return matchesReadStatus && matchesAttachment &&
              matchesSender && matchesDateFrom && matchesDateTo;
     });
-  }, [emails, searchQuery, emailFilters]);
+  }, [emails, emailFilters]);
 
   const handleRefresh = useCallback(async () => {
     setSyncLoading(true);
@@ -227,8 +232,6 @@ function EmailList({
 
   const handleDeleteSelected = useCallback(async () => {
     try {
-      // Aqui você implementaria a exclusão dos emails selecionados
-      // Por enquanto, vamos apenas remover da lista local e mostrar uma mensagem
       const deletePromises = selectedEmails.map(async (emailId) => {
         await emailClient.deletar(parseInt(emailId));
       });
@@ -318,8 +321,8 @@ function EmailList({
                 Nenhum email encontrado
               </h3>
               <p className="text-gray-500">
-                {searchQuery
-                  ? `Não há emails correspondentes à pesquisa "${searchQuery}"`
+                {debouncedSearchQuery
+                  ? `Não há emails correspondentes à pesquisa "${debouncedSearchQuery}"`
                   : "Sua caixa de entrada está vazia"
                 }
               </p>
@@ -344,6 +347,15 @@ function EmailList({
           ))
         )}
       </div>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalElements={totalElements}
+        pageSize={50}
+        onPageChange={setCurrentPage}
+        loading={loading}
+      />
     </div>
   );
 }

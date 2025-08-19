@@ -22,6 +22,8 @@ import AreaModal from '../../components/areas/AreaModal';
 import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
 import PageTitle from '@/components/ui/page-title';
 import { useToast } from '@/hooks/use-toast';
+import { useDebounce } from '@/hooks/use-debounce';
+import { Pagination } from '@/components/ui/pagination';
 
 export default function AreasPage() {
   const [areas, setAreas] = useState<AreaResponse[]>([]);
@@ -47,16 +49,19 @@ export default function AreasPage() {
   const [areaToDelete, setAreaToDelete] = useState<number | null>(null);
   const { toast } = useToast();
 
+  // Aplicar debounce na busca
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+
   useEffect(() => {
     loadAreas();
-  }, [currentPage, activeFilters, searchQuery]);
+  }, [currentPage, activeFilters, debouncedSearchQuery]);
 
   const loadAreas = async () => {
     try {
       setLoading(true);
 
       const filterParts = [];
-      if (searchQuery) filterParts.push(searchQuery);
+      if (debouncedSearchQuery) filterParts.push(debouncedSearchQuery);
       if (activeFilters.codigo) filterParts.push(activeFilters.codigo);
       if (activeFilters.nome) filterParts.push(activeFilters.nome);
       if (activeFilters.descricao) filterParts.push(activeFilters.descricao);
@@ -66,7 +71,7 @@ export default function AreasPage() {
       const response = await areasClient.buscarPorFiltro({
         filtro: filtro || undefined,
         page: currentPage,
-        size: 10,
+        size: 50,
         sort: sortField ? `${sortField},${sortDirection}` : undefined
       });
 
@@ -94,84 +99,24 @@ export default function AreasPage() {
     setCurrentPage(0);
   };
 
-  const sortedAreas = [...areas].sort((a, b) => {
-    if (!sortField) return 0;
-    
-    const aValue = a[sortField];
-    const bValue = b[sortField];
-    
-    if (aValue === bValue) return 0;
-    
-    const direction = sortDirection === 'asc' ? 1 : -1;
-    
-    if (typeof aValue === 'string' && typeof bValue === 'string') {
-      return aValue.localeCompare(bValue) * direction;
-    }
-    
-    if (aValue < bValue) return -1 * direction;
-    return 1 * direction;
-  });
-
-  const handleClearFilters = () => {
-    const emptyFilters = {
-      codigo: '',
-      nome: '',
-      descricao: '',
-      ativo: ''
-    };
-    setFilters(emptyFilters);
-    setActiveFilters(emptyFilters);
-    setCurrentPage(0);
-  };
-
-  const handleApplyFilters = () => {
-    setActiveFilters(filters);
-    setShowFilterModal(false);
-    setCurrentPage(0);
-  };
-
-  const filteredAreas = sortedAreas.filter(area => {
-    const matchesSearch = area.nmArea.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      area.dsArea.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      area.cdArea.toString().includes(searchQuery);
-
-    const matchesCodigo = !activeFilters.codigo ||
-      area.cdArea.toString().includes(activeFilters.codigo);
-
-    const matchesNome = !activeFilters.nome ||
-      area.nmArea.toLowerCase().includes(activeFilters.nome.toLowerCase());
-
-    const matchesDescricao = !activeFilters.descricao ||
-      area.dsArea.toLowerCase().includes(activeFilters.descricao.toLowerCase());
-
-    const matchesAtivo = !activeFilters.ativo ||
-      area.flAtivo === activeFilters.ativo;
-
-    return matchesSearch && matchesCodigo && matchesNome && matchesDescricao &&
-           matchesAtivo;
-  });
-
-  const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
-
-  const handleCreateArea = () => {
-    setSelectedArea(null);
-    setShowAreaModal(true);
-  };
-
-  const handleEditArea = (area: AreaResponse) => {
+  const handleEdit = (area: AreaResponse) => {
     setSelectedArea(area);
     setShowAreaModal(true);
   };
 
-  const handleDeleteArea = (id: number) => {
-    setAreaToDelete(id);
+  const handleDelete = async (areaId: number) => {
+    setAreaToDelete(areaId);
     setShowDeleteDialog(true);
   };
 
-  const confirmDeleteArea = async () => {
+  const confirmDelete = async () => {
     if (areaToDelete) {
       try {
         await areasClient.deletar(areaToDelete);
+        toast({
+          title: "Sucesso",
+          description: "Área excluída com sucesso",
+        });
         loadAreas();
       } catch (error) {
         toast({
@@ -180,33 +125,38 @@ export default function AreasPage() {
           variant: "destructive",
         });
       } finally {
+        setShowDeleteDialog(false);
         setAreaToDelete(null);
       }
     }
   };
 
-  const handleSaveArea = async (areaData: any) => {
-    try {
-      if (selectedArea) {
-        await areasClient.atualizar(selectedArea.idArea, areaData);
-      } else {
-        await areasClient.criar(areaData);
-      }
-      setShowAreaModal(false);
-      setSelectedArea(null);
-      loadAreas();
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: selectedArea ? "Erro ao atualizar área" : "Erro ao criar área",
-        variant: "destructive",
-      });
-    }
+  const handleAreaSaved = () => {
+    setShowAreaModal(false);
+    setSelectedArea(null);
+    loadAreas();
   };
 
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage);
+  const applyFilters = () => {
+    setActiveFilters(filters);
+    setCurrentPage(0);
+    setShowFilterModal(false);
   };
+
+  const clearFilters = () => {
+    const clearedFilters = {
+      codigo: '',
+      nome: '',
+      descricao: '',
+      ativo: ''
+    };
+    setFilters(clearedFilters);
+    setActiveFilters(clearedFilters);
+    setCurrentPage(0);
+    setShowFilterModal(false);
+  };
+
+  const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
@@ -214,10 +164,10 @@ export default function AreasPage() {
       <div className="bg-white border-b border-gray-200 p-6">
         <div className="flex items-start justify-between mb-4">
           <PageTitle />
-          <Button
-            onClick={handleCreateArea} 
-            className="bg-blue-600 hover:bg-blue-700"
-          >
+          <Button onClick={() => {
+            setSelectedArea(null);
+            setShowAreaModal(true);
+          }} className="bg-blue-600 hover:bg-blue-700">
             <PlusIcon className="h-4 w-4 mr-2" />
             Nova Área
           </Button>
@@ -227,10 +177,10 @@ export default function AreasPage() {
           <div className="flex-1 relative">
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="Pesquisar por nome, código ou descrição..."
+              placeholder="Pesquisar áreas..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-10 bg-gray-50 border-gray-200 focus:bg-white"
+              className="pl-10 bg-gray-50 border-gray-200 focus:bg-white"
             />
           </div>
           <Button
@@ -245,7 +195,7 @@ export default function AreasPage() {
             <Button
               variant="outline"
               className="h-10 px-4"
-              onClick={handleClearFilters}
+              onClick={clearFilters}
             >
               <XIcon className="h-4 w-4 mr-2" />
               Limpar Filtros
@@ -255,11 +205,11 @@ export default function AreasPage() {
       </div>
 
       {/* Table */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto bg-white">
         <Table>
-          <TableHeader className="bg-gray-50">
+          <TableHeader>
             <TableRow>
-              <TableHead className="w-24 cursor-pointer" onClick={() => handleSort('cdArea')}>
+              <TableHead className="cursor-pointer" onClick={() => handleSort('cdArea')}>
                 <div className="flex items-center">
                   Código
                   <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
@@ -271,42 +221,40 @@ export default function AreasPage() {
                   <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
-              <TableHead className="cursor-pointer" onClick={() => handleSort('dsArea')}>
-                <div className="flex items-center">
-                  Descrição
-                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
-                </div>
-              </TableHead>
+              <TableHead>Descrição</TableHead>
               <TableHead className="cursor-pointer" onClick={() => handleSort('flAtivo')}>
                 <div className="flex items-center">
                   Status
                   <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </TableHead>
-              <TableHead className="w-24 text-right">Ações</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={5} className="text-center py-8">
                   Carregando áreas...
                 </TableCell>
               </TableRow>
             ) : areas.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                  Nenhuma área encontrada
+                <TableCell colSpan={5} className="text-center py-8">
+                  <div className="flex flex-col items-center space-y-2">
+                    <BuildingIcon className="h-8 w-8 text-gray-400" />
+                    <p className="text-sm text-gray-500">Nenhuma área encontrada</p>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (
-              filteredAreas.map((area) => (
-                <TableRow key={area.idArea} className="hover:bg-gray-50">
+              areas.map((area) => (
+                <TableRow key={area.idArea}>
                   <TableCell className="font-medium">{area.cdArea}</TableCell>
                   <TableCell>{area.nmArea}</TableCell>
                   <TableCell>{area.dsArea}</TableCell>
                   <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs ${
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                       area.flAtivo === 'S' 
                         ? 'bg-green-100 text-green-800' 
                         : 'bg-red-100 text-red-800'
@@ -315,19 +263,19 @@ export default function AreasPage() {
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end space-x-2">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => handleEditArea(area)}
+                    <div className="flex items-center justify-end space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(area)}
                       >
                         <PencilSimpleIcon className="h-4 w-4" />
                       </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => handleDeleteArea(area.idArea)}
-                        className="text-red-500 hover:text-red-700"
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDelete(area.idArea)}
+                        className="text-red-600 hover:text-red-700"
                       >
                         <TrashIcon className="h-4 w-4" />
                       </Button>
@@ -340,64 +288,29 @@ export default function AreasPage() {
         </Table>
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="bg-white border-t border-gray-200 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-700">
-              Mostrando {currentPage * 10 + 1} até {Math.min((currentPage + 1) * 10, totalElements)} de {totalElements} resultados
-            </div>
-            <div className="flex space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 0}
-              >
-                Anterior
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage >= totalPages - 1}
-              >
-                Próxima
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Area Modal */}
-      {showAreaModal && (
-        <AreaModal
-          area={selectedArea}
-          onClose={() => {
-            setShowAreaModal(false);
-            setSelectedArea(null);
-          }}
-          onSave={handleSaveArea}
-        />
-      )}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalElements={totalElements}
+        pageSize={50}
+        onPageChange={setCurrentPage}
+        loading={loading}
+      />
 
       {/* Filter Modal */}
       {showFilterModal && (
         <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
-          <DialogContent className="max-w-2xl p-6">
+          <DialogContent>
             <DialogHeader>
-              <DialogTitle className="text-lg font-semibold">
-                Filtrar Áreas
-              </DialogTitle>
+              <DialogTitle>Filtrar Áreas</DialogTitle>
             </DialogHeader>
-
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid gap-4">
               <div>
                 <Label htmlFor="codigo">Código</Label>
                 <Input
                   id="codigo"
                   value={filters.codigo}
-                  onChange={(e) => setFilters({ ...filters, codigo: e.target.value })}
+                  onChange={(e) => setFilters({...filters, codigo: e.target.value})}
                   placeholder="Filtrar por código"
                 />
               </div>
@@ -406,7 +319,7 @@ export default function AreasPage() {
                 <Input
                   id="nome"
                   value={filters.nome}
-                  onChange={(e) => setFilters({ ...filters, nome: e.target.value })}
+                  onChange={(e) => setFilters({...filters, nome: e.target.value})}
                   placeholder="Filtrar por nome"
                 />
               </div>
@@ -415,36 +328,16 @@ export default function AreasPage() {
                 <Input
                   id="descricao"
                   value={filters.descricao}
-                  onChange={(e) => setFilters({ ...filters, descricao: e.target.value })}
+                  onChange={(e) => setFilters({...filters, descricao: e.target.value})}
                   placeholder="Filtrar por descrição"
                 />
               </div>
-              <div>
-                <Label htmlFor="ativo">Status</Label>
-                <select
-                  id="ativo"
-                  value={filters.ativo}
-                  onChange={(e) => setFilters({ ...filters, ativo: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Todos</option>
-                  <option value="S">Ativo</option>
-                  <option value="N">Inativo</option>
-                </select>
-              </div>
             </div>
-
-            <div className="flex justify-end space-x-2 mt-6">
-              <Button
-                variant="outline"
-                onClick={handleClearFilters}
-              >
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button variant="outline" onClick={clearFilters}>
                 Limpar
               </Button>
-              <Button
-                onClick={handleApplyFilters}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
+              <Button onClick={applyFilters}>
                 Aplicar Filtros
               </Button>
             </div>
@@ -452,16 +345,23 @@ export default function AreasPage() {
         </Dialog>
       )}
 
-      {/* Confirmation Dialog */}
+      {showAreaModal && (
+        <AreaModal
+          area={selectedArea}
+          onClose={() => {
+            setShowAreaModal(false);
+            setSelectedArea(null);
+          }}
+          onSave={handleAreaSaved}
+        />
+      )}
+
       <ConfirmationDialog
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
+        onConfirm={confirmDelete}
         title="Excluir Área"
         description="Tem certeza que deseja excluir esta área? Esta ação não pode ser desfeita."
-        confirmText="Excluir"
-        cancelText="Cancelar"
-        variant="destructive"
-        onConfirm={confirmDeleteArea}
       />
     </div>
   );

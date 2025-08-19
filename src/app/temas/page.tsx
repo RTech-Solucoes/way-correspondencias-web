@@ -1,27 +1,28 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
+import {useState, useEffect} from 'react';
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
+import {Button} from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
-  FileTextIcon,
   FunnelSimpleIcon,
   MagnifyingGlassIcon,
   PencilSimpleIcon,
   PlusIcon,
-  TrashIcon
+  TrashIcon,
+  XIcon,
+  TagIcon,
 } from '@phosphor-icons/react';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { TemaModal } from '@/components/temas/TemaModal';
-import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import {Dialog, DialogContent, DialogHeader, DialogTitle} from '@/components/ui/dialog';
+import {Label} from '@/components/ui/label';
+import {TemaModal} from '@/components/temas/TemaModal';
+import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
 import PageTitle from '@/components/ui/page-title';
-import { temasClient } from '@/api/temas/client';
-import { TemaResponse, TemaFilterParams, TemaRequest } from '@/api/temas/types';
+import {TemaResponse} from '@/api/temas/types';
+import {temasClient} from '@/api/temas/client';
 import { useToast } from '@/hooks/use-toast';
-import { Tema } from '@/types/temas/types';
+import { useDebounce } from '@/hooks/use-debounce';
+import { Pagination } from '@/components/ui/pagination';
 
 export default function TemasPage() {
   const [temas, setTemas] = useState<TemaResponse[]>([]);
@@ -32,65 +33,54 @@ export default function TemasPage() {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [temaToDelete, setTemaToDelete] = useState<TemaResponse | null>(null);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
   const { toast } = useToast();
 
   const [filters, setFilters] = useState({
-    nmTema: '',
-    ativo: '',
+    nome: '',
+    descricao: '',
   });
+  const [activeFilters, setActiveFilters] = useState(filters);
+
+  // Aplicar debounce na busca
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   useEffect(() => {
-    const loadTemas = async () => {
-      try {
-        setLoading(true);
-        const params: TemaFilterParams = {
-          filtro: searchQuery || undefined,
-          page: 0,
-          size: 100,
-        };
-        const response = await temasClient.buscarPorFiltro(params);
-        setTemas(response.content);
-      } catch {
-        toast({
-          title: "Erro",
-          description: "Erro ao carregar temas",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadTemas();
-  }, [searchQuery, toast]);
+  }, [currentPage, activeFilters, debouncedSearchQuery]);
 
-  const handleSearch = async () => {
+  const loadTemas = async () => {
     try {
       setLoading(true);
-      let results: TemaResponse[];
 
-      if (filters.nmTema) {
-        const result = await temasClient.buscarPorNmTema(filters.nmTema);
-        results = [result];
+      // Se há filtro específico de nome e não há outros filtros, usar busca por nome
+      if (activeFilters.nome && !activeFilters.descricao && !debouncedSearchQuery) {
+        const result = await temasClient.buscarPorNmTema(activeFilters.nome);
+        setTemas([result]);
+        setTotalPages(1);
+        setTotalElements(1);
       } else {
-        const params: TemaFilterParams = {
-          filtro: searchQuery || undefined,
-        };
-        const response = await temasClient.buscarPorFiltro(params);
-        results = response.content;
-      }
+        const filterParts = [];
+        if (debouncedSearchQuery) filterParts.push(debouncedSearchQuery);
+        if (activeFilters.nome) filterParts.push(activeFilters.nome);
+        if (activeFilters.descricao) filterParts.push(activeFilters.descricao);
 
-      if (filters.ativo) {
-        const isAtivo = filters.ativo === 'true';
-        results = results.filter(tema => tema.flAtivo === isAtivo);
-      }
+        const response = await temasClient.buscarPorFiltro({
+          filtro: filterParts.join(' ') || undefined,
+          page: currentPage,
+          size: 50,
+        });
 
-      setTemas(results);
-      setShowFilterModal(false);
-    } catch {
+        setTemas(response.content);
+        setTotalPages(response.totalPages);
+        setTotalElements(response.totalElements);
+      }
+    } catch (error) {
       toast({
         title: "Erro",
-        description: "Erro ao buscar temas",
+        description: "Erro ao carregar temas",
         variant: "destructive",
       });
     } finally {
@@ -116,14 +106,8 @@ export default function TemasPage() {
           title: "Sucesso",
           description: "Tema excluído com sucesso",
         });
-        const params: TemaFilterParams = {
-          filtro: searchQuery || undefined,
-          page: 0,
-          size: 100,
-        };
-        const response = await temasClient.buscarPorFiltro(params);
-        setTemas(response.content);
-      } catch {
+        loadTemas();
+      } catch (error) {
         toast({
           title: "Erro",
           description: "Erro ao excluir tema",
@@ -136,52 +120,30 @@ export default function TemasPage() {
     }
   };
 
-  const handleTemaSave = async (tema: Tema) => {
-    try {
-      const temaRequest: TemaRequest = {
-        nmTema: tema.nmTema,
-        dsTema: tema.dsTema,
-        flAtivo: true
-      };
-
-      if (selectedTema) {
-        await temasClient.atualizar(selectedTema.id, temaRequest);
-        toast({
-          title: "Sucesso",
-          description: "Tema atualizado com sucesso",
-        });
-      } else {
-        await temasClient.criar(temaRequest);
-        toast({
-          title: "Sucesso",
-          description: "Tema criado com sucesso",
-        });
-      }
-
-      setShowTemaModal(false);
-      setSelectedTema(null);
-
-      const params: TemaFilterParams = {
-        filtro: searchQuery || undefined,
-        page: 0,
-        size: 100,
-      };
-      const response = await temasClient.buscarPorFiltro(params);
-      setTemas(response.content);
-
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: selectedTema ? "Erro ao atualizar tema" : "Erro ao criar tema",
-        variant: "destructive",
-      });
-    }
+  const handleTemaSaved = () => {
+    setShowTemaModal(false);
+    setSelectedTema(null);
+    loadTemas();
   };
 
-  const filteredTemas = temas.filter(tema =>
-    tema.nmTema.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    tema.dsTema.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const applyFilters = () => {
+    setActiveFilters(filters);
+    setCurrentPage(0);
+    setShowFilterModal(false);
+  };
+
+  const clearFilters = () => {
+    const clearedFilters = {
+      nome: '',
+      descricao: '',
+    };
+    setFilters(clearedFilters);
+    setActiveFilters(clearedFilters);
+    setCurrentPage(0);
+    setShowFilterModal(false);
+  };
+
+  const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
@@ -215,14 +177,16 @@ export default function TemasPage() {
             <FunnelSimpleIcon className="h-4 w-4 mr-2"/>
             Filtrar
           </Button>
-          <Button
-            variant="outline"
-            className="h-10 px-4"
-            onClick={handleSearch}
-          >
-            <MagnifyingGlassIcon className="h-4 w-4 mr-2"/>
-            Buscar
-          </Button>
+          {hasActiveFilters && (
+            <Button
+              variant="outline"
+              className="h-10 px-4"
+              onClick={clearFilters}
+            >
+              <XIcon className="h-4 w-4 mr-2"/>
+              Limpar Filtros
+            </Button>
+          )}
         </div>
       </div>
 
@@ -230,47 +194,34 @@ export default function TemasPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nome do Tema</TableHead>
+              <TableHead>Nome</TableHead>
               <TableHead>Descrição</TableHead>
-              <TableHead>Status</TableHead>
               <TableHead>Criado em</TableHead>
-              <TableHead>Última Atualização</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
+                <TableCell colSpan={4} className="text-center py-8">
                   Carregando temas...
                 </TableCell>
               </TableRow>
-            ) : filteredTemas.length === 0 ? (
+            ) : temas.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
+                <TableCell colSpan={4} className="text-center py-8">
                   <div className="flex flex-col items-center space-y-2">
-                    <FileTextIcon className="h-8 w-8 text-gray-400"/>
+                    <TagIcon className="h-8 w-8 text-gray-400"/>
                     <p className="text-sm text-gray-500">Nenhum tema encontrado</p>
                   </div>
                 </TableCell>
               </TableRow>
             ) : (
-              filteredTemas.map((tema) => (
+              temas.map((tema) => (
                 <TableRow key={tema.id}>
                   <TableCell className="font-medium">{tema.nmTema}</TableCell>
-                  <TableCell className="max-w-xs truncate">{tema.dsTema}</TableCell>
-                  <TableCell>
-                    <Badge variant={tema.flAtivo ? 'default' : 'secondary'}>
-                      {tema.flAtivo ? 'Ativo' : 'Inativo'}
-                    </Badge>
-                  </TableCell>
+                  <TableCell>{tema.dsTema}</TableCell>
                   <TableCell>{new Date(tema.dtCriacao).toLocaleDateString('pt-BR')}</TableCell>
-                  <TableCell>
-                    {tema.dtUltimaAtualizacao
-                      ? new Date(tema.dtUltimaAtualizacao).toLocaleDateString('pt-BR')
-                      : 'N/A'
-                    }
-                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end space-x-2">
                       <Button
@@ -297,6 +248,15 @@ export default function TemasPage() {
         </Table>
       </div>
 
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalElements={totalElements}
+        pageSize={50}
+        onPageChange={setCurrentPage}
+        loading={loading}
+      />
+
       {/* Filter Modal */}
       {showFilterModal && (
         <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
@@ -306,55 +266,44 @@ export default function TemasPage() {
             </DialogHeader>
             <div className="grid gap-4">
               <div>
-                <Label htmlFor="nmTema">Nome do Tema</Label>
+                <Label htmlFor="nome">Nome</Label>
                 <Input
-                  id="nmTema"
-                  value={filters.nmTema}
-                  onChange={(e) => setFilters({...filters, nmTema: e.target.value})}
-                  placeholder="Filtrar por nome do tema"
+                  id="nome"
+                  value={filters.nome}
+                  onChange={(e) => setFilters({...filters, nome: e.target.value})}
+                  placeholder="Filtrar por nome"
                 />
               </div>
               <div>
-                <Label htmlFor="ativo">Status</Label>
-                <select
-                  id="ativo"
-                  value={filters.ativo}
-                  onChange={(e) => setFilters({...filters, ativo: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                >
-                  <option value="">Todos</option>
-                  <option value="true">Ativo</option>
-                  <option value="false">Inativo</option>
-                </select>
+                <Label htmlFor="descricao">Descrição</Label>
+                <Input
+                  id="descricao"
+                  value={filters.descricao}
+                  onChange={(e) => setFilters({...filters, descricao: e.target.value})}
+                  placeholder="Filtrar por descrição"
+                />
               </div>
             </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setFilters({
-                    nmTema: '',
-                    ativo: '',
-                  });
-                  setShowFilterModal(false);
-                }}
-              >
-                Limpar Filtros
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button variant="outline" onClick={clearFilters}>
+                Limpar
               </Button>
-              <Button onClick={handleSearch}>
+              <Button onClick={applyFilters}>
                 Aplicar Filtros
               </Button>
-            </DialogFooter>
+            </div>
           </DialogContent>
         </Dialog>
       )}
 
-      {/* Tema Modal */}
       <TemaModal
         isOpen={showTemaModal}
-        onClose={() => setShowTemaModal(false)}
+        onClose={() => {
+          setShowTemaModal(false);
+          setSelectedTema(null);
+        }}
+        onSave={handleTemaSaved}
         tema={selectedTema}
-        onSave={handleTemaSave}
       />
 
       <ConfirmationDialog
