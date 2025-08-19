@@ -46,7 +46,7 @@ const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
     const hasError = !!error;
 
     return (
-      <div className="space-y-2">
+      <div className="">
         {label && (
           <Label
             htmlFor={inputId}
@@ -58,7 +58,7 @@ const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
 
         <div className="relative">
           {leftIcon && (
-            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none text-muted-foreground">
               {leftIcon}
             </div>
           )}
@@ -80,7 +80,7 @@ const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
             <button
               type="button"
               onClick={togglePasswordVisibility}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 hover:text-foreground transition-colors text-gray-600"
               tabIndex={-1}
             >
               {showPassword ? (
@@ -89,12 +89,6 @@ const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
                 <EyeIcon size={16} />
               )}
             </button>
-          )}
-
-          {rightIcon && !isPassword && (
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
-              {rightIcon}
-            </div>
           )}
         </div>
 
