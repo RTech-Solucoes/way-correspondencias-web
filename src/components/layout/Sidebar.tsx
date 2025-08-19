@@ -165,7 +165,6 @@ export default function Sidebar() {
           </nav>
 
           <div className="flex-col justify-end space-y-2">
-            {/* User Profile Section */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button

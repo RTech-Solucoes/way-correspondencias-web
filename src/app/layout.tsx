@@ -1,6 +1,6 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import { Outfit as DefaultFont } from 'next/font/google';
+import { Lexend as DefaultFont } from 'next/font/google';
 import { ApiProvider } from '@/api/ApiProvider';
 import { ReactNode } from 'react'
 import IconProvider from "@/components/providers/IconProvider";
@@ -9,7 +9,9 @@ import ConditionalLayout from "@/components/layout/ConditionalLayout";
 import { Toaster } from "sonner";
 
 const defaultFont = DefaultFont({
-  subsets: ['latin']
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+  subsets: ['latin'],
+  variable: '--font-default'
 });
 
 export const metadata: Metadata = {
@@ -30,13 +32,17 @@ export default function RootLayout({
 
   return (
     <html lang="en">
-      <body className={defaultFont.className}>
+      <body className={`${defaultFont.className} ${defaultFont.variable}`}>
         <ApiProvider>
           <IconProvider>
             <AuthGuard>
               <ConditionalLayout>
                 {children}
-                <Toaster />
+                <Toaster
+                  closeButton
+                  richColors
+                  position="bottom-right"
+                />
               </ConditionalLayout>
             </AuthGuard>
           </IconProvider>

@@ -243,7 +243,6 @@ export default function TemasPage() {
         loading={loading}
       />
 
-      {/* Filter Modal */}
       {showFilterModal && (
         <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
           <DialogContent>

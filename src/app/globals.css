@@ -149,18 +149,6 @@ select {
   @apply mb-4;
 }
 
-.prose ul {
-  @apply mb-4 pl-6 list-disc;
-}
-
-.prose li {
-  @apply mb-1;
-}
-
-.prose strong {
-  @apply font-semibold text-gray-900;
-}
-
 .glass {
   @apply
   bg-gray-200/50
@@ -190,4 +178,13 @@ button, input[type="file"] {
     transform: none;
     opacity: 1;
   }
+}
+
+/* Sonner Toast Styling */
+[data-sonner-toaster] {
+  font-family: var(--font-default), sans-serif;
+}
+
+[data-sonner-toaster] [data-type="success"] {
+  @apply bg-green-50 border-green-200 text-green-800;
 }

@@ -285,7 +285,6 @@ export default function ResponsaveisPage() {
         loading={loading}
       />
 
-      {/* Filter Modal */}
       {showFilterModal && (
         <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
           <DialogContent>

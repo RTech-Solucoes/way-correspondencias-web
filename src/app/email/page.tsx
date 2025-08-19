@@ -124,7 +124,6 @@ export default function EmailPage() {
         )}
       </div>
 
-      {/* Email Filter Modal */}
       {showFilterModal && (
         <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
           <DialogContent>
@@ -212,7 +211,6 @@ export default function EmailPage() {
         </Dialog>
       )}
 
-      {/* Create Email Modal */}
       {showCreateModal && (
         <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
           <DialogContent className="max-w-2xl">

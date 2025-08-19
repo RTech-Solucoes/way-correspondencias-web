@@ -5,17 +5,16 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="98226f2c-f64e-43be-946e-e89028627d5c" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/app/areas/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/areas/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/dashboard/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/dashboard/page.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/app/email/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/email/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/globals.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/globals.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/layout.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/app/responsaveis/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/responsaveis/page.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/app/solicitacoes/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/solicitacoes/page.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/app/temas/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/temas/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/email/EmailDetail.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/email/EmailDetail.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/email/EmailList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/email/EmailList.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/responsaveis/ResponsavelModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/responsaveis/ResponsavelModal.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/solicitacoes/SolicitacaoModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/solicitacoes/SolicitacaoModal.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/ui/text-field.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ui/text-field.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/hooks/use-toast.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/layout/Sidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/layout/Sidebar.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -168,7 +167,7 @@
       <workItem from="1755603149675" duration="483000" />
       <workItem from="1755612297954" duration="1160000" />
       <workItem from="1755620430312" duration="20000" />
-      <workItem from="1755620478134" duration="1183000" />
+      <workItem from="1755620478134" duration="2040000" />
     </task>
     <task id="LOCAL-00001" summary="Alteração biblioteca de Ícones&#10;lucide-react -&gt; @phosphor-icons/react">
       <option name="closed" value="true" />

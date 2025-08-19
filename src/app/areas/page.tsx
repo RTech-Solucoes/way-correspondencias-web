@@ -147,7 +147,6 @@ export default function AreasPage() {
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
-      {/* Header */}
       <div className="bg-white border-b border-gray-200 p-6">
         <div className="flex items-start justify-between mb-4">
           <PageTitle />
@@ -191,7 +190,6 @@ export default function AreasPage() {
         </div>
       </div>
 
-      {/* Table */}
       <div className="flex-1 overflow-auto bg-white">
         <Table>
           <TableHeader>
@@ -284,7 +282,6 @@ export default function AreasPage() {
         loading={loading}
       />
 
-      {/* Filter Modal */}
       {showFilterModal && (
         <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
           <DialogContent>
