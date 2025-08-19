@@ -32,12 +32,6 @@ class SolicitacoesClient {
     });
   }
 
-  async buscarPorArea(idArea: number): Promise<SolicitacaoResponse[]> {
-    return this.client.request<SolicitacaoResponse[]>(`/area/${idArea}`, {
-      method: 'GET',
-    });
-  }
-
   async buscarPorStatus(flStatus: string): Promise<SolicitacaoResponse[]> {
     return this.client.request<SolicitacaoResponse[]>(`/status/${encodeURIComponent(flStatus)}`, {
       method: 'GET',
@@ -56,12 +50,6 @@ class SolicitacoesClient {
 
   async buscarPorResponsavelEStatus(idResponsavel: number, flStatus: string): Promise<SolicitacaoResponse[]> {
     return this.client.request<SolicitacaoResponse[]>(`/responsavel/${idResponsavel}/status/${encodeURIComponent(flStatus)}`, {
-      method: 'GET',
-    });
-  }
-
-  async buscarPorAreaEStatus(idArea: number, flStatus: string): Promise<SolicitacaoResponse[]> {
-    return this.client.request<SolicitacaoResponse[]>(`/area/${idArea}/status/${encodeURIComponent(flStatus)}`, {
       method: 'GET',
     });
   }

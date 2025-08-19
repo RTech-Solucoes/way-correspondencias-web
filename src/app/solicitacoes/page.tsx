@@ -117,12 +117,6 @@ export default function SolicitacoesPage() {
         results = await solicitacoesClient.buscarPorResponsavel(parseInt(filters.responsavel));
       } else if (filters.tema) {
         results = await solicitacoesClient.buscarPorTema(parseInt(filters.tema));
-      } else if (filters.area) {
-        if (filters.status) {
-          results = await solicitacoesClient.buscarPorAreaEStatus(parseInt(filters.area), filters.status);
-        } else {
-          results = await solicitacoesClient.buscarPorArea(parseInt(filters.area));
-        }
       } else if (filters.status) {
         if (filters.responsavel) {
           results = await solicitacoesClient.buscarPorResponsavelEStatus(parseInt(filters.responsavel), filters.status);

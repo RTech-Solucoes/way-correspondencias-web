@@ -27,19 +27,15 @@ import {
   DialogFooter
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ResponsavelModal from '../../components/responsaveis/ResponsavelModal';
 import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
 import PageTitle from '@/components/ui/page-title';
 import { responsaveisClient } from '@/api/responsaveis/client';
 import { ResponsavelResponse, ResponsavelFilterParams } from '@/api/responsaveis/types';
-import { areasClient } from '@/api/areas/client';
-import { AreaResponse } from '@/api/areas/types';
 import { useToast } from '@/hooks/use-toast';
 
 export default function ResponsaveisPage() {
   const [responsaveis, setResponsaveis] = useState<ResponsavelResponse[]>([]);
-  const [areas, setAreas] = useState<AreaResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedResponsavel, setSelectedResponsavel] = useState<ResponsavelResponse | null>(null);
@@ -52,12 +48,11 @@ export default function ResponsaveisPage() {
   const [filters, setFilters] = useState({
     usuario: '',
     email: '',
-    area: '',
   });
 
   useEffect(() => {
     const loadData = async () => {
-      await Promise.all([loadResponsaveis(), loadAreas()]);
+      await Promise.all([loadResponsaveis()]);
     };
     loadData();
   }, []);
@@ -83,27 +78,17 @@ export default function ResponsaveisPage() {
     }
   };
 
-  const loadAreas = async () => {
-    try {
-      const response = await areasClient.buscarPorFiltro({ size: 100 });
-      setAreas(response.content);
-    } catch (error) {
-    }
-  };
-
   const handleSearch = async () => {
     try {
       setLoading(true);
       let results: ResponsavelResponse[];
 
       if (filters.usuario) {
-        const result = await responsaveisClient.buscarPorNmUsuario(filters.usuario);
+        const result = await responsaveisClient.buscarPorNmUsuarioLogin(filters.usuario);
         results = [result];
       } else if (filters.email) {
         const result = await responsaveisClient.buscarPorDsEmail(filters.email);
         results = [result];
-      } else if (filters.area) {
-        results = await responsaveisClient.buscarPorArea(parseInt(filters.area));
       } else {
         const params: ResponsavelFilterParams = {
           filtro: searchQuery || undefined,
@@ -314,25 +299,6 @@ export default function ResponsaveisPage() {
                   placeholder="Filtrar por email"
                 />
               </div>
-              <div>
-                <Label htmlFor="area">Área</Label>
-                <Select
-                  value={filters.area}
-                  onValueChange={(value) => setFilters({...filters, area: value})}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a área" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Todas as áreas</SelectItem>
-                    {areas.map((area) => (
-                      <SelectItem key={area.idArea} value={area.idArea.toString()}>
-                        {area.nmArea}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
             <DialogFooter>
               <Button
@@ -341,7 +307,6 @@ export default function ResponsaveisPage() {
                   setFilters({
                     usuario: '',
                     email: '',
-                    area: '',
                   });
                   setShowFilterModal(false);
                 }}

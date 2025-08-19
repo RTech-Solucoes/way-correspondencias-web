@@ -14,12 +14,6 @@ class EmailClient {
     });
   }
 
-  async buscarPorNmUsuario(nmUsuario: string): Promise<EmailResponse[]> {
-    return this.client.request<EmailResponse[]>(`/usuario/${encodeURIComponent(nmUsuario)}`, {
-      method: 'GET',
-    });
-  }
-
   async buscarPorDsRemetente(dsRemetente: string): Promise<EmailResponse[]> {
     return this.client.request<EmailResponse[]>(`/remetente/${encodeURIComponent(dsRemetente)}`, {
       method: 'GET',
@@ -38,16 +32,6 @@ class EmailClient {
     queryParams.append('fim', fim);
 
     return this.client.request<EmailResponse[]>(`/periodo?${queryParams.toString()}`, {
-      method: 'GET',
-    });
-  }
-
-  async buscarPorUsuarioEPeriodo(nmUsuario: string, inicio: string, fim: string): Promise<EmailResponse[]> {
-    const queryParams = new URLSearchParams();
-    queryParams.append('inicio', inicio);
-    queryParams.append('fim', fim);
-
-    return this.client.request<EmailResponse[]>(`/usuario/${encodeURIComponent(nmUsuario)}/periodo?${queryParams.toString()}`, {
       method: 'GET',
     });
   }

@@ -14,20 +14,14 @@ class ResponsaveisClient {
     });
   }
 
-  async buscarPorNmUsuario(nmUsuario: string): Promise<ResponsavelResponse> {
-    return this.client.request<ResponsavelResponse>(`/usuario/${encodeURIComponent(nmUsuario)}`, {
+  async buscarPorNmUsuarioLogin(nmUsuarioLogin: string): Promise<ResponsavelResponse> {
+    return this.client.request<ResponsavelResponse>(`/usuario/${encodeURIComponent(nmUsuarioLogin)}`, {
       method: 'GET',
     });
   }
 
   async buscarPorDsEmail(dsEmail: string): Promise<ResponsavelResponse> {
     return this.client.request<ResponsavelResponse>(`/email/${encodeURIComponent(dsEmail)}`, {
-      method: 'GET',
-    });
-  }
-
-  async buscarPorArea(idArea: number): Promise<ResponsavelResponse[]> {
-    return this.client.request<ResponsavelResponse[]>(`/area/${idArea}`, {
       method: 'GET',
     });
   }

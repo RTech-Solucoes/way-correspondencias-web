@@ -3,7 +3,7 @@
 import React, { useState, forwardRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { EyeIcon, EyeSlashIcon } from '@phosphor-icons/react';
+import { EyeIcon, EyeClosedIcon } from '@phosphor-icons/react';
 import { cn } from '@/utils/utils';
 
 interface TextFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -84,9 +84,9 @@ const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
               tabIndex={-1}
             >
               {showPassword ? (
-                <EyeSlashIcon size={16} />
-              ) : (
                 <EyeIcon size={16} />
+              ) : (
+                <EyeClosedIcon size={16} />
               )}
             </button>
           )}

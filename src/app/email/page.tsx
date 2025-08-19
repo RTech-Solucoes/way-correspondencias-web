@@ -1,6 +1,6 @@
 'use client';
 
-import {useState, useEffect} from 'react';
+import {useState} from 'react';
 import {
   FunnelSimpleIcon,
   MagnifyingGlassIcon,
@@ -21,13 +21,10 @@ import EmailList from '../../components/email/EmailList';
 import EmailDetail from '../../components/email/EmailDetail';
 import PageTitle from '@/components/ui/page-title';
 import { emailClient } from '@/api/email/client';
-import { EmailResponse, EmailFilterParams } from '@/api/email/types';
 import { useToast } from '@/hooks/use-toast';
 
 export default function EmailPage() {
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
-  const [emails, setEmails] = useState<EmailResponse[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -36,7 +33,6 @@ export default function EmailPage() {
   const [emailFilters, setEmailFilters] = useState({
     remetente: '',
     destinatario: '',
-    usuario: '',
     status: '',
     dateFrom: '',
     dateTo: '',
@@ -50,76 +46,6 @@ export default function EmailPage() {
     txConteudo: '',
     flStatus: 'PENDENTE',
   });
-
-  useEffect(() => {
-    const loadEmails = async () => {
-      try {
-        setLoading(true);
-        const params: EmailFilterParams = {
-          filtro: searchQuery || undefined,
-          page: 0,
-          size: 50,
-        };
-        const response = await emailClient.buscarPorFiltro(params);
-        setEmails(response.content);
-      } catch {
-        toast({
-          title: "Erro",
-          description: "Erro ao carregar emails",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadEmails();
-  }, [searchQuery, toast]);
-
-  const handleSearch = async () => {
-    try {
-      setLoading(true);
-      let results: EmailResponse[];
-
-      if (emailFilters.usuario) {
-        results = await emailClient.buscarPorNmUsuario(emailFilters.usuario);
-      } else if (emailFilters.remetente) {
-        results = await emailClient.buscarPorDsRemetente(emailFilters.remetente);
-      } else if (emailFilters.destinatario) {
-        results = await emailClient.buscarPorDsDestinatario(emailFilters.destinatario);
-      } else if (emailFilters.dateFrom && emailFilters.dateTo) {
-        if (emailFilters.usuario) {
-          results = await emailClient.buscarPorUsuarioEPeriodo(
-            emailFilters.usuario,
-            emailFilters.dateFrom + 'T00:00:00',
-            emailFilters.dateTo + 'T23:59:59'
-          );
-        } else {
-          results = await emailClient.buscarPorPeriodo(
-            emailFilters.dateFrom + 'T00:00:00',
-            emailFilters.dateTo + 'T23:59:59'
-          );
-        }
-      } else {
-        const params: EmailFilterParams = {
-          filtro: searchQuery || undefined,
-        };
-        const response = await emailClient.buscarPorFiltro(params);
-        results = response.content;
-      }
-
-      setEmails(results);
-      setShowFilterModal(false);
-    } catch {
-      toast({
-        title: "Erro",
-        description: "Erro ao buscar emails",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleCreateEmail = async () => {
     try {
@@ -143,7 +69,6 @@ export default function EmailPage() {
         txConteudo: '',
         flStatus: 'PENDENTE',
       });
-      handleSearch();
     } catch {
       toast({
         title: "Erro",
@@ -182,14 +107,6 @@ export default function EmailPage() {
             <FunnelSimpleIcon className="h-4 w-4 mr-2"/>
             Filtrar
           </Button>
-          <Button
-            variant="outline"
-            className="h-10 px-4"
-            onClick={handleSearch}
-          >
-            <MagnifyingGlassIcon className="h-4 w-4 mr-2"/>
-            Buscar
-          </Button>
         </div>
       </div>
 
@@ -215,20 +132,6 @@ export default function EmailPage() {
         )}
       </div>
 
-      {/* Display loading state */}
-      {loading && (
-        <div className="flex justify-center items-center p-4">
-          <span>Carregando emails...</span>
-        </div>
-      )}
-
-      {/* Display emails count */}
-      {!loading && emails.length > 0 && (
-        <div className="px-6 py-2 bg-gray-50 text-sm text-gray-600">
-          {emails.length} email{emails.length !== 1 ? 's' : ''} encontrado{emails.length !== 1 ? 's' : ''}
-        </div>
-      )}
-
       {/* Email Filter Modal */}
       {showFilterModal && (
         <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
@@ -237,15 +140,6 @@ export default function EmailPage() {
               <DialogTitle>Filtrar Emails</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4">
-              <div>
-                <Label htmlFor="usuario">Usuário</Label>
-                <Input
-                  id="usuario"
-                  value={emailFilters.usuario}
-                  onChange={(e) => setEmailFilters({...emailFilters, usuario: e.target.value})}
-                  placeholder="Filtrar por usuário"
-                />
-              </div>
               <div>
                 <Label htmlFor="remetente">Remetente</Label>
                 <Input
@@ -309,7 +203,6 @@ export default function EmailPage() {
                   setEmailFilters({
                     remetente: '',
                     destinatario: '',
-                    usuario: '',
                     status: '',
                     dateFrom: '',
                     dateTo: '',
@@ -319,7 +212,7 @@ export default function EmailPage() {
               >
                 Limpar Filtros
               </Button>
-              <Button onClick={handleSearch}>
+              <Button onClick={() => setShowFilterModal(false)}>
                 Aplicar Filtros
               </Button>
             </DialogFooter>
