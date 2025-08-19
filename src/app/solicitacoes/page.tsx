@@ -28,7 +28,7 @@ import { AreaResponse } from '@/api/areas/types';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Pagination } from '@/components/ui/pagination';
 
@@ -47,7 +47,6 @@ export default function SolicitacoesPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
-  const { toast } = useToast();
 
   const [filters, setFilters] = useState({
     identificacao: '',
@@ -121,11 +120,7 @@ export default function SolicitacoesPage() {
         setTotalElements(response.totalElements);
       }
     } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Erro ao carregar solicitações",
-        variant: "destructive",
-      });
+      toast.error("Erro ao carregar solicitações");
     } finally {
       setLoading(false);
     }
@@ -169,17 +164,10 @@ export default function SolicitacoesPage() {
     if (solicitacaoToDelete) {
       try {
         await solicitacoesClient.deletar(solicitacaoToDelete.id);
-        toast({
-          title: "Sucesso",
-          description: "Solicitação excluída com sucesso",
-        });
+        toast.success("Solicitação excluída com sucesso");
         loadSolicitacoes();
       } catch (error) {
-        toast({
-          title: "Erro",
-          description: "Erro ao excluir solicitação",
-          variant: "destructive",
-        });
+        toast.error("Erro ao excluir solicitação");
       } finally {
         setShowDeleteDialog(false);
         setSolicitacaoToDelete(null);

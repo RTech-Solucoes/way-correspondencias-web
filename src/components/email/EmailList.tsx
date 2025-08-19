@@ -5,7 +5,7 @@ import {ArrowClockwiseIcon, EnvelopeSimpleIcon, PaperclipIcon, SpinnerIcon, Tras
 import {Button} from '@/components/ui/button';
 import {Checkbox} from '@/components/ui/checkbox';
 import {cn} from '@/utils/utils';
-import {useToast} from '@/hooks/use-toast';
+import {toast} from '@/hooks/use-toast';
 import { emailClient } from '@/api/email/client';
 import { EmailResponse } from '@/api/email/types';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -149,7 +149,6 @@ function EmailList({
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
-  const {toast} = useToast();
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
@@ -167,15 +166,11 @@ function EmailList({
       setTotalPages(response.totalPages);
       setTotalElements(response.totalElements);
     } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Erro ao carregar emails",
-        variant: "destructive",
-      });
+      toast.error("Erro ao carregar emails");
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearchQuery, currentPage, toast]);
+  }, [debouncedSearchQuery, currentPage]);
 
   useEffect(() => {
     loadEmails();
@@ -211,20 +206,13 @@ function EmailList({
     setSyncLoading(true);
     try {
       await loadEmails();
-      toast({
-        title: "Emails sincronizados",
-        description: "Seus emails foram atualizados com sucesso.",
-      });
+      toast.success("Seus emails foram atualizados com sucesso");
     } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Erro ao sincronizar emails",
-        variant: "destructive",
-      });
+      toast.error("Erro ao sincronizar emails");
     } finally {
       setSyncLoading(false);
     }
-  }, [loadEmails, toast]);
+  }, [loadEmails]);
 
   const handleDeleteSelected = useCallback(async () => {
     try {
@@ -237,18 +225,11 @@ function EmailList({
       setSelectedEmails([]);
       await loadEmails();
 
-      toast({
-        title: "Emails excluídos",
-        description: `${selectedEmails.length} email(s) foram excluídos.`,
-      });
+      toast.success(`${selectedEmails.length} email(s) foram excluídos`);
     } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Erro ao excluir emails",
-        variant: "destructive",
-      });
+      toast.error("Erro ao excluir emails");
     }
-  }, [selectedEmails, loadEmails, toast]);
+  }, [selectedEmails, loadEmails]);
 
   return (
     <div className="flex-1 flex flex-col bg-white">

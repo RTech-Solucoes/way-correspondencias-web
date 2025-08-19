@@ -21,7 +21,7 @@ import {areasClient} from '@/api/areas/client';
 import AreaModal from '../../components/areas/AreaModal';
 import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
 import PageTitle from '@/components/ui/page-title';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Pagination } from '@/components/ui/pagination';
 
@@ -47,7 +47,6 @@ export default function AreasPage() {
   const [activeFilters, setActiveFilters] = useState(filters);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [areaToDelete, setAreaToDelete] = useState<number | null>(null);
-  const { toast } = useToast();
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
@@ -78,11 +77,7 @@ export default function AreasPage() {
       setTotalPages(response.totalPages);
       setTotalElements(response.totalElements);
     } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Erro ao carregar áreas",
-        variant: "destructive",
-      });
+      toast.error("Erro ao carregar áreas");
     } finally {
       setLoading(false);
     }
@@ -112,17 +107,10 @@ export default function AreasPage() {
     if (areaToDelete) {
       try {
         await areasClient.deletar(areaToDelete);
-        toast({
-          title: "Sucesso",
-          description: "Área excluída com sucesso",
-        });
+        toast.success("Área excluída com sucesso");
         loadAreas();
       } catch (error) {
-        toast({
-          title: "Erro",
-          description: "Erro ao excluir área",
-          variant: "destructive",
-        });
+        toast.error("Erro ao excluir área");
       } finally {
         setShowDeleteDialog(false);
         setAreaToDelete(null);

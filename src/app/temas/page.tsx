@@ -20,7 +20,7 @@ import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
 import PageTitle from '@/components/ui/page-title';
 import {TemaResponse} from '@/api/temas/types';
 import {temasClient} from '@/api/temas/client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Pagination } from '@/components/ui/pagination';
 
@@ -36,7 +36,6 @@ export default function TemasPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
-  const { toast } = useToast();
 
   const [filters, setFilters] = useState({
     nome: '',
@@ -76,11 +75,7 @@ export default function TemasPage() {
         setTotalElements(response.totalElements);
       }
     } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Erro ao carregar temas",
-        variant: "destructive",
-      });
+      toast.error("Erro ao carregar temas");
     } finally {
       setLoading(false);
     }
@@ -100,17 +95,10 @@ export default function TemasPage() {
     if (temaToDelete) {
       try {
         await temasClient.deletar(temaToDelete.id);
-        toast({
-          title: "Sucesso",
-          description: "Tema excluído com sucesso",
-        });
+        toast.success("Tema excluído com sucesso");
         loadTemas();
       } catch (error) {
-        toast({
-          title: "Erro",
-          description: "Erro ao excluir tema",
-          variant: "destructive",
-        });
+        toast.error("Erro ao excluir tema");
       } finally {
         setShowDeleteDialog(false);
         setTemaToDelete(null);

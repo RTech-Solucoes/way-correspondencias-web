@@ -4,7 +4,7 @@ import {useEffect, useState} from 'react';
 import {ArrowLeftIcon, DownloadIcon, FileTextIcon, PaperclipIcon} from '@phosphor-icons/react';
 import {Button} from '@/components/ui/button';
 import {Avatar, AvatarFallback} from '@/components/ui/avatar';
-import {useToast} from '@/hooks/use-toast';
+import {toast} from '@/hooks/use-toast';
 import SolicitacaoModal from '@/components/solicitacoes/SolicitacaoModal';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { TemaResponse } from '@/api/temas/types';
@@ -46,7 +46,6 @@ export default function EmailDetail({
   emailId,
   onBack
 }: EmailDetailProps) {
-  const {toast} = useToast();
   const [email, setEmail] = useState<EmailResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [showSolicitacaoModal, setShowSolicitacaoModal] = useState(false);
@@ -61,11 +60,7 @@ export default function EmailDetail({
         const emailData = await emailClient.buscarPorId(parseInt(emailId));
         setEmail(emailData);
       } catch (error) {
-        toast({
-          title: "Erro",
-          description: "Erro ao carregar o email",
-          variant: "destructive",
-        });
+        toast.error("Erro ao carregar o email");
         onBack();
       } finally {
         setLoading(false);
@@ -75,7 +70,7 @@ export default function EmailDetail({
     if (emailId) {
       loadEmail();
     }
-  }, [emailId, onBack, toast]);
+  }, [emailId, onBack]);
 
   const loadModalData = async () => {
     try {
@@ -89,11 +84,7 @@ export default function EmailDetail({
       setTemas(temasResponse.content);
       setAreas(areasResponse.content);
     } catch {
-      toast({
-        title: "Erro",
-        description: "Erro ao carregar dados do formulário",
-        variant: "destructive",
-      });
+      toast.error("Erro ao carregar dados do formulário");
     }
   };
 
@@ -108,10 +99,7 @@ export default function EmailDetail({
   };
 
   const handleSaveSolicitacao = () => {
-    toast({
-      title: "Solicitação criada",
-      description: "A solicitação foi criada com sucesso a partir do email.",
-    });
+    toast.success("A solicitação foi criada com sucesso a partir do email");
     setShowSolicitacaoModal(false);
   };
 

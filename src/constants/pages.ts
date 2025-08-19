@@ -2,11 +2,11 @@ import {PageDef} from "@/types/pages/pages";
 import {PresentationChartIcon, BuildingIcon, ClipboardTextIcon, EnvelopeSimpleIcon, TagIcon, UsersIcon} from "@phosphor-icons/react";
 
 export const PAGES_DEF: PageDef[] = [
-  {
-    path: "/dashboard",
-    label: "Dashboard",
-    icon: PresentationChartIcon
-  },
+  // {
+  //   path: "/dashboard",
+  //   label: "Dashboard",
+  //   icon: PresentationChartIcon
+  // },
   {
     path: "/email",
     label: "Email",

@@ -6,8 +6,7 @@ import { ReactNode } from 'react'
 import IconProvider from "@/components/providers/IconProvider";
 import AuthGuard from "@/components/providers/AuthGuard";
 import ConditionalLayout from "@/components/layout/ConditionalLayout";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { Toaster } from "sonner";
 
 const defaultFont = DefaultFont({
   subsets: ['latin']
@@ -37,7 +36,7 @@ export default function RootLayout({
             <AuthGuard>
               <ConditionalLayout>
                 {children}
-                <ToastContainer />
+                <Toaster />
               </ConditionalLayout>
             </AuthGuard>
           </IconProvider>

@@ -33,7 +33,7 @@ import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
 import PageTitle from '@/components/ui/page-title';
 import { responsaveisClient } from '@/api/responsaveis/client';
 import { ResponsavelResponse, ResponsavelFilterParams } from '@/api/responsaveis/types';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Pagination } from '@/components/ui/pagination';
 
@@ -49,7 +49,6 @@ export default function ResponsaveisPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
-  const { toast } = useToast();
 
   const [filters, setFilters] = useState({
     usuario: '',
@@ -94,11 +93,7 @@ export default function ResponsaveisPage() {
         setTotalElements(response.totalElements);
       }
     } catch {
-      toast({
-        title: "Erro",
-        description: "Erro ao carregar responsáveis",
-        variant: "destructive",
-      });
+      toast.error("Erro ao carregar responsáveis");
     } finally {
       setLoading(false);
     }
@@ -118,17 +113,10 @@ export default function ResponsaveisPage() {
     if (responsavelToDelete) {
       try {
         await responsaveisClient.deletar(responsavelToDelete.id);
-        toast({
-          title: "Sucesso",
-          description: "Responsável excluído com sucesso",
-        });
+        toast.success("Responsável excluído com sucesso");
         loadResponsaveis();
       } catch {
-        toast({
-          title: "Erro",
-          description: "Erro ao excluir responsável",
-          variant: "destructive",
-        });
+        toast.error("Erro ao excluir responsável");
       } finally {
         setShowDeleteDialog(false);
         setResponsavelToDelete(null);

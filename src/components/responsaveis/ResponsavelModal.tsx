@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { TextField } from '@/components/ui/text-field';
 import { ResponsavelResponse, ResponsavelRequest } from '@/api/responsaveis/types';
 import { responsaveisClient } from '@/api/responsaveis/client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
 
 interface ResponsavelModalProps {
   responsavel: ResponsavelResponse | null;
@@ -30,7 +30,6 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
     idArea: undefined
   });
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
 
   useEffect(() => {
     if (responsavel) {
@@ -64,11 +63,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
     e.preventDefault();
 
     if (!formData.nmResponsavel.trim() || !formData.dsEmail.trim() || !formData.nmUsuario.trim()) {
-      toast({
-        title: "Erro",
-        description: "Por favor, preencha todos os campos obrigatórios",
-        variant: "destructive",
-      });
+      toast.error("Por favor, preencha todos os campos obrigatórios");
       return;
     }
 
@@ -77,26 +72,16 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
 
       if (responsavel) {
         await responsaveisClient.atualizar(responsavel.id, formData);
-        toast({
-          title: "Sucesso",
-          description: "Responsável atualizado com sucesso",
-        });
+        toast.success("Responsável atualizado com sucesso");
       } else {
         await responsaveisClient.criar(formData);
-        toast({
-          title: "Sucesso",
-          description: "Responsável criado com sucesso",
-        });
+        toast.success("Responsável criado com sucesso");
       }
 
       onSave();
       onClose();
     } catch (error) {
-      toast({
-        title: "Erro",
-        description: responsavel ? "Erro ao atualizar responsável" : "Erro ao criar responsável",
-        variant: "destructive",
-      });
+      toast.error(responsavel ? "Erro ao atualizar responsável" : "Erro ao criar responsável");
     } finally {
       setLoading(false);
     }

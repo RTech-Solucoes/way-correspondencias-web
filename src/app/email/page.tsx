@@ -21,14 +21,13 @@ import EmailList from '../../components/email/EmailList';
 import EmailDetail from '../../components/email/EmailDetail';
 import PageTitle from '@/components/ui/page-title';
 import { emailClient } from '@/api/email/client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
 
 export default function EmailPage() {
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const { toast } = useToast();
 
   const [emailFilters, setEmailFilters] = useState({
     remetente: '',
@@ -55,10 +54,7 @@ export default function EmailPage() {
       };
       await emailClient.criar(emailData);
 
-      toast({
-        title: "Sucesso",
-        description: "Email criado com sucesso",
-      });
+      toast.success("Email criado com sucesso");
 
       setShowCreateModal(false);
       setNewEmail({
@@ -70,11 +66,7 @@ export default function EmailPage() {
         flStatus: 'PENDENTE',
       });
     } catch {
-      toast({
-        title: "Erro",
-        description: "Erro ao criar email",
-        variant: "destructive",
-      });
+      toast.error("Erro ao criar email");
     }
   };
 

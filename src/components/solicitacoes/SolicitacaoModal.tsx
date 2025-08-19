@@ -24,7 +24,7 @@ import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { TemaResponse } from '@/api/temas/types';
 import { AreaResponse } from '@/api/areas/types';
 import { solicitacoesClient } from '@/api/solicitacoes/client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { capitalize } from '@/utils/utils';
 
 interface SolicitacaoModalProps {
@@ -55,7 +55,6 @@ export default function SolicitacaoModal({
     idArea: 0
   });
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
 
   useEffect(() => {
     if (solicitacao) {
@@ -105,11 +104,7 @@ export default function SolicitacaoModal({
 
     if (!formData.dsAssunto.trim() || !formData.txConteudo.trim() ||
         !formData.idResponsavel || !formData.idTema || !formData.idArea) {
-      toast({
-        title: "Erro",
-        description: "Por favor, preencha todos os campos obrigatórios",
-        variant: "destructive",
-      });
+      toast.error("Por favor, preencha todos os campos obrigatórios");
       return;
     }
 
@@ -118,26 +113,16 @@ export default function SolicitacaoModal({
 
       if (solicitacao) {
         await solicitacoesClient.atualizar(solicitacao.id, formData);
-        toast({
-          title: "Sucesso",
-          description: "Solicitação atualizada com sucesso",
-        });
+        toast.success("Solicitação atualizada com sucesso");
       } else {
         await solicitacoesClient.criar(formData);
-        toast({
-          title: "Sucesso",
-          description: "Solicitação criada com sucesso",
-        });
+        toast.success("Solicitação criada com sucesso");
       }
 
       onSave();
       onOpenChange(false);
     } catch {
-      toast({
-        title: "Erro",
-        description: solicitacao ? "Erro ao atualizar solicitação" : "Erro ao criar solicitação",
-        variant: "destructive",
-      });
+      toast.error(solicitacao ? "Erro ao atualizar solicitação" : "Erro ao criar solicitação");
     } finally {
       setLoading(false);
     }
