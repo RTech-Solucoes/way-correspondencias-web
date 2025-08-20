@@ -282,14 +282,14 @@ function EmailList({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex flex-col flex-1 overflow-y-auto">
         {loading ? (
           <div className="flex items-center justify-center py-8">
             <SpinnerIcon className="h-6 w-6 animate-spin text-gray-400" />
             <span className="ml-2 text-gray-500">Carregando emails...</span>
           </div>
         ) : filteredEmails.length === 0 ? (
-          <div className="flex items-center justify-center py-16">
+          <div className="flex flex-1 items-center justify-center py-16">
             <div className="text-center">
               <EnvelopeSimpleIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-600 mb-2">

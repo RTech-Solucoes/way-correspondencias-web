@@ -247,7 +247,7 @@ export default function AreaModal({area, onClose, onSave}: AreaModalProps) {
             </Button>
             <Button
               type="submit"
-              className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-primary hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isSubmitDisabled}
             >
               {area ? 'Atualizar' : 'Criar'}

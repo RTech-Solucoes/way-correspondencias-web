@@ -204,7 +204,7 @@ export default function ResponsaveisPage() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto bg-white">
+      <div className="flex flex-1 overflow-auto bg-white">
         <Table>
           <TableHeader>
             <TableRow>

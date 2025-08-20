@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { ReactNode } from 'react';
 import { cn } from "@/utils/utils";
-import Sidebar from "@/components/layout/Sidebar";
+import Sidebar from "@/components/layout/sidebar/Sidebar";
 import {PUBLIC_ROUTES} from "@/constants/pages";
 
 interface ConditionalLayoutProps {

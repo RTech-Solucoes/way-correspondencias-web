@@ -153,7 +153,7 @@ export default function AreasPage() {
           <Button onClick={() => {
             setSelectedArea(null);
             setShowAreaModal(true);
-          }} className="bg-blue-600 hover:bg-blue-700">
+          }} className="bg-primary hover:bg-blue-700">
             <PlusIcon className="h-4 w-4 mr-2" />
             Nova Área
           </Button>
@@ -190,7 +190,7 @@ export default function AreasPage() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto bg-white">
+      <div className="flex flex-1 overflow-auto bg-white">
         <Table>
           <TableHeader>
             <TableRow>
