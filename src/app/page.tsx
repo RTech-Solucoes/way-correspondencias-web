@@ -29,8 +29,6 @@ export default function LoginPage() {
 
     let hasErrors = false;
 
-    router.push(PAGES_DEF[0].path);
-    return
     if (!email) {
       setEmailError('Email é obrigatório');
       hasErrors = true;
