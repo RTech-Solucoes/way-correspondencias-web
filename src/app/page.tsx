@@ -2,7 +2,6 @@
 
 import authClient from "@/api/auth/client";
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { TextField } from '@/components/ui/text-field';
 import { PAGES_DEF } from "@/constants/pages";
@@ -30,6 +29,8 @@ export default function LoginPage() {
 
     let hasErrors = false;
 
+    router.push(PAGES_DEF[0].path);
+    return
     if (!email) {
       setEmailError('Email é obrigatório');
       hasErrors = true;

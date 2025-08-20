@@ -35,16 +35,16 @@ export default function RootLayout({
       <body className={`${defaultFont.className} ${defaultFont.variable}`}>
         <ApiProvider>
           <IconProvider>
-            <AuthGuard>
-              <ConditionalLayout>
-                {children}
-                <Toaster
-                  closeButton
-                  richColors
-                  position="bottom-right"
-                />
-              </ConditionalLayout>
-            </AuthGuard>
+            {/* <AuthGuard> */}
+            <ConditionalLayout>
+              {children}
+              <Toaster
+                closeButton
+                richColors
+                position="top-right"
+              />
+            </ConditionalLayout>
+            {/*  </AuthGuard> */}
           </IconProvider>
         </ApiProvider>
       </body>
