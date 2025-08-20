@@ -7,7 +7,8 @@ const nextConfig = {
     optimizePackageImports: ["@phosphor-icons/react"],
   },
   images: { unoptimized: true },
-  devIndicators: false
+  devIndicators: false,
+  reactStrictMode: false,
 };
 
 module.exports = nextConfig;

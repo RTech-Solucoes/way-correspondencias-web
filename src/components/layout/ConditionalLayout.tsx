@@ -4,7 +4,9 @@ import { usePathname } from 'next/navigation';
 import { ReactNode } from 'react';
 import { cn } from "@/utils/utils";
 import Sidebar from "@/components/layout/Sidebar";
-import {PUBLIC_ROUTES} from "@/constants/pages";
+import { PUBLIC_ROUTES } from "@/constants/pages";
+import useModal from '@/context/Modal/Modal';
+import { Modal } from '../libs/Modal/Modal';
 
 interface ConditionalLayoutProps {
   children: ReactNode;
@@ -12,8 +14,9 @@ interface ConditionalLayoutProps {
 
 export default function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const pathname = usePathname();
+  const { modalContent } = useModal();
 
-const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
+  const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
 
   if (isPublicRoute) {
     return (
@@ -31,10 +34,11 @@ const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
         "bg-gray-50 flex flex-row min-w-0 transition-all duration-300 ease-in-out",
       )}
     >
-      <Sidebar/>
+      <Sidebar />
       <article>
         {children}
       </article>
+      {modalContent && <Modal>{modalContent}</Modal>}
     </main>
   );
 }
