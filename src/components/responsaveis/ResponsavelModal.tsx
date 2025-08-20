@@ -23,30 +23,30 @@ interface ResponsavelModalProps {
 
 export default function ResponsavelModal({ responsavel, open, onClose, onSave }: ResponsavelModalProps) {
   const [formData, setFormData] = useState<ResponsavelRequest>({
-    nmUsuario: '',
-    dsEmail: '',
+    nmUsuarioLogin: '',
     nmResponsavel: '',
-    flAtivo: true,
-    idArea: undefined
+    dsEmail: '',
+    nrCpf: '',
+    dtNascimento: ''
   });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (responsavel) {
       setFormData({
-        nmUsuario: responsavel.nmUsuario,
-        dsEmail: responsavel.dsEmail,
+        nmUsuarioLogin: responsavel.nmUsuario, // Map from response field
         nmResponsavel: responsavel.nmResponsavel,
-        flAtivo: responsavel.flAtivo,
-        idArea: responsavel.area?.id
+        dsEmail: responsavel.dsEmail,
+        nrCpf: '', // New field, will need to be filled
+        dtNascimento: '' // New field, will need to be filled
       });
     } else {
       setFormData({
-        nmUsuario: '',
-        dsEmail: '',
+        nmUsuarioLogin: '',
         nmResponsavel: '',
-        flAtivo: true,
-        idArea: undefined
+        dsEmail: '',
+        nrCpf: '',
+        dtNascimento: ''
       });
     }
   }, [responsavel, open]);
@@ -62,7 +62,11 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    if (!formData.nmResponsavel.trim() || !formData.dsEmail.trim() || !formData.nmUsuario.trim()) {
+    if (!formData.nmResponsavel.trim() ||
+        !formData.dsEmail.trim() ||
+        !formData.nmUsuarioLogin.trim() ||
+        !formData.nrCpf.trim() ||
+        !formData.dtNascimento.trim()) {
       toast.error("Por favor, preencha todos os campos obrigatórios");
       return;
     }
@@ -94,7 +98,9 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
   const isFormValid = useCallback(() => {
     return formData.nmResponsavel.trim() !== '' &&
            formData.dsEmail.trim() !== '' &&
-           formData.nmUsuario.trim() !== '';
+           formData.nmUsuarioLogin.trim() !== '' &&
+           formData.nrCpf.trim() !== '' &&
+           formData.dtNascimento.trim() !== '';
   }, [formData]);
 
   return (
@@ -118,8 +124,8 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
 
           <TextField
             label="Usuário *"
-            name="nmUsuario"
-            value={formData.nmUsuario}
+            name="nmUsuarioLogin"
+            value={formData.nmUsuarioLogin}
             onChange={handleChange}
             required
           />
@@ -133,19 +139,24 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
             required
           />
 
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="flAtivo"
-              name="flAtivo"
-              checked={formData.flAtivo}
-              onChange={handleChange}
-              className="rounded"
-            />
-            <label htmlFor="flAtivo" className="text-sm font-medium">
-              Ativo
-            </label>
-          </div>
+          <TextField
+            label="CPF *"
+            name="nrCpf"
+            value={formData.nrCpf}
+            onChange={handleChange}
+            placeholder="000.000.000-00"
+            maxLength={11}
+            required
+          />
+
+          <TextField
+            label="Data de Nascimento *"
+            name="dtNascimento"
+            type="date"
+            value={formData.dtNascimento}
+            onChange={handleChange}
+            required
+          />
 
           <DialogFooter className="flex gap-2">
             <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>

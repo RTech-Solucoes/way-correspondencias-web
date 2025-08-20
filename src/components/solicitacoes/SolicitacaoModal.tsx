@@ -28,23 +28,23 @@ import { toast } from 'sonner';
 import { capitalize } from '@/utils/utils';
 
 interface SolicitacaoModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
   solicitacao: SolicitacaoResponse | null;
+  open: boolean;
+  onClose(): void;
+  onSave(): void;
   responsaveis: ResponsavelResponse[];
   temas: TemaResponse[];
   areas: AreaResponse[];
-  onSave: () => void;
 }
 
 export default function SolicitacaoModal({
-  open,
-  onOpenChange,
   solicitacao,
+  open,
+  onClose,
+  onSave,
   responsaveis,
   temas,
-  areas,
-  onSave
+  areas
 }: SolicitacaoModalProps) {
   const [formData, setFormData] = useState<SolicitacaoRequest>({
     dsAssunto: '',
@@ -120,7 +120,7 @@ export default function SolicitacaoModal({
       }
 
       onSave();
-      onOpenChange(false);
+      onClose();
     } catch {
       toast.error(solicitacao ? "Erro ao atualizar solicitação" : "Erro ao criar solicitação");
     } finally {
@@ -129,7 +129,7 @@ export default function SolicitacaoModal({
   };
 
   const handleClose = () => {
-    onOpenChange(false);
+    onClose();
   };
 
   const isFormValid = useCallback(() => {
@@ -141,7 +141,7 @@ export default function SolicitacaoModal({
   }, [formData]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>

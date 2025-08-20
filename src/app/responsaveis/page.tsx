@@ -124,7 +124,7 @@ export default function ResponsaveisPage() {
     }
   };
 
-  const handleResponsavelSaved = () => {
+  const handleResponsavelSave = () => {
     setShowResponsavelModal(false);
     setSelectedResponsavel(null);
     loadResponsaveis();
@@ -331,7 +331,7 @@ export default function ResponsaveisPage() {
             setShowResponsavelModal(false);
             setSelectedResponsavel(null);
           }}
-          onSave={handleResponsavelSaved}
+          onSave={handleResponsavelSave}
         />
       )}
 

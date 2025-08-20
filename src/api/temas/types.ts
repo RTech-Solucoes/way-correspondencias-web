@@ -10,7 +10,6 @@ export interface TemaResponse {
 export interface TemaRequest {
   nmTema: string;
   dsTema: string;
-  flAtivo: boolean;
 }
 
 export interface PagedResponse<T> {

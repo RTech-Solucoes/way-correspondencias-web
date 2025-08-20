@@ -17,13 +17,13 @@ import areasClient from '@/api/areas/client';
 import {AreaResponse} from '@/api/areas/types';
 
 interface TemaModalProps {
-  isOpen: boolean;
+  tema: TemaResponse | null;
+  open: boolean;
   onClose(): void;
-  onSave(tema: Tema): void;
-  tema?: TemaResponse | null;
+  onSave(): void;
 }
 
-export function TemaModal({isOpen, onClose, onSave, tema}: TemaModalProps) {
+export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
   const [nmTema, setNmTema] = useState('');
   const [dsTema, setDsTema] = useState('');
   const [nrDiasPrazo, setNrDiasPrazo] = useState(0);
@@ -48,10 +48,10 @@ export function TemaModal({isOpen, onClose, onSave, tema}: TemaModalProps) {
   }, []);
 
   useEffect(() => {
-    if (isOpen) {
+    if (open) {
       buscarAreas();
     }
-  }, [isOpen, buscarAreas]);
+  }, [open, buscarAreas]);
 
   useEffect(() => {
     if (tema) {
@@ -67,7 +67,7 @@ export function TemaModal({isOpen, onClose, onSave, tema}: TemaModalProps) {
       setTpContagem(TipoContagem.UTEIS);
       setSelectedAreaIds([]);
     }
-  }, [tema, isOpen]);
+  }, [tema, open]);
 
   const handleAreaToggle = (areaId: string) => {
     setSelectedAreaIds(prev =>
@@ -84,31 +84,39 @@ export function TemaModal({isOpen, onClose, onSave, tema}: TemaModalProps) {
            selectedAreaIds.length > 0;
   }, [nmTema, dsTema, nrDiasPrazo, selectedAreaIds]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!isFormValid()) return;
 
-    const currentDate = new Date().toISOString().split('T')[0];
-    const currentUser = '12345678901';
+    try {
+      const currentDate = new Date().toISOString().split('T')[0];
+      const currentUser = '12345678901';
 
-    const novoTema: Tema = {
-      idTema: tema?.id.toString() || uuidv4(),
-      nmTema,
-      dsTema,
-      idAreas: selectedAreaIds,
-      nrDiasPrazo,
-      tpContagem,
-      dtCadastro: currentDate,
-      nrCpfCadastro: currentUser,
-      vsVersao: 1,
-      dtAlteracao: currentDate,
-      nrCpfAlteracao: currentUser
-    };
+      const novoTema: Tema = {
+        idTema: tema?.id.toString() || uuidv4(),
+        nmTema,
+        dsTema,
+        idAreas: selectedAreaIds,
+        nrDiasPrazo,
+        tpContagem,
+        dtCadastro: currentDate,
+        nrCpfCadastro: currentUser,
+        vsVersao: 1,
+        dtAlteracao: currentDate,
+        nrCpfAlteracao: currentUser
+      };
 
-    onSave(novoTema);
+      // Mock da operação de salvar - aqui seria chamada a API
+      console.log('Salvando tema:', novoTema);
+
+      onSave();
+      onClose();
+    } catch (error) {
+      console.error('Erro ao salvar tema:', error);
+    }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
@@ -199,16 +207,11 @@ export function TemaModal({isOpen, onClose, onSave, tema}: TemaModalProps) {
                   </button>
                 ))}
                 {areas.length === 0 && !loadingAreas && (
-                  <div className="text-sm text-gray-500 p-4">
+                  <div className="text-sm text-gray-500 pt-4">
                     Nenhuma área encontrada
                   </div>
                 )}
               </div>
-            )}
-            {selectedAreaIds.length === 0 && (
-              <p className="text-sm text-gray-500">
-                Nenhuma área selecionada
-              </p>
             )}
           </div>
         </div>

@@ -1,5 +1,5 @@
 import ApiClient from "../client";
-import { EmailResponse, EmailRequest, PagedResponse, EmailFilterParams } from "./types";
+import { EmailResponse, PagedResponse, EmailFilterParams } from "./types";
 
 class EmailClient {
   private client: ApiClient;
@@ -49,26 +49,6 @@ class EmailClient {
 
     return this.client.request<PagedResponse<EmailResponse>>(endpoint, {
       method: 'GET',
-    });
-  }
-
-  async criar(email: EmailRequest): Promise<EmailResponse> {
-    return this.client.request<EmailResponse>('', {
-      method: 'POST',
-      body: JSON.stringify(email),
-    });
-  }
-
-  async atualizar(id: number, email: EmailRequest): Promise<EmailResponse> {
-    return this.client.request<EmailResponse>(`/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(email),
-    });
-  }
-
-  async deletar(id: number): Promise<void> {
-    return this.client.request<void>(`/${id}`, {
-      method: 'DELETE',
     });
   }
 }

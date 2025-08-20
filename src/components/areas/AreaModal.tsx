@@ -18,18 +18,16 @@ import {SpinnerIcon, WarningCircleIcon, WarningIcon} from "@phosphor-icons/react
 
 interface AreaModalProps {
   area: AreaResponse | null;
-
+  open: boolean;
   onClose(): void;
-
   onSave(area: AreaRequest): void;
 }
 
-export default function AreaModal({area, onClose, onSave}: AreaModalProps) {
+export default function AreaModal({area, open, onClose, onSave}: AreaModalProps) {
   const [formData, setFormData] = useState<AreaRequest>({
     cdArea: '',
     nmArea: '',
-    dsArea: '',
-    flAtivo: 'S'
+    dsArea: ''
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -42,15 +40,13 @@ export default function AreaModal({area, onClose, onSave}: AreaModalProps) {
       setFormData({
         cdArea: area.cdArea,
         nmArea: area.nmArea,
-        dsArea: area.dsArea,
-        flAtivo: area.flAtivo
+        dsArea: area.dsArea
       });
     } else {
       setFormData({
         cdArea: '',
         nmArea: '',
-        dsArea: '',
-        flAtivo: 'S'
+        dsArea: ''
       });
     }
   }, [area]);
@@ -150,7 +146,7 @@ export default function AreaModal({area, onClose, onSave}: AreaModalProps) {
   const isSubmitDisabled = !isFormValid();
 
   return (
-    <Dialog open={true} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>
@@ -222,19 +218,6 @@ export default function AreaModal({area, onClose, onSave}: AreaModalProps) {
                 <p className="text-red-500 text-sm">{errors.dsArea}</p>
               </div>
             )}
-          </div>
-
-          <div>
-            <Label htmlFor="flAtivo">Status *</Label>
-            <select
-              id="flAtivo"
-              value={formData.flAtivo}
-              onChange={(e) => handleChange('flAtivo', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="S">Ativo</option>
-              <option value="N">Inativo</option>
-            </select>
           </div>
 
           <DialogFooter className="gap-2">

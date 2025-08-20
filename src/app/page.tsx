@@ -64,7 +64,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-landscape">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-landscape overflow-hidden">
       <form onSubmit={handleSubmit} className="flex flex-col w-full max-w-xl gap-6 p-8 rounded-4xl m-auto glass pop-in">
         <Image
           src="/images/logo.png"

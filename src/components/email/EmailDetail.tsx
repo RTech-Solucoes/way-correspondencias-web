@@ -223,13 +223,13 @@ export default function EmailDetail({
       </div>
 
       <SolicitacaoModal
-        open={showSolicitacaoModal}
-        onOpenChange={(open) => setShowSolicitacaoModal(open)}
         solicitacao={null}
+        open={showSolicitacaoModal}
+        onClose={() => setShowSolicitacaoModal(false)}
+        onSave={handleSaveSolicitacao}
         responsaveis={responsaveis}
         temas={temas}
         areas={areas}
-        onSave={handleSaveSolicitacao}
       />
     </div>
   );

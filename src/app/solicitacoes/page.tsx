@@ -175,6 +175,12 @@ export default function SolicitacoesPage() {
     }
   };
 
+  const handleSolicitacaoSave = () => {
+    setShowSolicitacaoModal(false);
+    setSelectedSolicitacao(null);
+    loadSolicitacoes();
+  };
+
   const handleSolicitacaoSaved = () => {
     setShowSolicitacaoModal(false);
     setSelectedSolicitacao(null);
@@ -467,15 +473,20 @@ export default function SolicitacoesPage() {
         </Dialog>
       )}
 
-      <SolicitacaoModal
-        open={showSolicitacaoModal}
-        onOpenChange={setShowSolicitacaoModal}
-        solicitacao={selectedSolicitacao}
-        responsaveis={responsaveis}
-        temas={temas}
-        areas={areas}
-        onSave={handleSolicitacaoSaved}
-      />
+      {showSolicitacaoModal && (
+        <SolicitacaoModal
+          solicitacao={selectedSolicitacao}
+          open={showSolicitacaoModal}
+          onClose={() => {
+            setShowSolicitacaoModal(false);
+            setSelectedSolicitacao(null);
+          }}
+          onSave={handleSolicitacaoSave}
+          responsaveis={responsaveis}
+          temas={temas}
+          areas={areas}
+        />
+      )}
 
       <ConfirmationDialog
         open={showDeleteDialog}

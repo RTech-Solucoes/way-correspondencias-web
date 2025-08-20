@@ -112,6 +112,12 @@ export default function TemasPage() {
     loadTemas();
   };
 
+  const handleTemaSave = () => {
+    setShowTemaModal(false);
+    setSelectedTema(null);
+    loadTemas();
+  };
+
   const applyFilters = () => {
     setActiveFilters(filters);
     setCurrentPage(0);
@@ -281,15 +287,17 @@ export default function TemasPage() {
         </Dialog>
       )}
 
-      <TemaModal
-        isOpen={showTemaModal}
-        onClose={() => {
-          setShowTemaModal(false);
-          setSelectedTema(null);
-        }}
-        onSave={handleTemaSaved}
-        tema={selectedTema}
-      />
+      {showTemaModal && (
+        <TemaModal
+          tema={selectedTema}
+          open={showTemaModal}
+          onClose={() => {
+            setShowTemaModal(false);
+            setSelectedTema(null);
+          }}
+          onSave={handleTemaSave}
+        />
+      )}
 
       <ConfirmationDialog
         open={showDeleteDialog}

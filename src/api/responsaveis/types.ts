@@ -21,11 +21,11 @@ export interface ResponsavelResponse {
 }
 
 export interface ResponsavelRequest {
-  nmUsuario: string;
-  dsEmail: string;
+  nmUsuarioLogin: string;
   nmResponsavel: string;
-  flAtivo: boolean;
-  idArea?: number;
+  dsEmail: string;
+  nrCpf: string;
+  dtNascimento: string; // ISO date string format
 }
 
 export interface PagedResponse<T> {

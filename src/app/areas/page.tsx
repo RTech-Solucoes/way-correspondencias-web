@@ -16,7 +16,7 @@ import {
 } from '@phosphor-icons/react';
 import {Dialog, DialogContent, DialogHeader, DialogTitle} from '@/components/ui/dialog';
 import {Label} from '@/components/ui/label';
-import {AreaResponse} from '@/api/areas/types';
+import {AreaResponse, AreaRequest} from '@/api/areas/types';
 import {areasClient} from '@/api/areas/client';
 import AreaModal from '../../components/areas/AreaModal';
 import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
@@ -115,6 +115,23 @@ export default function AreasPage() {
         setShowDeleteDialog(false);
         setAreaToDelete(null);
       }
+    }
+  };
+
+  const handleAreaSave = async (area: AreaRequest) => {
+    try {
+      if (selectedArea) {
+        await areasClient.atualizar(selectedArea.idArea, area);
+        toast.success("Área atualizada com sucesso");
+      } else {
+        await areasClient.criar(area);
+        toast.success("Área criada com sucesso");
+      }
+      setShowAreaModal(false);
+      setSelectedArea(null);
+      loadAreas();
+    } catch (error) {
+      toast.error("Erro ao salvar área");
     }
   };
 
@@ -332,11 +349,12 @@ export default function AreasPage() {
       {showAreaModal && (
         <AreaModal
           area={selectedArea}
+          open={showAreaModal}
           onClose={() => {
             setShowAreaModal(false);
             setSelectedArea(null);
           }}
-          onSave={handleAreaSaved}
+          onSave={handleAreaSave}
         />
       )}
 

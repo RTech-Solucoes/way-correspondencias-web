@@ -31,16 +31,6 @@ export interface EmailResponse {
   anexos?: Anexo[];
 }
 
-export interface EmailRequest {
-  nmUsuario: string;
-  dsRemetente: string;
-  dsDestinatario: string;
-  dsAssunto: string;
-  txConteudo: string;
-  dtEnvio: string;
-  flStatus: string;
-}
-
 export interface PagedResponse<T> {
   content: T[];
   totalElements: number;

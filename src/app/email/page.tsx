@@ -4,7 +4,6 @@ import {useState} from 'react';
 import {
   FunnelSimpleIcon,
   MagnifyingGlassIcon,
-  PlusIcon,
 } from '@phosphor-icons/react';
 import {Button} from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,14 +19,11 @@ import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/c
 import EmailList from '../../components/email/EmailList';
 import EmailDetail from '../../components/email/EmailDetail';
 import PageTitle from '@/components/ui/page-title';
-import { emailClient } from '@/api/email/client';
-import { toast } from 'sonner';
 
 export default function EmailPage() {
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const [emailFilters, setEmailFilters] = useState({
     remetente: '',
@@ -37,48 +33,11 @@ export default function EmailPage() {
     dateTo: '',
   });
 
-  const [newEmail, setNewEmail] = useState({
-    nmUsuario: '',
-    dsRemetente: '',
-    dsDestinatario: '',
-    dsAssunto: '',
-    txConteudo: '',
-    flStatus: 'PENDENTE',
-  });
-
-  const handleCreateEmail = async () => {
-    try {
-      const emailData = {
-        ...newEmail,
-        dtEnvio: new Date().toISOString(),
-      };
-      await emailClient.criar(emailData);
-
-      toast.success("Email criado com sucesso");
-
-      setShowCreateModal(false);
-      setNewEmail({
-        nmUsuario: '',
-        dsRemetente: '',
-        dsDestinatario: '',
-        dsAssunto: '',
-        txConteudo: '',
-        flStatus: 'PENDENTE',
-      });
-    } catch {
-      toast.error("Erro ao criar email");
-    }
-  };
-
   return (
     <div className="flex flex-col min-h-0 flex-1">
       <div className="bg-white border-b border-gray-200 p-6">
         <div className="flex items-start justify-between mb-4">
           <PageTitle />
-          <Button onClick={() => setShowCreateModal(true)}>
-            <PlusIcon className="h-4 w-4 mr-2"/>
-            Novo Email
-          </Button>
         </div>
 
         <div className="flex items-center space-x-4">
@@ -205,93 +164,6 @@ export default function EmailPage() {
               </Button>
               <Button onClick={() => setShowFilterModal(false)}>
                 Aplicar Filtros
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {showCreateModal && (
-        <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Novo Email</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4">
-              <div>
-                <Label htmlFor="nmUsuario">Usuário</Label>
-                <Input
-                  id="nmUsuario"
-                  value={newEmail.nmUsuario}
-                  onChange={(e) => setNewEmail({...newEmail, nmUsuario: e.target.value})}
-                  placeholder="Nome do usuário"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="dsRemetente">Remetente</Label>
-                  <Input
-                    id="dsRemetente"
-                    value={newEmail.dsRemetente}
-                    onChange={(e) => setNewEmail({...newEmail, dsRemetente: e.target.value})}
-                    placeholder="Email do remetente"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="dsDestinatario">Destinatário</Label>
-                  <Input
-                    id="dsDestinatario"
-                    value={newEmail.dsDestinatario}
-                    onChange={(e) => setNewEmail({...newEmail, dsDestinatario: e.target.value})}
-                    placeholder="Email do destinatário"
-                  />
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="dsAssunto">Assunto</Label>
-                <Input
-                  id="dsAssunto"
-                  value={newEmail.dsAssunto}
-                  onChange={(e) => setNewEmail({...newEmail, dsAssunto: e.target.value})}
-                  placeholder="Assunto do email"
-                />
-              </div>
-              <div>
-                <Label htmlFor="txConteudo">Conteúdo</Label>
-                <textarea
-                  id="txConteudo"
-                  value={newEmail.txConteudo}
-                  onChange={(e) => setNewEmail({...newEmail, txConteudo: e.target.value})}
-                  placeholder="Conteúdo do email"
-                  className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md resize-none"
-                />
-              </div>
-              <div>
-                <Label htmlFor="flStatus">Status</Label>
-                <Select
-                  value={newEmail.flStatus}
-                  onValueChange={(value) => setNewEmail({...newEmail, flStatus: value})}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="PENDENTE">Pendente</SelectItem>
-                    <SelectItem value="ENVIADO">Enviado</SelectItem>
-                    <SelectItem value="RESPONDIDO">Respondido</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setShowCreateModal(false)}
-              >
-                Cancelar
-              </Button>
-              <Button onClick={handleCreateEmail}>
-                Criar Email
               </Button>
             </DialogFooter>
           </DialogContent>

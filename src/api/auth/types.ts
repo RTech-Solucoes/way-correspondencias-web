@@ -8,12 +8,3 @@ export interface LoginResponse {
   tokenType: string,
   expiresInSeconds: number
 }
-
-export interface RegisterRequest {
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-  phone: string;
-  role: string;
-}

@@ -10,7 +10,6 @@ export interface AreaRequest {
   cdArea: string;
   nmArea: string;
   dsArea: string;
-  flAtivo: string;
 }
 
 export interface PagedResponse<T> {
