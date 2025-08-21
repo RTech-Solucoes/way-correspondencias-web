@@ -324,8 +324,8 @@ export default function SolicitacoesPage() {
                   <TableCell className="font-medium">{solicitacao.cdIdentificacao}</TableCell>
                   <TableCell className="max-w-xs truncate">{solicitacao.dsAssunto}</TableCell>
                   <TableCell>{solicitacao.nmResponsavel}</TableCell>
-                  <TableCell>{solicitacao.area.nmArea}</TableCell>
-                  <TableCell>{solicitacao.tema.nmTema}</TableCell>
+                  <TableCell>{solicitacao.area?.nmArea || 'N/A'}</TableCell>
+                  <TableCell>{solicitacao.tema?.nmTema || solicitacao.nmTema || 'N/A'}</TableCell>
                   <TableCell>
                     <Badge variant={getStatusBadgeVariant(solicitacao.flAtivo)}>
                       {getStatusText(solicitacao.flAtivo)}
@@ -416,7 +416,7 @@ export default function SolicitacoesPage() {
                     <SelectContent>
                       <SelectItem value="all">Todos</SelectItem>
                       {responsaveis.map((resp) => (
-                        <SelectItem key={resp.id} value={resp.id.toString()}>
+                        <SelectItem key={resp.idResponsavel} value={resp.idResponsavel.toString()}>
                           {resp.nmResponsavel}
                         </SelectItem>
                       ))}
@@ -435,7 +435,7 @@ export default function SolicitacoesPage() {
                     <SelectContent>
                       <SelectItem value="all">Todos</SelectItem>
                       {temas.map((tema) => (
-                        <SelectItem key={tema.id} value={tema.id.toString()}>
+                        <SelectItem key={tema.idTema} value={tema.idTema.toString()}>
                           {tema.nmTema}
                         </SelectItem>
                       ))}

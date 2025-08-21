@@ -36,6 +36,28 @@ class TemasClient {
     });
   }
 
+  async buscarPorFiltroComAreas(params: TemaFilterParams = {}): Promise<PagedResponse<TemaResponse>> {
+    const queryParams = new URLSearchParams();
+
+    if (params.filtro) queryParams.append('filtro', params.filtro);
+    if (params.page !== undefined) queryParams.append('page', params.page.toString());
+    if (params.size !== undefined) queryParams.append('size', params.size.toString());
+    if (params.sort) queryParams.append('sort', params.sort);
+
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/com-areas?${queryString}` : '/com-areas';
+
+    return this.client.request<PagedResponse<TemaResponse>>(endpoint, {
+      method: 'GET',
+    });
+  }
+
+  async buscarPorIdComAreas(id: number): Promise<TemaResponse> {
+    return this.client.request<TemaResponse>(`/${id}/com-areas`, {
+      method: 'GET',
+    });
+  }
+
   async criar(tema: TemaRequest): Promise<TemaResponse> {
     return this.client.request<TemaResponse>('', {
       method: 'POST',

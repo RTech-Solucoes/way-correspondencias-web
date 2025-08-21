@@ -1,7 +1,7 @@
 'use client';
 
 import React, {memo, useCallback, useMemo, useState, useEffect} from 'react';
-import {ArrowClockwiseIcon, EnvelopeSimpleIcon, PaperclipIcon, SpinnerIcon} from '@phosphor-icons/react';
+import {ArrowClockwiseIcon, EnvelopeSimpleIcon, SpinnerIcon, PaperclipIcon} from '@phosphor-icons/react';
 import {Button} from '@/components/ui/button';
 import {cn} from '@/utils/utils';
 import { toast } from 'sonner';
@@ -53,8 +53,8 @@ const EmailItem = memo<{
     onSelect();
   }, [onSelect]);
 
-  const isRead = email.flAtivo === 'S' || email.dtResposta !== null;
-  const hasAttachment = email.anexos && email.anexos.length > 0;
+  const isRead = email.flAtivo === 'S';
+  const hasAttachment = false; // Anexos não estão disponíveis no EmailResponse do backend
   const preview = email.dsCorpo
     ? (email.dsCorpo.length > 100 ? email.dsCorpo.substring(0, 100) + '...' : email.dsCorpo)
     : 'Sem conteúdo disponível';
@@ -79,7 +79,7 @@ const EmailItem = memo<{
                 <PaperclipIcon className="h-3 w-3 text-gray-400"/>
               )}
             </div>
-            <span className="text-xs text-gray-500">{formatDate(email.dtEnvio)}</span>
+            <span className="text-xs text-gray-500">{formatDate(email.dtRecebimento)}</span>
           </div>
 
           <h3 className="text-sm mb-1 truncate font-bold text-gray-900">
@@ -165,8 +165,8 @@ function EmailList({
 
   const filteredEmails = useMemo(() => {
     return emails.filter(email => {
-      const isRead = email.flAtivo === 'S' || email.dtResposta !== null;
-      const hasAttachment = email.anexos && email.anexos.length > 0;
+      const isRead = email.flAtivo === 'S';
+      const hasAttachment = false; // Anexos não estão disponíveis no EmailResponse do backend
 
       const matchesReadStatus = !emailFilters.isRead ||
         emailFilters.isRead === 'all' ||
@@ -181,7 +181,7 @@ function EmailList({
       const matchesSender = !emailFilters.sender ||
         email.dsRemetente.toLowerCase().includes(emailFilters.sender.toLowerCase());
 
-      const emailDate = new Date(formatDate(email.dtEnvio).split(' ')[0].split('/').reverse().join('-'));
+      const emailDate = new Date(formatDate(email.dtRecebimento).split(' ')[0].split('/').reverse().join('-'));
       const matchesDateFrom = !emailFilters.dateFrom ||
         emailDate >= new Date(emailFilters.dateFrom);
       const matchesDateTo = !emailFilters.dateTo ||

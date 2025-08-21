@@ -24,6 +24,7 @@ import PageTitle from '@/components/ui/page-title';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Pagination } from '@/components/ui/pagination';
+import {getStatusText} from "@/utils/utils";
 
 export default function AreasPage() {
   const [areas, setAreas] = useState<AreaResponse[]>([]);
@@ -264,7 +265,7 @@ export default function AreasPage() {
                         ? 'bg-green-100 text-green-800' 
                         : 'bg-red-100 text-red-800'
                     }`}>
-                      {area.flAtivo === 'S' ? 'Ativo' : 'Inativo'}
+                      {getStatusText(area.flAtivo)}
                     </span>
                   </TableCell>
                   <TableCell className="text-right">

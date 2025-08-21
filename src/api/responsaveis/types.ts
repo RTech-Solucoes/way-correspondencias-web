@@ -7,7 +7,7 @@ export interface ResponsavelResponse {
   dsEmail: string;
   nrCpf: string;
   dtNascimento: string;
-  flAtivo: 'ATIVO' | 'INATIVO';
+  flAtivo: 'S' | 'N';
 }
 
 export interface ResponsavelRequest {

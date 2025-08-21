@@ -1,15 +1,22 @@
+import {StatusAtivo} from "@/types/misc/types";
+import {AreaResponse} from "@/api/areas/types";
+
 export interface TemaResponse {
-  id: number;
+  idTema: number;
   nmTema: string;
   dsTema: string;
+  nrPrazo: number;
+  tpPrazo: string;
   flAtivo: StatusAtivo;
-  dtCriacao: string;
-  dtUltimaAtualizacao?: string;
+  areas: AreaResponse[];
 }
 
 export interface TemaRequest {
   nmTema: string;
   dsTema: string;
+  nrPrazo?: number;
+  tpPrazo?: string;
+  idsAreas?: number[]; // Corrigindo nome do campo
 }
 
 export interface PagedResponse<T> {

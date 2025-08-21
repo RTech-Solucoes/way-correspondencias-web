@@ -1,39 +1,44 @@
+import {StatusAtivo} from "@/types/misc/types";
+
 export interface SolicitacaoResponse {
   id: number;
+  idSolicitacao: number;
+  idEmail: number;
+  idTema: number;
+  nmTema: string;
+  tema: {
+    idTema: number;
+    nmTema: string;
+  };
+  idResponsavel: number;
+  nmResponsavel: string;
+  idArea?: number;
+  area?: {
+    idArea: number;
+    nmArea: string;
+  };
   cdIdentificacao: string;
   dsAssunto: string;
-  dsCorpo: string;
+  dsSolicitacao: string;
+  dsObservacao: string;
+  nrPrazo: number;
+  tpPrazo: string;
+  flStatus: 'P' | 'V' | 'A' | 'T' | 'R' | 'O' | 'S' | 'C' | 'X';
   flAtivo: StatusAtivo;
   dtCriacao: string;
-  dtPrazoResposta?: string;
-  dtResposta?: string;
-  txResposta?: string;
-  responsavel: {
-    id: number;
-    nmResponsavel: string;
-    dsEmail: string;
-  };
-  tema: {
-    id: number;
-    nmTema: string;
-    dsTema: string;
-  };
-  area: {
-    id: number;
-    nmArea: string;
-    cdArea: string;
-  };
 }
 
 export interface SolicitacaoRequest {
-  dsAssunto: string;
-  dsCorpo: string;
-  flAtivo: StatusAtivo;
-  dtPrazoResposta?: string;
-  txResposta?: string;
-  idResponsavel: number;
+  idEmail?: number;
   idTema: number;
-  idArea: number;
+  idResponsavel: number;
+  cdIdentificacao: string;
+  dsAssunto?: string;
+  dsSolicitacao?: string;
+  dsObservacao?: string;
+  nrPrazo?: number;
+  tpPrazo?: string;
+  flStatus: 'P' | 'V' | 'A' | 'T' | 'R' | 'O' | 'S' | 'C' | 'X';
 }
 
 export interface PagedResponse<T> {

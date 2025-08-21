@@ -1,7 +1,7 @@
 'use client';
 
 import {useEffect, useState} from 'react';
-import {ArrowLeftIcon, DownloadIcon, FileTextIcon, PaperclipIcon} from '@phosphor-icons/react';
+import {ArrowLeftIcon, FileTextIcon} from '@phosphor-icons/react';
 import {Button} from '@/components/ui/button';
 import {Avatar, AvatarFallback, AvatarImage} from '@/components/ui/avatar';
 import {toast} from 'sonner';
@@ -33,14 +33,6 @@ const formatDate = (dateString?: string): string => {
     hour: '2-digit',
     minute: '2-digit'
   });
-};
-
-const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return '0 Bytes';
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
 export default function EmailDetail({
@@ -160,52 +152,19 @@ export default function EmailDetail({
           <Avatar className="h-12 w-12">
             <AvatarImage src='/images/avatar.svg' />
             <AvatarFallback>
-              {getInitials(email?.nmUsuario)}
+              {getInitials(email?.dsRemetente)}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
             <div className="flex items-center justify-between mb-1">
-              <h3 className="font-semibold text-gray-900">{email?.nmUsuario}</h3>
-              <span className="text-sm text-gray-500">{formatDate(email?.dtEnvio)}</span>
+              <h3 className="font-semibold text-gray-900">{email?.dsRemetente}</h3>
+              <span className="text-sm text-gray-500">{formatDate(email?.dtRecebimento)}</span>
             </div>
             <p className="text-sm text-gray-600 mb-1">De: {email?.dsRemetente}</p>
             <p className="text-sm text-gray-600">Para: {email?.dsDestinatario}</p>
-            {email?.dtResposta && (
-              <p className="text-sm text-gray-600">Respondido em: {formatDate(email?.dtResposta)}</p>
-            )}
           </div>
         </div>
 
-        {email?.anexos && email?.anexos.length > 0 && (
-          <div>
-            <h4 className="text-sm font-medium text-gray-700 mb-2">
-              Anexos ({email?.anexos.length})
-            </h4>
-            <div className="space-y-2">
-              {email?.anexos.map((attachment, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                >
-                  <div className="flex items-center space-x-3">
-                    <PaperclipIcon className="h-5 w-5 text-gray-400"/>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        {attachment.dsNomeAnexo}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {formatFileSize(attachment.nmTamanhoAnexo)}
-                      </p>
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="sm">
-                    <DownloadIcon className="h-4 w-4"/>
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
         <div className="prose max-w-none">
           <div className="whitespace-pre-wrap text-gray-900 leading-relaxed">
             {email?.dsCorpo}

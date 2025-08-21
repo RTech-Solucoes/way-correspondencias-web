@@ -9,7 +9,6 @@ import {Textarea} from '@/components/ui/textarea';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
 import {CheckIcon} from '@phosphor-icons/react';
 import {TemaResponse} from '@/api/temas/types';
-import {TipoContagem} from '@/types/temas/enums';
 import {cn} from '@/utils/utils';
 import areasClient from '@/api/areas/client';
 import {AreaResponse} from '@/api/areas/types';
@@ -27,11 +26,12 @@ interface TemaModalProps {
 export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
   const [nmTema, setNmTema] = useState('');
   const [dsTema, setDsTema] = useState('');
-  const [nrDiasPrazo, setNrDiasPrazo] = useState(0);
-  const [tpContagem, setTpContagem] = useState<TipoContagem>(TipoContagem.UTEIS);
+  const [nrPrazo, setNrPrazo] = useState(0);
+  const [tpPrazo, setTpPrazo] = useState('');
   const [selectedAreaIds, setSelectedAreaIds] = useState<string[]>([]);
   const [areas, setAreas] = useState<AreaResponse[]>([]);
   const [loadingAreas, setLoadingAreas] = useState(false);
+  const [loadingTema, setLoadingTema] = useState(false);
 
   const buscarAreas = useCallback(async () => {
     try {
@@ -48,27 +48,46 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
     }
   }, []);
 
+  const buscarTemaComAreas = useCallback(async (idTema: number) => {
+    try {
+      setLoadingTema(true);
+      const temaComAreas = await temasClient.buscarPorIdComAreas(idTema);
+
+      setNmTema(temaComAreas.nmTema);
+      setDsTema(temaComAreas.dsTema || '');
+      setNrPrazo(temaComAreas.nrPrazo || 0);
+      setTpPrazo(temaComAreas.tpPrazo || '');
+
+      // Carrega as áreas associadas ao tema
+      if (temaComAreas.areas && temaComAreas.areas.length > 0) {
+        setSelectedAreaIds(temaComAreas.areas.map(area => area.idArea.toString()));
+      } else {
+        setSelectedAreaIds([]);
+      }
+    } catch {
+      toast.error("Erro ao carregar tema");
+    } finally {
+      setLoadingTema(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (open) {
       buscarAreas();
-    }
-  }, [open, buscarAreas]);
 
-  useEffect(() => {
-    if (tema) {
-      setNmTema(tema.nmTema);
-      setDsTema(tema.dsTema);
-      setNrDiasPrazo(30);
-      setTpContagem(TipoContagem.UTEIS);
-      setSelectedAreaIds([]);
-    } else {
-      setNmTema('');
-      setDsTema('');
-      setNrDiasPrazo(0);
-      setTpContagem(TipoContagem.UTEIS);
-      setSelectedAreaIds([]);
+      if (tema) {
+        // Se está editando, busca o tema com áreas do servidor
+        buscarTemaComAreas(tema.idTema);
+      } else {
+        // Se está criando, limpa os campos
+        setNmTema('');
+        setDsTema('');
+        setNrPrazo(0);
+        setTpPrazo('');
+        setSelectedAreaIds([]);
+      }
     }
-  }, [tema, open]);
+  }, [open, tema, buscarAreas, buscarTemaComAreas]);
 
   const handleAreaToggle = (areaId: string) => {
     setSelectedAreaIds(prev =>
@@ -88,11 +107,14 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
     try {
       const temaRequest: TemaRequest = {
         nmTema: nmTema.trim(),
-        dsTema: dsTema.trim()
+        dsTema: dsTema.trim(),
+        nrPrazo: nrPrazo > 0 ? nrPrazo : undefined,
+        tpPrazo: tpPrazo || undefined,
+        idsAreas: selectedAreaIds.length > 0 ? selectedAreaIds.map(id => parseInt(id)) : undefined
       };
 
       if (tema) {
-        await temasClient.atualizar(tema.id, temaRequest);
+        await temasClient.atualizar(tema.idTema, temaRequest);
         toast.success("Tema atualizado com sucesso!");
       } else {
         await temasClient.criar(temaRequest);
@@ -129,12 +151,12 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="nrDiasPrazo">Dias de Prazo</Label>
+              <Label htmlFor="nrPrazo">Dias de Prazo</Label>
               <Input
-                id="nrDiasPrazo"
+                id="nrPrazo"
                 type="number"
-                value={nrDiasPrazo}
-                onChange={(e) => setNrDiasPrazo(Number(e.target.value))}
+                value={nrPrazo}
+                onChange={(e) => setNrPrazo(Number(e.target.value))}
                 placeholder="0"
                 min="1"
               />
@@ -153,14 +175,14 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="tpContagem">Tipo de Contagem</Label>
-            <Select value={tpContagem} onValueChange={(value) => setTpContagem(value as TipoContagem)}>
+            <Label htmlFor="tpPrazo">Tipo de Prazo</Label>
+            <Select value={tpPrazo} onValueChange={setTpPrazo}>
               <SelectTrigger>
-                <SelectValue/>
+                <SelectValue placeholder="Selecione o tipo de prazo"/>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={TipoContagem.UTEIS}>Dias Úteis</SelectItem>
-                <SelectItem value={TipoContagem.CORRIDOS}>Dias Corridos</SelectItem>
+                <SelectItem value="U">Dias Úteis</SelectItem>
+                <SelectItem value="C">Dias Corridos</SelectItem>
               </SelectContent>
             </Select>
           </div>

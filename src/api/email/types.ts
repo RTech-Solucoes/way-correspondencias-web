@@ -8,15 +8,12 @@ export interface Anexo {
 
 export interface EmailResponse {
   idEmail: number;
-  nmUsuario: string;
   dsRemetente: string;
   dsDestinatario: string;
   dsAssunto: string;
   dsCorpo: string;
-  dtEnvio: string;
-  dtResposta?: string;
+  dtRecebimento: string;
   flAtivo: StatusAtivo;
-  anexos?: Anexo[];
 }
 
 export interface PagedResponse<T> {

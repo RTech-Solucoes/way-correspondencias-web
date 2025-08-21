@@ -10,8 +10,18 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { TextField } from '@/components/ui/text-field';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import { ResponsavelResponse, ResponsavelRequest } from '@/api/responsaveis/types';
 import { responsaveisClient } from '@/api/responsaveis/client';
+import { PerfilResponse } from '@/api/perfis/types';
+import { perfisClient } from '@/api/perfis/client';
 import { toast } from 'sonner';
 
 interface ResponsavelModalProps {
@@ -23,7 +33,7 @@ interface ResponsavelModalProps {
 
 export default function ResponsavelModal({ responsavel, open, onClose, onSave }: ResponsavelModalProps) {
   const [formData, setFormData] = useState<ResponsavelRequest>({
-    idPerfil: 1, // Default perfil ID
+    idPerfil: 0,
     nmUsuarioLogin: '',
     nmResponsavel: '',
     dsEmail: '',
@@ -31,6 +41,29 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
     dtNascimento: ''
   });
   const [loading, setLoading] = useState(false);
+  const [perfis, setPerfis] = useState<PerfilResponse[]>([]);
+  const [loadingPerfis, setLoadingPerfis] = useState(false);
+
+  const buscarPerfis = useCallback(async () => {
+    try {
+      setLoadingPerfis(true);
+      const response = await perfisClient.buscarPorFiltro({ size: 100 });
+      const perfisAtivos = response.content.filter(perfil => perfil.flAtivo === 'S');
+      setPerfis(perfisAtivos);
+    } catch {
+      console.error('Erro ao carregar perfis');
+      toast.error("Erro ao carregar perfis");
+      setPerfis([]);
+    } finally {
+      setLoadingPerfis(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (open) {
+      buscarPerfis();
+    }
+  }, [open, buscarPerfis]);
 
   useEffect(() => {
     if (responsavel) {
@@ -44,7 +77,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
       });
     } else {
       setFormData({
-        idPerfil: 1, // Default perfil ID
+        idPerfil: 0,
         nmUsuarioLogin: '',
         nmResponsavel: '',
         dsEmail: '',
@@ -90,7 +123,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
 
       onSave();
       onClose();
-    } catch (error) {
+    } catch {
       toast.error(responsavel ? "Erro ao atualizar responsável" : "Erro ao criar responsável");
     } finally {
       setLoading(false);
@@ -120,16 +153,31 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
-          <TextField
-            label="Perfil *"
-            name="idPerfil"
-            type="number"
-            value={formData.idPerfil.toString()}
-            onChange={handleChange}
-            required
-            min="1"
-            placeholder="ID do Perfil"
-          />
+          <div className="space-y-2">
+            <Label htmlFor="idPerfil">Perfil *</Label>
+            <Select
+              value={formData.idPerfil > 0 ? formData.idPerfil.toString() : ""}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, idPerfil: parseInt(value) }))}
+              disabled={loadingPerfis}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={loadingPerfis ? "Carregando perfis..." : "Selecione o perfil"} />
+              </SelectTrigger>
+              <SelectContent>
+                {!loadingPerfis && perfis.length > 0 ? (
+                  perfis.map(perfil => (
+                    <SelectItem key={perfil.idPerfil} value={perfil.idPerfil.toString()}>
+                      {perfil.nmPerfil}
+                    </SelectItem>
+                  ))
+                ) : !loadingPerfis && perfis.length === 0 ? (
+                  <div className="px-2 py-1.5 text-sm text-gray-500">
+                    Nenhum perfil disponível
+                  </div>
+                ) : null}
+              </SelectContent>
+            </Select>
+          </div>
 
           <TextField
             label="Nome *"

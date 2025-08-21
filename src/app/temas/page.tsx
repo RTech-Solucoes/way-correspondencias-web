@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
 import {Button} from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +23,7 @@ import {temasClient} from '@/api/temas/client';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Pagination } from '@/components/ui/pagination';
+import {getStatusText} from "@/utils/utils";
 
 export default function TemasPage() {
   const [temas, setTemas] = useState<TemaResponse[]>([]);
@@ -45,11 +46,7 @@ export default function TemasPage() {
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
-  useEffect(() => {
-    loadTemas();
-  }, [currentPage, activeFilters, debouncedSearchQuery]);
-
-  const loadTemas = async () => {
+  const loadTemas = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -64,7 +61,7 @@ export default function TemasPage() {
         if (activeFilters.nome) filterParts.push(activeFilters.nome);
         if (activeFilters.descricao) filterParts.push(activeFilters.descricao);
 
-        const response = await temasClient.buscarPorFiltro({
+        const response = await temasClient.buscarPorFiltroComAreas({
           filtro: filterParts.join(' ') || undefined,
           page: currentPage,
           size: 50,
@@ -74,12 +71,16 @@ export default function TemasPage() {
         setTotalPages(response.totalPages);
         setTotalElements(response.totalElements);
       }
-    } catch (error) {
+    } catch {
       toast.error("Erro ao carregar temas");
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, activeFilters, debouncedSearchQuery]);
+
+  useEffect(() => {
+    loadTemas();
+  }, [loadTemas]);
 
   const handleEdit = (tema: TemaResponse) => {
     setSelectedTema(tema);
@@ -94,10 +95,10 @@ export default function TemasPage() {
   const confirmDelete = async () => {
     if (temaToDelete) {
       try {
-        await temasClient.deletar(temaToDelete.id);
+        await temasClient.deletar(temaToDelete.idTema);
         toast.success("Tema excluído com sucesso");
         loadTemas();
-      } catch (error) {
+      } catch {
         toast.error("Erro ao excluir tema");
       } finally {
         setShowDeleteDialog(false);
@@ -106,11 +107,6 @@ export default function TemasPage() {
     }
   };
 
-  const handleTemaSaved = () => {
-    setShowTemaModal(false);
-    setSelectedTema(null);
-    loadTemas();
-  };
 
   const handleTemaSave = () => {
     setShowTemaModal(false);
@@ -188,14 +184,17 @@ export default function TemasPage() {
             <TableRow>
               <TableHead>Nome</TableHead>
               <TableHead>Descrição</TableHead>
-              <TableHead>Criado em</TableHead>
+              <TableHead>Prazo</TableHead>
+              <TableHead>Tipo Prazo</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Áreas</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-8">
+                <TableCell colSpan={7} className="text-center py-8">
                   <div className="flex flex-1 items-center justify-center py-8">
                     <SpinnerIcon className="h-6 w-6 animate-spin text-gray-400" />
                     <span className="ml-2 text-gray-500">Buscando temas...</span>
@@ -204,7 +203,7 @@ export default function TemasPage() {
               </TableRow>
             ) : temas.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-8">
+                <TableCell colSpan={7} className="text-center py-8">
                   <div className="flex flex-col items-center space-y-2">
                     <TagIcon className="h-8 w-8 text-gray-400"/>
                     <p className="text-sm text-gray-500">Nenhum tema encontrado</p>
@@ -213,10 +212,46 @@ export default function TemasPage() {
               </TableRow>
             ) : (
               temas.map((tema) => (
-                <TableRow key={tema.id}>
+                <TableRow key={tema.idTema}>
                   <TableCell className="font-medium">{tema.nmTema}</TableCell>
-                  <TableCell>{tema.dsTema}</TableCell>
-                  <TableCell>{new Date(tema.dtCriacao).toLocaleDateString('pt-BR')}</TableCell>
+                  <TableCell className="max-w-xs truncate" title={tema.dsTema}>
+                    {tema.dsTema || '-'}
+                  </TableCell>
+                  <TableCell>
+                    {tema.nrPrazo ? `${tema.nrPrazo}` : '-'}
+                  </TableCell>
+                  <TableCell>
+                    {tema.tpPrazo === 'C' ? 'Dias Corridos' :
+                     tema.tpPrazo === 'U' ? 'Dias Úteis' :
+                     tema.tpPrazo || '-'}
+                  </TableCell>
+                  <TableCell>
+                    <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
+                      tema.flAtivo === 'S' 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {getStatusText(tema.flAtivo)}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    {tema.areas && tema.areas.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {tema.areas.slice(0, 2).map((area, index) => (
+                          <span key={index} className="inline-flex px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
+                            {area.nmArea}
+                          </span>
+                        ))}
+                        {tema.areas.length > 2 && (
+                          <span className="inline-flex px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">
+                            +{tema.areas.length - 2}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-gray-400 text-sm">Nenhuma área</span>
+                    )}
+                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end space-x-2">
                       <Button

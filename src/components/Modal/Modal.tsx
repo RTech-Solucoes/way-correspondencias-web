@@ -34,7 +34,7 @@ export const Modal = ({ children, modalWidth }: ModalProps) => {
       opacity: 1,
       transition: {
         duration: 0.1,
-        type: "spring",
+        type: "spring" as const,
         damping: 35,
         stiffness: 700,
       },

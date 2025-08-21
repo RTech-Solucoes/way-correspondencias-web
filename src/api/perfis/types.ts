@@ -1,31 +1,30 @@
 import {StatusAtivo} from "@/types/misc/types";
 
-export interface AreaResponse {
-  idArea: number;
-  cdArea: string;
-  nmArea: string;
-  dsArea: string;
+export interface PerfilResponse {
+  idPerfil: number;
+  nmPerfil: string;
+  dsPerfil: string;
   flAtivo: StatusAtivo;
 }
 
-export interface AreaRequest {
-  cdArea: string;
-  nmArea: string;
-  dsArea: string;
+export interface PerfilRequest {
+  nmPerfil: string;
+  dsPerfil?: string;
 }
 
 export interface PagedResponse<T> {
   content: T[];
   totalElements: number;
   totalPages: number;
-  size: number;
   number: number;
+  size: number;
+  numberOfElements: number;
   first: boolean;
   last: boolean;
-  numberOfElements: number;
+  empty: boolean;
 }
 
-export interface AreaFilterParams {
+export interface PerfilFilterParams {
   filtro?: string;
   page?: number;
   size?: number;

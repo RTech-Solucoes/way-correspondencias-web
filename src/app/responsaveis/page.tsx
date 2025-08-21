@@ -36,6 +36,7 @@ import { ResponsavelResponse, ResponsavelFilterParams } from '@/api/responsaveis
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Pagination } from '@/components/ui/pagination';
+import {getStatusText} from "@/utils/utils";
 
 export default function ResponsaveisPage() {
   const [responsaveis, setResponsaveis] = useState<ResponsavelResponse[]>([]);
@@ -245,11 +246,11 @@ export default function ResponsaveisPage() {
                   <TableCell>{responsavel.nmPerfil || 'N/A'}</TableCell>
                   <TableCell>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      responsavel.flAtivo === 'ATIVO'
+                      responsavel.flAtivo === 'S'
                         ? 'bg-green-100 text-green-800' 
                         : 'bg-red-100 text-red-800'
                     }`}>
-                      {responsavel.flAtivo === 'ATIVO' ? 'Ativo' : 'Inativo'}
+                      {getStatusText(responsavel.flAtivo)}
                     </span>
                   </TableCell>
                   <TableCell>{responsavel.nrCpf}</TableCell>
