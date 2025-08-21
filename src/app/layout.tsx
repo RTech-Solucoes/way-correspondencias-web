@@ -3,8 +3,8 @@ import type { Metadata } from 'next';
 import { Lexend as DefaultFont } from 'next/font/google';
 import { ApiProvider } from '@/api/ApiProvider';
 import { ReactNode } from 'react'
-import IconProvider from "@/components/providers/IconProvider";
-import AuthGuard from "@/components/providers/AuthGuard";
+import IconProvider from "@/providers/IconProvider";
+import AuthGuard from "@/providers/AuthGuard";
 import ConditionalLayout from "@/components/layout/ConditionalLayout";
 import { Toaster } from "sonner";
 import { ModalProvider } from '@/context/modal/ModalContext';

@@ -1,4 +1,4 @@
-import BaseModal from "@/components/libs/BaseModal/BaseModal";
+import BaseModal from "@/components/BaseModal/BaseModal";
 import useModal from "@/context/modal/ModalContext";
 import WordLikeEditor from "@/modules/WordLikeEditor";
 

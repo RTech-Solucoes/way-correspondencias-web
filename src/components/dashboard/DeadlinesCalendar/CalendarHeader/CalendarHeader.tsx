@@ -1,4 +1,4 @@
-import CardHeaderComponent from "@/components/libs/CardHeaderComponent/CardHeaderComponent";
+import CardHeaderComponent from "@/components/CardHeaderComponent/CardHeaderComponent";
 import { Button } from "@/components/ui/button";
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 

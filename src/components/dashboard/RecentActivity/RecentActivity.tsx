@@ -1,5 +1,5 @@
 import { mockUsersEmail } from "@/api/MockDados";
-import CardHeaderComponent from "@/components/libs/CardHeaderComponent/CardHeaderComponent";
+import CardHeaderComponent from "@/components/CardHeaderComponent/CardHeaderComponent";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@radix-ui/react-avatar";

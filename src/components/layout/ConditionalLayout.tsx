@@ -6,7 +6,7 @@ import { cn } from "@/utils/utils";
 import Sidebar from "@/components/layout/sidebar/Sidebar";
 import { PUBLIC_ROUTES } from "@/constants/pages";
 import useModal from '@/context/modal/ModalContext';
-import { Modal } from '../libs/Modal/Modal';
+import { Modal } from '@/components/Modal/Modal';
 
 interface ConditionalLayoutProps {
   children: ReactNode;
