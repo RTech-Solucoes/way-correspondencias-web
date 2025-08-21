@@ -341,7 +341,24 @@ export default function SolicitacoesPage() {
                   <TableCell className="font-medium">{solicitacao.cdIdentificacao}</TableCell>
                   <TableCell className="max-w-xs truncate">{solicitacao.dsAssunto}</TableCell>
                   <TableCell>{solicitacao.nmResponsavel}</TableCell>
-                  <TableCell>{solicitacao.areas?.map(area => area.nmArea).join(', ') || 'N/A'}</TableCell>
+                  <TableCell>
+                    {solicitacao.areas && solicitacao.areas.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {solicitacao.areas.slice(0, 2).map((area, index) => (
+                          <span key={index} className="inline-flex px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
+                            {area.nmArea}
+                          </span>
+                        ))}
+                        {solicitacao.areas.length > 2 && (
+                          <span className="inline-flex px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">
+                            +{solicitacao.areas.length - 2}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-gray-400 text-sm">Nenhuma área</span>
+                    )}
+                  </TableCell>
                   <TableCell>{solicitacao.tema?.nmTema || solicitacao.nmTema || 'N/A'}</TableCell>
                   <TableCell>
                     <Badge variant={getStatusBadgeVariant(solicitacao.flStatus)}>
@@ -530,7 +547,6 @@ export default function SolicitacoesPage() {
           onSave={handleSolicitacaoSave}
           responsaveis={responsaveis}
           temas={temas}
-          areas={areas}
         />
       )}
 

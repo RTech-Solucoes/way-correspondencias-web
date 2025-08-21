@@ -19,14 +19,13 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { SolicitacaoResponse, SolicitacaoRequest } from '@/api/solicitacoes/types';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { TemaResponse } from '@/api/temas/types';
-import { AreaResponse } from '@/api/areas/types';
 import { solicitacoesClient } from '@/api/solicitacoes/client';
 import { toast } from 'sonner';
 import { capitalize } from '@/utils/utils';
+import { MultiSelectAreas } from '@/components/ui/multi-select-areas';
 
 interface SolicitacaoModalProps {
   solicitacao: SolicitacaoResponse | null;
@@ -35,7 +34,6 @@ interface SolicitacaoModalProps {
   onSave(): void;
   responsaveis: ResponsavelResponse[];
   temas: TemaResponse[];
-  areas: AreaResponse[];
 }
 
 export default function SolicitacaoModal({
@@ -44,8 +42,7 @@ export default function SolicitacaoModal({
   onClose,
   onSave,
   responsaveis,
-  temas,
-  areas
+  temas
 }: SolicitacaoModalProps) {
   const [formData, setFormData] = useState<SolicitacaoRequest>({
     cdIdentificacao: '',
@@ -99,7 +96,6 @@ export default function SolicitacaoModal({
     if (name === 'dsAssunto') {
       processedValue = capitalize(value);
     } else if (name === 'nrPrazo') {
-      // Converte para número ou undefined se vazio
       processedValue = value === '' ? undefined : parseInt(value);
     }
 
@@ -109,31 +105,16 @@ export default function SolicitacaoModal({
     }));
   };
 
-  const handleAreaToggle = (areaId: number) => {
-    setFormData(prev => {
-      const currentAreas = prev.idsAreas || [];
-      const isSelected = currentAreas.includes(areaId);
-
-      if (isSelected) {
-        // Remove a área se já estiver selecionada
-        return {
-          ...prev,
-          idsAreas: currentAreas.filter(id => id !== areaId)
-        };
-      } else {
-        // Adiciona a área se não estiver selecionada
-        return {
-          ...prev,
-          idsAreas: [...currentAreas, areaId]
-        };
-      }
-    });
+  const handleAreasSelectionChange = (selectedIds: number[]) => {
+    setFormData(prev => ({
+      ...prev,
+      idsAreas: selectedIds
+    }));
   };
 
   const handleSelectChange = (field: keyof SolicitacaoRequest, value: string) => {
     let processedValue: string | number | undefined = value;
 
-    // Trata campos de ID
     if (field.includes('id') && field !== 'cdIdentificacao') {
       processedValue = value ? parseInt(value) : 0;
     }
@@ -165,7 +146,6 @@ export default function SolicitacaoModal({
     try {
       setLoading(true);
 
-      // Preparar dados para envio - garantir que campos opcionais sejam undefined se vazios
       const requestData: SolicitacaoRequest = {
         ...formData,
         dsAssunto: formData.dsAssunto?.trim() || undefined,
@@ -206,7 +186,7 @@ export default function SolicitacaoModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {solicitacao ? 'Editar Solicitação' : 'Nova Solicitação'}
@@ -300,37 +280,10 @@ export default function SolicitacaoModal({
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>Áreas</Label>
-            <div className="border rounded-lg p-3 max-h-40 overflow-y-auto">
-              {areas.length === 0 ? (
-                <p className="text-sm text-gray-500">Nenhuma área disponível</p>
-              ) : (
-                <div className="space-y-2">
-                  {areas.map((area) => (
-                    <div key={area.idArea} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`area-${area.idArea}`}
-                        checked={formData.idsAreas?.includes(area.idArea) || false}
-                        onCheckedChange={() => handleAreaToggle(area.idArea)}
-                      />
-                      <Label
-                        htmlFor={`area-${area.idArea}`}
-                        className="text-sm font-normal cursor-pointer flex-1"
-                      >
-                        {area.nmArea}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            {formData.idsAreas && formData.idsAreas.length > 0 && (
-              <p className="text-xs text-gray-500">
-                {formData.idsAreas.length} área(s) selecionada(s)
-              </p>
-            )}
-          </div>
+          <MultiSelectAreas
+            selectedAreaIds={formData.idsAreas || []}
+            onSelectionChange={handleAreasSelectionChange}
+          />
 
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
