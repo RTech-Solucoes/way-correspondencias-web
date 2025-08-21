@@ -64,10 +64,10 @@ export default function Sidebar() {
           pathname={pathname}
         />
 
-        <NotificationsButton
-          unreadCount={unreadCount}
-          notifications={notifications}
-        />
+        {/*<NotificationsButton*/}
+        {/*  unreadCount={unreadCount}*/}
+        {/*  notifications={notifications}*/}
+        {/*/>*/}
 
         <ProfileButton
           user={user}
