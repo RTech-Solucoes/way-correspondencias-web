@@ -1,0 +1,47 @@
+name: Deploy Way WEB
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  deploy:
+    runs-on: self-hosted, ec2, apps
+    steps:
+      - name: Pull latest code
+        run: |
+          cd /home/ubuntu/way-correspondencias-web
+          git pull origin develop
+
+      - name: Extract branch name and commit hash
+        id: extract_tags
+        run: |
+          BRANCH_NAME=$(echo "$GITHUB_REF" | sed 's/refs\/heads\///')
+          COMMIT_HASH="$(echo $GITHUB_SHA | cut -c1-7)"
+          DOCKER_TAG="$BRANCH_NAME"_"$COMMIT_HASH"
+          echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+          echo "COMMIT_HASH=$COMMIT_HASH" >> $GITHUB_ENV
+
+      - name: Build Docker image
+        run: |
+          docker build -t way-web:${{ env.DOCKER_TAG }} .
+
+      - name: Stop and remove old container
+        run: |
+          docker stop way-web || true
+          docker rm way-web || true
+
+      - name: Deploy new container version
+        run: |
+          docker run -d \
+            -p 3000:3000 \
+            --name way-web \
+            --restart always \
+            way-web:${{ env.DOCKER_TAG }}
+
+      - name: Clean up old images
+        run: |
+          # Remove imagens com mais de 24 horas e que não estão sendo usadas
+          docker image prune -a -f --filter "until=24h"
