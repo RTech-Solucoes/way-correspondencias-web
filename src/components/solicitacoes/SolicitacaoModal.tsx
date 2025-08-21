@@ -1,12 +1,12 @@
 'use client';
 
-import {useState, useEffect, FormEvent, useCallback} from 'react';
+import { useState, useEffect, FormEvent, useCallback } from 'react';
 import {
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogFooter 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { TextField } from '@/components/ui/text-field';
@@ -14,10 +14,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import {
   Select,
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select';
 import { SolicitacaoResponse, SolicitacaoRequest } from '@/api/solicitacoes/types';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
@@ -26,6 +26,8 @@ import { AreaResponse } from '@/api/areas/types';
 import { solicitacoesClient } from '@/api/solicitacoes/client';
 import { toast } from 'sonner';
 import { capitalize } from '@/utils/utils';
+import useModal from '@/context/Modal/Modal';
+import ModalWord from './ModalWord/ModalWord';
 
 interface SolicitacaoModalProps {
   solicitacao: SolicitacaoResponse | null;
@@ -46,6 +48,8 @@ export default function SolicitacaoModal({
   temas,
   areas
 }: SolicitacaoModalProps) {
+  const { setModalContent } = useModal();
+
   const [formData, setFormData] = useState<SolicitacaoRequest>({
     dsAssunto: '',
     txConteudo: '',
@@ -103,7 +107,7 @@ export default function SolicitacaoModal({
     e.preventDefault();
 
     if (!formData.dsAssunto.trim() || !formData.txConteudo.trim() ||
-        !formData.idResponsavel || !formData.idTema || !formData.idArea) {
+      !formData.idResponsavel || !formData.idTema || !formData.idArea) {
       toast.error("Por favor, preencha todos os campos obrigatórios");
       return;
     }
@@ -134,10 +138,10 @@ export default function SolicitacaoModal({
 
   const isFormValid = useCallback(() => {
     return formData.dsAssunto.trim() !== '' &&
-           formData.txConteudo.trim() !== '' &&
-           formData.idResponsavel > 0 &&
-           formData.idTema > 0 &&
-           formData.idArea > 0;
+      formData.txConteudo.trim() !== '' &&
+      formData.idResponsavel > 0 &&
+      formData.idTema > 0 &&
+      formData.idArea > 0;
   }, [formData]);
 
   return (
@@ -150,6 +154,15 @@ export default function SolicitacaoModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
+          <div className='w-full flex justify-end -mb-2'>
+            <Button
+              type="button"
+              onClick={() => setModalContent(<ModalWord />)}
+            >
+              Criar Documento
+            </Button>
+          </div>
+
           <TextField
             label="Assunto *"
             name="dsAssunto"
