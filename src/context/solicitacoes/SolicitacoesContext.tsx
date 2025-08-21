@@ -8,33 +8,33 @@ import {
   useState, ReactNode,
 } from "react";
 
-export interface SolicitacaoContextProps {
+export interface SolicitacoesContextProps {
   prop: number | null,
   setProp: Dispatch<SetStateAction<number | null>>;
 }
 
-const SolicitacaoContext = createContext<SolicitacaoContextProps>({} as SolicitacaoContextProps);
+const SolicitacoesContext = createContext<SolicitacoesContextProps>({} as SolicitacoesContextProps);
 
-export const SolicitacaoProvider = ({ children }: { children: ReactNode }) => {
+export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
   const [prop, setProp] = useState<number | null>(null);
 
   return (
-    <SolicitacaoContext.Provider
+    <SolicitacoesContext.Provider
       value={{
         prop,
         setProp
       }}
     >
       {children}
-    </SolicitacaoContext.Provider>
+    </SolicitacoesContext.Provider>
   );
 };
 
-export default function useSolicitacao() {
-  const context = useContext(SolicitacaoContext);
+export default function useSolicitacoes() {
+  const context = useContext(SolicitacoesContext);
 
   if (!context) {
-    throw new Error("useSolicitacao must be used within a SolicitacaoProvider");
+    throw new Error("useSolicitacoes must be used within a SolicitacoesProvider");
   }
 
   return context;

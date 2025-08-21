@@ -214,23 +214,6 @@ function EmailList({
     }
   }, [loadEmails]);
 
-  const handleDeleteSelected = useCallback(async () => {
-    try {
-      const deletePromises = selectedEmails.map(async (emailId) => {
-        await emailClient.deletar(parseInt(emailId));
-      });
-
-      await Promise.all(deletePromises);
-
-      setSelectedEmails([]);
-      await loadEmails();
-
-      toast.success(`${selectedEmails.length} email(s) foram excluídos`);
-    } catch (error) {
-      toast.error("Erro ao excluir emails");
-    }
-  }, [selectedEmails, loadEmails]);
-
   return (
     <div className="flex-1 flex flex-col bg-white">
       <div className="flex items-center justify-between p-4 border-b border-gray-200">
@@ -254,18 +237,6 @@ function EmailList({
         </div>
 
         <div className="flex items-center space-x-2">
-          {selectedEmails.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleDeleteSelected}
-              className="text-red-600 hover:text-red-700"
-            >
-              <TrashIcon className="h-4 w-4 mr-1" />
-              Excluir
-            </Button>
-          )}
-
           <Button
             variant="ghost"
             size="sm"
