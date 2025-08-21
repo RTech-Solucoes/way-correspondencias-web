@@ -8,13 +8,14 @@ import {Label} from '@/components/ui/label';
 import {Textarea} from '@/components/ui/textarea';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
 import {CheckIcon} from '@phosphor-icons/react';
-import {Tema} from '@/types/temas/types';
 import {TemaResponse} from '@/api/temas/types';
 import {TipoContagem} from '@/types/temas/enums';
-import {v4 as uuidv4} from 'uuid';
 import {cn} from '@/utils/utils';
 import areasClient from '@/api/areas/client';
 import {AreaResponse} from '@/api/areas/types';
+import {temasClient} from '@/api/temas/client';
+import {TemaRequest} from '@/api/temas/types';
+import { toast } from 'sonner';
 
 interface TemaModalProps {
   tema: TemaResponse | null;
@@ -40,7 +41,7 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
       });
       const areasAtivas = response.content.filter((area: AreaResponse) => area.flAtivo === 'S');
       setAreas(areasAtivas);
-    } catch (error) {
+    } catch {
       setAreas([]);
     } finally {
       setLoadingAreas(false);
@@ -78,40 +79,31 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
   };
 
   const isFormValid = useCallback(() => {
-    return nmTema.trim() !== '' &&
-           dsTema.trim() !== '' &&
-           nrDiasPrazo > 0 &&
-           selectedAreaIds.length > 0;
-  }, [nmTema, dsTema, nrDiasPrazo, selectedAreaIds]);
+    return nmTema.trim() !== '' && dsTema.trim() !== '';
+  }, [nmTema, dsTema]);
 
   const handleSave = async () => {
     if (!isFormValid()) return;
 
     try {
-      const currentDate = new Date().toISOString().split('T')[0];
-      const currentUser = '12345678901';
-
-      const novoTema: Tema = {
-        idTema: tema?.id.toString() || uuidv4(),
-        nmTema,
-        dsTema,
-        idAreas: selectedAreaIds,
-        nrDiasPrazo,
-        tpContagem,
-        dtCadastro: currentDate,
-        nrCpfCadastro: currentUser,
-        vsVersao: 1,
-        dtAlteracao: currentDate,
-        nrCpfAlteracao: currentUser
+      const temaRequest: TemaRequest = {
+        nmTema: nmTema.trim(),
+        dsTema: dsTema.trim()
       };
 
-      // Mock da operação de salvar - aqui seria chamada a API
-      console.log('Salvando tema:', novoTema);
+      if (tema) {
+        await temasClient.atualizar(tema.id, temaRequest);
+        toast.success("Tema atualizado com sucesso!");
+      } else {
+        await temasClient.criar(temaRequest);
+        toast.success("Tema criado com sucesso!");
+      }
 
       onSave();
       onClose();
     } catch (error) {
       console.error('Erro ao salvar tema:', error);
+      toast.error(`Erro ao ${tema ? 'atualizar' : 'criar'} tema`);
     }
   };
 
@@ -137,7 +129,7 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="nrDiasPrazo">Dias de Prazo *</Label>
+              <Label htmlFor="nrDiasPrazo">Dias de Prazo</Label>
               <Input
                 id="nrDiasPrazo"
                 type="number"
@@ -174,7 +166,7 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
           </div>
 
           <div className="space-y-4">
-            <Label>Áreas Relacionadas * (selecione pelo menos uma)</Label>
+            <Label>Áreas Relacionadas</Label>
             {loadingAreas ? (
               <div className="flex items-center justify-center p-8">
                 <div className="text-sm text-gray-500">Carregando áreas...</div>
