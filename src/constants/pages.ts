@@ -13,6 +13,11 @@ export const PAGES_DEF: PageDef[] = [
     icon: EnvelopeSimpleIcon
   },
   {
+    path: "/responsaveis",
+    label: "Responsáveis",
+    icon: UsersIcon
+  },
+  {
     path: "/areas",
     label: "Áreas",
     icon: BuildingIcon
@@ -21,11 +26,6 @@ export const PAGES_DEF: PageDef[] = [
     path: "/temas",
     label: "Temas",
     icon: TagIcon
-  },
-  {
-    path: "/responsaveis",
-    label: "Responsáveis",
-    icon: UsersIcon
   },
   {
     path: "/solicitacoes",

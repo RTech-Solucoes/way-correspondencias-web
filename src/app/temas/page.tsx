@@ -157,14 +157,6 @@ export default function TemasPage() {
               className="pl-10 bg-gray-50 border-gray-200 focus:bg-white"
             />
           </div>
-          <Button
-            variant="secondary"
-            className="h-10 px-4"
-            onClick={() => setShowFilterModal(true)}
-          >
-            <FunnelSimpleIcon className="h-4 w-4 mr-2"/>
-            Filtrar
-          </Button>
           {hasActiveFilters && (
             <Button
               variant="outline"
@@ -175,6 +167,14 @@ export default function TemasPage() {
               Limpar Filtros
             </Button>
           )}
+          <Button
+            variant="secondary"
+            className="h-10 px-4"
+            onClick={() => setShowFilterModal(true)}
+          >
+            <FunnelSimpleIcon className="h-4 w-4 mr-2"/>
+            Filtrar
+          </Button>
         </div>
       </div>
 
@@ -238,12 +238,12 @@ export default function TemasPage() {
                     {tema.areas && tema.areas.length > 0 ? (
                       <div className="flex flex-wrap gap-1">
                         {tema.areas.slice(0, 2).map((area, index) => (
-                          <span key={index} className="inline-flex px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
+                          <span key={index} className="inline-flex px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
                             {area.nmArea}
                           </span>
                         ))}
                         {tema.areas.length > 2 && (
-                          <span className="inline-flex px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">
+                          <span className="inline-flex px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
                             +{tema.areas.length - 2}
                           </span>
                         )}
@@ -255,14 +255,14 @@ export default function TemasPage() {
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end space-x-2">
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={() => handleEdit(tema)}
                       >
                         <PencilSimpleIcon className="h-4 w-4"/>
                       </Button>
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={() => handleDelete(tema)}
                         className="text-red-600 hover:text-red-700"

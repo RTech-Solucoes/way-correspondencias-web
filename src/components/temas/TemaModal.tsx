@@ -58,7 +58,6 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
       setNrPrazo(temaComAreas.nrPrazo || 0);
       setTpPrazo(temaComAreas.tpPrazo || '');
 
-      // Carrega as áreas associadas ao tema
       if (temaComAreas.areas && temaComAreas.areas.length > 0) {
         setSelectedAreaIds(temaComAreas.areas.map(area => area.idArea.toString()));
       } else {
@@ -76,10 +75,8 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
       buscarAreas();
 
       if (tema) {
-        // Se está editando, busca o tema com áreas do servidor
         buscarTemaComAreas(tema.idTema);
       } else {
-        // Se está criando, limpa os campos
         setNmTema('');
         setDsTema('');
         setNrPrazo(0);

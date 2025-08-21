@@ -184,14 +184,6 @@ export default function ResponsaveisPage() {
               className="pl-10 bg-gray-50 border-gray-200 focus:bg-white"
             />
           </div>
-          <Button
-            variant="secondary"
-            className="h-10 px-4"
-            onClick={() => setShowFilterModal(true)}
-          >
-            <FunnelSimpleIcon className="h-4 w-4 mr-2"/>
-            Filtrar
-          </Button>
           {hasActiveFilters && (
             <Button
               variant="outline"
@@ -202,6 +194,14 @@ export default function ResponsaveisPage() {
               Limpar Filtros
             </Button>
           )}
+          <Button
+            variant="secondary"
+            className="h-10 px-4"
+            onClick={() => setShowFilterModal(true)}
+          >
+            <FunnelSimpleIcon className="h-4 w-4 mr-2"/>
+            Filtrar
+          </Button>
         </div>
       </div>
 
@@ -257,14 +257,14 @@ export default function ResponsaveisPage() {
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end space-x-2">
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={() => handleEdit(responsavel)}
                       >
                         <PencilSimpleIcon className="h-4 w-4"/>
                       </Button>
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={() => handleDelete(responsavel)}
                         className="text-red-600 hover:text-red-700"

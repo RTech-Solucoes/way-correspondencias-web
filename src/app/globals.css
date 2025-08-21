@@ -161,11 +161,11 @@ button, input[type="file"] {
 
 .bg-landscape {
   background-image: url('/images/background.jpg');
-  background-size: cover; 
-  background-position: center; 
-  background-repeat: no-repeat; 
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   width: 100%;
-  height: 100vh; 
+  height: 100vh;
 }
 
 .pop-in {

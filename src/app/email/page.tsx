@@ -4,6 +4,7 @@ import {useState} from 'react';
 import {
   FunnelSimpleIcon,
   MagnifyingGlassIcon,
+  XIcon,
 } from '@phosphor-icons/react';
 import {Button} from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,6 +34,34 @@ export default function EmailPage() {
     dateTo: '',
   });
 
+  const [activeEmailFilters, setActiveEmailFilters] = useState({
+    remetente: '',
+    destinatario: '',
+    status: '',
+    dateFrom: '',
+    dateTo: '',
+  });
+
+  const applyFilters = () => {
+    setActiveEmailFilters(emailFilters);
+    setShowFilterModal(false);
+  };
+
+  const clearFilters = () => {
+    const clearedFilters = {
+      remetente: '',
+      destinatario: '',
+      status: '',
+      dateFrom: '',
+      dateTo: '',
+    };
+    setEmailFilters(clearedFilters);
+    setActiveEmailFilters(clearedFilters);
+    setShowFilterModal(false);
+  };
+
+  const hasActiveFilters = Object.values(activeEmailFilters).some(value => value !== '');
+
   return (
     <div className="flex flex-col min-h-0 flex-1">
       <div className="bg-white border-b border-gray-200 p-6">
@@ -50,6 +79,16 @@ export default function EmailPage() {
               className="pl-10 bg-gray-50 border-gray-200 focus:bg-white"
             />
           </div>
+          {hasActiveFilters && (
+            <Button
+              variant="outline"
+              className="h-10 px-4"
+              onClick={clearFilters}
+            >
+              <XIcon className="h-4 w-4 mr-2"/>
+              Limpar Filtros
+            </Button>
+          )}
           <Button
             variant="secondary"
             className="h-10 px-4"
@@ -70,9 +109,9 @@ export default function EmailPage() {
             emailFilters={{
               isRead: '',
               hasAttachment: '',
-              dateFrom: emailFilters.dateFrom,
-              dateTo: emailFilters.dateTo,
-              sender: emailFilters.remetente
+              dateFrom: activeEmailFilters.dateFrom,
+              dateTo: activeEmailFilters.dateTo,
+              sender: activeEmailFilters.remetente
             }}
           />
         ) : (
@@ -149,20 +188,11 @@ export default function EmailPage() {
             <DialogFooter>
               <Button
                 variant="outline"
-                onClick={() => {
-                  setEmailFilters({
-                    remetente: '',
-                    destinatario: '',
-                    status: '',
-                    dateFrom: '',
-                    dateTo: '',
-                  });
-                  setShowFilterModal(false);
-                }}
+                onClick={clearFilters}
               >
                 Limpar Filtros
               </Button>
-              <Button onClick={() => setShowFilterModal(false)}>
+              <Button onClick={applyFilters}>
                 Aplicar Filtros
               </Button>
             </DialogFooter>

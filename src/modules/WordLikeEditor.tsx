@@ -21,10 +21,10 @@ export default function WordLikeEditor() {
     toolbar: [
       [{ header: [1, 2, 3, false] }],
       ["bold", "italic", "underline", "strike"],
-      [{ align: [] }], // <--- alinhamento habilitado
+      [{ align: [] }],
       [{ list: "ordered" }, { list: "bullet" }],
       ["blockquote", "code-block"],
-      ["link", "image"], // <--- inserir imagem
+      ["link", "image"],
       ["clean"],
     ],
   };
@@ -32,7 +32,7 @@ export default function WordLikeEditor() {
   const formats = [
     "header",
     "bold", "italic", "underline", "strike",
-    "align", // <--- importante
+    "align",
     "list", "bullet",
     "blockquote", "code-block",
     "link", "image",
