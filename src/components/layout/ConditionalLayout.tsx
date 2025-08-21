@@ -3,9 +3,9 @@
 import { usePathname } from 'next/navigation';
 import { ReactNode } from 'react';
 import { cn } from "@/utils/utils";
-import Sidebar from "@/components/layout/Sidebar";
+import Sidebar from "@/components/layout/sidebar/Sidebar";
 import { PUBLIC_ROUTES } from "@/constants/pages";
-import useModal from '@/context/Modal/Modal';
+import useModal from '@/context/modal/ModalContext';
 import { Modal } from '../libs/Modal/Modal';
 
 interface ConditionalLayoutProps {

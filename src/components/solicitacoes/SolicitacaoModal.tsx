@@ -26,7 +26,7 @@ import { AreaResponse } from '@/api/areas/types';
 import { solicitacoesClient } from '@/api/solicitacoes/client';
 import { toast } from 'sonner';
 import { capitalize } from '@/utils/utils';
-import useModal from '@/context/Modal/Modal';
+import useModal from '@/context/modal/ModalContext';
 import ModalWord from './ModalWord/ModalWord';
 
 interface SolicitacaoModalProps {
@@ -146,7 +146,7 @@ export default function SolicitacaoModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>
             {solicitacao ? 'Editar Solicitação' : 'Nova Solicitação'}
@@ -154,14 +154,14 @@ export default function SolicitacaoModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
-          <div className='w-full flex justify-end -mb-2'>
-            <Button
-              type="button"
-              onClick={() => setModalContent(<ModalWord />)}
-            >
-              Criar Documento
-            </Button>
-          </div>
+          {/*<div className='w-full flex justify-end -mb-2'>*/}
+          {/*  <Button*/}
+          {/*    type="button"*/}
+          {/*    onClick={() => setModalContent(<ModalWord />)}*/}
+          {/*  >*/}
+          {/*    Criar Documento*/}
+          {/*  </Button>*/}
+          {/*</div>*/}
 
           <TextField
             label="Assunto *"

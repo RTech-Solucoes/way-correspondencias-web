@@ -118,7 +118,7 @@ export default function EmailPage() {
                     <SelectValue placeholder="Selecione o status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos</SelectItem>
+                    <SelectItem value="all">Todos</SelectItem>
                     <SelectItem value="PENDENTE">Pendente</SelectItem>
                     <SelectItem value="ENVIADO">Enviado</SelectItem>
                     <SelectItem value="RESPONDIDO">Respondido</SelectItem>

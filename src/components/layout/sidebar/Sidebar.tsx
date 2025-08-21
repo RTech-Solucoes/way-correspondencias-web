@@ -11,8 +11,8 @@ import authClient from "@/api/auth/client";
 import {Notification} from "@/types/notifications/types";
 
 const MOCK_USER: User = {
-  name: "Joao Silva",
-  email: "joaosilva@email.com",
+  name: "Joao da Silva Nunes",
+  email: "joaonunes@email.com",
   avatar: "/images/avatar.png"
 }
 

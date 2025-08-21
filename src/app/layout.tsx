@@ -7,7 +7,7 @@ import IconProvider from "@/components/providers/IconProvider";
 import AuthGuard from "@/components/providers/AuthGuard";
 import ConditionalLayout from "@/components/layout/ConditionalLayout";
 import { Toaster } from "sonner";
-import { ModalProvider } from '@/context/Modal/Modal';
+import { ModalProvider } from '@/context/modal/ModalContext';
 
 const defaultFont = DefaultFont({
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
@@ -34,10 +34,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${defaultFont.className} ${defaultFont.variable}`}>
-        <ModalProvider>
-          <ApiProvider>
-            <IconProvider>
-              <AuthGuard>
+        <ApiProvider>
+          <IconProvider>
+            <AuthGuard>
+              <ModalProvider>
                 <ConditionalLayout>
                   {children}
                   <Toaster
@@ -46,10 +46,10 @@ export default function RootLayout({
                     position="bottom-right"
                   />
                 </ConditionalLayout>
-              </AuthGuard>
-            </IconProvider>
-          </ApiProvider>
-        </ModalProvider>
+              </ModalProvider>
+            </AuthGuard>
+          </IconProvider>
+        </ApiProvider>
       </body>
     </html>
   );

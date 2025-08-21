@@ -1,5 +1,5 @@
 import BaseModal from "@/components/libs/BaseModal/BaseModal";
-import useModal from "@/context/Modal/Modal";
+import useModal from "@/context/modal/ModalContext";
 import WordLikeEditor from "@/modules/WordLikeEditor";
 
 export default function ModalWord() {

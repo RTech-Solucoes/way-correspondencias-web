@@ -391,7 +391,7 @@ export default function SolicitacoesPage() {
                       <SelectValue placeholder="Selecione o status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todos</SelectItem>
+                      <SelectItem value="all">Todos</SelectItem>
                       <SelectItem value="PENDENTE">Pendente</SelectItem>
                       <SelectItem value="EM_ANDAMENTO">Em Andamento</SelectItem>
                       <SelectItem value="CONCLUIDA">Concluída</SelectItem>
@@ -411,7 +411,7 @@ export default function SolicitacoesPage() {
                       <SelectValue placeholder="Selecione o responsável" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todos</SelectItem>
+                      <SelectItem value="all">Todos</SelectItem>
                       {responsaveis.map((resp) => (
                         <SelectItem key={resp.id} value={resp.id.toString()}>
                           {resp.nmResponsavel}
@@ -430,7 +430,7 @@ export default function SolicitacoesPage() {
                       <SelectValue placeholder="Selecione o tema" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todos</SelectItem>
+                      <SelectItem value="all">Todos</SelectItem>
                       {temas.map((tema) => (
                         <SelectItem key={tema.id} value={tema.id.toString()}>
                           {tema.nmTema}

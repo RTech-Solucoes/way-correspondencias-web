@@ -105,7 +105,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
 
   return (
     <Dialog open={open} onOpenChange={(newOpen) => !newOpen && onClose()}>
-      <DialogContent className="sm:max-w-[400px]">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>
             {responsavel ? 'Editar Responsável' : 'Novo Responsável'}

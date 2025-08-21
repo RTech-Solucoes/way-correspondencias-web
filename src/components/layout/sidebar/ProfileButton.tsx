@@ -20,6 +20,11 @@ export default function ProfileButton ({
   user: User,
   handleLogout(): void
 }) {
+  const names = user?.name.split(' ')
+  const nameInital = names?.[0]?.charAt(0).toUpperCase()
+  const surnameInital = names?.[names.length - 1]?.charAt(0).toUpperCase()
+  const initials = nameInital + surnameInital
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -31,8 +36,7 @@ export default function ProfileButton ({
             <Avatar className="h-12 w-12">
               <AvatarImage src={user?.avatar} />
               <AvatarFallback className="w-12 h-12 group-hover:bg-white">
-                {user?.name.split(' ')[0].charAt(0).toUpperCase()}
-                {user?.name.split(' ')[1].charAt(0).toUpperCase()}
+                {initials}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
