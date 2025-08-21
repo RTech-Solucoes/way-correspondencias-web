@@ -6,16 +6,16 @@ import { Label } from '@/components/ui/label';
 import { TextField } from '@/components/ui/text-field';
 import { PAGES_DEF } from "@/constants/pages";
 import { cn } from '@/utils/utils';
-import { EnvelopeSimpleIcon, LockIcon } from '@phosphor-icons/react';
+import { UserIcon, LockIcon } from '@phosphor-icons/react';
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from 'react';
 import { toast } from 'sonner';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [emailError, setEmailError] = useState('');
+  const [usernameError, setUsernameError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -24,13 +24,13 @@ export default function LoginPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    setEmailError('');
+    setUsernameError('');
     setPasswordError('');
 
     let hasErrors = false;
 
-    if (!email) {
-      setEmailError('Email é obrigatório');
+    if (!username) {
+      setUsernameError('Username é obrigatório');
       hasErrors = true;
     }
 
@@ -46,17 +46,17 @@ export default function LoginPage() {
       setIsLoading(true);
       try {
         await authClient.login({
-          username: email,
+          username: username,
           password: password
         });
 
 
         toast.success("Login Realizado com Sucesso.")
         router.push(PAGES_DEF[0].path);
-        setEmail('');
+        setUsername('');
         setPassword('');
-      } catch (error) {
-        toast.warning("CPF ou senha inválidos")
+      } catch {
+        toast.warning("Username ou senha inválidos")
       } finally {
         setIsLoading(false);
       }
@@ -80,20 +80,20 @@ export default function LoginPage() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email" className="text-md font-medium text-white">
-            Email
+          <Label htmlFor="username" className="text-md font-medium text-white">
+            Nome de usuário
           </Label>
           <TextField
-            id="email"
-            type="email"
-            value={email}
+            id="username"
+            type="text"
+            value={username}
             onChange={(e) => {
-              setEmail(e.target.value);
-              if (emailError) setEmailError('');
+              setUsername(e.target.value);
+              if (usernameError) setUsernameError('');
             }}
-            leftIcon={<EnvelopeSimpleIcon className="h-5 w-5 text-gray-300" />}
-            placeholder="seu.email@waybrasil.com"
-            error={emailError}
+            leftIcon={<UserIcon className="h-5 w-5 text-gray-300" />}
+            placeholder="Digite seu nome de usuário"
+            error={usernameError}
             disabled={isLoading}
             className={cn(
               "h-12 border-none pl-10 text-white",
