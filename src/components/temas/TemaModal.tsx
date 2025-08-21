@@ -169,7 +169,7 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
             <Label>Áreas Relacionadas</Label>
             {loadingAreas ? (
               <div className="flex items-center justify-center p-8">
-                <div className="text-sm text-gray-500">Carregando áreas...</div>
+                <div className="text-sm text-gray-500">Buscando áreas...</div>
               </div>
             ) : (
               <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto">

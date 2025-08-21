@@ -1,6 +1,6 @@
 'use client';
 
-import {useState, useEffect} from 'react';
+import React, {useState, useEffect} from 'react';
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
 import {Button} from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +11,7 @@ import {
   PlusIcon,
   TrashIcon,
   XIcon,
-  TagIcon,
+  TagIcon, SpinnerIcon,
 } from '@phosphor-icons/react';
 import {Dialog, DialogContent, DialogHeader, DialogTitle} from '@/components/ui/dialog';
 import {Label} from '@/components/ui/label';
@@ -196,7 +196,10 @@ export default function TemasPage() {
             {loading ? (
               <TableRow>
                 <TableCell colSpan={4} className="text-center py-8">
-                  Carregando temas...
+                  <div className="flex flex-1 items-center justify-center py-8">
+                    <SpinnerIcon className="h-6 w-6 animate-spin text-gray-400" />
+                    <span className="ml-2 text-gray-500">Buscando temas...</span>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : temas.length === 0 ? (

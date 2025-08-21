@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,7 +14,7 @@ import {
   PlusIcon,
   TrashIcon,
   ClipboardTextIcon,
-  XIcon
+  XIcon, SpinnerIcon
 } from '@phosphor-icons/react';
 import PageTitle from '@/components/ui/page-title';
 import { solicitacoesClient } from '@/api/solicitacoes/client';
@@ -303,7 +303,10 @@ export default function SolicitacoesPage() {
             {loading ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8">
-                  Carregando solicitações...
+                  <div className="flex flex-1 items-center justify-center py-8">
+                    <SpinnerIcon className="h-6 w-6 animate-spin text-gray-400" />
+                    <span className="ml-2 text-gray-500">Buscando solicitações...</span>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : solicitacoes.length === 0 ? (

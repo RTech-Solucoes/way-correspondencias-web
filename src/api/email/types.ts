@@ -24,7 +24,7 @@ export interface EmailResponse {
   dsRemetente: string;
   dsDestinatario: string;
   dsAssunto: string;
-  txConteudo: string;
+  dsCorpo: string;
   dtEnvio: string;
   dtResposta?: string;
   flStatus: string;

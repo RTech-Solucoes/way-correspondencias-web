@@ -1,6 +1,6 @@
 'use client';
 
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import {
   FunnelSimpleIcon,
   MagnifyingGlassIcon,
@@ -16,8 +16,8 @@ import {
 } from "@/components/ui/dialog";
 import {Label} from "@/components/ui/label";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
-import EmailList from '../../components/email/EmailList';
-import EmailDetail from '../../components/email/EmailDetail';
+import EmailList from '@/components/email/EmailList';
+import EmailDetail from '@/components/email/EmailDetail';
 import PageTitle from '@/components/ui/page-title';
 
 export default function EmailPage() {
@@ -32,6 +32,10 @@ export default function EmailPage() {
     dateFrom: '',
     dateTo: '',
   });
+
+  useEffect(() => {
+    console.log('selectedEmail changed:', selectedEmail);
+  }, [selectedEmail]);
 
   return (
     <div className="flex flex-col min-h-0 flex-1">

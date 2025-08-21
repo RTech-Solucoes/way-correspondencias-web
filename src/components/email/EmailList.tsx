@@ -1,9 +1,8 @@
 'use client';
 
 import React, {memo, useCallback, useMemo, useState, useEffect} from 'react';
-import {ArrowClockwiseIcon, EnvelopeSimpleIcon, PaperclipIcon, SpinnerIcon, TrashIcon} from '@phosphor-icons/react';
+import {ArrowClockwiseIcon, EnvelopeSimpleIcon, PaperclipIcon, SpinnerIcon} from '@phosphor-icons/react';
 import {Button} from '@/components/ui/button';
-import {Checkbox} from '@/components/ui/checkbox';
 import {cn} from '@/utils/utils';
 import { toast } from 'sonner';
 import { emailClient } from '@/api/email/client';
@@ -43,17 +42,36 @@ const formatDate = (dateString?: string): string => {
   }
 };
 
-const convertEmailResponse = (email: EmailResponse): Email => {
+const convertEmailResponse = (email: EmailResponse | null): Email => {
+  if (!email) {
+    console.warn('Email object is undefined or null');
+    return {
+      id: '0',
+      from: 'Email inválido',
+      subject: 'Assunto não disponível',
+      preview: 'Conteúdo não disponível',
+      date: '',
+      isRead: false,
+      hasAttachment: false,
+      labels: ['erro'],
+      content: 'Conteúdo não disponível'
+    };
+  }
+
+  const convertedId = email.id?.toString() || '0';
+
   return {
-    id: email.id.toString(),
-    from: `${email.nmUsuario} <${email.dsRemetente}>`,
-    subject: email.dsAssunto,
-    preview: email.txConteudo.length > 100 ? email.txConteudo.substring(0, 100) + '...' : email.txConteudo,
+    id: convertedId,
+    from: email.dsRemetente,
+    subject: email.dsAssunto || 'Sem assunto',
+    preview: email.dsCorpo
+      ? (email.dsCorpo.length > 100 ? email.dsCorpo.substring(0, 100) + '...' : email.dsCorpo)
+      : 'Sem conteúdo disponível',
     date: formatDate(email.dtEnvio),
     isRead: email.flStatus === 'RESPONDIDO' || email.dtResposta !== null,
     hasAttachment: email.anexos ? email.anexos.length > 0 : false,
-    labels: [email.flStatus.toLowerCase()],
-    content: email.txConteudo
+    labels: [email.flStatus?.toLowerCase() || 'desconhecido'],
+    content: email.dsCorpo || 'Conteúdo não disponível'
   };
 };
 
@@ -73,19 +91,12 @@ interface EmailListProps {
 const EmailItem = memo<{
   email: Email;
   isSelected: boolean;
-  isChecked: boolean;
   onSelect(): void;
-  onToggleCheck(): void;
-}>(({ email, isSelected, isChecked, onSelect, onToggleCheck }) => {
+}>(({ email, isSelected, onSelect }) => {
   const handleClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
     onSelect();
   }, [onSelect]);
-
-  const handleCheckboxClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation();
-    onToggleCheck();
-  }, [onToggleCheck]);
 
   return (
     <div
@@ -97,11 +108,6 @@ const EmailItem = memo<{
       onClick={handleClick}
     >
       <div className="flex items-start space-x-3">
-        <Checkbox
-          checked={isChecked}
-          onCheckedChange={onToggleCheck}
-          onClick={handleCheckboxClick}
-        />
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center space-x-2">
@@ -142,7 +148,6 @@ function EmailList({
     sender: ''
   }
 }: EmailListProps) {
-  const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
   const [syncLoading, setSyncLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [emails, setEmails] = useState<Email[]>([]);
@@ -161,12 +166,43 @@ function EmailList({
         size: 50
       });
 
-      const convertedEmails = response.content.map(convertEmailResponse);
+      if (!response || !response.content) {
+        console.error('Resposta da API inválida:', response);
+        toast.error("Resposta da API inválida");
+        setEmails([]);
+        setTotalPages(0);
+        setTotalElements(0);
+        return;
+      }
+
+      if (!Array.isArray(response.content)) {
+        console.error('response.content não é um array:', response.content);
+        toast.error("Formato de dados inválido");
+        setEmails([]);
+        setTotalPages(0);
+        setTotalElements(0);
+        return;
+      }
+
+      const convertedEmails = response.content.map((email, index) => {
+        try {
+          return convertEmailResponse(email);
+          console.log("teste")
+        } catch (error) {
+          console.error(`Erro ao converter email ${index}:`, error, email);
+          return convertEmailResponse(null);
+        }
+      });
+
       setEmails(convertedEmails);
-      setTotalPages(response.totalPages);
-      setTotalElements(response.totalElements);
+      setTotalPages(response.totalPages || 0);
+      setTotalElements(response.totalElements || 0);
     } catch (error) {
+      console.error("Erro ao carregar emails:", error);
       toast.error("Erro ao carregar emails");
+      setEmails([]);
+      setTotalPages(0);
+      setTotalElements(0);
     } finally {
       setLoading(false);
     }
@@ -207,7 +243,7 @@ function EmailList({
     try {
       await loadEmails();
       toast.success("Seus emails foram atualizados com sucesso");
-    } catch (error) {
+    } catch {
       toast.error("Erro ao sincronizar emails");
     } finally {
       setSyncLoading(false);
@@ -218,21 +254,8 @@ function EmailList({
     <div className="flex-1 flex flex-col bg-white">
       <div className="flex items-center justify-between p-4 border-b border-gray-200">
         <div className="flex items-center space-x-2">
-          <Checkbox
-            checked={selectedEmails.length === filteredEmails.length && filteredEmails.length > 0}
-            onCheckedChange={(checked) => {
-              if (checked) {
-                setSelectedEmails(filteredEmails.map(email => email.id));
-              } else {
-                setSelectedEmails([]);
-              }
-            }}
-          />
           <span className="text-sm text-gray-500">
-            {selectedEmails.length > 0
-              ? `${selectedEmails.length} selecionado(s)`
-              : `${filteredEmails.length} email(s)`
-            }
+            {filteredEmails.length} email(s)
           </span>
         </div>
 
@@ -255,9 +278,9 @@ function EmailList({
 
       <div className="flex flex-col flex-1 overflow-y-auto">
         {loading ? (
-          <div className="flex items-center justify-center py-8">
+          <div className="flex flex-1 items-center justify-center py-8">
             <SpinnerIcon className="h-6 w-6 animate-spin text-gray-400" />
-            <span className="ml-2 text-gray-500">Carregando emails...</span>
+            <span className="ml-2 text-gray-500">Buscando emails...</span>
           </div>
         ) : filteredEmails.length === 0 ? (
           <div className="flex flex-1 items-center justify-center py-16">
@@ -275,20 +298,12 @@ function EmailList({
             </div>
           </div>
         ) : (
-          filteredEmails.map((email) => (
+          filteredEmails.map((email, index) => (
             <EmailItem
-              key={email.id}
+              key={index}
               email={email}
               isSelected={selectedEmail === email.id}
-              isChecked={selectedEmails.includes(email.id)}
               onSelect={() => onEmailSelect(email.id)}
-              onToggleCheck={() => {
-                setSelectedEmails(prev =>
-                  prev.includes(email.id)
-                    ? prev.filter(id => id !== email.id)
-                    : [...prev, email.id]
-                );
-              }}
             />
           ))
         )}

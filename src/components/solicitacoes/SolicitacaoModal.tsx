@@ -52,7 +52,7 @@ export default function SolicitacaoModal({
 
   const [formData, setFormData] = useState<SolicitacaoRequest>({
     dsAssunto: '',
-    txConteudo: '',
+    dsCorpo: '',
     flStatus: 'PENDENTE',
     idResponsavel: 0,
     idTema: 0,
@@ -64,7 +64,7 @@ export default function SolicitacaoModal({
     if (solicitacao) {
       setFormData({
         dsAssunto: solicitacao.dsAssunto,
-        txConteudo: solicitacao.txConteudo,
+        dsCorpo: solicitacao.dsCorpo,
         flStatus: solicitacao.flStatus,
         idResponsavel: solicitacao.responsavel.id,
         idTema: solicitacao.tema.id,
@@ -73,7 +73,7 @@ export default function SolicitacaoModal({
     } else {
       setFormData({
         dsAssunto: '',
-        txConteudo: '',
+        dsCorpo: '',
         flStatus: 'PENDENTE',
         idResponsavel: 0,
         idTema: 0,
@@ -106,7 +106,7 @@ export default function SolicitacaoModal({
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    if (!formData.dsAssunto.trim() || !formData.txConteudo.trim() ||
+    if (!formData.dsAssunto.trim() || !formData.dsCorpo.trim() ||
       !formData.idResponsavel || !formData.idTema || !formData.idArea) {
       toast.error("Por favor, preencha todos os campos obrigatórios");
       return;
@@ -138,7 +138,7 @@ export default function SolicitacaoModal({
 
   const isFormValid = useCallback(() => {
     return formData.dsAssunto.trim() !== '' &&
-      formData.txConteudo.trim() !== '' &&
+      formData.dsCorpo.trim() !== '' &&
       formData.idResponsavel > 0 &&
       formData.idTema > 0 &&
       formData.idArea > 0;
@@ -174,11 +174,11 @@ export default function SolicitacaoModal({
           />
 
           <div className="space-y-2">
-            <Label htmlFor="txConteudo">Conteúdo *</Label>
+            <Label htmlFor="dsCorpo">Conteúdo *</Label>
             <Textarea
-              id="txConteudo"
-              name="txConteudo"
-              value={formData.txConteudo}
+              id="dsCorpo"
+              name="dsCorpo"
+              value={formData.dsCorpo}
               onChange={handleInputChange}
               placeholder="Descreva detalhadamente sua solicitação..."
               rows={4}

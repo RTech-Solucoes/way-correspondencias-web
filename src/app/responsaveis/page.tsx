@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Table,
   TableBody, 
@@ -11,14 +11,14 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { 
+import {
   PlusIcon,
   MagnifyingGlassIcon,
   PencilSimpleIcon,
   TrashIcon,
   FunnelSimpleIcon,
   UsersIcon,
-  XIcon
+  XIcon, SpinnerIcon
 } from '@phosphor-icons/react';
 import {
   Dialog,
@@ -221,7 +221,10 @@ export default function ResponsaveisPage() {
             {loading ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8">
-                  Carregando responsáveis...
+                  <div className="flex flex-1 items-center justify-center py-8">
+                    <SpinnerIcon className="h-6 w-6 animate-spin text-gray-400" />
+                    <span className="ml-2 text-gray-500">Buscando responsáveis...</span>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : responsaveis.length === 0 ? (

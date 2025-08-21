@@ -57,9 +57,13 @@ export default function EmailDetail({
     const loadEmail = async () => {
       try {
         setLoading(true);
-        const emailData = await emailClient.buscarPorId(parseInt(emailId));
+
+        const numericId = parseInt(emailId);
+
+        const emailData = await emailClient.buscarPorId(numericId);
         setEmail(emailData);
       } catch (error) {
+        console.error('Erro ao carregar email:', error);
         toast.error("Erro ao carregar o email");
         onBack();
       } finally {
@@ -107,7 +111,7 @@ export default function EmailDetail({
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-500">Carregando email...</p>
+          <p className="text-gray-500">Buscando email...</p>
         </div>
       </div>
     );
@@ -217,7 +221,7 @@ export default function EmailDetail({
 
         <div className="prose max-w-none">
           <div className="whitespace-pre-wrap text-gray-900 leading-relaxed">
-            {email.txConteudo}
+            {email.dsCorpo}
           </div>
         </div>
       </div>
