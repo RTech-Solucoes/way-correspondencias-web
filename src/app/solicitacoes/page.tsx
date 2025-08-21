@@ -323,12 +323,12 @@ export default function SolicitacoesPage() {
                 <TableRow key={solicitacao.id}>
                   <TableCell className="font-medium">{solicitacao.cdIdentificacao}</TableCell>
                   <TableCell className="max-w-xs truncate">{solicitacao.dsAssunto}</TableCell>
-                  <TableCell>{solicitacao.responsavel.nmResponsavel}</TableCell>
+                  <TableCell>{solicitacao.nmResponsavel}</TableCell>
                   <TableCell>{solicitacao.area.nmArea}</TableCell>
                   <TableCell>{solicitacao.tema.nmTema}</TableCell>
                   <TableCell>
-                    <Badge variant={getStatusBadgeVariant(solicitacao.flStatus)}>
-                      {getStatusText(solicitacao.flStatus)}
+                    <Badge variant={getStatusBadgeVariant(solicitacao.flAtivo)}>
+                      {getStatusText(solicitacao.flAtivo)}
                     </Badge>
                   </TableCell>
                   <TableCell>{new Date(solicitacao.dtCriacao).toLocaleDateString('pt-BR')}</TableCell>

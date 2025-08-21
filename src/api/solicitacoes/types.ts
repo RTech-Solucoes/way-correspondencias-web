@@ -3,7 +3,7 @@ export interface SolicitacaoResponse {
   cdIdentificacao: string;
   dsAssunto: string;
   dsCorpo: string;
-  flStatus: string;
+  flAtivo: StatusAtivo;
   dtCriacao: string;
   dtPrazoResposta?: string;
   dtResposta?: string;
@@ -28,7 +28,7 @@ export interface SolicitacaoResponse {
 export interface SolicitacaoRequest {
   dsAssunto: string;
   dsCorpo: string;
-  flStatus: string;
+  flAtivo: StatusAtivo;
   dtPrazoResposta?: string;
   txResposta?: string;
   idResponsavel: number;

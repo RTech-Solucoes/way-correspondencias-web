@@ -56,7 +56,7 @@ export default function LoginPage() {
         setUsername('');
         setPassword('');
       } catch {
-        toast.warning("Username ou senha inválidos")
+        toast.warning("Nome de usuário ou senha inválidos")
       } finally {
         setIsLoading(false);
       }

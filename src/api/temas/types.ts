@@ -2,7 +2,7 @@ export interface TemaResponse {
   id: number;
   nmTema: string;
   dsTema: string;
-  flAtivo: boolean;
+  flAtivo: StatusAtivo;
   dtCriacao: string;
   dtUltimaAtualizacao?: string;
 }

@@ -10,6 +10,7 @@ import {Button} from "@/components/ui/button";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {SignOutIcon} from "@phosphor-icons/react";
 import {User} from "@/types/auth/types";
+import {getInitials} from "@/utils/utils";
 
 
 
@@ -20,10 +21,6 @@ export default function ProfileButton ({
   user: User,
   handleLogout(): void
 }) {
-  const names = user?.name.split(' ')
-  const nameInital = names?.[0]?.charAt(0).toUpperCase()
-  const surnameInital = names?.[names.length - 1]?.charAt(0).toUpperCase()
-  const initials = nameInital + surnameInital
 
   return (
     <DropdownMenu>
@@ -36,7 +33,7 @@ export default function ProfileButton ({
             <Avatar className="h-12 w-12">
               <AvatarImage src={user?.avatar} />
               <AvatarFallback className="w-12 h-12 group-hover:bg-white">
-                {initials}
+                {getInitials(user?.name)}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">

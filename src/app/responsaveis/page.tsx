@@ -112,7 +112,7 @@ export default function ResponsaveisPage() {
   const confirmDelete = async () => {
     if (responsavelToDelete) {
       try {
-        await responsaveisClient.deletar(responsavelToDelete.id);
+        await responsaveisClient.deletar(responsavelToDelete.idResponsavel);
         toast.success("Responsável excluído com sucesso");
         loadResponsaveis();
       } catch {
@@ -156,7 +156,7 @@ export default function ResponsaveisPage() {
   const filteredResponsaveis = responsaveis.filter(responsavel =>
     responsavel.nmResponsavel.toLowerCase().includes(searchQuery.toLowerCase()) ||
     responsavel.dsEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    responsavel.nmUsuario.toLowerCase().includes(searchQuery.toLowerCase())
+    responsavel.nmUsuarioLogin.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -211,9 +211,9 @@ export default function ResponsaveisPage() {
               <TableHead>Nome</TableHead>
               <TableHead>Usuário</TableHead>
               <TableHead>Email</TableHead>
-              <TableHead>Área</TableHead>
+              <TableHead>Perfil</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Criado em</TableHead>
+              <TableHead>CPF</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -238,21 +238,21 @@ export default function ResponsaveisPage() {
               </TableRow>
             ) : (
               responsaveis.map((responsavel) => (
-                <TableRow key={responsavel.id}>
+                <TableRow key={responsavel.idResponsavel}>
                   <TableCell className="font-medium">{responsavel.nmResponsavel}</TableCell>
-                  <TableCell>{responsavel.nmUsuario}</TableCell>
+                  <TableCell>{responsavel.nmUsuarioLogin}</TableCell>
                   <TableCell>{responsavel.dsEmail}</TableCell>
-                  <TableCell>{getAreaName(responsavel.area)}</TableCell>
+                  <TableCell>{responsavel.nmPerfil || 'N/A'}</TableCell>
                   <TableCell>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      responsavel.flAtivo 
+                      responsavel.flAtivo === 'ATIVO'
                         ? 'bg-green-100 text-green-800' 
                         : 'bg-red-100 text-red-800'
                     }`}>
-                      {responsavel.flAtivo ? 'Ativo' : 'Inativo'}
+                      {responsavel.flAtivo === 'ATIVO' ? 'Ativo' : 'Inativo'}
                     </span>
                   </TableCell>
-                  <TableCell>{new Date(responsavel.dtCriacao).toLocaleDateString('pt-BR')}</TableCell>
+                  <TableCell>{responsavel.nrCpf}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end space-x-2">
                       <Button

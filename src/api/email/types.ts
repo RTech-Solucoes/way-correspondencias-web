@@ -1,25 +1,13 @@
-export interface Anexo {
-  id_anexo: number;
-  ds_nome_anexo: string;
-  nm_tamanho_anexo: number;
-}
+import {StatusAtivo} from "@/types/misc/types";
 
-export interface EmailAPI {
-  id_email: number;
-  cd_sei?: string;
-  titulo: string;
-  assunto: string;
-  conteudo: string;
-  remetente: string;
-  resposta?: string;
-  prazo_resposta?: string;
-  id_setor: number;
-  id_responsavel: number;
-  tp_email: string;
+export interface Anexo {
+  idAnexo: number;
+  dsNomeAnexo: string;
+  nmTamanhoAnexo: number;
 }
 
 export interface EmailResponse {
-  id: number;
+  idEmail: number;
   nmUsuario: string;
   dsRemetente: string;
   dsDestinatario: string;
@@ -27,7 +15,7 @@ export interface EmailResponse {
   dsCorpo: string;
   dtEnvio: string;
   dtResposta?: string;
-  flStatus: string;
+  flAtivo: StatusAtivo;
   anexos?: Anexo[];
 }
 

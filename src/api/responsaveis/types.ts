@@ -1,31 +1,22 @@
-export interface CreateResponsavelRequest {
-  nmResponsavel: string;
-  email: string;
-  senha: string;
-  tp_perfil: 'VISUALIZADOR' | 'EDITOR' | 'APROVADOR';
-}
-
 export interface ResponsavelResponse {
-  id: number;
-  nmUsuario: string;
-  dsEmail: string;
-  nmResponsavel: string;
-  flAtivo: boolean;
-  dtCriacao: string;
-  dtUltimaAtualizacao?: string;
-  area?: {
-    id: number;
-    nmArea: string;
-    cdArea: string;
-  };
-}
-
-export interface ResponsavelRequest {
+  idResponsavel: number;
+  idPerfil: number;
+  nmPerfil: string;
   nmUsuarioLogin: string;
   nmResponsavel: string;
   dsEmail: string;
   nrCpf: string;
-  dtNascimento: string; // ISO date string format
+  dtNascimento: string;
+  flAtivo: 'ATIVO' | 'INATIVO';
+}
+
+export interface ResponsavelRequest {
+  idPerfil: number;
+  nmUsuarioLogin: string;
+  nmResponsavel: string;
+  dsEmail: string;
+  nrCpf: string;
+  dtNascimento: string;
 }
 
 export interface PagedResponse<T> {

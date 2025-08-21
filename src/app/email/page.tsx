@@ -1,6 +1,6 @@
 'use client';
 
-import {useEffect, useState} from 'react';
+import {useState} from 'react';
 import {
   FunnelSimpleIcon,
   MagnifyingGlassIcon,
@@ -32,10 +32,6 @@ export default function EmailPage() {
     dateFrom: '',
     dateTo: '',
   });
-
-  useEffect(() => {
-    console.log('selectedEmail changed:', selectedEmail);
-  }, [selectedEmail]);
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
@@ -69,7 +65,7 @@ export default function EmailPage() {
         {!selectedEmail ? (
           <EmailList
             searchQuery={searchQuery}
-            selectedEmail={selectedEmail || null}
+            selectedEmail={selectedEmail}
             onEmailSelect={setSelectedEmail}
             emailFilters={{
               isRead: '',

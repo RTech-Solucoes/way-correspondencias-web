@@ -53,7 +53,7 @@ export default function SolicitacaoModal({
   const [formData, setFormData] = useState<SolicitacaoRequest>({
     dsAssunto: '',
     dsCorpo: '',
-    flStatus: 'PENDENTE',
+    flAtivo: 'PENDENTE',
     idResponsavel: 0,
     idTema: 0,
     idArea: 0
@@ -65,7 +65,7 @@ export default function SolicitacaoModal({
       setFormData({
         dsAssunto: solicitacao.dsAssunto,
         dsCorpo: solicitacao.dsCorpo,
-        flStatus: solicitacao.flStatus,
+        flAtivo: solicitacao.flAtivo,
         idResponsavel: solicitacao.responsavel.id,
         idTema: solicitacao.tema.id,
         idArea: solicitacao.area.id
@@ -74,7 +74,7 @@ export default function SolicitacaoModal({
       setFormData({
         dsAssunto: '',
         dsCorpo: '',
-        flStatus: 'PENDENTE',
+        flAtivo: 'PENDENTE',
         idResponsavel: 0,
         idTema: 0,
         idArea: 0
@@ -209,8 +209,8 @@ export default function SolicitacaoModal({
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
               <Select
-                value={formData.flStatus}
-                onValueChange={(value) => handleSelectChange('flStatus', value)}
+                value={formData.flAtivo}
+                onValueChange={(value) => handleSelectChange('flAtivo', value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o status" />

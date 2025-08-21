@@ -23,6 +23,7 @@ interface ResponsavelModalProps {
 
 export default function ResponsavelModal({ responsavel, open, onClose, onSave }: ResponsavelModalProps) {
   const [formData, setFormData] = useState<ResponsavelRequest>({
+    idPerfil: 1, // Default perfil ID
     nmUsuarioLogin: '',
     nmResponsavel: '',
     dsEmail: '',
@@ -34,14 +35,16 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
   useEffect(() => {
     if (responsavel) {
       setFormData({
-        nmUsuarioLogin: responsavel.nmUsuario, // Map from response field
+        idPerfil: responsavel.idPerfil,
+        nmUsuarioLogin: responsavel.nmUsuarioLogin,
         nmResponsavel: responsavel.nmResponsavel,
         dsEmail: responsavel.dsEmail,
-        nrCpf: '', // New field, will need to be filled
-        dtNascimento: '' // New field, will need to be filled
+        nrCpf: responsavel.nrCpf || '',
+        dtNascimento: responsavel.dtNascimento || ''
       });
     } else {
       setFormData({
+        idPerfil: 1, // Default perfil ID
         nmUsuarioLogin: '',
         nmResponsavel: '',
         dsEmail: '',
@@ -55,7 +58,9 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? checked :
+              name === 'idPerfil' ? parseInt(value) || 1 :
+              value
     }));
   };
 
@@ -66,7 +71,8 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
         !formData.dsEmail.trim() ||
         !formData.nmUsuarioLogin.trim() ||
         !formData.nrCpf.trim() ||
-        !formData.dtNascimento.trim()) {
+        !formData.dtNascimento.trim() ||
+        !formData.idPerfil) {
       toast.error("Por favor, preencha todos os campos obrigatórios");
       return;
     }
@@ -75,7 +81,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
       setLoading(true);
 
       if (responsavel) {
-        await responsaveisClient.atualizar(responsavel.id, formData);
+        await responsaveisClient.atualizar(responsavel.idResponsavel, formData);
         toast.success("Responsável atualizado com sucesso");
       } else {
         await responsaveisClient.criar(formData);
@@ -100,7 +106,8 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
            formData.dsEmail.trim() !== '' &&
            formData.nmUsuarioLogin.trim() !== '' &&
            formData.nrCpf.trim() !== '' &&
-           formData.dtNascimento.trim() !== '';
+           formData.dtNascimento.trim() !== '' &&
+           formData.idPerfil > 0;
   }, [formData]);
 
   return (
@@ -113,6 +120,17 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
+          <TextField
+            label="Perfil *"
+            name="idPerfil"
+            type="number"
+            value={formData.idPerfil.toString()}
+            onChange={handleChange}
+            required
+            min="1"
+            placeholder="ID do Perfil"
+          />
+
           <TextField
             label="Nome *"
             name="nmResponsavel"

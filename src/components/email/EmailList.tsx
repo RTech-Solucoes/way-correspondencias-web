@@ -10,18 +10,6 @@ import { EmailResponse } from '@/api/email/types';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Pagination } from '@/components/ui/pagination';
 
-interface Email {
-  id: string;
-  from: string;
-  subject: string;
-  preview: string;
-  date: string;
-  isRead: boolean;
-  hasAttachment: boolean;
-  labels: string[];
-  content?: string;
-}
-
 const formatDate = (dateString?: string): string => {
   if (!dateString) return '';
 
@@ -42,39 +30,6 @@ const formatDate = (dateString?: string): string => {
   }
 };
 
-const convertEmailResponse = (email: EmailResponse | null): Email => {
-  if (!email) {
-    console.warn('Email object is undefined or null');
-    return {
-      id: '0',
-      from: 'Email inválido',
-      subject: 'Assunto não disponível',
-      preview: 'Conteúdo não disponível',
-      date: '',
-      isRead: false,
-      hasAttachment: false,
-      labels: ['erro'],
-      content: 'Conteúdo não disponível'
-    };
-  }
-
-  const convertedId = email.id?.toString() || '0';
-
-  return {
-    id: convertedId,
-    from: email.dsRemetente,
-    subject: email.dsAssunto || 'Sem assunto',
-    preview: email.dsCorpo
-      ? (email.dsCorpo.length > 100 ? email.dsCorpo.substring(0, 100) + '...' : email.dsCorpo)
-      : 'Sem conteúdo disponível',
-    date: formatDate(email.dtEnvio),
-    isRead: email.flStatus === 'RESPONDIDO' || email.dtResposta !== null,
-    hasAttachment: email.anexos ? email.anexos.length > 0 : false,
-    labels: [email.flStatus?.toLowerCase() || 'desconhecido'],
-    content: email.dsCorpo || 'Conteúdo não disponível'
-  };
-};
-
 interface EmailListProps {
   searchQuery: string;
   selectedEmail: string | null;
@@ -89,21 +44,27 @@ interface EmailListProps {
 }
 
 const EmailItem = memo<{
-  email: Email;
+  email: EmailResponse;
   isSelected: boolean;
-  onSelect(): void;
+  onSelect: () => void;
 }>(({ email, isSelected, onSelect }) => {
   const handleClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
     onSelect();
   }, [onSelect]);
 
+  const isRead = email.flAtivo === 'S' || email.dtResposta !== null;
+  const hasAttachment = email.anexos && email.anexos.length > 0;
+  const preview = email.dsCorpo
+    ? (email.dsCorpo.length > 100 ? email.dsCorpo.substring(0, 100) + '...' : email.dsCorpo)
+    : 'Sem conteúdo disponível';
+
   return (
     <div
       className={cn(
         "p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors",
         isSelected && "bg-blue-100",
-        !email.isRead && "bg-blue-50/30"
+        !isRead && "bg-blue-50/30"
       )}
       onClick={handleClick}
     >
@@ -112,21 +73,21 @@ const EmailItem = memo<{
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center space-x-2">
               <span className="text-sm truncate font-semibold text-gray-700">
-                {email.from}
+                {email.dsRemetente}
               </span>
-              {email.hasAttachment && (
+              {hasAttachment && (
                 <PaperclipIcon className="h-3 w-3 text-gray-400"/>
               )}
             </div>
-            <span className="text-xs text-gray-500">{email.date}</span>
+            <span className="text-xs text-gray-500">{formatDate(email.dtEnvio)}</span>
           </div>
 
           <h3 className="text-sm mb-1 truncate font-bold text-gray-900">
-            {email.subject}
+            {email.dsAssunto || 'Sem assunto'}
           </h3>
 
           <p className="text-xs text-gray-500 line-clamp-2">
-            {email.preview}
+            {preview}
           </p>
         </div>
       </div>
@@ -150,7 +111,7 @@ function EmailList({
 }: EmailListProps) {
   const [syncLoading, setSyncLoading] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [emails, setEmails] = useState<Email[]>([]);
+  const [emails, setEmails] = useState<EmailResponse[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
@@ -184,17 +145,7 @@ function EmailList({
         return;
       }
 
-      const convertedEmails = response.content.map((email, index) => {
-        try {
-          return convertEmailResponse(email);
-          console.log("teste")
-        } catch (error) {
-          console.error(`Erro ao converter email ${index}:`, error, email);
-          return convertEmailResponse(null);
-        }
-      });
-
-      setEmails(convertedEmails);
+      setEmails(response.content);
       setTotalPages(response.totalPages || 0);
       setTotalElements(response.totalElements || 0);
     } catch (error) {
@@ -214,20 +165,23 @@ function EmailList({
 
   const filteredEmails = useMemo(() => {
     return emails.filter(email => {
+      const isRead = email.flAtivo === 'S' || email.dtResposta !== null;
+      const hasAttachment = email.anexos && email.anexos.length > 0;
+
       const matchesReadStatus = !emailFilters.isRead ||
         emailFilters.isRead === 'all' ||
-        (emailFilters.isRead === 'read' && email.isRead) ||
-        (emailFilters.isRead === 'unread' && !email.isRead);
+        (emailFilters.isRead === 'read' && isRead) ||
+        (emailFilters.isRead === 'unread' && !isRead);
 
       const matchesAttachment = !emailFilters.hasAttachment ||
         emailFilters.hasAttachment === 'all' ||
-        (emailFilters.hasAttachment === 'true' && email.hasAttachment) ||
-        (emailFilters.hasAttachment === 'false' && !email.hasAttachment);
+        (emailFilters.hasAttachment === 'true' && hasAttachment) ||
+        (emailFilters.hasAttachment === 'false' && !hasAttachment);
 
       const matchesSender = !emailFilters.sender ||
-        email.from.toLowerCase().includes(emailFilters.sender.toLowerCase());
+        email.dsRemetente.toLowerCase().includes(emailFilters.sender.toLowerCase());
 
-      const emailDate = new Date(email.date.split(' ')[0].split('/').reverse().join('-'));
+      const emailDate = new Date(formatDate(email.dtEnvio).split(' ')[0].split('/').reverse().join('-'));
       const matchesDateFrom = !emailFilters.dateFrom ||
         emailDate >= new Date(emailFilters.dateFrom);
       const matchesDateTo = !emailFilters.dateTo ||
@@ -302,8 +256,8 @@ function EmailList({
             <EmailItem
               key={index}
               email={email}
-              isSelected={selectedEmail === email.id}
-              onSelect={() => onEmailSelect(email.id)}
+              isSelected={selectedEmail === email.idEmail?.toString()}
+              onSelect={() => onEmailSelect(email.idEmail?.toString() || '')}
             />
           ))
         )}

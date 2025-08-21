@@ -3,7 +3,7 @@ export interface AreaResponse {
   cdArea: string;
   nmArea: string;
   dsArea: string;
-  flAtivo: string;
+  flAtivo: StatusAtivo;
 }
 
 export interface AreaRequest {

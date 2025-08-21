@@ -32,8 +32,8 @@ class SolicitacoesClient {
     });
   }
 
-  async buscarPorStatus(flStatus: string): Promise<SolicitacaoResponse[]> {
-    return this.client.request<SolicitacaoResponse[]>(`/status/${encodeURIComponent(flStatus)}`, {
+  async buscarPorStatus(flAtivo: string): Promise<SolicitacaoResponse[]> {
+    return this.client.request<SolicitacaoResponse[]>(`/status/${encodeURIComponent(flAtivo)}`, {
       method: 'GET',
     });
   }
@@ -48,8 +48,8 @@ class SolicitacoesClient {
     });
   }
 
-  async buscarPorResponsavelEStatus(idResponsavel: number, flStatus: string): Promise<SolicitacaoResponse[]> {
-    return this.client.request<SolicitacaoResponse[]>(`/responsavel/${idResponsavel}/status/${encodeURIComponent(flStatus)}`, {
+  async buscarPorResponsavelEStatus(idResponsavel: number, flAtivo: string): Promise<SolicitacaoResponse[]> {
+    return this.client.request<SolicitacaoResponse[]>(`/responsavel/${idResponsavel}/status/${encodeURIComponent(flAtivo)}`, {
       method: 'GET',
     });
   }
