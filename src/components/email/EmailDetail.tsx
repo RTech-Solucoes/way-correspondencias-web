@@ -179,7 +179,6 @@ export default function EmailDetail({
         onSave={handleSaveSolicitacao}
         responsaveis={responsaveis}
         temas={temas}
-        areas={areas}
       />
     </div>
   );

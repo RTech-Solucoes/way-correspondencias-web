@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { SolicitacaoResponse, SolicitacaoRequest } from '@/api/solicitacoes/types';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { TemaResponse } from '@/api/temas/types';
@@ -54,7 +55,8 @@ export default function SolicitacaoModal({
     flStatus: 'P',
     idResponsavel: 0,
     idTema: 0,
-    nrPrazo: 0,
+    idsAreas: [],
+    nrPrazo: undefined,
     tpPrazo: ''
   });
   const [loading, setLoading] = useState(false);
@@ -70,7 +72,8 @@ export default function SolicitacaoModal({
         flStatus: solicitacao.flStatus,
         idResponsavel: solicitacao.idResponsavel,
         idTema: solicitacao.idTema,
-        nrPrazo: solicitacao.nrPrazo || 0,
+        idsAreas: solicitacao.areas?.map(area => area.idArea) || [],
+        nrPrazo: solicitacao.nrPrazo || undefined,
         tpPrazo: solicitacao.tpPrazo || ''
       });
     } else {
@@ -82,7 +85,8 @@ export default function SolicitacaoModal({
         flStatus: 'P',
         idResponsavel: 0,
         idTema: 0,
-        nrPrazo: 0,
+        idsAreas: [],
+        nrPrazo: undefined,
         tpPrazo: ''
       });
     }
@@ -90,10 +94,13 @@ export default function SolicitacaoModal({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    let processedValue = value;
+    let processedValue: string | number | undefined = value;
 
     if (name === 'dsAssunto') {
       processedValue = capitalize(value);
+    } else if (name === 'nrPrazo') {
+      // Converte para número ou undefined se vazio
+      processedValue = value === '' ? undefined : parseInt(value);
     }
 
     setFormData(prev => ({
@@ -102,36 +109,86 @@ export default function SolicitacaoModal({
     }));
   };
 
+  const handleAreaToggle = (areaId: number) => {
+    setFormData(prev => {
+      const currentAreas = prev.idsAreas || [];
+      const isSelected = currentAreas.includes(areaId);
+
+      if (isSelected) {
+        // Remove a área se já estiver selecionada
+        return {
+          ...prev,
+          idsAreas: currentAreas.filter(id => id !== areaId)
+        };
+      } else {
+        // Adiciona a área se não estiver selecionada
+        return {
+          ...prev,
+          idsAreas: [...currentAreas, areaId]
+        };
+      }
+    });
+  };
+
   const handleSelectChange = (field: keyof SolicitacaoRequest, value: string) => {
+    let processedValue: string | number | undefined = value;
+
+    // Trata campos de ID
+    if (field.includes('id') && field !== 'cdIdentificacao') {
+      processedValue = value ? parseInt(value) : 0;
+    }
+
     setFormData(prev => ({
       ...prev,
-      [field]: field.includes('id') ? parseInt(value) : value
+      [field]: processedValue
     }));
   };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    if (!formData.cdIdentificacao?.trim() || !formData.idResponsavel || !formData.idTema) {
-      toast.error("Por favor, preencha todos os campos obrigatórios");
+    if (!formData.cdIdentificacao?.trim()) {
+      toast.error("Código de identificação é obrigatório");
+      return;
+    }
+
+    if (!formData.idResponsavel || formData.idResponsavel === 0) {
+      toast.error("Responsável é obrigatório");
+      return;
+    }
+
+    if (!formData.idTema || formData.idTema === 0) {
+      toast.error("Tema é obrigatório");
       return;
     }
 
     try {
       setLoading(true);
 
+      // Preparar dados para envio - garantir que campos opcionais sejam undefined se vazios
+      const requestData: SolicitacaoRequest = {
+        ...formData,
+        dsAssunto: formData.dsAssunto?.trim() || undefined,
+        dsSolicitacao: formData.dsSolicitacao?.trim() || undefined,
+        dsObservacao: formData.dsObservacao?.trim() || undefined,
+        nrPrazo: formData.nrPrazo && formData.nrPrazo > 0 ? formData.nrPrazo : undefined,
+        tpPrazo: formData.tpPrazo?.trim() || undefined,
+      };
+
       if (solicitacao) {
-        await solicitacoesClient.atualizar(solicitacao.idSolicitacao, formData);
+        await solicitacoesClient.atualizar(solicitacao.idSolicitacao, requestData);
         toast.success("Solicitação atualizada com sucesso");
       } else {
-        await solicitacoesClient.criar(formData);
+        await solicitacoesClient.criar(requestData);
         toast.success("Solicitação criada com sucesso");
       }
 
       onSave();
       onClose();
-    } catch {
-      toast.error(solicitacao ? "Erro ao atualizar solicitação" : "Erro ao criar solicitação");
+    } catch (error: unknown) {
+      console.error('Erro ao salvar solicitação:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      toast.error(solicitacao ? `Erro ao atualizar solicitação: ${errorMessage}` : `Erro ao criar solicitação: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -156,7 +213,7 @@ export default function SolicitacaoModal({
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 py-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <TextField
             label="Código de Identificação *"
             name="cdIdentificacao"
@@ -207,7 +264,7 @@ export default function SolicitacaoModal({
             <div className="space-y-2">
               <Label htmlFor="responsavel">Responsável *</Label>
               <Select
-                value={formData.idResponsavel.toString()}
+                value={formData.idResponsavel ? formData.idResponsavel.toString() : ''}
                 onValueChange={(value) => handleSelectChange('idResponsavel', value)}
               >
                 <SelectTrigger>
@@ -226,7 +283,7 @@ export default function SolicitacaoModal({
             <div className="space-y-2">
               <Label htmlFor="tema">Tema *</Label>
               <Select
-                value={formData.idTema.toString()}
+                value={formData.idTema ? formData.idTema.toString() : ''}
                 onValueChange={(value) => handleSelectChange('idTema', value)}
               >
                 <SelectTrigger>
@@ -241,6 +298,38 @@ export default function SolicitacaoModal({
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Áreas</Label>
+            <div className="border rounded-lg p-3 max-h-40 overflow-y-auto">
+              {areas.length === 0 ? (
+                <p className="text-sm text-gray-500">Nenhuma área disponível</p>
+              ) : (
+                <div className="space-y-2">
+                  {areas.map((area) => (
+                    <div key={area.idArea} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`area-${area.idArea}`}
+                        checked={formData.idsAreas?.includes(area.idArea) || false}
+                        onCheckedChange={() => handleAreaToggle(area.idArea)}
+                      />
+                      <Label
+                        htmlFor={`area-${area.idArea}`}
+                        className="text-sm font-normal cursor-pointer flex-1"
+                      >
+                        {area.nmArea}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            {formData.idsAreas && formData.idsAreas.length > 0 && (
+              <p className="text-xs text-gray-500">
+                {formData.idsAreas.length} área(s) selecionada(s)
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-3 gap-4">

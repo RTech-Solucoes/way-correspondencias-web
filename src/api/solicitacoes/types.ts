@@ -12,11 +12,10 @@ export interface SolicitacaoResponse {
   };
   idResponsavel: number;
   nmResponsavel: string;
-  idArea?: number;
-  area?: {
+  areas: {
     idArea: number;
     nmArea: string;
-  };
+  }[];
   cdIdentificacao: string;
   dsAssunto: string;
   dsSolicitacao: string;
@@ -32,6 +31,7 @@ export interface SolicitacaoRequest {
   idEmail?: number;
   idTema: number;
   idResponsavel: number;
+  idsAreas?: number[];
   cdIdentificacao: string;
   dsAssunto?: string;
   dsSolicitacao?: string;

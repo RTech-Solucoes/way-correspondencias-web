@@ -52,6 +52,7 @@ export default function SolicitacoesPage() {
     identificacao: '',
     responsavel: '',
     tema: '',
+    area: '',
     status: '',
     dateFrom: '',
     dateTo: '',
@@ -71,32 +72,37 @@ export default function SolicitacoesPage() {
     try {
       setLoading(true);
 
-      if (activeFilters.identificacao && !activeFilters.responsavel && !activeFilters.tema && !activeFilters.status && !debouncedSearchQuery) {
+      if (activeFilters.identificacao && !activeFilters.responsavel && !activeFilters.tema && !activeFilters.area && !activeFilters.status && !debouncedSearchQuery) {
         const result = await solicitacoesClient.buscarPorCdIdentificacao(activeFilters.identificacao);
         setSolicitacoes([result]);
         setTotalPages(1);
         setTotalElements(1);
-      } else if (activeFilters.responsavel && !activeFilters.identificacao && !activeFilters.tema && !activeFilters.status && !debouncedSearchQuery) {
+      } else if (activeFilters.responsavel && !activeFilters.identificacao && !activeFilters.tema && !activeFilters.area && !activeFilters.status && !debouncedSearchQuery) {
         const results = await solicitacoesClient.buscarPorResponsavel(parseInt(activeFilters.responsavel));
         setSolicitacoes(results);
         setTotalPages(1);
         setTotalElements(results.length);
-      } else if (activeFilters.tema && !activeFilters.identificacao && !activeFilters.responsavel && !activeFilters.status && !debouncedSearchQuery) {
+      } else if (activeFilters.tema && !activeFilters.identificacao && !activeFilters.responsavel && !activeFilters.area && !activeFilters.status && !debouncedSearchQuery) {
         const results = await solicitacoesClient.buscarPorTema(parseInt(activeFilters.tema));
         setSolicitacoes(results);
         setTotalPages(1);
         setTotalElements(results.length);
-      } else if (activeFilters.status && !activeFilters.identificacao && !activeFilters.responsavel && !activeFilters.tema && !debouncedSearchQuery) {
+      } else if (activeFilters.area && !activeFilters.identificacao && !activeFilters.responsavel && !activeFilters.tema && !activeFilters.status && !debouncedSearchQuery) {
+        const results = await solicitacoesClient.buscarPorArea(parseInt(activeFilters.area));
+        setSolicitacoes(results);
+        setTotalPages(1);
+        setTotalElements(results.length);
+      } else if (activeFilters.status && !activeFilters.identificacao && !activeFilters.responsavel && !activeFilters.tema && !activeFilters.area && !debouncedSearchQuery) {
         const results = await solicitacoesClient.buscarPorStatus(activeFilters.status);
         setSolicitacoes(results);
         setTotalPages(1);
         setTotalElements(results.length);
-      } else if (activeFilters.responsavel && activeFilters.status && !activeFilters.identificacao && !activeFilters.tema && !debouncedSearchQuery) {
+      } else if (activeFilters.responsavel && activeFilters.status && !activeFilters.identificacao && !activeFilters.tema && !activeFilters.area && !debouncedSearchQuery) {
         const results = await solicitacoesClient.buscarPorResponsavelEStatus(parseInt(activeFilters.responsavel), activeFilters.status);
         setSolicitacoes(results);
         setTotalPages(1);
         setTotalElements(results.length);
-      } else if (activeFilters.dateFrom && activeFilters.dateTo && !activeFilters.identificacao && !activeFilters.responsavel && !activeFilters.tema && !activeFilters.status && !debouncedSearchQuery) {
+      } else if (activeFilters.dateFrom && activeFilters.dateTo && !activeFilters.identificacao && !activeFilters.responsavel && !activeFilters.tema && !activeFilters.area && !activeFilters.status && !debouncedSearchQuery) {
         const results = await solicitacoesClient.buscarPorPeriodo(
           activeFilters.dateFrom + 'T00:00:00',
           activeFilters.dateTo + 'T23:59:59'
@@ -163,7 +169,7 @@ export default function SolicitacoesPage() {
   const confirmDelete = async () => {
     if (solicitacaoToDelete) {
       try {
-        await solicitacoesClient.deletar(solicitacaoToDelete.id);
+        await solicitacoesClient.deletar(solicitacaoToDelete.idSolicitacao);
         toast.success("Solicitação excluída com sucesso");
         loadSolicitacoes();
       } catch (error) {
@@ -181,12 +187,6 @@ export default function SolicitacoesPage() {
     loadSolicitacoes();
   };
 
-  const handleSolicitacaoSaved = () => {
-    setShowSolicitacaoModal(false);
-    setSelectedSolicitacao(null);
-    loadSolicitacoes();
-  };
-
   const applyFilters = () => {
     setActiveFilters(filters);
     setCurrentPage(0);
@@ -198,6 +198,7 @@ export default function SolicitacoesPage() {
       identificacao: '',
       responsavel: '',
       tema: '',
+      area: '',
       status: '',
       dateFrom: '',
       dateTo: '',
@@ -212,14 +213,20 @@ export default function SolicitacoesPage() {
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status.toUpperCase()) {
-      case 'PENDENTE':
+      case 'P':
         return 'secondary';
-      case 'EM_ANDAMENTO':
-        return 'default';
-      case 'CONCLUIDA':
-        return 'default';
-      case 'CANCELADA':
+      case 'V':
+      case 'T':
         return 'destructive';
+      case 'A':
+      case 'R':
+      case 'O':
+      case 'S':
+        return 'default';
+      case 'C':
+        return 'default';
+      case 'X':
+        return 'outline';
       default:
         return 'secondary';
     }
@@ -227,14 +234,24 @@ export default function SolicitacoesPage() {
 
   const getStatusText = (status: string) => {
     switch (status.toUpperCase()) {
-      case 'PENDENTE':
-        return 'Pendente';
-      case 'EM_ANDAMENTO':
-        return 'Em Andamento';
-      case 'CONCLUIDA':
-        return 'Concluída';
-      case 'CANCELADA':
-        return 'Cancelada';
+      case 'P':
+        return 'Pré-análise';
+      case 'V':
+        return 'Vencido Regulatório';
+      case 'A':
+        return 'Em análise Área Técnica';
+      case 'T':
+        return 'Vencido Área Técnica';
+      case 'R':
+        return 'Análise Regulatória';
+      case 'O':
+        return 'Em Aprovação';
+      case 'S':
+        return 'Em Assinatura';
+      case 'C':
+        return 'Concluído';
+      case 'X':
+        return 'Arquivado';
       default:
         return status;
     }
@@ -320,15 +337,15 @@ export default function SolicitacoesPage() {
               </TableRow>
             ) : (
               solicitacoes.map((solicitacao) => (
-                <TableRow key={solicitacao.id}>
+                <TableRow key={solicitacao.idSolicitacao}>
                   <TableCell className="font-medium">{solicitacao.cdIdentificacao}</TableCell>
                   <TableCell className="max-w-xs truncate">{solicitacao.dsAssunto}</TableCell>
                   <TableCell>{solicitacao.nmResponsavel}</TableCell>
-                  <TableCell>{solicitacao.area?.nmArea || 'N/A'}</TableCell>
+                  <TableCell>{solicitacao.areas?.map(area => area.nmArea).join(', ') || 'N/A'}</TableCell>
                   <TableCell>{solicitacao.tema?.nmTema || solicitacao.nmTema || 'N/A'}</TableCell>
                   <TableCell>
-                    <Badge variant={getStatusBadgeVariant(solicitacao.flAtivo)}>
-                      {getStatusText(solicitacao.flAtivo)}
+                    <Badge variant={getStatusBadgeVariant(solicitacao.flStatus)}>
+                      {getStatusText(solicitacao.flStatus)}
                     </Badge>
                   </TableCell>
                   <TableCell>{new Date(solicitacao.dtCriacao).toLocaleDateString('pt-BR')}</TableCell>
@@ -395,10 +412,15 @@ export default function SolicitacoesPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todos</SelectItem>
-                      <SelectItem value="PENDENTE">Pendente</SelectItem>
-                      <SelectItem value="EM_ANDAMENTO">Em Andamento</SelectItem>
-                      <SelectItem value="CONCLUIDA">Concluída</SelectItem>
-                      <SelectItem value="CANCELADA">Cancelada</SelectItem>
+                      <SelectItem value="P">Pré-análise</SelectItem>
+                      <SelectItem value="V">Vencido Regulatório</SelectItem>
+                      <SelectItem value="A">Em análise Área Técnica</SelectItem>
+                      <SelectItem value="T">Vencido Área Técnica</SelectItem>
+                      <SelectItem value="R">Análise Regulatória</SelectItem>
+                      <SelectItem value="O">Em Aprovação</SelectItem>
+                      <SelectItem value="S">Em Assinatura</SelectItem>
+                      <SelectItem value="C">Concluído</SelectItem>
+                      <SelectItem value="X">Arquivado</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -437,6 +459,27 @@ export default function SolicitacoesPage() {
                       {temas.map((tema) => (
                         <SelectItem key={tema.idTema} value={tema.idTema.toString()}>
                           {tema.nmTema}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="area">Área</Label>
+                  <Select
+                    value={filters.area}
+                    onValueChange={(value) => setFilters({...filters, area: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a área" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas</SelectItem>
+                      {areas.map((area) => (
+                        <SelectItem key={area.idArea} value={area.idArea.toString()}>
+                          {area.nmArea}
                         </SelectItem>
                       ))}
                     </SelectContent>

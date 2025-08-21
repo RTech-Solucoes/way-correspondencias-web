@@ -32,6 +32,12 @@ class SolicitacoesClient {
     });
   }
 
+  async buscarPorArea(idArea: number): Promise<SolicitacaoResponse[]> {
+    return this.client.request<SolicitacaoResponse[]>(`/area/${idArea}`, {
+      method: 'GET',
+    });
+  }
+
   async buscarPorStatus(flAtivo: string): Promise<SolicitacaoResponse[]> {
     return this.client.request<SolicitacaoResponse[]>(`/status/${encodeURIComponent(flAtivo)}`, {
       method: 'GET',
