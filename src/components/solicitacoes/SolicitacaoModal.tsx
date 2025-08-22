@@ -396,7 +396,7 @@ export default function SolicitacaoModal({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {solicitacao ? 'Editar Solicitação' : `Nova Solicitação - Step ${currentStep} de 2`}
+            {solicitacao ? 'Editar Solicitação' : 'Nova Solicitação'}
           </DialogTitle>
         </DialogHeader>
 

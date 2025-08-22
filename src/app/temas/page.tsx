@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
 import {Button} from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -49,8 +49,14 @@ export default function TemasPage() {
     confirmDelete,
     handleTemaSave,
     applyFilters,
-    clearFilters
+    clearFilters,
+    loadTemas
   } = useTemas();
+
+  // Load data when page mounts
+  useEffect(() => {
+    loadTemas();
+  }, []);
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
@@ -201,7 +207,7 @@ export default function TemasPage() {
         currentPage={currentPage}
         totalPages={totalPages}
         totalElements={totalElements}
-        pageSize={50}
+        pageSize={15}
         onPageChange={setCurrentPage}
         loading={loading}
       />

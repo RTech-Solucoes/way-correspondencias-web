@@ -56,7 +56,7 @@ const TemasContext = createContext<TemasContextProps>({} as TemasContextProps);
 
 export const TemasProvider = ({ children }: { children: ReactNode }) => {
   const [temas, setTemas] = useState<TemaResponse[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTema, setSelectedTema] = useState<TemaResponse | null>(null);
   const [showTemaModal, setShowTemaModal] = useState(false);
@@ -93,7 +93,7 @@ export const TemasProvider = ({ children }: { children: ReactNode }) => {
         const response = await temasClient.buscarPorFiltroComAreas({
           filtro: filterParts.join(' ') || undefined,
           page: currentPage,
-          size: 50,
+          size: 10,
         });
 
         setTemas(response.content);
@@ -108,7 +108,10 @@ export const TemasProvider = ({ children }: { children: ReactNode }) => {
   }, [currentPage, activeFilters, debouncedSearchQuery]);
 
   useEffect(() => {
-    loadTemas();
+    // Only reload if we have data already loaded (not initial load)
+    if (temas.length > 0 || activeFilters.nome || activeFilters.descricao || debouncedSearchQuery) {
+      loadTemas();
+    }
   }, [loadTemas]);
 
   const handleEdit = (tema: TemaResponse) => {

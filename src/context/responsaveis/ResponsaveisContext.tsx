@@ -57,7 +57,7 @@ const ResponsaveisContext = createContext<ResponsaveisContextProps>({} as Respon
 
 export const ResponsaveisProvider = ({ children }: { children: ReactNode }) => {
   const [responsaveis, setResponsaveis] = useState<ResponsavelResponse[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedResponsavel, setSelectedResponsavel] = useState<ResponsavelResponse | null>(null);
   const [showResponsavelModal, setShowResponsavelModal] = useState(false);
@@ -77,7 +77,10 @@ export const ResponsaveisProvider = ({ children }: { children: ReactNode }) => {
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   useEffect(() => {
-    loadResponsaveis();
+    // Only reload if we have data already loaded (not initial load)
+    if (responsaveis.length > 0 || activeFilters.usuario || activeFilters.email || debouncedSearchQuery) {
+      loadResponsaveis();
+    }
   }, [currentPage, activeFilters, debouncedSearchQuery]);
 
   const loadResponsaveis = async () => {
@@ -103,7 +106,7 @@ export const ResponsaveisProvider = ({ children }: { children: ReactNode }) => {
         const params: ResponsavelFilterParams = {
           filtro: filterParts.join(' ') || undefined,
           page: currentPage,
-          size: 50,
+          size: 10,
         };
         const response = await responsaveisClient.buscarPorFiltro(params);
         setResponsaveis(response.content);

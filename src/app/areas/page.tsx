@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import AreaModal from '../../components/areas/AreaModal';
 import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
 import {Pagination} from '@/components/ui/pagination';
@@ -37,8 +37,14 @@ export default function AreasPage() {
     confirmDelete,
     handleAreaSave,
     applyFilters,
-    clearFilters
+    clearFilters,
+    loadAreas
   } = useAreas();
+
+  // Load data when page mounts
+  useEffect(() => {
+    loadAreas();
+  }, []);
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
@@ -66,7 +72,7 @@ export default function AreasPage() {
         currentPage={currentPage}
         totalPages={totalPages}
         totalElements={totalElements}
-        pageSize={50}
+        pageSize={15}
         onPageChange={setCurrentPage}
         loading={loading}
       />

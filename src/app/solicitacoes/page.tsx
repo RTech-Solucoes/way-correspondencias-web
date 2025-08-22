@@ -118,7 +118,7 @@ export default function SolicitacoesPage() {
         const params: SolicitacaoFilterParams = {
           filtro: filterParts.join(' ') || undefined,
           page: currentPage,
-          size: 50,
+          size: 10,
         };
         const response = await solicitacoesClient.buscarPorFiltro(params);
         setSolicitacoes(response.content);
@@ -396,7 +396,7 @@ export default function SolicitacoesPage() {
         currentPage={currentPage}
         totalPages={totalPages}
         totalElements={totalElements}
-        pageSize={50}
+        pageSize={15}
         onPageChange={setCurrentPage}
         loading={loading}
       />

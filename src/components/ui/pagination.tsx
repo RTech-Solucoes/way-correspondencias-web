@@ -19,7 +19,7 @@ export function Pagination({
   onPageChange,
   loading = false
 }: PaginationProps) {
-  const startItem = currentPage * pageSize + 1;
+  const startItem = totalElements > 0 ? Math.min(currentPage * pageSize + 1, totalElements) : 0;
   const endItem = Math.min((currentPage + 1) * pageSize, totalElements);
 
   const getVisiblePages = () => {

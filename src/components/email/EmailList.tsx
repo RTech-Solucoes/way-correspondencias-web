@@ -124,7 +124,7 @@ function EmailList({
       const response = await emailClient.buscarPorFiltro({
         filtro: debouncedSearchQuery || undefined,
         page: currentPage,
-        size: 50
+        size: 15
       });
 
       if (!response || !response.content) {
@@ -267,7 +267,7 @@ function EmailList({
         currentPage={currentPage}
         totalPages={totalPages}
         totalElements={totalElements}
-        pageSize={50}
+        pageSize={15}
         onPageChange={setCurrentPage}
         loading={loading}
       />

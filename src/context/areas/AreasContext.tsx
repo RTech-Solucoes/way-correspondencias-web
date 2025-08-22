@@ -61,7 +61,7 @@ const AreasContext = createContext<AreasContextProps>({} as AreasContextProps);
 
 export const AreasProvider = ({ children }: { children: ReactNode }) => {
   const [areas, setAreas] = useState<AreaResponse[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedArea, setSelectedArea] = useState<AreaResponse | null>(null);
   const [showAreaModal, setShowAreaModal] = useState(false);
@@ -85,7 +85,10 @@ export const AreasProvider = ({ children }: { children: ReactNode }) => {
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   useEffect(() => {
-    loadAreas();
+    // Only reload if we have data already loaded (not initial load)
+    if (areas.length > 0 || activeFilters.codigo || activeFilters.nome || activeFilters.descricao || debouncedSearchQuery) {
+      loadAreas();
+    }
   }, [currentPage, activeFilters, debouncedSearchQuery]);
 
   const loadAreas = async () => {
@@ -103,7 +106,7 @@ export const AreasProvider = ({ children }: { children: ReactNode }) => {
       const response = await areasClient.buscarPorFiltro({
         filtro: filtro || undefined,
         page: currentPage,
-        size: 50,
+        size: 10,
         sort: sortField ? `${sortField},${sortDirection}` : undefined
       });
 

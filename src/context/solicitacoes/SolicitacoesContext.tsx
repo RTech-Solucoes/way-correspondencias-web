@@ -158,7 +158,7 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
         const params: SolicitacaoFilterParams = {
           filtro: filterParts.join(' ') || undefined,
           page: currentPage,
-          size: 50,
+          size: 10,
         };
         const response = await solicitacoesClient.buscarPorFiltro(params);
         setSolicitacoes(response.content);

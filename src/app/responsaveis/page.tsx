@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Table,
   TableBody, 
@@ -62,8 +62,14 @@ export default function ResponsaveisPage() {
     confirmDelete,
     handleResponsavelSave,
     applyFilters,
-    clearFilters
+    clearFilters,
+    loadResponsaveis
   } = useResponsaveis();
+
+  // Load data when page mounts
+  useEffect(() => {
+    loadResponsaveis();
+  }, []);
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
@@ -189,7 +195,7 @@ export default function ResponsaveisPage() {
         currentPage={currentPage}
         totalPages={totalPages}
         totalElements={totalElements}
-        pageSize={50}
+        pageSize={15}
         onPageChange={setCurrentPage}
         loading={loading}
       />
