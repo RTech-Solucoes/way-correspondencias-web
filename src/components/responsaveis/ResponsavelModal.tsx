@@ -87,12 +87,11 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
     }
   }, [responsavel, open]);
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
+  const handleChange = (e: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked :
-              name === 'idPerfil' ? parseInt(value) || 1 :
+      [name]: name === 'idPerfil' ? parseInt(value) || 1 :
               value
     }));
   };
@@ -153,31 +152,6 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="idPerfil">Perfil *</Label>
-            <Select
-              value={formData.idPerfil > 0 ? formData.idPerfil.toString() : ""}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, idPerfil: parseInt(value) }))}
-              disabled={loadingPerfis}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={loadingPerfis ? "Carregando perfis..." : "Selecione o perfil"} />
-              </SelectTrigger>
-              <SelectContent>
-                {!loadingPerfis && perfis?.length > 0 ? (
-                  perfis.map(perfil => (
-                    <SelectItem key={perfil.idPerfil} value={perfil.idPerfil.toString()}>
-                      {perfil.nmPerfil}
-                    </SelectItem>
-                  ))
-                ) : !loadingPerfis && perfis?.length === 0 ? (
-                  <div className="px-2 py-1.5 text-sm text-gray-500">
-                    Nenhum perfil disponível
-                  </div>
-                ) : null}
-              </SelectContent>
-            </Select>
-          </div>
 
           <TextField
             label="Nome *"
@@ -223,6 +197,32 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
             onChange={handleChange}
             required
           />
+
+          <div className="space-y-2">
+            <Label htmlFor="idPerfil">Perfil *</Label>
+            <Select
+              value={formData.idPerfil > 0 ? formData.idPerfil.toString() : ""}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, idPerfil: parseInt(value) }))}
+              disabled={loadingPerfis}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={loadingPerfis ? "Carregando perfis..." : "Selecione o perfil"} />
+              </SelectTrigger>
+              <SelectContent>
+                {!loadingPerfis && perfis?.length > 0 ? (
+                  perfis.map(perfil => (
+                    <SelectItem key={perfil.idPerfil} value={perfil.idPerfil.toString()}>
+                      {perfil.nmPerfil}
+                    </SelectItem>
+                  ))
+                ) : !loadingPerfis && perfis?.length === 0 ? (
+                  <div className="px-2 py-1.5 text-sm text-gray-500">
+                    Nenhum perfil disponível
+                  </div>
+                ) : null}
+              </SelectContent>
+            </Select>
+          </div>
 
           <DialogFooter className="flex gap-2">
             <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>

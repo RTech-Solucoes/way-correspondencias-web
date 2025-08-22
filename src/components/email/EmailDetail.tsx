@@ -177,6 +177,8 @@ export default function EmailDetail({
         onSave={handleSaveSolicitacao}
         responsaveis={responsaveis}
         temas={temas}
+        initialSubject={email?.dsAssunto}
+        initialDescription={email?.dsCorpo}
       />
     </div>
   );

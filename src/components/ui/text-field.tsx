@@ -4,8 +4,6 @@ import * as React from 'react';
 import { cn } from '@/utils/utils';
 import {
   forwardRef,
-  ComponentPropsWithoutRef,
-  ElementRef,
   ComponentType,
   useId,
   useState,
@@ -21,11 +19,11 @@ export interface TextFieldProps {
   label?: string;
   placeholder?: string;
   value?: string;
-  onChange?: (value: string) => void;
+  onChange?: (e: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLTextAreaElement>) => void;
   onBlur?: () => void;
   onFocus?: () => void;
 
-  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'search';
+  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'search' | 'date';
   as?: 'input' | 'textarea';
   rows?: number;
 
@@ -98,7 +96,9 @@ const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, TextFieldPr
     const actualInputType = isPasswordType && showPassword ? 'text' : type;
 
     const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      onChange?.(e.target.value);
+      if (onChange) {
+        onChange(e as ChangeEvent<HTMLInputElement> & ChangeEvent<HTMLTextAreaElement>);
+      }
     };
 
     const togglePasswordVisibility = () => {

@@ -5,10 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="98226f2c-f64e-43be-946e-e89028627d5c" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/app/email/[id]/page.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/email/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/email/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/context/email/EmailContext.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/context/email/EmailContext.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/email/EmailDetail.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/email/EmailDetail.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/responsaveis/ResponsavelModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/responsaveis/ResponsavelModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/solicitacoes/SolicitacaoModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/solicitacoes/SolicitacaoModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/ui/dialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ui/dialog.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/ui/select.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ui/select.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/ui/text-field.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ui/text-field.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/ui/textarea.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ui/textarea.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -176,7 +180,7 @@
       <workItem from="1755797589426" duration="1389000" />
       <workItem from="1755857759907" duration="1882000" />
       <workItem from="1755860387043" duration="1486000" />
-      <workItem from="1755861953837" duration="984000" />
+      <workItem from="1755861953837" duration="3686000" />
     </task>
     <task id="LOCAL-00001" summary="Alteração biblioteca de Ícones&#10;lucide-react -&gt; @phosphor-icons/react">
       <option name="closed" value="true" />

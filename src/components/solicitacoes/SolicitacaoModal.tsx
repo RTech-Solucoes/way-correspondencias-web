@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, FormEvent, useCallback } from 'react';
+import {useState, useEffect, FormEvent, useCallback, ChangeEvent} from 'react';
 import {
   Dialog,
   DialogContent,
@@ -34,6 +34,9 @@ interface SolicitacaoModalProps {
   onSave(): void;
   responsaveis: ResponsavelResponse[];
   temas: TemaResponse[];
+  // Campos para preenchimento automático a partir do email
+  initialSubject?: string;
+  initialDescription?: string;
 }
 
 export default function SolicitacaoModal({
@@ -42,7 +45,9 @@ export default function SolicitacaoModal({
   onClose,
   onSave,
   responsaveis,
-  temas
+  temas,
+  initialSubject,
+  initialDescription
 }: SolicitacaoModalProps) {
   const [formData, setFormData] = useState<SolicitacaoRequest>({
     cdIdentificacao: '',
@@ -74,10 +79,11 @@ export default function SolicitacaoModal({
         tpPrazo: solicitacao.tpPrazo || ''
       });
     } else {
+      // Quando não é edição, preenche com dados do email se fornecidos
       setFormData({
         cdIdentificacao: '',
-        dsAssunto: '',
-        dsSolicitacao: '',
+        dsAssunto: initialSubject || '',
+        dsSolicitacao: initialDescription || '',
         dsObservacao: '',
         flStatus: 'P',
         idResponsavel: 0,
@@ -87,9 +93,9 @@ export default function SolicitacaoModal({
         tpPrazo: ''
       });
     }
-  }, [solicitacao, open]);
+  }, [solicitacao, open, initialSubject, initialDescription]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     let processedValue: string | number | undefined = value;
 
