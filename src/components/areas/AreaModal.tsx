@@ -98,7 +98,7 @@ export default function AreaModal({area, open, onClose, onSave}: AreaModalProps)
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0 && !hasValidationError;
+    return Object.keys(newErrors)?.length === 0 && !hasValidationError;
   };
 
   const isFormValid = useCallback(() => {

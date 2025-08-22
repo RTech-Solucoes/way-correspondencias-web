@@ -147,6 +147,7 @@ export default function EmailDetail({
       </div>
 
       <div className="flex flex-col flex-1 overflow-y-auto gap-6 p-6">
+        <span className="text-sm text-gray-500">{formatDate(email?.dtRecebimento)}</span>
         <h2 className="text-2xl font-semibold truncate">{email?.dsAssunto}</h2>
         <div className="flex items-start space-x-4">
           <Avatar className="h-12 w-12">
@@ -156,10 +157,7 @@ export default function EmailDetail({
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="font-semibold text-gray-900">{email?.dsRemetente}</h3>
-              <span className="text-sm text-gray-500">{formatDate(email?.dtRecebimento)}</span>
-            </div>
+            <h3 className="font-semibold text-gray-900">{email?.dsRemetente}</h3>
             <p className="text-sm text-gray-600 mb-1">De: {email?.dsRemetente}</p>
             <p className="text-sm text-gray-600">Para: {email?.dsDestinatario}</p>
           </div>
@@ -179,6 +177,8 @@ export default function EmailDetail({
         onSave={handleSaveSolicitacao}
         responsaveis={responsaveis}
         temas={temas}
+        initialSubject={email?.dsAssunto}
+        initialDescription={email?.dsCorpo}
       />
     </div>
   );

@@ -43,7 +43,7 @@ const MOCK_NOTIFICATIONS: Notification[] = [
 export default function Sidebar() {
   const user = MOCK_USER;
   const notifications = MOCK_NOTIFICATIONS;
-  const unreadCount = MOCK_NOTIFICATIONS.filter(n => n.unread).length;
+  const unreadCount = MOCK_NOTIFICATIONS.filter(n => n.unread)?.length;
   const pathname = usePathname();
 
   const handleLogout = () => {

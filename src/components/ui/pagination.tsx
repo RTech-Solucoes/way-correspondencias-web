@@ -45,8 +45,8 @@ export function Pagination({
 
     rangeWithDots.push(...range);
 
-    if (range[range.length - 1] < totalPages - 1) {
-      if (range[range.length - 1] < totalPages - 2) {
+    if (range[range?.length - 1] < totalPages - 1) {
+      if (range[range?.length - 1] < totalPages - 2) {
         rangeWithDots.push('...', totalPages - 1);
       } else {
         rangeWithDots.push(totalPages - 1);
