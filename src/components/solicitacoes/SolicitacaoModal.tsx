@@ -362,7 +362,7 @@ export default function SolicitacaoModal({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="nrPrazo">Número do Prazo</Label>
+          <Label htmlFor="nrPrazo">Prazo</Label>
           <TextField
             id="nrPrazo"
             name="nrPrazo"

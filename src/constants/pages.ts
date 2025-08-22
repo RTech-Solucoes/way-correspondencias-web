@@ -35,11 +35,6 @@ export const PAGES_DEF: PageDef[] = [
     label: "Solicitações",
     icon: ClipboardTextIcon
   },
-  {
-    path: "/tramitacao",
-    label: "Tramitações",
-    icon: ArrowsLeftRightIcon
-  },
 ];
 
 export const PUBLIC_ROUTES: string[] = ["/"]

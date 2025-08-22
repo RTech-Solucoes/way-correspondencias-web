@@ -20,7 +20,7 @@ export default function Nav ({
     <nav className="flex flex-col grow gap-3 px-2 py-3">
       {
         navigationItems.map((item) => {
-          const isActive = pathname === item.path;
+          const isActive = pathname.startsWith(item.path);
 
           return (
             <Button

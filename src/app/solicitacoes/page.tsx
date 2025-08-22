@@ -38,6 +38,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Pagination } from '@/components/ui/pagination';
+import { formatDate } from '@/utils/utils';
 
 export default function SolicitacoesPage() {
   const [solicitacoes, setSolicitacoes] = useState<SolicitacaoResponse[]>([]);
@@ -372,7 +373,7 @@ export default function SolicitacoesPage() {
                       {getStatusText(solicitacao.flStatus)}
                     </Badge>
                   </StickyTableCell>
-                  <StickyTableCell>{new Date(solicitacao.dtCriacao).toLocaleDateString('pt-BR')}</StickyTableCell>
+                  <StickyTableCell>{formatDate(solicitacao.dtCriacao)}</StickyTableCell>
                   <StickyTableCell className="text-right">
                     <div className="flex items-center justify-end space-x-2">
                       <Button

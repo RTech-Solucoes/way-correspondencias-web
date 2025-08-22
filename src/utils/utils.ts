@@ -41,3 +41,19 @@ export function getStatusText(status: StatusAtivo | null): string {
 
   return status === 'S' ? "Ativo" : "Inativo";
 }
+
+export function formatDate(dateString: string | null): string {
+  if (!dateString) return '';
+
+  try {
+    const date = new Date(dateString);
+    
+    if (isNaN(date.getTime())) {
+      return 'Data inválida';
+    }
+    
+    return date.toLocaleDateString('pt-BR');
+  } catch (error) {
+    return 'Data inválida';
+  }
+}
