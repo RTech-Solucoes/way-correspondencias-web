@@ -1,5 +1,8 @@
 import { PageDef } from "@/types/pages/pages";
-import { PresentationChartIcon, BuildingIcon, ClipboardTextIcon, EnvelopeSimpleIcon, TagIcon, UsersIcon } from "@phosphor-icons/react";
+import {
+  PresentationChartIcon, BuildingIcon, ClipboardTextIcon, EnvelopeSimpleIcon, TagIcon, UsersIcon,
+  ArrowsLeftRightIcon
+} from "@phosphor-icons/react";
 
 export const PAGES_DEF: PageDef[] = [
   // {
@@ -31,6 +34,11 @@ export const PAGES_DEF: PageDef[] = [
     path: "/solicitacoes",
     label: "Solicitações",
     icon: ClipboardTextIcon
+  },
+  {
+    path: "/tramitacao",
+    label: "Tramitações",
+    icon: ArrowsLeftRightIcon
   },
 ];
 
