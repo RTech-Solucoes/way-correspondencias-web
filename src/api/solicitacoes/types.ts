@@ -20,11 +20,14 @@ export interface SolicitacaoResponse {
   dsAssunto: string;
   dsSolicitacao: string;
   dsObservacao: string;
+  nrOficio?: string;
+  nrProcesso?: string;
   nrPrazo: number;
   tpPrazo: string;
   flStatus: 'P' | 'V' | 'A' | 'T' | 'R' | 'O' | 'S' | 'C' | 'X';
   flAtivo: StatusAtivo;
   dtCriacao: string;
+  dtAtualizacao?: string;
 }
 
 export interface SolicitacaoRequest {
@@ -36,6 +39,8 @@ export interface SolicitacaoRequest {
   dsAssunto?: string;
   dsSolicitacao?: string;
   dsObservacao?: string;
+  nrOficio?: string;
+  nrProcesso?: string;
   nrPrazo?: number;
   tpPrazo?: string;
   flStatus: 'P' | 'V' | 'A' | 'T' | 'R' | 'O' | 'S' | 'C' | 'X';

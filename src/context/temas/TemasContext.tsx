@@ -43,6 +43,8 @@ export interface TemasContextProps {
   setFilters: Dispatch<SetStateAction<FiltersState>>;
   activeFilters: FiltersState;
   hasActiveFilters: boolean;
+  sortField: keyof TemaResponse | null;
+  sortDirection: 'asc' | 'desc';
   loadTemas: () => Promise<void>;
   handleEdit: (tema: TemaResponse) => void;
   handleDelete: (tema: TemaResponse) => void;
@@ -50,6 +52,7 @@ export interface TemasContextProps {
   handleTemaSave: () => void;
   applyFilters: () => void;
   clearFilters: () => void;
+  handleSort: (field: keyof TemaResponse) => void;
 }
 
 const TemasContext = createContext<TemasContextProps>({} as TemasContextProps);
@@ -72,6 +75,9 @@ export const TemasProvider = ({ children }: { children: ReactNode }) => {
     descricao: '',
   });
   const [activeFilters, setActiveFilters] = useState(filters);
+
+  const [sortField, setSortField] = useState<keyof TemaResponse | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
@@ -162,6 +168,13 @@ export const TemasProvider = ({ children }: { children: ReactNode }) => {
     setShowFilterModal(false);
   };
 
+  const handleSort = (field: keyof TemaResponse) => {
+    const newSortDirection = sortField === field && sortDirection === 'asc' ? 'desc' : 'asc';
+    setSortField(field);
+    setSortDirection(newSortDirection);
+    setCurrentPage(0);
+  };
+
   const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
 
   return (
@@ -189,13 +202,16 @@ export const TemasProvider = ({ children }: { children: ReactNode }) => {
         setFilters,
         activeFilters,
         hasActiveFilters,
+        sortField,
+        sortDirection,
         loadTemas,
         handleEdit,
         handleDelete,
         confirmDelete,
         handleTemaSave,
         applyFilters,
-        clearFilters
+        clearFilters,
+        handleSort
       }}
     >
       {children}

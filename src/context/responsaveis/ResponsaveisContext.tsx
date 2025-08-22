@@ -43,6 +43,8 @@ export interface ResponsaveisContextProps {
   activeFilters: FiltersState;
   hasActiveFilters: boolean;
   filteredResponsaveis: ResponsavelResponse[];
+  sortField: keyof ResponsavelResponse | null;
+  sortDirection: 'asc' | 'desc';
   loadResponsaveis: () => Promise<void>;
   handleEdit: (responsavel: ResponsavelResponse) => void;
   handleDelete: (responsavel: ResponsavelResponse) => void;
@@ -51,6 +53,7 @@ export interface ResponsaveisContextProps {
   applyFilters: () => void;
   clearFilters: () => void;
   getAreaName: (area: { id: number; nmArea: string; cdArea: string } | undefined) => string;
+  handleSort: (field: keyof ResponsavelResponse) => void;
 }
 
 const ResponsaveisContext = createContext<ResponsaveisContextProps>({} as ResponsaveisContextProps);
@@ -74,6 +77,9 @@ export const ResponsaveisProvider = ({ children }: { children: ReactNode }) => {
   });
   const [activeFilters, setActiveFilters] = useState(filters);
 
+  const [sortField, setSortField] = useState<keyof ResponsavelResponse | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   useEffect(() => {
@@ -81,7 +87,7 @@ export const ResponsaveisProvider = ({ children }: { children: ReactNode }) => {
     if (responsaveis.length > 0 || activeFilters.usuario || activeFilters.email || debouncedSearchQuery) {
       loadResponsaveis();
     }
-  }, [currentPage, activeFilters, debouncedSearchQuery]);
+  }, [currentPage, activeFilters, debouncedSearchQuery, sortField, sortDirection]);
 
   const loadResponsaveis = async () => {
     try {
@@ -168,13 +174,34 @@ export const ResponsaveisProvider = ({ children }: { children: ReactNode }) => {
     setShowFilterModal(false);
   };
 
+  const handleSort = (field: keyof ResponsavelResponse) => {
+    const newSortDirection = sortField === field && sortDirection === 'asc' ? 'desc' : 'asc';
+    setSortField(field);
+    setSortDirection(newSortDirection);
+  };
+
   const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
 
   const getAreaName = (area: { id: number; nmArea: string; cdArea: string } | undefined) => {
     return area ? area.nmArea : 'N/A';
   };
 
-  const filteredResponsaveis = responsaveis.filter(responsavel =>
+  const sortedResponsaveis = [...responsaveis].sort((a, b) => {
+    if (sortField) {
+      const aValue = a[sortField];
+      const bValue = b[sortField];
+
+      if (aValue < bValue) {
+        return sortDirection === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortDirection === 'asc' ? 1 : -1;
+      }
+    }
+    return 0;
+  });
+
+  const filteredResponsaveis = sortedResponsaveis.filter(responsavel =>
     responsavel.nmResponsavel.toLowerCase().includes(searchQuery.toLowerCase()) ||
     responsavel.dsEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
     responsavel.nmUsuarioLogin.toLowerCase().includes(searchQuery.toLowerCase())
@@ -213,7 +240,10 @@ export const ResponsaveisProvider = ({ children }: { children: ReactNode }) => {
         handleResponsavelSave,
         applyFilters,
         clearFilters,
-        getAreaName
+        getAreaName,
+        sortField,
+        sortDirection,
+        handleSort
       }}
     >
       {children}

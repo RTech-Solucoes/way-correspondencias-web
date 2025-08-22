@@ -18,7 +18,9 @@ import {
   PlusIcon,
   TrashIcon,
   XIcon,
-  TagIcon, SpinnerIcon,
+  TagIcon,
+  SpinnerIcon,
+  ArrowsDownUpIcon,
 } from '@phosphor-icons/react';
 import {Dialog, DialogContent, DialogHeader, DialogTitle} from '@/components/ui/dialog';
 import {Label} from '@/components/ui/label';
@@ -57,7 +59,8 @@ export default function TemasPage() {
     handleTemaSave,
     applyFilters,
     clearFilters,
-    loadTemas
+    loadTemas,
+    handleSort
   } = useTemas();
 
   // Load data when page mounts
@@ -114,11 +117,31 @@ export default function TemasPage() {
         <StickyTable>
           <StickyTableHeader>
             <StickyTableRow>
-              <StickyTableHead>Nome</StickyTableHead>
+              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('nmTema')}>
+                <div className="flex items-center">
+                  Nome
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
+                </div>
+              </StickyTableHead>
               <StickyTableHead>Descrição</StickyTableHead>
-              <StickyTableHead>Prazo</StickyTableHead>
-              <StickyTableHead>Tipo Prazo</StickyTableHead>
-              <StickyTableHead>Status</StickyTableHead>
+              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('nrPrazo')}>
+                <div className="flex items-center">
+                  Prazo
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
+                </div>
+              </StickyTableHead>
+              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('tpPrazo')}>
+                <div className="flex items-center">
+                  Tipo Prazo
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
+                </div>
+              </StickyTableHead>
+              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('flAtivo')}>
+                <div className="flex items-center">
+                  Status
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
+                </div>
+              </StickyTableHead>
               <StickyTableHead>Áreas</StickyTableHead>
               <StickyTableHead className="text-right">Ações</StickyTableHead>
             </StickyTableRow>

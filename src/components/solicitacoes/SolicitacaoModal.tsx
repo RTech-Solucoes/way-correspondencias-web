@@ -26,7 +26,9 @@ import { solicitacoesClient } from '@/api/solicitacoes/client';
 import { toast } from 'sonner';
 import { capitalize } from '@/utils/utils';
 import { MultiSelectAreas } from '@/components/ui/multi-select-areas';
-import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
+import { IconChevronLeft, IconChevronRight, IconCheck } from '@tabler/icons-react';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface SolicitacaoModalProps {
   solicitacao: SolicitacaoResponse | null;
@@ -60,7 +62,9 @@ export default function SolicitacaoModal({
     idTema: 0,
     idsAreas: [],
     nrPrazo: undefined,
-    tpPrazo: ''
+    tpPrazo: '',
+    nrOficio: '',
+    nrProcesso: ''
   });
   const [loading, setLoading] = useState(false);
 
@@ -77,7 +81,9 @@ export default function SolicitacaoModal({
         idTema: solicitacao.idTema,
         idsAreas: solicitacao.areas?.map(area => area.idArea) || [],
         nrPrazo: solicitacao.nrPrazo || undefined,
-        tpPrazo: solicitacao.tpPrazo || ''
+        tpPrazo: solicitacao.tpPrazo || '',
+        nrOficio: solicitacao.nrOficio || '',
+        nrProcesso: solicitacao.nrProcesso || ''
       });
     } else {
       setFormData({
@@ -90,22 +96,23 @@ export default function SolicitacaoModal({
         idTema: 0,
         idsAreas: [],
         nrPrazo: undefined,
-        tpPrazo: ''
+        tpPrazo: '',
+        nrOficio: '',
+        nrProcesso: ''
       });
     }
     setCurrentStep(1);
   }, [solicitacao, open, initialSubject, initialDescription]);
 
-
-  const getResponsavelFromTema = (temaId: number): number => {
+  const getResponsavelFromTema = useCallback((temaId: number): number => {
     const tema = temas.find(t => t.idTema === temaId);
     if (tema && responsaveis.length > 0) {
       return responsaveis[0].idResponsavel;
     }
     return responsaveis.length > 0 ? responsaveis[0].idResponsavel : 0;
-  };
+  }, [temas, responsaveis]);
 
-  const fillDataFromTema = (temaId: number) => {
+  const fillDataFromTema = useCallback((temaId: number) => {
     const tema = temas.find(t => t.idTema === temaId);
     if (tema) {
       const areasIds = tema.areas?.map(area => area.idArea) || [];
@@ -120,9 +127,9 @@ export default function SolicitacaoModal({
         tpPrazo: tema.tpPrazo || ''
       }));
     }
-  };
+  }, [temas, getResponsavelFromTema]);
 
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = useCallback((e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     let processedValue: string | number | undefined = value;
 
@@ -136,16 +143,29 @@ export default function SolicitacaoModal({
       ...prev,
       [name]: processedValue
     }));
-  };
+  }, []);
 
-  const handleAreasSelectionChange = (selectedIds: number[]) => {
+  const handleAreasSelectionChange = useCallback((selectedIds: number[]) => {
     setFormData(prev => ({
       ...prev,
       idsAreas: selectedIds
     }));
-  };
+  }, []);
 
-  const handleSelectChange = (field: keyof SolicitacaoRequest, value: string) => {
+  const handleAreaToggle = useCallback((areaId: number) => {
+    setFormData(prev => {
+      const currentAreas = prev.idsAreas || [];
+      const isChecked = currentAreas.includes(areaId);
+      return {
+        ...prev,
+        idsAreas: isChecked
+          ? currentAreas.filter(id => id !== areaId)
+          : [...currentAreas, areaId]
+      };
+    });
+  }, []);
+
+  const handleSelectChange = useCallback((field: keyof SolicitacaoRequest, value: string) => {
     let processedValue: string | number | undefined = value;
 
     if (field.includes('id') && field !== 'cdIdentificacao') {
@@ -165,19 +185,25 @@ export default function SolicitacaoModal({
 
       return newFormData;
     });
-  };
+  }, [getResponsavelFromTema]);
 
-  const handleNextStep = () => {
+  const handleNextStep = useCallback(() => {
     if (!formData.cdIdentificacao?.trim()) {
       toast.error("Código de identificação é obrigatório");
       return;
     }
     setCurrentStep(2);
-  };
+  }, [formData.cdIdentificacao]);
 
-  const handlePreviousStep = () => {
+  const handlePreviousStep = useCallback(() => {
     setCurrentStep(1);
-  };
+  }, []);
+
+  const handleStepClick = useCallback((step: number) => {
+    if (step === 1 || (step === 2 && formData.cdIdentificacao?.trim())) {
+      setCurrentStep(step);
+    }
+  }, [formData.cdIdentificacao]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -201,13 +227,15 @@ export default function SolicitacaoModal({
         dsAssunto: formData.dsAssunto?.trim() || undefined,
         dsSolicitacao: formData.dsSolicitacao?.trim() || undefined,
         dsObservacao: formData.dsObservacao?.trim() || undefined,
+        nrOficio: formData.nrOficio?.trim() || undefined,
+        nrProcesso: formData.nrProcesso?.trim() || undefined,
         nrPrazo: formData.nrPrazo && formData.nrPrazo > 0 ? formData.nrPrazo : undefined,
         tpPrazo: formData.tpPrazo?.trim() || undefined,
       };
 
       if (solicitacao) {
         await solicitacoesClient.atualizar(solicitacao.idSolicitacao, finalFormData);
-        toast.success("Solicitação atualizada com sucesso");
+        toast.success("Solicitação encaminhada com sucesso");
       } else {
         await solicitacoesClient.criar(finalFormData);
         toast.success("Solicitação criada com sucesso");
@@ -218,124 +246,100 @@ export default function SolicitacaoModal({
     } catch (error: unknown) {
       console.error('Erro ao salvar solicitação:', error);
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-      toast.error(solicitacao ? `Erro ao atualizar solicitação: ${errorMessage}` : `Erro ao criar solicitação: ${errorMessage}`);
+      toast.error(solicitacao ? `Erro ao encaminhar solicitação: ${errorMessage}` : `Erro ao criar solicitação: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setCurrentStep(1);
     onClose();
-  };
+  }, [onClose]);
 
   const isStep1Valid = useCallback(() => {
     return formData.cdIdentificacao?.trim() !== '' && formData.idTema > 0;
   }, [formData.cdIdentificacao, formData.idTema]);
 
   const isStep2Valid = useCallback(() => {
-    return formData.idTema > 0 && formData.idResponsavel > 0;
-  }, [formData.idTema, formData.idResponsavel]);
+    return formData.idTema > 0;
+  }, [formData.idTema]);
 
-  const renderStep1 = () => (
-    <div className="space-y-4">
-      <div className="flex gap-2 w-full">
-        <TextField
-          label="Código de Identificação *"
-          name="cdIdentificacao"
-          value={formData.cdIdentificacao}
-          onChange={handleInputChange}
-          required
-          autoFocus
-          maxLength={50}
-          className="w-full"
-        />
+  const getSelectedTema = useCallback(() => {
+    return temas.find(tema => tema.idTema === formData.idTema);
+  }, [temas, formData.idTema]);
 
-        <TextField
-          label="Assunto"
-          name="dsAssunto"
-          value={formData.dsAssunto}
-          onChange={handleInputChange}
-          maxLength={500}
-          className="w-full"
-        />
-      </div>
+  const getAreasResponsaveis = useCallback(() => {
+    if (!formData.idsAreas || !solicitacao?.areas) return [];
+    return solicitacao.areas.filter(area =>
+      formData.idsAreas?.includes(area.idArea)
+    );
+  }, [formData.idsAreas, solicitacao?.areas]);
 
-      <div className="w-full space-y-2">
-        <Label htmlFor="dsSolicitacao">Descrição da Solicitação</Label>
-        <Textarea
-          id="dsSolicitacao"
-          name="dsSolicitacao"
-          value={formData.dsSolicitacao}
-          onChange={handleInputChange}
-          rows={4}
-          maxLength={10000}
-          className="w-full"
-        />
-      </div>
+  const selectedAreas = useCallback(() => {
+    return solicitacao?.areas || [];
+  }, [solicitacao?.areas]);
 
-      <div className="w-full space-y-2">
-        <Label htmlFor="dsObservacao">Observações</Label>
-        <Textarea
-          id="dsObservacao"
-          name="dsObservacao"
-          value={formData.dsObservacao}
-          onChange={handleInputChange}
-          rows={3}
-          maxLength={10000}
-          className="w-full"
-        />
-      </div>
-
+  const renderStep2 = useCallback(() => (
+    <div className="space-y-6">
       <div className="space-y-2">
-        <Label htmlFor="tema">Tema *</Label>
-        <Select
-          value={formData.idTema ? formData.idTema.toString() : ''}
-          onValueChange={(value) => {
-            const temaId = parseInt(value);
-            fillDataFromTema(temaId);
-          }}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Selecione o tema" />
-          </SelectTrigger>
-          <SelectContent>
-            {temas.map((tema) => (
-              <SelectItem key={tema.idTema} value={tema.idTema.toString()}>
-                {tema.nmTema}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-    </div>
-  );
-
-  const renderStep2 = () => (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="responsavel">Responsável *</Label>
-        <Select
-          value={formData.idResponsavel ? formData.idResponsavel.toString() : ''}
-          onValueChange={(value) => handleSelectChange('idResponsavel', value)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Selecione o responsável" />
-          </SelectTrigger>
-          <SelectContent>
-            {responsaveis.map((responsavel) => (
-              <SelectItem key={responsavel.idResponsavel} value={responsavel.idResponsavel.toString()}>
-                {responsavel.nmResponsavel}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Label>Tema Selecionado</Label>
+        <div className="p-4 bg-gray-50 border rounded-3xl">
+          {getSelectedTema() ? (
+            <div className="flex items-center justify-between">
+              <span className="font-medium">{getSelectedTema()?.nmTema}</span>
+              <Badge>{responsaveis.find(r => r.idResponsavel === formData.idResponsavel)?.nmResponsavel || 'N/A'}</Badge>
+            </div>
+          ) : (
+            <span className="text-sm text-gray-500">Nenhum tema selecionado.</span>
+          )}
+        </div>
       </div>
 
-      <MultiSelectAreas
-        selectedAreaIds={formData.idsAreas || []}
-        onSelectionChange={handleAreasSelectionChange}
-      />
+      {solicitacao ? (
+        <div className="space-y-4">
+          <div>
+            <Label>Áreas da Solicitação</Label>
+            <div className="mt-2 space-y-2">
+              {selectedAreas().map((area) => {
+                const isChecked = formData.idsAreas?.includes(area.idArea) || false;
+                return (
+                  <div
+                    key={area.idArea}
+                    className="flex items-center justify-between p-3 bg-gray-50 border rounded-3xl cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleAreaToggle(area.idArea)}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                        isChecked 
+                          ? 'bg-blue-500 border-blue-500' 
+                          : 'border-gray-300'
+                      }`}>
+                        {isChecked && (
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </div>
+                      <span className="text-sm font-medium text-gray-700">
+                        {area.nmArea}
+                      </span>
+                    </div>
+                    <Badge>
+                      {solicitacao.nmResponsavel}
+                    </Badge>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <MultiSelectAreas
+          selectedAreaIds={formData.idsAreas || []}
+          onSelectionChange={handleAreasSelectionChange}
+        />
+      )}
 
       <div className="grid grid-cols-3 gap-4">
         <div className="space-y-2">
@@ -389,39 +393,156 @@ export default function SolicitacaoModal({
         </div>
       </div>
     </div>
+  ), [getSelectedTema, responsaveis, formData.idResponsavel, solicitacao, selectedAreas, formData.idsAreas, handleAreaToggle, handleAreasSelectionChange, formData.flStatus, handleSelectChange, formData.nrPrazo, handleInputChange, formData.tpPrazo]);
+
+  const renderStep1 = () => (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 gap-4">
+        <TextField
+          label="Código de Identificação *"
+          name="cdIdentificacao"
+          value={formData.cdIdentificacao}
+          onChange={handleInputChange}
+          required
+          autoFocus
+          maxLength={50}
+        />
+        <TextField
+          label="Assunto"
+          name="dsAssunto"
+          value={formData.dsAssunto}
+          onChange={handleInputChange}
+          maxLength={500}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <TextField
+          label="Nº Ofício"
+          name="nrOficio"
+          value={formData.nrOficio}
+          onChange={handleInputChange}
+          maxLength={50}
+        />
+        <TextField
+          label="Nº Processo"
+          name="nrProcesso"
+          value={formData.nrProcesso}
+          onChange={handleInputChange}
+          maxLength={50}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="dsSolicitacao">Descrição da Solicitação</Label>
+        <Textarea
+          id="dsSolicitacao"
+          name="dsSolicitacao"
+          value={formData.dsSolicitacao}
+          onChange={handleInputChange}
+          rows={3}
+          maxLength={1000}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="dsObservacao">Observações</Label>
+        <Textarea
+          id="dsObservacao"
+          name="dsObservacao"
+          value={formData.dsObservacao}
+          onChange={handleInputChange}
+          rows={3}
+          maxLength={1000}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="tema">Tema *</Label>
+        <Select
+          value={formData.idTema ? formData.idTema.toString() : ''}
+          onValueChange={(value) => {
+            const temaId = parseInt(value);
+            fillDataFromTema(temaId);
+          }}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione o tema" />
+          </SelectTrigger>
+          <SelectContent>
+            {temas.map((tema) => (
+              <SelectItem key={tema.idTema} value={tema.idTema.toString()}>
+                {tema.nmTema}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
   );
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {solicitacao ? 'Editar Solicitação' : 'Nova Solicitação'}
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="pb-6">
+          <DialogTitle className="text-xl font-semibold">
+            {solicitacao ? 'Encaminhar Solicitação' : 'Nova Solicitação'}
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto">
-          <div className="flex justify-center mb-4">
-            <div className="flex items-center space-x-4">
-              <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                currentStep >= 1 ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-600'
-              }`}>
-                1
+        <form onSubmit={handleSubmit} className="space-y-8">
+          <div className="flex justify-center mb-8">
+            <div className="flex items-center space-x-6">
+              <div className="flex flex-col items-center space-y-2">
+                <button
+                  type="button"
+                  onClick={() => handleStepClick(1)}
+                  className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors ${
+                    currentStep >= 1 
+                      ? 'bg-blue-500 border-blue-500 text-white' 
+                      : 'border-gray-300 text-gray-400'
+                  } ${currentStep === 1 ? 'ring-2 ring-blue-200' : ''}`}
+                >
+                  {currentStep > 1 ? <IconCheck size={20} /> : '1'}
+                </button>
+                <span className={`text-xs font-medium ${
+                  currentStep >= 1 ? 'text-blue-600' : 'text-gray-400'
+                }`}>
+                  Revisar Solicitação
+                </span>
               </div>
-              <div className={`w-16 h-1 ${
+
+              <div className={`w-20 h-1 transition-colors ${
                 currentStep >= 2 ? 'bg-blue-500' : 'bg-gray-300'
               }`}></div>
-              <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                currentStep >= 2 ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-600'
-              }`}>
-                2
+
+              <div className="flex flex-col items-center space-y-2">
+                <button
+                  type="button"
+                  onClick={() => handleStepClick(2)}
+                  disabled={!formData.cdIdentificacao?.trim()}
+                  className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors disabled:cursor-not-allowed ${
+                    currentStep >= 2
+                      ? 'bg-blue-500 border-blue-500 text-white'
+                      : 'border-gray-300 text-gray-400'
+                  } ${currentStep === 2 ? 'ring-2 ring-blue-200' : ''}`}
+                >
+                  {currentStep > 2 ? <IconCheck size={20} /> : '2'}
+                </button>
+                <span className={`text-xs font-medium ${
+                  currentStep >= 2 ? 'text-blue-600' : 'text-gray-400'
+                }`}>
+                  Alterar Solicitação
+                </span>
               </div>
             </div>
           </div>
 
-          {currentStep === 1 ? renderStep1() : renderStep2()}
+          <div className="min-h-[400px]">
+            {currentStep === 1 ? renderStep1() : renderStep2()}
+          </div>
 
-          <DialogFooter className="flex gap-2 pt-4">
+          <DialogFooter className="flex gap-3 pt-6 border-t">
             <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
               Cancelar
             </Button>
@@ -431,7 +552,7 @@ export default function SolicitacaoModal({
                 type="button"
                 onClick={handleNextStep}
                 disabled={!isStep1Valid()}
-                className="disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="flex items-center gap-2"
               >
                 Próximo
                 <IconChevronRight size={16} />
@@ -440,16 +561,22 @@ export default function SolicitacaoModal({
 
             {currentStep === 2 && (
               <>
-                <Button type="button" variant="outline" onClick={handlePreviousStep} disabled={loading} className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handlePreviousStep}
+                  disabled={loading}
+                  className="flex items-center gap-2"
+                >
                   <IconChevronLeft size={16} />
                   Anterior
                 </Button>
                 <Button
                   type="submit"
                   disabled={loading || !isStep2Valid()}
-                  className="disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2"
                 >
-                  {loading ? 'Salvando...' : solicitacao ? 'Salvar Alterações' : 'Criar Solicitação'}
+                  {loading ? 'Salvando...' : solicitacao ? 'Encaminhar Solicitação' : 'Criar Solicitação'}
                 </Button>
               </>
             )}

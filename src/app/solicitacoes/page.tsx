@@ -17,11 +17,15 @@ import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import {
   FunnelSimpleIcon,
   MagnifyingGlassIcon,
-  PencilSimpleIcon,
+  PaperPlaneIcon,
   PlusIcon,
   TrashIcon,
   ClipboardTextIcon,
-  XIcon, SpinnerIcon
+  XIcon,
+  SpinnerIcon,
+  CaretDownIcon,
+  CaretRightIcon,
+  ArrowsDownUpIcon
 } from '@phosphor-icons/react';
 import PageTitle from '@/components/ui/page-title';
 import { solicitacoesClient } from '@/api/solicitacoes/client';
@@ -55,6 +59,9 @@ export default function SolicitacoesPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
+  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+  const [sortField, setSortField] = useState<keyof SolicitacaoResponse | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   const [filters, setFilters] = useState({
     identificacao: '',
@@ -265,6 +272,42 @@ export default function SolicitacoesPage() {
     }
   };
 
+  const toggleRowExpansion = (solicitacaoId: number) => {
+    const newExpandedRows = new Set(expandedRows);
+    if (newExpandedRows.has(solicitacaoId)) {
+      newExpandedRows.delete(solicitacaoId);
+    } else {
+      newExpandedRows.add(solicitacaoId);
+    }
+    setExpandedRows(newExpandedRows);
+  };
+
+  const handleSort = (field: keyof SolicitacaoResponse) => {
+    let newSortDirection: 'asc' | 'desc' = 'asc';
+    if (sortField === field && sortDirection === 'asc') {
+      newSortDirection = 'desc';
+    }
+    setSortField(field);
+    setSortDirection(newSortDirection);
+    setCurrentPage(0);
+  };
+
+  const sortedSolicitacoes = () => {
+    const sorted = [...solicitacoes];
+    if (sortField) {
+      sorted.sort((a, b) => {
+        const aValue = a[sortField];
+        const bValue = b[sortField];
+
+        if (aValue === bValue) return 0;
+
+        const comparison = aValue < bValue ? -1 : 1;
+        return sortDirection === 'asc' ? comparison : -comparison;
+      });
+    }
+    return sorted;
+  };
+
   return (
     <div className="flex flex-col min-h-0 flex-1">
       <div className="bg-white border-b border-gray-200 p-6">
@@ -314,20 +357,45 @@ export default function SolicitacoesPage() {
         <StickyTable>
           <StickyTableHeader>
             <StickyTableRow>
-              <StickyTableHead>Identificação</StickyTableHead>
-              <StickyTableHead>Assunto</StickyTableHead>
-              <StickyTableHead>Responsável</StickyTableHead>
+              <StickyTableHead className="w-8"></StickyTableHead>
+              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('cdIdentificacao')}>
+                <div className="flex items-center">
+                  Identificação
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
+                </div>
+              </StickyTableHead>
+              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('dsAssunto')}>
+                <div className="flex items-center">
+                  Assunto
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
+                </div>
+              </StickyTableHead>
+              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('nmResponsavel')}>
+                <div className="flex items-center">
+                  Responsável
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
+                </div>
+              </StickyTableHead>
               <StickyTableHead>Áreas</StickyTableHead>
-              <StickyTableHead>Tema</StickyTableHead>
-              <StickyTableHead>Status</StickyTableHead>
-              <StickyTableHead>Criado em</StickyTableHead>
+              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('nmTema')}>
+                <div className="flex items-center">
+                  Tema
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
+                </div>
+              </StickyTableHead>
+              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('flStatus')}>
+                <div className="flex items-center">
+                  Status
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
+                </div>
+              </StickyTableHead>
               <StickyTableHead className="text-right">Ações</StickyTableHead>
             </StickyTableRow>
           </StickyTableHeader>
           <StickyTableBody>
             {loading ? (
               <StickyTableRow>
-                <StickyTableCell colSpan={8} className="text-center py-8">
+                <StickyTableCell colSpan={9} className="text-center py-8">
                   <div className="flex flex-1 items-center justify-center py-8">
                     <SpinnerIcon className="h-6 w-6 animate-spin text-gray-400" />
                     <span className="ml-2 text-gray-500">Buscando solicitações...</span>
@@ -336,7 +404,7 @@ export default function SolicitacoesPage() {
               </StickyTableRow>
             ) : solicitacoes?.length === 0 ? (
               <StickyTableRow>
-                <StickyTableCell colSpan={8} className="text-center py-8">
+                <StickyTableCell colSpan={9} className="text-center py-8">
                   <div className="flex flex-col items-center space-y-2">
                     <ClipboardTextIcon className="h-8 w-8 text-gray-400"/>
                     <p className="text-sm text-gray-500">Nenhuma solicitação encontrada</p>
@@ -344,56 +412,131 @@ export default function SolicitacoesPage() {
                 </StickyTableCell>
               </StickyTableRow>
             ) : (
-              solicitacoes.map((solicitacao) => (
-                <StickyTableRow key={solicitacao.idSolicitacao}>
-                  <StickyTableCell className="font-medium">{solicitacao.cdIdentificacao}</StickyTableCell>
-                  <StickyTableCell className="max-w-xs truncate">{solicitacao.dsAssunto}</StickyTableCell>
-                  <StickyTableCell>{solicitacao.nmResponsavel}</StickyTableCell>
-                  <StickyTableCell>
-                    {solicitacao.areas && solicitacao.areas?.length > 0 ? (
-                      <div className="flex flex-wrap gap-1">
-                        {solicitacao.areas.slice(0, 2).map((area, index) => (
-                          <span key={index} className="inline-flex px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                            {area.nmArea}
-                          </span>
-                        ))}
-                        {solicitacao.areas?.length > 2 && (
-                          <span className="inline-flex px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
-                            +{solicitacao.areas?.length - 2}
-                          </span>
+              sortedSolicitacoes().map((solicitacao) => (
+                <React.Fragment key={solicitacao.idSolicitacao}>
+                  <StickyTableRow>
+                    <StickyTableCell className="w-8">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleRowExpansion(solicitacao.idSolicitacao)}
+                        className="p-1 h-6 w-6"
+                      >
+                        {expandedRows.has(solicitacao.idSolicitacao) ? (
+                          <CaretDownIcon className="h-4 w-4" />
+                        ) : (
+                          <CaretRightIcon className="h-4 w-4" />
                         )}
+                      </Button>
+                    </StickyTableCell>
+                    <StickyTableCell className="font-medium">{solicitacao.cdIdentificacao}</StickyTableCell>
+                    <StickyTableCell className="max-w-xs truncate">{solicitacao.dsAssunto}</StickyTableCell>
+                    <StickyTableCell>{solicitacao.nmResponsavel}</StickyTableCell>
+                    <StickyTableCell>
+                      {solicitacao.areas && solicitacao.areas?.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {solicitacao.areas.slice(0, 2).map((area, index) => (
+                            <span key={index} className="inline-flex px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                              {area.nmArea}
+                            </span>
+                          ))}
+                          {solicitacao.areas?.length > 2 && (
+                            <span className="inline-flex px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
+                              +{solicitacao.areas?.length - 2}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 text-sm">Nenhuma área</span>
+                      )}
+                    </StickyTableCell>
+                    <StickyTableCell>{solicitacao.tema?.nmTema || solicitacao.nmTema || 'N/A'}</StickyTableCell>
+                    <StickyTableCell>
+                      <Badge variant={getStatusBadgeVariant(solicitacao.flStatus)}>
+                        {getStatusText(solicitacao.flStatus)}
+                      </Badge>
+                    </StickyTableCell>
+                    <StickyTableCell className="text-right">
+                      <div className="flex items-center justify-end space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(solicitacao)}
+                        >
+                          <PaperPlaneIcon className="h-4 w-4"/>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(solicitacao)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <TrashIcon className="h-4 w-4"/>
+                        </Button>
                       </div>
-                    ) : (
-                      <span className="text-gray-400 text-sm">Nenhuma área</span>
-                    )}
-                  </StickyTableCell>
-                  <StickyTableCell>{solicitacao.tema?.nmTema || solicitacao.nmTema || 'N/A'}</StickyTableCell>
-                  <StickyTableCell>
-                    <Badge variant={getStatusBadgeVariant(solicitacao.flStatus)}>
-                      {getStatusText(solicitacao.flStatus)}
-                    </Badge>
-                  </StickyTableCell>
-                  <StickyTableCell>{formatDate(solicitacao.dtCriacao)}</StickyTableCell>
-                  <StickyTableCell className="text-right">
-                    <div className="flex items-center justify-end space-x-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(solicitacao)}
-                      >
-                        <PencilSimpleIcon className="h-4 w-4"/>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(solicitacao)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <TrashIcon className="h-4 w-4"/>
-                      </Button>
-                    </div>
-                  </StickyTableCell>
-                </StickyTableRow>
+                    </StickyTableCell>
+                  </StickyTableRow>
+                  {expandedRows.has(solicitacao.idSolicitacao) && (
+                    <StickyTableRow>
+                      <StickyTableCell colSpan={9} className="bg-gray-50 p-6">
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-2 gap-6">
+                            <div>
+                              <h4 className="font-semibold text-gray-900 mb-2">Informações Detalhadas</h4>
+                              <div className="space-y-2 text-sm">
+                                {solicitacao.dsSolicitacao && (
+                                  <div>
+                                    <span className="font-medium text-gray-700">Descrição:</span>
+                                    <p className="text-gray-600 mt-1">{solicitacao.dsSolicitacao}</p>
+                                  </div>
+                                )}
+                                {solicitacao.dsObservacao && (
+                                  <div>
+                                    <span className="font-medium text-gray-700">Observações:</span>
+                                    <p className="text-gray-600 mt-1">{solicitacao.dsObservacao}</p>
+                                  </div>
+                                )}
+                                {solicitacao.nrOficio && (
+                                  <div>
+                                    <span className="font-medium text-gray-700">Nº Ofício:</span>
+                                    <span className="text-gray-600 ml-2">{solicitacao.nrOficio}</span>
+                                  </div>
+                                )}
+                                {solicitacao.nrProcesso && (
+                                  <div>
+                                    <span className="font-medium text-gray-700">Nº Processo:</span>
+                                    <span className="text-gray-600 ml-2">{solicitacao.nrProcesso}</span>
+                                  </div>
+                                )}
+                                <div>
+                                  <span className="font-medium text-gray-700">Data de Criação:</span>
+                                  <span className="text-gray-600 ml-2">{formatDate(solicitacao.dtCriacao)}</span>
+                                </div>
+                                {solicitacao.dtAtualizacao && (
+                                  <div>
+                                    <span className="font-medium text-gray-700">Última Atualização:</span>
+                                    <span className="text-gray-600 ml-2">{formatDate(solicitacao.dtAtualizacao)}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-gray-900 mb-2">Áreas e Responsáveis</h4>
+                              <div className="space-y-2">
+                                {solicitacao.areas?.map((area) => (
+                                  <div key={area.idArea} className="flex items-center justify-between p-2 bg-white rounded border">
+                                    <span className="text-sm font-medium text-gray-700">{area.nmArea}</span>
+                                    <span className="text-xs text-gray-500">Responsável será implementado</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </StickyTableCell>
+                    </StickyTableRow>
+                  )}
+                </React.Fragment>
               ))
             )}
           </StickyTableBody>

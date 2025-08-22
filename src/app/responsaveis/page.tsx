@@ -18,7 +18,9 @@ import {
   TrashIcon,
   FunnelSimpleIcon,
   UsersIcon,
-  XIcon, SpinnerIcon
+  XIcon,
+  SpinnerIcon,
+  ArrowsDownUpIcon
 } from '@phosphor-icons/react';
 import {
   Dialog,
@@ -63,7 +65,8 @@ export default function ResponsaveisPage() {
     handleResponsavelSave,
     applyFilters,
     clearFilters,
-    loadResponsaveis
+    loadResponsaveis,
+    handleSort
   } = useResponsaveis();
 
   // Load data when page mounts
@@ -120,12 +123,37 @@ export default function ResponsaveisPage() {
         <StickyTable>
           <StickyTableHeader>
             <StickyTableRow>
-              <StickyTableHead>Nome</StickyTableHead>
-              <StickyTableHead>Usuário</StickyTableHead>
-              <StickyTableHead>Email</StickyTableHead>
+              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('nmResponsavel')}>
+                <div className="flex items-center">
+                  Nome
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
+                </div>
+              </StickyTableHead>
+              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('nmUsuarioLogin')}>
+                <div className="flex items-center">
+                  Usuário
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
+                </div>
+              </StickyTableHead>
+              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('dsEmail')}>
+                <div className="flex items-center">
+                  Email
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
+                </div>
+              </StickyTableHead>
               <StickyTableHead>Perfil</StickyTableHead>
-              <StickyTableHead>Status</StickyTableHead>
-              <StickyTableHead>CPF</StickyTableHead>
+              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('flAtivo')}>
+                <div className="flex items-center">
+                  Status
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
+                </div>
+              </StickyTableHead>
+              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('nrCpf')}>
+                <div className="flex items-center">
+                  CPF
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
+                </div>
+              </StickyTableHead>
               <StickyTableHead className="text-right">Ações</StickyTableHead>
             </StickyTableRow>
           </StickyTableHeader>

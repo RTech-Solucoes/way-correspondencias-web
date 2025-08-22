@@ -19,6 +19,20 @@ export default class ApiClient {
     return {};
   }
 
+  private handleUnauthorized(): void {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('tokenType');
+    localStorage.removeItem('user');
+
+    import('sonner').then(({ toast }) => {
+      toast.error('Seu token expirou, faça login novamente');
+    });
+
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login';
+    }
+  }
+
   public async request<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -39,6 +53,11 @@ export default class ApiClient {
       const response = await fetch(url, config);
       
       if (!response.ok) {
+        if (response.status === 401) {
+          this.handleUnauthorized();
+          throw new Error('Token expirado. Redirecionando para login...');
+        }
+
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
       }
