@@ -17,7 +17,7 @@ import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import {
   FunnelSimpleIcon,
   MagnifyingGlassIcon,
-  PaperPlaneIcon,
+  PaperPlaneRightIcon,
   PlusIcon,
   TrashIcon,
   ClipboardTextIcon,
@@ -463,7 +463,7 @@ export default function SolicitacoesPage() {
                           size="sm"
                           onClick={() => handleEdit(solicitacao)}
                         >
-                          <PaperPlaneIcon className="h-4 w-4"/>
+                          <PaperPlaneRightIcon className="h-4 w-4"/>
                         </Button>
                         <Button
                           variant="ghost"
