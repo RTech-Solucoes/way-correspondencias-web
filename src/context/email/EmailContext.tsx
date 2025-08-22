@@ -8,6 +8,7 @@ import {
   useState,
   ReactNode,
 } from "react";
+import {useRouter} from "next/navigation";
 
 interface EmailFiltersState {
   remetente: string;
@@ -55,6 +56,8 @@ export const EmailProvider = ({ children }: { children: ReactNode }) => {
     dateTo: '',
   });
 
+  const router = useRouter();
+
   const applyFilters = () => {
     setActiveEmailFilters(emailFilters);
     setShowFilterModal(false);
@@ -75,11 +78,17 @@ export const EmailProvider = ({ children }: { children: ReactNode }) => {
 
   const hasActiveFilters = Object.values(activeEmailFilters).some(value => value !== '');
 
+  const onEmailSelect = (id: string) => {
+    setSelectedEmail(id)
+    router.push(`/email/${id}`)
+  }
+
   return (
     <EmailContext.Provider
       value={{
         selectedEmail,
         setSelectedEmail,
+        onEmailSelect,
         searchQuery,
         setSearchQuery,
         showFilterModal,

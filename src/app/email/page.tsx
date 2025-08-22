@@ -1,27 +1,5 @@
 "use client";
 
-import {
-  FunnelSimpleIcon,
-  MagnifyingGlassIcon,
-  XIcon,
-} from "@phosphor-icons/react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import EmailList from "@/components/email/EmailList";
 import EmailDetail from "@/components/email/EmailDetail";
 import PageTitle from "@/components/ui/page-title";
@@ -32,7 +10,7 @@ import FilterDialog from "@/components/email/FilterDialog";
 export default function EmailPage() {
   const {
     selectedEmail,
-    setSelectedEmail,
+    onEmailSelect,
     searchQuery,
     setSearchQuery,
     showFilterModal,
@@ -62,25 +40,18 @@ export default function EmailPage() {
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-        {!selectedEmail ? (
-          <EmailList
-            searchQuery={searchQuery}
-            selectedEmail={selectedEmail}
-            onEmailSelect={setSelectedEmail}
-            emailFilters={{
-              isRead: '',
-              hasAttachment: '',
-              dateFrom: activeEmailFilters.dateFrom,
-              dateTo: activeEmailFilters.dateTo,
-              sender: activeEmailFilters.remetente
-            }}
-          />
-        ) : (
-          <EmailDetail
-            emailId={selectedEmail}
-            onBack={() => setSelectedEmail(null)}
-          />
-        )}
+        <EmailList
+          searchQuery={searchQuery}
+          selectedEmail={selectedEmail}
+          onEmailSelect={onEmailSelect}
+          emailFilters={{
+            isRead: '',
+            hasAttachment: '',
+            dateFrom: activeEmailFilters.dateFrom,
+            dateTo: activeEmailFilters.dateTo,
+            sender: activeEmailFilters.remetente
+          }}
+        />
       </div>
 
       {showFilterModal && (
