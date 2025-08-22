@@ -309,7 +309,7 @@ export default function SolicitacoesPage() {
               <TableHead>Identificação</TableHead>
               <TableHead>Assunto</TableHead>
               <TableHead>Responsável</TableHead>
-              <TableHead>Área</TableHead>
+              <TableHead>Áreas</TableHead>
               <TableHead>Tema</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Criado em</TableHead>
