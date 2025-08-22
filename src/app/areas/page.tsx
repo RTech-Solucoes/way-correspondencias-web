@@ -1,31 +1,14 @@
 'use client';
 
 import React from 'react';
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
-import {Button} from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  ArrowsDownUpIcon,
-  FunnelSimpleIcon,
-  MagnifyingGlassIcon,
-  PencilSimpleIcon,
-  PlusIcon,
-  TrashIcon,
-  XIcon,
-  BuildingIcon, SpinnerIcon,
-} from '@phosphor-icons/react';
-import {Dialog, DialogContent, DialogHeader, DialogTitle} from '@/components/ui/dialog';
-import {Label} from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { AreaResponse, AreaRequest } from '@/api/areas/types';
-import { areasClient } from '@/api/areas/client';
 import AreaModal from '../../components/areas/AreaModal';
-import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
-import PageTitle from '@/components/ui/page-title';
-import { Pagination } from '@/components/ui/pagination';
-import {getStatusText} from "@/utils/utils";
+import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
+import {Pagination} from '@/components/ui/pagination';
 import useAreas from '@/context/areas/AreasContext';
+import HeaderArea from '@/components/areas/HeaderArea';
+import SearchArea from "@/components/areas/SearchArea";
+import TableArea from "@/components/areas/TableArea";
+import FilterModalArea from "@/components/areas/FilterModalArea";
 
 export default function AreasPage() {
   const {

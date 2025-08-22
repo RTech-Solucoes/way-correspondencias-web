@@ -88,14 +88,14 @@ export default function LoginPage() {
             type="text"
             value={username}
             onChange={(e) => {
-              setUsername(e.target.value);
+              setUsername(e);
               if (usernameError) setUsernameError('');
             }}
-            leftIcon={<UserIcon className="h-5 w-5 text-gray-300" />}
+            startIcon={UserIcon}
             placeholder="Digite seu nome de usuário"
             error={usernameError}
             disabled={isLoading}
-            className={cn(
+            inputClassName={cn(
               "h-12 border-none pl-10 text-white",
               "bg-gradient-to-r from-gray-200/20 via-gray-200/20 to-gray-200/20",
               "focus-visible:via-blue-200/50 focus-visible:to-blue-300/20",
@@ -113,14 +113,14 @@ export default function LoginPage() {
             type="password"
             value={password}
             onChange={(e) => {
-              setPassword(e.target.value);
+              setPassword(e);
               if (passwordError) setPasswordError('');
             }}
             placeholder="Digite sua senha"
             error={passwordError}
-            leftIcon={<LockIcon className="h-5 w-5 text-gray-300" />}
+            startIcon={LockIcon}
             disabled={isLoading}
-            className={cn(
+            inputClassName={cn(
               "h-12 border-none pl-10 pr-10 text-white placeholder-gray-400",
               "bg-gradient-to-r from-gray-200/20 via-gray-200/20 to-gray-200/20",
               "focus-visible:via-blue-200/50 focus-visible:to-blue-300/20",

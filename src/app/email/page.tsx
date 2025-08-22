@@ -26,6 +26,8 @@ import EmailList from "@/components/email/EmailList";
 import EmailDetail from "@/components/email/EmailDetail";
 import PageTitle from "@/components/ui/page-title";
 import useEmail from "@/context/email/EmailContext";
+import EmailSearch from "@/components/email/EmailSearch";
+import FilterDialog from "@/components/email/FilterDialog";
 
 export default function EmailPage() {
   const {
