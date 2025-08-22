@@ -2,13 +2,13 @@
 
 import React, { useEffect } from 'react';
 import {
-  Table,
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
+  StickyTable,
+  StickyTableBody,
+  StickyTableCell,
+  StickyTableHead,
+  StickyTableHeader,
+  StickyTableRow
+} from '@/components/ui/sticky-table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -116,46 +116,46 @@ export default function ResponsaveisPage() {
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-auto bg-white">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Usuário</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Perfil</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>CPF</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+      <div className="flex flex-1 overflow-hidden bg-white">
+        <StickyTable>
+          <StickyTableHeader>
+            <StickyTableRow>
+              <StickyTableHead>Nome</StickyTableHead>
+              <StickyTableHead>Usuário</StickyTableHead>
+              <StickyTableHead>Email</StickyTableHead>
+              <StickyTableHead>Perfil</StickyTableHead>
+              <StickyTableHead>Status</StickyTableHead>
+              <StickyTableHead>CPF</StickyTableHead>
+              <StickyTableHead className="text-right">Ações</StickyTableHead>
+            </StickyTableRow>
+          </StickyTableHeader>
+          <StickyTableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
+              <StickyTableRow>
+                <StickyTableCell colSpan={7} className="text-center py-8">
                   <div className="flex flex-1 items-center justify-center py-8">
                     <SpinnerIcon className="h-6 w-6 animate-spin text-gray-400" />
                     <span className="ml-2 text-gray-500">Buscando responsáveis...</span>
                   </div>
-                </TableCell>
-              </TableRow>
+                </StickyTableCell>
+              </StickyTableRow>
             ) : responsaveis?.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
+              <StickyTableRow>
+                <StickyTableCell colSpan={7} className="text-center py-8">
                   <div className="flex flex-col items-center space-y-2">
                     <UsersIcon className="h-8 w-8 text-gray-400"/>
                     <p className="text-sm text-gray-500">Nenhum responsável encontrado</p>
                   </div>
-                </TableCell>
-              </TableRow>
+                </StickyTableCell>
+              </StickyTableRow>
             ) : (
               responsaveis.map((responsavel) => (
-                <TableRow key={responsavel.idResponsavel}>
-                  <TableCell className="font-medium">{responsavel.nmResponsavel}</TableCell>
-                  <TableCell>{responsavel.nmUsuarioLogin}</TableCell>
-                  <TableCell>{responsavel.dsEmail}</TableCell>
-                  <TableCell>{responsavel.nmPerfil || 'N/A'}</TableCell>
-                  <TableCell>
+                <StickyTableRow key={responsavel.idResponsavel}>
+                  <StickyTableCell className="font-medium">{responsavel.nmResponsavel}</StickyTableCell>
+                  <StickyTableCell>{responsavel.nmUsuarioLogin}</StickyTableCell>
+                  <StickyTableCell>{responsavel.dsEmail}</StickyTableCell>
+                  <StickyTableCell>{responsavel.nmPerfil || 'N/A'}</StickyTableCell>
+                  <StickyTableCell>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                       responsavel.flAtivo === 'S'
                         ? 'bg-green-100 text-green-800' 
@@ -163,9 +163,9 @@ export default function ResponsaveisPage() {
                     }`}>
                       {getStatusText(responsavel.flAtivo)}
                     </span>
-                  </TableCell>
-                  <TableCell>{responsavel.nrCpf}</TableCell>
-                  <TableCell className="text-right">
+                  </StickyTableCell>
+                  <StickyTableCell>{responsavel.nrCpf}</StickyTableCell>
+                  <StickyTableCell className="text-right">
                     <div className="flex items-center justify-end space-x-2">
                       <Button
                         variant="ghost"
@@ -183,12 +183,12 @@ export default function ResponsaveisPage() {
                         <TrashIcon className="h-4 w-4"/>
                       </Button>
                     </div>
-                  </TableCell>
-                </TableRow>
+                  </StickyTableCell>
+                </StickyTableRow>
               ))
             )}
-          </TableBody>
-        </Table>
+          </StickyTableBody>
+        </StickyTable>
       </div>
 
       <Pagination

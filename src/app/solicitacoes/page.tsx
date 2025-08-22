@@ -1,7 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  StickyTable,
+  StickyTableBody,
+  StickyTableCell,
+  StickyTableHead,
+  StickyTableHeader,
+  StickyTableRow
+} from '@/components/ui/sticky-table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -303,45 +310,45 @@ export default function SolicitacoesPage() {
       </div>
 
       <div className="flex flex-1 overflow-auto bg-white">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Identificação</TableHead>
-              <TableHead>Assunto</TableHead>
-              <TableHead>Responsável</TableHead>
-              <TableHead>Áreas</TableHead>
-              <TableHead>Tema</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Criado em</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+        <StickyTable>
+          <StickyTableHeader>
+            <StickyTableRow>
+              <StickyTableHead>Identificação</StickyTableHead>
+              <StickyTableHead>Assunto</StickyTableHead>
+              <StickyTableHead>Responsável</StickyTableHead>
+              <StickyTableHead>Áreas</StickyTableHead>
+              <StickyTableHead>Tema</StickyTableHead>
+              <StickyTableHead>Status</StickyTableHead>
+              <StickyTableHead>Criado em</StickyTableHead>
+              <StickyTableHead className="text-right">Ações</StickyTableHead>
+            </StickyTableRow>
+          </StickyTableHeader>
+          <StickyTableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center py-8">
+              <StickyTableRow>
+                <StickyTableCell colSpan={8} className="text-center py-8">
                   <div className="flex flex-1 items-center justify-center py-8">
                     <SpinnerIcon className="h-6 w-6 animate-spin text-gray-400" />
                     <span className="ml-2 text-gray-500">Buscando solicitações...</span>
                   </div>
-                </TableCell>
-              </TableRow>
+                </StickyTableCell>
+              </StickyTableRow>
             ) : solicitacoes?.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center py-8">
+              <StickyTableRow>
+                <StickyTableCell colSpan={8} className="text-center py-8">
                   <div className="flex flex-col items-center space-y-2">
                     <ClipboardTextIcon className="h-8 w-8 text-gray-400"/>
                     <p className="text-sm text-gray-500">Nenhuma solicitação encontrada</p>
                   </div>
-                </TableCell>
-              </TableRow>
+                </StickyTableCell>
+              </StickyTableRow>
             ) : (
               solicitacoes.map((solicitacao) => (
-                <TableRow key={solicitacao.idSolicitacao}>
-                  <TableCell className="font-medium">{solicitacao.cdIdentificacao}</TableCell>
-                  <TableCell className="max-w-xs truncate">{solicitacao.dsAssunto}</TableCell>
-                  <TableCell>{solicitacao.nmResponsavel}</TableCell>
-                  <TableCell>
+                <StickyTableRow key={solicitacao.idSolicitacao}>
+                  <StickyTableCell className="font-medium">{solicitacao.cdIdentificacao}</StickyTableCell>
+                  <StickyTableCell className="max-w-xs truncate">{solicitacao.dsAssunto}</StickyTableCell>
+                  <StickyTableCell>{solicitacao.nmResponsavel}</StickyTableCell>
+                  <StickyTableCell>
                     {solicitacao.areas && solicitacao.areas?.length > 0 ? (
                       <div className="flex flex-wrap gap-1">
                         {solicitacao.areas.slice(0, 2).map((area, index) => (
@@ -358,15 +365,15 @@ export default function SolicitacoesPage() {
                     ) : (
                       <span className="text-gray-400 text-sm">Nenhuma área</span>
                     )}
-                  </TableCell>
-                  <TableCell>{solicitacao.tema?.nmTema || solicitacao.nmTema || 'N/A'}</TableCell>
-                  <TableCell>
+                  </StickyTableCell>
+                  <StickyTableCell>{solicitacao.tema?.nmTema || solicitacao.nmTema || 'N/A'}</StickyTableCell>
+                  <StickyTableCell>
                     <Badge variant={getStatusBadgeVariant(solicitacao.flStatus)}>
                       {getStatusText(solicitacao.flStatus)}
                     </Badge>
-                  </TableCell>
-                  <TableCell>{new Date(solicitacao.dtCriacao).toLocaleDateString('pt-BR')}</TableCell>
-                  <TableCell className="text-right">
+                  </StickyTableCell>
+                  <StickyTableCell>{new Date(solicitacao.dtCriacao).toLocaleDateString('pt-BR')}</StickyTableCell>
+                  <StickyTableCell className="text-right">
                     <div className="flex items-center justify-end space-x-2">
                       <Button
                         variant="ghost"
@@ -384,12 +391,12 @@ export default function SolicitacoesPage() {
                         <TrashIcon className="h-4 w-4"/>
                       </Button>
                     </div>
-                  </TableCell>
-                </TableRow>
+                  </StickyTableCell>
+                </StickyTableRow>
               ))
             )}
-          </TableBody>
-        </Table>
+          </StickyTableBody>
+        </StickyTable>
       </div>
 
       <Pagination

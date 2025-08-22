@@ -1,7 +1,14 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
+import {
+  StickyTable,
+  StickyTableBody,
+  StickyTableCell,
+  StickyTableHead,
+  StickyTableHeader,
+  StickyTableRow
+} from '@/components/ui/sticky-table';
 import {Button} from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -103,54 +110,54 @@ export default function TemasPage() {
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-auto bg-white">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Descrição</TableHead>
-              <TableHead>Prazo</TableHead>
-              <TableHead>Tipo Prazo</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Áreas</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+      <div className="flex flex-1 overflow-hidden bg-white">
+        <StickyTable>
+          <StickyTableHeader>
+            <StickyTableRow>
+              <StickyTableHead>Nome</StickyTableHead>
+              <StickyTableHead>Descrição</StickyTableHead>
+              <StickyTableHead>Prazo</StickyTableHead>
+              <StickyTableHead>Tipo Prazo</StickyTableHead>
+              <StickyTableHead>Status</StickyTableHead>
+              <StickyTableHead>Áreas</StickyTableHead>
+              <StickyTableHead className="text-right">Ações</StickyTableHead>
+            </StickyTableRow>
+          </StickyTableHeader>
+          <StickyTableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
+              <StickyTableRow>
+                <StickyTableCell colSpan={7} className="text-center py-8">
                   <div className="flex flex-1 items-center justify-center py-8">
                     <SpinnerIcon className="h-6 w-6 animate-spin text-gray-400" />
                     <span className="ml-2 text-gray-500">Buscando temas...</span>
                   </div>
-                </TableCell>
-              </TableRow>
+                </StickyTableCell>
+              </StickyTableRow>
             ) : temas?.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
+              <StickyTableRow>
+                <StickyTableCell colSpan={7} className="text-center py-8">
                   <div className="flex flex-col items-center space-y-2">
                     <TagIcon className="h-8 w-8 text-gray-400"/>
                     <p className="text-sm text-gray-500">Nenhum tema encontrado</p>
                   </div>
-                </TableCell>
-              </TableRow>
+                </StickyTableCell>
+              </StickyTableRow>
             ) : (
               temas.map((tema) => (
-                <TableRow key={tema.idTema}>
-                  <TableCell className="font-medium">{tema.nmTema}</TableCell>
-                  <TableCell className="max-w-xs truncate" title={tema.dsTema}>
+                <StickyTableRow key={tema.idTema}>
+                  <StickyTableCell className="font-medium">{tema.nmTema}</StickyTableCell>
+                  <StickyTableCell className="max-w-xs truncate" title={tema.dsTema}>
                     {tema.dsTema || '-'}
-                  </TableCell>
-                  <TableCell>
+                  </StickyTableCell>
+                  <StickyTableCell>
                     {tema.nrPrazo ? `${tema.nrPrazo}` : '-'}
-                  </TableCell>
-                  <TableCell>
+                  </StickyTableCell>
+                  <StickyTableCell>
                     {tema.tpPrazo === 'C' ? 'Dias Corridos' :
                      tema.tpPrazo === 'U' ? 'Dias Úteis' :
                      tema.tpPrazo || '-'}
-                  </TableCell>
-                  <TableCell>
+                  </StickyTableCell>
+                  <StickyTableCell>
                     <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
                       tema.flAtivo === 'S' 
                         ? 'bg-green-100 text-green-800' 
@@ -158,8 +165,8 @@ export default function TemasPage() {
                     }`}>
                       {getStatusText(tema.flAtivo)}
                     </span>
-                  </TableCell>
-                  <TableCell>
+                  </StickyTableCell>
+                  <StickyTableCell>
                     {tema.areas && tema.areas?.length > 0 ? (
                       <div className="flex flex-wrap gap-1">
                         {tema.areas.slice(0, 2).map((area, index) => (
@@ -176,8 +183,8 @@ export default function TemasPage() {
                     ) : (
                       <span className="text-gray-400 text-sm">Nenhuma área</span>
                     )}
-                  </TableCell>
-                  <TableCell className="text-right">
+                  </StickyTableCell>
+                  <StickyTableCell className="text-right">
                     <div className="flex items-center justify-end space-x-2">
                       <Button
                         variant="ghost"
@@ -195,12 +202,12 @@ export default function TemasPage() {
                         <TrashIcon className="h-4 w-4"/>
                       </Button>
                     </div>
-                  </TableCell>
-                </TableRow>
+                  </StickyTableCell>
+                </StickyTableRow>
               ))
             )}
-          </TableBody>
-        </Table>
+          </StickyTableBody>
+        </StickyTable>
       </div>
 
       <Pagination
