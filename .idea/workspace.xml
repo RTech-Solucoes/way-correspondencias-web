@@ -5,26 +5,29 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="98226f2c-f64e-43be-946e-e89028627d5c" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/types/misc/enums.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/types/misc/types.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/api/areas/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/api/areas/types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/api/email/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/api/email/types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/api/responsaveis/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/api/responsaveis/types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/api/solicitacoes/client.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/api/solicitacoes/client.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/api/solicitacoes/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/api/solicitacoes/types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/api/temas/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/api/temas/types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/areas/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/areas/page.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/app/email/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/email/page.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/app/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/page.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/app/responsaveis/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/responsaveis/page.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/app/solicitacoes/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/solicitacoes/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/email/EmailDetail.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/email/EmailDetail.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/temas/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/temas/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/areas/AreaModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/areas/AreaModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/dashboard/DeadlinesCalendar/CalendarWeek/CalendarWeek.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/dashboard/DeadlinesCalendar/CalendarWeek/CalendarWeek.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/components/email/EmailList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/email/EmailList.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/layout/sidebar/ProfileButton.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/layout/sidebar/ProfileButton.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/components/layout/sidebar/Sidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/layout/sidebar/Sidebar.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/components/responsaveis/ResponsavelModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/responsaveis/ResponsavelModal.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/components/solicitacoes/SolicitacaoModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/solicitacoes/SolicitacaoModal.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/types/email/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/types/email/types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/temas/TemaModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/temas/TemaModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/ui/dialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ui/dialog.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/ui/multi-select-areas.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ui/multi-select-areas.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/ui/pagination.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ui/pagination.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/ui/text-field.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ui/text-field.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/context/areas/AreasContext.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/context/areas/AreasContext.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/context/email/EmailContext.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/context/email/EmailContext.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/context/responsaveis/ResponsaveisContext.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/context/responsaveis/ResponsaveisContext.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/context/solicitacoes/SolicitacoesContext.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/context/solicitacoes/SolicitacoesContext.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/context/temas/TemasContext.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/context/temas/TemasContext.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/utils/utils.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils/utils.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -191,6 +194,8 @@
       <workItem from="1755785073391" duration="590000" />
       <workItem from="1755788233180" duration="3209000" />
       <workItem from="1755797589426" duration="1389000" />
+      <workItem from="1755857759907" duration="1882000" />
+      <workItem from="1755860387043" duration="1061000" />
     </task>
     <task id="LOCAL-00001" summary="Alteração biblioteca de Ícones&#10;lucide-react -&gt; @phosphor-icons/react">
       <option name="closed" value="true" />

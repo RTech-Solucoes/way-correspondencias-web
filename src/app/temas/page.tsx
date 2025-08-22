@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useState, useEffect, useCallback} from 'react';
+import React from 'react';
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
 import {Button} from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,120 +18,39 @@ import {Label} from '@/components/ui/label';
 import {TemaModal} from '@/components/temas/TemaModal';
 import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
 import PageTitle from '@/components/ui/page-title';
-import {TemaResponse} from '@/api/temas/types';
-import {temasClient} from '@/api/temas/client';
-import { toast } from 'sonner';
-import { useDebounce } from '@/hooks/use-debounce';
 import { Pagination } from '@/components/ui/pagination';
 import {getStatusText} from "@/utils/utils";
+import useTemas from '@/context/temas/TemasContext';
 
 export default function TemasPage() {
-  const [temas, setTemas] = useState<TemaResponse[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTema, setSelectedTema] = useState<TemaResponse | null>(null);
-  const [showTemaModal, setShowTemaModal] = useState(false);
-  const [showFilterModal, setShowFilterModal] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [temaToDelete, setTemaToDelete] = useState<TemaResponse | null>(null);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalElements, setTotalElements] = useState(0);
-
-  const [filters, setFilters] = useState({
-    nome: '',
-    descricao: '',
-  });
-  const [activeFilters, setActiveFilters] = useState(filters);
-
-  const debouncedSearchQuery = useDebounce(searchQuery, 500);
-
-  const loadTemas = useCallback(async () => {
-    try {
-      setLoading(true);
-
-      if (activeFilters.nome && !activeFilters.descricao && !debouncedSearchQuery) {
-        const result = await temasClient.buscarPorNmTema(activeFilters.nome);
-        setTemas([result]);
-        setTotalPages(1);
-        setTotalElements(1);
-      } else {
-        const filterParts = [];
-        if (debouncedSearchQuery) filterParts.push(debouncedSearchQuery);
-        if (activeFilters.nome) filterParts.push(activeFilters.nome);
-        if (activeFilters.descricao) filterParts.push(activeFilters.descricao);
-
-        const response = await temasClient.buscarPorFiltroComAreas({
-          filtro: filterParts.join(' ') || undefined,
-          page: currentPage,
-          size: 50,
-        });
-
-        setTemas(response.content);
-        setTotalPages(response.totalPages);
-        setTotalElements(response.totalElements);
-      }
-    } catch {
-      toast.error("Erro ao carregar temas");
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, activeFilters, debouncedSearchQuery]);
-
-  useEffect(() => {
-    loadTemas();
-  }, [loadTemas]);
-
-  const handleEdit = (tema: TemaResponse) => {
-    setSelectedTema(tema);
-    setShowTemaModal(true);
-  };
-
-  const handleDelete = (tema: TemaResponse) => {
-    setTemaToDelete(tema);
-    setShowDeleteDialog(true);
-  };
-
-  const confirmDelete = async () => {
-    if (temaToDelete) {
-      try {
-        await temasClient.deletar(temaToDelete.idTema);
-        toast.success("Tema excluído com sucesso");
-        loadTemas();
-      } catch {
-        toast.error("Erro ao excluir tema");
-      } finally {
-        setShowDeleteDialog(false);
-        setTemaToDelete(null);
-      }
-    }
-  };
-
-
-  const handleTemaSave = () => {
-    setShowTemaModal(false);
-    setSelectedTema(null);
-    loadTemas();
-  };
-
-  const applyFilters = () => {
-    setActiveFilters(filters);
-    setCurrentPage(0);
-    setShowFilterModal(false);
-  };
-
-  const clearFilters = () => {
-    const clearedFilters = {
-      nome: '',
-      descricao: '',
-    };
-    setFilters(clearedFilters);
-    setActiveFilters(clearedFilters);
-    setCurrentPage(0);
-    setShowFilterModal(false);
-  };
-
-  const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
+  const {
+    temas,
+    loading,
+    searchQuery,
+    setSearchQuery,
+    selectedTema,
+    setSelectedTema,
+    showTemaModal,
+    setShowTemaModal,
+    showFilterModal,
+    setShowFilterModal,
+    showDeleteDialog,
+    setShowDeleteDialog,
+    temaToDelete,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    totalElements,
+    filters,
+    setFilters,
+    hasActiveFilters,
+    handleEdit,
+    handleDelete,
+    confirmDelete,
+    handleTemaSave,
+    applyFilters,
+    clearFilters
+  } = useTemas();
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
@@ -201,7 +120,7 @@ export default function TemasPage() {
                   </div>
                 </TableCell>
               </TableRow>
-            ) : temas.length === 0 ? (
+            ) : temas?.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8">
                   <div className="flex flex-col items-center space-y-2">
@@ -235,16 +154,16 @@ export default function TemasPage() {
                     </span>
                   </TableCell>
                   <TableCell>
-                    {tema.areas && tema.areas.length > 0 ? (
+                    {tema.areas && tema.areas?.length > 0 ? (
                       <div className="flex flex-wrap gap-1">
                         {tema.areas.slice(0, 2).map((area, index) => (
                           <span key={index} className="inline-flex px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
                             {area.nmArea}
                           </span>
                         ))}
-                        {tema.areas.length > 2 && (
+                        {tema.areas?.length > 2 && (
                           <span className="inline-flex px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
-                            +{tema.areas.length - 2}
+                            +{tema.areas?.length - 2}
                           </span>
                         )}
                       </div>

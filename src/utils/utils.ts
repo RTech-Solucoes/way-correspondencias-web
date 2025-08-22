@@ -21,7 +21,7 @@ export function getInitials(name: string | null): string {
 
   const names = name.split(' ')
   const nameInital = names?.[0]?.charAt(0).toUpperCase()
-  const surnameInital = names?.[names.length - 1]?.charAt(0).toUpperCase()
+  const surnameInital = names?.[names?.length - 1]?.charAt(0).toUpperCase()
 
   return nameInital + surnameInital
 }

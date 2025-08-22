@@ -58,7 +58,7 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
       setNrPrazo(temaComAreas.nrPrazo || 0);
       setTpPrazo(temaComAreas.tpPrazo || '');
 
-      if (temaComAreas.areas && temaComAreas.areas.length > 0) {
+      if (temaComAreas.areas && temaComAreas.areas?.length > 0) {
         setSelectedAreaIds(temaComAreas.areas.map(area => area.idArea.toString()));
       } else {
         setSelectedAreaIds([]);
@@ -107,7 +107,7 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
         dsTema: dsTema.trim(),
         nrPrazo: nrPrazo > 0 ? nrPrazo : undefined,
         tpPrazo: tpPrazo || undefined,
-        idsAreas: selectedAreaIds.length > 0 ? selectedAreaIds.map(id => parseInt(id)) : undefined
+        idsAreas: selectedAreaIds?.length > 0 ? selectedAreaIds.map(id => parseInt(id)) : undefined
       };
 
       if (tema) {
@@ -217,7 +217,7 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
                     {area.nmArea}
                   </button>
                 ))}
-                {areas.length === 0 && !loadingAreas && (
+                {areas?.length === 0 && !loadingAreas && (
                   <div className="text-sm text-gray-500 pt-4">
                     Nenhuma área encontrada
                   </div>

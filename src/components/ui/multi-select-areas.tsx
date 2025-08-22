@@ -84,16 +84,16 @@ export function MultiSelectAreas({
               {area.nmArea}
             </button>
           ))}
-          {areas.length === 0 && !loading && (
+          {areas?.length === 0 && !loading && (
             <div className="text-sm text-gray-500 pt-4">
               Nenhuma área encontrada
             </div>
           )}
         </div>
       )}
-      {selectedAreaIds.length > 0 && (
+      {selectedAreaIds?.length > 0 && (
         <div className="text-xs text-gray-500">
-          {selectedAreaIds.length} área(s) selecionada(s)
+          {selectedAreaIds?.length} área(s) selecionada(s)
         </div>
       )}
     </div>

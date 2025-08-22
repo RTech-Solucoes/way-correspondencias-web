@@ -56,7 +56,7 @@ const EmailItem = memo<{
   const isRead = email.flAtivo === 'S';
   const hasAttachment = false; // Anexos não estão disponíveis no EmailResponse do backend
   const preview = email.dsCorpo
-    ? (email.dsCorpo.length > 100 ? email.dsCorpo.substring(0, 100) + '...' : email.dsCorpo)
+    ? (email.dsCorpo?.length > 100 ? email.dsCorpo.substring(0, 100) + '...' : email.dsCorpo)
     : 'Sem conteúdo disponível';
 
   return (
@@ -209,7 +209,7 @@ function EmailList({
       <div className="flex items-center justify-between p-4 border-b border-gray-200">
         <div className="flex items-center space-x-2">
           <span className="text-sm text-gray-500">
-            {filteredEmails.length} email(s)
+            {filteredEmails?.length} email(s)
           </span>
         </div>
 
@@ -236,7 +236,7 @@ function EmailList({
             <SpinnerIcon className="h-6 w-6 animate-spin text-gray-400" />
             <span className="ml-2 text-gray-500">Buscando emails...</span>
           </div>
-        ) : filteredEmails.length === 0 ? (
+        ) : filteredEmails?.length === 0 ? (
           <div className="flex flex-1 items-center justify-center py-16">
             <div className="text-center">
               <EnvelopeSimpleIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />

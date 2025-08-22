@@ -81,27 +81,27 @@ export default function SolicitacoesPage() {
         const results = await solicitacoesClient.buscarPorResponsavel(parseInt(activeFilters.responsavel));
         setSolicitacoes(results);
         setTotalPages(1);
-        setTotalElements(results.length);
+        setTotalElements(results?.length);
       } else if (activeFilters.tema && !activeFilters.identificacao && !activeFilters.responsavel && !activeFilters.area && !activeFilters.status && !debouncedSearchQuery) {
         const results = await solicitacoesClient.buscarPorTema(parseInt(activeFilters.tema));
         setSolicitacoes(results);
         setTotalPages(1);
-        setTotalElements(results.length);
+        setTotalElements(results?.length);
       } else if (activeFilters.area && !activeFilters.identificacao && !activeFilters.responsavel && !activeFilters.tema && !activeFilters.status && !debouncedSearchQuery) {
         const results = await solicitacoesClient.buscarPorArea(parseInt(activeFilters.area));
         setSolicitacoes(results);
         setTotalPages(1);
-        setTotalElements(results.length);
+        setTotalElements(results?.length);
       } else if (activeFilters.status && !activeFilters.identificacao && !activeFilters.responsavel && !activeFilters.tema && !activeFilters.area && !debouncedSearchQuery) {
         const results = await solicitacoesClient.buscarPorStatus(activeFilters.status);
         setSolicitacoes(results);
         setTotalPages(1);
-        setTotalElements(results.length);
+        setTotalElements(results?.length);
       } else if (activeFilters.responsavel && activeFilters.status && !activeFilters.identificacao && !activeFilters.tema && !activeFilters.area && !debouncedSearchQuery) {
         const results = await solicitacoesClient.buscarPorResponsavelEStatus(parseInt(activeFilters.responsavel), activeFilters.status);
         setSolicitacoes(results);
         setTotalPages(1);
-        setTotalElements(results.length);
+        setTotalElements(results?.length);
       } else if (activeFilters.dateFrom && activeFilters.dateTo && !activeFilters.identificacao && !activeFilters.responsavel && !activeFilters.tema && !activeFilters.area && !activeFilters.status && !debouncedSearchQuery) {
         const results = await solicitacoesClient.buscarPorPeriodo(
           activeFilters.dateFrom + 'T00:00:00',
@@ -109,7 +109,7 @@ export default function SolicitacoesPage() {
         );
         setSolicitacoes(results);
         setTotalPages(1);
-        setTotalElements(results.length);
+        setTotalElements(results?.length);
       } else {
         const filterParts = [];
         if (debouncedSearchQuery) filterParts.push(debouncedSearchQuery);
@@ -326,7 +326,7 @@ export default function SolicitacoesPage() {
                   </div>
                 </TableCell>
               </TableRow>
-            ) : solicitacoes.length === 0 ? (
+            ) : solicitacoes?.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8">
                   <div className="flex flex-col items-center space-y-2">
@@ -342,16 +342,16 @@ export default function SolicitacoesPage() {
                   <TableCell className="max-w-xs truncate">{solicitacao.dsAssunto}</TableCell>
                   <TableCell>{solicitacao.nmResponsavel}</TableCell>
                   <TableCell>
-                    {solicitacao.areas && solicitacao.areas.length > 0 ? (
+                    {solicitacao.areas && solicitacao.areas?.length > 0 ? (
                       <div className="flex flex-wrap gap-1">
                         {solicitacao.areas.slice(0, 2).map((area, index) => (
                           <span key={index} className="inline-flex px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
                             {area.nmArea}
                           </span>
                         ))}
-                        {solicitacao.areas.length > 2 && (
+                        {solicitacao.areas?.length > 2 && (
                           <span className="inline-flex px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
-                            +{solicitacao.areas.length - 2}
+                            +{solicitacao.areas?.length - 2}
                           </span>
                         )}
                       </div>

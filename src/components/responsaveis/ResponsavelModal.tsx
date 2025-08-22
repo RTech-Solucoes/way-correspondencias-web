@@ -164,13 +164,13 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
                 <SelectValue placeholder={loadingPerfis ? "Carregando perfis..." : "Selecione o perfil"} />
               </SelectTrigger>
               <SelectContent>
-                {!loadingPerfis && perfis.length > 0 ? (
+                {!loadingPerfis && perfis?.length > 0 ? (
                   perfis.map(perfil => (
                     <SelectItem key={perfil.idPerfil} value={perfil.idPerfil.toString()}>
                       {perfil.nmPerfil}
                     </SelectItem>
                   ))
-                ) : !loadingPerfis && perfis.length === 0 ? (
+                ) : !loadingPerfis && perfis?.length === 0 ? (
                   <div className="px-2 py-1.5 text-sm text-gray-500">
                     Nenhum perfil disponível
                   </div>

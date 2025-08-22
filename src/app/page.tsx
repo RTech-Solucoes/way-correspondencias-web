@@ -37,7 +37,7 @@ export default function LoginPage() {
     if (!password) {
       setPasswordError('Senha é obrigatória');
       hasErrors = true;
-    } else if (password.length < 6) {
+    } else if (password?.length < 6) {
       setPasswordError('Senha deve ter pelo menos 6 caracteres');
       hasErrors = true;
     }

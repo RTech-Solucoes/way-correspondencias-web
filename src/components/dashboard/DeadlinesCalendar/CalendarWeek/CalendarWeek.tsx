@@ -37,7 +37,7 @@ export default function CalendarWeek() {
               key={day}
               className="bg-white border border-gray-200 rounded-b-lg p-2 h-64 overflow-y-auto"
             >
-              {dayObligations.length === 0 ? (
+              {dayObligations?.length === 0 ? (
                 <div className="text-xs text-gray-400 h-full flex items-center justify-center">
                   Sem obrigações
                 </div>

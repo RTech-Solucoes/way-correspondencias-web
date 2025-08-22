@@ -1,13 +1,12 @@
-'use client';
+"use client";
 
-import {useState} from 'react';
 import {
   FunnelSimpleIcon,
   MagnifyingGlassIcon,
   XIcon,
-} from '@phosphor-icons/react';
-import {Button} from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+} from "@phosphor-icons/react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -15,52 +14,34 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {Label} from "@/components/ui/label";
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
-import EmailList from '@/components/email/EmailList';
-import EmailDetail from '@/components/email/EmailDetail';
-import PageTitle from '@/components/ui/page-title';
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import EmailList from "@/components/email/EmailList";
+import EmailDetail from "@/components/email/EmailDetail";
+import PageTitle from "@/components/ui/page-title";
+import useEmail from "@/context/email/EmailContext";
 
 export default function EmailPage() {
-  const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showFilterModal, setShowFilterModal] = useState(false);
-
-  const [emailFilters, setEmailFilters] = useState({
-    remetente: '',
-    destinatario: '',
-    status: '',
-    dateFrom: '',
-    dateTo: '',
-  });
-
-  const [activeEmailFilters, setActiveEmailFilters] = useState({
-    remetente: '',
-    destinatario: '',
-    status: '',
-    dateFrom: '',
-    dateTo: '',
-  });
-
-  const applyFilters = () => {
-    setActiveEmailFilters(emailFilters);
-    setShowFilterModal(false);
-  };
-
-  const clearFilters = () => {
-    const clearedFilters = {
-      remetente: '',
-      destinatario: '',
-      status: '',
-      dateFrom: '',
-      dateTo: '',
-    };
-    setEmailFilters(clearedFilters);
-    setActiveEmailFilters(clearedFilters);
-    setShowFilterModal(false);
-  };
-
-  const hasActiveFilters = Object.values(activeEmailFilters).some(value => value !== '');
+  const {
+    selectedEmail,
+    setSelectedEmail,
+    searchQuery,
+    setSearchQuery,
+    showFilterModal,
+    setShowFilterModal,
+    emailFilters,
+    setEmailFilters,
+    activeEmailFilters,
+    hasActiveFilters,
+    applyFilters,
+    clearFilters,
+  } = useEmail();
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
@@ -71,7 +52,7 @@ export default function EmailPage() {
 
         <div className="flex items-center space-x-4">
           <div className="flex-1 relative">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400"/>
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               placeholder="Pesquisar emails..."
               value={searchQuery}
@@ -85,7 +66,7 @@ export default function EmailPage() {
               className="h-10 px-4"
               onClick={clearFilters}
             >
-              <XIcon className="h-4 w-4 mr-2"/>
+              <XIcon className="h-4 w-4 mr-2" />
               Limpar Filtros
             </Button>
           )}
@@ -94,31 +75,32 @@ export default function EmailPage() {
             className="h-10 px-4"
             onClick={() => setShowFilterModal(true)}
           >
-            <FunnelSimpleIcon className="h-4 w-4 mr-2"/>
+            <FunnelSimpleIcon className="h-4 w-4 mr-2" />
             Filtrar
           </Button>
         </div>
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-        {!selectedEmail ? (
+        <div
+          className={`transition-all duration-300 ${
+            selectedEmail ? "w-1/2" : "w-full"
+          }`}
+        >
           <EmailList
-            searchQuery={searchQuery}
             selectedEmail={selectedEmail}
             onEmailSelect={setSelectedEmail}
-            emailFilters={{
-              isRead: '',
-              hasAttachment: '',
-              dateFrom: activeEmailFilters.dateFrom,
-              dateTo: activeEmailFilters.dateTo,
-              sender: activeEmailFilters.remetente
-            }}
+            searchQuery={searchQuery}
+            filters={activeEmailFilters}
           />
-        ) : (
-          <EmailDetail
-            emailId={selectedEmail}
-            onBack={() => setSelectedEmail(null)}
-          />
+        </div>
+        {selectedEmail && (
+          <div className="w-1/2 border-l">
+            <EmailDetail
+              emailId={selectedEmail}
+              onClose={() => setSelectedEmail(null)}
+            />
+          </div>
         )}
       </div>
 
@@ -134,7 +116,12 @@ export default function EmailPage() {
                 <Input
                   id="remetente"
                   value={emailFilters.remetente}
-                  onChange={(e) => setEmailFilters({...emailFilters, remetente: e.target.value})}
+                  onChange={(e) =>
+                    setEmailFilters({
+                      ...emailFilters,
+                      remetente: e.target.value,
+                    })
+                  }
                   placeholder="Filtrar por remetente"
                 />
               </div>
@@ -143,7 +130,12 @@ export default function EmailPage() {
                 <Input
                   id="destinatario"
                   value={emailFilters.destinatario}
-                  onChange={(e) => setEmailFilters({...emailFilters, destinatario: e.target.value})}
+                  onChange={(e) =>
+                    setEmailFilters({
+                      ...emailFilters,
+                      destinatario: e.target.value,
+                    })
+                  }
                   placeholder="Filtrar por destinatário"
                 />
               </div>
@@ -151,50 +143,50 @@ export default function EmailPage() {
                 <Label htmlFor="status">Status</Label>
                 <Select
                   value={emailFilters.status}
-                  onValueChange={(value) => setEmailFilters({...emailFilters, status: value})}
+                  onValueChange={(value) =>
+                    setEmailFilters({ ...emailFilters, status: value })
+                  }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione o status" />
+                    <SelectValue placeholder="Selecionar status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="PENDENTE">Pendente</SelectItem>
-                    <SelectItem value="ENVIADO">Enviado</SelectItem>
-                    <SelectItem value="RESPONDIDO">Respondido</SelectItem>
+                    <SelectItem value="enviado">Enviado</SelectItem>
+                    <SelectItem value="pendente">Pendente</SelectItem>
+                    <SelectItem value="erro">Erro</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="dateFrom">Data Início</Label>
+                  <Label htmlFor="dateFrom">Data de</Label>
                   <Input
                     id="dateFrom"
                     type="date"
                     value={emailFilters.dateFrom}
-                    onChange={(e) => setEmailFilters({...emailFilters, dateFrom: e.target.value})}
+                    onChange={(e) =>
+                      setEmailFilters({ ...emailFilters, dateFrom: e.target.value })
+                    }
                   />
                 </div>
                 <div>
-                  <Label htmlFor="dateTo">Data Fim</Label>
+                  <Label htmlFor="dateTo">Data até</Label>
                   <Input
                     id="dateTo"
                     type="date"
                     value={emailFilters.dateTo}
-                    onChange={(e) => setEmailFilters({...emailFilters, dateTo: e.target.value})}
+                    onChange={(e) =>
+                      setEmailFilters({ ...emailFilters, dateTo: e.target.value })
+                    }
                   />
                 </div>
               </div>
             </div>
             <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={clearFilters}
-              >
+              <Button variant="outline" onClick={clearFilters}>
                 Limpar Filtros
               </Button>
-              <Button onClick={applyFilters}>
-                Aplicar Filtros
-              </Button>
+              <Button onClick={applyFilters}>Aplicar Filtros</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

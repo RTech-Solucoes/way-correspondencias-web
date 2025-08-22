@@ -186,59 +186,68 @@ export default function SolicitacaoModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>
             {solicitacao ? 'Editar Solicitação' : 'Nova Solicitação'}
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <TextField
-            label="Código de Identificação *"
-            name="cdIdentificacao"
-            value={formData.cdIdentificacao}
-            onChange={handleInputChange}
-            placeholder="Digite o código de identificação (máx. 50 caracteres)"
-            required
-            autoFocus
-            maxLength={50}
-          />
-
-          <TextField
-            label="Assunto"
-            name="dsAssunto"
-            value={formData.dsAssunto}
-            onChange={handleInputChange}
-            placeholder="Digite o assunto da solicitação (máx. 500 caracteres)"
-            maxLength={500}
-          />
-
-          <div className="space-y-2">
-            <Label htmlFor="dsSolicitacao">Descrição da Solicitação</Label>
-            <Textarea
-              id="dsSolicitacao"
-              name="dsSolicitacao"
-              value={formData.dsSolicitacao}
+        <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto">
+          <div className="flex gap-2 w-full">
+            <TextField
+              label="Código de Identificação *"
+              name="cdIdentificacao"
+              value={formData.cdIdentificacao}
               onChange={handleInputChange}
-              placeholder="Descreva detalhadamente sua solicitação (máx. 10000 caracteres)..."
-              rows={4}
-              maxLength={10000}
+              placeholder="Digite o código de identificação (máx. 50 caracteres)"
+              required
+              autoFocus
+              maxLength={50}
+              className="w-full"
+            />
+
+            <TextField
+              label="Assunto"
+              name="dsAssunto"
+              value={formData.dsAssunto}
+              onChange={handleInputChange}
+              placeholder="Digite o assunto da solicitação (máx. 500 caracteres)"
+              maxLength={500}
+              className="w-full"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="dsObservacao">Observações</Label>
-            <Textarea
-              id="dsObservacao"
-              name="dsObservacao"
-              value={formData.dsObservacao}
-              onChange={handleInputChange}
-              placeholder="Observações adicionais (máx. 10000 caracteres)..."
-              rows={3}
-              maxLength={10000}
-            />
+          <div className="flex gap-2">
+            <div className="w-full space-y-2">
+              <Label htmlFor="dsSolicitacao">Descrição da Solicitação</Label>
+              <Textarea
+                id="dsSolicitacao"
+                name="dsSolicitacao"
+                value={formData.dsSolicitacao}
+                onChange={handleInputChange}
+                placeholder="Descreva detalhadamente sua solicitação (máx. 10000 caracteres)..."
+                rows={4}
+                maxLength={10000}
+                className="w-full"
+              />
+            </div>
+
+            <div className="w-full space-y-2">
+              <Label htmlFor="dsObservacao">Observações</Label>
+              <Textarea
+                id="dsObservacao"
+                name="dsObservacao"
+                value={formData.dsObservacao}
+                onChange={handleInputChange}
+                placeholder="Observações adicionais (máx. 10000 caracteres)..."
+                rows={3}
+                maxLength={10000}
+                className="w-full"
+              />
+            </div>
           </div>
+
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
