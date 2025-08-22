@@ -9,13 +9,7 @@ export default function AnexoList({ anexos, onRemove }: AnexoListProps) {
   return (
     <div className="flex gap-2 w-full flex-wrap">
       {anexos.length === 0 ? (
-        <label
-          htmlFor="file-upload"
-          className="flex gap-2 cursor-pointer border border-color-border bg-transparent px-4 py-2 rounded-xl text-sm text-center text-black h-10"
-        >
-          <Paperclip size={20} weight="bold" />
-          <span>Anexar Documento</span>
-        </label>
+        <span className="text-neutral-400 text-sm">Anexar Documento</span>
       ) : (
         anexos.map((file, idx) => (
           <div className="flex border rounded-md justify-between">
