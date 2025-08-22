@@ -88,7 +88,7 @@ export default function LoginPage() {
             type="text"
             value={username}
             onChange={(e) => {
-              setUsername(e);
+              setUsername(e.target.value);
               if (usernameError) setUsernameError('');
             }}
             startIcon={UserIcon}
@@ -113,7 +113,7 @@ export default function LoginPage() {
             type="password"
             value={password}
             onChange={(e) => {
-              setPassword(e);
+              setPassword(e.target.value);
               if (passwordError) setPasswordError('');
             }}
             placeholder="Digite sua senha"

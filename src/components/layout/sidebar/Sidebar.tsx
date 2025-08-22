@@ -1,25 +1,27 @@
 'use client';
 
 import {usePathname} from 'next/navigation';
+import {useEffect, useState} from 'react';
 import Header from './Header';
 import ProfileButton from './ProfileButton';
 import Nav from './Nav';
 import {PAGES_DEF} from '@/constants/pages';
 import {User} from "@/types/auth/types";
-import NotificationsButton from "./NotificationsButton";
 import authClient from "@/api/auth/client";
+import responsaveisClient from "@/api/responsaveis/client";
 import {Notification} from "@/types/notifications/types";
 
 const MOCK_USER: User = {
-  name: "Joao da Silva Nunes",
-  email: "joaonunes@email.com",
+  name: "Nome",
+  username: "nome",
+  email: "nome@username.com",
   avatar: "/images/avatar.svg"
 }
 
 const MOCK_NOTIFICATIONS: Notification[] = [
   {
     id: '1',
-    title: 'Novo email recebido',
+    title: 'Novo username recebido',
     message: 'Maria Silva enviou um relatório de compliance',
     time: '5 min atrás',
     unread: true,
@@ -41,10 +43,35 @@ const MOCK_NOTIFICATIONS: Notification[] = [
 ];
 
 export default function Sidebar() {
-  const user = MOCK_USER;
+  const [user, setUser] = useState<User>(MOCK_USER);
+  const [loadingUser, setLoadingUser] = useState<boolean>(false);
   const notifications = MOCK_NOTIFICATIONS;
   const unreadCount = MOCK_NOTIFICATIONS.filter(n => n.unread)?.length;
   const pathname = usePathname();
+
+  useEffect(() => {
+    const loadUserData = async () => {
+      const userName = authClient.getUserName();
+      if (userName) {
+        setLoadingUser(true);
+        try {
+          const responsavel = await responsaveisClient.buscarPorNmUsuarioLogin(userName);
+          setUser({
+            name: responsavel.nmResponsavel,
+            username: responsavel.nmUsuarioLogin,
+            email: responsavel.dsEmail,
+            avatar: "/images/avatar.svg"
+          });
+        } catch (error) {
+          console.error('Erro ao buscar dados do usuário:', error);
+        } finally {
+          setLoadingUser(false);
+        }
+      }
+    };
+
+    loadUserData();
+  }, []);
 
   const handleLogout = () => {
     authClient.logout();

@@ -17,6 +17,7 @@ class AuthClient {
     if (response.accessToken) {
       localStorage.setItem('authToken', response.accessToken);
       localStorage.setItem('tokenType', response.tokenType);
+      localStorage.setItem('userName', data.username);
     }
 
     return response;
@@ -25,6 +26,7 @@ class AuthClient {
   logout(): void {
     localStorage.removeItem('authToken');
     localStorage.removeItem('tokenType');
+    localStorage.removeItem('userName');
     window.location.href = '/';
   }
 
@@ -34,6 +36,10 @@ class AuthClient {
 
   getToken(): string | null {
     return localStorage.getItem('authToken');
+  }
+
+  getUserName(): string | null {
+    return localStorage.getItem('userName');
   }
 }
 

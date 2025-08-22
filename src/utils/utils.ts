@@ -20,10 +20,20 @@ export function getInitials(name: string | null): string {
   if (!name) return '';
 
   const names = name.split(' ')
-  const nameInital = names?.[0]?.charAt(0).toUpperCase()
-  const surnameInital = names?.[names?.length - 1]?.charAt(0).toUpperCase()
+  const firstNameInital = names?.[0]?.charAt(0).toUpperCase()
+  const lastNameInital = names?.[names?.length - 1]?.charAt(0).toUpperCase()
 
-  return nameInital + surnameInital
+  return firstNameInital + lastNameInital
+}
+
+export function getFirstAndLastName(name: string | null): string {
+  if (!name) return '';
+
+  const names = name.split(' ')
+  const firstName = names?.[0]
+  const lastName = names?.[names?.length - 1]
+
+  return firstName + ' ' + lastName
 }
 
 export function getStatusText(status: StatusAtivo | null): string {
