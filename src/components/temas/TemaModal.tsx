@@ -128,7 +128,7 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>
             {tema ? 'Editar Tema' : 'Novo Tema'}
@@ -136,7 +136,7 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
         </DialogHeader>
 
         <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="nmTema">Nome do Tema *</Label>
               <Input
@@ -148,7 +148,7 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="nrPrazo">Dias de Prazo</Label>
+              <Label htmlFor="nrPrazo">Prazo</Label>
               <Input
                 id="nrPrazo"
                 type="number"
@@ -158,6 +158,20 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
                 min="1"
               />
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="tpPrazo">Tipo de Prazo</Label>
+              <Select value={tpPrazo} onValueChange={setTpPrazo}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo de prazo"/>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="U">Dias Úteis</SelectItem>
+                  <SelectItem value="C">Dias Corridos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
           </div>
 
           <div className="space-y-2">
@@ -169,19 +183,6 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
               placeholder="Digite a descrição do tema"
               rows={3}
             />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="tpPrazo">Tipo de Prazo</Label>
-            <Select value={tpPrazo} onValueChange={setTpPrazo}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o tipo de prazo"/>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="U">Dias Úteis</SelectItem>
-                <SelectItem value="C">Dias Corridos</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           <div className="space-y-4">

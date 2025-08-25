@@ -5,12 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="98226f2c-f64e-43be-946e-e89028627d5c" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/components/ui/sticky-table.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/responsaveis/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/responsaveis/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/solicitacoes/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/solicitacoes/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/temas/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/temas/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/areas/TableArea.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/areas/TableArea.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/solicitacoes/SolicitacaoModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/solicitacoes/SolicitacaoModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/temas/TemaModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/temas/TemaModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/ui/dialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ui/dialog.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -34,12 +32,12 @@
     &quot;assignee&quot;: &quot;luizrxg-rtech&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/rtech-solucoes/way-correspondencias-web&quot;,
-    &quot;accountId&quot;: &quot;d17f99be-3620-4f2a-8662-d3dcf9022936&quot;
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/RTech-Solucoes/way-correspondencias-web",
+    "accountId": "a3a8b9d8-d7b7-4814-8317-a8b349361ea4"
   }
-}</component>
+}]]></component>
   <component name="PackageJsonUpdateNotifier">
     <dismissed value="$PROJECT_DIR$/package.json" />
   </component>
@@ -62,7 +60,7 @@
     "RunOnceActivity.git.unshallow": "true",
     "git-widget-placeholder": "develop",
     "junie.onboarding.icon.badge.shown": "true",
-    "last_opened_file_path": "D:/Work/projetos/rtech/way/way-correspondencias-web",
+    "last_opened_file_path": "C:/Users/Sofia/Desktop/Work/way/way-correspondencias-web",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -119,7 +117,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-d6986cc7102b-e03c56caf84a-JavaScript-WS-252.23892.411" />
+        <option value="bundled-js-predefined-d6986cc7102b-6a121458b545-JavaScript-WS-251.25410.117" />
       </set>
     </attachedChunks>
   </component>
@@ -181,6 +179,7 @@
       <workItem from="1755861953837" duration="3686000" />
       <workItem from="1755875770372" duration="4118000" />
       <workItem from="1755880879592" duration="2406000" />
+      <workItem from="1756130474134" duration="207000" />
     </task>
     <task id="LOCAL-00001" summary="Alteração biblioteca de Ícones&#10;lucide-react -&gt; @phosphor-icons/react">
       <option name="closed" value="true" />

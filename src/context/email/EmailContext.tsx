@@ -21,6 +21,7 @@ interface EmailFiltersState {
 export interface EmailContextProps {
   selectedEmail: string | null;
   setSelectedEmail: Dispatch<SetStateAction<string | null>>;
+  onEmailSelect(id: string): void;
   searchQuery: string;
   setSearchQuery: Dispatch<SetStateAction<string>>;
   showFilterModal: boolean;

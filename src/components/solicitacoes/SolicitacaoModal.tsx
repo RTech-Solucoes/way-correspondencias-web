@@ -26,9 +26,8 @@ import { solicitacoesClient } from '@/api/solicitacoes/client';
 import { toast } from 'sonner';
 import { capitalize } from '@/utils/utils';
 import { MultiSelectAreas } from '@/components/ui/multi-select-areas';
-import { IconChevronLeft, IconChevronRight, IconCheck } from '@tabler/icons-react';
+import { CaretLeftIcon, CaretRightIcon, CheckIcon, ArrowBendUpRightIcon } from '@phosphor-icons/react';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 
 interface SolicitacaoModalProps {
   solicitacao: SolicitacaoResponse | null;
@@ -503,7 +502,7 @@ export default function SolicitacaoModal({
                       : 'border-gray-300 text-gray-400'
                   } ${currentStep === 1 ? 'ring-2 ring-blue-200' : ''}`}
                 >
-                  {currentStep > 1 ? <IconCheck size={20} /> : '1'}
+                  {currentStep > 1 ? <CheckIcon size={20} /> : '1'}
                 </button>
                 <span className={`text-xs font-medium ${
                   currentStep >= 1 ? 'text-blue-600' : 'text-gray-400'
@@ -527,7 +526,7 @@ export default function SolicitacaoModal({
                       : 'border-gray-300 text-gray-400'
                   } ${currentStep === 2 ? 'ring-2 ring-blue-200' : ''}`}
                 >
-                  {currentStep > 2 ? <IconCheck size={20} /> : '2'}
+                  {currentStep > 2 ? <CheckIcon size={20} /> : '2'}
                 </button>
                 <span className={`text-xs font-medium ${
                   currentStep >= 2 ? 'text-blue-600' : 'text-gray-400'
@@ -555,7 +554,7 @@ export default function SolicitacaoModal({
                 className="flex items-center gap-2"
               >
                 Próximo
-                <IconChevronRight size={16} />
+                <CaretRightIcon size={16} />
               </Button>
             )}
 
@@ -568,7 +567,7 @@ export default function SolicitacaoModal({
                   disabled={loading}
                   className="flex items-center gap-2"
                 >
-                  <IconChevronLeft size={16} />
+                  <CaretLeftIcon size={16} />
                   Anterior
                 </Button>
                 <Button
@@ -576,6 +575,7 @@ export default function SolicitacaoModal({
                   disabled={loading || !isStep2Valid()}
                   className="flex items-center gap-2"
                 >
+                  { solicitacao && <ArrowBendUpRightIcon className="h-4 w-4 mr-2"/>}
                   {loading ? 'Salvando...' : solicitacao ? 'Encaminhar Solicitação' : 'Criar Solicitação'}
                 </Button>
               </>

@@ -37,7 +37,7 @@ export default class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL;
     const url = `${baseUrl}${this.module}${endpoint}`;
     
     const config: RequestInit = {
