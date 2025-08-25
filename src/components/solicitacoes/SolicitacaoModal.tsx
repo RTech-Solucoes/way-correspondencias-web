@@ -28,6 +28,18 @@ import { capitalize } from '@/utils/utils';
 import { MultiSelectAreas } from '@/components/ui/multi-select-areas';
 import { CaretLeftIcon, CaretRightIcon, CheckIcon, ArrowBendUpRightIcon } from '@phosphor-icons/react';
 import { Badge } from '@/components/ui/badge';
+import { useDropzone } from 'react-dropzone';
+import AnexoComponent from '../AnexoComponotent/AnexoComponent';
+import AnexoList from '../AnexoComponotent/AnexoList/AnexoList';
+
+// Tipos para anexos
+interface AnexoBackend {
+  idAnexo: number;
+  idObjeto: number;
+  nmArquivo: string;
+  dsCaminho: string;
+  tpObjeto: string;
+}
 
 interface SolicitacaoModalProps {
   solicitacao: SolicitacaoResponse | null;
@@ -66,6 +78,8 @@ export default function SolicitacaoModal({
     nrProcesso: ''
   });
   const [loading, setLoading] = useState(false);
+  const [anexos, setAnexos] = useState<File[]>([]);
+  const [anexosBackend, setAnexosBackend] = useState<AnexoBackend[]>([]);
 
   useEffect(() => {
     if (solicitacao) {
@@ -101,6 +115,14 @@ export default function SolicitacaoModal({
       });
     }
     setCurrentStep(1);
+  }, [solicitacao, open, initialSubject, initialDescription]);
+
+  useEffect(() => {
+    if (solicitacao && solicitacao.idSolicitacao) {
+      solicitacoesClient.buscarAnexos(solicitacao.idSolicitacao).then(setAnexosBackend);
+    } else {
+      setAnexosBackend([]);
+    }
   }, [solicitacao, open, initialSubject, initialDescription]);
 
   const getResponsavelFromTema = useCallback((temaId: number): number => {
@@ -199,6 +221,10 @@ export default function SolicitacaoModal({
       setCurrentStep(2);
     } else if (currentStep === 2) {
       setCurrentStep(3);
+    } else if (currentStep === 3) {
+      setCurrentStep(4);
+    } else if (currentStep === 4) {
+      setCurrentStep(5);
     }
   }, [formData.cdIdentificacao, formData.idTema, currentStep]);
 
@@ -207,6 +233,10 @@ export default function SolicitacaoModal({
       setCurrentStep(1);
     } else if (currentStep === 3) {
       setCurrentStep(2);
+    } else if (currentStep === 4) {
+      setCurrentStep(3);
+    } else if (currentStep === 5) {
+      setCurrentStep(4);
     }
   }, [currentStep]);
 
@@ -217,8 +247,17 @@ export default function SolicitacaoModal({
       setCurrentStep(step);
     } else if (step === 3 && formData.cdIdentificacao?.trim() && formData.idTema > 0) {
       setCurrentStep(step);
+    } else if (step === 4 && formData.cdIdentificacao?.trim() && formData.idTema > 0) {
+      setCurrentStep(step);
+    } else if (step === 5 && formData.cdIdentificacao?.trim() && formData.idTema > 0) {
+      setCurrentStep(step);
     }
   }, [formData.cdIdentificacao, formData.idTema]);
+
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    setAnexos(prev => [...prev, ...acceptedFiles]);
+  }, []);
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -235,7 +274,6 @@ export default function SolicitacaoModal({
 
     try {
       setLoading(true);
-
       const finalFormData = {
         ...formData,
         idResponsavel: formData.idResponsavel || getResponsavelFromTema(formData.idTema),
@@ -247,21 +285,31 @@ export default function SolicitacaoModal({
         nrPrazo: formData.nrPrazo && formData.nrPrazo > 0 ? formData.nrPrazo : undefined,
         tpPrazo: formData.tpPrazo?.trim() || undefined,
       };
-
+      let solicitacaoId;
       if (solicitacao) {
+        // Atualização
         await solicitacoesClient.atualizar(solicitacao.idSolicitacao, finalFormData);
-        toast.success("Solicitação encaminhada com sucesso");
+        solicitacaoId = solicitacao.idSolicitacao;
       } else {
-        await solicitacoesClient.criar(finalFormData);
-        toast.success("Solicitação criada com sucesso");
+        // Criação
+        const created = await solicitacoesClient.criar(finalFormData);
+        solicitacaoId = created.idSolicitacao;
       }
-
+      // Enviar anexos após criar/atualizar solicitação
+      if (anexos.length > 0 && solicitacaoId) {
+        const formDataAnexos = new FormData();
+        anexos.forEach((file) => {
+          formDataAnexos.append('files', file);
+        });
+        formDataAnexos.append('idObjeto', String(solicitacaoId));
+        formDataAnexos.append('tpObjeto', 'S');
+        await solicitacoesClient.uploadAnexos(formDataAnexos);
+      }
+      toast.success('Solicitação salva com sucesso!');
       onSave();
       onClose();
-    } catch (error: unknown) {
-      console.error('Erro ao salvar solicitação:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-      toast.error(solicitacao ? `Erro ao encaminhar solicitação: ${errorMessage}` : `Erro ao criar solicitação: ${errorMessage}`);
+    } catch {
+      toast.error('Erro ao salvar solicitação');
     } finally {
       setLoading(false);
     }
@@ -309,7 +357,7 @@ export default function SolicitacaoModal({
         onSelectionChange={handleAreasSelectionChange}
       />
     </div>
-  ), [getSelectedTema, responsaveis, formData.idResponsavel, solicitacao, selectedAreas, formData.idsAreas, handleAreaToggle, handleAreasSelectionChange]);
+  ), [getSelectedTema, responsaveis, formData.idResponsavel, formData.idsAreas, handleAreasSelectionChange]);
 
   const renderStep3 = useCallback(() => (
     <div className="space-y-6">
@@ -365,7 +413,118 @@ export default function SolicitacaoModal({
         </div>
       </div>
     </div>
-  ), [formData.flStatus, handleSelectChange, formData.nrPrazo, handleInputChange, formData.tpPrazo, formData.cdIdentificacao, formData.dsAssunto, getSelectedTema, formData.idsAreas]);
+  ), [formData.flStatus, handleSelectChange, formData.nrPrazo, handleInputChange, formData.tpPrazo]);
+
+  const renderStep4 = useCallback(() => (
+    <div className="space-y-6">
+      <div className="text-center">
+        <Label className="text-xl font-semibold">Documentos da Solicitação</Label>
+        <p className="text-sm text-gray-600 mt-2">
+          Anexe documentos relacionados à sua solicitação
+        </p>
+      </div>
+
+      {/* Componente de Upload de Anexos */}
+      <div className="flex flex-col space-y-4">
+        <AnexoComponent onAddAnexos={handleAddAnexos} />
+
+        {/* Lista de Anexos Novos (a serem enviados) */}
+        {anexos.length > 0 && (
+          <div>
+            <Label className="text-sm font-medium mb-2 block">Novos documentos:</Label>
+            <AnexoList anexos={anexos} onRemove={handleRemoveAnexo} />
+          </div>
+        )}
+
+        {/* Lista de Anexos já Vinculados (do backend) */}
+        {anexosBackend.length > 0 && (
+          <div>
+            <Label className="text-sm font-medium mb-2 block">Documentos já anexados:</Label>
+            <AnexoList
+              anexos={anexosBackend.map(a => ({
+                name: a.nmArquivo,
+                size: 0,
+                idAnexo: a.idAnexo,
+                idObjeto: a.idObjeto,
+                nmArquivo: a.nmArquivo,
+                dsCaminho: a.dsCaminho,
+                tpObjeto: a.tpObjeto
+              }))}
+              onRemove={handleRemoveAnexoBackend}
+              onDownload={handleDownloadAnexoBackend}
+            />
+          </div>
+        )}
+
+        {anexos.length === 0 && anexosBackend.length === 0 && (
+          <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
+            <p className="text-gray-500">Nenhum documento anexado ainda</p>
+            <p className="text-sm text-gray-400 mt-1">
+              Use o botão <strong>Anexar Documento</strong> acima para adicionar arquivos
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  ), [anexos, anexosBackend]);
+
+  const renderStep5 = useCallback(() => (
+    <div className="space-y-6">
+      <div className="text-center">
+        <Label className="text-xl font-semibold">Resumo da Solicitação</Label>
+        <p className="text-sm text-gray-600 mt-2">
+          Revise as informações da sua solicitação antes de enviar
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label>Código de Identificação</Label>
+            <div className="p-4 bg-gray-50 border rounded-lg">
+              {formData.cdIdentificacao}
+            </div>
+          </div>
+          <div>
+            <Label>Tema</Label>
+            <div className="p-4 bg-gray-50 border rounded-lg">
+              {getSelectedTema()?.nmTema}
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label>Responsável</Label>
+            <div className="p-4 bg-gray-50 border rounded-lg">
+              {responsaveis.find(r => r.idResponsavel === formData.idResponsavel)?.nmResponsavel || 'N/A'}
+            </div>
+          </div>
+          <div>
+            <Label>Status</Label>
+            <div className="p-4 bg-gray-50 border rounded-lg">
+              {formData.flStatus}
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label>Prazos</Label>
+            <div className="p-4 bg-gray-50 border rounded-lg">
+              {formData.nrPrazo} {formData.tpPrazo === 'U' ? 'dias úteis' : 'dias corridos'}
+            </div>
+          </div>
+          <div>
+            <Label>Anexos</Label>
+            <div className="p-4 bg-gray-50 border rounded-lg">
+              {anexos.length + anexosBackend.length}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  ), [formData, getSelectedTema, responsaveis, anexos, anexosBackend]);
 
   const renderStep1 = () => (
     <div className="space-y-6">
@@ -452,6 +611,46 @@ export default function SolicitacaoModal({
       </div>
     </div>
   );
+
+  const handleRemoveAnexo = (index: number) => {
+    setAnexos(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleAddAnexos = (files: FileList | null) => {
+    if (files) {
+      const fileArray = Array.from(files);
+      setAnexos(prev => [...prev, ...fileArray]);
+    }
+  };
+
+  const handleRemoveAnexoBackend = async (index: number) => {
+    const anexo = anexosBackend[index];
+    if (!anexo) return;
+    try {
+      await solicitacoesClient.deletarAnexo(anexo.idAnexo);
+      setAnexosBackend(prev => prev.filter((_, i) => i !== index));
+      toast.success('Anexo removido com sucesso!');
+    } catch {
+      toast.error('Erro ao remover anexo');
+    }
+  };
+
+  const handleDownloadAnexoBackend = async (anexo: any) => {
+    if (!anexo || !anexo.idObjeto || !anexo.nmArquivo) return;
+    try {
+      const blob = await solicitacoesClient.downloadAnexo(anexo.idObjeto, anexo.nmArquivo);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = anexo.nmArquivo;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      toast.error('Erro ao baixar anexo');
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -553,19 +752,89 @@ export default function SolicitacaoModal({
                     : currentStep > 3 
                       ? 'text-blue-500' 
                       : currentStep >= 3 
-                        ? 'text-blue-600' 
+                        ? 'text-blue-600'
                         : 'text-gray-400'
                 }`}>
                   Status e<br/>Prazos
                 </span>
               </div>
+
+              {/* Linha conectora 3-4 */}
+              <div className={`w-16 h-1 transition-colors ${
+                currentStep >= 4 ? 'bg-blue-500' : 'bg-gray-300'
+              }`}></div>
+
+              {/* Etapa 4 */}
+              <div className="flex flex-col items-center space-y-2">
+                <button
+                  type="button"
+                  onClick={() => handleStepClick(4)}
+                  disabled={!isStep1Valid()}
+                  className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors disabled:cursor-not-allowed ${
+                    currentStep === 4
+                      ? 'bg-blue-500 border-blue-500 text-white ring-2 ring-blue-200'
+                      : currentStep > 4
+                        ? 'bg-blue-100 border-blue-300 text-blue-600'
+                        : 'border-gray-300 text-gray-400'
+                  }`}
+                >
+                  {currentStep > 4 ? <CheckIcon size={20} /> : '4'}
+                </button>
+                <span className={`text-xs font-medium text-center ${
+                  currentStep === 4 
+                    ? 'text-blue-600' 
+                    : currentStep > 4 
+                      ? 'text-blue-500' 
+                      : currentStep >= 4 
+                        ? 'text-blue-600' 
+                        : 'text-gray-400'
+                }`}>
+                  Anexos
+                </span>
+              </div>
+
+              {/* Linha conectora 4-5 */}
+              <div className={`w-16 h-1 transition-colors ${
+                currentStep >= 5 ? 'bg-blue-500' : 'bg-gray-300'
+              }`}></div>
+
+              {/* Etapa 5 */}
+              <div className="flex flex-col items-center space-y-2">
+                <button
+                  type="button"
+                  onClick={() => handleStepClick(5)}
+                  disabled={!isStep1Valid()}
+                  className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors disabled:cursor-not-allowed ${
+                    currentStep === 5
+                      ? 'bg-blue-500 border-blue-500 text-white ring-2 ring-blue-200'
+                      : currentStep > 5
+                        ? 'bg-blue-100 border-blue-300 text-blue-600'
+                        : 'border-gray-300 text-gray-400'
+                  }`}
+                >
+                  {currentStep > 5 ? <CheckIcon size={20} /> : '5'}
+                </button>
+                <span className={`text-xs font-medium text-center ${
+                  currentStep === 5 
+                    ? 'text-blue-600' 
+                    : currentStep > 5 
+                      ? 'text-blue-500' 
+                      : currentStep >= 5 
+                        ? 'text-blue-600' 
+                        : 'text-gray-400'
+                }`}>
+                  Resumo
+                </span>
+              </div>
             </div>
           </div>
 
-          <div className="min-h-[400px]">
+          <div className="h-[500px]">
             {currentStep === 1 && renderStep1()}
             {currentStep === 2 && renderStep2()}
             {currentStep === 3 && renderStep3()}
+            {currentStep === 4 && renderStep4()}
+            {currentStep === 5 && renderStep5()}
           </div>
 
           <DialogFooter className="flex gap-3 pt-6 border-t">
@@ -610,6 +879,54 @@ export default function SolicitacaoModal({
             )}
 
             {currentStep === 3 && (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handlePreviousStep}
+                  disabled={loading}
+                  className="flex items-center gap-2"
+                >
+                  <CaretLeftIcon size={16} />
+                  Anterior
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleNextStep}
+                  disabled={loading}
+                  className="flex items-center gap-2"
+                >
+                  Próximo
+                  <CaretRightIcon size={16} />
+                </Button>
+              </>
+            )}
+
+            {currentStep === 4 && (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handlePreviousStep}
+                  disabled={loading}
+                  className="flex items-center gap-2"
+                >
+                  <CaretLeftIcon size={16} />
+                  Anterior
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleNextStep}
+                  disabled={loading}
+                  className="flex items-center gap-2"
+                >
+                  Próximo
+                  <CaretRightIcon size={16} />
+                </Button>
+              </>
+            )}
+
+            {currentStep === 5 && (
               <>
                 <Button
                   type="button"

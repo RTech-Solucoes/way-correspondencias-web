@@ -11,13 +11,6 @@ import authClient from "@/api/auth/client";
 import responsaveisClient from "@/api/responsaveis/client";
 import {Notification} from "@/types/notifications/types";
 
-const MOCK_USER: User = {
-  name: "Nome",
-  username: "nome",
-  email: "nome@username.com",
-  avatar: "/images/avatar.svg"
-}
-
 const MOCK_NOTIFICATIONS: Notification[] = [
   {
     id: '1',
@@ -43,7 +36,7 @@ const MOCK_NOTIFICATIONS: Notification[] = [
 ];
 
 export default function Sidebar() {
-  const [user, setUser] = useState<User>(MOCK_USER);
+  const [user, setUser] = useState<User | null>(null);
   const [loadingUser, setLoadingUser] = useState<boolean>(false);
   const notifications = MOCK_NOTIFICATIONS;
   const unreadCount = MOCK_NOTIFICATIONS.filter(n => n.unread)?.length;

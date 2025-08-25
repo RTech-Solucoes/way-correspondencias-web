@@ -95,6 +95,44 @@ class SolicitacoesClient {
       method: 'DELETE',
     });
   }
+
+  async buscarAnexos(idObjeto: number): Promise<any[]> {
+    // Busca anexos vinculados à solicitação
+    return this.client.request<any[]>(`/anexos/idObjeto/${idObjeto}/tpObjeto/S`, {
+      method: 'GET',
+    });
+  }
+
+  async deletarAnexo(idAnexo: number): Promise<void> {
+    // Deleta anexo pelo id
+    return this.client.request<void>(`/anexos/${idAnexo}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async uploadAnexos(formData: FormData): Promise<void> {
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+    await fetch(`${baseUrl}/anexos/upload`, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        // Não definir Content-Type para permitir que o browser defina o boundary do multipart
+        ...this.client.getAuthHeaders?.(),
+      },
+    });
+  }
+
+  async downloadAnexo(idObjeto: number, nmArquivo: string): Promise<Blob> {
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+    const url = `${baseUrl}/anexos/idObjeto/${idObjeto}/tpObjeto/S/download?nmArquivo=${encodeURIComponent(nmArquivo)}`;
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        ...this.client.getAuthHeaders?.(),
+      },
+    });
+    return await response.blob();
+  }
 }
 
 export const solicitacoesClient = new SolicitacoesClient();

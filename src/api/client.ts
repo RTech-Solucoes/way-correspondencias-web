@@ -7,7 +7,7 @@ export default class ApiClient {
     this.module = module;
   }
 
-  private getAuthHeaders(): HeadersInit {
+  public getAuthHeaders(): HeadersInit {
     const authToken = localStorage.getItem('authToken');
     const tokenType = localStorage.getItem('tokenType');
 
@@ -28,7 +28,6 @@ export default class ApiClient {
       toast.error('Seu token expirou, faça login novamente');
     });
 
-    // Only redirect if we're not already on a public route to prevent infinite loops
     if (typeof window !== 'undefined') {
       const currentPath = window.location.pathname;
       const publicRoutes = ['/'];
