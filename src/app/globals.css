@@ -117,7 +117,7 @@ select {
 }
 
 *::-webkit-scrollbar-track {
-  @apply bg-transparent my-4;
+  @apply bg-transparent;
 }
 
 *::-webkit-scrollbar-thumb {

@@ -187,22 +187,38 @@ export default function SolicitacaoModal({
   }, [getResponsavelFromTema]);
 
   const handleNextStep = useCallback(() => {
-    if (!formData.cdIdentificacao?.trim()) {
-      toast.error("Código de identificação é obrigatório");
-      return;
+    if (currentStep === 1) {
+      if (!formData.cdIdentificacao?.trim()) {
+        toast.error("Código de identificação é obrigatório");
+        return;
+      }
+      if (!formData.idTema || formData.idTema === 0) {
+        toast.error("Tema é obrigatório");
+        return;
+      }
+      setCurrentStep(2);
+    } else if (currentStep === 2) {
+      setCurrentStep(3);
     }
-    setCurrentStep(2);
-  }, [formData.cdIdentificacao]);
+  }, [formData.cdIdentificacao, formData.idTema, currentStep]);
 
   const handlePreviousStep = useCallback(() => {
-    setCurrentStep(1);
-  }, []);
+    if (currentStep === 2) {
+      setCurrentStep(1);
+    } else if (currentStep === 3) {
+      setCurrentStep(2);
+    }
+  }, [currentStep]);
 
   const handleStepClick = useCallback((step: number) => {
-    if (step === 1 || (step === 2 && formData.cdIdentificacao?.trim())) {
+    if (step === 1) {
+      setCurrentStep(step);
+    } else if (step === 2 && formData.cdIdentificacao?.trim() && formData.idTema > 0) {
+      setCurrentStep(step);
+    } else if (step === 3 && formData.cdIdentificacao?.trim() && formData.idTema > 0) {
       setCurrentStep(step);
     }
-  }, [formData.cdIdentificacao]);
+  }, [formData.cdIdentificacao, formData.idTema]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -268,13 +284,6 @@ export default function SolicitacaoModal({
     return temas.find(tema => tema.idTema === formData.idTema);
   }, [temas, formData.idTema]);
 
-  const getAreasResponsaveis = useCallback(() => {
-    if (!formData.idsAreas || !solicitacao?.areas) return [];
-    return solicitacao.areas.filter(area =>
-      formData.idsAreas?.includes(area.idArea)
-    );
-  }, [formData.idsAreas, solicitacao?.areas]);
-
   const selectedAreas = useCallback(() => {
     return solicitacao?.areas || [];
   }, [solicitacao?.areas]);
@@ -295,51 +304,15 @@ export default function SolicitacaoModal({
         </div>
       </div>
 
-      {solicitacao ? (
-        <div className="space-y-4">
-          <div>
-            <Label>Áreas da Solicitação</Label>
-            <div className="mt-2 space-y-2">
-              {selectedAreas().map((area) => {
-                const isChecked = formData.idsAreas?.includes(area.idArea) || false;
-                return (
-                  <div
-                    key={area.idArea}
-                    className="flex items-center justify-between p-3 bg-gray-50 border rounded-3xl cursor-pointer hover:bg-gray-100 transition-colors"
-                    onClick={() => handleAreaToggle(area.idArea)}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-                        isChecked 
-                          ? 'bg-blue-500 border-blue-500' 
-                          : 'border-gray-300'
-                      }`}>
-                        {isChecked && (
-                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                      </div>
-                      <span className="text-sm font-medium text-gray-700">
-                        {area.nmArea}
-                      </span>
-                    </div>
-                    <Badge>
-                      {solicitacao.nmResponsavel}
-                    </Badge>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      ) : (
-        <MultiSelectAreas
-          selectedAreaIds={formData.idsAreas || []}
-          onSelectionChange={handleAreasSelectionChange}
-        />
-      )}
+      <MultiSelectAreas
+        selectedAreaIds={formData.idsAreas || []}
+        onSelectionChange={handleAreasSelectionChange}
+      />
+    </div>
+  ), [getSelectedTema, responsaveis, formData.idResponsavel, solicitacao, selectedAreas, formData.idsAreas, handleAreaToggle, handleAreasSelectionChange]);
 
+  const renderStep3 = useCallback(() => (
+    <div className="space-y-6">
       <div className="grid grid-cols-3 gap-4">
         <div className="space-y-2">
           <Label htmlFor="status">Status *</Label>
@@ -392,7 +365,7 @@ export default function SolicitacaoModal({
         </div>
       </div>
     </div>
-  ), [getSelectedTema, responsaveis, formData.idResponsavel, solicitacao, selectedAreas, formData.idsAreas, handleAreaToggle, handleAreasSelectionChange, formData.flStatus, handleSelectChange, formData.nrPrazo, handleInputChange, formData.tpPrazo]);
+  ), [formData.flStatus, handleSelectChange, formData.nrPrazo, handleInputChange, formData.tpPrazo, formData.cdIdentificacao, formData.dsAssunto, getSelectedTema, formData.idsAreas]);
 
   const renderStep1 = () => (
     <div className="space-y-6">
@@ -482,7 +455,7 @@ export default function SolicitacaoModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent>
         <DialogHeader className="pb-6">
           <DialogTitle className="text-xl font-semibold">
             {solicitacao ? 'Encaminhar Solicitação' : 'Nova Solicitação'}
@@ -490,55 +463,109 @@ export default function SolicitacaoModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Stepper Navigation */}
           <div className="flex justify-center mb-8">
-            <div className="flex items-center space-x-6">
+            <div className="flex items-center space-x-4">
+              {/* Etapa 1 */}
               <div className="flex flex-col items-center space-y-2">
                 <button
                   type="button"
                   onClick={() => handleStepClick(1)}
                   className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors ${
-                    currentStep >= 1 
-                      ? 'bg-blue-500 border-blue-500 text-white' 
-                      : 'border-gray-300 text-gray-400'
-                  } ${currentStep === 1 ? 'ring-2 ring-blue-200' : ''}`}
+                    currentStep === 1
+                      ? 'bg-blue-500 border-blue-500 text-white ring-2 ring-blue-200'
+                      : currentStep > 1
+                        ? 'bg-blue-100 border-blue-300 text-blue-600'
+                        : 'border-gray-300 text-gray-400'
+                  }`}
                 >
                   {currentStep > 1 ? <CheckIcon size={20} /> : '1'}
                 </button>
-                <span className={`text-xs font-medium ${
-                  currentStep >= 1 ? 'text-blue-600' : 'text-gray-400'
+                <span className={`text-xs font-medium text-center ${
+                  currentStep === 1 
+                    ? 'text-blue-600' 
+                    : currentStep > 1 
+                      ? 'text-blue-500' 
+                      : 'text-gray-400'
                 }`}>
-                  Revisar Solicitação
+                  Dados da<br/>Solicitação
                 </span>
               </div>
 
-              <div className={`w-20 h-1 transition-colors ${
+              {/* Linha conectora 1-2 */}
+              <div className={`w-16 h-1 transition-colors ${
                 currentStep >= 2 ? 'bg-blue-500' : 'bg-gray-300'
               }`}></div>
 
+              {/* Etapa 2 */}
               <div className="flex flex-col items-center space-y-2">
                 <button
                   type="button"
                   onClick={() => handleStepClick(2)}
-                  disabled={!formData.cdIdentificacao?.trim()}
+                  disabled={!isStep1Valid()}
                   className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors disabled:cursor-not-allowed ${
-                    currentStep >= 2
-                      ? 'bg-blue-500 border-blue-500 text-white'
-                      : 'border-gray-300 text-gray-400'
-                  } ${currentStep === 2 ? 'ring-2 ring-blue-200' : ''}`}
+                    currentStep === 2
+                      ? 'bg-blue-500 border-blue-500 text-white ring-2 ring-blue-200'
+                      : currentStep > 2
+                        ? 'bg-blue-100 border-blue-300 text-blue-600'
+                        : 'border-gray-300 text-gray-400'
+                  }`}
                 >
                   {currentStep > 2 ? <CheckIcon size={20} /> : '2'}
                 </button>
-                <span className={`text-xs font-medium ${
-                  currentStep >= 2 ? 'text-blue-600' : 'text-gray-400'
+                <span className={`text-xs font-medium text-center ${
+                  currentStep === 2 
+                    ? 'text-blue-600' 
+                    : currentStep > 2 
+                      ? 'text-blue-500' 
+                      : currentStep >= 2 
+                        ? 'text-blue-600' 
+                        : 'text-gray-400'
                 }`}>
-                  Alterar Solicitação
+                  Tema e<br/>Áreas
+                </span>
+              </div>
+
+              {/* Linha conectora 2-3 */}
+              <div className={`w-16 h-1 transition-colors ${
+                currentStep >= 3 ? 'bg-blue-500' : 'bg-gray-300'
+              }`}></div>
+
+              {/* Etapa 3 */}
+              <div className="flex flex-col items-center space-y-2">
+                <button
+                  type="button"
+                  onClick={() => handleStepClick(3)}
+                  disabled={!isStep1Valid()}
+                  className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors disabled:cursor-not-allowed ${
+                    currentStep === 3
+                      ? 'bg-blue-500 border-blue-500 text-white ring-2 ring-blue-200'
+                      : currentStep > 3
+                        ? 'bg-blue-100 border-blue-300 text-blue-600'
+                        : 'border-gray-300 text-gray-400'
+                  }`}
+                >
+                  {currentStep > 3 ? <CheckIcon size={20} /> : '3'}
+                </button>
+                <span className={`text-xs font-medium text-center ${
+                  currentStep === 3 
+                    ? 'text-blue-600' 
+                    : currentStep > 3 
+                      ? 'text-blue-500' 
+                      : currentStep >= 3 
+                        ? 'text-blue-600' 
+                        : 'text-gray-400'
+                }`}>
+                  Status e<br/>Prazos
                 </span>
               </div>
             </div>
           </div>
 
           <div className="min-h-[400px]">
-            {currentStep === 1 ? renderStep1() : renderStep2()}
+            {currentStep === 1 && renderStep1()}
+            {currentStep === 2 && renderStep2()}
+            {currentStep === 3 && renderStep3()}
           </div>
 
           <DialogFooter className="flex gap-3 pt-6 border-t">
@@ -571,8 +598,32 @@ export default function SolicitacaoModal({
                   Anterior
                 </Button>
                 <Button
-                  type="submit"
+                  type="button"
+                  onClick={handleNextStep}
                   disabled={loading || !isStep2Valid()}
+                  className="flex items-center gap-2"
+                >
+                  Próximo
+                  <CaretRightIcon size={16} />
+                </Button>
+              </>
+            )}
+
+            {currentStep === 3 && (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handlePreviousStep}
+                  disabled={loading}
+                  className="flex items-center gap-2"
+                >
+                  <CaretLeftIcon size={16} />
+                  Anterior
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={loading}
                   className="flex items-center gap-2"
                 >
                   { solicitacao && <ArrowBendUpRightIcon className="h-4 w-4 mr-2"/>}
