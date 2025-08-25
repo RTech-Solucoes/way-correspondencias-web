@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import {
   StickyTable,
   StickyTableBody,
@@ -29,12 +29,18 @@ import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
 import PageTitle from '@/components/ui/page-title';
 import { Pagination } from '@/components/ui/pagination';
 import {getStatusText} from "@/utils/utils";
-import useTemas from '@/context/temas/TemasContext';
+import { useTemas } from '@/context/temas/TemasContext';
+import { temasClient } from '@/api/temas/client';
+import { TemaFilterParams } from '@/api/temas/types';
+import { toast } from 'sonner';
+import { useDebounce } from '@/hooks/use-debounce';
 
 export default function TemasPage() {
   const {
     temas,
+    setTemas,
     loading,
+    setLoading,
     searchQuery,
     setSearchQuery,
     selectedTema,
@@ -46,27 +52,98 @@ export default function TemasPage() {
     showDeleteDialog,
     setShowDeleteDialog,
     temaToDelete,
+    setTemaToDelete,
     currentPage,
     setCurrentPage,
     totalPages,
+    setTotalPages,
     totalElements,
+    setTotalElements,
     filters,
     setFilters,
+    activeFilters,
     hasActiveFilters,
+    sortField,
+    sortDirection,
     handleEdit,
     handleDelete,
-    confirmDelete,
     handleTemaSave,
     applyFilters,
     clearFilters,
-    loadTemas,
-    handleSort
+    handleSort,
   } = useTemas();
 
-  // Load data when page mounts
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+
+  const loadTemas = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      const filterParts = [];
+      if (debouncedSearchQuery) filterParts.push(debouncedSearchQuery);
+      if (activeFilters.nome) filterParts.push(activeFilters.nome);
+
+      const params: TemaFilterParams = {
+        filtro: filterParts.join(' ') || undefined,
+        page: currentPage,
+        size: 10,
+      };
+
+      const response = await temasClient.buscarPorFiltro(params);
+      setTemas(response.content);
+      setTotalPages(response.totalPages);
+      setTotalElements(response.totalElements);
+    } catch {
+      toast.error("Erro ao carregar temas");
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, activeFilters, debouncedSearchQuery, setLoading, setTemas, setTotalPages, setTotalElements]);
+
   useEffect(() => {
     loadTemas();
-  }, []);
+  }, [loadTemas]);
+
+  const confirmDelete = async () => {
+    if (temaToDelete) {
+      try {
+        await temasClient.deletar(temaToDelete.idTema);
+        toast.success("Tema excluído com sucesso");
+        loadTemas();
+      } catch {
+        toast.error("Erro ao excluir tema");
+      } finally {
+        setShowDeleteDialog(false);
+        setTemaToDelete(null);
+      }
+    }
+  };
+
+  const onTemaSave = () => {
+    handleTemaSave();
+    loadTemas();
+  };
+
+  const sortedTemas = () => {
+    const sorted = [...temas];
+    if (sortField) {
+      sorted.sort((a, b) => {
+        const aValue = a[sortField];
+        const bValue = b[sortField];
+
+        if (aValue === bValue) return 0;
+
+        // Handle undefined/null values
+        if (aValue == null && bValue == null) return 0;
+        if (aValue == null) return 1;
+        if (bValue == null) return -1;
+
+        const comparison = aValue < bValue ? -1 : 1;
+        return sortDirection === 'asc' ? comparison : -comparison;
+      });
+    }
+    return sorted;
+  };
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
@@ -166,7 +243,7 @@ export default function TemasPage() {
                 </StickyTableCell>
               </StickyTableRow>
             ) : (
-              temas.map((tema) => (
+              sortedTemas().map((tema) => (
                 <StickyTableRow key={tema.idTema}>
                   <StickyTableCell className="font-medium">{tema.nmTema}</StickyTableCell>
                   <StickyTableCell className="max-w-xs truncate" title={tema.dsTema}>
@@ -227,8 +304,8 @@ export default function TemasPage() {
                     </div>
                   </StickyTableCell>
                 </StickyTableRow>
-              ))
-            )}
+              )))
+            }
           </StickyTableBody>
         </StickyTable>
       </div>
@@ -286,9 +363,8 @@ export default function TemasPage() {
           open={showTemaModal}
           onClose={() => {
             setShowTemaModal(false);
-            setSelectedTema(null);
           }}
-          onSave={handleTemaSave}
+          onSave={onTemaSave}
         />
       )}
 

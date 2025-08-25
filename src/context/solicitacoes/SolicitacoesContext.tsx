@@ -6,19 +6,12 @@ import {
   createContext,
   useContext,
   useState,
-  ReactNode,
-  useEffect
+  ReactNode
 } from "react";
-import { SolicitacaoResponse, SolicitacaoFilterParams } from '@/api/solicitacoes/types';
+import { SolicitacaoResponse } from '@/api/solicitacoes/types';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { TemaResponse } from '@/api/temas/types';
 import { AreaResponse } from '@/api/areas/types';
-import { solicitacoesClient } from '@/api/solicitacoes/client';
-import { responsaveisClient } from '@/api/responsaveis/client';
-import { temasClient } from '@/api/temas/client';
-import { areasClient } from '@/api/areas/client';
-import { toast } from 'sonner';
-import { useDebounce } from '@/hooks/use-debounce';
 
 interface FiltersState {
   identificacao: string;
@@ -32,10 +25,15 @@ interface FiltersState {
 
 export interface SolicitacoesContextProps {
   solicitacoes: SolicitacaoResponse[];
+  setSolicitacoes: Dispatch<SetStateAction<SolicitacaoResponse[]>>;
   responsaveis: ResponsavelResponse[];
+  setResponsaveis: Dispatch<SetStateAction<ResponsavelResponse[]>>;
   temas: TemaResponse[];
+  setTemas: Dispatch<SetStateAction<TemaResponse[]>>;
   areas: AreaResponse[];
+  setAreas: Dispatch<SetStateAction<AreaResponse[]>>;
   loading: boolean;
+  setLoading: Dispatch<SetStateAction<boolean>>;
   searchQuery: string;
   setSearchQuery: Dispatch<SetStateAction<string>>;
   selectedSolicitacao: SolicitacaoResponse | null;
@@ -51,23 +49,29 @@ export interface SolicitacoesContextProps {
   currentPage: number;
   setCurrentPage: Dispatch<SetStateAction<number>>;
   totalPages: number;
+  setTotalPages: Dispatch<SetStateAction<number>>;
   totalElements: number;
+  setTotalElements: Dispatch<SetStateAction<number>>;
   filters: FiltersState;
   setFilters: Dispatch<SetStateAction<FiltersState>>;
   activeFilters: FiltersState;
+  setActiveFilters: Dispatch<SetStateAction<FiltersState>>;
+  expandedRows: Set<number>;
+  setExpandedRows: Dispatch<SetStateAction<Set<number>>>;
+  sortField: keyof SolicitacaoResponse | null;
+  setSortField: Dispatch<SetStateAction<keyof SolicitacaoResponse | null>>;
+  sortDirection: 'asc' | 'desc';
+  setSortDirection: Dispatch<SetStateAction<'asc' | 'desc'>>;
   hasActiveFilters: boolean;
-  loadSolicitacoes: () => Promise<void>;
-  loadResponsaveis: () => Promise<void>;
-  loadTemas: () => Promise<void>;
-  loadAreas: () => Promise<void>;
   handleEdit: (solicitacao: SolicitacaoResponse) => void;
   handleDelete: (solicitacao: SolicitacaoResponse) => void;
-  confirmDelete: () => Promise<void>;
   handleSolicitacaoSave: () => void;
   applyFilters: () => void;
   clearFilters: () => void;
-  getStatusBadgeVariant: (status: string) => string;
+  getStatusBadgeVariant: (status: string) => "default" | "secondary" | "destructive" | "outline";
   getStatusText: (status: string) => string;
+  toggleRowExpansion: (solicitacaoId: number) => void;
+  handleSort: (field: keyof SolicitacaoResponse) => void;
 }
 
 const SolicitacoesContext = createContext<SolicitacoesContextProps>({} as SolicitacoesContextProps);
@@ -87,6 +91,9 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
+  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+  const [sortField, setSortField] = useState<keyof SolicitacaoResponse | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   const [filters, setFilters] = useState<FiltersState>({
     identificacao: '',
@@ -99,102 +106,7 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
   });
   const [activeFilters, setActiveFilters] = useState(filters);
 
-  const debouncedSearchQuery = useDebounce(searchQuery, 500);
-
-  useEffect(() => {
-    loadSolicitacoes();
-    loadResponsaveis();
-    loadTemas();
-    loadAreas();
-  }, [currentPage, activeFilters, debouncedSearchQuery]);
-
-  const loadSolicitacoes = async () => {
-    try {
-      setLoading(true);
-
-      if (activeFilters.identificacao && !activeFilters.responsavel && !activeFilters.tema && !activeFilters.area && !activeFilters.status && !debouncedSearchQuery) {
-        const result = await solicitacoesClient.buscarPorCdIdentificacao(activeFilters.identificacao);
-        setSolicitacoes([result]);
-        setTotalPages(1);
-        setTotalElements(1);
-      } else if (activeFilters.responsavel && !activeFilters.identificacao && !activeFilters.tema && !activeFilters.area && !activeFilters.status && !debouncedSearchQuery) {
-        const results = await solicitacoesClient.buscarPorResponsavel(parseInt(activeFilters.responsavel));
-        setSolicitacoes(results);
-        setTotalPages(1);
-        setTotalElements(results?.length);
-      } else if (activeFilters.tema && !activeFilters.identificacao && !activeFilters.responsavel && !activeFilters.area && !activeFilters.status && !debouncedSearchQuery) {
-        const results = await solicitacoesClient.buscarPorTema(parseInt(activeFilters.tema));
-        setSolicitacoes(results);
-        setTotalPages(1);
-        setTotalElements(results?.length);
-      } else if (activeFilters.area && !activeFilters.identificacao && !activeFilters.responsavel && !activeFilters.tema && !activeFilters.status && !debouncedSearchQuery) {
-        const results = await solicitacoesClient.buscarPorArea(parseInt(activeFilters.area));
-        setSolicitacoes(results);
-        setTotalPages(1);
-        setTotalElements(results?.length);
-      } else if (activeFilters.status && !activeFilters.identificacao && !activeFilters.responsavel && !activeFilters.tema && !activeFilters.area && !debouncedSearchQuery) {
-        const results = await solicitacoesClient.buscarPorStatus(activeFilters.status);
-        setSolicitacoes(results);
-        setTotalPages(1);
-        setTotalElements(results?.length);
-      } else if (activeFilters.responsavel && activeFilters.status && !activeFilters.identificacao && !activeFilters.tema && !activeFilters.area && !debouncedSearchQuery) {
-        const results = await solicitacoesClient.buscarPorResponsavelEStatus(parseInt(activeFilters.responsavel), activeFilters.status);
-        setSolicitacoes(results);
-        setTotalPages(1);
-        setTotalElements(results?.length);
-      } else if (activeFilters.dateFrom && activeFilters.dateTo && !activeFilters.identificacao && !activeFilters.responsavel && !activeFilters.tema && !activeFilters.area && !activeFilters.status && !debouncedSearchQuery) {
-        const results = await solicitacoesClient.buscarPorPeriodo(
-          activeFilters.dateFrom + 'T00:00:00',
-          activeFilters.dateTo + 'T23:59:59'
-        );
-        setSolicitacoes(results);
-        setTotalPages(1);
-        setTotalElements(results?.length);
-      } else {
-        const filterParts = [];
-        if (debouncedSearchQuery) filterParts.push(debouncedSearchQuery);
-        if (activeFilters.identificacao) filterParts.push(activeFilters.identificacao);
-
-        const params: SolicitacaoFilterParams = {
-          filtro: filterParts.join(' ') || undefined,
-          page: currentPage,
-          size: 10,
-        };
-        const response = await solicitacoesClient.buscarPorFiltro(params);
-        setSolicitacoes(response.content);
-        setTotalPages(response.totalPages);
-        setTotalElements(response.totalElements);
-      }
-    } catch (error) {
-      toast.error("Erro ao carregar solicitações");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadResponsaveis = async () => {
-    try {
-      const response = await responsaveisClient.buscarPorFiltro({ size: 100 });
-      setResponsaveis(response.content);
-    } catch (error) {
-    }
-  };
-
-  const loadTemas = async () => {
-    try {
-      const response = await temasClient.buscarPorFiltro({ size: 100 });
-      setTemas(response.content);
-    } catch (error) {
-    }
-  };
-
-  const loadAreas = async () => {
-    try {
-      const response = await areasClient.buscarPorFiltro({ size: 100 });
-      setAreas(response.content);
-    } catch (error) {
-    }
-  };
+  const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
 
   const handleEdit = (solicitacao: SolicitacaoResponse) => {
     setSelectedSolicitacao(solicitacao);
@@ -206,25 +118,9 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
     setShowDeleteDialog(true);
   };
 
-  const confirmDelete = async () => {
-    if (solicitacaoToDelete) {
-      try {
-        await solicitacoesClient.deletar(solicitacaoToDelete.idSolicitacao);
-        toast.success("Solicitação excluída com sucesso");
-        loadSolicitacoes();
-      } catch (error) {
-        toast.error("Erro ao excluir solicitação");
-      } finally {
-        setShowDeleteDialog(false);
-        setSolicitacaoToDelete(null);
-      }
-    }
-  };
-
   const handleSolicitacaoSave = () => {
     setShowSolicitacaoModal(false);
     setSelectedSolicitacao(null);
-    loadSolicitacoes();
   };
 
   const applyFilters = () => {
@@ -249,9 +145,7 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
     setShowFilterModal(false);
   };
 
-  const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
-
-  const getStatusBadgeVariant = (status: string) => {
+  const getStatusBadgeVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
     switch (status.toUpperCase()) {
       case 'P':
         return 'secondary';
@@ -297,14 +191,39 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const toggleRowExpansion = (solicitacaoId: number) => {
+    const newExpandedRows = new Set(expandedRows);
+    if (newExpandedRows.has(solicitacaoId)) {
+      newExpandedRows.delete(solicitacaoId);
+    } else {
+      newExpandedRows.add(solicitacaoId);
+    }
+    setExpandedRows(newExpandedRows);
+  };
+
+  const handleSort = (field: keyof SolicitacaoResponse) => {
+    let newSortDirection: 'asc' | 'desc' = 'asc';
+    if (sortField === field && sortDirection === 'asc') {
+      newSortDirection = 'desc';
+    }
+    setSortField(field);
+    setSortDirection(newSortDirection);
+    setCurrentPage(0);
+  };
+
   return (
     <SolicitacoesContext.Provider
       value={{
         solicitacoes,
+        setSolicitacoes,
         responsaveis,
+        setResponsaveis,
         temas,
+        setTemas,
         areas,
+        setAreas,
         loading,
+        setLoading,
         searchQuery,
         setSearchQuery,
         selectedSolicitacao,
@@ -320,23 +239,29 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
         currentPage,
         setCurrentPage,
         totalPages,
+        setTotalPages,
         totalElements,
+        setTotalElements,
         filters,
         setFilters,
         activeFilters,
+        setActiveFilters,
+        expandedRows,
+        setExpandedRows,
+        sortField,
+        setSortField,
+        sortDirection,
+        setSortDirection,
         hasActiveFilters,
-        loadSolicitacoes,
-        loadResponsaveis,
-        loadTemas,
-        loadAreas,
         handleEdit,
         handleDelete,
-        confirmDelete,
         handleSolicitacaoSave,
         applyFilters,
         clearFilters,
         getStatusBadgeVariant,
-        getStatusText
+        getStatusText,
+        toggleRowExpansion,
+        handleSort,
       }}
     >
       {children}
@@ -344,12 +269,10 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export default function useSolicitacoes() {
+export const useSolicitacoes = () => {
   const context = useContext(SolicitacoesContext);
-
   if (!context) {
-    throw new Error("useSolicitacoes must be used within a SolicitacoesProvider");
+    throw new Error('useSolicitacoes must be used within a SolicitacoesProvider');
   }
-
   return context;
-}
+};

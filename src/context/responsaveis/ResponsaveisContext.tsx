@@ -6,13 +6,9 @@ import {
   createContext,
   useContext,
   useState,
-  ReactNode,
-  useEffect
+  ReactNode
 } from "react";
-import { ResponsavelResponse, ResponsavelFilterParams } from '@/api/responsaveis/types';
-import { responsaveisClient } from '@/api/responsaveis/client';
-import { toast } from 'sonner';
-import { useDebounce } from '@/hooks/use-debounce';
+import { ResponsavelResponse } from '@/api/responsaveis/types';
 
 interface FiltersState {
   usuario: string;
@@ -21,7 +17,9 @@ interface FiltersState {
 
 export interface ResponsaveisContextProps {
   responsaveis: ResponsavelResponse[];
+  setResponsaveis: Dispatch<SetStateAction<ResponsavelResponse[]>>;
   loading: boolean;
+  setLoading: Dispatch<SetStateAction<boolean>>;
   searchQuery: string;
   setSearchQuery: Dispatch<SetStateAction<string>>;
   selectedResponsavel: ResponsavelResponse | null;
@@ -37,18 +35,20 @@ export interface ResponsaveisContextProps {
   currentPage: number;
   setCurrentPage: Dispatch<SetStateAction<number>>;
   totalPages: number;
+  setTotalPages: Dispatch<SetStateAction<number>>;
   totalElements: number;
+  setTotalElements: Dispatch<SetStateAction<number>>;
   filters: FiltersState;
   setFilters: Dispatch<SetStateAction<FiltersState>>;
   activeFilters: FiltersState;
+  setActiveFilters: Dispatch<SetStateAction<FiltersState>>;
   hasActiveFilters: boolean;
-  filteredResponsaveis: ResponsavelResponse[];
   sortField: keyof ResponsavelResponse | null;
+  setSortField: Dispatch<SetStateAction<keyof ResponsavelResponse | null>>;
   sortDirection: 'asc' | 'desc';
-  loadResponsaveis: () => Promise<void>;
+  setSortDirection: Dispatch<SetStateAction<'asc' | 'desc'>>;
   handleEdit: (responsavel: ResponsavelResponse) => void;
   handleDelete: (responsavel: ResponsavelResponse) => void;
-  confirmDelete: () => Promise<void>;
   handleResponsavelSave: () => void;
   applyFilters: () => void;
   clearFilters: () => void;
@@ -70,6 +70,8 @@ export const ResponsaveisProvider = ({ children }: { children: ReactNode }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
+  const [sortField, setSortField] = useState<keyof ResponsavelResponse | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   const [filters, setFilters] = useState<FiltersState>({
     usuario: '',
@@ -77,54 +79,7 @@ export const ResponsaveisProvider = ({ children }: { children: ReactNode }) => {
   });
   const [activeFilters, setActiveFilters] = useState(filters);
 
-  const [sortField, setSortField] = useState<keyof ResponsavelResponse | null>(null);
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-
-  const debouncedSearchQuery = useDebounce(searchQuery, 500);
-
-  useEffect(() => {
-    // Only reload if we have data already loaded (not initial load)
-    if (responsaveis.length > 0 || activeFilters.usuario || activeFilters.email || debouncedSearchQuery) {
-      loadResponsaveis();
-    }
-  }, [currentPage, activeFilters, debouncedSearchQuery, sortField, sortDirection]);
-
-  const loadResponsaveis = async () => {
-    try {
-      setLoading(true);
-
-      if (activeFilters.usuario && !activeFilters.email && !debouncedSearchQuery) {
-        const result = await responsaveisClient.buscarPorNmUsuarioLogin(activeFilters.usuario);
-        setResponsaveis([result]);
-        setTotalPages(1);
-        setTotalElements(1);
-      } else if (activeFilters.email && !activeFilters.usuario && !debouncedSearchQuery) {
-        const result = await responsaveisClient.buscarPorDsEmail(activeFilters.email);
-        setResponsaveis([result]);
-        setTotalPages(1);
-        setTotalElements(1);
-      } else {
-        const filterParts = [];
-        if (debouncedSearchQuery) filterParts.push(debouncedSearchQuery);
-        if (activeFilters.usuario) filterParts.push(activeFilters.usuario);
-        if (activeFilters.email) filterParts.push(activeFilters.email);
-
-        const params: ResponsavelFilterParams = {
-          filtro: filterParts.join(' ') || undefined,
-          page: currentPage,
-          size: 10,
-        };
-        const response = await responsaveisClient.buscarPorFiltro(params);
-        setResponsaveis(response.content);
-        setTotalPages(response.totalPages);
-        setTotalElements(response.totalElements);
-      }
-    } catch {
-      toast.error("Erro ao carregar responsáveis");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
 
   const handleEdit = (responsavel: ResponsavelResponse) => {
     setSelectedResponsavel(responsavel);
@@ -136,25 +91,9 @@ export const ResponsaveisProvider = ({ children }: { children: ReactNode }) => {
     setShowDeleteDialog(true);
   };
 
-  const confirmDelete = async () => {
-    if (responsavelToDelete) {
-      try {
-        await responsaveisClient.deletar(responsavelToDelete.idResponsavel);
-        toast.success("Responsável excluído com sucesso");
-        loadResponsaveis();
-      } catch {
-        toast.error("Erro ao excluir responsável");
-      } finally {
-        setShowDeleteDialog(false);
-        setResponsavelToDelete(null);
-      }
-    }
-  };
-
   const handleResponsavelSave = () => {
     setShowResponsavelModal(false);
     setSelectedResponsavel(null);
-    loadResponsaveis();
   };
 
   const applyFilters = () => {
@@ -174,44 +113,27 @@ export const ResponsaveisProvider = ({ children }: { children: ReactNode }) => {
     setShowFilterModal(false);
   };
 
+  const getAreaName = (area: { id: number; nmArea: string; cdArea: string } | undefined) => {
+    return area?.nmArea || 'N/A';
+  };
+
   const handleSort = (field: keyof ResponsavelResponse) => {
-    const newSortDirection = sortField === field && sortDirection === 'asc' ? 'desc' : 'asc';
+    let newSortDirection: 'asc' | 'desc' = 'asc';
+    if (sortField === field && sortDirection === 'asc') {
+      newSortDirection = 'desc';
+    }
     setSortField(field);
     setSortDirection(newSortDirection);
+    setCurrentPage(0);
   };
-
-  const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
-
-  const getAreaName = (area: { id: number; nmArea: string; cdArea: string } | undefined) => {
-    return area ? area.nmArea : 'N/A';
-  };
-
-  const sortedResponsaveis = [...responsaveis].sort((a, b) => {
-    if (sortField) {
-      const aValue = a[sortField];
-      const bValue = b[sortField];
-
-      if (aValue < bValue) {
-        return sortDirection === 'asc' ? -1 : 1;
-      }
-      if (aValue > bValue) {
-        return sortDirection === 'asc' ? 1 : -1;
-      }
-    }
-    return 0;
-  });
-
-  const filteredResponsaveis = sortedResponsaveis.filter(responsavel =>
-    responsavel.nmResponsavel.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    responsavel.dsEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    responsavel.nmUsuarioLogin.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   return (
     <ResponsaveisContext.Provider
       value={{
         responsaveis,
+        setResponsaveis,
         loading,
+        setLoading,
         searchQuery,
         setSearchQuery,
         selectedResponsavel,
@@ -227,23 +149,25 @@ export const ResponsaveisProvider = ({ children }: { children: ReactNode }) => {
         currentPage,
         setCurrentPage,
         totalPages,
+        setTotalPages,
         totalElements,
+        setTotalElements,
         filters,
         setFilters,
         activeFilters,
+        setActiveFilters,
         hasActiveFilters,
-        filteredResponsaveis,
-        loadResponsaveis,
+        sortField,
+        setSortField,
+        sortDirection,
+        setSortDirection,
         handleEdit,
         handleDelete,
-        confirmDelete,
         handleResponsavelSave,
         applyFilters,
         clearFilters,
         getAreaName,
-        sortField,
-        sortDirection,
-        handleSort
+        handleSort,
       }}
     >
       {children}
@@ -251,12 +175,10 @@ export const ResponsaveisProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export default function useResponsaveis() {
+export const useResponsaveis = () => {
   const context = useContext(ResponsaveisContext);
-
   if (!context) {
-    throw new Error("useResponsaveis must be used within a ResponsaveisProvider");
+    throw new Error('useResponsaveis must be used within a ResponsaveisProvider');
   }
-
   return context;
-}
+};

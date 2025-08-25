@@ -28,8 +28,14 @@ export default class ApiClient {
       toast.error('Seu token expirou, faça login novamente');
     });
 
+    // Only redirect if we're not already on a public route to prevent infinite loops
     if (typeof window !== 'undefined') {
-      window.location.href = '/login';
+      const currentPath = window.location.pathname;
+      const publicRoutes = ['/'];
+
+      if (!publicRoutes.includes(currentPath)) {
+        window.location.href = '/';
+      }
     }
   }
 

@@ -6,14 +6,9 @@ import {
   createContext,
   useContext,
   useState,
-  ReactNode,
-  useEffect,
-  useCallback
+  ReactNode
 } from "react";
 import { TemaResponse } from '@/api/temas/types';
-import { temasClient } from '@/api/temas/client';
-import { toast } from 'sonner';
-import { useDebounce } from '@/hooks/use-debounce';
 
 interface FiltersState {
   nome: string;
@@ -22,7 +17,9 @@ interface FiltersState {
 
 export interface TemasContextProps {
   temas: TemaResponse[];
+  setTemas: Dispatch<SetStateAction<TemaResponse[]>>;
   loading: boolean;
+  setLoading: Dispatch<SetStateAction<boolean>>;
   searchQuery: string;
   setSearchQuery: Dispatch<SetStateAction<string>>;
   selectedTema: TemaResponse | null;
@@ -38,17 +35,20 @@ export interface TemasContextProps {
   currentPage: number;
   setCurrentPage: Dispatch<SetStateAction<number>>;
   totalPages: number;
+  setTotalPages: Dispatch<SetStateAction<number>>;
   totalElements: number;
+  setTotalElements: Dispatch<SetStateAction<number>>;
   filters: FiltersState;
   setFilters: Dispatch<SetStateAction<FiltersState>>;
   activeFilters: FiltersState;
+  setActiveFilters: Dispatch<SetStateAction<FiltersState>>;
   hasActiveFilters: boolean;
   sortField: keyof TemaResponse | null;
+  setSortField: Dispatch<SetStateAction<keyof TemaResponse | null>>;
   sortDirection: 'asc' | 'desc';
-  loadTemas: () => Promise<void>;
+  setSortDirection: Dispatch<SetStateAction<'asc' | 'desc'>>;
   handleEdit: (tema: TemaResponse) => void;
   handleDelete: (tema: TemaResponse) => void;
-  confirmDelete: () => Promise<void>;
   handleTemaSave: () => void;
   applyFilters: () => void;
   clearFilters: () => void;
@@ -59,7 +59,7 @@ const TemasContext = createContext<TemasContextProps>({} as TemasContextProps);
 
 export const TemasProvider = ({ children }: { children: ReactNode }) => {
   const [temas, setTemas] = useState<TemaResponse[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTema, setSelectedTema] = useState<TemaResponse | null>(null);
   const [showTemaModal, setShowTemaModal] = useState(false);
@@ -69,6 +69,8 @@ export const TemasProvider = ({ children }: { children: ReactNode }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
+  const [sortField, setSortField] = useState<keyof TemaResponse | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   const [filters, setFilters] = useState<FiltersState>({
     nome: '',
@@ -76,49 +78,7 @@ export const TemasProvider = ({ children }: { children: ReactNode }) => {
   });
   const [activeFilters, setActiveFilters] = useState(filters);
 
-  const [sortField, setSortField] = useState<keyof TemaResponse | null>(null);
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-
-  const debouncedSearchQuery = useDebounce(searchQuery, 500);
-
-  const loadTemas = useCallback(async () => {
-    try {
-      setLoading(true);
-
-      if (activeFilters.nome && !activeFilters.descricao && !debouncedSearchQuery) {
-        const result = await temasClient.buscarPorNmTema(activeFilters.nome);
-        setTemas([result]);
-        setTotalPages(1);
-        setTotalElements(1);
-      } else {
-        const filterParts = [];
-        if (debouncedSearchQuery) filterParts.push(debouncedSearchQuery);
-        if (activeFilters.nome) filterParts.push(activeFilters.nome);
-        if (activeFilters.descricao) filterParts.push(activeFilters.descricao);
-
-        const response = await temasClient.buscarPorFiltroComAreas({
-          filtro: filterParts.join(' ') || undefined,
-          page: currentPage,
-          size: 10,
-        });
-
-        setTemas(response.content);
-        setTotalPages(response.totalPages);
-        setTotalElements(response.totalElements);
-      }
-    } catch {
-      toast.error("Erro ao carregar temas");
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, activeFilters, debouncedSearchQuery]);
-
-  useEffect(() => {
-    // Only reload if we have data already loaded (not initial load)
-    if (temas.length > 0 || activeFilters.nome || activeFilters.descricao || debouncedSearchQuery) {
-      loadTemas();
-    }
-  }, [loadTemas]);
+  const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
 
   const handleEdit = (tema: TemaResponse) => {
     setSelectedTema(tema);
@@ -130,25 +90,9 @@ export const TemasProvider = ({ children }: { children: ReactNode }) => {
     setShowDeleteDialog(true);
   };
 
-  const confirmDelete = async () => {
-    if (temaToDelete) {
-      try {
-        await temasClient.deletar(temaToDelete.idTema);
-        toast.success("Tema excluído com sucesso");
-        loadTemas();
-      } catch {
-        toast.error("Erro ao excluir tema");
-      } finally {
-        setShowDeleteDialog(false);
-        setTemaToDelete(null);
-      }
-    }
-  };
-
   const handleTemaSave = () => {
     setShowTemaModal(false);
     setSelectedTema(null);
-    loadTemas();
   };
 
   const applyFilters = () => {
@@ -169,19 +113,22 @@ export const TemasProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const handleSort = (field: keyof TemaResponse) => {
-    const newSortDirection = sortField === field && sortDirection === 'asc' ? 'desc' : 'asc';
+    let newSortDirection: 'asc' | 'desc' = 'asc';
+    if (sortField === field && sortDirection === 'asc') {
+      newSortDirection = 'desc';
+    }
     setSortField(field);
     setSortDirection(newSortDirection);
     setCurrentPage(0);
   };
 
-  const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
-
   return (
     <TemasContext.Provider
       value={{
         temas,
+        setTemas,
         loading,
+        setLoading,
         searchQuery,
         setSearchQuery,
         selectedTema,
@@ -197,21 +144,24 @@ export const TemasProvider = ({ children }: { children: ReactNode }) => {
         currentPage,
         setCurrentPage,
         totalPages,
+        setTotalPages,
         totalElements,
+        setTotalElements,
         filters,
         setFilters,
         activeFilters,
+        setActiveFilters,
         hasActiveFilters,
         sortField,
+        setSortField,
         sortDirection,
-        loadTemas,
+        setSortDirection,
         handleEdit,
         handleDelete,
-        confirmDelete,
         handleTemaSave,
         applyFilters,
         clearFilters,
-        handleSort
+        handleSort,
       }}
     >
       {children}
@@ -219,12 +169,10 @@ export const TemasProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export default function useTemas() {
+export const useTemas = () => {
   const context = useContext(TemasContext);
-
   if (!context) {
-    throw new Error("useTemas must be used within a TemasProvider");
+    throw new Error('useTemas must be used within a TemasProvider');
   }
-
   return context;
-}
+};

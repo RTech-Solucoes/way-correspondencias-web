@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import {
   StickyTable,
   StickyTableBody,
@@ -9,38 +9,38 @@ import {
   StickyTableHeader,
   StickyTableRow
 } from '@/components/ui/sticky-table';
-import { Button } from '@/components/ui/button';
+import {Button} from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  PlusIcon,
+  FunnelSimpleIcon,
   MagnifyingGlassIcon,
   PencilSimpleIcon,
+  PlusIcon,
   TrashIcon,
-  FunnelSimpleIcon,
-  UsersIcon,
   XIcon,
+  UsersIcon,
   SpinnerIcon,
-  ArrowsDownUpIcon
+  ArrowsDownUpIcon,
 } from '@phosphor-icons/react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import ResponsavelModal from '../../components/responsaveis/ResponsavelModal';
+import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog';
+import {Label} from '@/components/ui/label';
+import ResponsavelModal from '@/components/responsaveis/ResponsavelModal';
 import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
 import PageTitle from '@/components/ui/page-title';
 import { Pagination } from '@/components/ui/pagination';
 import {getStatusText} from "@/utils/utils";
-import useResponsaveis from '@/context/responsaveis/ResponsaveisContext';
+import { useResponsaveis } from '@/context/responsaveis/ResponsaveisContext';
+import { responsaveisClient } from '@/api/responsaveis/client';
+import { ResponsavelFilterParams } from '@/api/responsaveis/types';
+import { toast } from 'sonner';
+import { useDebounce } from '@/hooks/use-debounce';
 
 export default function ResponsaveisPage() {
   const {
     responsaveis,
+    setResponsaveis,
     loading,
+    setLoading,
     searchQuery,
     setSearchQuery,
     selectedResponsavel,
@@ -52,27 +52,110 @@ export default function ResponsaveisPage() {
     showDeleteDialog,
     setShowDeleteDialog,
     responsavelToDelete,
+    setResponsavelToDelete,
     currentPage,
     setCurrentPage,
     totalPages,
+    setTotalPages,
     totalElements,
+    setTotalElements,
     filters,
     setFilters,
+    activeFilters,
     hasActiveFilters,
+    sortField,
+    sortDirection,
     handleEdit,
     handleDelete,
-    confirmDelete,
     handleResponsavelSave,
     applyFilters,
     clearFilters,
-    loadResponsaveis,
-    handleSort
+    handleSort,
   } = useResponsaveis();
 
-  // Load data when page mounts
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+
+  const loadResponsaveis = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      if (activeFilters.usuario && !activeFilters.email && !debouncedSearchQuery) {
+        const result = await responsaveisClient.buscarPorNmUsuarioLogin(activeFilters.usuario);
+        setResponsaveis([result]);
+        setTotalPages(1);
+        setTotalElements(1);
+      } else if (activeFilters.email && !activeFilters.usuario && !debouncedSearchQuery) {
+        const result = await responsaveisClient.buscarPorDsEmail(activeFilters.email);
+        setResponsaveis([result]);
+        setTotalPages(1);
+        setTotalElements(1);
+      } else {
+        const filterParts = [];
+        if (debouncedSearchQuery) filterParts.push(debouncedSearchQuery);
+        if (activeFilters.usuario) filterParts.push(activeFilters.usuario);
+
+        const params: ResponsavelFilterParams = {
+          filtro: filterParts.join(' ') || undefined,
+          page: currentPage,
+          size: 10,
+        };
+
+        const response = await responsaveisClient.buscarPorFiltro(params);
+        setResponsaveis(response.content);
+        setTotalPages(response.totalPages);
+        setTotalElements(response.totalElements);
+      }
+    } catch {
+      toast.error("Erro ao carregar responsáveis");
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, activeFilters, debouncedSearchQuery, setLoading, setResponsaveis, setTotalPages, setTotalElements]);
+
   useEffect(() => {
     loadResponsaveis();
-  }, []);
+  }, [loadResponsaveis]);
+
+  const confirmDelete = async () => {
+    if (responsavelToDelete) {
+      try {
+        await responsaveisClient.deletar(responsavelToDelete.idResponsavel);
+        toast.success("Responsável excluído com sucesso");
+        loadResponsaveis();
+      } catch {
+        toast.error("Erro ao excluir responsável");
+      } finally {
+        setShowDeleteDialog(false);
+        setResponsavelToDelete(null);
+      }
+    }
+  };
+
+  const onResponsavelSave = () => {
+    handleResponsavelSave();
+    loadResponsaveis();
+  };
+
+  const sortedResponsaveis = () => {
+    const sorted = [...responsaveis];
+    if (sortField) {
+      sorted.sort((a, b) => {
+        const aValue = a[sortField];
+        const bValue = b[sortField];
+
+        if (aValue === bValue) return 0;
+
+        // Handle undefined/null values
+        if (aValue == null && bValue == null) return 0;
+        if (aValue == null) return 1;
+        if (bValue == null) return -1;
+
+        const comparison = aValue < bValue ? -1 : 1;
+        return sortDirection === 'asc' ? comparison : -comparison;
+      });
+    }
+    return sorted;
+  };
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
@@ -177,7 +260,7 @@ export default function ResponsaveisPage() {
                 </StickyTableCell>
               </StickyTableRow>
             ) : (
-              responsaveis.map((responsavel) => (
+              sortedResponsaveis().map((responsavel) => (
                 <StickyTableRow key={responsavel.idResponsavel}>
                   <StickyTableCell className="font-medium">{responsavel.nmResponsavel}</StickyTableCell>
                   <StickyTableCell>{responsavel.nmUsuarioLogin}</StickyTableCell>
@@ -274,7 +357,7 @@ export default function ResponsaveisPage() {
             setShowResponsavelModal(false);
             setSelectedResponsavel(null);
           }}
-          onSave={handleResponsavelSave}
+          onSave={onResponsavelSave}
         />
       )}
 

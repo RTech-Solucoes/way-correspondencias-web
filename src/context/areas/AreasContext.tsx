@@ -6,13 +6,9 @@ import {
   createContext,
   useContext,
   useState,
-  ReactNode,
-  useEffect
+  ReactNode
 } from "react";
-import { AreaResponse, AreaRequest } from '@/api/areas/types';
-import { areasClient } from '@/api/areas/client';
-import { toast } from 'sonner';
-import { useDebounce } from '@/hooks/use-debounce';
+import { AreaResponse } from '@/api/areas/types';
 
 interface FiltersState {
   codigo: string;
@@ -23,7 +19,9 @@ interface FiltersState {
 
 export interface AreasContextProps {
   areas: AreaResponse[];
+  setAreas: Dispatch<SetStateAction<AreaResponse[]>>;
   loading: boolean;
+  setLoading: Dispatch<SetStateAction<boolean>>;
   searchQuery: string;
   setSearchQuery: Dispatch<SetStateAction<string>>;
   selectedArea: AreaResponse | null;
@@ -33,25 +31,27 @@ export interface AreasContextProps {
   showFilterModal: boolean;
   setShowFilterModal: Dispatch<SetStateAction<boolean>>;
   sortField: keyof AreaResponse | null;
+  setSortField: Dispatch<SetStateAction<keyof AreaResponse | null>>;
   sortDirection: 'asc' | 'desc';
+  setSortDirection: Dispatch<SetStateAction<'asc' | 'desc'>>;
   currentPage: number;
   setCurrentPage: Dispatch<SetStateAction<number>>;
   totalPages: number;
+  setTotalPages: Dispatch<SetStateAction<number>>;
   totalElements: number;
+  setTotalElements: Dispatch<SetStateAction<number>>;
   filters: FiltersState;
   setFilters: Dispatch<SetStateAction<FiltersState>>;
   activeFilters: FiltersState;
+  setActiveFilters: Dispatch<SetStateAction<FiltersState>>;
   showDeleteDialog: boolean;
   setShowDeleteDialog: Dispatch<SetStateAction<boolean>>;
   areaToDelete: number | null;
   setAreaToDelete: Dispatch<SetStateAction<number | null>>;
   hasActiveFilters: boolean;
-  loadAreas: () => Promise<void>;
   handleSort: (field: keyof AreaResponse) => void;
   handleEdit: (area: AreaResponse) => void;
-  handleDelete: (areaId: number) => Promise<void>;
-  confirmDelete: () => Promise<void>;
-  handleAreaSave: (area: AreaRequest) => Promise<void>;
+  handleDelete: (areaId: number) => void;
   handleAreaSaved: () => void;
   applyFilters: () => void;
   clearFilters: () => void;
@@ -71,6 +71,8 @@ export const AreasProvider = ({ children }: { children: ReactNode }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [areaToDelete, setAreaToDelete] = useState<number | null>(null);
 
   const [filters, setFilters] = useState<FiltersState>({
     codigo: '',
@@ -79,54 +81,16 @@ export const AreasProvider = ({ children }: { children: ReactNode }) => {
     ativo: ''
   });
   const [activeFilters, setActiveFilters] = useState(filters);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [areaToDelete, setAreaToDelete] = useState<number | null>(null);
 
-  const debouncedSearchQuery = useDebounce(searchQuery, 500);
-
-  useEffect(() => {
-    // Only reload if we have data already loaded (not initial load)
-    if (areas.length > 0 || activeFilters.codigo || activeFilters.nome || activeFilters.descricao || debouncedSearchQuery) {
-      loadAreas();
-    }
-  }, [currentPage, activeFilters, debouncedSearchQuery]);
-
-  const loadAreas = async () => {
-    try {
-      setLoading(true);
-
-      const filterParts = [];
-      if (debouncedSearchQuery) filterParts.push(debouncedSearchQuery);
-      if (activeFilters.codigo) filterParts.push(activeFilters.codigo);
-      if (activeFilters.nome) filterParts.push(activeFilters.nome);
-      if (activeFilters.descricao) filterParts.push(activeFilters.descricao);
-
-      const filtro = filterParts.join(' ');
-
-      const response = await areasClient.buscarPorFiltro({
-        filtro: filtro || undefined,
-        page: currentPage,
-        size: 10,
-        sort: sortField ? `${sortField},${sortDirection}` : undefined
-      });
-
-      setAreas(response.content);
-      setTotalPages(response.totalPages);
-      setTotalElements(response.totalElements);
-    } catch (error) {
-      toast.error("Erro ao carregar áreas");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
 
   const handleSort = (field: keyof AreaResponse) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
+    let newSortDirection: 'asc' | 'desc' = 'asc';
+    if (sortField === field && sortDirection === 'asc') {
+      newSortDirection = 'desc';
     }
+    setSortField(field);
+    setSortDirection(newSortDirection);
     setCurrentPage(0);
   };
 
@@ -135,47 +99,14 @@ export const AreasProvider = ({ children }: { children: ReactNode }) => {
     setShowAreaModal(true);
   };
 
-  const handleDelete = async (areaId: number) => {
+  const handleDelete = (areaId: number) => {
     setAreaToDelete(areaId);
     setShowDeleteDialog(true);
-  };
-
-  const confirmDelete = async () => {
-    if (areaToDelete) {
-      try {
-        await areasClient.deletar(areaToDelete);
-        toast.success("Área excluída com sucesso");
-        loadAreas();
-      } catch (error) {
-        toast.error("Erro ao excluir área");
-      } finally {
-        setShowDeleteDialog(false);
-        setAreaToDelete(null);
-      }
-    }
-  };
-
-  const handleAreaSave = async (area: AreaRequest) => {
-    try {
-      if (selectedArea) {
-        await areasClient.atualizar(selectedArea.idArea, area);
-        toast.success("Área atualizada com sucesso");
-      } else {
-        await areasClient.criar(area);
-        toast.success("Área criada com sucesso");
-      }
-      setShowAreaModal(false);
-      setSelectedArea(null);
-      loadAreas();
-    } catch (error) {
-      toast.error("Erro ao salvar área");
-    }
   };
 
   const handleAreaSaved = () => {
     setShowAreaModal(false);
     setSelectedArea(null);
-    loadAreas();
   };
 
   const applyFilters = () => {
@@ -197,13 +128,13 @@ export const AreasProvider = ({ children }: { children: ReactNode }) => {
     setShowFilterModal(false);
   };
 
-  const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
-
   return (
     <AreasContext.Provider
       value={{
         areas,
+        setAreas,
         loading,
+        setLoading,
         searchQuery,
         setSearchQuery,
         selectedArea,
@@ -213,28 +144,30 @@ export const AreasProvider = ({ children }: { children: ReactNode }) => {
         showFilterModal,
         setShowFilterModal,
         sortField,
+        setSortField,
         sortDirection,
+        setSortDirection,
         currentPage,
         setCurrentPage,
         totalPages,
+        setTotalPages,
         totalElements,
+        setTotalElements,
         filters,
         setFilters,
         activeFilters,
+        setActiveFilters,
         showDeleteDialog,
         setShowDeleteDialog,
         areaToDelete,
         setAreaToDelete,
         hasActiveFilters,
-        loadAreas,
         handleSort,
         handleEdit,
         handleDelete,
-        confirmDelete,
-        handleAreaSave,
         handleAreaSaved,
         applyFilters,
-        clearFilters
+        clearFilters,
       }}
     >
       {children}
@@ -242,12 +175,10 @@ export const AreasProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export default function useAreas() {
+export const useAreas = () => {
   const context = useContext(AreasContext);
-
   if (!context) {
-    throw new Error("useAreas must be used within a AreasProvider");
+    throw new Error('useAreas must be used within an AreasProvider');
   }
-
   return context;
-}
+};

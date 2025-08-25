@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   StickyTable,
   StickyTableBody,
@@ -29,13 +29,10 @@ import {
 } from '@phosphor-icons/react';
 import PageTitle from '@/components/ui/page-title';
 import { solicitacoesClient } from '@/api/solicitacoes/client';
-import { SolicitacaoResponse, SolicitacaoFilterParams } from '@/api/solicitacoes/types';
+import { SolicitacaoFilterParams } from '@/api/solicitacoes/types';
 import { responsaveisClient } from '@/api/responsaveis/client';
-import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { temasClient } from '@/api/temas/client';
-import { TemaResponse } from '@/api/temas/types';
 import { areasClient } from '@/api/areas/client';
-import { AreaResponse } from '@/api/areas/types';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -43,47 +40,63 @@ import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Pagination } from '@/components/ui/pagination';
 import { formatDate } from '@/utils/utils';
+import { useSolicitacoes } from '@/context/solicitacoes/SolicitacoesContext';
 
 export default function SolicitacoesPage() {
-  const [solicitacoes, setSolicitacoes] = useState<SolicitacaoResponse[]>([]);
-  const [responsaveis, setResponsaveis] = useState<ResponsavelResponse[]>([]);
-  const [temas, setTemas] = useState<TemaResponse[]>([]);
-  const [areas, setAreas] = useState<AreaResponse[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedSolicitacao, setSelectedSolicitacao] = useState<SolicitacaoResponse | null>(null);
-  const [showSolicitacaoModal, setShowSolicitacaoModal] = useState(false);
-  const [showFilterModal, setShowFilterModal] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [solicitacaoToDelete, setSolicitacaoToDelete] = useState<SolicitacaoResponse | null>(null);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalElements, setTotalElements] = useState(0);
-  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
-  const [sortField, setSortField] = useState<keyof SolicitacaoResponse | null>(null);
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-
-  const [filters, setFilters] = useState({
-    identificacao: '',
-    responsavel: '',
-    tema: '',
-    area: '',
-    status: '',
-    dateFrom: '',
-    dateTo: '',
-  });
-  const [activeFilters, setActiveFilters] = useState(filters);
+  const {
+    solicitacoes,
+    setSolicitacoes,
+    responsaveis,
+    setResponsaveis,
+    temas,
+    setTemas,
+    areas,
+    setAreas,
+    loading,
+    setLoading,
+    searchQuery,
+    setSearchQuery,
+    selectedSolicitacao,
+    setSelectedSolicitacao,
+    showSolicitacaoModal,
+    setShowSolicitacaoModal,
+    showFilterModal,
+    setShowFilterModal,
+    showDeleteDialog,
+    setShowDeleteDialog,
+    solicitacaoToDelete,
+    setSolicitacaoToDelete,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    setTotalPages,
+    totalElements,
+    setTotalElements,
+    filters,
+    setFilters,
+    activeFilters,
+    setActiveFilters,
+    expandedRows,
+    setExpandedRows,
+    sortField,
+    setSortField,
+    sortDirection,
+    setSortDirection,
+    hasActiveFilters,
+    handleEdit,
+    handleDelete,
+    handleSolicitacaoSave,
+    applyFilters,
+    clearFilters,
+    getStatusBadgeVariant,
+    getStatusText,
+    toggleRowExpansion,
+    handleSort,
+  } = useSolicitacoes();
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
-  useEffect(() => {
-    loadSolicitacoes();
-    loadResponsaveis();
-    loadTemas();
-    loadAreas();
-  }, [currentPage, activeFilters, debouncedSearchQuery]);
-
-  const loadSolicitacoes = async () => {
+  const loadSolicitacoes = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -140,46 +153,46 @@ export default function SolicitacoesPage() {
         setTotalPages(response.totalPages);
         setTotalElements(response.totalElements);
       }
-    } catch (error) {
+    } catch {
       toast.error("Erro ao carregar solicitações");
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, activeFilters, debouncedSearchQuery, setSolicitacoes, setTotalPages, setTotalElements, setLoading]);
 
-  const loadResponsaveis = async () => {
+  useEffect(() => {
+    loadSolicitacoes();
+    loadResponsaveis();
+    loadTemas();
+    loadAreas();
+  }, [loadSolicitacoes]);
+
+  const loadResponsaveis = useCallback(async () => {
     try {
       const response = await responsaveisClient.buscarPorFiltro({ size: 100 });
       setResponsaveis(response.content);
-    } catch (error) {
+    } catch {
+      // Handle error silently
     }
-  };
+  }, [setResponsaveis]);
 
-  const loadTemas = async () => {
+  const loadTemas = useCallback(async () => {
     try {
       const response = await temasClient.buscarPorFiltro({ size: 100 });
       setTemas(response.content);
-    } catch (error) {
+    } catch {
+      // Handle error silently
     }
-  };
+  }, [setTemas]);
 
-  const loadAreas = async () => {
+  const loadAreas = useCallback(async () => {
     try {
       const response = await areasClient.buscarPorFiltro({ size: 100 });
       setAreas(response.content);
-    } catch (error) {
+    } catch {
+      // Handle error silently
     }
-  };
-
-  const handleEdit = (solicitacao: SolicitacaoResponse) => {
-    setSelectedSolicitacao(solicitacao);
-    setShowSolicitacaoModal(true);
-  };
-
-  const handleDelete = (solicitacao: SolicitacaoResponse) => {
-    setSolicitacaoToDelete(solicitacao);
-    setShowDeleteDialog(true);
-  };
+  }, [setAreas]);
 
   const confirmDelete = async () => {
     if (solicitacaoToDelete) {
@@ -187,7 +200,7 @@ export default function SolicitacoesPage() {
         await solicitacoesClient.deletar(solicitacaoToDelete.idSolicitacao);
         toast.success("Solicitação excluída com sucesso");
         loadSolicitacoes();
-      } catch (error) {
+      } catch {
         toast.error("Erro ao excluir solicitação");
       } finally {
         setShowDeleteDialog(false);
@@ -196,100 +209,9 @@ export default function SolicitacoesPage() {
     }
   };
 
-  const handleSolicitacaoSave = () => {
-    setShowSolicitacaoModal(false);
-    setSelectedSolicitacao(null);
+  const onSolicitacaoSave = () => {
+    handleSolicitacaoSave();
     loadSolicitacoes();
-  };
-
-  const applyFilters = () => {
-    setActiveFilters(filters);
-    setCurrentPage(0);
-    setShowFilterModal(false);
-  };
-
-  const clearFilters = () => {
-    const clearedFilters = {
-      identificacao: '',
-      responsavel: '',
-      tema: '',
-      area: '',
-      status: '',
-      dateFrom: '',
-      dateTo: '',
-    };
-    setFilters(clearedFilters);
-    setActiveFilters(clearedFilters);
-    setCurrentPage(0);
-    setShowFilterModal(false);
-  };
-
-  const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
-
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status.toUpperCase()) {
-      case 'P':
-        return 'secondary';
-      case 'V':
-      case 'T':
-        return 'destructive';
-      case 'A':
-      case 'R':
-      case 'O':
-      case 'S':
-        return 'default';
-      case 'C':
-        return 'default';
-      case 'X':
-        return 'outline';
-      default:
-        return 'secondary';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status.toUpperCase()) {
-      case 'P':
-        return 'Pré-análise';
-      case 'V':
-        return 'Vencido Regulatório';
-      case 'A':
-        return 'Em análise Área Técnica';
-      case 'T':
-        return 'Vencido Área Técnica';
-      case 'R':
-        return 'Análise Regulatória';
-      case 'O':
-        return 'Em Aprovação';
-      case 'S':
-        return 'Em Assinatura';
-      case 'C':
-        return 'Concluído';
-      case 'X':
-        return 'Arquivado';
-      default:
-        return status;
-    }
-  };
-
-  const toggleRowExpansion = (solicitacaoId: number) => {
-    const newExpandedRows = new Set(expandedRows);
-    if (newExpandedRows.has(solicitacaoId)) {
-      newExpandedRows.delete(solicitacaoId);
-    } else {
-      newExpandedRows.add(solicitacaoId);
-    }
-    setExpandedRows(newExpandedRows);
-  };
-
-  const handleSort = (field: keyof SolicitacaoResponse) => {
-    let newSortDirection: 'asc' | 'desc' = 'asc';
-    if (sortField === field && sortDirection === 'asc') {
-      newSortDirection = 'desc';
-    }
-    setSortField(field);
-    setSortDirection(newSortDirection);
-    setCurrentPage(0);
   };
 
   const sortedSolicitacoes = () => {
@@ -301,6 +223,7 @@ export default function SolicitacoesPage() {
 
         if (aValue === bValue) return 0;
 
+        // Handle undefined/null values
         if (aValue == null && bValue == null) return 0;
         if (aValue == null) return 1;
         if (bValue == null) return -1;
@@ -699,7 +622,7 @@ export default function SolicitacoesPage() {
             setShowSolicitacaoModal(false);
             setSelectedSolicitacao(null);
           }}
-          onSave={handleSolicitacaoSave}
+          onSave={onSolicitacaoSave}
           responsaveis={responsaveis}
           temas={temas}
         />
