@@ -301,6 +301,10 @@ export default function SolicitacoesPage() {
 
         if (aValue === bValue) return 0;
 
+        if (aValue == null && bValue == null) return 0;
+        if (aValue == null) return 1;
+        if (bValue == null) return -1;
+
         const comparison = aValue < bValue ? -1 : 1;
         return sortDirection === 'asc' ? comparison : -comparison;
       });
