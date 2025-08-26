@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { 
+import {useState, useEffect, ChangeEvent, FormEvent, useCallback} from 'react';
+import {
   Dialog, 
   DialogContent, 
   DialogHeader, 
@@ -9,106 +9,231 @@ import {
   DialogFooter 
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { TextField } from '@/components/ui/text-field';
 import { Label } from '@/components/ui/label';
-import { Responsavel } from '@/lib/types';
-import { v4 as uuidv4 } from 'uuid';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
+import { ResponsavelResponse, ResponsavelRequest } from '@/api/responsaveis/types';
+import { responsaveisClient } from '@/api/responsaveis/client';
+import { PerfilResponse } from '@/api/perfis/types';
+import { perfisClient } from '@/api/perfis/client';
+import { toast } from 'sonner';
 
 interface ResponsavelModalProps {
-  responsavel: Responsavel | null;
+  responsavel: ResponsavelResponse | null;
+  open: boolean;
   onClose(): void;
-  onSave(responsavel: Responsavel): void;
+  onSave(): void;
 }
 
-export default function ResponsavelModal({ responsavel, onClose, onSave }: ResponsavelModalProps) {
-  const [formData, setFormData] = useState<Responsavel>({
-    idResponsavel: '',
-    dsNome: '',
+export default function ResponsavelModal({ responsavel, open, onClose, onSave }: ResponsavelModalProps) {
+  const [formData, setFormData] = useState<ResponsavelRequest>({
+    idPerfil: 0,
+    nmUsuarioLogin: '',
+    nmResponsavel: '',
     dsEmail: '',
-    nmTelefone: '',
-    dsPerfil: ''
+    nrCpf: '',
+    dtNascimento: ''
   });
+  const [loading, setLoading] = useState(false);
+  const [perfis, setPerfis] = useState<PerfilResponse[]>([]);
+  const [loadingPerfis, setLoadingPerfis] = useState(false);
+
+  const buscarPerfis = useCallback(async () => {
+    try {
+      setLoadingPerfis(true);
+      const response = await perfisClient.buscarPorFiltro({ size: 100 });
+      const perfisAtivos = response.content.filter(perfil => perfil.flAtivo === 'S');
+      setPerfis(perfisAtivos);
+    } catch {
+      console.error('Erro ao carregar perfis');
+      toast.error("Erro ao carregar perfis");
+      setPerfis([]);
+    } finally {
+      setLoadingPerfis(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (open) {
+      buscarPerfis();
+    }
+  }, [open, buscarPerfis]);
 
   useEffect(() => {
     if (responsavel) {
-      setFormData(responsavel);
+      setFormData({
+        idPerfil: responsavel.idPerfil,
+        nmUsuarioLogin: responsavel.nmUsuarioLogin,
+        nmResponsavel: responsavel.nmResponsavel,
+        dsEmail: responsavel.dsEmail,
+        nrCpf: responsavel.nrCpf || '',
+        dtNascimento: responsavel.dtNascimento || ''
+      });
     } else {
       setFormData({
-        idResponsavel: uuidv4(),
-        dsNome: '',
+        idPerfil: 0,
+        nmUsuarioLogin: '',
+        nmResponsavel: '',
         dsEmail: '',
-        nmTelefone: '',
-        dsPerfil: ''
+        nrCpf: '',
+        dtNascimento: ''
       });
     }
-  }, [responsavel]);
+  }, [responsavel, open]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: name === 'idPerfil' ? parseInt(value) || 1 :
+              value
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+
+    if (!formData.nmResponsavel.trim() ||
+        !formData.dsEmail.trim() ||
+        !formData.nmUsuarioLogin.trim() ||
+        !formData.nrCpf.trim() ||
+        !formData.dtNascimento.trim() ||
+        !formData.idPerfil) {
+      toast.error("Por favor, preencha todos os campos obrigatórios");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      if (responsavel) {
+        await responsaveisClient.atualizar(responsavel.idResponsavel, formData);
+        toast.success("Responsável atualizado com sucesso");
+      } else {
+        await responsaveisClient.criar(formData);
+        toast.success("Responsável criado com sucesso");
+      }
+
+      onSave();
+      onClose();
+    } catch {
+      toast.error(responsavel ? "Erro ao atualizar responsável" : "Erro ao criar responsável");
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const handleClose = () => {
+    onClose();
+  };
+
+  const isFormValid = useCallback(() => {
+    return formData.nmResponsavel.trim() !== '' &&
+           formData.dsEmail.trim() !== '' &&
+           formData.nmUsuarioLogin.trim() !== '' &&
+           formData.nrCpf.trim() !== '' &&
+           formData.dtNascimento.trim() !== '' &&
+           formData.idPerfil > 0;
+  }, [formData]);
+
   return (
-    <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[400px]">
+    <Dialog open={open} onOpenChange={(newOpen) => !newOpen && onClose()}>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>
             {responsavel ? 'Editar Responsável' : 'Novo Responsável'}
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="dsNome">Nome</Label>
-            <Input
-              id="dsNome"
-              name="dsNome"
-              value={formData.dsNome}
-              onChange={handleChange}
-              required
-              autoFocus
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+
+          <TextField
+            label="Nome *"
+            name="nmResponsavel"
+            value={formData.nmResponsavel}
+            onChange={handleChange}
+            required
+            autoFocus
+          />
+
+          <TextField
+            label="Usuário *"
+            name="nmUsuarioLogin"
+            value={formData.nmUsuarioLogin}
+            onChange={handleChange}
+            required
+          />
+
+          <TextField
+            label="Email *"
+            name="dsEmail"
+            type="email"
+            value={formData.dsEmail}
+            onChange={handleChange}
+            required
+          />
+
+          <TextField
+            label="CPF *"
+            name="nrCpf"
+            value={formData.nrCpf}
+            onChange={handleChange}
+            placeholder="000.000.000-00"
+            maxLength={11}
+            required
+          />
+
+          <TextField
+            label="Data de Nascimento *"
+            name="dtNascimento"
+            type="date"
+            value={formData.dtNascimento}
+            onChange={handleChange}
+            required
+          />
 
           <div className="space-y-2">
-            <Label htmlFor="dsEmail">Email</Label>
-            <Input
-              id="dsEmail"
-              name="dsEmail"
-              type="email"
-              value={formData.dsEmail}
-              onChange={handleChange}
-              required
-            />
+            <Label htmlFor="idPerfil">Perfil *</Label>
+            <Select
+              value={formData.idPerfil > 0 ? formData.idPerfil.toString() : ""}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, idPerfil: parseInt(value) }))}
+              disabled={loadingPerfis}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={loadingPerfis ? "Carregando perfis..." : "Selecione o perfil"} />
+              </SelectTrigger>
+              <SelectContent>
+                {!loadingPerfis && perfis?.length > 0 ? (
+                  perfis.map(perfil => (
+                    <SelectItem key={perfil.idPerfil} value={perfil.idPerfil.toString()}>
+                      {perfil.nmPerfil}
+                    </SelectItem>
+                  ))
+                ) : !loadingPerfis && perfis?.length === 0 ? (
+                  <div className="px-2 py-1.5 text-sm text-gray-500">
+                    Nenhum perfil disponível
+                  </div>
+                ) : null}
+              </SelectContent>
+            </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="nmTelefone">Telefone</Label>
-            <Input
-              id="nmTelefone"
-              name="nmTelefone"
-              type="tel"
-              value={formData.nmTelefone}
-              onChange={handleChange}
-              placeholder="(00) 00000-0000"
-              required
-            />
-          </div>
-
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+          <DialogFooter className="flex gap-2">
+            <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
               Cancelar
             </Button>
-            <Button type="submit">
-              {responsavel ? 'Salvar Alterações' : 'Criar Responsável'}
+            <Button
+              type="submit"
+              disabled={loading || !isFormValid()}
+              className="disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Salvando...' : responsavel ? 'Salvar Alterações' : 'Criar Responsável'}
             </Button>
           </DialogFooter>
         </form>

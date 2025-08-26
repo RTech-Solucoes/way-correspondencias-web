@@ -1,357 +1,379 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
+import React, { useEffect, useCallback } from 'react';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  StickyTable,
+  StickyTableBody,
+  StickyTableCell,
+  StickyTableHead,
+  StickyTableHeader,
+  StickyTableRow
+} from '@/components/ui/sticky-table';
+import {Button} from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
-  PlusIcon,
+  FunnelSimpleIcon,
   MagnifyingGlassIcon,
-  PencilIcon,
+  PencilSimpleIcon,
+  PlusIcon,
   TrashIcon,
-  DotsThreeVerticalIcon,
-  FunnelIcon,
-  DownloadIcon,
-  UploadIcon,
-  ClockIcon,
-  FileTextIcon,
-  BuildingIcon
-} from '@phosphor-icons/react'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter
-} from '@/components/ui/dialog'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Tema } from '@/lib/types'
-import { mockTemas, mockAreas } from '@/lib/mockData'
-import { TemaModal } from '@/components/temas/TemaModal'
-import {Checkbox} from "@/components/ui/checkbox";
+  XIcon,
+  TagIcon,
+  SpinnerIcon,
+  ArrowsDownUpIcon,
+} from '@phosphor-icons/react';
+import {Dialog, DialogContent, DialogHeader, DialogTitle} from '@/components/ui/dialog';
+import {Label} from '@/components/ui/label';
+import {TemaModal} from '@/components/temas/TemaModal';
+import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
+import PageTitle from '@/components/ui/page-title';
+import { Pagination } from '@/components/ui/pagination';
+import {getStatusText} from "@/utils/utils";
+import { useTemas } from '@/context/temas/TemasContext';
+import { temasClient } from '@/api/temas/client';
+import { TemaFilterParams } from '@/api/temas/types';
+import { toast } from 'sonner';
+import { useDebounce } from '@/hooks/use-debounce';
 
 export default function TemasPage() {
-  const [temas, setTemas] = useState<Tema[]>(mockTemas)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedTema, setSelectedTema] = useState<Tema | null>(null)
-  const [showTemaModal, setShowTemaModal] = useState(false)
-  const [sortField, setSortField] = useState<keyof Tema | null>(null)
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
-  const [showFilterModal, setShowFilterModal] = useState(false)
-  const [filterAreas, setFilterAreas] = useState<string[]>([])
-  const [filterTpContagem, setFilterTpContagem] = useState<string | null>(null)
+  const {
+    temas,
+    setTemas,
+    loading,
+    setLoading,
+    searchQuery,
+    setSearchQuery,
+    selectedTema,
+    setSelectedTema,
+    showTemaModal,
+    setShowTemaModal,
+    showFilterModal,
+    setShowFilterModal,
+    showDeleteDialog,
+    setShowDeleteDialog,
+    temaToDelete,
+    setTemaToDelete,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    setTotalPages,
+    totalElements,
+    setTotalElements,
+    filters,
+    setFilters,
+    activeFilters,
+    hasActiveFilters,
+    sortField,
+    sortDirection,
+    handleEdit,
+    handleDelete,
+    handleTemaSave,
+    applyFilters,
+    clearFilters,
+    handleSort,
+  } = useTemas();
 
-  const handleSort = (field: keyof Tema) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
-    } else {
-      setSortField(field)
-      setSortDirection('asc')
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+
+  const loadTemas = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      const filterParts = [];
+      if (debouncedSearchQuery) filterParts.push(debouncedSearchQuery);
+      if (activeFilters.nome) filterParts.push(activeFilters.nome);
+
+      const params: TemaFilterParams = {
+        filtro: filterParts.join(' ') || undefined,
+        page: currentPage,
+        size: 10,
+      };
+
+      const response = await temasClient.buscarPorFiltro(params);
+      setTemas(response.content);
+      setTotalPages(response.totalPages);
+      setTotalElements(response.totalElements);
+    } catch {
+      toast.error("Erro ao carregar temas");
+    } finally {
+      setLoading(false);
     }
-  }
+  }, [currentPage, activeFilters, debouncedSearchQuery, setLoading, setTemas, setTotalPages, setTotalElements]);
 
-  const sortedTemas = [...temas].sort((a, b) => {
-    if (!sortField) return 0
-    
-    const aValue = a[sortField]
-    const bValue = b[sortField]
-    
-    if (aValue === bValue) return 0
-    
-    const direction = sortDirection === 'asc' ? 1 : -1
-    
-    if (typeof aValue === 'string' && typeof bValue === 'string') {
-      return aValue.localeCompare(bValue) * direction
+  useEffect(() => {
+    loadTemas();
+  }, [loadTemas]);
+
+  const confirmDelete = async () => {
+    if (temaToDelete) {
+      try {
+        await temasClient.deletar(temaToDelete.idTema);
+        toast.success("Tema excluído com sucesso");
+        loadTemas();
+      } catch {
+        toast.error("Erro ao excluir tema");
+      } finally {
+        setShowDeleteDialog(false);
+        setTemaToDelete(null);
+      }
     }
-    
-    if (Array.isArray(aValue) && Array.isArray(bValue)) {
-      return (aValue.length - bValue.length) * direction
+  };
+
+  const onTemaSave = () => {
+    handleTemaSave();
+    loadTemas();
+  };
+
+  const sortedTemas = () => {
+    const sorted = [...temas];
+    if (sortField) {
+      sorted.sort((a, b) => {
+        const aValue = a[sortField];
+        const bValue = b[sortField];
+
+        if (aValue === bValue) return 0;
+
+        if (aValue == null && bValue == null) return 0;
+        if (aValue == null) return 1;
+        if (bValue == null) return -1;
+
+        const comparison = aValue < bValue ? -1 : 1;
+        return sortDirection === 'asc' ? comparison : -comparison;
+      });
     }
-    
-    if (aValue < bValue) return -1 * direction
-    return 1 * direction
-  })
-
-  const getAreasForTema = (idAreas: string[]) => {
-    return mockAreas.filter(area => idAreas.includes(area.idArea))
-  }
-
-  const filteredTemas = sortedTemas.filter(tema =>
-    tema.nmTema.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    tema.dsTema.toLowerCase().includes(searchQuery.toLowerCase())
-  ).filter(tema => {
-    const areas = getAreasForTema(tema.idAreas)
-    const areaMatch = filterAreas.length === 0 || areas.some(area => filterAreas.includes(area.idArea))
-    const tpContagemMatch = !filterTpContagem || tema.tpContagem === filterTpContagem
-    return areaMatch && tpContagemMatch
-  })
-
-
-  const handleCreateTema = () => {
-    setSelectedTema(null)
-    setShowTemaModal(true)
-  }
-
-  const handleEditTema = (tema: Tema) => {
-    setSelectedTema(tema)
-    setShowTemaModal(true)
-  }
-
-  const handleDeleteTema = (temaId: string) => {
-    if (window.confirm('Tem certeza que deseja excluir este tema?')) {
-      setTemas(prev => prev.filter(tema => tema.idTema !== temaId))
-    }
-  }
-
-  const handleSaveTema = (tema: Tema) => {
-    if (selectedTema) {
-      setTemas(prev => prev.map(t => t.idTema === tema.idTema ? tema : t))
-    } else {
-      setTemas(prev => [...prev, tema])
-    }
-    setShowTemaModal(false)
-    setSelectedTema(null)
-  }
-
-  const handleFilterSubmit = () => {
-    setShowFilterModal(false)
-  }
+    return sorted;
+  };
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
-      {/* Header */}
       <div className="bg-white border-b border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Cadastro de Temas
-          </h1>
-          <Button 
-            onClick={handleCreateTema} 
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <PlusIcon className="h-4 w-4 mr-2" />
+        <div className="flex items-start justify-between mb-4">
+          <PageTitle />
+          <Button onClick={() => {
+            setSelectedTema(null);
+            setShowTemaModal(true);
+          }}>
+            <PlusIcon className="h-4 w-4 mr-2"/>
             Novo Tema
           </Button>
         </div>
-        
+
         <div className="flex items-center space-x-4">
           <div className="flex-1 relative">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400"/>
             <Input
-              placeholder="Pesquisar por nome ou descrição..."
+              placeholder="Pesquisar temas..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-10 bg-gray-50 border-gray-200 focus:bg-white"
+              className="pl-10 bg-gray-50 border-gray-200 focus:bg-white"
             />
           </div>
+          {hasActiveFilters && (
+            <Button
+              variant="outline"
+              className="h-10 px-4"
+              onClick={clearFilters}
+            >
+              <XIcon className="h-4 w-4 mr-2"/>
+              Limpar Filtros
+            </Button>
+          )}
           <Button
             variant="secondary"
             className="h-10 px-4"
             onClick={() => setShowFilterModal(true)}
           >
-            <FunnelIcon className="h-4 w-4 mr-2" />
+            <FunnelSimpleIcon className="h-4 w-4 mr-2"/>
             Filtrar
           </Button>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="flex-1 overflow-auto">
-        <Table>
-          <TableHeader className="bg-gray-50">
-            <TableRow>
-              <TableHead className="cursor-pointer" onClick={() => handleSort('nmTema')}>
+      <div className="flex flex-1 overflow-hidden bg-white">
+        <StickyTable>
+          <StickyTableHeader>
+            <StickyTableRow>
+              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('nmTema')}>
                 <div className="flex items-center">
                   Nome
-                  <DotsThreeVerticalIcon className="ml-2 h-4 w-4" />
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
-              </TableHead>
-              <TableHead className="cursor-pointer" onClick={() => handleSort('dsTema')}>
+              </StickyTableHead>
+              <StickyTableHead>Descrição</StickyTableHead>
+              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('nrPrazo')}>
                 <div className="flex items-center">
-                  Descrição
-                  <DotsThreeVerticalIcon className="ml-2 h-4 w-4" />
+                  Prazo
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
-              </TableHead>
-              <TableHead className="cursor-pointer" onClick={() => handleSort('idAreas')}>
+              </StickyTableHead>
+              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('tpPrazo')}>
                 <div className="flex items-center">
-                  Áreas Relacionadas
-                  <DotsThreeVerticalIcon className="ml-2 h-4 w-4" />
+                  Tipo Prazo
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
-              </TableHead>
-              <TableHead className="cursor-pointer" onClick={() => handleSort('nrDiasPrazo')}>
+              </StickyTableHead>
+              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('flAtivo')}>
                 <div className="flex items-center">
-                  Prazo (dias)
-                  <DotsThreeVerticalIcon className="ml-2 h-4 w-4" />
+                  Status
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
-              </TableHead>
-              <TableHead className="cursor-pointer" onClick={() => handleSort('tpContagem')}>
-                <div className="flex items-center">
-                  Tipo de Contagem
-                  <DotsThreeVerticalIcon className="ml-2 h-4 w-4" />
-                </div>
-              </TableHead>
-              <TableHead className="cursor-pointer" onClick={() => handleSort('dtCadastro')}>
-                <div className="flex items-center">
-                  Data de Cadastro
-                  <DotsThreeVerticalIcon className="ml-2 h-4 w-4" />
-                </div>
-              </TableHead>
-              <TableHead className="w-24 text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredTemas.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                  Nenhum tema encontrado
-                </TableCell>
-              </TableRow>
+              </StickyTableHead>
+              <StickyTableHead>Áreas</StickyTableHead>
+              <StickyTableHead className="text-right">Ações</StickyTableHead>
+            </StickyTableRow>
+          </StickyTableHeader>
+          <StickyTableBody>
+            {loading ? (
+              <StickyTableRow>
+                <StickyTableCell colSpan={7} className="text-center py-8">
+                  <div className="flex flex-1 items-center justify-center py-8">
+                    <SpinnerIcon className="h-6 w-6 animate-spin text-gray-400" />
+                    <span className="ml-2 text-gray-500">Buscando temas...</span>
+                  </div>
+                </StickyTableCell>
+              </StickyTableRow>
+            ) : temas?.length === 0 ? (
+              <StickyTableRow>
+                <StickyTableCell colSpan={7} className="text-center py-8">
+                  <div className="flex flex-col items-center space-y-2">
+                    <TagIcon className="h-8 w-8 text-gray-400"/>
+                    <p className="text-sm text-gray-500">Nenhum tema encontrado</p>
+                  </div>
+                </StickyTableCell>
+              </StickyTableRow>
             ) : (
-              filteredTemas.map((tema) => {
-                const areas = getAreasForTema(tema.idAreas)
-                return (
-                  <TableRow key={tema.idTema} className="hover:bg-gray-50">
-                    <TableCell className="font-medium">{tema.nmTema}</TableCell>
-                    <TableCell className="max-w-xs">
-                      <div className="truncate" title={tema.dsTema}>
-                        {tema.dsTema}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1 max-w-sm">
-                        {areas.length === 0 ? (
-                          <span className="text-gray-400 text-sm">Nenhuma área</span>
-                        ) : (
-                          areas.map((area) => (
-                            <Badge key={area.idArea} variant="outline" className="text-xs">
-                              {area.nmArea}
-                            </Badge>
-                          ))
+              sortedTemas().map((tema) => (
+                <StickyTableRow key={tema.idTema}>
+                  <StickyTableCell className="font-medium">{tema.nmTema}</StickyTableCell>
+                  <StickyTableCell className="max-w-xs truncate" title={tema.dsTema}>
+                    {tema.dsTema || '-'}
+                  </StickyTableCell>
+                  <StickyTableCell>
+                    {tema.nrPrazo ? `${tema.nrPrazo}` : '-'}
+                  </StickyTableCell>
+                  <StickyTableCell>
+                    {tema.tpPrazo === 'C' ? 'Dias Corridos' :
+                     tema.tpPrazo === 'U' ? 'Dias Úteis' :
+                     tema.tpPrazo || '-'}
+                  </StickyTableCell>
+                  <StickyTableCell>
+                    <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
+                      tema.flAtivo === 'S' 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {getStatusText(tema.flAtivo)}
+                    </span>
+                  </StickyTableCell>
+                  <StickyTableCell>
+                    {tema.areas && tema.areas?.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {tema.areas.slice(0, 2).map((area, index) => (
+                          <span key={index} className="inline-flex px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                            {area.nmArea}
+                          </span>
+                        ))}
+                        {tema.areas?.length > 2 && (
+                          <span className="inline-flex px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
+                            +{tema.areas?.length - 2}
+                          </span>
                         )}
                       </div>
-                    </TableCell>
-                    <TableCell>{tema.nrDiasPrazo}</TableCell>
-                    <TableCell>
-                      <Badge variant={tema.tpContagem === 'UTEIS' ? 'default' : 'secondary'}>
-                        {tema.tpContagem === 'UTEIS' ? 'Úteis' : 'Corridos'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{new Date(tema.dtCadastro).toLocaleDateString('pt-BR')}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => handleEditTema(tema)}
-                        >
-                          <PencilIcon className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => handleDeleteTema(tema.idTema)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )
-              })
-            )}
-          </TableBody>
-        </Table>
+                    ) : (
+                      <span className="text-gray-400 text-sm">Nenhuma área</span>
+                    )}
+                  </StickyTableCell>
+                  <StickyTableCell className="text-right">
+                    <div className="flex items-center justify-end space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEdit(tema)}
+                      >
+                        <PencilSimpleIcon className="h-4 w-4"/>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(tema)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <TrashIcon className="h-4 w-4"/>
+                      </Button>
+                    </div>
+                  </StickyTableCell>
+                </StickyTableRow>
+              )))
+            }
+          </StickyTableBody>
+        </StickyTable>
       </div>
 
-      {/* Tema Modal */}
-      {showTemaModal && (
-        <TemaModal
-          isOpen={showTemaModal}
-          onClose={() => {
-            setShowTemaModal(false)
-            setSelectedTema(null)
-          }}
-          onSave={handleSaveTema}
-          tema={selectedTema}
-        />
-      )}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalElements={totalElements}
+        pageSize={15}
+        onPageChange={setCurrentPage}
+        loading={loading}
+      />
 
-      {/* Filter Modal */}
       {showFilterModal && (
         <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
-          <DialogContent className="max-w-sm p-6">
+          <DialogContent>
             <DialogHeader>
-              <DialogTitle className="text-lg font-bold">
-                Filtrar Temas
-              </DialogTitle>
+              <DialogTitle>Filtrar Temas</DialogTitle>
             </DialogHeader>
-
-            <div>
-              <Label htmlFor="areas" className="block text-sm font-medium text-gray-700">
-                Áreas Relacionadas
-              </Label>
-              <div className="mt-2">
-                {mockAreas.map(area => (
-                  <div key={area.idArea} className="flex items-center">
-                    <Checkbox
-                      id={`area-${area.idArea}`}
-                      checked={filterAreas.includes(area.idArea)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setFilterAreas(prev => [...prev, area.idArea])
-                        } else {
-                          setFilterAreas(prev => prev.filter(id => id !== area.idArea))
-                        }
-                      }}
-                      className="h-4 w-4 text-blue-600 border-gray-300 rounded"
-                    />
-                    <Label htmlFor={`area-${area.idArea}`} className="ml-2 text-sm cursor-pointer">
-                      {area.nmArea}
-                    </Label>
-                  </div>
-                ))}
+            <div className="grid gap-4">
+              <div>
+                <Label htmlFor="nome">Nome</Label>
+                <Input
+                  id="nome"
+                  value={filters.nome}
+                  onChange={(e) => setFilters({...filters, nome: e.target.value})}
+                  placeholder="Filtrar por nome"
+                />
+              </div>
+              <div>
+                <Label htmlFor="descricao">Descrição</Label>
+                <Input
+                  id="descricao"
+                  value={filters.descricao}
+                  onChange={(e) => setFilters({...filters, descricao: e.target.value})}
+                  placeholder="Filtrar por descrição"
+                />
               </div>
             </div>
-
-            <div>
-              <Label htmlFor="tpContagem" className="block text-sm font-medium text-gray-700">
-                Tipo de Contagem
-              </Label>
-              <Select
-                value={filterTpContagem?.toString()}
-                onValueChange={setFilterTpContagem}
-              >
-                <SelectTrigger className="mt-2">
-                  <SelectValue placeholder="Selecione o tipo de contagem" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="UTEIS">Úteis</SelectItem>
-                  <SelectItem value="CORRIDOS">Corridos</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <DialogFooter>
-              <Button
-                onClick={handleFilterSubmit}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button variant="outline" onClick={clearFilters}>
+                Limpar
+              </Button>
+              <Button onClick={applyFilters}>
                 Aplicar Filtros
               </Button>
-            </DialogFooter>
+            </div>
           </DialogContent>
         </Dialog>
       )}
+
+      {showTemaModal && (
+        <TemaModal
+          tema={selectedTema}
+          open={showTemaModal}
+          onClose={() => {
+            setShowTemaModal(false);
+          }}
+          onSave={onTemaSave}
+        />
+      )}
+
+      <ConfirmationDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirm={confirmDelete}
+        title="Excluir Tema"
+        description={`Tem certeza que deseja excluir o tema "${temaToDelete?.nmTema}"? Esta ação não pode ser desfeita.`}
+      />
     </div>
-  )
+  );
 }

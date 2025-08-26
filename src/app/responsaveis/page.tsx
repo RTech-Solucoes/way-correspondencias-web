@@ -1,261 +1,315 @@
 'use client';
 
-import { useState } from 'react';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
+import React, { useEffect, useCallback } from 'react';
+import {
+  StickyTable,
+  StickyTableBody,
+  StickyTableCell,
+  StickyTableHead,
+  StickyTableHeader,
+  StickyTableRow
+} from '@/components/ui/sticky-table';
+import {Button} from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { 
-  PlusIcon,
+import {
+  FunnelSimpleIcon,
   MagnifyingGlassIcon,
   PencilSimpleIcon,
+  PlusIcon,
   TrashIcon,
-  FunnelSimpleIcon,
+  XIcon,
+  UsersIcon,
+  SpinnerIcon,
   ArrowsDownUpIcon,
-  XIcon
 } from '@phosphor-icons/react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Responsavel } from '@/lib/types';
-import { mockResponsaveis } from '@/lib/mockData';
-import ResponsavelModal from '../../components/responsaveis/ResponsavelModal';
+import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog';
+import {Label} from '@/components/ui/label';
+import ResponsavelModal from '@/components/responsaveis/ResponsavelModal';
+import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
+import PageTitle from '@/components/ui/page-title';
+import { Pagination } from '@/components/ui/pagination';
+import {getStatusText} from "@/utils/utils";
+import { useResponsaveis } from '@/context/responsaveis/ResponsaveisContext';
+import { responsaveisClient } from '@/api/responsaveis/client';
+import { ResponsavelFilterParams } from '@/api/responsaveis/types';
+import { toast } from 'sonner';
+import { useDebounce } from '@/hooks/use-debounce';
 
 export default function ResponsaveisPage() {
-  const [responsaveis, setResponsaveis] = useState<Responsavel[]>(mockResponsaveis);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedResponsavel, setSelectedResponsavel] = useState<Responsavel | null>(null);
-  const [showResponsavelModal, setShowResponsavelModal] = useState(false);
-  const [showFilterModal, setShowFilterModal] = useState(false);
-  const [sortField, setSortField] = useState<keyof Responsavel | null>(null);
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const {
+    responsaveis,
+    setResponsaveis,
+    loading,
+    setLoading,
+    searchQuery,
+    setSearchQuery,
+    selectedResponsavel,
+    setSelectedResponsavel,
+    showResponsavelModal,
+    setShowResponsavelModal,
+    showFilterModal,
+    setShowFilterModal,
+    showDeleteDialog,
+    setShowDeleteDialog,
+    responsavelToDelete,
+    setResponsavelToDelete,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    setTotalPages,
+    totalElements,
+    setTotalElements,
+    filters,
+    setFilters,
+    activeFilters,
+    hasActiveFilters,
+    sortField,
+    sortDirection,
+    handleEdit,
+    handleDelete,
+    handleResponsavelSave,
+    applyFilters,
+    clearFilters,
+    handleSort,
+  } = useResponsaveis();
 
-  const [filters, setFilters] = useState({
-    nome: '',
-    email: '',
-    telefone: '',
-    perfil: ''
-  });
-  const [activeFilters, setActiveFilters] = useState(filters);
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
-  const handleSort = (field: keyof Responsavel) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
+  const loadResponsaveis = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      if (activeFilters.usuario && !activeFilters.email && !debouncedSearchQuery) {
+        const result = await responsaveisClient.buscarPorNmUsuarioLogin(activeFilters.usuario);
+        setResponsaveis([result]);
+        setTotalPages(1);
+        setTotalElements(1);
+      } else if (activeFilters.email && !activeFilters.usuario && !debouncedSearchQuery) {
+        const result = await responsaveisClient.buscarPorDsEmail(activeFilters.email);
+        setResponsaveis([result]);
+        setTotalPages(1);
+        setTotalElements(1);
+      } else {
+        const filterParts = [];
+        if (debouncedSearchQuery) filterParts.push(debouncedSearchQuery);
+        if (activeFilters.usuario) filterParts.push(activeFilters.usuario);
+
+        const params: ResponsavelFilterParams = {
+          filtro: filterParts.join(' ') || undefined,
+          page: currentPage,
+          size: 10,
+        };
+
+        const response = await responsaveisClient.buscarPorFiltro(params);
+        setResponsaveis(response.content);
+        setTotalPages(response.totalPages);
+        setTotalElements(response.totalElements);
+      }
+    } catch {
+      toast.error("Erro ao carregar responsáveis");
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, activeFilters, debouncedSearchQuery, setLoading, setResponsaveis, setTotalPages, setTotalElements]);
+
+  useEffect(() => {
+    loadResponsaveis();
+  }, [loadResponsaveis]);
+
+  const confirmDelete = async () => {
+    if (responsavelToDelete) {
+      try {
+        await responsaveisClient.deletar(responsavelToDelete.idResponsavel);
+        toast.success("Responsável excluído com sucesso");
+        loadResponsaveis();
+      } catch {
+        toast.error("Erro ao excluir responsável");
+      } finally {
+        setShowDeleteDialog(false);
+        setResponsavelToDelete(null);
+      }
     }
   };
 
-  const sortedResponsaveis = [...responsaveis].sort((a, b) => {
-    if (!sortField) return 0;
+  const onResponsavelSave = () => {
+    handleResponsavelSave();
+    loadResponsaveis();
+  };
 
-    const aValue = a[sortField];
-    const bValue = b[sortField];
+  const sortedResponsaveis = () => {
+    const sorted = [...responsaveis];
+    if (sortField) {
+      sorted.sort((a, b) => {
+        const aValue = a[sortField];
+        const bValue = b[sortField];
 
-    if (aValue === bValue) return 0;
+        if (aValue === bValue) return 0;
 
-    const direction = sortDirection === 'asc' ? 1 : -1;
+        if (aValue == null && bValue == null) return 0;
+        if (aValue == null) return 1;
+        if (bValue == null) return -1;
 
-    if (typeof aValue === 'string' && typeof bValue === 'string') {
-      return aValue.localeCompare(bValue) * direction;
+        const comparison = aValue < bValue ? -1 : 1;
+        return sortDirection === 'asc' ? comparison : -comparison;
+      });
     }
-
-    return 0;
-  });
-
-  const handleClearFilters = () => {
-    const emptyFilters = {
-      nome: '',
-      email: '',
-      telefone: '',
-      perfil: ''
-    };
-    setFilters(emptyFilters);
-    setActiveFilters(emptyFilters);
-  };
-
-  const handleApplyFilters = () => {
-    setActiveFilters(filters);
-    setShowFilterModal(false);
-  };
-
-  const filteredResponsaveis = sortedResponsaveis.filter(responsavel => {
-    const matchesSearch = responsavel.dsNome.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      responsavel.dsEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      responsavel.nmTelefone.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesNome = !activeFilters.nome ||
-      responsavel.dsNome.toLowerCase().includes(activeFilters.nome.toLowerCase());
-
-    const matchesEmail = !activeFilters.email ||
-      responsavel.dsEmail.toLowerCase().includes(activeFilters.email.toLowerCase());
-
-    const matchesTelefone = !activeFilters.telefone ||
-      responsavel.nmTelefone.includes(activeFilters.telefone);
-
-    const matchesPerfil = !activeFilters.perfil ||
-      responsavel.dsPerfil === activeFilters.perfil;
-
-    return matchesSearch && matchesNome && matchesEmail && matchesTelefone && matchesPerfil;
-  });
-
-  const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
-
-  const handleCreateResponsavel = () => {
-    setSelectedResponsavel(null);
-    setShowResponsavelModal(true);
-  };
-
-  const handleEditResponsavel = (responsavel: Responsavel) => {
-    setSelectedResponsavel(responsavel);
-    setShowResponsavelModal(true);
-  };
-
-  const handleDeleteResponsavel = (id: string) => {
-    if (window.confirm('Tem certeza que deseja excluir este responsável?')) {
-      setResponsaveis(responsaveis.filter(responsavel => responsavel.idResponsavel !== id));
-    }
-  };
-
-  const handleSaveResponsavel = (responsavel: Responsavel) => {
-    if (selectedResponsavel) {
-      setResponsaveis(responsaveis.map(r => r.idResponsavel === responsavel.idResponsavel ? responsavel : r));
-    } else {
-      setResponsaveis([...responsaveis, responsavel]);
-    }
-    setShowResponsavelModal(false);
-    setSelectedResponsavel(null);
+    return sorted;
   };
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
-      {/* Header */}
       <div className="bg-white border-b border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Cadastro de Responsáveis
-          </h1>
-          <Button 
-            onClick={handleCreateResponsavel} 
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <PlusIcon className="h-4 w-4 mr-2" />
+        <div className="flex items-start justify-between mb-4">
+          <PageTitle />
+          <Button onClick={() => {
+            setSelectedResponsavel(null);
+            setShowResponsavelModal(true);
+          }}>
+            <PlusIcon className="h-4 w-4 mr-2"/>
             Novo Responsável
           </Button>
         </div>
 
         <div className="flex items-center space-x-4">
           <div className="flex-1 relative">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400"/>
             <Input
-              placeholder="Pesquisar por nome, email ou telefone..."
+              placeholder="Pesquisar responsáveis..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-10 bg-gray-50 border-gray-200 focus:bg-white"
+              className="pl-10 bg-gray-50 border-gray-200 focus:bg-white"
             />
           </div>
+          {hasActiveFilters && (
+            <Button
+              variant="outline"
+              className="h-10 px-4"
+              onClick={clearFilters}
+            >
+              <XIcon className="h-4 w-4 mr-2"/>
+              Limpar Filtros
+            </Button>
+          )}
           <Button
             variant="secondary"
             className="h-10 px-4"
             onClick={() => setShowFilterModal(true)}
           >
-            <FunnelSimpleIcon className="h-4 w-4 mr-2" />
+            <FunnelSimpleIcon className="h-4 w-4 mr-2"/>
             Filtrar
           </Button>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="flex-1 overflow-auto">
-        <Table>
-          <TableHeader className="bg-gray-50">
-            <TableRow>
-              <TableHead className="cursor-pointer" onClick={() => handleSort('dsNome')}>
+      <div className="flex flex-1 overflow-hidden bg-white">
+        <StickyTable>
+          <StickyTableHeader>
+            <StickyTableRow>
+              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('nmResponsavel')}>
                 <div className="flex items-center">
                   Nome
                   <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
-              </TableHead>
-              <TableHead className="cursor-pointer" onClick={() => handleSort('dsEmail')}>
+              </StickyTableHead>
+              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('nmUsuarioLogin')}>
+                <div className="flex items-center">
+                  Usuário
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
+                </div>
+              </StickyTableHead>
+              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('dsEmail')}>
                 <div className="flex items-center">
                   Email
                   <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
-              </TableHead>
-              <TableHead className="cursor-pointer" onClick={() => handleSort('nmTelefone')}>
+              </StickyTableHead>
+              <StickyTableHead>Perfil</StickyTableHead>
+              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('flAtivo')}>
                 <div className="flex items-center">
-                  Telefone
+                  Status
                   <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
-              </TableHead>
-              <TableHead className="w-24 text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredResponsaveis.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center py-8 text-gray-500">
-                  Nenhum responsável encontrado
-                </TableCell>
-              </TableRow>
+              </StickyTableHead>
+              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('nrCpf')}>
+                <div className="flex items-center">
+                  CPF
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
+                </div>
+              </StickyTableHead>
+              <StickyTableHead className="text-right">Ações</StickyTableHead>
+            </StickyTableRow>
+          </StickyTableHeader>
+          <StickyTableBody>
+            {loading ? (
+              <StickyTableRow>
+                <StickyTableCell colSpan={7} className="text-center py-8">
+                  <div className="flex flex-1 items-center justify-center py-8">
+                    <SpinnerIcon className="h-6 w-6 animate-spin text-gray-400" />
+                    <span className="ml-2 text-gray-500">Buscando responsáveis...</span>
+                  </div>
+                </StickyTableCell>
+              </StickyTableRow>
+            ) : responsaveis?.length === 0 ? (
+              <StickyTableRow>
+                <StickyTableCell colSpan={7} className="text-center py-8">
+                  <div className="flex flex-col items-center space-y-2">
+                    <UsersIcon className="h-8 w-8 text-gray-400"/>
+                    <p className="text-sm text-gray-500">Nenhum responsável encontrado</p>
+                  </div>
+                </StickyTableCell>
+              </StickyTableRow>
             ) : (
-              filteredResponsaveis.map((responsavel) => (
-                <TableRow key={responsavel.idResponsavel} className="hover:bg-gray-50">
-                  <TableCell className="font-medium">{responsavel.dsNome}</TableCell>
-                  <TableCell>{responsavel.dsEmail}</TableCell>
-                  <TableCell>{responsavel.nmTelefone}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end space-x-2">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => handleEditResponsavel(responsavel)}
+              sortedResponsaveis().map((responsavel) => (
+                <StickyTableRow key={responsavel.idResponsavel}>
+                  <StickyTableCell className="font-medium">{responsavel.nmResponsavel}</StickyTableCell>
+                  <StickyTableCell>{responsavel.nmUsuarioLogin}</StickyTableCell>
+                  <StickyTableCell>{responsavel.dsEmail}</StickyTableCell>
+                  <StickyTableCell>{responsavel.nmPerfil || 'N/A'}</StickyTableCell>
+                  <StickyTableCell>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      responsavel.flAtivo === 'S'
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {getStatusText(responsavel.flAtivo)}
+                    </span>
+                  </StickyTableCell>
+                  <StickyTableCell>{responsavel.nrCpf}</StickyTableCell>
+                  <StickyTableCell className="text-right">
+                    <div className="flex items-center justify-end space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEdit(responsavel)}
                       >
-                        <PencilSimpleIcon className="h-4 w-4" />
+                        <PencilSimpleIcon className="h-4 w-4"/>
                       </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => handleDeleteResponsavel(responsavel.idResponsavel)}
-                        className="text-red-500 hover:text-red-700"
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(responsavel)}
+                        className="text-red-600 hover:text-red-700"
                       >
-                        <TrashIcon className="h-4 w-4" />
+                        <TrashIcon className="h-4 w-4"/>
                       </Button>
                     </div>
-                  </TableCell>
-                </TableRow>
+                  </StickyTableCell>
+                </StickyTableRow>
               ))
             )}
-          </TableBody>
-        </Table>
+          </StickyTableBody>
+        </StickyTable>
       </div>
 
-      {/* Responsavel Modal */}
-      {showResponsavelModal && (
-        <ResponsavelModal
-          responsavel={selectedResponsavel}
-          onClose={() => {
-            setShowResponsavelModal(false);
-            setSelectedResponsavel(null);
-          }}
-          onSave={handleSaveResponsavel}
-        />
-      )}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalElements={totalElements}
+        pageSize={15}
+        onPageChange={setCurrentPage}
+        loading={loading}
+      />
 
-      {/* Filter Modal */}
       {showFilterModal && (
         <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
           <DialogContent>
@@ -264,12 +318,12 @@ export default function ResponsaveisPage() {
             </DialogHeader>
             <div className="grid gap-4">
               <div>
-                <Label htmlFor="nome">Nome</Label>
+                <Label htmlFor="usuario">Usuário</Label>
                 <Input
-                  id="nome"
-                  value={filters.nome}
-                  onChange={(e) => setFilters({ ...filters, nome: e.target.value })}
-                  placeholder="Filtrar por nome"
+                  id="usuario"
+                  value={filters.usuario}
+                  onChange={(e) => setFilters({...filters, usuario: e.target.value})}
+                  placeholder="Filtrar por usuário"
                 />
               </div>
               <div>
@@ -277,56 +331,42 @@ export default function ResponsaveisPage() {
                 <Input
                   id="email"
                   value={filters.email}
-                  onChange={(e) => setFilters({ ...filters, email: e.target.value })}
+                  onChange={(e) => setFilters({...filters, email: e.target.value})}
                   placeholder="Filtrar por email"
                 />
               </div>
-              <div>
-                <Label htmlFor="telefone">Telefone</Label>
-                <Input
-                  id="telefone"
-                  value={filters.telefone}
-                  onChange={(e) => setFilters({ ...filters, telefone: e.target.value })}
-                  placeholder="Filtrar por telefone"
-                />
-              </div>
-              <div>
-                <Label htmlFor="perfil">Perfil</Label>
-                <Select
-                  value={filters.perfil}
-                  onValueChange={(value: string) => setFilters({ ...filters, perfil: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um perfil" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Todos</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="user">User</SelectItem>
-                    <SelectItem value="manager">Manager</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={clearFilters}>
+                Limpar Filtros
+              </Button>
+              <Button onClick={applyFilters}>
+                Aplicar Filtros
+              </Button>
+            </DialogFooter>
           </DialogContent>
-          <DialogFooter>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setShowFilterModal(false);
-                handleClearFilters();
-              }}
-              className="mr-2"
-            >
-              <XIcon className="h-4 w-4 mr-2" />
-              Limpar Filtros
-            </Button>
-            <Button onClick={handleApplyFilters}>
-              Aplicar Filtros
-            </Button>
-          </DialogFooter>
         </Dialog>
       )}
+
+      {showResponsavelModal && (
+        <ResponsavelModal
+          responsavel={selectedResponsavel}
+          open={showResponsavelModal}
+          onClose={() => {
+            setShowResponsavelModal(false);
+            setSelectedResponsavel(null);
+          }}
+          onSave={onResponsavelSave}
+        />
+      )}
+
+      <ConfirmationDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirm={confirmDelete}
+        title="Excluir Responsável"
+        description={`Tem certeza que deseja excluir o responsável "${responsavelToDelete?.nmResponsavel}"? Esta ação não pode ser desfeita.`}
+      />
     </div>
   );
 }

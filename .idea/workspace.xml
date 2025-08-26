@@ -5,14 +5,23 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="98226f2c-f64e-43be-946e-e89028627d5c" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/next.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/next.config.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/layout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/solicitacoes/SolicitacaoModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/solicitacoes/SolicitacaoModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/temas/TemaModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/temas/TemaModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/ui/dialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ui/dialog.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="TypeScript File" />
+        <option value="TypeScript JSX File" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -23,17 +32,17 @@
     &quot;assignee&quot;: &quot;luizrxg-rtech&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/rtech-solucoes/way-correspondencias-web&quot;,
-    &quot;accountId&quot;: &quot;d17f99be-3620-4f2a-8662-d3dcf9022936&quot;
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/RTech-Solucoes/way-correspondencias-web",
+    "accountId": "a3a8b9d8-d7b7-4814-8317-a8b349361ea4"
   }
-}</component>
+}]]></component>
   <component name="PackageJsonUpdateNotifier">
     <dismissed value="$PROJECT_DIR$/package.json" />
   </component>
   <component name="ProblemsViewState">
-    <option name="selectedTabId" value="CurrentFile" />
+    <option name="selectedTabId" value="ProjectErrors" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 0
@@ -43,25 +52,28 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/work/projetos/rtech/way-correspondencias-web&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;bun&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;D:\\work\\projetos\\rtech\\way-correspondencias-web\\node_modules\\typescript\\lib&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "develop",
+    "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "C:/Users/Sofia/Desktop/Work/way/way-correspondencias-web",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "bun",
+    "npm.Next.js: server-side.executor": "Run",
+    "run.code.analysis.last.selected.profile": "pProject Default",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "to.speed.mode.migration.done": "true",
+    "ts.external.directory.path": "D:\\Work\\projetos\\rtech\\way\\way-correspondencias-web\\node_modules\\typescript\\lib",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="ReactDesignerToolWindowState">
     <option name="myId2Visible">
       <map>
@@ -73,13 +85,18 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="D:\work\projetos\rtech\way-correspondencias-web" />
+      <recent name="D:\Work\projetos\rtech\way\way-correspondencias-web\src\app\email\[id]" />
+      <recent name="D:\Work\projetos\rtech\way-correspondencias-web\src\types\solicitacoes" />
+      <recent name="D:\Work\projetos\rtech\way-correspondencias-web\src\api\areas" />
+      <recent name="D:\Work\projetos\rtech\way-correspondencias-web\src\api\temas" />
+      <recent name="D:\Work\projetos\rtech\way-correspondencias-web\src\api\solicitacoes" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
-      <recent name="D:\work\projetos\rtech\way-correspondencias-web\src" />
-      <recent name="D:\work\projetos\rtech\way-correspondencias-web\api" />
-      <recent name="D:\work\projetos\rtech\way-correspondencias-web" />
-      <recent name="D:\work\projetos\rtech\way-correspondencias-web\lib\api" />
+      <recent name="D:\Work\projetos\rtech\way\way-correspondencias-web\src" />
+      <recent name="D:\Work\projetos\rtech\way\way-correspondencias-web\src\components" />
+      <recent name="D:\Work\projetos\rtech\way\way-correspondencias-web\src\app" />
+      <recent name="D:\Work\projetos\rtech\way\way-correspondencias-web\src\context\solicitacoes" />
+      <recent name="D:\Work\projetos\rtech\way\way-correspondencias-web\src\components\layout\sidebar" />
     </key>
   </component>
   <component name="RunManager" selected="npm.Next.js: server-side">
@@ -100,7 +117,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-d6986cc7102b-09060db00ec0-JavaScript-WS-251.26927.40" />
+        <option value="bundled-js-predefined-d6986cc7102b-6a121458b545-JavaScript-WS-251.25410.117" />
       </set>
     </attachedChunks>
   </component>
@@ -123,6 +140,46 @@
       <workItem from="1754672216736" duration="2719000" />
       <workItem from="1754675050668" duration="557000" />
       <workItem from="1754682168624" duration="619000" />
+      <workItem from="1755104204188" duration="383000" />
+      <workItem from="1755104660931" duration="3163000" />
+      <workItem from="1755110041017" duration="61000" />
+      <workItem from="1755168696281" duration="6000" />
+      <workItem from="1755180454323" duration="3748000" />
+      <workItem from="1755185181479" duration="4117000" />
+      <workItem from="1755191783823" duration="13654000" />
+      <workItem from="1755205756804" duration="1497000" />
+      <workItem from="1755349540482" duration="3028000" />
+      <workItem from="1755515518270" duration="194000" />
+      <workItem from="1755516852705" duration="332000" />
+      <workItem from="1755517846118" duration="2625000" />
+      <workItem from="1755520507989" duration="735000" />
+      <workItem from="1755521322913" duration="4484000" />
+      <workItem from="1755526019361" duration="4746000" />
+      <workItem from="1755532346537" duration="1749000" />
+      <workItem from="1755534141984" duration="452000" />
+      <workItem from="1755542379582" duration="2397000" />
+      <workItem from="1755602696047" duration="25000" />
+      <workItem from="1755603149675" duration="483000" />
+      <workItem from="1755612297954" duration="1160000" />
+      <workItem from="1755620430312" duration="20000" />
+      <workItem from="1755620478134" duration="2173000" />
+      <workItem from="1755627175687" duration="116000" />
+      <workItem from="1755628590897" duration="74000" />
+      <workItem from="1755689574112" duration="1236000" />
+      <workItem from="1755694850909" duration="3599000" />
+      <workItem from="1755699208959" duration="4381000" />
+      <workItem from="1755703663797" duration="3249000" />
+      <workItem from="1755777072869" duration="1325000" />
+      <workItem from="1755779599749" duration="4758000" />
+      <workItem from="1755785073391" duration="590000" />
+      <workItem from="1755788233180" duration="3209000" />
+      <workItem from="1755797589426" duration="1389000" />
+      <workItem from="1755857759907" duration="1882000" />
+      <workItem from="1755860387043" duration="1486000" />
+      <workItem from="1755861953837" duration="3686000" />
+      <workItem from="1755875770372" duration="4118000" />
+      <workItem from="1755880879592" duration="2406000" />
+      <workItem from="1756130474134" duration="207000" />
     </task>
     <task id="LOCAL-00001" summary="Alteração biblioteca de Ícones&#10;lucide-react -&gt; @phosphor-icons/react">
       <option name="closed" value="true" />
@@ -137,6 +194,17 @@
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Alteração biblioteca de Ícones&#10;lucide-react -&gt; @phosphor-icons/react" />

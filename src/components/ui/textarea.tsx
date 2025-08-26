@@ -1,18 +1,41 @@
 import * as React from 'react';
+import {forwardRef, TextareaHTMLAttributes} from 'react';
+import {cva, type VariantProps} from 'class-variance-authority';
 
-import { cn } from '@/lib/utils';
+import {cn} from '@/utils/utils';
+
+const textareaVariants = cva(
+  'flex w-full rounded-3xl ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 transition-colors duration-200',
+  {
+    variants: {
+      variant: {
+        default: 'border border-input bg-background focus-visible:ring-ring',
+        filled: 'border-0 bg-gray-100 focus-visible:bg-white focus-visible:ring-1 focus-visible:ring-ring',
+        outlined: 'border-2 border-input bg-transparent focus-visible:ring-ring',
+        ghost: 'border-0 bg-transparent hover:bg-gray-50 focus-visible:bg-white focus-visible:ring-1 focus-visible:ring-ring',
+      },
+      inputSize: {
+        sm: 'min-h-[60px] px-3 py-2 text-xs',
+        md: 'min-h-[80px] px-4 py-3 text-sm',
+        lg: 'min-h-[100px] px-5 py-4 text-base',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+      inputSize: 'md',
+    },
+  }
+);
 
 export interface TextareaProps
-  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
+  extends TextareaHTMLAttributes<HTMLTextAreaElement>,
+    VariantProps<typeof textareaVariants> {}
 
-const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ className, ...props }, ref) => {
+const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
+  ({ className, variant, inputSize, ...props }, ref) => {
     return (
       <textarea
-        className={cn(
-          'flex min-h-[80px] w-full rounded-3xl border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
-          className
-        )}
+        className={cn(textareaVariants({ variant, inputSize, className }))}
         ref={ref}
         {...props}
       />

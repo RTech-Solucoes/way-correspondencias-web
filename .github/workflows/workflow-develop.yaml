@@ -1,0 +1,41 @@
+name: Deploy for Way Web
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v3
+
+      - name: Instalar openfortivpn
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openfortivpn
+
+      - name: Conectar VPN
+        env:
+          VPN_SERVER: vpn1.way262.com.br
+          VPN_USER: T_carlos.silva
+          VPN_PASS: Twaybrasil@262
+          VPN_CERT: cb80f98b2d89f9beb935c8c42b8854ab3b456050a82aaa2a7cafee156b133f7e
+        run: |
+          sudo openfortivpn $VPN_SERVER \
+            --username="$VPN_USER" \
+            --password="$VPN_PASS" \
+            --trusted-cert="$VPN_CERT" > vpn.log 2>&1 &
+          sleep 30
+
+      - name: Testar VPN
+        run: |
+          ping -c 3 10.132.4.129 || exit 1
+
+      - name: Deploy aplicação
+        run: |
+          sshpass -p "Suporte@#0608" ssh -o StrictHostKeyChecking=no rtech@10.132.4.129 "cd /home/rtech/way-correspondencias-web && ./deploy.sh"
