@@ -1,47 +1,41 @@
-name: Deploy Way WEB
+name: Deploy for Way Web
 
 on:
   push:
-    branches:
-      - poc
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
 
 jobs:
   deploy:
-    runs-on: self-hosted, ec2, apps
+    runs-on: ubuntu-latest
+
     steps:
-      - name: Pull latest code
-        run: |
-          cd /home/ubuntu/way-correspondencias-web
-          git pull origin develop
+      - name: Checkout código
+        uses: actions/checkout@v3
 
-      - name: Extract branch name and commit hash
-        id: extract_tags
+      - name: Instalar openfortivpn
         run: |
-          BRANCH_NAME=$(echo "$GITHUB_REF" | sed 's/refs\/heads\///')
-          COMMIT_HASH="$(echo $GITHUB_SHA | cut -c1-7)"
-          DOCKER_TAG="$BRANCH_NAME"_"$COMMIT_HASH"
-          echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
-          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
-          echo "COMMIT_HASH=$COMMIT_HASH" >> $GITHUB_ENV
+          sudo apt-get update
+          sudo apt-get install -y openfortivpn
 
-      - name: Build Docker image
+      - name: Conectar VPN
+        env:
+          VPN_SERVER: vpn1.way262.com.br
+          VPN_USER: T_carlos.silva
+          VPN_PASS: Twaybrasil@262
+          VPN_CERT: cb80f98b2d89f9beb935c8c42b8854ab3b456050a82aaa2a7cafee156b133f7e
         run: |
-          docker build -t way-web:${{ env.DOCKER_TAG }} .
+          sudo openfortivpn $VPN_SERVER \
+            --username="$VPN_USER" \
+            --password="$VPN_PASS" \
+            --trusted-cert="$VPN_CERT" > vpn.log 2>&1 &
+          sleep 30
 
-      - name: Stop and remove old container
+      - name: Testar VPN
         run: |
-          docker stop way-web || true
-          docker rm way-web || true
+          ping -c 3 10.132.4.129 || exit 1
 
-      - name: Deploy new container version
+      - name: Deploy aplicação
         run: |
-          docker run -d \
-            -p 3000:3000 \
-            --name way-web \
-            --restart always \
-            way-web:${{ env.DOCKER_TAG }}
-
-      - name: Clean up old images
-        run: |
-          # Remove imagens com mais de 24 horas e que não estão sendo usadas
-          docker image prune -a -f --filter "until=24h"
+          sshpass -p "Suporte@#0608" ssh -o StrictHostKeyChecking=no rtech@10.132.4.129 "cd /home/rtech/way-correspondencias-web && ./deploy.sh"
