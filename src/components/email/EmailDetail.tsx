@@ -79,7 +79,7 @@ export default function EmailDetail({
 
   const loadModalData = async () => {
     try {
-      const [responsaveisResponse, temasResponse, areasResponse] = await Promise.all([
+      const [responsaveisResponse, temasResponse, areaResponse] = await Promise.all([
         responsaveisClient.buscarPorFiltro({ size: 100 }),
         temasClient.buscarPorFiltro({ size: 100 }),
         areasClient.buscarPorFiltro({ size: 100 })
@@ -87,7 +87,7 @@ export default function EmailDetail({
 
       setResponsaveis(responsaveisResponse.content);
       setTemas(temasResponse.content);
-      setAreas(areasResponse.content);
+      setAreas(areaResponse.content);
     } catch {
       toast.error("Erro ao carregar dados do formulário");
     }
@@ -164,10 +164,10 @@ export default function EmailDetail({
               {getInitials(email?.dsRemetente)}
             </AvatarFallback>
           </Avatar>
-          <div className="flex-1">
+          <div className="flex flex-col">
             <h3 className="font-semibold text-gray-900">{email?.dsRemetente}</h3>
             <p className="text-sm text-gray-600 mb-1">De: {email?.dsRemetente}</p>
-            <p className="text-sm text-gray-600">Para: {email?.dsDestinatario}</p>
+            <p className="inline-flex text-sm text-gray-600 max-w-[200px]">Para: {email?.dsDestinatario}</p>
           </div>
         </div>
 

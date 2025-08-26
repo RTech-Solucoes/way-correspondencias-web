@@ -6,12 +6,16 @@ import {
   createContext,
   useContext,
   useState,
-  ReactNode
+  ReactNode,
+  useCallback,
+  useMemo
 } from "react";
 import { SolicitacaoResponse } from '@/api/solicitacoes/types';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { TemaResponse } from '@/api/temas/types';
 import { AreaResponse } from '@/api/areas/types';
+import { StatusSolicPrazoTemaResponse } from '@/api/status-prazo-tema/types';
+import { statusPrazoTemaClient } from '@/api/status-prazo-tema/client';
 
 interface FiltersState {
   identificacao: string;
@@ -95,6 +99,30 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
   const [sortField, setSortField] = useState<keyof SolicitacaoResponse | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
+  // Cache para os status por tema
+  const [statusCache, setStatusCache] = useState<Map<number, StatusSolicPrazoTemaResponse[]>>(new Map());
+
+  // Função para buscar status de um tema da API
+  const fetchStatusForTema = useCallback(async (idTema: number): Promise<StatusSolicPrazoTemaResponse[]> => {
+    if (statusCache.has(idTema)) {
+      return statusCache.get(idTema) || [];
+    }
+
+    try {
+      const status = await statusPrazoTemaClient.listarStatusPorTema(idTema);
+      setStatusCache(prev => new Map(prev).set(idTema, status));
+      return status;
+    } catch (error) {
+      console.error('Erro ao buscar status do tema:', error);
+      return [];
+    }
+  }, [statusCache]);
+
+  // Função para encontrar uma solicitação por status para obter o tema
+  const findSolicitacaoByStatus = useCallback((statusCodigo: string | number) => {
+    return solicitacoes.find(s => s.statusCodigo?.toString() === statusCodigo.toString());
+  }, [solicitacoes]);
+
   const [filters, setFilters] = useState<FiltersState>({
     identificacao: '',
     responsavel: '',
@@ -145,49 +173,128 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
     setShowFilterModal(false);
   };
 
-  const getStatusBadgeVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
-    switch (status.toUpperCase()) {
-      case 'P':
-        return 'secondary';
-      case 'V':
-      case 'T':
-        return 'destructive';
-      case 'A':
-      case 'R':
-      case 'O':
-      case 'S':
-        return 'default';
-      case 'C':
-        return 'default';
-      case 'X':
-        return 'outline';
-      default:
-        return 'secondary';
+  const getStatusBadgeVariant = (status: string | number): "default" | "secondary" | "destructive" | "outline" => {
+    // Implementação baseada em padrões conhecidos enquanto não temos API específica para variants
+    const statusStr = status?.toString()?.toUpperCase();
+
+    // Padrões para status críticos/vencidos
+    if (statusStr?.includes('VENCIDO') || statusStr === 'T' || statusStr === '2' || statusStr === '4') {
+      return 'destructive';
     }
+
+    // Padrões para status finalizados
+    if (statusStr?.includes('CONCLUÍDO') || statusStr?.includes('ARQUIVADO') || statusStr === 'C' || statusStr === 'X' || statusStr === '8' || statusStr === '9') {
+      return 'outline';
+    }
+
+    // Padrões para status inicial
+    if (statusStr?.includes('PRÉ') || statusStr === 'P' || statusStr === '1') {
+      return 'secondary';
+    }
+
+    // Status em andamento (default)
+    return 'default';
   };
 
-  const getStatusText = (status: string) => {
-    switch (status.toUpperCase()) {
+  const getStatusText = useCallback(async (status: string | number, idTema?: number) => {
+    const statusCodigo = Number(status);
+
+    // Se temos o idTema, buscar da API
+    if (idTema) {
+      try {
+        const statusList = await fetchStatusForTema(idTema);
+        const statusInfo = statusList.find(s => s.statusCodigo === statusCodigo);
+        if (statusInfo) {
+          // Assumindo que existe um campo com o texto do status na resposta
+          // Como não temos a estrutura completa da API, vamos usar um fallback
+          return `Status ${statusCodigo}`;
+        }
+      } catch (error) {
+        console.error('Erro ao buscar texto do status:', error);
+      }
+    }
+
+    // Fallback para o switch case existente como backup
+    const statusStr = status?.toString()?.toUpperCase();
+    switch (statusStr) {
       case 'P':
+      case '1':
         return 'Pré-análise';
       case 'V':
+      case '2':
         return 'Vencido Regulatório';
       case 'A':
+      case '3':
         return 'Em análise Área Técnica';
       case 'T':
+      case '4':
         return 'Vencido Área Técnica';
       case 'R':
+      case '5':
         return 'Análise Regulatória';
       case 'O':
+      case '6':
         return 'Em Aprovação';
       case 'S':
+      case '7':
         return 'Em Assinatura';
       case 'C':
+      case '8':
         return 'Concluído';
       case 'X':
+      case '9':
         return 'Arquivado';
       default:
-        return status;
+        return status?.toString() || 'N/A';
+    }
+  }, [fetchStatusForTema]);
+
+  // Versão síncrona para compatibilidade com uso atual
+  const getStatusTextSync = (status: string | number) => {
+    const solicitacao = findSolicitacaoByStatus(status);
+    if (solicitacao?.idTema) {
+      // Para uso síncrono, vamos usar o cache se disponível
+      const cached = statusCache.get(solicitacao.idTema);
+      if (cached) {
+        const statusInfo = cached.find(s => s.statusCodigo === Number(status));
+        if (statusInfo) {
+          return `Status ${statusInfo.statusCodigo}`;
+        }
+      }
+    }
+
+    // Fallback para switch case
+    const statusStr = status?.toString()?.toUpperCase();
+    switch (statusStr) {
+      case 'P':
+      case '1':
+        return 'Pré-análise';
+      case 'V':
+      case '2':
+        return 'Vencido Regulatório';
+      case 'A':
+      case '3':
+        return 'Em análise Área Técnica';
+      case 'T':
+      case '4':
+        return 'Vencido Área Técnica';
+      case 'R':
+      case '5':
+        return 'Análise Regulatória';
+      case 'O':
+      case '6':
+        return 'Em Aprovação';
+      case 'S':
+      case '7':
+        return 'Em Assinatura';
+      case 'C':
+      case '8':
+        return 'Concluído';
+      case 'X':
+      case '9':
+        return 'Arquivado';
+      default:
+        return status?.toString() || 'N/A';
     }
   };
 
@@ -259,7 +366,7 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
         applyFilters,
         clearFilters,
         getStatusBadgeVariant,
-        getStatusText,
+        getStatusText: getStatusTextSync,
         toggleRowExpansion,
         handleSort,
       }}

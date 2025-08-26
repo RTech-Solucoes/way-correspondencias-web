@@ -15,13 +15,15 @@ interface MultiSelectAreasProps {
   onSelectionChange: (selectedIds: number[]) => void;
   label?: string;
   className?: string;
+  disabled?: boolean;
 }
 
 export function MultiSelectAreas({
   selectedAreaIds,
   onSelectionChange,
   label = "Áreas",
-  className
+  className,
+  disabled
 }: MultiSelectAreasProps) {
   const [areas, setAreas] = useState<AreaResponse[]>([]);
   const [responsaveis, setResponsaveis] = useState<ResponsavelResponse[]>([]);
@@ -32,12 +34,12 @@ export function MultiSelectAreas({
       try {
         setLoading(true);
 
-        const [areasResponse, responsaveisResponse] = await Promise.all([
+        const [areaResponse, responsaveisResponse] = await Promise.all([
           areasClient.buscarPorFiltro({ size: 1000 }),
           responsaveisClient.buscarPorFiltro({ size: 1000 })
         ]);
 
-        const areasAtivas = areasResponse.content.filter((area: AreaResponse) => area.flAtivo === 'S');
+        const areasAtivas = areaResponse.content.filter((area: AreaResponse) => area.flAtivo === 'S');
         const responsaveisAtivos = responsaveisResponse.content.filter((resp: ResponsavelResponse) => resp.flAtivo === 'S');
 
         setAreas(areasAtivas);
@@ -54,6 +56,8 @@ export function MultiSelectAreas({
   }, []);
 
   const handleAreaToggle = (areaId: number) => {
+    if (disabled) return;
+
     const isSelected = selectedAreaIds.includes(areaId);
 
     if (isSelected) {
@@ -78,30 +82,44 @@ export function MultiSelectAreas({
           <div className="text-sm text-gray-500">Buscando áreas...</div>
         </div>
       ) : (
-        <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-3 max-h-64 overflow-y-auto">
+        <div className={cn("mt-2 grid grid-cols-1 md:grid-cols-2 gap-3 overflow-y-auto", disabled && "opacity-50 pointer-events-none")}>
           {areas.map((area, index) => {
             const isChecked = selectedAreaIds.includes(area.idArea);
             return (
               <div
                 key={area.idArea}
-                className="flex items-center justify-between p-3 bg-gray-50 border box-border rounded-3xl cursor-pointer hover:bg-gray-100 transition-colors min-w-0"
+                className={cn(
+                  "flex flex-col items-start gap-2 justify-between p-3 bg-gray-100 box-border rounded-3xl transition-colors min-w-0",
+                  disabled ? "cursor-not-allowed bg-gray-100" : "cursor-pointer hover:bg-gray-100"
+                )}
                 onClick={() => handleAreaToggle(area.idArea)}
               >
                 <div className="flex items-center space-x-3 min-w-0 flex-1">
                   <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors flex-shrink-0 ${
                     isChecked 
                       ? 'bg-blue-500 border-blue-500' 
-                      : 'border-gray-300'
+                      : disabled 
+                        ? 'border-gray-200' 
+                        : 'border-gray-300'
                   }`}>
                     {isChecked && (
                       <CheckIcon className="w-3 h-3 text-white" />
                     )}
                   </div>
-                  <span className="text-sm font-medium text-gray-700 truncate">
+                  <span className={cn(
+                    "text-sm font-medium truncate",
+                    disabled ? "text-gray-400" : "text-gray-700"
+                  )}>
                     {area.nmArea}
                   </span>
                 </div>
-                <Badge variant="secondary" className="ml-2 flex-shrink-0 text-xs">
+                <Badge
+                  variant="secondary"
+                  className={cn(
+                    "ml-2 flex-shrink-0 text-xs border-none text-foreground bg-gray-200",
+                    disabled && "opacity-60"
+                  )}
+                >
                   {getResponsavelForArea(index)}
                 </Badge>
               </div>

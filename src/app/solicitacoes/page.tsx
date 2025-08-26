@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import {
   StickyTable,
   StickyTableBody,
@@ -29,7 +29,6 @@ import {
 } from '@phosphor-icons/react';
 import PageTitle from '@/components/ui/page-title';
 import { solicitacoesClient } from '@/api/solicitacoes/client';
-import { SolicitacaoFilterParams } from '@/api/solicitacoes/types';
 import { responsaveisClient } from '@/api/responsaveis/client';
 import { temasClient } from '@/api/temas/client';
 import { areasClient } from '@/api/areas/client';
@@ -41,6 +40,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { Pagination } from '@/components/ui/pagination';
 import { formatDate } from '@/utils/utils';
 import { useSolicitacoes } from '@/context/solicitacoes/SolicitacoesContext';
+import TramitacaoList from '@/components/solicitacoes/TramitacaoList';
 
 export default function SolicitacoesPage() {
   const {
@@ -100,60 +100,24 @@ export default function SolicitacoesPage() {
     try {
       setLoading(true);
 
-      if (activeFilters.identificacao && !activeFilters.responsavel && !activeFilters.tema && !activeFilters.area && !activeFilters.status && !debouncedSearchQuery) {
-        const result = await solicitacoesClient.buscarPorCdIdentificacao(activeFilters.identificacao);
-        setSolicitacoes([result]);
-        setTotalPages(1);
-        setTotalElements(1);
-      } else if (activeFilters.responsavel && !activeFilters.identificacao && !activeFilters.tema && !activeFilters.area && !activeFilters.status && !debouncedSearchQuery) {
-        const results = await solicitacoesClient.buscarPorResponsavel(parseInt(activeFilters.responsavel));
-        setSolicitacoes(results);
-        setTotalPages(1);
-        setTotalElements(results?.length);
-      } else if (activeFilters.tema && !activeFilters.identificacao && !activeFilters.responsavel && !activeFilters.area && !activeFilters.status && !debouncedSearchQuery) {
-        const results = await solicitacoesClient.buscarPorTema(parseInt(activeFilters.tema));
-        setSolicitacoes(results);
-        setTotalPages(1);
-        setTotalElements(results?.length);
-      } else if (activeFilters.area && !activeFilters.identificacao && !activeFilters.responsavel && !activeFilters.tema && !activeFilters.status && !debouncedSearchQuery) {
-        const results = await solicitacoesClient.buscarPorArea(parseInt(activeFilters.area));
-        setSolicitacoes(results);
-        setTotalPages(1);
-        setTotalElements(results?.length);
-      } else if (activeFilters.status && !activeFilters.identificacao && !activeFilters.responsavel && !activeFilters.tema && !activeFilters.area && !debouncedSearchQuery) {
-        const results = await solicitacoesClient.buscarPorStatus(activeFilters.status);
-        setSolicitacoes(results);
-        setTotalPages(1);
-        setTotalElements(results?.length);
-      } else if (activeFilters.responsavel && activeFilters.status && !activeFilters.identificacao && !activeFilters.tema && !activeFilters.area && !debouncedSearchQuery) {
-        const results = await solicitacoesClient.buscarPorResponsavelEStatus(parseInt(activeFilters.responsavel), activeFilters.status);
-        setSolicitacoes(results);
-        setTotalPages(1);
-        setTotalElements(results?.length);
-      } else if (activeFilters.dateFrom && activeFilters.dateTo && !activeFilters.identificacao && !activeFilters.responsavel && !activeFilters.tema && !activeFilters.area && !activeFilters.status && !debouncedSearchQuery) {
-        const results = await solicitacoesClient.buscarPorPeriodo(
-          activeFilters.dateFrom + 'T00:00:00',
-          activeFilters.dateTo + 'T23:59:59'
-        );
-        setSolicitacoes(results);
-        setTotalPages(1);
-        setTotalElements(results?.length);
-      } else {
-        const filterParts = [];
-        if (debouncedSearchQuery) filterParts.push(debouncedSearchQuery);
-        if (activeFilters.identificacao) filterParts.push(activeFilters.identificacao);
+      // Com a nova API, usamos apenas o método listar com filtro
+      const filterParts = [];
+      if (debouncedSearchQuery) filterParts.push(debouncedSearchQuery);
+      if (activeFilters.identificacao) filterParts.push(activeFilters.identificacao);
+      if (activeFilters.responsavel) filterParts.push(activeFilters.responsavel);
+      if (activeFilters.tema) filterParts.push(activeFilters.tema);
+      if (activeFilters.area) filterParts.push(activeFilters.area);
+      if (activeFilters.status) filterParts.push(activeFilters.status);
+      if (activeFilters.dateFrom) filterParts.push(activeFilters.dateFrom);
+      if (activeFilters.dateTo) filterParts.push(activeFilters.dateTo);
 
-        const params: SolicitacaoFilterParams = {
-          filtro: filterParts.join(' ') || undefined,
-          page: currentPage,
-          size: 15,
-        };
-        const response = await solicitacoesClient.buscarPorFiltro(params);
-        setSolicitacoes(response.content);
-        setTotalPages(response.totalPages);
-        setTotalElements(response.totalElements);
-      }
-    } catch {
+      const filtro = filterParts.join(' ') || undefined;
+      const response = await solicitacoesClient.listar(filtro);
+      setSolicitacoes(response);
+      setTotalPages(1); // API não retorna paginação, ajustar conforme necessário
+      setTotalElements(response.length);
+
+    } catch (error) {
       toast.error("Erro ao carregar solicitações");
     } finally {
       setLoading(false);
@@ -212,11 +176,14 @@ export default function SolicitacoesPage() {
   };
 
   const sortedSolicitacoes = () => {
-    if (!Array.isArray(solicitacoes)) {
+    console.log(solicitacoes)
+
+    if (!solicitacoes || solicitacoes.length === 0) {
       return [];
     }
 
-    const sorted = [...solicitacoes];
+    const sorted = [...solicitacoes]
+
     if (sortField) {
       sorted.sort((a, b) => {
         const aValue = a[sortField];
@@ -232,6 +199,7 @@ export default function SolicitacoesPage() {
         return sortDirection === 'asc' ? comparison : -comparison;
       });
     }
+
     return sorted;
   };
 
@@ -339,48 +307,42 @@ export default function SolicitacoesPage() {
                 </StickyTableCell>
               </StickyTableRow>
             ) : (
-              sortedSolicitacoes().map((solicitacao) => (
+              sortedSolicitacoes()?.map((solicitacao) => (
                 <React.Fragment key={solicitacao.idSolicitacao}>
-                  <StickyTableRow>
+                  <StickyTableRow
+                    onClick={() => toggleRowExpansion(solicitacao.idSolicitacao)}
+                    className="cursor-pointer"
+                  >
                     <StickyTableCell className="w-8">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toggleRowExpansion(solicitacao.idSolicitacao)}
-                        className="p-1 h-6 w-6"
-                      >
-                        {expandedRows.has(solicitacao.idSolicitacao) ? (
-                          <CaretDownIcon className="h-4 w-4" />
-                        ) : (
-                          <CaretRightIcon className="h-4 w-4" />
-                        )}
-                      </Button>
+                      {expandedRows.has(solicitacao.idSolicitacao) ? (
+                        <CaretDownIcon className="h-4 w-4" />
+                      ) : (
+                        <CaretRightIcon className="h-4 w-4" />
+                      )}
                     </StickyTableCell>
                     <StickyTableCell className="font-medium">{solicitacao.cdIdentificacao}</StickyTableCell>
                     <StickyTableCell className="max-w-xs truncate">{solicitacao.dsAssunto}</StickyTableCell>
-                    <StickyTableCell>{solicitacao.nmResponsavel}</StickyTableCell>
+                    <StickyTableCell>{solicitacao.nmResponsavel || '-'}</StickyTableCell>
                     <StickyTableCell>
-                      {solicitacao.areas && solicitacao.areas?.length > 0 ? (
+                      {solicitacao.areas && solicitacao.areas.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
                           {solicitacao.areas.slice(0, 2).map((area, index) => (
-                            <span key={index} className="inline-flex px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                            <span key={area.idArea} className="text-xs bg-gray-100 px-2 py-1 rounded">
                               {area.nmArea}
                             </span>
                           ))}
-                          {solicitacao.areas?.length > 2 && (
-                            <span className="inline-flex px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
-                              +{solicitacao.areas?.length - 2}
-                            </span>
+                          {solicitacao.areas.length > 2 && (
+                            <span className="text-xs text-gray-500">+{solicitacao.areas.length - 2} mais</span>
                           )}
                         </div>
                       ) : (
-                        <span className="text-gray-400 text-sm">Nenhuma área</span>
+                        <span className="text-gray-400 text-sm">-</span>
                       )}
                     </StickyTableCell>
-                    <StickyTableCell>{solicitacao.tema?.nmTema || solicitacao.nmTema || 'N/A'}</StickyTableCell>
+                    <StickyTableCell>{solicitacao.nmTema || '-'}</StickyTableCell>
                     <StickyTableCell>
-                      <Badge variant={getStatusBadgeVariant(solicitacao.flStatus)}>
-                        {getStatusText(solicitacao.flStatus)}
+                      <Badge variant={getStatusBadgeVariant(solicitacao.statusCodigo?.toString() || '')}>
+                        {getStatusText(solicitacao.statusCodigo?.toString() || '')}
                       </Badge>
                     </StickyTableCell>
                     <StickyTableCell className="text-right">
@@ -388,14 +350,20 @@ export default function SolicitacoesPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleEdit(solicitacao)}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleEdit(solicitacao)
+                          }}
                         >
                           <PaperPlaneRightIcon className="h-4 w-4"/>
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDelete(solicitacao)}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDelete(solicitacao)
+                          }}
                           className="text-red-600 hover:text-red-700"
                         >
                           <TrashIcon className="h-4 w-4"/>
@@ -406,60 +374,7 @@ export default function SolicitacoesPage() {
                   {expandedRows.has(solicitacao.idSolicitacao) && (
                     <StickyTableRow>
                       <StickyTableCell colSpan={9} className="bg-gray-50 p-6">
-                        <div className="space-y-4">
-                          <div className="grid grid-cols-2 gap-6">
-                            <div>
-                              <h4 className="font-semibold text-gray-900 mb-2">Informações Detalhadas</h4>
-                              <div className="space-y-2 text-sm">
-                                {solicitacao.dsSolicitacao && (
-                                  <div>
-                                    <span className="font-medium text-gray-700">Descrição:</span>
-                                    <p className="text-gray-600 mt-1">{solicitacao.dsSolicitacao}</p>
-                                  </div>
-                                )}
-                                {solicitacao.dsObservacao && (
-                                  <div>
-                                    <span className="font-medium text-gray-700">Observações:</span>
-                                    <p className="text-gray-600 mt-1">{solicitacao.dsObservacao}</p>
-                                  </div>
-                                )}
-                                {solicitacao.nrOficio && (
-                                  <div>
-                                    <span className="font-medium text-gray-700">Nº Ofício:</span>
-                                    <span className="text-gray-600 ml-2">{solicitacao.nrOficio}</span>
-                                  </div>
-                                )}
-                                {solicitacao.nrProcesso && (
-                                  <div>
-                                    <span className="font-medium text-gray-700">Nº Processo:</span>
-                                    <span className="text-gray-600 ml-2">{solicitacao.nrProcesso}</span>
-                                  </div>
-                                )}
-                                <div>
-                                  <span className="font-medium text-gray-700">Data de Criação:</span>
-                                  <span className="text-gray-600 ml-2">{formatDate(solicitacao.dtCriacao)}</span>
-                                </div>
-                                {solicitacao.dtAtualizacao && (
-                                  <div>
-                                    <span className="font-medium text-gray-700">Última Atualização:</span>
-                                    <span className="text-gray-600 ml-2">{formatDate(solicitacao.dtAtualizacao)}</span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            <div>
-                              <h4 className="font-semibold text-gray-900 mb-2">Áreas e Responsáveis</h4>
-                              <div className="space-y-2">
-                                {solicitacao.areas?.map((area) => (
-                                  <div key={area.idArea} className="flex items-center justify-between p-2 bg-white rounded border">
-                                    <span className="text-sm font-medium text-gray-700">{area.nmArea}</span>
-                                    <span className="text-xs text-gray-500">Responsável será implementado</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                        <TramitacaoList idSolicitacao={solicitacao.idSolicitacao} areas={areas} />
                       </StickyTableCell>
                     </StickyTableRow>
                   )}

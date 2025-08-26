@@ -8,10 +8,11 @@ import {
   DialogTitle,
   DialogFooter
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { TextField } from '@/components/ui/text-field';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
+import {Button} from '@/components/ui/button';
+import {TextField} from '@/components/ui/text-field';
+import {Textarea} from '@/components/ui/textarea';
+import {Label} from '@/components/ui/label';
+import {Checkbox} from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -19,20 +20,20 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { SolicitacaoResponse, SolicitacaoRequest } from '@/api/solicitacoes/types';
-import { ResponsavelResponse } from '@/api/responsaveis/types';
-import { TemaResponse } from '@/api/temas/types';
-import { solicitacoesClient } from '@/api/solicitacoes/client';
-import { toast } from 'sonner';
-import { capitalize } from '@/utils/utils';
-import { MultiSelectAreas } from '@/components/ui/multi-select-areas';
-import { CaretLeftIcon, CaretRightIcon, CheckIcon, ArrowBendUpRightIcon } from '@phosphor-icons/react';
-import { Badge } from '@/components/ui/badge';
-import { useDropzone } from 'react-dropzone';
+import {SolicitacaoResponse, SolicitacaoRequest} from '@/api/solicitacoes/types';
+import {ResponsavelResponse} from '@/api/responsaveis/types';
+import {TemaResponse} from '@/api/temas/types';
+import {solicitacoesClient} from '@/api/solicitacoes/client';
+import {toast} from 'sonner';
+import {capitalize} from '@/utils/utils';
+import {MultiSelectAreas} from '@/components/ui/multi-select-areas';
+import {CaretLeftIcon, CaretRightIcon, CheckIcon, ArrowBendUpRightIcon} from '@phosphor-icons/react';
 import AnexoComponent from '../AnexoComponotent/AnexoComponent';
 import AnexoList from '../AnexoComponotent/AnexoList/AnexoList';
+import {statusPrazoTemaClient} from '@/api/status-prazo-tema/client';
+import {StatusSolicPrazoTemaResponse} from '@/api/status-prazo-tema/types';
 
-interface AnexoBackend {
+interface AnexoFromBackend {
   idAnexo: number;
   idObjeto: number;
   nmArquivo: string;
@@ -40,11 +41,24 @@ interface AnexoBackend {
   tpObjeto: string;
 }
 
+interface AnexoListItem {
+  idAnexo?: number;
+  idObjeto?: number;
+  name: string;
+  size?: number;
+  nmArquivo?: string;
+  dsCaminho?: string;
+  tpObjeto?: string;
+}
+
 interface SolicitacaoModalProps {
   solicitacao: SolicitacaoResponse | null;
   open: boolean;
+
   onClose(): void;
+
   onSave(): void;
+
   responsaveis: ResponsavelResponse[];
   temas: TemaResponse[];
   initialSubject?: string;
@@ -52,15 +66,15 @@ interface SolicitacaoModalProps {
 }
 
 export default function SolicitacaoModal({
-  solicitacao,
-  open,
-  onClose,
-  onSave,
-  responsaveis,
-  temas,
-  initialSubject,
-  initialDescription
-}: SolicitacaoModalProps) {
+                                           solicitacao,
+                                           open,
+                                           onClose,
+                                           onSave,
+                                           responsaveis,
+                                           temas,
+                                           initialSubject,
+                                           initialDescription
+                                         }: SolicitacaoModalProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<SolicitacaoRequest>({
     cdIdentificacao: '',
@@ -78,7 +92,10 @@ export default function SolicitacaoModal({
   });
   const [loading, setLoading] = useState(false);
   const [anexos, setAnexos] = useState<File[]>([]);
-  const [anexosBackend, setAnexosBackend] = useState<AnexoBackend[]>([]);
+  const [anexosBackend, setAnexosBackend] = useState<AnexoFromBackend[]>([]);
+  const [statusPrazos, setStatusPrazos] = useState<StatusSolicPrazoTemaResponse[]>([]);
+  const [loadingStatusPrazos, setLoadingStatusPrazos] = useState(false);
+  const [prazoExcepcional, setPrazoExcepcional] = useState(false);
 
   useEffect(() => {
     if (solicitacao) {
@@ -97,6 +114,7 @@ export default function SolicitacaoModal({
         nrOficio: solicitacao.nrOficio || '',
         nrProcesso: solicitacao.nrProcesso || ''
       });
+      setPrazoExcepcional(Boolean(solicitacao.nrPrazo && solicitacao.nrPrazo > 0));
     } else {
       setFormData({
         cdIdentificacao: '',
@@ -112,6 +130,7 @@ export default function SolicitacaoModal({
         nrOficio: '',
         nrProcesso: ''
       });
+      setPrazoExcepcional(false);
     }
     setCurrentStep(1);
     setAnexos([]);
@@ -119,7 +138,9 @@ export default function SolicitacaoModal({
 
   useEffect(() => {
     if (solicitacao && solicitacao.idSolicitacao && open) {
-      solicitacoesClient.buscarAnexos(solicitacao.idSolicitacao).then(setAnexosBackend);
+      solicitacoesClient.buscarAnexos(solicitacao.idSolicitacao).then((anexos) => {
+        setAnexosBackend(anexos);
+      });
     } else {
       setAnexosBackend([]);
     }
@@ -154,7 +175,7 @@ export default function SolicitacaoModal({
   }, [temas, getResponsavelFromTema]);
 
   const handleInputChange = useCallback((e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
+    const {name, value} = e.target;
     let processedValue: string | number | undefined = value;
 
     if (name === 'dsAssunto') {
@@ -174,19 +195,6 @@ export default function SolicitacaoModal({
       ...prev,
       idsAreas: selectedIds
     }));
-  }, []);
-
-  const handleAreaToggle = useCallback((areaId: number) => {
-    setFormData(prev => {
-      const currentAreas = prev.idsAreas || [];
-      const isChecked = currentAreas.includes(areaId);
-      return {
-        ...prev,
-        idsAreas: isChecked
-          ? currentAreas.filter(id => id !== areaId)
-          : [...currentAreas, areaId]
-      };
-    });
   }, []);
 
   const handleSelectChange = useCallback((field: keyof SolicitacaoRequest, value: string) => {
@@ -216,12 +224,12 @@ export default function SolicitacaoModal({
         toast.error("Código de identificação é obrigatório");
         return;
       }
+      setCurrentStep(2);
+    } else if (currentStep === 2) {
       if (!formData.idTema || formData.idTema === 0) {
         toast.error("Tema é obrigatório");
         return;
       }
-      setCurrentStep(2);
-    } else if (currentStep === 2) {
       setCurrentStep(3);
     } else if (currentStep === 3) {
       setCurrentStep(4);
@@ -245,23 +253,17 @@ export default function SolicitacaoModal({
   const handleStepClick = useCallback((step: number) => {
     if (step === 1) {
       setCurrentStep(step);
-    } else if (step === 2 && formData.cdIdentificacao?.trim() && formData.idTema > 0) {
+    } else if (step === 2 && formData.cdIdentificacao?.trim()) {
       setCurrentStep(step);
-    } else if (step === 3 && formData.cdIdentificacao?.trim() && formData.idTema > 0) {
+    } else if (step === 3 && formData.cdIdentificacao?.trim() && (formData.idTema && formData.idTema > 0)) {
       setCurrentStep(step);
-    } else if (step === 4 && formData.cdIdentificacao?.trim() && formData.idTema > 0) {
+    } else if (step === 4 && formData.cdIdentificacao?.trim() && (formData.idTema && formData.idTema > 0)) {
       setCurrentStep(step);
-    } else if (step === 5 && formData.cdIdentificacao?.trim() && formData.idTema > 0) {
+    } else if (step === 5 && formData.cdIdentificacao?.trim() && (formData.idTema && formData.idTema > 0)) {
       setCurrentStep(step);
     }
   }, [formData.cdIdentificacao, formData.idTema]);
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    setAnexos(prev => [...prev, ...acceptedFiles]);
-  }, []);
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
-
-  // Funções para manipulação de anexos
   const handleAddAnexos = useCallback((files: FileList | null) => {
     if (files && files.length > 0) {
       const fileArray = Array.from(files);
@@ -274,22 +276,30 @@ export default function SolicitacaoModal({
   }, []);
 
   const handleRemoveAnexoBackend = useCallback(async (idAnexo: number) => {
+    if (!solicitacao?.idSolicitacao) return;
+
     try {
-      await solicitacoesClient.deletarAnexo(idAnexo);
+      await solicitacoesClient.removerAnexo(solicitacao.idSolicitacao, idAnexo);
       setAnexosBackend(prev => prev.filter(anexo => anexo.idAnexo !== idAnexo));
       toast.success('Documento removido com sucesso');
     } catch {
       toast.error('Erro ao remover documento');
     }
-  }, []);
+  }, [solicitacao?.idSolicitacao]);
 
-  const handleDownloadAnexoBackend = useCallback(async (anexo: any) => {
+  const handleDownloadAnexoBackend = useCallback(async (anexo: AnexoListItem) => {
     try {
-      const blob = await solicitacoesClient.downloadAnexo(anexo.idObjeto, anexo.nmArquivo);
+      // Garantir que temos os dados necessários do anexo
+      if (!anexo.idObjeto || !anexo.idAnexo) {
+        toast.error('Dados do documento incompletos');
+        return;
+      }
+
+      const blob = await solicitacoesClient.downloadAnexo(anexo.idObjeto, anexo.idAnexo);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = anexo.nmArquivo;
+      link.download = anexo.nmArquivo || anexo.name || 'documento';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -358,112 +368,300 @@ export default function SolicitacaoModal({
   }, [onClose]);
 
   const isStep1Valid = useCallback(() => {
-    return formData.cdIdentificacao?.trim() !== '' && formData.idTema > 0;
-  }, [formData.cdIdentificacao, formData.idTema]);
+    return formData.cdIdentificacao?.trim() !== '';
+  }, [formData.cdIdentificacao]);
 
   const isStep2Valid = useCallback(() => {
-    return formData.idTema > 0;
+    return formData.idTema !== undefined && formData.idTema > 0;
   }, [formData.idTema]);
 
   const getSelectedTema = useCallback(() => {
     return temas.find(tema => tema.idTema === formData.idTema);
   }, [temas, formData.idTema]);
 
-  const selectedAreas = useCallback(() => {
-    return solicitacao?.areas || [];
-  }, [solicitacao?.areas]);
-
   const renderStep2 = useCallback(() => (
     <div className="space-y-6">
       <div className="space-y-2">
-        <Label>Tema Selecionado</Label>
-        <div className="p-4 bg-gray-50 border rounded-3xl">
-          {getSelectedTema() ? (
-            <div className="flex items-center justify-between">
-              <span className="font-medium">{getSelectedTema()?.nmTema}</span>
-              <Badge>{responsaveis.find(r => r.idResponsavel === formData.idResponsavel)?.nmResponsavel || 'N/A'}</Badge>
-            </div>
-          ) : (
-            <span className="text-sm text-gray-500">Nenhum tema selecionado.</span>
-          )}
-        </div>
+        <Label htmlFor="tema">Tema *</Label>
+        <Select
+          value={formData.idTema ? formData.idTema.toString() : ''}
+          onValueChange={(value) => {
+            const temaId = parseInt(value);
+            fillDataFromTema(temaId);
+          }}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione o tema"/>
+          </SelectTrigger>
+          <SelectContent>
+            {temas.map((tema) => (
+              <SelectItem key={tema.idTema} value={tema.idTema.toString()}>
+                {tema.nmTema}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <MultiSelectAreas
         selectedAreaIds={formData.idsAreas || []}
         onSelectionChange={handleAreasSelectionChange}
+        disabled={formData.idTema === 0 || formData.idTema === null}
       />
     </div>
-  ), [getSelectedTema, responsaveis, formData.idResponsavel, formData.idsAreas, handleAreasSelectionChange]);
+  ), [formData.idTema, fillDataFromTema, temas, formData.idsAreas, handleAreasSelectionChange]);
 
-  const renderStep3 = useCallback(() => (
-    <div className="space-y-6">
-      <div className="grid grid-cols-3 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="status">Status *</Label>
-          <Select
-            value={formData.flStatus}
-            onValueChange={(value) => handleSelectChange('flStatus', value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="P">Pré-análise</SelectItem>
-              <SelectItem value="V">Vencido Regulatório</SelectItem>
-              <SelectItem value="A">Em análise Área Técnica</SelectItem>
-              <SelectItem value="T">Vencido Área Técnica</SelectItem>
-              <SelectItem value="R">Análise Regulatória</SelectItem>
-              <SelectItem value="O">Em Aprovação</SelectItem>
-              <SelectItem value="S">Em Assinatura</SelectItem>
-              <SelectItem value="C">Concluído</SelectItem>
-              <SelectItem value="X">Arquivado</SelectItem>
-            </SelectContent>
-          </Select>
+  const loadStatusPrazos = useCallback(async () => {
+    if (!formData.idTema) return;
+
+    try {
+      setLoadingStatusPrazos(true);
+      const prazos = await statusPrazoTemaClient.listarPrazosTema(formData.idTema);
+      setStatusPrazos(prazos);
+    } catch (error) {
+      console.error('Erro ao carregar prazos por status:', error);
+      toast.error('Erro ao carregar configurações de prazos');
+    } finally {
+      setLoadingStatusPrazos(false);
+    }
+  }, [formData.idTema]);
+
+  // Função para atualizar prazo de um status específico
+  const handleUpdateStatusPrazo = useCallback(async (statusCodigo: number, nrPrazoInterno: number) => {
+    if (!formData.idTema) return;
+
+    try {
+      const updated = await statusPrazoTemaClient.upsertPrazoStatus(
+        formData.idTema,
+        statusCodigo,
+        {nrPrazoInterno}
+      );
+
+      setStatusPrazos(prev => {
+        const index = prev.findIndex(p => p.statusCodigo === statusCodigo);
+        if (index >= 0) {
+          const newArray = [...prev];
+          newArray[index] = updated;
+          return newArray;
+        } else {
+          return [...prev, updated];
+        }
+      });
+
+      toast.success('Prazo interno atualizado com sucesso');
+    } catch (error) {
+      console.error('Erro ao atualizar prazo:', error);
+      toast.error('Erro ao atualizar prazo interno');
+    }
+  }, [formData.idTema]);
+
+  const renderStep3 = useCallback(() => {
+    // Definir os status disponíveis com suas descrições
+    const statusOptions = [
+      {codigo: 'P', nome: 'Pré-análise'},
+      {codigo: 'V', nome: 'Vencido Regulatório'},
+      {codigo: 'A', nome: 'Em análise Área Técnica'},
+      {codigo: 'T', nome: 'Vencido Área Técnica'},
+      {codigo: 'R', nome: 'Análise Regulatória'},
+      {codigo: 'O', nome: 'Em Aprovação'},
+      {codigo: 'S', nome: 'Em Assinatura'},
+      {codigo: 'C', nome: 'Concluído'},
+      {codigo: 'X', nome: 'Arquivado'}
+    ];
+
+    return (
+      <div className="space-y-6">
+        {/* Checkbox para Prazo Excepcional */}
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="prazoExcepcional"
+            checked={prazoExcepcional}
+            onCheckedChange={(checked) => {
+              setPrazoExcepcional(!!checked);
+              if (!checked) {
+                setFormData(prev => ({
+                  ...prev,
+                  nrPrazo: undefined,
+                  tpPrazo: ''
+                }));
+              }
+            }}
+          />
+          <Label htmlFor="prazoExcepcional" className="text-sm font-medium text-gray-700">
+            Prazo Excepcional
+          </Label>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="nrPrazo">Prazo</Label>
+        {/* Campos principais de status e prazos */}
+        <div className="grid grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="status">Status *</Label>
+            <Select
+              value={formData.flStatus}
+              onValueChange={(value) => handleSelectChange('flStatus', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o status"/>
+              </SelectTrigger>
+              <SelectContent>
+                {statusOptions.map((status) => (
+                  <SelectItem key={status.codigo} value={status.codigo}>
+                    {status.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <TextField
             id="nrPrazo"
+            label="Prazo"
             name="nrPrazo"
             type="number"
             value={formData.nrPrazo && formData.nrPrazo > 0 ? formData.nrPrazo.toString() : ''}
             onChange={handleInputChange}
+            placeholder="Dias"
+            disabled={!prazoExcepcional}
+            className="mt-1.5"
           />
+
+          <div className="space-y-2">
+            <Label htmlFor="tpPrazo">Tipo de Prazo</Label>
+            <Select
+              value={formData.tpPrazo}
+              onValueChange={(value) => handleSelectChange('tpPrazo', value)}
+              disabled={!prazoExcepcional}
+            >
+              <SelectTrigger className={!prazoExcepcional ? 'bg-gray-100 cursor-not-allowed' : ''}>
+                <SelectValue placeholder="Selecione"/>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="U">Dias Úteis</SelectItem>
+                <SelectItem value="C">Dias Corridos</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="tpPrazo">Tipo de Prazo</Label>
-          <Select
-            value={formData.tpPrazo}
-            onValueChange={(value) => handleSelectChange('tpPrazo', value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="U">Dias Úteis</SelectItem>
-              <SelectItem value="C">Dias Corridos</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Seção de configuração de prazos internos por status */}
+        {formData.idTema && (
+          <div className="border rounded-lg p-4 bg-gray-50">
+            <div className="mb-4">
+              <h3 className="text-lg font-medium text-gray-900">
+                Configuração de Prazos Internos por Status
+              </h3>
+              <p className="text-sm text-gray-600">
+                Configure prazos específicos para cada status do tema &quot;{getSelectedTema()?.nmTema}&quot;
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {loadingStatusPrazos ? (
+                <div className="flex items-center justify-center p-8">
+                  <div className="text-sm text-gray-500">Carregando configurações...</div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  {statusOptions.map((status) => {
+                    const prazoConfig = statusPrazos.find(p => p.statusCodigo.toString() === status.codigo);
+                    const prazoAtual = prazoConfig?.nrPrazoInterno || '';
+
+                    return (
+                      <div key={status.codigo} className="bg-white border rounded-lg p-4">
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-medium text-gray-900">{status.nome}</h4>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label className="text-xs text-gray-600">
+                              Prazo Interno (dias)
+                            </Label>
+                            <div className="flex gap-2">
+                              <TextField
+                                type="number"
+                                value={prazoAtual.toString()}
+                                onChange={(e) => {
+                                  const valor = parseInt(e.target.value) || 0;
+                                  if (valor > 0) {
+                                    handleUpdateStatusPrazo(parseInt(status.codigo, 10), valor);
+                                  }
+                                }}
+                                placeholder="0"
+                                className="flex-1"
+                              />
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={() => {
+                                  const input = document.querySelector(`input[value="${prazoAtual}"]`) as HTMLInputElement;
+                                  if (input && input.value) {
+                                    const valor = parseInt(input.value) || 0;
+                                    if (valor > 0) {
+                                      handleUpdateStatusPrazo(parseInt(status.codigo, 10), valor);
+                                    }
+                                  }
+                                }}
+                                disabled={!prazoAtual || prazoAtual === 0}
+                                className="px-3"
+                              >
+                                Salvar
+                              </Button>
+                            </div>
+                          </div>
+
+                          {prazoConfig && (
+                            <div className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+                              ✓ Configurado: {prazoConfig.nrPrazoInterno} dias
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <div className="text-blue-500 mt-0.5">ℹ️</div>
+                  <div className="text-sm text-blue-700">
+                    <strong>Dica:</strong> Os prazos internos configurados aqui são específicos para este tema
+                    e podem ser diferentes dos prazos padrão. Deixe em branco para usar o prazo padrão do tema.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-    </div>
-  ), [formData.flStatus, handleSelectChange, formData.nrPrazo, handleInputChange, formData.tpPrazo]);
+    );
+  }, [
+    formData.flStatus,
+    formData.nrPrazo,
+    formData.tpPrazo,
+    formData.idTema,
+    prazoExcepcional,
+    handleSelectChange,
+    handleInputChange,
+    getSelectedTema,
+    loadingStatusPrazos,
+    statusPrazos,
+    handleUpdateStatusPrazo
+  ]);
 
   const renderStep4 = useCallback(() => (
     <div className="space-y-6">
 
       {/* Componente de Upload de Anexos */}
       <div className="flex flex-col space-y-4">
-        <AnexoComponent onAddAnexos={handleAddAnexos} />
+        <AnexoComponent onAddAnexos={handleAddAnexos}/>
 
         {/* Lista de Anexos Novos (a serem enviados) */}
         {anexos.length > 0 && (
           <div>
-            <Label className="text-sm font-medium mb-2 block">Novos documentos:</Label>
-            <AnexoList anexos={anexos} onRemove={handleRemoveAnexo} />
+            <Label className="text-sm font-medium mb-2 block">Anexos:</Label>
+            <AnexoList anexos={anexos} onRemove={handleRemoveAnexo}/>
           </div>
         )}
 
@@ -473,31 +671,27 @@ export default function SolicitacaoModal({
             <Label className="text-sm font-medium mb-2 block">Documentos já anexados:</Label>
             <AnexoList
               anexos={anexosBackend.map(a => ({
-                name: a.nmArquivo,
-                size: 0,
                 idAnexo: a.idAnexo,
                 idObjeto: a.idObjeto,
+                name: a.nmArquivo,
                 nmArquivo: a.nmArquivo,
                 dsCaminho: a.dsCaminho,
-                tpObjeto: a.tpObjeto
+                tpObjeto: a.tpObjeto,
+                size: 0
               }))}
-              onRemove={handleRemoveAnexoBackend}
+              onRemove={(index) => {
+                const anexo = anexosBackend[index];
+                if (anexo?.idAnexo) {
+                  handleRemoveAnexoBackend(anexo.idAnexo);
+                }
+              }}
               onDownload={handleDownloadAnexoBackend}
             />
           </div>
         )}
-
-        {anexos.length === 0 && anexosBackend.length === 0 && (
-          <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
-            <p className="text-gray-500">Nenhum documento anexado ainda</p>
-            <p className="text-sm text-gray-400 mt-1">
-              Use o botão <strong>Anexar Documento</strong> acima para adicionar arquivos
-            </p>
-          </div>
-        )}
       </div>
     </div>
-  ), [anexos, anexosBackend]);
+  ), [anexos, anexosBackend, handleAddAnexos, handleRemoveAnexo, handleRemoveAnexoBackend, handleDownloadAnexoBackend]);
 
   const renderStep5 = useCallback(() => (
     <div className="space-y-6">
@@ -611,31 +805,14 @@ export default function SolicitacaoModal({
           maxLength={1000}
         />
       </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="tema">Tema *</Label>
-        <Select
-          value={formData.idTema ? formData.idTema.toString() : ''}
-          onValueChange={(value) => {
-            const temaId = parseInt(value);
-            fillDataFromTema(temaId);
-          }}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Selecione o tema" />
-          </SelectTrigger>
-          <SelectContent>
-            {temas.map((tema) => (
-              <SelectItem key={tema.idTema} value={tema.idTema.toString()}>
-                {tema.nmTema}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
     </div>
   );
 
+  useEffect(() => {
+    if (currentStep === 3 && formData.idTema) {
+      loadStatusPrazos();
+    }
+  }, [currentStep, formData.idTema, loadStatusPrazos]);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -646,7 +823,7 @@ export default function SolicitacaoModal({
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="flex flex-col overflow-y-auto space-y-8">
           {/* Stepper Navigation */}
           <div className="flex justify-center mb-8">
             <div className="flex items-center space-x-4">
@@ -663,13 +840,13 @@ export default function SolicitacaoModal({
                         : 'border-gray-300 text-gray-400'
                   }`}
                 >
-                  {currentStep > 1 ? <CheckIcon size={20} /> : '1'}
+                  {currentStep > 1 ? <CheckIcon size={20}/> : '1'}
                 </button>
                 <span className={`text-xs font-medium text-center ${
-                  currentStep === 1 
-                    ? 'text-blue-600' 
-                    : currentStep > 1 
-                      ? 'text-blue-500' 
+                  currentStep === 1
+                    ? 'text-blue-600'
+                    : currentStep > 1
+                      ? 'text-blue-500'
                       : 'text-gray-400'
                 }`}>
                   Dados da<br/>Solicitação
@@ -695,15 +872,15 @@ export default function SolicitacaoModal({
                         : 'border-gray-300 text-gray-400'
                   }`}
                 >
-                  {currentStep > 2 ? <CheckIcon size={20} /> : '2'}
+                  {currentStep > 2 ? <CheckIcon size={20}/> : '2'}
                 </button>
                 <span className={`text-xs font-medium text-center ${
-                  currentStep === 2 
-                    ? 'text-blue-600' 
-                    : currentStep > 2 
-                      ? 'text-blue-500' 
-                      : currentStep >= 2 
-                        ? 'text-blue-600' 
+                  currentStep === 2
+                    ? 'text-blue-600'
+                    : currentStep > 2
+                      ? 'text-blue-500'
+                      : currentStep >= 2
+                        ? 'text-blue-600'
                         : 'text-gray-400'
                 }`}>
                   Tema e<br/>Áreas
@@ -729,14 +906,14 @@ export default function SolicitacaoModal({
                         : 'border-gray-300 text-gray-400'
                   }`}
                 >
-                  {currentStep > 3 ? <CheckIcon size={20} /> : '3'}
+                  {currentStep > 3 ? <CheckIcon size={20}/> : '3'}
                 </button>
                 <span className={`text-xs font-medium text-center ${
-                  currentStep === 3 
-                    ? 'text-blue-600' 
-                    : currentStep > 3 
-                      ? 'text-blue-500' 
-                      : currentStep >= 3 
+                  currentStep === 3
+                    ? 'text-blue-600'
+                    : currentStep > 3
+                      ? 'text-blue-500'
+                      : currentStep >= 3
                         ? 'text-blue-600'
                         : 'text-gray-400'
                 }`}>
@@ -763,15 +940,15 @@ export default function SolicitacaoModal({
                         : 'border-gray-300 text-gray-400'
                   }`}
                 >
-                  {currentStep > 4 ? <CheckIcon size={20} /> : '4'}
+                  {currentStep > 4 ? <CheckIcon size={20}/> : '4'}
                 </button>
                 <span className={`text-xs font-medium text-center ${
-                  currentStep === 4 
-                    ? 'text-blue-600' 
-                    : currentStep > 4 
-                      ? 'text-blue-500' 
-                      : currentStep >= 4 
-                        ? 'text-blue-600' 
+                  currentStep === 4
+                    ? 'text-blue-600'
+                    : currentStep > 4
+                      ? 'text-blue-500'
+                      : currentStep >= 4
+                        ? 'text-blue-600'
                         : 'text-gray-400'
                 }`}>
                   Anexos
@@ -797,15 +974,15 @@ export default function SolicitacaoModal({
                         : 'border-gray-300 text-gray-400'
                   }`}
                 >
-                  {currentStep > 5 ? <CheckIcon size={20} /> : '5'}
+                  {currentStep > 5 ? <CheckIcon size={20}/> : '5'}
                 </button>
                 <span className={`text-xs font-medium text-center ${
-                  currentStep === 5 
-                    ? 'text-blue-600' 
-                    : currentStep > 5 
-                      ? 'text-blue-500' 
-                      : currentStep >= 5 
-                        ? 'text-blue-600' 
+                  currentStep === 5
+                    ? 'text-blue-600'
+                    : currentStep > 5
+                      ? 'text-blue-500'
+                      : currentStep >= 5
+                        ? 'text-blue-600'
                         : 'text-gray-400'
                 }`}>
                   Resumo
@@ -822,119 +999,119 @@ export default function SolicitacaoModal({
             {currentStep === 5 && renderStep5()}
           </div>
 
-          <DialogFooter className="flex gap-3 pt-6 border-t">
-            <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
-              Cancelar
-            </Button>
+        </form>
+        <DialogFooter className="flex gap-3 pt-6 border-t">
+          <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
+            Cancelar
+          </Button>
 
-            {currentStep === 1 && (
+          {currentStep === 1 && (
+            <Button
+              type="button"
+              onClick={handleNextStep}
+              disabled={!isStep1Valid()}
+              className="flex items-center gap-2"
+            >
+              Próximo
+              <CaretRightIcon size={16}/>
+            </Button>
+          )}
+
+          {currentStep === 2 && (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handlePreviousStep}
+                disabled={loading}
+                className="flex items-center gap-2"
+              >
+                <CaretLeftIcon size={16}/>
+                Anterior
+              </Button>
               <Button
                 type="button"
                 onClick={handleNextStep}
-                disabled={!isStep1Valid()}
+                disabled={loading || !isStep2Valid()}
                 className="flex items-center gap-2"
               >
                 Próximo
-                <CaretRightIcon size={16} />
+                <CaretRightIcon size={16}/>
               </Button>
-            )}
+            </>
+          )}
 
-            {currentStep === 2 && (
-              <>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handlePreviousStep}
-                  disabled={loading}
-                  className="flex items-center gap-2"
-                >
-                  <CaretLeftIcon size={16} />
-                  Anterior
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleNextStep}
-                  disabled={loading || !isStep2Valid()}
-                  className="flex items-center gap-2"
-                >
-                  Próximo
-                  <CaretRightIcon size={16} />
-                </Button>
-              </>
-            )}
+          {currentStep === 3 && (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handlePreviousStep}
+                disabled={loading}
+                className="flex items-center gap-2"
+              >
+                <CaretLeftIcon size={16}/>
+                Anterior
+              </Button>
+              <Button
+                type="button"
+                onClick={handleNextStep}
+                disabled={loading}
+                className="flex items-center gap-2"
+              >
+                Próximo
+                <CaretRightIcon size={16}/>
+              </Button>
+            </>
+          )}
 
-            {currentStep === 3 && (
-              <>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handlePreviousStep}
-                  disabled={loading}
-                  className="flex items-center gap-2"
-                >
-                  <CaretLeftIcon size={16} />
-                  Anterior
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleNextStep}
-                  disabled={loading}
-                  className="flex items-center gap-2"
-                >
-                  Próximo
-                  <CaretRightIcon size={16} />
-                </Button>
-              </>
-            )}
+          {currentStep === 4 && (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handlePreviousStep}
+                disabled={loading}
+                className="flex items-center gap-2"
+              >
+                <CaretLeftIcon size={16}/>
+                Anterior
+              </Button>
+              <Button
+                type="button"
+                onClick={handleNextStep}
+                disabled={loading}
+                className="flex items-center gap-2"
+              >
+                Próximo
+                <CaretRightIcon size={16}/>
+              </Button>
+            </>
+          )}
 
-            {currentStep === 4 && (
-              <>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handlePreviousStep}
-                  disabled={loading}
-                  className="flex items-center gap-2"
-                >
-                  <CaretLeftIcon size={16} />
-                  Anterior
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleNextStep}
-                  disabled={loading}
-                  className="flex items-center gap-2"
-                >
-                  Próximo
-                  <CaretRightIcon size={16} />
-                </Button>
-              </>
-            )}
-
-            {currentStep === 5 && (
-              <>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handlePreviousStep}
-                  disabled={loading}
-                  className="flex items-center gap-2"
-                >
-                  <CaretLeftIcon size={16} />
-                  Anterior
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="flex items-center gap-2"
-                >
-                  { solicitacao && <ArrowBendUpRightIcon className="h-4 w-4 mr-2"/>}
-                  {loading ? 'Salvando...' : solicitacao ? 'Encaminhar Solicitação' : 'Criar Solicitação'}
-                </Button>
-              </>
-            )}
-          </DialogFooter>
-        </form>
+          {currentStep === 5 && (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handlePreviousStep}
+                disabled={loading}
+                className="flex items-center gap-2"
+              >
+                <CaretLeftIcon size={16}/>
+                Anterior
+              </Button>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="flex items-center gap-2"
+              >
+                {solicitacao && <ArrowBendUpRightIcon className="h-4 w-4 mr-2"/>}
+                {loading ? 'Salvando...' : solicitacao ? 'Encaminhar Solicitação' : 'Criar Solicitação'}
+              </Button>
+            </>
+          )}
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
