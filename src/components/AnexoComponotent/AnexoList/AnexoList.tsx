@@ -1,4 +1,4 @@
-import {DownloadSimpleIcon, TrashIcon} from "@phosphor-icons/react";
+import {DownloadSimpleIcon, XIcon} from "@phosphor-icons/react";
 import {Button} from "@/components/ui/button";
 import React from "react";
 
@@ -67,10 +67,9 @@ export default function AnexoList({
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-red-600 hover:text-red-600 hover:bg-red-100"
                 onClick={() => onRemove(index)}
               >
-                <TrashIcon className="h-4 w-4"/>
+                <XIcon className="h-4 w-4"/>
               </Button>
             </div>
           );

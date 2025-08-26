@@ -22,11 +22,14 @@ class StatusPrazoTemaClient {
     });
   }
 
-  /**
-   * Lista todos os prazos configurados para um tema
-   */
   async listarPrazosTema(idTema: number): Promise<StatusSolicPrazoTemaResponse[]> {
     return this.client.request<StatusSolicPrazoTemaResponse[]>(`/${idTema}/status/prazos`, {
+      method: 'GET',
+    });
+  }
+
+  async listarStatusPorTema(idTema: number): Promise<StatusSolicPrazoTemaResponse[]> {
+    return this.client.request<StatusSolicPrazoTemaResponse[]>(`/${idTema}/status`, {
       method: 'GET',
     });
   }

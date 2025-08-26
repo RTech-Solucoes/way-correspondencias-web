@@ -34,12 +34,12 @@ export function MultiSelectAreas({
       try {
         setLoading(true);
 
-        const [areasResponse, responsaveisResponse] = await Promise.all([
+        const [areaResponse, responsaveisResponse] = await Promise.all([
           areasClient.buscarPorFiltro({ size: 1000 }),
           responsaveisClient.buscarPorFiltro({ size: 1000 })
         ]);
 
-        const areasAtivas = areasResponse.content.filter((area: AreaResponse) => area.flAtivo === 'S');
+        const areasAtivas = areaResponse.content.filter((area: AreaResponse) => area.flAtivo === 'S');
         const responsaveisAtivos = responsaveisResponse.content.filter((resp: ResponsavelResponse) => resp.flAtivo === 'S');
 
         setAreas(areasAtivas);
@@ -89,7 +89,7 @@ export function MultiSelectAreas({
               <div
                 key={area.idArea}
                 className={cn(
-                  "flex items-center justify-between p-3 bg-gray-50 border box-border rounded-3xl transition-colors min-w-0",
+                  "flex flex-col items-start gap-2 justify-between p-3 bg-gray-100 box-border rounded-3xl transition-colors min-w-0",
                   disabled ? "cursor-not-allowed bg-gray-100" : "cursor-pointer hover:bg-gray-100"
                 )}
                 onClick={() => handleAreaToggle(area.idArea)}
@@ -116,7 +116,7 @@ export function MultiSelectAreas({
                 <Badge
                   variant="secondary"
                   className={cn(
-                    "ml-2 flex-shrink-0 text-xs",
+                    "ml-2 flex-shrink-0 text-xs border-none text-foreground bg-gray-200",
                     disabled && "opacity-60"
                   )}
                 >

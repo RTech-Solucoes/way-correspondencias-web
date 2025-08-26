@@ -40,6 +40,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { Pagination } from '@/components/ui/pagination';
 import { formatDate } from '@/utils/utils';
 import { useSolicitacoes } from '@/context/solicitacoes/SolicitacoesContext';
+import TramitacaoList from '@/components/solicitacoes/TramitacaoList';
 
 export default function SolicitacoesPage() {
   const {
@@ -373,81 +374,7 @@ export default function SolicitacoesPage() {
                   {expandedRows.has(solicitacao.idSolicitacao) && (
                     <StickyTableRow>
                       <StickyTableCell colSpan={9} className="bg-gray-50 p-6">
-                        <div className="space-y-4">
-                          <div className="grid grid-cols-2 gap-6">
-                            <div>
-                              <h4 className="font-semibold text-gray-900 mb-2">Informações Detalhadas</h4>
-                              <div className="space-y-2 text-sm">
-                                {solicitacao.dsSolicitacao && (
-                                  <div>
-                                    <span className="font-medium text-gray-700">Descrição:</span>
-                                    <p className="text-gray-600 mt-1">{solicitacao.dsSolicitacao}</p>
-                                  </div>
-                                )}
-                                {solicitacao.dsObservacao && (
-                                  <div>
-                                    <span className="font-medium text-gray-700">Observações:</span>
-                                    <p className="text-gray-600 mt-1">{solicitacao.dsObservacao}</p>
-                                  </div>
-                                )}
-                                {solicitacao.nrOficio && (
-                                  <div>
-                                    <span className="font-medium text-gray-700">Nº Ofício:</span>
-                                    <span className="text-gray-600 ml-2">{solicitacao.nrOficio}</span>
-                                  </div>
-                                )}
-                                {solicitacao.nrProcesso && (
-                                  <div>
-                                    <span className="font-medium text-gray-700">Nº Processo:</span>
-                                    <span className="text-gray-600 ml-2">{solicitacao.nrProcesso}</span>
-                                  </div>
-                                )}
-                                {solicitacao.nrPrazo && (
-                                  <div>
-                                    <span className="font-medium text-gray-700">Prazo (dias):</span>
-                                    <span className="text-gray-600 ml-2">{solicitacao.nrPrazo}</span>
-                                  </div>
-                                )}
-                                {solicitacao.tpPrazo && (
-                                  <div>
-                                    <span className="font-medium text-gray-700">Tipo de Prazo:</span>
-                                    <span className="text-gray-600 ml-2">{solicitacao.tpPrazo}</span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            <div>
-                              <h4 className="font-semibold text-gray-900 mb-2">Informações Adicionais</h4>
-                              <div className="space-y-2 text-sm">
-                                <div>
-                                  <span className="font-medium text-gray-700">ID Solicitação:</span>
-                                  <span className="text-gray-600 ml-2">{solicitacao.idSolicitacao}</span>
-                                </div>
-                                {solicitacao.idEmail && (
-                                  <div>
-                                    <span className="font-medium text-gray-700">ID Email:</span>
-                                    <span className="text-gray-600 ml-2">{solicitacao.idEmail}</span>
-                                  </div>
-                                )}
-                                {solicitacao.idTema && (
-                                  <div>
-                                    <span className="font-medium text-gray-700">ID Tema:</span>
-                                    <span className="text-gray-600 ml-2">{solicitacao.idTema}</span>
-                                  </div>
-                                )}
-                                {solicitacao.statusCodigo && (
-                                  <div>
-                                    <span className="font-medium text-gray-700">Status Código:</span>
-                                    <span className="text-gray-600 ml-2">{solicitacao.statusCodigo}</span>
-                                  </div>
-                                )}
-                                <div className="text-xs text-gray-500 mt-4">
-                                  <p>Nota: Campos como responsável e áreas não estão disponíveis na nova estrutura da API.</p>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                        <TramitacaoList idSolicitacao={solicitacao.idSolicitacao} areas={areas} />
                       </StickyTableCell>
                     </StickyTableRow>
                   )}

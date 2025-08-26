@@ -1,0 +1,45 @@
+import ApiClient from "../client";
+import { TramitacaoResponse, TramitacaoRequest } from './types';
+
+class TramitacoesClient {
+  private client: ApiClient;
+
+  constructor() {
+    this.client = new ApiClient('/tramitacoes');
+  }
+
+  async obter(id: number): Promise<TramitacaoResponse> {
+    return this.client.request<TramitacaoResponse>(`/${id}`, {
+      method: 'GET',
+    });
+  }
+
+  async listarPorSolicitacao(idSolicitacao: number): Promise<TramitacaoResponse[]> {
+    return this.client.request<TramitacaoResponse[]>(`/solicitacao/${idSolicitacao}`, {
+      method: 'GET',
+    });
+  }
+
+  async criar(data: TramitacaoRequest): Promise<TramitacaoResponse> {
+    return this.client.request<TramitacaoResponse>('', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async atualizar(id: number, data: TramitacaoRequest): Promise<TramitacaoResponse> {
+    return this.client.request<TramitacaoResponse>(`/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deletar(id: number): Promise<void> {
+    return this.client.request<void>(`/${id}`, {
+      method: 'DELETE',
+    });
+  }
+}
+
+export const tramitacoesClient = new TramitacoesClient();
+export default tramitacoesClient;

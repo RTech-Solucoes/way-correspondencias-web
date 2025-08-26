@@ -79,7 +79,7 @@ export default function EmailDetail({
 
   const loadModalData = async () => {
     try {
-      const [responsaveisResponse, temasResponse, areasResponse] = await Promise.all([
+      const [responsaveisResponse, temasResponse, areaResponse] = await Promise.all([
         responsaveisClient.buscarPorFiltro({ size: 100 }),
         temasClient.buscarPorFiltro({ size: 100 }),
         areasClient.buscarPorFiltro({ size: 100 })
@@ -87,7 +87,7 @@ export default function EmailDetail({
 
       setResponsaveis(responsaveisResponse.content);
       setTemas(temasResponse.content);
-      setAreas(areasResponse.content);
+      setAreas(areaResponse.content);
     } catch {
       toast.error("Erro ao carregar dados do formulário");
     }
