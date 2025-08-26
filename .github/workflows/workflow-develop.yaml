@@ -3,7 +3,7 @@ name: Deploy Way WEB
 on:
   push:
     branches:
-      - develop
+      - poc
 
 jobs:
   deploy:
