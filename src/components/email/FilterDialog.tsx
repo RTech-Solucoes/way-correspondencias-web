@@ -1,11 +1,9 @@
-import { Label } from "@/components/ui/label";
-import useModal from "@/context/modal/ModalContext";
-import { Dispatch, SetStateAction } from "react";
-import BaseModal from "../BaseModal/BaseModal";
-import { Button } from "../ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
-import { Input } from "../ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import {Label} from "@/components/ui/label";
+import {Dispatch, SetStateAction} from "react";
+import {Button} from "../ui/button";
+import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from "../ui/dialog";
+import {Input} from "../ui/input";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "../ui/select";
 
 interface IEmailFilters {
     remetente: string;

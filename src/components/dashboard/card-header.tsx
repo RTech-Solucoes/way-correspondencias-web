@@ -9,7 +9,7 @@ interface ICardHeader {
   children?: ReactNode
 }
 
-export default function CardHeaderComponent(props: ICardHeader) {
+export default function Component(props: ICardHeader) {
   return (
     <CardHeader>
       <div className="flex items-center justify-between">

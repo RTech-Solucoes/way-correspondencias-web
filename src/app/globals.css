@@ -151,7 +151,9 @@ select {
 
 .glass {
   @apply
-  bg-gray-200/50
+  bg-gradient-to-tr
+  from-gray-200/50
+  to-gray-200/10
   backdrop-blur-lg
 }
 

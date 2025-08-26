@@ -1,5 +1,5 @@
-import { mockUsersEmail } from "@/api/MockDados";
-import CardHeaderComponent from "@/components/CardHeaderComponent/CardHeaderComponent";
+import { mockUsersEmail } from "@/components/dashboard/MockDados";
+import CardHeader from "@/components/CardHeader/CardHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@radix-ui/react-avatar";
@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback } from "@radix-ui/react-avatar";
 export default function RecentActivity() {
   return (
     <Card className="flex flex-col">
-      <CardHeaderComponent
+      <CardHeader
         title="Atividade Recente"
         description="Últimas ações no sistema"
       />

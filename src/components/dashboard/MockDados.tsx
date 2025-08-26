@@ -61,9 +61,3 @@ export const obligationsRecent = [
     { id: 2, title: "5.2 - Contrato", status: "pendente", date: "Ontem, 10:15", assignee: "Operação" },
     { id: 3, title: "Ofício SEI n. 714/2025", status: "em_andamento", date: "17/07, 09:45", assignee: "Meio Ambiente" },
 ]
-
-export const mockAnexos = [
-    new File(["Conteúdo do arquivo 1"], "arquivo1.txt", { type: "text/plain" }),
-    new File(["Conteúdo do arquivo 2"], "arquivo2.pdf", { type: "application/pdf" }),
-    new File(["Conteúdo do arquivo 3"], "arquivo3.jpg", { type: "image/jpeg" }),
-];

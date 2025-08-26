@@ -6,7 +6,7 @@ import {EmailProvider} from '@/context/email/EmailContext';
 import {ResponsaveisProvider} from '@/context/responsaveis/ResponsaveisContext';
 import {SolicitacoesProvider} from '@/context/solicitacoes/SolicitacoesContext';
 import {TemasProvider} from '@/context/temas/TemasContext';
-import {ApiProvider} from "@/api/ApiProvider";
+import {ApiProvider} from "@/providers/ApiProvider";
 import IconProvider from "@/providers/IconProvider";
 
 interface ProvidersProps {

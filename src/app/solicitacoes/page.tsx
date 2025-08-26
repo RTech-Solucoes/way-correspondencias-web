@@ -146,7 +146,7 @@ export default function SolicitacoesPage() {
         const params: SolicitacaoFilterParams = {
           filtro: filterParts.join(' ') || undefined,
           page: currentPage,
-          size: 10,
+          size: 15,
         };
         const response = await solicitacoesClient.buscarPorFiltro(params);
         setSolicitacoes(response.content);
@@ -215,6 +215,11 @@ export default function SolicitacoesPage() {
   };
 
   const sortedSolicitacoes = () => {
+    // Verificação de segurança para garantir que solicitacoes seja um array
+    if (!Array.isArray(solicitacoes)) {
+      return [];
+    }
+
     const sorted = [...solicitacoes];
     if (sortField) {
       sorted.sort((a, b) => {

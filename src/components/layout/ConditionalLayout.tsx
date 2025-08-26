@@ -5,8 +5,6 @@ import { ReactNode } from 'react';
 import { cn } from "@/utils/utils";
 import Sidebar from "@/components/layout/sidebar/Sidebar";
 import { PUBLIC_ROUTES } from "@/constants/pages";
-import useModal from '@/context/modal/ModalContext';
-import { Modal } from '@/components/Modal/Modal';
 
 interface ConditionalLayoutProps {
   children: ReactNode;
@@ -14,7 +12,6 @@ interface ConditionalLayoutProps {
 
 export default function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const pathname = usePathname();
-  const { modalContent } = useModal();
 
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
 
@@ -38,7 +35,6 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
       <article>
         {children}
       </article>
-      {modalContent && <Modal>{modalContent}</Modal>}
     </main>
   );
 }
