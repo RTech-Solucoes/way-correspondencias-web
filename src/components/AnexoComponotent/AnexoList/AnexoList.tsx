@@ -1,4 +1,6 @@
 import {DownloadSimpleIcon, TrashIcon} from "@phosphor-icons/react";
+import {Button} from "@/components/ui/button";
+import React from "react";
 
 interface AnexoBackend {
   idAnexo?: number;
@@ -22,53 +24,54 @@ export default function AnexoList({
   onDownload,
 }: AnexoListProps) {
   return (
-    <div className="flex gap-2 w-full flex-wrap">
+    <div className="flex flex-col gap-2 w-full">
       {anexos.length === 0 ? (
-        <span className="text-neutral-400 text-sm">Anexar Documento</span>
+        <span className="w-full text-foreground text-sm">Anexar Documento</span>
       ) : (
-        anexos.map((file, idx) => {
+        anexos.map((file, index) => {
           const isBackend = (file as AnexoBackend).idAnexo !== undefined;
           return (
-            <div className="flex border rounded-md justify-between" key={idx}>
-              <div
-                className="flex justify-between p-2 items-center text-sm max-w-[220px] cursor-pointer"
-                onClick={() => {
-                  if (isBackend && onDownload) {
-                    onDownload(file as AnexoBackend);
-                  } else {
-                    const fileURL = URL.createObjectURL(file as File);
-                    window.open(fileURL, "_blank");
-                  }
-                }}
+            <div
+              key={index}
+              className="flex w-full rounded-3xl border items-center justify-between bg-gray-50 px-4 py-2 text-sm cursor-pointer"
+              onClick={() => {
+                if (isBackend && onDownload) {
+                  onDownload(file as AnexoBackend);
+                } else {
+                  const fileURL = URL.createObjectURL(file as File);
+                  window.open(fileURL, "_blank");
+                }
+              }}
+            >
+              <span className="truncate w-full">
+                {file.name || (file as AnexoBackend).nmArquivo}
+              </span>
+              <span className="text-gray-400 text-xs whitespace-nowrap mr-4">
+                {file.size
+                  ? ((file.size / 1024).toFixed(1) + " KB")
+                  : ""}
+              </span>
+              {isBackend &&
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-green-600 hover:text-green-600 hover:bg-green-100"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onDownload) onDownload(file as AnexoBackend);
+                  }}
+                >
+                  <DownloadSimpleIcon size={18}/>
+                </Button>
+              }
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-red-600 hover:text-red-600 hover:bg-red-100"
+                onClick={() => onRemove(index)}
               >
-                <span className="truncate w-4/6">
-                  {file.name || (file as AnexoBackend).nmArquivo}
-                </span>
-                <span className="text-gray-400 text-xs">
-                  {file.size
-                    ? ((file.size / 1024).toFixed(1) + " KB")
-                    : ""}
-                </span>
-                {isBackend && (
-                  <button
-                    type="button"
-                    className="ml-2 text-blue-500"
-                    title="Baixar"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (onDownload) onDownload(file as AnexoBackend);
-                    }}
-                  >
-                    <DownloadSimpleIcon size={18} />
-                  </button>
-                )}
-              </div>
-              <button
-                onClick={() => onRemove(idx)}
-                className=" text-white bg-red-500 w-10 h-full rounded-l-full flex justify-center items-center"
-              >
-                <TrashIcon size={18} weight="bold" />
-              </button>
+                <TrashIcon className="h-4 w-4"/>
+              </Button>
             </div>
           );
         })

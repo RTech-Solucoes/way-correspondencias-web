@@ -145,49 +145,69 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
     setShowFilterModal(false);
   };
 
-  const getStatusBadgeVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
-    switch (status.toUpperCase()) {
+  const getStatusBadgeVariant = (status: string | number): "default" | "secondary" | "destructive" | "outline" => {
+    const statusStr = status?.toString()?.toUpperCase();
+    switch (statusStr) {
       case 'P':
+      case '1':
         return 'secondary';
       case 'V':
       case 'T':
+      case '2':
+      case '4':
         return 'destructive';
       case 'A':
       case 'R':
       case 'O':
       case 'S':
+      case '3':
+      case '5':
+      case '6':
+      case '7':
         return 'default';
       case 'C':
-        return 'default';
+      case '8':
+        return 'outline';
       case 'X':
+      case '9':
         return 'outline';
       default:
         return 'secondary';
     }
   };
 
-  const getStatusText = (status: string) => {
-    switch (status.toUpperCase()) {
+  const getStatusText = (status: string | number) => {
+    const statusStr = status?.toString()?.toUpperCase();
+    switch (statusStr) {
       case 'P':
+      case '1':
         return 'Pré-análise';
       case 'V':
+      case '2':
         return 'Vencido Regulatório';
       case 'A':
+      case '3':
         return 'Em análise Área Técnica';
       case 'T':
+      case '4':
         return 'Vencido Área Técnica';
       case 'R':
+      case '5':
         return 'Análise Regulatória';
       case 'O':
+      case '6':
         return 'Em Aprovação';
       case 'S':
+      case '7':
         return 'Em Assinatura';
       case 'C':
+      case '8':
         return 'Concluído';
       case 'X':
+      case '9':
         return 'Arquivado';
       default:
-        return status;
+        return status?.toString() || 'N/A';
     }
   };
 

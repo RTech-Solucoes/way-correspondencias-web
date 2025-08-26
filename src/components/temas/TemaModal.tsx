@@ -7,14 +7,11 @@ import { Input } from '@/components/ui/input';
 import {Label} from '@/components/ui/label';
 import {Textarea} from '@/components/ui/textarea';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
-import {CheckIcon} from '@phosphor-icons/react';
 import {TemaResponse} from '@/api/temas/types';
-import {cn} from '@/utils/utils';
-import areasClient from '@/api/areas/client';
-import {AreaResponse} from '@/api/areas/types';
 import {temasClient} from '@/api/temas/client';
 import {TemaRequest} from '@/api/temas/types';
 import { toast } from 'sonner';
+import { MultiSelectAreas } from '@/components/ui/multi-select-areas';
 
 interface TemaModalProps {
   tema: TemaResponse | null;
@@ -28,25 +25,8 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
   const [dsTema, setDsTema] = useState('');
   const [nrPrazo, setNrPrazo] = useState(0);
   const [tpPrazo, setTpPrazo] = useState('');
-  const [selectedAreaIds, setSelectedAreaIds] = useState<string[]>([]);
-  const [areas, setAreas] = useState<AreaResponse[]>([]);
-  const [loadingAreas, setLoadingAreas] = useState(false);
+  const [selectedAreaIds, setSelectedAreaIds] = useState<number[]>([]);
   const [loadingTema, setLoadingTema] = useState(false);
-
-  const buscarAreas = useCallback(async () => {
-    try {
-      setLoadingAreas(true);
-      const response = await areasClient.buscarPorFiltro({
-        size: 1000
-      });
-      const areasAtivas = response.content.filter((area: AreaResponse) => area.flAtivo === 'S');
-      setAreas(areasAtivas);
-    } catch {
-      setAreas([]);
-    } finally {
-      setLoadingAreas(false);
-    }
-  }, []);
 
   const buscarTemaComAreas = useCallback(async (idTema: number) => {
     try {
@@ -59,7 +39,7 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
       setTpPrazo(temaComAreas.tpPrazo || '');
 
       if (temaComAreas.areas && temaComAreas.areas?.length > 0) {
-        setSelectedAreaIds(temaComAreas.areas.map(area => area.idArea.toString()));
+        setSelectedAreaIds(temaComAreas.areas.map(area => area.idArea));
       } else {
         setSelectedAreaIds([]);
       }
@@ -72,8 +52,6 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
 
   useEffect(() => {
     if (open) {
-      buscarAreas();
-
       if (tema) {
         buscarTemaComAreas(tema.idTema);
       } else {
@@ -84,15 +62,11 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
         setSelectedAreaIds([]);
       }
     }
-  }, [open, tema, buscarAreas, buscarTemaComAreas]);
+  }, [open, tema, buscarTemaComAreas]);
 
-  const handleAreaToggle = (areaId: string) => {
-    setSelectedAreaIds(prev =>
-      prev.includes(areaId)
-        ? prev.filter(id => id !== areaId)
-        : [...prev, areaId]
-    );
-  };
+  const handleAreasSelectionChange = useCallback((selectedIds: number[]) => {
+    setSelectedAreaIds(selectedIds);
+  }, []);
 
   const isFormValid = useCallback(() => {
     return nmTema.trim() !== '' && dsTema.trim() !== '';
@@ -107,7 +81,7 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
         dsTema: dsTema.trim(),
         nrPrazo: nrPrazo > 0 ? nrPrazo : undefined,
         tpPrazo: tpPrazo || undefined,
-        idsAreas: selectedAreaIds?.length > 0 ? selectedAreaIds.map(id => parseInt(id)) : undefined
+        idsAreas: selectedAreaIds?.length > 0 ? selectedAreaIds : undefined
       };
 
       if (tema) {
@@ -186,45 +160,11 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
           </div>
 
           <div className="space-y-4">
-            <Label>Áreas Relacionadas</Label>
-            {loadingAreas ? (
-              <div className="flex items-center justify-center p-8">
-                <div className="text-sm text-gray-500">Buscando áreas...</div>
-              </div>
-            ) : (
-              <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
-                {areas.map((area) => (
-                  <button
-                    key={area.idArea}
-                    type="button"
-                    onClick={() => handleAreaToggle(area.idArea.toString())}
-                    className={cn(
-                      "flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium transition-all hover:shadow-sm",
-                      selectedAreaIds.includes(area.idArea.toString())
-                        ? "bg-blue-500 text-white border-blue-500"
-                        : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
-                    )}
-                  >
-                    <div className={cn(
-                      "w-4 h-4 rounded-full border flex items-center justify-center transition-all",
-                      selectedAreaIds.includes(area.idArea.toString())
-                        ? "border-white bg-white"
-                        : "border-gray-400 bg-transparent"
-                    )}>
-                      {selectedAreaIds.includes(area.idArea.toString()) && (
-                        <CheckIcon className="w-2.5 h-2.5 text-blue-500"/>
-                      )}
-                    </div>
-                    {area.nmArea}
-                  </button>
-                ))}
-                {areas?.length === 0 && !loadingAreas && (
-                  <div className="text-sm text-gray-500 pt-4">
-                    Nenhuma área encontrada
-                  </div>
-                )}
-              </div>
-            )}
+            <MultiSelectAreas
+              selectedAreaIds={selectedAreaIds}
+              onSelectionChange={handleAreasSelectionChange}
+              label="Áreas Relacionadas"
+            />
           </div>
         </div>
 
@@ -234,7 +174,7 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
           </Button>
           <Button
             onClick={handleSave}
-            disabled={!isFormValid() || loadingAreas}
+            disabled={!isFormValid() || loadingTema}
             className="disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {tema ? 'Salvar Alterações' : 'Criar Tema'}
