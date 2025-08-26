@@ -16,7 +16,7 @@ export interface TemaRequest {
   dsTema: string;
   nrPrazo?: number;
   tpPrazo?: string;
-  idsAreas?: number[]; // Corrigindo nome do campo
+  idsAreas?: number[];
 }
 
 export interface PagedResponse<T> {

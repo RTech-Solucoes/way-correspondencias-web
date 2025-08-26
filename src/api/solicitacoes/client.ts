@@ -97,14 +97,12 @@ class SolicitacoesClient {
   }
 
   async buscarAnexos(idObjeto: number): Promise<any[]> {
-    // Busca anexos vinculados à solicitação
     return this.client.request<any[]>(`/anexos/idObjeto/${idObjeto}/tpObjeto/S`, {
       method: 'GET',
     });
   }
 
   async deletarAnexo(idAnexo: number): Promise<void> {
-    // Deleta anexo pelo id
     return this.client.request<void>(`/anexos/${idAnexo}`, {
       method: 'DELETE',
     });
@@ -116,7 +114,6 @@ class SolicitacoesClient {
       method: 'POST',
       body: formData,
       headers: {
-        // Não definir Content-Type para permitir que o browser defina o boundary do multipart
         ...this.client.getAuthHeaders?.(),
       },
     });

@@ -28,7 +28,7 @@ export default function Nav ({
               variant={isActive ? "default" : "ghost"}
               className={cn(
                 "flex justify-start w-full text-left h-11 text-sm px-4 transition-colors duration-200",
-                isActive && "bg-primary text-white"
+                isActive && "bg-primary/20 text-primary hover:bg-primary/20",
               )}
               onClick={() => handleNavigation(item.path)}
             >

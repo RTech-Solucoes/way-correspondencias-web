@@ -32,7 +32,6 @@ import { useDropzone } from 'react-dropzone';
 import AnexoComponent from '../AnexoComponotent/AnexoComponent';
 import AnexoList from '../AnexoComponotent/AnexoList/AnexoList';
 
-// Tipos para anexos
 interface AnexoBackend {
   idAnexo: number;
   idObjeto: number;
@@ -115,13 +114,17 @@ export default function SolicitacaoModal({
       });
     }
     setCurrentStep(1);
+    setAnexos([]);
   }, [solicitacao, open, initialSubject, initialDescription]);
 
   useEffect(() => {
-    if (solicitacao && solicitacao.idSolicitacao) {
+    if (solicitacao && solicitacao.idSolicitacao && open) {
       solicitacoesClient.buscarAnexos(solicitacao.idSolicitacao).then(setAnexosBackend);
     } else {
       setAnexosBackend([]);
+    }
+    if (!open) {
+      setAnexos([]);
     }
   }, [solicitacao, open, initialSubject, initialDescription]);
 
@@ -199,7 +202,6 @@ export default function SolicitacaoModal({
         [field]: processedValue
       };
 
-      // Se estamos alterando o tema, atualiza o responsável automaticamente
       if (field === 'idTema' && processedValue) {
         newFormData.idResponsavel = getResponsavelFromTema(processedValue as number);
       }
@@ -259,6 +261,44 @@ export default function SolicitacaoModal({
   }, []);
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
+  // Funções para manipulação de anexos
+  const handleAddAnexos = useCallback((files: FileList | null) => {
+    if (files && files.length > 0) {
+      const fileArray = Array.from(files);
+      setAnexos(prev => [...prev, ...fileArray]);
+    }
+  }, []);
+
+  const handleRemoveAnexo = useCallback((index: number) => {
+    setAnexos(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const handleRemoveAnexoBackend = useCallback(async (idAnexo: number) => {
+    try {
+      await solicitacoesClient.deletarAnexo(idAnexo);
+      setAnexosBackend(prev => prev.filter(anexo => anexo.idAnexo !== idAnexo));
+      toast.success('Documento removido com sucesso');
+    } catch {
+      toast.error('Erro ao remover documento');
+    }
+  }, []);
+
+  const handleDownloadAnexoBackend = useCallback(async (anexo: any) => {
+    try {
+      const blob = await solicitacoesClient.downloadAnexo(anexo.idObjeto, anexo.nmArquivo);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = anexo.nmArquivo;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch {
+      toast.error('Erro ao baixar documento');
+    }
+  }, []);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
@@ -287,15 +327,12 @@ export default function SolicitacaoModal({
       };
       let solicitacaoId;
       if (solicitacao) {
-        // Atualização
         await solicitacoesClient.atualizar(solicitacao.idSolicitacao, finalFormData);
         solicitacaoId = solicitacao.idSolicitacao;
       } else {
-        // Criação
         const created = await solicitacoesClient.criar(finalFormData);
         solicitacaoId = created.idSolicitacao;
       }
-      // Enviar anexos após criar/atualizar solicitação
       if (anexos.length > 0 && solicitacaoId) {
         const formDataAnexos = new FormData();
         anexos.forEach((file) => {
@@ -417,12 +454,6 @@ export default function SolicitacaoModal({
 
   const renderStep4 = useCallback(() => (
     <div className="space-y-6">
-      <div className="text-center">
-        <Label className="text-xl font-semibold">Documentos da Solicitação</Label>
-        <p className="text-sm text-gray-600 mt-2">
-          Anexe documentos relacionados à sua solicitação
-        </p>
-      </div>
 
       {/* Componente de Upload de Anexos */}
       <div className="flex flex-col space-y-4">
@@ -470,13 +501,6 @@ export default function SolicitacaoModal({
 
   const renderStep5 = useCallback(() => (
     <div className="space-y-6">
-      <div className="text-center">
-        <Label className="text-xl font-semibold">Resumo da Solicitação</Label>
-        <p className="text-sm text-gray-600 mt-2">
-          Revise as informações da sua solicitação antes de enviar
-        </p>
-      </div>
-
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -612,45 +636,6 @@ export default function SolicitacaoModal({
     </div>
   );
 
-  const handleRemoveAnexo = (index: number) => {
-    setAnexos(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const handleAddAnexos = (files: FileList | null) => {
-    if (files) {
-      const fileArray = Array.from(files);
-      setAnexos(prev => [...prev, ...fileArray]);
-    }
-  };
-
-  const handleRemoveAnexoBackend = async (index: number) => {
-    const anexo = anexosBackend[index];
-    if (!anexo) return;
-    try {
-      await solicitacoesClient.deletarAnexo(anexo.idAnexo);
-      setAnexosBackend(prev => prev.filter((_, i) => i !== index));
-      toast.success('Anexo removido com sucesso!');
-    } catch {
-      toast.error('Erro ao remover anexo');
-    }
-  };
-
-  const handleDownloadAnexoBackend = async (anexo: any) => {
-    if (!anexo || !anexo.idObjeto || !anexo.nmArquivo) return;
-    try {
-      const blob = await solicitacoesClient.downloadAnexo(anexo.idObjeto, anexo.nmArquivo);
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = anexo.nmArquivo;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-    } catch {
-      toast.error('Erro ao baixar anexo');
-    }
-  };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>

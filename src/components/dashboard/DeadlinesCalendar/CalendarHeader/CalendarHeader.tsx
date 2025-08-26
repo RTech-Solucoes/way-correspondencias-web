@@ -1,6 +1,5 @@
-import CardHeader from "@/components/CardHeader/CardHeader";
+import CustomCardHeader from "../../card-header";
 import { Button } from "@/components/ui/button";
-import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 type CalendarView = 'month' | 'week' | 'year';
 
@@ -11,7 +10,7 @@ interface ICalendarHeader {
 
 export default function CalendarHeader(props: ICalendarHeader) {
   return (
-    <CardHeader
+    <CustomCardHeader
       title="Calendário de Obrigações"
       description="Visualize suas obrigações no calendário"
     >
@@ -41,6 +40,6 @@ export default function CalendarHeader(props: ICalendarHeader) {
           Ano
         </Button>
       </div>
-    </CardHeader>
+    </CustomCardHeader>
   )
 }

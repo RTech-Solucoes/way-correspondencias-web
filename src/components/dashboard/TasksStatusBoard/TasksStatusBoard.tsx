@@ -1,5 +1,5 @@
 import { obligationsRecent } from "@/components/dashboard/MockDados";
-import CardHeader from "@/components/CardHeader/CardHeader";
+import CardHeader from "../card-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { CheckCircleIcon, ClockIcon, WarningCircleIcon, XCircleIcon } from "@phosphor-icons/react";

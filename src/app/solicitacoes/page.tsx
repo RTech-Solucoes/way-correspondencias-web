@@ -172,7 +172,6 @@ export default function SolicitacoesPage() {
       const response = await responsaveisClient.buscarPorFiltro({ size: 100 });
       setResponsaveis(response.content);
     } catch {
-      // Handle error silently
     }
   }, [setResponsaveis]);
 
@@ -181,7 +180,6 @@ export default function SolicitacoesPage() {
       const response = await temasClient.buscarPorFiltro({ size: 100 });
       setTemas(response.content);
     } catch {
-      // Handle error silently
     }
   }, [setTemas]);
 
@@ -190,7 +188,6 @@ export default function SolicitacoesPage() {
       const response = await areasClient.buscarPorFiltro({ size: 100 });
       setAreas(response.content);
     } catch {
-      // Handle error silently
     }
   }, [setAreas]);
 
@@ -215,7 +212,6 @@ export default function SolicitacoesPage() {
   };
 
   const sortedSolicitacoes = () => {
-    // Verificação de segurança para garantir que solicitacoes seja um array
     if (!Array.isArray(solicitacoes)) {
       return [];
     }
@@ -228,7 +224,6 @@ export default function SolicitacoesPage() {
 
         if (aValue === bValue) return 0;
 
-        // Handle undefined/null values
         if (aValue == null && bValue == null) return 0;
         if (aValue == null) return 1;
         if (bValue == null) return -1;

@@ -63,12 +63,9 @@ export function MultiSelectAreas({
     }
   };
 
-  // Função para obter um responsável para cada área
-  // Como não há uma relação direta, vamos distribuir os responsáveis entre as áreas
   const getResponsavelForArea = (areaIndex: number) => {
     if (responsaveis.length === 0) return 'N/A';
 
-    // Distribuir responsáveis ciclicamente entre as áreas
     const responsavelIndex = areaIndex % responsaveis.length;
     return responsaveis[responsavelIndex]?.nmResponsavel || 'N/A';
   };

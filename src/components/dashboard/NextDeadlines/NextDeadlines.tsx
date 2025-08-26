@@ -1,5 +1,5 @@
 import { deadlines } from "@/components/dashboard/MockDados";
-import CardHeader from "@/components/CardHeader/CardHeader";
+import CardHeader from "../card-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { ClockIcon } from "@phosphor-icons/react";

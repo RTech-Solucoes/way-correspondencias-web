@@ -54,7 +54,7 @@ const EmailItem = memo<{
   }, [onSelect]);
 
   const isRead = email.flAtivo === 'S';
-  const hasAttachment = false; // Anexos não estão disponíveis no EmailResponse do backend
+  const hasAttachment = false;
   const preview = email.dsCorpo
     ? (email.dsCorpo?.length > 100 ? email.dsCorpo.substring(0, 100) + '...' : email.dsCorpo)
     : 'Sem conteúdo disponível';
@@ -166,7 +166,7 @@ function EmailList({
   const filteredEmails = useMemo(() => {
     return emails.filter(email => {
       const isRead = email.flAtivo === 'S';
-      const hasAttachment = false; // Anexos não estão disponíveis no EmailResponse do backend
+      const hasAttachment = false;
 
       const matchesReadStatus = !emailFilters.isRead ||
         emailFilters.isRead === 'all' ||

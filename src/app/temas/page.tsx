@@ -132,8 +132,7 @@ export default function TemasPage() {
         const bValue = b[sortField];
 
         if (aValue === bValue) return 0;
-        
-        // Handle undefined/null values
+
         if (aValue == null && bValue == null) return 0;
         if (aValue == null) return 1;
         if (bValue == null) return -1;
