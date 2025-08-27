@@ -7,9 +7,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogClose,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-  import { Textarea } from '@/components/ui/textarea';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import {
@@ -21,13 +22,13 @@ import { SolicitacaoResponse } from '@/api/solicitacoes/types';
 import { AnexoResponse, ArquivoDTO, TipoObjetoAnexo } from '@/api/anexos/type';
 import { anexosClient } from '@/api/anexos/client';
 import { base64ToUint8Array, saveBlob } from '@/utils/utils';
+import { X } from 'lucide-react';
 
 type DetalhesSolicitacaoModalProps = {
   open: boolean;
   onClose: () => void;
   solicitacao: SolicitacaoResponse | null;
   anexos?: AnexoResponse[];
-  onBaixarAnexo?: (anexo: AnexoResponse) => Promise<void> | void;
   onHistoricoRespostas?: () => void;
   onAbrirEmailOriginal?: () => void;
   onEnviarDevolutiva?: (mensagem: string, arquivos: File[]) => Promise<void> | void;
@@ -60,7 +61,6 @@ export default function DetalhesSolicitacaoModal({
   onClose,
   solicitacao,
   anexos = [],
-  onBaixarAnexo,
   onHistoricoRespostas,
   onAbrirEmailOriginal,
   onEnviarDevolutiva,
@@ -69,7 +69,6 @@ export default function DetalhesSolicitacaoModal({
   const [resposta, setResposta] = useState('');
   const [arquivos, setArquivos] = useState<File[]>([]);
   const [expandDescricao, setExpandDescricao] = useState(false);
-  const [expandAssunto, setExpandAssunto] = useState(false);
   const [sending, setSending] = useState(false);
 
   const descRef = useRef<HTMLParagraphElement | null>(null);
@@ -82,20 +81,28 @@ export default function DetalhesSolicitacaoModal({
   );
 
   statusLabel = solicitacao?.statusSolicitacao?.nmStatus ?? statusLabel;
+
   const criadorLine = useMemo(() => {
     const when = formatDateTime((solicitacao as SolicitacaoResponse)?.dtCriacao);
     return `Criado em: ${when}`;
   }, [solicitacao?.dtCriacao]);
 
-  const prazoLine = useMemo(() => formatDateTime((solicitacao as SolicitacaoResponse)?.dtPrazo), [solicitacao?.dtPrazo]);
+  const prazoLine = useMemo(
+    () => formatDateTime((solicitacao as SolicitacaoResponse)?.dtPrazo),
+    [solicitacao?.dtPrazo]
+  );
 
   const assunto = solicitacao?.dsAssunto ?? '';
   const descricao = solicitacao?.dsSolicitacao ?? '';
-  const areas = Array.isArray(solicitacao?.tema?.areas) ? (solicitacao!.tema!.areas! as Array<{ nmArea: string; idArea?: number; cdArea?: string }>) : [];
+  const areas = Array.isArray(solicitacao?.tema?.areas)
+    ? (solicitacao!.tema!.areas! as Array<{ nmArea: string; idArea?: number; cdArea?: string }>)
+    : [];
 
-  const temaLabel = solicitacao?.tema?.nmTema ?? (solicitacao as SolicitacaoResponse)?.nmTema ?? '—';
+  const temaLabel =
+    solicitacao?.tema?.nmTema ?? (solicitacao as SolicitacaoResponse)?.nmTema ?? '—';
 
-  const anexosToShow: AnexoResponse[] = (Array.isArray(anexos) && anexos.length > 0) ? anexos : [];
+  const anexosToShow: AnexoResponse[] =
+    Array.isArray(anexos) && anexos.length > 0 ? anexos : [];
 
   const measureDescricao = useCallback(() => {
     const el = descRef.current;
@@ -202,13 +209,14 @@ export default function DetalhesSolicitacaoModal({
     [solicitacao?.idSolicitacao]
   );
 
-  const descricaoCollapsedStyle: React.CSSProperties = !expandDescricao && lineHeightPx
-    ? { maxHeight: `${lineHeightPx * MAX_DESC_LINES}px`, overflow: 'hidden' }
-    : {};
+  const descricaoCollapsedStyle: React.CSSProperties =
+    !expandDescricao && lineHeightPx
+      ? { maxHeight: `${lineHeightPx * MAX_DESC_LINES}px`, overflow: 'hidden' }
+      : {};
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl md:max-w-4xl lg:max-w-5xl p-0 flex flex-col max-h-[85vh]">
+      <DialogContent className="max-w-3xl md:max-w-4xl lg:max-w-5xl p-0 flex flex-col max-h-[85vh] [&>button.absolute.right-4.top-4]:hidden">
         <div className="px-6 pt-6">
           <DialogHeader className="p-0">
             <div className="flex items-start justify-between gap-4">
@@ -226,32 +234,30 @@ export default function DetalhesSolicitacaoModal({
                 </div>
               </div>
 
-              <span
-                className="shrink-0 rounded-full bg-orange-100 text-orange-700 text-xs font-medium px-3 py-1.5"
-                title="Status atual"
-              >
-                {statusLabel}
-              </span>
+              <DialogClose asChild>
+                <button
+                  type="button"
+                  className="flex items-center justify-center rounded-full bg-slate-800 text-white hover:bg-slate-700 transition-colors h-9 w-9"
+                  aria-label="Fechar"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </DialogClose>
             </div>
           </DialogHeader>
         </div>
 
-        <form id="detalhes-form" onSubmit={handleEnviar} className="px-6 pb-6 space-y-8 overflow-y-auto flex-1">
+        <form
+          id="detalhes-form"
+          onSubmit={handleEnviar}
+          className="px-6 pb-6 space-y-8 overflow-y-auto flex-1"
+        >
           <section className="space-y-2">
             <h3 className="text-sm font-semibold">Assunto</h3>
             <div className="rounded-md border bg-muted/30 p-4">
-              <p className={`text-sm ${expandAssunto ? '' : 'line-clamp-2'}`}>
+              <p className="text-sm whitespace-pre-wrap break-words">
                 {assunto || '—'}
               </p>
-              {assunto && assunto.length > 0 && (
-                <button
-                  type="button"
-                  className="mt-2 text-sm font-medium text-primary hover:underline"
-                  onClick={() => setExpandAssunto((v) => !v)}
-                >
-                  {expandAssunto ? 'Ver menos' : 'Ver mais'}
-                </button>
-              )}
             </div>
           </section>
 
@@ -304,9 +310,6 @@ export default function DetalhesSolicitacaoModal({
           <section className="space-y-2">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">Descrição</h3>
-              {/* <button type="button" className="text-sm text-primary hover:underline" onClick={onAbrirEmailOriginal}>
-                  Ver e-mail original
-                </button> */}
             </div>
 
             <div className="rounded-md border bg-muted/30 p-4">
@@ -342,7 +345,7 @@ export default function DetalhesSolicitacaoModal({
                   <div className="col-span-9 px-4 py-3">
                     <AnexoItem
                       anexos={anexosToShow.filter((a) => a.tpObjeto === 'A')}
-                      onBaixar={onBaixarAnexo ?? handleBaixarAnexo}
+                      onBaixar={handleBaixarAnexo}
                     />
                   </div>
                 </div>
@@ -356,7 +359,7 @@ export default function DetalhesSolicitacaoModal({
                   <div className="col-span-9 px-4 py-3">
                     <AnexoItem
                       anexos={anexosToShow.filter((a) => a.tpObjeto === 'G')}
-                      onBaixar={onBaixarAnexo ?? handleBaixarAnexo}
+                      onBaixar={handleBaixarAnexo}
                     />
                   </div>
                 </div>
@@ -370,7 +373,7 @@ export default function DetalhesSolicitacaoModal({
                   <div className="col-span-9 px-4 py-3">
                     <AnexoItem
                       anexos={anexosToShow.filter((a) => a.tpObjeto === 'S')}
-                      onBaixar={onBaixarAnexo ?? handleBaixarAnexo}
+                      onBaixar={handleBaixarAnexo}
                     />
                   </div>
                 </div>
@@ -381,13 +384,6 @@ export default function DetalhesSolicitacaoModal({
           <section className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">Enviar devolutiva ao Regulatório</h3>
-              {/* <button
-                type="button"
-                className="text-sm text-primary hover:underline"
-                onClick={onHistoricoRespostas}
-              >
-                Histórico de respostas
-              </button> */}
             </div>
 
             <div className="rounded-md border bg-muted/30 p-4">
@@ -442,7 +438,6 @@ function AnexoItem({
   if (!anexos || anexos.length === 0) {
     return <span className="text-sm text-muted-foreground">Nenhum documento</span>;
   }
-
   return (
     <ul className="flex flex-col gap-2">
       {anexos.map((a) => (

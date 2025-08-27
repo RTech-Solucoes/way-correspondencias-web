@@ -644,7 +644,6 @@ export default function SolicitacoesPage() {
           solicitacao={detalhesSolicitacao ?? selectedSolicitacao}
           anexos={(detalhesAnexos ?? [])}
           statusLabel={getStatusText((detalhesSolicitacao ?? selectedSolicitacao)?.statusCodigo?.toString() || '')}
-          onBaixarAnexo={baixarAnexo}
           onAbrirEmailOriginal={abrirEmailOriginal}
           onHistoricoRespostas={abrirHistorico}
           onEnviarDevolutiva={enviarDevolutiva}
