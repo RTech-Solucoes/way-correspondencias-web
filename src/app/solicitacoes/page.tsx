@@ -42,6 +42,8 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { Pagination } from '@/components/ui/pagination';
 import { useSolicitacoes } from '@/context/solicitacoes/SolicitacoesContext';
 import TramitacaoList from '@/components/solicitacoes/TramitacaoList';
+import anexosClient from '@/api/anexos/client';
+import { TipoObjetoAnexo } from '@/api/anexos/type';
 
 export default function SolicitacoesPage() {
   const {
@@ -213,6 +215,8 @@ export default function SolicitacoesPage() {
     try {
       const detalhes = await solicitacoesClient.buscarPorId(s.idSolicitacao);
       setDetalhesSolicitacao(detalhes || s);
+      const anexos = await anexosClient.buscarPorIdObjetoETipoObjeto(s.idSolicitacao, TipoObjetoAnexo.S);
+
     } catch {
       toast.error('Erro ao carregar os detalhes da solicitação');
       setDetalhesSolicitacao(s);

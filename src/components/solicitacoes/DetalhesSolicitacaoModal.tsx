@@ -42,7 +42,20 @@ type DetalhesSolicitacaoModalProps = {
 const formatDateTime = (iso?: string | null) => {
   if (!iso) return '—';
   const d = new Date(iso);
-  return d.toLocaleDateString() + ' às ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  const date = d.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+
+  const time = d.toLocaleTimeString('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+
+  return `${date} às ${time}`;
 };
 
 const MAX_DESC_LINES = 6;
@@ -69,7 +82,7 @@ export default function DetalhesSolicitacaoModal({
   const [lineHeightPx, setLineHeightPx] = useState<number | null>(null);
 
   const identificador = useMemo(
-    () => (solicitacao?.idSolicitacao ? `#${solicitacao.idSolicitacao}` : ''),
+    () => (solicitacao?.cdIdentificacao ? `#${solicitacao.cdIdentificacao}` : ''),
     [solicitacao?.cdIdentificacao]
   );
 
@@ -77,17 +90,15 @@ export default function DetalhesSolicitacaoModal({
   const criadorLine = useMemo(() => {
     const who = solicitacao?.nmUsuarioCriacao ?? '—';
     const when = formatDateTime((solicitacao as any)?.dtCriacao);
-    return `Criado por ${who} em: ${when}`;
+    return `Criado em: ${when}`;
+    // return `Criado por ${who} em: ${when}`;
   }, [solicitacao?.nmUsuarioCriacao, solicitacao?.dtCriacao]);
 
   const prazoLine = useMemo(() => formatDateTime((solicitacao as any)?.dtPrazo), [solicitacao?.dtPrazo]);
 
   const assunto = solicitacao?.dsAssunto ?? '';
   const descricao = solicitacao?.dsSolicitacao ?? '';
-  const areaLabel =
-    solicitacao?.area?.nmArea ??
-    solicitacao?.areas?.[0]?.nmArea ??
-    (Array.isArray(solicitacao?.areas) && solicitacao!.areas!.length > 0 ? solicitacao!.areas!.map(a => a.nmArea).join(', ') : '—');
+  const areas = Array.isArray(solicitacao?.tema?.areas) ? (solicitacao!.tema!.areas! as Array<{ nmArea: string; idArea?: number; cdArea?: string }>) : [];
 
   const temaLabel = solicitacao?.tema?.nmTema ?? (solicitacao as any)?.nmTema ?? '—';
 
@@ -180,6 +191,7 @@ export default function DetalhesSolicitacaoModal({
                 <DialogTitle className="text-[20px] font-semibold">
                   Solicitação {identificador || ''}
                 </DialogTitle>
+
                 <div className="mt-1 text-sm text-muted-foreground">{criadorLine}</div>
 
                 <div className="mt-3 flex items-center gap-2 text-sm">
@@ -222,10 +234,23 @@ export default function DetalhesSolicitacaoModal({
             <h3 className="text-sm font-semibold">Metadados</h3>
             <div className="rounded-md border bg-muted/30">
               <div className="grid grid-cols-12 gap-0">
-                <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Área:</div>
-                <div className="col-span-9 px-4 py-3 text-sm">
-                  {areaLabel}
-                </div>
+                <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Áreas:</div>
+<div className="col-span-9 px-4 py-3 text-sm">
+  {areas.length > 0 ? (
+    <div className="flex flex-wrap gap-2">
+      {areas.map((a, idx) => (
+        <Pill
+          key={a.idArea ?? a.cdArea ?? `${a.nmArea}-${idx}`}
+          title={a.nmArea}
+        >
+          {a.nmArea}
+        </Pill>
+      ))}
+    </div>
+  ) : (
+    '—'
+  )}
+</div>
               </div>
               <div className="h-px bg-border" />
               <div className="grid grid-cols-12 gap-0">
@@ -419,5 +444,17 @@ function AnexoItem({
         </li>
       ))}
     </ul>
+  );
+}
+
+function Pill({ children, title }: { children: React.ReactNode; title?: string }) {
+  return (
+    <span
+      title={title}
+      className="inline-flex min-w-0 items-center rounded-full border border-border bg-muted/40 px-2.5 py-0.5 text-xs font-medium text-foreground/90"
+      style={{ backgroundColor: 'rgba(147, 197, 253, 0.3)' }}
+    >
+      <span className="truncate max-w-[160px]">{children}</span>
+    </span>
   );
 }
