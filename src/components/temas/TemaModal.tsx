@@ -36,7 +36,8 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
       setNmTema(temaComAreas.nmTema);
       setDsTema(temaComAreas.dsTema || '');
       setNrPrazo(temaComAreas.nrPrazo || 0);
-      setTpPrazo(temaComAreas.tpPrazo || '');
+      // mapear legado 'C' (corridas) para 'H' (horas)
+      setTpPrazo(temaComAreas.tpPrazo === 'C' ? 'H' : (temaComAreas.tpPrazo || ''));
 
       if (temaComAreas.areas && temaComAreas.areas?.length > 0) {
         setSelectedAreaIds(temaComAreas.areas.map(area => area.idArea));
@@ -140,8 +141,10 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
                   <SelectValue placeholder="Selecione o tipo de prazo"/>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="U">Horas Úteis</SelectItem>
-                  <SelectItem value="C">Horas Corridas</SelectItem>
+                  <SelectItem value="H">Horas</SelectItem>
+                  <SelectItem value="D">Dias</SelectItem>
+                  <SelectItem value="U">Dias Úteis</SelectItem>
+                  <SelectItem value="M">Meses</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -159,7 +162,7 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
             />
           </div>
 
-          <div className="space-y-4">
+          <div className="flex flex-col overflow-y-auto max-h-60">
             <MultiSelectAreas
               selectedAreaIds={selectedAreaIds}
               onSelectionChange={handleAreasSelectionChange}

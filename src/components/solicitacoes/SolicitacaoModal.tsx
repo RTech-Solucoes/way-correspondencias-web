@@ -1,6 +1,7 @@
 'use client';
 
 import {useState, useEffect, FormEvent, useCallback, ChangeEvent} from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Dialog,
   DialogContent,
@@ -30,8 +31,9 @@ import {MultiSelectAreas} from '@/components/ui/multi-select-areas';
 import {CaretLeftIcon, CaretRightIcon, CheckIcon, ArrowBendUpRightIcon} from '@phosphor-icons/react';
 import AnexoComponent from '../AnexoComponotent/AnexoComponent';
 import AnexoList from '../AnexoComponotent/AnexoList/AnexoList';
-import {statusPrazoTemaClient} from '@/api/status-prazo-tema/client';
+import {statusSolicPrazoTemaClient} from '@/api/status-prazo-tema/client';
 import {StatusSolicPrazoTemaResponse} from '@/api/status-prazo-tema/types';
+import { statusSolicitacaoClient, StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
 
 interface AnexoFromBackend {
   idAnexo: number;
@@ -66,15 +68,16 @@ interface SolicitacaoModalProps {
 }
 
 export default function SolicitacaoModal({
-                                           solicitacao,
-                                           open,
-                                           onClose,
-                                           onSave,
-                                           responsaveis,
-                                           temas,
-                                           initialSubject,
-                                           initialDescription
-                                         }: SolicitacaoModalProps) {
+  solicitacao,
+  open,
+  onClose,
+  onSave,
+  responsaveis,
+  temas,
+  initialSubject,
+  initialDescription
+}: SolicitacaoModalProps) {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<SolicitacaoRequest>({
     cdIdentificacao: '',
@@ -96,6 +99,8 @@ export default function SolicitacaoModal({
   const [statusPrazos, setStatusPrazos] = useState<StatusSolicPrazoTemaResponse[]>([]);
   const [loadingStatusPrazos, setLoadingStatusPrazos] = useState(false);
   const [prazoExcepcional, setPrazoExcepcional] = useState(false);
+  const [statusList, setStatusList] = useState<StatusSolicitacaoResponse[]>([]);
+  const [createdSolicitacao, setCreatedSolicitacao] = useState<SolicitacaoResponse | null>(null);
 
   useEffect(() => {
     if (solicitacao) {
@@ -110,7 +115,7 @@ export default function SolicitacaoModal({
         idTema: solicitacao.idTema || 0,
         idsAreas: solicitacao.areas?.map(area => area.idArea) || [],
         nrPrazo: solicitacao.nrPrazo || undefined,
-        tpPrazo: solicitacao.tpPrazo || '',
+        tpPrazo: solicitacao.tpPrazo === 'C' ? 'H' : (solicitacao.tpPrazo || ''),
         nrOficio: solicitacao.nrOficio || '',
         nrProcesso: solicitacao.nrProcesso || ''
       });
@@ -139,7 +144,14 @@ export default function SolicitacaoModal({
   useEffect(() => {
     if (solicitacao && solicitacao.idSolicitacao && open) {
       solicitacoesClient.buscarAnexos(solicitacao.idSolicitacao).then((anexos) => {
-        setAnexosBackend(anexos);
+        const anexosMapeados = anexos.map(anexo => ({
+          idAnexo: anexo.id,
+          idObjeto: solicitacao.idSolicitacao,
+          nmArquivo: anexo.nomeArquivo,
+          dsCaminho: '',
+          tpObjeto: 'S'
+        }));
+        setAnexosBackend(anexosMapeados);
       });
     } else {
       setAnexosBackend([]);
@@ -218,25 +230,135 @@ export default function SolicitacaoModal({
     });
   }, [getResponsavelFromTema]);
 
-  const handleNextStep = useCallback(() => {
-    if (currentStep === 1) {
-      if (!formData.cdIdentificacao?.trim()) {
-        toast.error("Código de identificação é obrigatório");
-        return;
+  const isStep1Valid = useCallback(() => {
+    return formData.cdIdentificacao?.trim() !== '';
+  }, [formData.cdIdentificacao]);
+
+  const isStep2Valid = useCallback(() => {
+    return formData.idTema !== undefined && formData.idTema > 0;
+  }, [formData.idTema]);
+
+  const getSelectedTema = useCallback(() => {
+    return temas.find(tema => tema.idTema === formData.idTema);
+  }, [temas, formData.idTema]);
+
+  const handleNextStep = useCallback(async () => {
+    try {
+      if (currentStep === 1) {
+        if (!formData.cdIdentificacao?.trim()) {
+          toast.error("Código de identificação é obrigatório");
+          return;
+        }
+
+        if (!solicitacao) {
+          setCurrentStep(2);
+          return;
+        }
+
+        await solicitacoesClient.etapaIdentificacao(solicitacao.idSolicitacao, {
+          cdIdentificacao: formData.cdIdentificacao?.trim(),
+          dsAssunto: formData.dsAssunto?.trim(),
+          dsObservacao: formData.dsObservacao?.trim(),
+          nrOficio: formData.nrOficio?.trim(),
+          nrProcesso: formData.nrProcesso?.trim(),
+        });
+
+        setCurrentStep(2);
+      } else if (currentStep === 2) {
+        if (!formData.idTema || formData.idTema === 0) {
+          toast.error("Tema é obrigatório");
+          return;
+        }
+
+        if (!solicitacao) {
+          setCurrentStep(3);
+          return;
+        }
+
+        await solicitacoesClient.etapaTema(solicitacao.idSolicitacao, {
+          idTema: formData.idTema,
+          tpPrazo: formData.tpPrazo || undefined,
+          nrPrazoInterno: formData.nrPrazo,
+          flExcepcional: prazoExcepcional ? 'S' : 'N',
+          idsAreas: formData.idsAreas
+        });
+
+        setCurrentStep(3);
+      } else if (currentStep === 3) {
+        if (!solicitacao) {
+          setCurrentStep(4);
+          return;
+        }
+
+        const solicitacoesPrazos = statusPrazos
+          .filter(p => p.nrPrazoInterno && p.nrPrazoInterno > 0 && p.idStatusSolicitacao)
+          .map(p => ({
+            idStatusSolicitacao: p.idStatusSolicitacao!,
+            nrPrazoInterno: p.nrPrazoInterno,
+            tpPrazo: formData.tpPrazo || undefined,
+            flExcepcional: prazoExcepcional ? 'S' : 'N'
+          }));
+
+        await solicitacoesClient.etapaPrazo(solicitacao.idSolicitacao, {
+          nrPrazoInterno: formData.nrPrazo,
+          solicitacoesPrazos
+        });
+
+        setCurrentStep(4);
+      } else if (currentStep === 4) {
+        if (!solicitacao) {
+          setCurrentStep(5);
+          return;
+        }
+
+        if (anexos.length > 0) {
+          const arquivosDTO = await Promise.all(
+            anexos.map(async (file) => {
+              if (!file.name || file.name.trim() === '') {
+                throw new Error(`Arquivo sem nome válido: ${file.name || 'undefined'}`);
+              }
+
+              const base64 = await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                  const result = reader.result as string;
+                  if (!result) {
+                    reject(new Error('Erro ao ler arquivo'));
+                    return;
+                  }
+                  resolve(result);
+                };
+                reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
+                reader.readAsDataURL(file);
+              });
+
+              const base64Content = base64.split(',')[1];
+              if (!base64Content) {
+                throw new Error('Erro ao converter arquivo para base64');
+              }
+
+              return {
+                nomeArquivo: file.name.trim(),
+                conteudoArquivo: base64Content,
+                tipoArquivo: file.type || 'application/octet-stream'
+              };
+            })
+          );
+
+          try {
+            await solicitacoesClient.uploadAnexos(solicitacao.idSolicitacao, arquivosDTO);
+          } catch {
+            toast.error('Erro ao anexar arquivos');
+          }
+        }
+
+        setCurrentStep(5);
       }
-      setCurrentStep(2);
-    } else if (currentStep === 2) {
-      if (!formData.idTema || formData.idTema === 0) {
-        toast.error("Tema é obrigatório");
-        return;
-      }
-      setCurrentStep(3);
-    } else if (currentStep === 3) {
-      setCurrentStep(4);
-    } else if (currentStep === 4) {
-      setCurrentStep(5);
+    } catch (e) {
+      console.error(e);
+      toast.error('Erro ao avançar etapa');
     }
-  }, [formData.cdIdentificacao, formData.idTema, currentStep]);
+  }, [currentStep, formData, solicitacao, prazoExcepcional, statusPrazos, anexos]);
 
   const handlePreviousStep = useCallback(() => {
     if (currentStep === 2) {
@@ -253,16 +375,16 @@ export default function SolicitacaoModal({
   const handleStepClick = useCallback((step: number) => {
     if (step === 1) {
       setCurrentStep(step);
-    } else if (step === 2 && formData.cdIdentificacao?.trim()) {
+    } else if (step === 2 && isStep1Valid()) {
       setCurrentStep(step);
-    } else if (step === 3 && formData.cdIdentificacao?.trim() && (formData.idTema && formData.idTema > 0)) {
+    } else if (step === 3 && isStep1Valid() && isStep2Valid()) {
       setCurrentStep(step);
-    } else if (step === 4 && formData.cdIdentificacao?.trim() && (formData.idTema && formData.idTema > 0)) {
+    } else if (step === 4 && isStep1Valid() && isStep2Valid()) {
       setCurrentStep(step);
-    } else if (step === 5 && formData.cdIdentificacao?.trim() && (formData.idTema && formData.idTema > 0)) {
+    } else if (step === 5 && isStep1Valid() && isStep2Valid()) {
       setCurrentStep(step);
     }
-  }, [formData.cdIdentificacao, formData.idTema]);
+  }, [isStep1Valid, isStep2Valid]);
 
   const handleAddAnexos = useCallback((files: FileList | null) => {
     if (files && files.length > 0) {
@@ -289,21 +411,34 @@ export default function SolicitacaoModal({
 
   const handleDownloadAnexoBackend = useCallback(async (anexo: AnexoListItem) => {
     try {
-      // Garantir que temos os dados necessários do anexo
-      if (!anexo.idObjeto || !anexo.idAnexo) {
+      if (!anexo.idObjeto || !anexo.nmArquivo) {
         toast.error('Dados do documento incompletos');
         return;
       }
 
-      const blob = await solicitacoesClient.downloadAnexo(anexo.idObjeto, anexo.idAnexo);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = anexo.nmArquivo || anexo.name || 'documento';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      const arquivos = await solicitacoesClient.downloadAnexo(anexo.idObjeto, anexo.nmArquivo);
+
+      if (arquivos.length > 0) {
+        const arquivo = arquivos[0];
+        const byteCharacters = atob(arquivo.conteudoArquivo);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: arquivo.tipoArquivo });
+
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = arquivo.nomeArquivo || anexo.name || 'documento';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      } else {
+        toast.error('Arquivo não encontrado');
+      }
     } catch {
       toast.error('Erro ao baixar documento');
     }
@@ -311,69 +446,91 @@ export default function SolicitacaoModal({
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-
-    if (!formData.cdIdentificacao?.trim()) {
-      toast.error("Código de identificação é obrigatório");
-      return;
-    }
-
-    if (!formData.idTema || formData.idTema === 0) {
-      toast.error("Tema é obrigatório");
-      return;
-    }
-
     try {
       setLoading(true);
-      const finalFormData = {
-        ...formData,
-        idResponsavel: formData.idResponsavel || getResponsavelFromTema(formData.idTema),
-        dsAssunto: formData.dsAssunto?.trim() || undefined,
-        dsSolicitacao: formData.dsSolicitacao?.trim() || undefined,
-        dsObservacao: formData.dsObservacao?.trim() || undefined,
-        nrOficio: formData.nrOficio?.trim() || undefined,
-        nrProcesso: formData.nrProcesso?.trim() || undefined,
-        nrPrazo: formData.nrPrazo && formData.nrPrazo > 0 ? formData.nrPrazo : undefined,
-        tpPrazo: formData.tpPrazo?.trim() || undefined,
-      };
-      let solicitacaoId;
-      if (solicitacao) {
-        await solicitacoesClient.atualizar(solicitacao.idSolicitacao, finalFormData);
-        solicitacaoId = solicitacao.idSolicitacao;
+      let id = solicitacao?.idSolicitacao || createdSolicitacao?.idSolicitacao;
+
+      if (createdSolicitacao?.idSolicitacao) {
+        await solicitacoesClient.etapaStatus(createdSolicitacao.idSolicitacao);
+        toast.success('Solicitação criada com sucesso!');
+      } else if (solicitacao?.idSolicitacao) {
+        await solicitacoesClient.etapaStatus(solicitacao.idSolicitacao);
+        toast.success('Solicitação encaminhada com sucesso!');
       } else {
-        const created = await solicitacoesClient.criar(finalFormData);
-        solicitacaoId = created.idSolicitacao;
-      }
+        if (!formData.cdIdentificacao?.trim()) { toast.error('Código de identificação é obrigatório'); setLoading(false); return; }
+        if (!formData.idTema || formData.idTema === 0) { toast.error('Tema é obrigatório'); setLoading(false); return; }
 
-      if (formData.idTema && statusPrazos.length > 0) {
-        try {
-          for (const prazo of statusPrazos) {
-            if (prazo.nrPrazoInterno > 0) {
-              await statusPrazoTemaClient.upsertPrazoStatus(
-                formData.idTema,
-                prazo.statusCodigo,
-                { nrPrazoInterno: prazo.nrPrazoInterno }
-              );
-            }
-          }
-        } catch (error) {
-          toast.error('Erro ao salvar prazos internos');
-        }
-      }
-
-      if (anexos.length > 0 && solicitacaoId) {
-        const formDataAnexos = new FormData();
-        anexos.forEach((file) => {
-          formDataAnexos.append('files', file);
+        const created = await solicitacoesClient.criar({
+          cdIdentificacao: formData.cdIdentificacao?.trim(),
+          dsAssunto: formData.dsAssunto?.trim(),
+          dsSolicitacao: formData.dsSolicitacao?.trim(),
+          dsObservacao: formData.dsObservacao?.trim(),
+          nrOficio: formData.nrOficio?.trim(),
+          nrProcesso: formData.nrProcesso?.trim(),
+          flExcepcional: prazoExcepcional ? 'S' : 'N',
         });
-        formDataAnexos.append('idObjeto', String(solicitacaoId));
-        formDataAnexos.append('tpObjeto', 'S');
-        await solicitacoesClient.uploadAnexos(formDataAnexos);
+        id = created.idSolicitacao;
+
+        await solicitacoesClient.etapaIdentificacao(id, {
+          cdIdentificacao: formData.cdIdentificacao?.trim(),
+          dsAssunto: formData.dsAssunto?.trim(),
+          dsObservacao: formData.dsObservacao?.trim(),
+          nrOficio: formData.nrOficio?.trim(),
+          nrProcesso: formData.nrProcesso?.trim(),
+        });
+
+        await solicitacoesClient.etapaTema(id, {
+          idTema: formData.idTema,
+          tpPrazo: formData.tpPrazo || undefined,
+          nrPrazoInterno: formData.nrPrazo,
+          flExcepcional: prazoExcepcional ? 'S' : 'N',
+          idsAreas: formData.idsAreas
+        });
+
+        if (statusPrazos.length > 0) {
+          const solicitacoesPrazos = statusPrazos
+            .filter(p => p.nrPrazoInterno && p.nrPrazoInterno > 0 && p.idStatusSolicitacao)
+            .map(p => ({
+              idStatusSolicitacao: p.idStatusSolicitacao!,
+              nrPrazoInterno: p.nrPrazoInterno,
+              tpPrazo: formData.tpPrazo || undefined,
+              flExcepcional: prazoExcepcional ? 'S' : 'N'
+            }));
+          if (solicitacoesPrazos.length > 0) {
+            await solicitacoesClient.etapaPrazo(id, { nrPrazoInterno: formData.nrPrazo, solicitacoesPrazos });
+          }
+        }
+
+        if (anexos.length > 0) {
+          const arquivosDTO = await Promise.all(
+            anexos.map(async (file) => {
+              const base64 = await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result as string);
+                reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
+                reader.readAsDataURL(file);
+              });
+
+              return {
+                nomeArquivo: file.name.trim(),
+                conteudoArquivo: base64.split(',')[1],
+                tipoArquivo: file.type || 'application/octet-stream'
+              };
+            })
+          );
+          await solicitacoesClient.uploadAnexos(id, arquivosDTO);
+        }
+
+        await solicitacoesClient.etapaStatus(id);
+        toast.success('Solicitação criada com sucesso!');
       }
-      toast.success('Solicitação salva com sucesso!');
+
       onSave();
       onClose();
-    } catch {
-      toast.error('Erro ao salvar solicitação');
+      router.refresh();
+    } catch (err) {
+      console.error(err);
+      toast.error(solicitacao || createdSolicitacao ? 'Erro ao encaminhar solicitação' : 'Erro ao criar solicitação');
     } finally {
       setLoading(false);
     }
@@ -381,20 +538,9 @@ export default function SolicitacaoModal({
 
   const handleClose = useCallback(() => {
     setCurrentStep(1);
+    setCreatedSolicitacao(null);
     onClose();
   }, [onClose]);
-
-  const isStep1Valid = useCallback(() => {
-    return formData.cdIdentificacao?.trim() !== '';
-  }, [formData.cdIdentificacao]);
-
-  const isStep2Valid = useCallback(() => {
-    return formData.idTema !== undefined && formData.idTema > 0;
-  }, [formData.idTema]);
-
-  const getSelectedTema = useCallback(() => {
-    return temas.find(tema => tema.idTema === formData.idTema);
-  }, [temas, formData.idTema]);
 
   const renderStep2 = useCallback(() => (
     <div className="space-y-6">
@@ -433,7 +579,7 @@ export default function SolicitacaoModal({
 
     try {
       setLoadingStatusPrazos(true);
-      const prazos = await statusPrazoTemaClient.listarPrazosTema(formData.idTema);
+      const prazos = await statusSolicPrazoTemaClient.listar(formData.idTema);
       setStatusPrazos(prazos);
     } catch (error) {
       console.error('Erro ao carregar prazos por status:', error);
@@ -443,19 +589,19 @@ export default function SolicitacaoModal({
     }
   }, [formData.idTema]);
 
-  const updateLocalPrazo = useCallback((statusCodigo: string, valor: number) => {
+  const updateLocalPrazo = useCallback((idStatus: number, valor: number) => {
     setStatusPrazos(prev => {
-      const existing = prev.find(p => p.statusCodigo.toString() === statusCodigo);
+      const existing = prev.find(p => p.idStatusSolicitacao === idStatus);
       if (existing) {
         return prev.map(p =>
-          p.statusCodigo.toString() === statusCodigo
+          p.idStatusSolicitacao === idStatus
             ? {...p, nrPrazoInterno: valor}
             : p
         );
       } else {
         const newPrazo = {
           idStatusSolicPrazoTema: 0,
-          statusCodigo: parseInt(statusCodigo),
+          idStatusSolicitacao: idStatus,
           nrPrazoInterno: valor,
           tema: {
             idTema: formData.idTema || 0,
@@ -468,17 +614,20 @@ export default function SolicitacaoModal({
     });
   }, [formData.idTema, getSelectedTema]);
 
-  const renderStep3 = useCallback(() => {
-    const statusOptions = [
-      {codigo: 'P', nome: 'Pré-análise'},
-      {codigo: 'V', nome: 'Vencido Regulatório'},
-      {codigo: 'A', nome: 'Em análise Área Técnica'},
-      {codigo: 'T', nome: 'Vencido Área Técnica'},
-      {codigo: 'R', nome: 'Análise Regulatória'},
-      {codigo: 'O', nome: 'Em Aprovação'},
-      {codigo: 'S', nome: 'Em Assinatura'},
-      {codigo: 'C', nome: 'Concluído'},
-      {codigo: 'X', nome: 'Arquivado'}
+  const renderStep3 = useCallback((): JSX.Element => {
+    const statusOptions = statusList.length > 0 ? statusList.map(status => ({
+      codigo: status.idStatusSolicitacao,
+      nome: status.nmStatus
+    })) : [
+      {codigo: 1, nome: 'Pré-análise'},
+      {codigo: 2, nome: 'Vencido Regulatório'},
+      {codigo: 3, nome: 'Em análise Área Técnica'},
+      {codigo: 4, nome: 'Vencido Área Técnica'},
+      {codigo: 5, nome: 'Análise Regulatória'},
+      {codigo: 6, nome: 'Em Aprovação'},
+      {codigo: 7, nome: 'Em Assinatura'},
+      {codigo: 8, nome: 'Concluído'},
+      {codigo: 9, nome: 'Arquivado'}
     ];
 
     return (
@@ -488,8 +637,9 @@ export default function SolicitacaoModal({
             id="prazoExcepcional"
             checked={prazoExcepcional}
             onCheckedChange={(checked) => {
-              setPrazoExcepcional(!!checked);
-              if (!checked) {
+              const ativo = !!checked;
+              setPrazoExcepcional(ativo);
+              if (!ativo) {
                 setFormData(prev => ({
                   ...prev,
                   nrPrazo: undefined,
@@ -502,7 +652,6 @@ export default function SolicitacaoModal({
             Prazo Excepcional
           </Label>
         </div>
-
         <div className="grid grid-cols-2 gap-4">
           <TextField
             id="nrPrazo"
@@ -514,7 +663,6 @@ export default function SolicitacaoModal({
             placeholder="Horas"
             disabled={!prazoExcepcional}
           />
-
           <div className="flex flex-col gap-1">
             <Label htmlFor="tpPrazo">Tipo de Prazo</Label>
             <Select
@@ -523,82 +671,64 @@ export default function SolicitacaoModal({
               disabled={!prazoExcepcional}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Selecione"/>
+                <SelectValue placeholder="Selecione" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="U">Horas úteis</SelectItem>
-                <SelectItem value="C">Horas corridas</SelectItem>
+                <SelectItem value="H">Horas</SelectItem>
+                <SelectItem value="D">Dias</SelectItem>
+                <SelectItem value="U">Dias úteis</SelectItem>
+                <SelectItem value="M">Meses</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
-
-        {formData.idTema && (
+        {formData.idTema ? (
           <div className="flex flex-col">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Configuração de Prazos Internos
-            </h3>
-
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Configuração de Prazos Internos</h3>
             <div className="space-y-4">
               {loadingStatusPrazos ? (
                 <div className="flex items-center justify-center p-8">
-                  <div className="text-sm text-gray-500">Carregando configurações...</div>
+                  <div className="text-sm text-gray-500">Carregando configura��ões...</div>
                 </div>
               ) : (
                 <div className="grid grid-cols-3 gap-4">
-                  {statusOptions.map((status) => {
-                    const prazoConfig = statusPrazos.find(p => p.statusCodigo.toString() === status.codigo);
+                  {statusOptions.map((status, index) => {
+                    const prazoConfig = statusPrazos.find(p => p.idStatusSolicitacao === status.codigo);
                     const prazoAtual = prazoConfig?.nrPrazoInterno || 0;
-
                     return (
-                      <div key={status.codigo} className="bg-gray-50 rounded-lg p-4">
+                      <div key={index} className="bg-gray-50 rounded-lg p-4">
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
                             <h4 className="font-medium text-gray-900">{status.nome}</h4>
                           </div>
-
                           <div className="space-y-2">
-                            <Label className="text-xs text-gray-600">
-                              Prazo Interno (horas)
-                            </Label>
+                            <Label className="text-xs text-gray-600">Prazo Interno (horas)</Label>
                             <div className="flex items-center gap-2">
                               <Button
                                 type="button"
                                 variant="outline"
                                 size="sm"
-                                onClick={() => {
-                                  const newValue = Math.max(0, prazoAtual - 1);
-                                  updateLocalPrazo(status.codigo, newValue);
-                                }}
+                                onClick={() => updateLocalPrazo(status.codigo, Math.max(0, prazoAtual - 1))}
+                                disabled={!prazoExcepcional}
                                 className="w-8 h-8 p-0 flex items-center justify-center"
-                              >
-                                -
-                              </Button>
-
+                              >-</Button>
                               <TextField
                                 key={`prazo-${status.codigo}`}
                                 type="number"
                                 value={prazoAtual.toString()}
-                                onChange={(e) => {
-                                  const valor = parseInt(e.target.value) || 0;
-                                  updateLocalPrazo(status.codigo, valor);
-                                }}
+                                onChange={(e) => updateLocalPrazo(status.codigo, parseInt(e.target.value) || 0)}
                                 placeholder="0"
+                                disabled={!prazoExcepcional}
                                 className="flex-1 text-center"
                               />
-
                               <Button
                                 type="button"
                                 variant="outline"
                                 size="sm"
-                                onClick={() => {
-                                  const newValue = prazoAtual + 1;
-                                  updateLocalPrazo(status.codigo, newValue);
-                                }}
+                                onClick={() => updateLocalPrazo(status.codigo, prazoAtual + 1)}
+                                disabled={!prazoExcepcional}
                                 className="w-8 h-8 p-0 flex items-center justify-center"
-                              >
-                                +
-                              </Button>
+                              >+</Button>
                             </div>
                           </div>
                         </div>
@@ -609,20 +739,9 @@ export default function SolicitacaoModal({
               )}
             </div>
           </div>
-        )}
+        ) : null}
       </div>
-    );
-  }, [
-    formData.nrPrazo,
-    formData.tpPrazo,
-    formData.idTema,
-    prazoExcepcional,
-    handleSelectChange,
-    handleInputChange,
-    loadingStatusPrazos,
-    statusPrazos,
-    updateLocalPrazo
-  ]);
+    )}, [prazoExcepcional, formData.nrPrazo, formData.tpPrazo, formData.idTema, handleInputChange, handleSelectChange, loadingStatusPrazos, statusPrazos, updateLocalPrazo, setFormData, statusList]);
 
   const renderStep4 = useCallback(() => (
     <div className="space-y-6">
@@ -666,54 +785,186 @@ export default function SolicitacaoModal({
 
   const renderStep5 = useCallback(() => (
     <div className="space-y-6">
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">Resumo da Solicitação</h3>
+
+      {/* Informações Básicas */}
       <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <div>
-            <Label>Código de Identificação</Label>
-            <div className="p-4 bg-gray-50 border rounded-lg">
-              {formData.cdIdentificacao}
+            <Label className="text-sm font-semibold text-gray-700">Código de Identificação</Label>
+            <div className="p-3 bg-gray-50 border rounded-lg text-sm">
+              {formData.cdIdentificacao || 'Não informado'}
             </div>
           </div>
           <div>
-            <Label>Tema</Label>
-            <div className="p-4 bg-gray-50 border rounded-lg">
-              {getSelectedTema()?.nmTema}
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label>Responsável</Label>
-            <div className="p-4 bg-gray-50 border rounded-lg">
-              {responsaveis.find(r => r.idResponsavel === formData.idResponsavel)?.nmResponsavel || 'N/A'}
+            <Label className="text-sm font-semibold text-gray-700">Nº Ofício</Label>
+            <div className="p-3 bg-gray-50 border rounded-lg text-sm">
+              {formData.nrOficio || 'Não informado'}
             </div>
           </div>
           <div>
-            <Label>Status</Label>
-            <div className="p-4 bg-gray-50 border rounded-lg">
-              {formData.flStatus}
+            <Label className="text-sm font-semibold text-gray-700">Nº Processo</Label>
+            <div className="p-3 bg-gray-50 border rounded-lg text-sm">
+              {formData.nrProcesso || 'Não informado'}
             </div>
           </div>
         </div>
 
+        <div>
+          <Label className="text-sm font-semibold text-gray-700">Assunto</Label>
+          <div className="p-3 bg-gray-50 border rounded-lg text-sm">
+            {formData.dsAssunto || 'Não informado'}
+          </div>
+        </div>
+
+        <div>
+          <Label className="text-sm font-semibold text-gray-700">Descrição da Solicitação</Label>
+          <div className="p-3 bg-gray-50 border rounded-lg text-sm max-h-24 overflow-y-auto">
+            {formData.dsSolicitacao || 'Não informado'}
+          </div>
+        </div>
+
+        <div>
+          <Label className="text-sm font-semibold text-gray-700">Observações</Label>
+          <div className="p-3 bg-gray-50 border rounded-lg text-sm max-h-24 overflow-y-auto">
+            {formData.dsObservacao || 'Não informado'}
+          </div>
+        </div>
+      </div>
+
+      {/* Tema e Responsável */}
+      <div className="border-t pt-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label>Prazos</Label>
-            <div className="p-4 bg-gray-50 border rounded-lg">
-              {formData.nrPrazo ? `${formData.nrPrazo} horas` : 'Não definido'} {formData.tpPrazo === 'U' ? '(Horas úteis)' : formData.tpPrazo === 'C' ? '(Horas corridas)' : ''}
+            <Label className="text-sm font-semibold text-gray-700">Tema</Label>
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+              {getSelectedTema()?.nmTema || 'Não selecionado'}
             </div>
           </div>
           <div>
-            <Label>Anexos</Label>
-            <div className="p-4 bg-gray-50 border rounded-lg">
-              {anexos.length + anexosBackend.length}
+            <Label className="text-sm font-semibold text-gray-700">Responsável</Label>
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+              {responsaveis.find(r => r.idResponsavel === formData.idResponsavel)?.nmResponsavel || 'Não definido'}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Áreas Envolvidas */}
+      <div className="border-t pt-4">
+        <Label className="text-sm font-semibold text-gray-700">Áreas Envolvidas</Label>
+        <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-sm">
+          {formData.idsAreas && formData.idsAreas.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {formData.idsAreas.map(areaId => {
+                const tema = getSelectedTema();
+                const area = tema?.areas?.find(a => a.idArea === areaId);
+                return area ? (
+                  <span key={areaId} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    {area.nmArea}
+                  </span>
+                ) : null;
+              })}
+            </div>
+          ) : (
+            'Nenhuma área selecionada'
+          )}
+        </div>
+      </div>
+
+      {/* Prazos */}
+      <div className="border-t pt-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label className="text-sm font-semibold text-gray-700">Prazo Principal</Label>
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
+              {formData.nrPrazo && formData.nrPrazo > 0
+                ? `${formData.nrPrazo} ${(() => { switch(formData.tpPrazo){ case 'H': return 'horas'; case 'D': return 'dias'; case 'U': return 'dias úteis'; case 'M': return 'meses'; default: return 'unid.'; } })()}`
+                : 'Prazo padrão do tema'
+              }
+              {prazoExcepcional && (
+                <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                  Excepcional
+                </span>
+              )}
+            </div>
+          </div>
+          <div>
+            <Label className="text-sm font-semibold text-gray-700">Status</Label>
+            <div className="p-3 bg-gray-50 border rounded-lg text-sm">
+              {(() => {
+                if (solicitacao?.statusCodigo) {
+                  const statusAtual = statusList.find(s => s.idStatusSolicitacao === solicitacao.statusCodigo);
+                  return statusAtual?.nmStatus || solicitacao.statusCodigo;
+                }
+
+                const statusAtual = statusList.find(s => s.idStatusSolicitacao === 1);
+                return statusAtual?.nmStatus;
+              })()}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Prazos por Status */}
+      {statusPrazos.length > 0 && (
+        <div className="border-t pt-4">
+          <Label className="text-sm font-semibold text-gray-700">Prazos Configurados por Status</Label>
+          <div className="mt-2 space-y-2">
+            {statusPrazos
+              .filter(p => p.nrPrazoInterno && p.nrPrazoInterno > 0)
+              .map(prazo => {
+                const status = statusList.find(s => s.idStatusSolicitacao === prazo.idStatusSolicitacao);
+                return (
+                  <div key={prazo.idStatusSolicitacao} className="flex justify-between items-center p-2 bg-gray-50 rounded text-sm">
+                    <span className="font-medium">{status?.nmStatus || `Status ${prazo.idStatusSolicitacao}`}</span>
+                    <span className="text-gray-600">{prazo.nrPrazoInterno} horas</span>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+      )}
+
+      {/* Anexos */}
+      <div className="border-t pt-4">
+        <Label className="text-sm font-semibold text-gray-700">Anexos ({anexos.length + anexosBackend.length})</Label>
+        <div className="mt-2 space-y-2">
+          {/* Anexos novos */}
+          {anexos.length > 0 && (
+            <div>
+              <div className="text-xs text-gray-500 mb-2">Novos anexos a serem enviados:</div>
+              {anexos.map((file, index) => (
+                <div key={index} className="flex items-center justify-between p-2 bg-blue-50 border border-blue-200 rounded text-sm">
+                  <span className="font-medium text-blue-800">{file.name}</span>
+                  <span className="text-xs text-blue-600">{Math.round(file.size / 1024)} KB</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Anexos já salvos */}
+          {anexosBackend.length > 0 && (
+            <div>
+              <div className="text-xs text-gray-500 mb-2">Anexos já salvos:</div>
+              {anexosBackend.map((anexo, index) => (
+                <div key={index} className="flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded text-sm">
+                  <span className="font-medium text-green-800">{anexo.nmArquivo}</span>
+                  <span className="text-xs text-green-600">Salvo</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {anexos.length === 0 && anexosBackend.length === 0 && (
+            <div className="p-3 bg-gray-50 border rounded-lg text-sm text-gray-500 text-center">
+              Nenhum anexo adicionado
+            </div>
+          )}
+        </div>
+      </div>
     </div>
-  ), [formData, getSelectedTema, responsaveis, anexos, anexosBackend]);
+  ), [formData, getSelectedTema, responsaveis, anexos, anexosBackend, statusPrazos, statusList, prazoExcepcional]);
 
   const renderStep1 = () => (
     <div className="space-y-6">
@@ -785,6 +1036,29 @@ export default function SolicitacaoModal({
     }
   }, [currentStep, formData.idTema, loadStatusPrazos]);
 
+  useEffect(() => {
+    const loadStatusList = async () => {
+      try {
+        const status = await statusSolicitacaoClient.listarTodos();
+        setStatusList(status);
+        console.log(status)
+      } catch (error) {
+        console.error('Erro ao carregar lista de status:', error);
+      }
+    };
+
+    if (open) {
+      loadStatusList();
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (formData.idTema && open) {
+      loadStatusPrazos();
+    }
+  }, [formData.idTema, open, loadStatusPrazos]);
+
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="overflow-y-auto h-full">
@@ -794,7 +1068,7 @@ export default function SolicitacaoModal({
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="flex flex-col overflow-y-auto space-y-8">
+        <form id="solicitacao-form" onSubmit={handleSubmit} className="flex flex-col overflow-y-auto space-y-8">
           {/* Stepper Navigation */}
           <div className="flex justify-center mb-8 pt-1">
             <div className="flex items-start space-x-4">
@@ -868,7 +1142,7 @@ export default function SolicitacaoModal({
                 <button
                   type="button"
                   onClick={() => handleStepClick(3)}
-                  disabled={!isStep1Valid()}
+                  disabled={!isStep1Valid() || !isStep2Valid()}
                   className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors disabled:cursor-not-allowed ${
                     currentStep === 3
                       ? 'bg-blue-500 border-blue-500 text-white ring-2 ring-blue-200'
@@ -902,7 +1176,7 @@ export default function SolicitacaoModal({
                 <button
                   type="button"
                   onClick={() => handleStepClick(4)}
-                  disabled={!isStep1Valid()}
+                  disabled={!isStep1Valid() || !isStep2Valid()}
                   className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors disabled:cursor-not-allowed ${
                     currentStep === 4
                       ? 'bg-blue-500 border-blue-500 text-white ring-2 ring-blue-200'
@@ -936,7 +1210,7 @@ export default function SolicitacaoModal({
                 <button
                   type="button"
                   onClick={() => handleStepClick(5)}
-                  disabled={!isStep1Valid()}
+                  disabled={!isStep1Valid() || !isStep2Valid()}
                   className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors disabled:cursor-not-allowed ${
                     currentStep === 5
                       ? 'bg-blue-500 border-blue-500 text-white ring-2 ring-blue-200'
@@ -969,8 +1243,8 @@ export default function SolicitacaoModal({
             {currentStep === 4 && renderStep4()}
             {currentStep === 5 && renderStep5()}
           </div>
-
         </form>
+
         <DialogFooter className="flex gap-3 pt-6 border-t mt-auto">
           <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
             Cancelar
@@ -1074,6 +1348,7 @@ export default function SolicitacaoModal({
               </Button>
               <Button
                 type="submit"
+                form="solicitacao-form"
                 disabled={loading}
                 className="flex items-center gap-2"
               >

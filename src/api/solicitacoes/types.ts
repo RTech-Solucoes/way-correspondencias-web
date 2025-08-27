@@ -65,6 +65,7 @@ export interface SolicitacaoRequest {
   idEmail?: number;
   idTema?: number;
   idResponsavel?: number;
+  idStatusSolicitacao?: number; // adicionado para alinhar com backend
   statusCodigo?: number;
   flStatus?: string;
   cdIdentificacao?: string;
@@ -123,3 +124,26 @@ export interface BaseResponse {
   nrCpfAtualizacao?: string | null;
   flAtivo: string;
 }
+
+export interface SolicitacaoPrazoItemRequest {
+  idStatusSolicitacao: number;
+  nrPrazoInterno?: number;
+  tpPrazo?: string; // 'U' ou 'C'
+  flExcepcional?: string; // 'S' | 'N'
+}
+
+export interface SolicitacaoEtapaPrazoRequest {
+  nrPrazoInterno?: number; // prazo geral interno
+  nrPrazoExterno?: number; // se vier a ser usado
+  solicitacoesPrazos: SolicitacaoPrazoItemRequest[];
+}
+
+export interface SolicitacaoTemaEtapaRequest {
+  idTema: number;
+  tpPrazo?: string; // TipoPrazo
+  nrPrazoInterno?: number;
+  nrPrazoExterno?: number;
+  flExcepcional?: string; // 'S' | 'N'
+  idsAreas?: number[];
+}
+

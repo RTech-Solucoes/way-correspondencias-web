@@ -53,6 +53,7 @@ export default function AnexoList({
               </span>
               {isBackend &&
                 <Button
+                  type="button"
                   variant="ghost"
                   size="sm"
                   className="text-green-600 hover:text-green-600 hover:bg-green-100"
@@ -65,6 +66,7 @@ export default function AnexoList({
                 </Button>
               }
               <Button
+                type="button"
                 variant="ghost"
                 size="sm"
                 onClick={(e) => {

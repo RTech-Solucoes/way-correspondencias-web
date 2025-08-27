@@ -9,8 +9,32 @@ interface AnexoProps {
 
 export default function AnexoComponent({onAddAnexos}: AnexoProps) {
   const onDrop = useCallback((acceptedFiles: File[]) => {
+    // Filtrar arquivos válidos (com nome não vazio)
+    const validFiles = acceptedFiles.filter(file => {
+      if (!file.name || file.name.trim() === '') {
+        console.warn('Arquivo rejeitado: sem nome válido', file);
+        return false;
+      }
+      return true;
+    });
+
+    if (validFiles.length === 0) {
+      // Mostrar erro se nenhum arquivo foi válido
+      import('sonner').then(({ toast }) => {
+        toast.error('Nenhum arquivo válido foi selecionado');
+      });
+      return;
+    }
+
+    if (validFiles.length < acceptedFiles.length) {
+      // Avisar se alguns arquivos foram rejeitados
+      import('sonner').then(({ toast }) => {
+        toast.warning(`${acceptedFiles.length - validFiles.length} arquivo(s) foram rejeitados por não terem nome válido`);
+      });
+    }
+
     const dataTransfer = new DataTransfer();
-    acceptedFiles.forEach(file => dataTransfer.items.add(file));
+    validFiles.forEach(file => dataTransfer.items.add(file));
     onAddAnexos(dataTransfer.files);
   }, [onAddAnexos]);
 
@@ -66,7 +90,38 @@ export default function AnexoComponent({onAddAnexos}: AnexoProps) {
         type="file"
         className="hidden"
         multiple
-        onChange={(e) => onAddAnexos(e.target.files)}
+        onChange={(e) => {
+          if (e.target.files) {
+            // Aplicar a mesma validação do onDrop para o input manual
+            const fileArray = Array.from(e.target.files);
+            const validFiles = fileArray.filter(file => {
+              if (!file.name || file.name.trim() === '') {
+                console.warn('Arquivo rejeitado: sem nome válido', file);
+                return false;
+              }
+              return true;
+            });
+
+            if (validFiles.length === 0) {
+              import('sonner').then(({ toast }) => {
+                toast.error('Nenhum arquivo válido foi selecionado');
+              });
+              return;
+            }
+
+            if (validFiles.length < fileArray.length) {
+              import('sonner').then(({ toast }) => {
+                toast.warning(`${fileArray.length - validFiles.length} arquivo(s) foram rejeitados por não terem nome válido`);
+              });
+            }
+
+            const dataTransfer = new DataTransfer();
+            validFiles.forEach(file => dataTransfer.items.add(file));
+            onAddAnexos(dataTransfer.files);
+          } else {
+            onAddAnexos(null);
+          }
+        }}
         accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.gif"
       />
     </div>
