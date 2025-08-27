@@ -122,7 +122,7 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="nrPrazo">Prazo</Label>
+              <Label htmlFor="nrPrazo">Prazo (horas)</Label>
               <Input
                 id="nrPrazo"
                 type="number"
@@ -140,8 +140,8 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
                   <SelectValue placeholder="Selecione o tipo de prazo"/>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="U">Dias Úteis</SelectItem>
-                  <SelectItem value="C">Dias Corridos</SelectItem>
+                  <SelectItem value="U">Horas Úteis</SelectItem>
+                  <SelectItem value="C">Horas Corridas</SelectItem>
                 </SelectContent>
               </Select>
             </div>

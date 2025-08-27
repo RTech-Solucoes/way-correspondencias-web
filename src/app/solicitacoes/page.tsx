@@ -177,7 +177,6 @@ export default function SolicitacoesPage() {
   };
 
   const sortedSolicitacoes = () => {
-    console.log(solicitacoes)
 
     if (!solicitacoes || solicitacoes.length === 0) {
       return [];
