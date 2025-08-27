@@ -57,3 +57,57 @@ export function formatDate(dateString: string | null): string {
     return 'Data inválida';
   }
 }
+
+export function base64ToUint8Array(b64: string): Uint8Array {
+  let clean = b64.includes('base64,') ? b64.split('base64,')[1] : b64;
+  clean = clean.replace(/\s/g, '');
+  clean = clean.replace(/-/g, '+').replace(/_/g, '/');
+
+  const mod = clean.length % 4;
+  if (mod === 2) clean += '==';
+  else if (mod === 3) clean += '=';
+  else if (mod !== 0) {
+    throw new Error('Base64 inválido (comprimento inesperado).');
+  }
+
+  const bin = atob(clean);
+  const len = bin.length;
+  const arr = new Uint8Array(len);
+  for (let i = 0; i < len; i++) arr[i] = bin.charCodeAt(i);
+  return arr;
+}
+
+function toArrayBuffer(u8: Uint8Array): ArrayBuffer {
+  const ab = new ArrayBuffer(u8.byteLength);
+  new Uint8Array(ab).set(u8);
+  return ab;
+}
+
+export function saveBlob(
+  bytes: Uint8Array | ArrayBuffer | number[] | string,
+  mime: string | null | undefined,
+  filename: string
+) {
+  let part: BlobPart;
+
+  if (typeof bytes === 'string') {
+    const u8 = base64ToUint8Array(bytes);
+    part = toArrayBuffer(u8);
+  } else if (bytes instanceof Uint8Array) {
+    part = toArrayBuffer(bytes);
+  } else if (Array.isArray(bytes)) {
+    part = toArrayBuffer(new Uint8Array(bytes));
+  } else {
+    part = bytes as ArrayBuffer;
+  }
+
+  const blob = new Blob([part], { type: mime || 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename || 'arquivo';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}

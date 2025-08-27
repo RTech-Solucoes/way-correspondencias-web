@@ -15,7 +15,7 @@ class AnexosClient {
     );
   }
   
-  async download(idObjeto: number, tpObjeto: string, nmArquivo?: string): Promise<ArquivoDTO[]> {
+  async download(idObjeto: number, tpObjeto: TipoObjetoAnexo, nmArquivo?: string): Promise<ArquivoDTO[]> {
     const queryParams = new URLSearchParams();
     if (nmArquivo) queryParams.append('nmArquivo', nmArquivo);
 

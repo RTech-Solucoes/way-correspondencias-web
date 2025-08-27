@@ -10,11 +10,11 @@ export interface AnexoResponse {
   flAtivo: StatusAtivo;
 }
 
-export interface ArquivoDTO {
-  nomeArquivo: string;
-  tipoConteudo: string;
-  conteudoArquivo: Uint8Array;
-}
+export type ArquivoDTO = {
+  nomeArquivo?: string;
+  tipoConteudo?: string | null;
+  conteudoArquivo: string;
+};
 
 export enum TipoObjetoAnexo {
   E = "E", // E-mail

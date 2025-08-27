@@ -9,7 +9,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+  import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import {
@@ -18,8 +18,9 @@ import {
   Paperclip as PaperclipIcon,
 } from '@phosphor-icons/react';
 import { SolicitacaoResponse } from '@/api/solicitacoes/types';
-import { AnexoResponse } from '@/api/anexos/type';
-
+import { AnexoResponse, ArquivoDTO, TipoObjetoAnexo } from '@/api/anexos/type';
+import { anexosClient } from '@/api/anexos/client';
+import { base64ToUint8Array, saveBlob } from '@/utils/utils';
 
 type DetalhesSolicitacaoModalProps = {
   open: boolean;
@@ -82,11 +83,9 @@ export default function DetalhesSolicitacaoModal({
 
   statusLabel = solicitacao?.statusSolicitacao?.nmStatus ?? statusLabel;
   const criadorLine = useMemo(() => {
-    const who = solicitacao?.nmUsuarioCriacao ?? '—';
     const when = formatDateTime((solicitacao as SolicitacaoResponse)?.dtCriacao);
     return `Criado em: ${when}`;
-    // return `Criado por ${who} em: ${when}`;
-  }, [solicitacao?.nmUsuarioCriacao, solicitacao?.dtCriacao]);
+  }, [solicitacao?.dtCriacao]);
 
   const prazoLine = useMemo(() => formatDateTime((solicitacao as SolicitacaoResponse)?.dtPrazo), [solicitacao?.dtPrazo]);
 
@@ -168,6 +167,41 @@ export default function DetalhesSolicitacaoModal({
     [onEnviarDevolutiva, resposta, arquivos, onClose]
   );
 
+  const handleBaixarAnexo = useCallback(
+    async (anexo: AnexoResponse) => {
+      try {
+        if (!solicitacao?.idSolicitacao) {
+          toast.error('ID da solicitação não encontrado.');
+          return;
+        }
+
+        const arquivos = await anexosClient.download(
+          solicitacao.idSolicitacao,
+          TipoObjetoAnexo.S,
+          anexo.nmArquivo
+        );
+
+        if (!arquivos || arquivos.length === 0) {
+          toast.error('Nenhum arquivo retornado.');
+          return;
+        }
+
+        arquivos.forEach((arq: ArquivoDTO) => {
+          const bytes = base64ToUint8Array(arq.conteudoArquivo);
+          const name = arq.nomeArquivo || anexo.nmArquivo || 'arquivo';
+          const mime = arq.tipoConteudo || 'application/octet-stream';
+          saveBlob(bytes, mime, name);
+        });
+
+        toast.success('Download iniciado.');
+      } catch (e) {
+        console.error(e);
+        toast.error('Não foi possível baixar o anexo.');
+      }
+    },
+    [solicitacao?.idSolicitacao]
+  );
+
   const descricaoCollapsedStyle: React.CSSProperties = !expandDescricao && lineHeightPx
     ? { maxHeight: `${lineHeightPx * MAX_DESC_LINES}px`, overflow: 'hidden' }
     : {};
@@ -226,22 +260,22 @@ export default function DetalhesSolicitacaoModal({
             <div className="rounded-md border bg-muted/30">
               <div className="grid grid-cols-12 gap-0">
                 <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Áreas:</div>
-<div className="col-span-9 px-4 py-3 text-sm">
-  {areas.length > 0 ? (
-    <div className="flex flex-wrap gap-2">
-      {areas.map((a, idx) => (
-        <Pill
-          key={a.idArea ?? a.cdArea ?? `${a.nmArea}-${idx}`}
-          title={a.nmArea}
-        >
-          {a.nmArea}
-        </Pill>
-      ))}
-    </div>
-  ) : (
-    '—'
-  )}
-</div>
+                <div className="col-span-9 px-4 py-3 text-sm">
+                  {areas.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {areas.map((a, idx) => (
+                        <Pill
+                          key={a.idArea ?? a.cdArea ?? `${a.nmArea}-${idx}`}
+                          title={a.nmArea}
+                        >
+                          {a.nmArea}
+                        </Pill>
+                      ))}
+                    </div>
+                  ) : (
+                    '—'
+                  )}
+                </div>
               </div>
               <div className="h-px bg-border" />
               <div className="grid grid-cols-12 gap-0">
@@ -270,14 +304,9 @@ export default function DetalhesSolicitacaoModal({
           <section className="space-y-2">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">Descrição</h3>
-              {/*
-              <button
-                type="button"
-                className="text-sm text-primary hover:underline"
-                onClick={onAbrirEmailOriginal}
-              >
-                Ver e-mail original
-              </button> */}
+              {/* <button type="button" className="text-sm text-primary hover:underline" onClick={onAbrirEmailOriginal}>
+                  Ver e-mail original
+                </button> */}
             </div>
 
             <div className="rounded-md border bg-muted/30 p-4">
@@ -313,7 +342,7 @@ export default function DetalhesSolicitacaoModal({
                   <div className="col-span-9 px-4 py-3">
                     <AnexoItem
                       anexos={anexosToShow.filter((a) => a.tpObjeto === 'A')}
-                      onBaixar={onBaixarAnexo}
+                      onBaixar={onBaixarAnexo ?? handleBaixarAnexo}
                     />
                   </div>
                 </div>
@@ -327,7 +356,7 @@ export default function DetalhesSolicitacaoModal({
                   <div className="col-span-9 px-4 py-3">
                     <AnexoItem
                       anexos={anexosToShow.filter((a) => a.tpObjeto === 'G')}
-                      onBaixar={onBaixarAnexo}
+                      onBaixar={onBaixarAnexo ?? handleBaixarAnexo}
                     />
                   </div>
                 </div>
@@ -341,7 +370,7 @@ export default function DetalhesSolicitacaoModal({
                   <div className="col-span-9 px-4 py-3">
                     <AnexoItem
                       anexos={anexosToShow.filter((a) => a.tpObjeto === 'S')}
-                      onBaixar={onBaixarAnexo}
+                      onBaixar={onBaixarAnexo ?? handleBaixarAnexo}
                     />
                   </div>
                 </div>
