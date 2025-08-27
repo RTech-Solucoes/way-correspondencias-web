@@ -178,10 +178,6 @@ export default function SolicitacoesPage() {
   };
 
   const sortedSolicitacoes = () => {
-<<<<<<< HEAD
-
-=======
->>>>>>> e64492d (modal de status da solicitacao)
     if (!solicitacoes || solicitacoes.length === 0) {
       return [];
     }
