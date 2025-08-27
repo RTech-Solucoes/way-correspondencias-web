@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState, ChangeEvent, FormEvent } from 'react';
+import { useCallback, useMemo, useState, ChangeEvent, FormEvent, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -45,6 +45,8 @@ const formatDateTime = (iso?: string | null) => {
   return d.toLocaleDateString() + ' às ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
+const MAX_DESC_LINES = 6;
+
 export default function DetalhesSolicitacaoModal({
   open,
   onClose,
@@ -62,11 +64,16 @@ export default function DetalhesSolicitacaoModal({
   const [expandAssunto, setExpandAssunto] = useState(false);
   const [sending, setSending] = useState(false);
 
+  const descRef = useRef<HTMLParagraphElement | null>(null);
+  const [canToggleDescricao, setCanToggleDescricao] = useState(false);
+  const [lineHeightPx, setLineHeightPx] = useState<number | null>(null);
+
   const identificador = useMemo(
-    () => (solicitacao?.cdIdentificacao ? `#${solicitacao.cdIdentificacao}` : ''),
+    () => (solicitacao?.idSolicitacao ? `#${solicitacao.idSolicitacao}` : ''),
     [solicitacao?.cdIdentificacao]
   );
 
+  statusLabel = solicitacao?.statusSolicitacao?.nmStatus ?? statusLabel;
   const criadorLine = useMemo(() => {
     const who = solicitacao?.nmUsuarioCriacao ?? '—';
     const when = formatDateTime((solicitacao as any)?.dtCriacao);
@@ -88,6 +95,46 @@ export default function DetalhesSolicitacaoModal({
     (Array.isArray(anexos) && anexos.length > 0)
       ? anexos
       : ((solicitacao as any)?.anexos ?? []);
+
+  const measureDescricao = useCallback(() => {
+    const el = descRef.current;
+    if (!el) {
+      setCanToggleDescricao(false);
+      return;
+    }
+    const styles = window.getComputedStyle(el);
+    const lh = parseFloat(styles.lineHeight || '0');
+    if (!Number.isNaN(lh) && lh > 0) setLineHeightPx(lh);
+
+    const prevMaxHeight = el.style.maxHeight;
+    const prevOverflow = el.style.overflow;
+
+    el.style.maxHeight = 'none';
+    el.style.overflow = 'visible';
+
+    const fullHeight = el.scrollHeight;
+    const maxAllowed = (lh || 0) * MAX_DESC_LINES;
+
+    el.style.maxHeight = prevMaxHeight;
+    el.style.overflow = prevOverflow;
+
+    setCanToggleDescricao(fullHeight > maxAllowed + 1);
+  }, []);
+
+  useEffect(() => {
+    measureDescricao();
+  }, [open, descricao, measureDescricao]);
+
+  useEffect(() => {
+    const el = descRef.current;
+    if (!el) return;
+
+    const ro = new ResizeObserver(() => {
+      measureDescricao();
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [measureDescricao]);
 
   const handleUploadChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -118,6 +165,10 @@ export default function DetalhesSolicitacaoModal({
     },
     [onEnviarDevolutiva, resposta, arquivos, onClose]
   );
+
+  const descricaoCollapsedStyle: React.CSSProperties = !expandDescricao && lineHeightPx
+    ? { maxHeight: `${lineHeightPx * MAX_DESC_LINES}px`, overflow: 'hidden' }
+    : {};
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -203,7 +254,8 @@ export default function DetalhesSolicitacaoModal({
           <section className="space-y-2">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">Descrição</h3>
-              {/* <button
+              {/* se quiser reabilitar o link do e-mail original, descomente:
+              <button
                 type="button"
                 className="text-sm text-primary hover:underline"
                 onClick={onAbrirEmailOriginal}
@@ -213,10 +265,15 @@ export default function DetalhesSolicitacaoModal({
             </div>
 
             <div className="rounded-md border bg-muted/30 p-4">
-              <p className={`text-sm text-muted-foreground ${expandDescricao ? '' : 'line-clamp-4'}`}>
+              <p
+                ref={descRef}
+                className="text-sm text-muted-foreground"
+                style={descricaoCollapsedStyle}
+              >
                 {descricao || '—'}
               </p>
-              {descricao && descricao.length > 0 && (
+
+              {descricao && descricao.length > 0 && canToggleDescricao && (
                 <button
                   type="button"
                   className="mt-2 text-sm font-medium text-primary hover:underline"
