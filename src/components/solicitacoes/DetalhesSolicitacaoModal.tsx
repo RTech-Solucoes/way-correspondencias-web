@@ -1,120 +1,148 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState, ChangeEvent, FormEvent } from 'react';
+import { useCallback, useMemo, useState, ChangeEvent, FormEvent, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
+  DialogClose,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import {
-  ClockIcon,
-  DownloadIcon,
-  PaperclipIcon,
+  Clock as ClockIcon,
+  DownloadSimple as DownloadIcon,
+  Paperclip as PaperclipIcon,
 } from '@phosphor-icons/react';
 import { SolicitacaoResponse } from '@/api/solicitacoes/types';
-import { statusSolicitacaoClient, StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
-import { solicitacoesClient } from '@/api/solicitacoes/client';
-
-interface AnexoFromBackend {
-  idAnexo: number;
-  idObjeto: number;
-  nmArquivo: string;
-  dsCaminho: string;
-  tpObjeto: string;
-}
+import { AnexoResponse, ArquivoDTO, TipoObjetoAnexo } from '@/api/anexos/type';
+import { anexosClient } from '@/api/anexos/client';
+import { base64ToUint8Array, saveBlob } from '@/utils/utils';
+import { X } from 'lucide-react';
 
 type DetalhesSolicitacaoModalProps = {
   open: boolean;
-  onCloseAction: () => void;
+  onClose: () => void;
   solicitacao: SolicitacaoResponse | null;
-  anexos?: AnexoFromBackend[];
-  onBaixarAnexoAction?: (anexo: AnexoFromBackend) => Promise<void> | void;
-  onHistoricoRespostasAction?: () => void;
-  onAbrirEmailOriginalAction?: () => void;
-  onEnviarDevolutivaAction?: (mensagem: string, arquivos: File[]) => Promise<void> | void;
+  anexos?: AnexoResponse[];
+  onHistoricoRespostas?: () => void;
+  onAbrirEmailOriginal?: () => void;
+  onEnviarDevolutiva?: (mensagem: string, arquivos: File[]) => Promise<void> | void;
   statusLabel?: string;
-  onSuccessAction?: () => void;
 };
 
 const formatDateTime = (iso?: string | null) => {
-  if (!iso) return '';
+  if (!iso) return '—';
   const d = new Date(iso);
-  return d.toLocaleDateString() + ' às ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  const date = d.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+
+  const time = d.toLocaleTimeString('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+
+  return `${date} às ${time}`;
 };
+
+const MAX_DESC_LINES = 6;
 
 export default function DetalhesSolicitacaoModal({
   open,
-  onCloseAction,
+  onClose,
   solicitacao,
   anexos = [],
-  onBaixarAnexoAction,
-  onHistoricoRespostasAction,
-  onAbrirEmailOriginalAction,
-  onEnviarDevolutivaAction,
+  onHistoricoRespostas,
+  onAbrirEmailOriginal,
+  onEnviarDevolutiva,
   statusLabel = 'Status',
-  onSuccessAction,
 }: DetalhesSolicitacaoModalProps) {
   const [resposta, setResposta] = useState('');
   const [arquivos, setArquivos] = useState<File[]>([]);
   const [expandDescricao, setExpandDescricao] = useState(false);
-  const [encaminhando, setEncaminhando] = useState(false);
-  const [statusList, setStatusList] = useState<StatusSolicitacaoResponse[]>([]);
+  const [sending, setSending] = useState(false);
 
-  // Carregar lista de status quando o modal abrir
-  useEffect(() => {
-    if (open) {
-      const loadStatus = async () => {
-        try {
-          const status = await statusSolicitacaoClient.listarTodos();
-          setStatusList(status);
-        } catch (error) {
-          console.error('Erro ao carregar status:', error);
-        }
-      };
-      loadStatus();
-    }
-  }, [open]);
-
-  // Função para encaminhar a solicitação para etapa 5
-  const handleEncaminharSolicitacao = useCallback(async () => {
-    if (!solicitacao?.idSolicitacao) return;
-
-    try {
-      setEncaminhando(true);
-      await solicitacoesClient.etapaStatus(solicitacao.idSolicitacao);
-      toast.success('Solicitação encaminhada com sucesso!');
-      onCloseAction();
-      onSuccessAction?.();
-    } catch (error) {
-      console.error('Erro ao encaminhar solicitação:', error);
-      toast.error('Erro ao encaminhar solicitação');
-    } finally {
-      setEncaminhando(false);
-    }
-  }, [solicitacao?.idSolicitacao, onCloseAction, onSuccessAction]);
+  const descRef = useRef<HTMLParagraphElement | null>(null);
+  const [canToggleDescricao, setCanToggleDescricao] = useState(false);
+  const [lineHeightPx, setLineHeightPx] = useState<number | null>(null);
 
   const identificador = useMemo(
     () => (solicitacao?.cdIdentificacao ? `#${solicitacao.cdIdentificacao}` : ''),
     [solicitacao?.cdIdentificacao]
   );
 
+  statusLabel = solicitacao?.statusSolicitacao?.nmStatus ?? statusLabel;
+
   const criadorLine = useMemo(() => {
-    const who = solicitacao?.nmUsuarioCriacao ?? '—';
-    const when = solicitacao?.dtCriacao ? formatDateTime(solicitacao.dtCriacao) : '—';
-    return `Criado por ${who} em: ${when}`;
-  }, [solicitacao?.nmUsuarioCriacao, solicitacao?.dtCriacao]);
+    const when = formatDateTime((solicitacao as SolicitacaoResponse)?.dtCriacao);
+    return `Criado em: ${when}`;
+  }, [solicitacao?.dtCriacao]);
 
-  const prazoLine = useMemo(() => {
-    const prazo = solicitacao?.dtPrazo ? formatDateTime(solicitacao.dtPrazo) : undefined;
-    return prazo ?? '—';
-  }, [solicitacao?.dtPrazo]);
+  const prazoLine = useMemo(
+    () => formatDateTime((solicitacao as SolicitacaoResponse)?.dtPrazo),
+    [solicitacao?.dtPrazo]
+  );
 
-  const descricao = solicitacao?.dsSolicitacao || '';
+  const assunto = solicitacao?.dsAssunto ?? '';
+  const descricao = solicitacao?.dsSolicitacao ?? '';
+  const areas = Array.isArray(solicitacao?.tema?.areas)
+    ? (solicitacao!.tema!.areas! as Array<{ nmArea: string; idArea?: number; cdArea?: string }>)
+    : [];
+
+  const temaLabel =
+    solicitacao?.tema?.nmTema ?? (solicitacao as SolicitacaoResponse)?.nmTema ?? '—';
+
+  const anexosToShow: AnexoResponse[] =
+    Array.isArray(anexos) && anexos.length > 0 ? anexos : [];
+
+  const measureDescricao = useCallback(() => {
+    const el = descRef.current;
+    if (!el) {
+      setCanToggleDescricao(false);
+      return;
+    }
+    const styles = window.getComputedStyle(el);
+    const lh = parseFloat(styles.lineHeight || '0');
+    if (!Number.isNaN(lh) && lh > 0) setLineHeightPx(lh);
+
+    const prevMaxHeight = el.style.maxHeight;
+    const prevOverflow = el.style.overflow;
+
+    el.style.maxHeight = 'none';
+    el.style.overflow = 'visible';
+
+    const fullHeight = el.scrollHeight;
+    const maxAllowed = (lh || 0) * MAX_DESC_LINES;
+
+    el.style.maxHeight = prevMaxHeight;
+    el.style.overflow = prevOverflow;
+
+    setCanToggleDescricao(fullHeight > maxAllowed + 1);
+  }, []);
+
+  useEffect(() => {
+    measureDescricao();
+  }, [open, descricao, measureDescricao]);
+
+  useEffect(() => {
+    const el = descRef.current;
+    if (!el) return;
+
+    const ro = new ResizeObserver(() => {
+      measureDescricao();
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [measureDescricao]);
 
   const handleUploadChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -125,28 +153,70 @@ export default function DetalhesSolicitacaoModal({
   const handleEnviar = useCallback(
     async (e: FormEvent) => {
       e.preventDefault();
-      if (!onEnviarDevolutivaAction) return;
+      if (!onEnviarDevolutiva) return;
       if (!resposta.trim() && arquivos.length === 0) {
         toast.error('Escreva uma devolutiva ou anexe um arquivo.');
         return;
       }
       try {
-        await onEnviarDevolutivaAction(resposta.trim(), arquivos);
+        setSending(true);
+        await onEnviarDevolutiva(resposta.trim(), arquivos);
         toast.success('Resposta enviada com sucesso!');
         setResposta('');
         setArquivos([]);
-        onCloseAction();
-        onSuccessAction?.(); // Chama o callback de sucesso, se fornecido
+        onClose();
       } catch {
         toast.error('Não foi possível enviar a resposta.');
+      } finally {
+        setSending(false);
       }
     },
-    [onEnviarDevolutivaAction, resposta, arquivos, onCloseAction, onSuccessAction]
+    [onEnviarDevolutiva, resposta, arquivos, onClose]
   );
 
+  const handleBaixarAnexo = useCallback(
+    async (anexo: AnexoResponse) => {
+      try {
+        if (!solicitacao?.idSolicitacao) {
+          toast.error('ID da solicitação não encontrado.');
+          return;
+        }
+
+        const arquivos = await anexosClient.download(
+          solicitacao.idSolicitacao,
+          TipoObjetoAnexo.S,
+          anexo.nmArquivo
+        );
+
+        if (!arquivos || arquivos.length === 0) {
+          toast.error('Nenhum arquivo retornado.');
+          return;
+        }
+
+        arquivos.forEach((arq: ArquivoDTO) => {
+          const bytes = base64ToUint8Array(arq.conteudoArquivo);
+          const name = arq.nomeArquivo || anexo.nmArquivo || 'arquivo';
+          const mime = arq.tipoConteudo || 'application/octet-stream';
+          saveBlob(bytes, mime, name);
+        });
+
+        toast.success('Download iniciado.');
+      } catch (e) {
+        console.error(e);
+        toast.error('Não foi possível baixar o anexo.');
+      }
+    },
+    [solicitacao?.idSolicitacao]
+  );
+
+  const descricaoCollapsedStyle: React.CSSProperties =
+    !expandDescricao && lineHeightPx
+      ? { maxHeight: `${lineHeightPx * MAX_DESC_LINES}px`, overflow: 'hidden' }
+      : {};
+
   return (
-    <Dialog open={open} onOpenChange={onCloseAction}>
-      <DialogContent className="max-w-3xl md:max-w-4xl lg:max-w-5xl p-0 flex flex-col max-h-[85vh]">
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-3xl md:max-w-4xl lg:max-w-5xl p-0 flex flex-col max-h-[85vh] [&>button.absolute.right-4.top-4]:hidden">
         <div className="px-6 pt-6">
           <DialogHeader className="p-0">
             <div className="flex items-start justify-between gap-4">
@@ -154,6 +224,7 @@ export default function DetalhesSolicitacaoModal({
                 <DialogTitle className="text-[20px] font-semibold">
                   Solicitação {identificador || ''}
                 </DialogTitle>
+
                 <div className="mt-1 text-sm text-muted-foreground">{criadorLine}</div>
 
                 <div className="mt-3 flex items-center gap-2 text-sm">
@@ -163,49 +234,73 @@ export default function DetalhesSolicitacaoModal({
                 </div>
               </div>
 
-              <span
-                className="shrink-0 rounded-full bg-orange-100 text-orange-700 text-xs font-medium px-3 py-1.5"
-                title="Status atual"
-              >
-                {statusLabel}
-              </span>
+              <DialogClose asChild>
+                <button
+                  type="button"
+                  className="flex items-center justify-center rounded-full bg-slate-800 text-white hover:bg-slate-700 transition-colors h-9 w-9"
+                  aria-label="Fechar"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </DialogClose>
             </div>
           </DialogHeader>
         </div>
 
-        <form id="detalhes-form" onSubmit={handleEnviar} className="px-6 pb-6 space-y-8 overflow-y-auto flex-1">
+        <form
+          id="detalhes-form"
+          onSubmit={handleEnviar}
+          className="px-6 pb-6 space-y-8 overflow-y-auto flex-1"
+        >
           <section className="space-y-2">
             <h3 className="text-sm font-semibold">Assunto</h3>
-
-            <div className="rounded-md border bg-muted/30">
-              <div className="grid grid-cols-12 gap-0">
-                <div className="col-span-2 px-4 py-3 text-xs text-muted-foreground">Área:</div>
-                <div className="col-span-10 px-4 py-3 text-sm">
-                  {solicitacao?.area?.nmArea ?? solicitacao?.areas?.[0]?.nmArea ?? '—'}
-                </div>
-              </div>
-              <div className="h-px bg-border" />
-              <div className="grid grid-cols-12 gap-0">
-                <div className="col-span-2 px-4 py-3 text-xs text-muted-foreground">Tema:</div>
-                <div className="col-span-10 px-4 py-3 text-sm">
-                  {solicitacao?.tema?.nmTema ?? solicitacao?.nmTema ?? '—'}
-                </div>
-              </div>
+            <div className="rounded-md border bg-muted/30 p-4">
+              <p className="text-sm whitespace-pre-wrap break-words">
+                {assunto || '—'}
+              </p>
             </div>
           </section>
 
           <section className="space-y-2">
+            <h3 className="text-sm font-semibold">Metadados</h3>
             <div className="rounded-md border bg-muted/30">
+              <div className="grid grid-cols-12 gap-0">
+                <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Áreas:</div>
+                <div className="col-span-9 px-4 py-3 text-sm">
+                  {areas.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {areas.map((a, idx) => (
+                        <Pill
+                          key={a.idArea ?? a.cdArea ?? `${a.nmArea}-${idx}`}
+                          title={a.nmArea}
+                        >
+                          {a.nmArea}
+                        </Pill>
+                      ))}
+                    </div>
+                  ) : (
+                    '—'
+                  )}
+                </div>
+              </div>
+              <div className="h-px bg-border" />
+              <div className="grid grid-cols-12 gap-0">
+                <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Tema:</div>
+                <div className="col-span-9 px-4 py-3 text-sm">
+                  {temaLabel}
+                </div>
+              </div>
+              <div className="h-px bg-border" />
               <div className="grid grid-cols-12">
-                <div className="col-span-2 px-4 py-3 text-xs text-muted-foreground">Nº do ofício:</div>
-                <div className="col-span-10 px-4 py-3 text-sm">
+                <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Nº do ofício:</div>
+                <div className="col-span-9 px-4 py-3 text-sm">
                   {solicitacao?.nrOficio || '—'}
                 </div>
               </div>
               <div className="h-px bg-border" />
               <div className="grid grid-cols-12">
-                <div className="col-span-2 px-4 py-3 text-xs text-muted-foreground">Nº do processo:</div>
-                <div className="col-span-10 px-4 py-3 text-sm">
+                <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Nº do processo:</div>
+                <div className="col-span-9 px-4 py-3 text-sm">
                   {solicitacao?.nrProcesso || '—'}
                 </div>
               </div>
@@ -215,22 +310,18 @@ export default function DetalhesSolicitacaoModal({
           <section className="space-y-2">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">Descrição</h3>
-              <button
-                type="button"
-                className="text-sm text-primary hover:underline"
-                onClick={onAbrirEmailOriginalAction}
-              >
-                Ver e-mail original
-              </button>
             </div>
 
             <div className="rounded-md border bg-muted/30 p-4">
               <p
-                className={`text-sm text-muted-foreground ${expandDescricao ? '' : 'line-clamp-4'}`}
+                ref={descRef}
+                className="text-sm text-muted-foreground"
+                style={descricaoCollapsedStyle}
               >
                 {descricao || '—'}
               </p>
-              {descricao && descricao.length > 0 && (
+
+              {descricao && descricao.length > 0 && canToggleDescricao && (
                 <button
                   type="button"
                   className="mt-2 text-sm font-medium text-primary hover:underline"
@@ -252,7 +343,10 @@ export default function DetalhesSolicitacaoModal({
                     Anexado pelo Analista
                   </div>
                   <div className="col-span-9 px-4 py-3">
-                    <AnexoItem anexos={anexos.filter((a) => a.tpObjeto === 'A')} onBaixar={onBaixarAnexoAction} />
+                    <AnexoItem
+                      anexos={anexosToShow.filter((a) => a.tpObjeto === 'A')}
+                      onBaixar={handleBaixarAnexo}
+                    />
                   </div>
                 </div>
               </div>
@@ -263,7 +357,10 @@ export default function DetalhesSolicitacaoModal({
                     Anexado pelo Gerente
                   </div>
                   <div className="col-span-9 px-4 py-3">
-                    <AnexoItem anexos={anexos.filter((a) => a.tpObjeto === 'G')} onBaixar={onBaixarAnexoAction} />
+                    <AnexoItem
+                      anexos={anexosToShow.filter((a) => a.tpObjeto === 'G')}
+                      onBaixar={handleBaixarAnexo}
+                    />
                   </div>
                 </div>
               </div>
@@ -274,7 +371,10 @@ export default function DetalhesSolicitacaoModal({
                     Enviado pelo Regulatório
                   </div>
                   <div className="col-span-9 px-4 py-3">
-                    <AnexoItem anexos={anexos.filter((a) => a.tpObjeto === 'S')} onBaixar={onBaixarAnexoAction} />
+                    <AnexoItem
+                      anexos={anexosToShow.filter((a) => a.tpObjeto === 'S')}
+                      onBaixar={handleBaixarAnexo}
+                    />
                   </div>
                 </div>
               </div>
@@ -284,13 +384,6 @@ export default function DetalhesSolicitacaoModal({
           <section className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">Enviar devolutiva ao Regulatório</h3>
-              <button
-                type="button"
-                className="text-sm text-primary hover:underline"
-                onClick={onHistoricoRespostasAction}
-              >
-                Histórico de respostas
-              </button>
             </div>
 
             <div className="rounded-md border bg-muted/30 p-4">
@@ -320,118 +413,16 @@ export default function DetalhesSolicitacaoModal({
               </div>
             </div>
           </section>
-
-          {/* Nova seção: Step 5 - Informações Completas e Encaminhamento */}
-          <section className="space-y-4 border-t pt-6">
-            <h3 className="text-lg font-semibold">Step 5 - Informações Completas</h3>
-
-            {/* Mostrar todas as áreas */}
-            <div className="space-y-2">
-              <h4 className="text-sm font-semibold">Todas as Áreas</h4>
-              <div className="rounded-md border bg-muted/30 p-4">
-                {solicitacao?.areas && solicitacao.areas.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {solicitacao.areas.map((area) => (
-                      <span
-                        key={area.idArea}
-                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                      >
-                        {area.nmArea}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <span className="text-sm text-muted-foreground">Nenhuma área associada</span>
-                )}
-              </div>
-            </div>
-
-            {/* Informações do Tema */}
-            <div className="space-y-2">
-              <h4 className="text-sm font-semibold">Tema Detalhado</h4>
-              <div className="rounded-md border bg-muted/30 p-4">
-                <div className="grid grid-cols-12 gap-0">
-                  <div className="col-span-3 text-xs text-muted-foreground">Nome do Tema:</div>
-                  <div className="col-span-9 text-sm font-medium">
-                    {solicitacao?.tema?.nmTema ?? solicitacao?.nmTema ?? '—'}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Resumo de Anexos */}
-            <div className="space-y-2">
-              <h4 className="text-sm font-semibold">Resumo de Anexos</h4>
-              <div className="rounded-md border bg-muted/30 p-4">
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div className="space-y-1">
-                    <div className="text-lg font-semibold text-blue-600">
-                      {anexos.filter((a) => a.tpObjeto === 'A').length}
-                    </div>
-                    <div className="text-xs text-muted-foreground">Analista</div>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="text-lg font-semibold text-green-600">
-                      {anexos.filter((a) => a.tpObjeto === 'G').length}
-                    </div>
-                    <div className="text-xs text-muted-foreground">Gerente</div>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="text-lg font-semibold text-purple-600">
-                      {anexos.filter((a) => a.tpObjeto === 'S').length}
-                    </div>
-                    <div className="text-xs text-muted-foreground">Regulatório</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Status Disponíveis */}
-            <div className="space-y-2">
-              <h4 className="text-sm font-semibold">Status Disponíveis</h4>
-              <div className="rounded-md border bg-muted/30 p-4">
-                {statusList.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {statusList.map((status) => (
-                      <span
-                        key={status.id}
-                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"
-                      >
-                        {status.nome}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <span className="text-sm text-muted-foreground">Nenhum status disponível</span>
-                )}
-              </div>
-            </div>
-
-            {/* Ações Disponíveis */}
-            <div className="space-y-2">
-              <h4 className="text-sm font-semibold">Ações Disponíveis</h4>
-              <div className="rounded-md border bg-muted/30 p-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <Button
-                    variant="default"
-                    onClick={onCloseAction}
-                    className="w-full justify-center"
-                  >
-                    Fechar
-                  </Button>
-                  <Button
-                    variant="default"
-                    onClick={handleEncaminharSolicitacao}
-                    className="w-full justify-center"
-                    disabled={encaminhando}
-                  >
-                    {encaminhando ? 'Encaminhando...' : 'Encaminhar para análise'}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </section>
         </form>
+
+        <DialogFooter className="flex gap-3 px-6 pb-6">
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button type="submit" form="detalhes-form" disabled={sending}>
+            {sending ? 'Enviando...' : 'Enviar resposta'}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
@@ -441,37 +432,44 @@ function AnexoItem({
   anexos,
   onBaixar,
 }: {
-  anexos: AnexoFromBackend[];
-  onBaixar?: (anexo: AnexoFromBackend) => Promise<void> | void;
+  anexos: AnexoResponse[];
+  onBaixar?: (a: AnexoResponse) => void | Promise<void>;
 }) {
-  if (anexos.length === 0) return null;
-
+  if (!anexos || anexos.length === 0) {
+    return <span className="text-sm text-muted-foreground">Nenhum documento</span>;
+  }
   return (
-    <div className="flex flex-col gap-2">
-      {anexos.map((anexo) => (
-        <div
-          key={anexo.idAnexo}
-          className="flex items-center justify-between rounded-md border bg-muted/30 p-3"
+    <ul className="flex flex-col gap-2">
+      {anexos.map((a) => (
+        <li
+          key={`${a.idAnexo}-${a.nmArquivo}`}
+          className="flex items-center justify-between rounded-md border bg-white px-3 py-2"
         >
-          <div className="flex items-center gap-3">
-            <DownloadIcon className="h-5 w-5 text-muted-foreground" />
-            <div className="flex flex-col">
-              <span className="text-sm font-medium">{anexo.nmArquivo}</span>
-              <span className="text-xs text-muted-foreground">
-                {anexo.dsCaminho}
-              </span>
-            </div>
-          </div>
-
+          <span className="truncate text-sm">{a.nmArquivo}</span>
           <Button
-            variant="outline"
-            onClick={() => onBaixar?.(anexo)}
-            className="text-sm font-medium text-primary"
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => onBaixar?.(a)}
+            title="Baixar"
           >
-            Baixar
+            <DownloadIcon className="h-4 w-4" />
           </Button>
-        </div>
+        </li>
       ))}
-    </div>
+    </ul>
+  );
+}
+
+function Pill({ children, title }: { children: React.ReactNode; title?: string }) {
+  return (
+    <span
+      title={title}
+      className="inline-flex min-w-0 items-center rounded-full border border-border bg-muted/40 px-2.5 py-0.5 text-xs font-medium text-foreground/90"
+      style={{ backgroundColor: 'rgba(147, 197, 253, 0.3)' }}
+    >
+      <span className="truncate max-w-[160px]">{children}</span>
+    </span>
   );
 }

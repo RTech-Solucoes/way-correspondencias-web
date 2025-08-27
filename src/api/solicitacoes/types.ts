@@ -1,11 +1,20 @@
 export interface AreaSolicitacao {
   idArea: number;
   nmArea: string;
+  cdArea?: string | null;
+  dsArea?: string | null;
+  flAtivo: string;
 }
 
 export interface AreaTema {
   idTema: number;
   nmTema: string;
+  dsTema?: string | null;
+  nrPrazo: number;
+  nrPrazoExterno: number;
+  tpPrazo: string;
+  flAtivo: string;
+  areas?: AreaSolicitacao[];
 }
 
 export interface Email {
@@ -26,7 +35,7 @@ export interface StatusSolicitacao {
   flAtivo?: string | null;
 }
 
-export interface SolicitacaoResponse {
+export interface SolicitacaoResponse extends BaseResponse {
   idSolicitacao: number;
   idEmail?: number;
   idTema?: number;
@@ -41,8 +50,6 @@ export interface SolicitacaoResponse {
   nrOficio?: string;
   nrProcesso?: string;
   tpPrazo?: string;
-  dtCriacao?: string;
-  dtAtualizacao?: string;
   dtPrazo?: string;
   nmResponsavel?: string;
   nmTema?: string;
@@ -110,6 +117,14 @@ export interface SolicitacaoFilterParams {
   sort?: string;
 }
 
+export interface BaseResponse {
+  dtCriacao: string;
+  dtAtualizacao?: string | null;
+  nrCpfCriacao?: string | null;
+  nrCpfAtualizacao?: string | null;
+  flAtivo: string;
+}
+
 export interface SolicitacaoPrazoItemRequest {
   idStatusSolicitacao: number;
   nrPrazoInterno?: number;
@@ -131,3 +146,4 @@ export interface SolicitacaoTemaEtapaRequest {
   flExcepcional?: string; // 'S' | 'N'
   idsAreas?: number[];
 }
+
