@@ -3,13 +3,18 @@ export interface AreaSolicitacao {
   nmArea: string;
 }
 
+export interface AreaTema {
+  idTema: number;
+  nmTema: string;
+}
+
 export interface SolicitacaoResponse {
   idSolicitacao: number;
   idEmail?: number;
   idTema?: number;
   idResponsavel?: number;
   statusCodigo?: number;
-  flStatus?: string; // Status como string (P, A, C, etc.)
+  flStatus?: string;
   cdIdentificacao?: string;
   dsAssunto?: string;
   dsSolicitacao?: string;
@@ -20,9 +25,13 @@ export interface SolicitacaoResponse {
   tpPrazo?: string;
   dtCriacao?: string;
   dtAtualizacao?: string;
-  nmResponsavel?: string; // Nome do responsável para exibição
-  nmTema?: string; // Nome do tema para exibição
-  areas?: AreaSolicitacao[]; // Áreas associadas
+  nmResponsavel?: string;
+  nmTema?: string;
+  areas?: AreaSolicitacao[];
+  nmUsuarioCriacao: string;
+  dtPrazo?: string;
+  area: AreaSolicitacao;
+  tema: AreaTema;
 }
 
 export interface SolicitacaoRequest {

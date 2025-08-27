@@ -24,7 +24,7 @@ interface AnexoFromBackend {
   idObjeto: number;
   nmArquivo: string;
   dsCaminho: string;
-  tpObjeto: string; // 'A' | 'G' | 'S' (analista, gerente, regulatório)
+  tpObjeto: string;
 }
 
 type DetalhesSolicitacaoModalProps = {
@@ -111,9 +111,7 @@ export default function DetalhesSolicitacaoModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      {/* p-0 para controle total do layout; flex para separar área scroll do footer */}
       <DialogContent className="max-w-3xl md:max-w-4xl lg:max-w-5xl p-0 flex flex-col max-h-[85vh]">
-        {/* Cabeçalho */}
         <div className="px-6 pt-6">
           <DialogHeader className="p-0">
             <div className="flex items-start justify-between gap-4">
@@ -130,7 +128,6 @@ export default function DetalhesSolicitacaoModal({
                 </div>
               </div>
 
-              {/* Badge de status à direita */}
               <span
                 className="shrink-0 rounded-full bg-orange-100 text-orange-700 text-xs font-medium px-3 py-1.5"
                 title="Status atual"
@@ -141,9 +138,7 @@ export default function DetalhesSolicitacaoModal({
           </DialogHeader>
         </div>
 
-        {/* Corpo scrollável (formulário) */}
         <form id="detalhes-form" onSubmit={handleEnviar} className="px-6 pb-6 space-y-8 overflow-y-auto flex-1">
-          {/* Assunto */}
           <section className="space-y-2">
             <h3 className="text-sm font-semibold">Assunto</h3>
 
@@ -164,7 +159,6 @@ export default function DetalhesSolicitacaoModal({
             </div>
           </section>
 
-          {/* Ofício / Processo */}
           <section className="space-y-2">
             <div className="rounded-md border bg-muted/30">
               <div className="grid grid-cols-12">
@@ -183,7 +177,6 @@ export default function DetalhesSolicitacaoModal({
             </div>
           </section>
 
-          {/* Descrição */}
           <section className="space-y-2">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">Descrição</h3>
@@ -214,12 +207,10 @@ export default function DetalhesSolicitacaoModal({
             </div>
           </section>
 
-          {/* Anexos */}
           <section className="space-y-3">
             <h3 className="text-sm font-semibold">Anexos</h3>
 
             <div className="space-y-2">
-              {/* Analista */}
               <div className="rounded-md border">
                 <div className="grid grid-cols-12 items-center">
                   <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
@@ -231,7 +222,6 @@ export default function DetalhesSolicitacaoModal({
                 </div>
               </div>
 
-              {/* Gerente */}
               <div className="rounded-md border">
                 <div className="grid grid-cols-12 items-center">
                   <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
@@ -243,7 +233,6 @@ export default function DetalhesSolicitacaoModal({
                 </div>
               </div>
 
-              {/* Regulatório */}
               <div className="rounded-md border">
                 <div className="grid grid-cols-12 items-center">
                   <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
@@ -257,7 +246,6 @@ export default function DetalhesSolicitacaoModal({
             </div>
           </section>
 
-          {/* Devolutiva */}
           <section className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">Enviar devolutiva ao Regulatório</h3>
@@ -299,7 +287,6 @@ export default function DetalhesSolicitacaoModal({
           </section>
         </form>
 
-        {/* Rodapé fixo (fora da área scroll) */}
         <DialogFooter className="flex gap-3 px-6 pb-6">
           <Button type="button" variant="outline" onClick={onClose}>
             Cancelar
@@ -313,7 +300,6 @@ export default function DetalhesSolicitacaoModal({
   );
 }
 
-/** Listagem simples de anexos por “linha” */
 function AnexoItem({
   anexos,
   onBaixar,
