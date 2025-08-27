@@ -107,7 +107,7 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      const status = await statusPrazoTemaClient.listarStatusPorTema(idTema);
+      const status = await statusPrazoTemaClient.listar(idTema);
       setStatusCache(prev => new Map(prev).set(idTema, status));
       return status;
     } catch (error) {
@@ -194,7 +194,7 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
     if (idTema) {
       try {
         const statusList = await fetchStatusForTema(idTema);
-        const statusInfo = statusList.find(s => s.statusCodigo === statusCodigo);
+        const statusInfo = statusList.find(s => s.idStatusSolicitacao === statusCodigo);
         if (statusInfo) {
           return `Status ${statusCodigo}`;
         }
@@ -242,9 +242,9 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
     if (solicitacao?.idTema) {
       const cached = statusCache.get(solicitacao.idTema);
       if (cached) {
-        const statusInfo = cached.find(s => s.statusCodigo === Number(status));
+        const statusInfo = cached.find(s => s.idStatusSolicitacao === Number(status));
         if (statusInfo) {
-          return `Status ${statusInfo.statusCodigo}`;
+          return `Status ${statusInfo.idStatusSolicitacao}`;
         }
       }
     }

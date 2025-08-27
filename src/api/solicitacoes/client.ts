@@ -2,9 +2,12 @@ import ApiClient from '../client';
 import {
   SolicitacaoResponse,
   SolicitacaoRequest,
-  SolicitacaoTemaRequest,
-  SolicitacaoIdentificacaoRequest
+  SolicitacaoIdentificacaoRequest,
+  SolicitacaoTemaEtapaRequest,
+  SolicitacaoEtapaPrazoRequest,
+  SolicitacaoPrazoResponse
 } from './types';
+import { solicitacaoAnexosClient, ArquivoDTO, AnexoResponse } from './anexos-client';
 
 class SolicitacoesClient {
   private client: ApiClient;
@@ -16,154 +19,124 @@ class SolicitacoesClient {
   /**
    * Lista todas as solicitações ou filtra por critério
    */
-  async listar(filtro?: string): Promise<SolicitacaoResponse[]> {
+  async listar(filtro?: string, page?: number, size?: number, sort?: string): Promise<SolicitacaoResponse[]> {
     const queryParams = new URLSearchParams();
     if (filtro) queryParams.append('filtro', filtro);
-
-    const queryString = queryParams.toString();
-    const url = queryString ? `?${queryString}` : '';
-
-    return this.client.request<SolicitacaoResponse[]>(url, {
-      method: 'GET',
-    });
+    if (page !== undefined) queryParams.append('page', page.toString());
+    if (size !== undefined) queryParams.append('size', size.toString());
+    if (sort) queryParams.append('sort', sort);
+    const qs = queryParams.toString();
+    return this.client.request<SolicitacaoResponse[]>(qs ? `?${qs}` : '', { method: 'GET' });
   }
 
-  /**
-   * Busca uma solicitação por ID
-   */
   async buscarPorId(id: number): Promise<SolicitacaoResponse> {
     return this.client.request<SolicitacaoResponse>(`/${id}`, {
       method: 'GET',
     });
   }
 
-  /**
-   * Cria uma nova solicitação
-   */
   async criar(solicitacao: SolicitacaoRequest): Promise<SolicitacaoResponse> {
     return this.client.request<SolicitacaoResponse>('', {
       method: 'POST',
       body: JSON.stringify(solicitacao),
-      headers: {
-        'Content-Type': 'application/json',
-      },
     });
   }
 
-  /**
-   * Atualiza uma solicitação existente
-   */
   async atualizar(id: number, solicitacao: SolicitacaoRequest): Promise<SolicitacaoResponse> {
     return this.client.request<SolicitacaoResponse>(`/${id}`, {
       method: 'PUT',
       body: JSON.stringify(solicitacao),
-      headers: {
-        'Content-Type': 'application/json',
-      },
     });
   }
 
-  /**
-   * Deleta uma solicitação
-   */
   async deletar(id: number): Promise<void> {
     return this.client.request<void>(`/${id}`, {
       method: 'DELETE',
     });
   }
 
-  /**
-   * Lista prazos de uma solicitação
-   */
-  async listarPrazos(idSolicitacao: number): Promise<any[]> {
-    return this.client.request<any[]>(`/${idSolicitacao}/prazos`, {
+  async listarPrazos(idSolicitacao: number): Promise<SolicitacaoPrazoResponse[]> {
+    return this.client.request<SolicitacaoPrazoResponse[]>(`/${idSolicitacao}/prazos`, { method: 'GET' });
+  }
+
+  async previewSla(idSolicitacao: number, idStatusSolicitacao: number): Promise<number> {
+    return this.client.request<number>(`/${idSolicitacao}/sla?idStatusSolicitacao=${idStatusSolicitacao}`, {
       method: 'GET',
     });
   }
 
-  /**
-   * Preview do SLA para uma solicitação
-   */
-  async previewSla(idSolicitacao: number, statusCodigo: number): Promise<number> {
-    return this.client.request<number>(`/${idSolicitacao}/sla?statusCodigo=${statusCodigo}`, {
-      method: 'GET',
+  async definirPrazo(id: number, nrPrazoDias: number, idStatusSolicitacao?: number, tpPrazo?: string) {
+    const params = new URLSearchParams();
+    params.append('nrPrazoDias', nrPrazoDias.toString());
+    if (idStatusSolicitacao !== undefined) params.append('idStatusSolicitacao', idStatusSolicitacao.toString());
+    if (tpPrazo) params.append('tpPrazo', tpPrazo);
+    return this.client.request<any>(`/${id}/prazos/definir?${params.toString()}`, { method: 'POST' });
+  }
+
+  async definirPrazoExcepcional(id: number, nrPrazoDias: number, idStatusSolicitacao?: number, tpPrazo?: string) {
+    const params = new URLSearchParams();
+    params.append('nrPrazoDias', nrPrazoDias.toString());
+    if (idStatusSolicitacao !== undefined) params.append('idStatusSolicitacao', idStatusSolicitacao.toString());
+    if (tpPrazo) params.append('tpPrazo', tpPrazo);
+    return this.client.request<any>(`/${id}/prazos/excepcional?${params.toString()}`, { method: 'POST' });
+  }
+
+  async aplicarStatus(id: number, idStatusSolicitacao: number) {
+    return this.client.request<void>(`/${id}/aplicar-status/${idStatusSolicitacao}`, { method: 'POST' });
+  }
+
+  async etapaIdentificacao(id: number, req: SolicitacaoIdentificacaoRequest) {
+    return this.client.request<SolicitacaoResponse>(`/encaminhar/${id}/etapa01`, {
+      method: 'PUT',
+      body: JSON.stringify(req),
     });
   }
 
-  // Métodos placeholder para compatibilidade (podem não existir no backend ainda)
-  /**
-   * Busca anexos de uma solicitação
-   */
-  async buscarAnexos(idSolicitacao: number): Promise<any[]> {
-    try {
-      return this.client.request<any[]>(`/${idSolicitacao}/anexos`, {
-        method: 'GET',
-      });
-    } catch (error) {
-      console.warn('Endpoint de anexos não implementado ainda');
-      return [];
-    }
+  async etapaTema(id: number, req: SolicitacaoTemaEtapaRequest) {
+    return this.client.request<SolicitacaoResponse>(`/encaminhar/${id}/etapa02`, {
+      method: 'PUT',
+      body: JSON.stringify(req),
+    });
+  }
+
+  async etapaPrazo(id: number, req: SolicitacaoEtapaPrazoRequest) {
+    return this.client.request<SolicitacaoResponse>(`/encaminhar/${id}/etapa03`, {
+      method: 'PUT',
+      body: JSON.stringify(req),
+    });
+  }
+
+  async etapaStatus(id: number, idStatusSolicitacao?: number) {
+    const qs = idStatusSolicitacao ? `?idStatusSolicitacao=${idStatusSolicitacao}` : '';
+    return this.client.request<void>(`/encaminhar/${id}/etapa05${qs}`, { method: 'PUT' });
   }
 
   /**
-   * Upload de anexo para uma solicitação
+   * Lista anexos (wrapper compatibilidade)
    */
-  async uploadAnexo(idSolicitacao: number, file: File): Promise<any> {
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      return this.client.request<any>(`/${idSolicitacao}/anexos`, {
-        method: 'POST',
-        body: formData,
-      });
-    } catch (error) {
-      console.warn('Endpoint de upload de anexos não implementado ainda');
-      throw error;
-    }
+  async buscarAnexos(idSolicitacao: number): Promise<AnexoResponse[]> {
+    return solicitacaoAnexosClient.listar(idSolicitacao);
   }
 
   /**
-   * Remove anexo de uma solicitação
+   * Upload de anexos (wrapper compatibilidade)
+   */
+  async uploadAnexos(idSolicitacao: number, anexos: ArquivoDTO[]): Promise<void> { // anexos tipado evita TS7006
+    return solicitacaoAnexosClient.upload(idSolicitacao, anexos);
+  }
+
+  /**
+   * Remover anexo específico (wrapper compatibilidade)
    */
   async removerAnexo(idSolicitacao: number, idAnexo: number): Promise<void> {
-    try {
-      return this.client.request<void>(`/${idSolicitacao}/anexos/${idAnexo}`, {
-        method: 'DELETE',
-      });
-    } catch (error) {
-      console.warn('Endpoint de remoção de anexos não implementado ainda');
-      throw error;
-    }
+    return solicitacaoAnexosClient.deletar(idSolicitacao, idAnexo);
   }
 
   /**
-   * Download de anexo
+   * Download de anexos (wrapper compatibilidade)
    */
-  async downloadAnexo(idSolicitacao: number, idAnexo: number): Promise<Blob> {
-    try {
-      return this.client.request<Blob>(`/${idSolicitacao}/anexos/${idAnexo}/download`, {
-        method: 'GET',
-      });
-    } catch (error) {
-      console.warn('Endpoint de download de anexos não implementado ainda');
-      throw error;
-    }
-  }
-
-  /**
-   * Upload múltiplos anexos
-   */
-  async uploadAnexos(formData: FormData): Promise<any> {
-    try {
-      return this.client.request<any>('/anexos/upload', {
-        method: 'POST',
-        body: formData,
-      });
-    } catch (error) {
-      console.warn('Endpoint de upload múltiplo de anexos não implementado ainda');
-      throw error;
-    }
+  async downloadAnexo(idSolicitacao: number, nmArquivo?: string): Promise<ArquivoDTO[]> {
+    return solicitacaoAnexosClient.download(idSolicitacao, nmArquivo);
   }
 }
 

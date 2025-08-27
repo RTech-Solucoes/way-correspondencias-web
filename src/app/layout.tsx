@@ -36,11 +36,11 @@ export default function RootLayout({
           <Providers>
             <ConditionalLayout>
               {children}
-              <Toaster
-                closeButton
-                richColors
-                position="bottom-right"
-              />
+              {/*<Toaster*/}
+              {/*  closeButton*/}
+              {/*  richColors*/}
+              {/*  position="bottom-right"*/}
+              {/*/>*/}
             </ConditionalLayout>
           </Providers>
         </AuthGuard>

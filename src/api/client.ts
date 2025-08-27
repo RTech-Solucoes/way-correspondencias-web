@@ -44,34 +44,60 @@ export default class ApiClient {
   ): Promise<T> {
     const baseUrl = process.env.NEXT_PUBLIC_API_URL;
     const url = `${baseUrl}${this.module}${endpoint}`;
-    
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...this.getAuthHeaders() as Record<string, string>,
+      ...(options.headers as Record<string, string> | undefined)
+    };
+
     const config: RequestInit = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...this.getAuthHeaders(),
-        ...options.headers,
-      },
+      headers,
       ...options,
     };
 
+    // Ajusta Content-Type se body for FormData
+    if (config.body instanceof FormData) {
+      delete headers['Content-Type'];
+    }
+
+    const suppressLogout = headers['X-Suppress-Logout'] !== undefined;
+
+    interface ApiError extends Error { status?: number; payload?: unknown }
+
     try {
       const response = await fetch(url, config);
-      
+
       if (!response.ok) {
-        if (response.status === 401) {
+        let errorPayload: unknown = null;
+        try { errorPayload = await response.json(); } catch { /* ignore */ }
+
+        if (response.status === 401 && !suppressLogout) {
           this.handleUnauthorized();
-          throw new Error('Token expirado. Redirecionando para login...');
         }
 
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+        let message: string;
+        if (typeof errorPayload === 'object' && errorPayload !== null) {
+          const ep = errorPayload as { error?: string; message?: string };
+          message = ep.error || ep.message || `HTTP ${response.status}: ${response.statusText}`;
+        } else {
+          message = `HTTP ${response.status}: ${response.statusText}`;
+        }
+        const err: ApiError = new Error(message);
+        err.status = response.status;
+        err.payload = errorPayload;
+        throw err;
       }
 
       if (response.status === 204) {
         return {} as T;
       }
 
-      return await response.json();
+      try {
+        return await response.json();
+      } catch {
+        return {} as T;
+      }
     } catch (error) {
       throw error;
     }

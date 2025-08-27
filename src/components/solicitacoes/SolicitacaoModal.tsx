@@ -1,6 +1,7 @@
 'use client';
 
 import {useState, useEffect, FormEvent, useCallback, ChangeEvent} from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Dialog,
   DialogContent,
@@ -30,8 +31,8 @@ import {MultiSelectAreas} from '@/components/ui/multi-select-areas';
 import {CaretLeftIcon, CaretRightIcon, CheckIcon, ArrowBendUpRightIcon} from '@phosphor-icons/react';
 import AnexoComponent from '../AnexoComponotent/AnexoComponent';
 import AnexoList from '../AnexoComponotent/AnexoList/AnexoList';
-import {statusPrazoTemaClient} from '@/api/status-prazo-tema/client';
-import {StatusSolicPrazoTemaResponse} from '@/api/status-prazo-tema/types';
+import {statusSolicPrazoTemaClient} from '@/api/status-prazo-tema/client';
+import {StatusSolicitacaoPrazoTema, StatusSolicPrazoTemaResponse} from '@/api/status-prazo-tema/types';
 
 interface AnexoFromBackend {
   idAnexo: number;
@@ -66,15 +67,16 @@ interface SolicitacaoModalProps {
 }
 
 export default function SolicitacaoModal({
-                                           solicitacao,
-                                           open,
-                                           onClose,
-                                           onSave,
-                                           responsaveis,
-                                           temas,
-                                           initialSubject,
-                                           initialDescription
-                                         }: SolicitacaoModalProps) {
+  solicitacao,
+  open,
+  onClose,
+  onSave,
+  responsaveis,
+  temas,
+  initialSubject,
+  initialDescription
+}: SolicitacaoModalProps) {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<SolicitacaoRequest>({
     cdIdentificacao: '',
@@ -218,25 +220,78 @@ export default function SolicitacaoModal({
     });
   }, [getResponsavelFromTema]);
 
-  const handleNextStep = useCallback(() => {
-    if (currentStep === 1) {
-      if (!formData.cdIdentificacao?.trim()) {
-        toast.error("Código de identificação é obrigatório");
-        return;
+  const statusLetterToId = (letter?: string): number | undefined => {
+    if (!letter) return undefined;
+    const map: Record<string, number> = { P:1, V:2, A:3, T:4, R:5, O:6, S:7, C:8, X:9 };
+    return map[letter.toUpperCase()];
+  };
+
+  const handleNextStep = useCallback(async () => {
+    try {
+      if (currentStep === 1) {
+        if (!formData.cdIdentificacao?.trim()) {
+          toast.error("Código de identificação é obrigatório");
+          return;
+        }
+        // Apenas atualizar identificação se edição; novo só segue local
+        if (solicitacao) {
+          await solicitacoesClient.etapaIdentificacao(solicitacao.idSolicitacao, {
+            cdIdentificacao: formData.cdIdentificacao?.trim(),
+            dsAssunto: formData.dsAssunto?.trim(),
+            dsObservacao: formData.dsObservacao?.trim(),
+            nrOficio: formData.nrOficio?.trim(),
+            nrProcesso: formData.nrProcesso?.trim(),
+          });
+        }
+        setCurrentStep(2);
+      } else if (currentStep === 2) {
+        if (!formData.idTema || formData.idTema === 0) {
+          toast.error("Tema é obrigatório");
+          return;
+        }
+        if (solicitacao) {
+          await solicitacoesClient.etapaTema(solicitacao.idSolicitacao, {
+            idTema: formData.idTema,
+            tpPrazo: formData.tpPrazo || undefined,
+            nrPrazoInterno: formData.nrPrazo,
+            flExcepcional: prazoExcepcional ? 'S' : 'N',
+            idsAreas: formData.idsAreas
+          });
+        }
+        setCurrentStep(3);
+      } else if (currentStep === 3) {
+        if (solicitacao) {
+          const solicitacoesPrazos = statusPrazos
+            .filter(p => p.nrPrazoInterno && p.nrPrazoInterno > 0)
+            .map(p => ({
+              idStatusSolicitacao: p.idStatusSolicitacao,
+              nrPrazoInterno: p.nrPrazoInterno,
+              tpPrazo: formData.tpPrazo || undefined,
+              flExcepcional: prazoExcepcional ? 'S' : 'N'
+            }));
+          await solicitacoesClient.etapaPrazo(solicitacao.idSolicitacao, {
+            nrPrazoInterno: formData.nrPrazo,
+            solicitacoesPrazos
+          });
+        }
+        setCurrentStep(4);
+      } else if (currentStep === 4) {
+        if (solicitacao) {
+          if (anexos.length > 0) {
+            const formDataAnexos = new FormData();
+            anexos.forEach((file) => formDataAnexos.append('files', file));
+            formDataAnexos.append('idObjeto', String(solicitacao.idSolicitacao));
+            formDataAnexos.append('tpObjeto', 'S');
+            try { await solicitacoesClient.uploadAnexos(formDataAnexos); } catch { toast.error('Erro ao anexar arquivos'); }
+          }
+        }
+        setCurrentStep(5);
       }
-      setCurrentStep(2);
-    } else if (currentStep === 2) {
-      if (!formData.idTema || formData.idTema === 0) {
-        toast.error("Tema é obrigatório");
-        return;
-      }
-      setCurrentStep(3);
-    } else if (currentStep === 3) {
-      setCurrentStep(4);
-    } else if (currentStep === 4) {
-      setCurrentStep(5);
+    } catch (e) {
+      console.error(e);
+      toast.error('Erro ao avançar etapa');
     }
-  }, [formData.cdIdentificacao, formData.idTema, currentStep]);
+  }, [currentStep, formData, solicitacao, prazoExcepcional, statusPrazos, anexos]);
 
   const handlePreviousStep = useCallback(() => {
     if (currentStep === 2) {
@@ -311,68 +366,68 @@ export default function SolicitacaoModal({
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-
-    if (!formData.cdIdentificacao?.trim()) {
-      toast.error("Código de identificação é obrigatório");
-      return;
-    }
-
-    if (!formData.idTema || formData.idTema === 0) {
-      toast.error("Tema é obrigatório");
-      return;
-    }
-
     try {
       setLoading(true);
-      const finalFormData = {
-        ...formData,
-        idResponsavel: formData.idResponsavel || getResponsavelFromTema(formData.idTema),
-        dsAssunto: formData.dsAssunto?.trim() || undefined,
-        dsSolicitacao: formData.dsSolicitacao?.trim() || undefined,
-        dsObservacao: formData.dsObservacao?.trim() || undefined,
-        nrOficio: formData.nrOficio?.trim() || undefined,
-        nrProcesso: formData.nrProcesso?.trim() || undefined,
-        nrPrazo: formData.nrPrazo && formData.nrPrazo > 0 ? formData.nrPrazo : undefined,
-        tpPrazo: formData.tpPrazo?.trim() || undefined,
-      };
-      let solicitacaoId;
-      if (solicitacao) {
-        await solicitacoesClient.atualizar(solicitacao.idSolicitacao, finalFormData);
-        solicitacaoId = solicitacao.idSolicitacao;
-      } else {
-        const created = await solicitacoesClient.criar(finalFormData);
-        solicitacaoId = created.idSolicitacao;
-      }
+      let id = solicitacao?.idSolicitacao;
 
-      if (formData.idTema && statusPrazos.length > 0) {
-        try {
-          for (const prazo of statusPrazos) {
-            if (prazo.nrPrazoInterno > 0) {
-              await statusPrazoTemaClient.upsertPrazoStatus(
-                formData.idTema,
-                prazo.statusCodigo,
-                { nrPrazoInterno: prazo.nrPrazoInterno }
-              );
-            }
+      // Criação consolidada para nova solicitação
+      if (!id) {
+        if (!formData.cdIdentificacao?.trim()) { toast.error('Código de identificação é obrigatório'); setLoading(false); return; }
+        if (!formData.idTema || formData.idTema === 0) { toast.error('Tema é obrigatório'); setLoading(false); return; }
+
+        const created = await solicitacoesClient.criar({
+          cdIdentificacao: formData.cdIdentificacao?.trim(),
+          dsAssunto: formData.dsAssunto?.trim(),
+            dsSolicitacao: formData.dsSolicitacao?.trim(),
+            dsObservacao: formData.dsObservacao?.trim(),
+            nrOficio: formData.nrOficio?.trim(),
+            nrProcesso: formData.nrProcesso?.trim(),
+            idTema: formData.idTema,
+            nrPrazo: formData.nrPrazo,
+            tpPrazo: formData.tpPrazo || undefined,
+        });
+        id = created.idSolicitacao;
+
+        // Aplica prazos por status se configurados
+        if (statusPrazos.length > 0) {
+          const solicitacoesPrazos = statusPrazos
+            .filter(p => p.nrPrazoInterno && p.nrPrazoInterno > 0)
+            .map(p => ({
+              idStatusSolicitacao: p.idStatusSolicitacao,
+              nrPrazoInterno: p.nrPrazoInterno,
+              tpPrazo: formData.tpPrazo || undefined,
+              flExcepcional: prazoExcepcional ? 'S' : 'N'
+            }));
+          if (solicitacoesPrazos.length > 0) {
+            await solicitacoesClient.etapaPrazo(id, { nrPrazoInterno: formData.nrPrazo, solicitacoesPrazos });
           }
-        } catch (error) {
-          toast.error('Erro ao salvar prazos internos');
+        }
+
+        // Upload anexos novos
+        if (anexos.length > 0) {
+          const formDataAnexos = new FormData();
+          anexos.forEach(f => formDataAnexos.append('files', f));
+          formDataAnexos.append('idObjeto', String(id));
+          formDataAnexos.append('tpObjeto', 'S');
+          try { await solicitacoesClient.uploadAnexos(formDataAnexos); } catch { toast.error('Erro ao anexar arquivos'); }
+        }
+      } else {
+        // Em edição: aplicar status final após etapas já salvas
+        const statusId = statusLetterToId(formData.flStatus);
+        if (statusId) {
+          try {
+            await solicitacoesClient.etapaStatus(id, statusId);
+            await solicitacoesClient.aplicarStatus(id, statusId);
+          } catch { toast.error('Erro ao aplicar status'); }
         }
       }
 
-      if (anexos.length > 0 && solicitacaoId) {
-        const formDataAnexos = new FormData();
-        anexos.forEach((file) => {
-          formDataAnexos.append('files', file);
-        });
-        formDataAnexos.append('idObjeto', String(solicitacaoId));
-        formDataAnexos.append('tpObjeto', 'S');
-        await solicitacoesClient.uploadAnexos(formDataAnexos);
-      }
       toast.success('Solicitação salva com sucesso!');
       onSave();
       onClose();
-    } catch {
+      router.refresh();
+    } catch (err) {
+      console.error(err);
       toast.error('Erro ao salvar solicitação');
     } finally {
       setLoading(false);
@@ -433,7 +488,7 @@ export default function SolicitacaoModal({
 
     try {
       setLoadingStatusPrazos(true);
-      const prazos = await statusPrazoTemaClient.listarPrazosTema(formData.idTema);
+      const prazos = await statusSolicPrazoTemaClient.listar(formData.idTema);
       setStatusPrazos(prazos);
     } catch (error) {
       console.error('Erro ao carregar prazos por status:', error);
@@ -443,19 +498,19 @@ export default function SolicitacaoModal({
     }
   }, [formData.idTema]);
 
-  const updateLocalPrazo = useCallback((statusCodigo: string, valor: number) => {
+  const updateLocalPrazo = useCallback((idStatus: number, valor: number) => {
     setStatusPrazos(prev => {
-      const existing = prev.find(p => p.statusCodigo.toString() === statusCodigo);
+      const existing = prev.find(p => p.idStatusSolicitacao === idStatus);
       if (existing) {
         return prev.map(p =>
-          p.statusCodigo.toString() === statusCodigo
+          p.idStatusSolicitacao === idStatus
             ? {...p, nrPrazoInterno: valor}
             : p
         );
       } else {
         const newPrazo = {
           idStatusSolicPrazoTema: 0,
-          statusCodigo: parseInt(statusCodigo),
+          idStatusSolicitacao: idStatus,
           nrPrazoInterno: valor,
           tema: {
             idTema: formData.idTema || 0,
@@ -468,17 +523,17 @@ export default function SolicitacaoModal({
     });
   }, [formData.idTema, getSelectedTema]);
 
-  const renderStep3 = useCallback(() => {
+  const renderStep3 = useCallback((): JSX.Element => {
     const statusOptions = [
-      {codigo: 'P', nome: 'Pré-análise'},
-      {codigo: 'V', nome: 'Vencido Regulatório'},
-      {codigo: 'A', nome: 'Em análise Área Técnica'},
-      {codigo: 'T', nome: 'Vencido Área Técnica'},
-      {codigo: 'R', nome: 'Análise Regulatória'},
-      {codigo: 'O', nome: 'Em Aprovação'},
-      {codigo: 'S', nome: 'Em Assinatura'},
-      {codigo: 'C', nome: 'Concluído'},
-      {codigo: 'X', nome: 'Arquivado'}
+      {codigo: 1, nome: 'Pré-análise'},
+      {codigo: 2, nome: 'Vencido Regulatório'},
+      {codigo: 3, nome: 'Em análise Área Técnica'},
+      {codigo: 4, nome: 'Vencido Área Técnica'},
+      {codigo: 5, nome: 'Análise Regulatória'},
+      {codigo: 6, nome: 'Em Aprovação'},
+      {codigo: 7, nome: 'Em Assinatura'},
+      {codigo: 8, nome: 'Concluído'},
+      {codigo: 9, nome: 'Arquivado'}
     ];
 
     return (
@@ -488,8 +543,9 @@ export default function SolicitacaoModal({
             id="prazoExcepcional"
             checked={prazoExcepcional}
             onCheckedChange={(checked) => {
-              setPrazoExcepcional(!!checked);
-              if (!checked) {
+              const ativo = !!checked;
+              setPrazoExcepcional(ativo);
+              if (!ativo) {
                 setFormData(prev => ({
                   ...prev,
                   nrPrazo: undefined,
@@ -502,7 +558,6 @@ export default function SolicitacaoModal({
             Prazo Excepcional
           </Label>
         </div>
-
         <div className="grid grid-cols-2 gap-4">
           <TextField
             id="nrPrazo"
@@ -514,7 +569,6 @@ export default function SolicitacaoModal({
             placeholder="Horas"
             disabled={!prazoExcepcional}
           />
-
           <div className="flex flex-col gap-1">
             <Label htmlFor="tpPrazo">Tipo de Prazo</Label>
             <Select
@@ -523,7 +577,7 @@ export default function SolicitacaoModal({
               disabled={!prazoExcepcional}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Selecione"/>
+                <SelectValue placeholder="Selecione" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="U">Horas úteis</SelectItem>
@@ -532,13 +586,9 @@ export default function SolicitacaoModal({
             </Select>
           </div>
         </div>
-
-        {formData.idTema && (
+        {formData.idTema ? (
           <div className="flex flex-col">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Configuração de Prazos Internos
-            </h3>
-
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Configuração de Prazos Internos</h3>
             <div className="space-y-4">
               {loadingStatusPrazos ? (
                 <div className="flex items-center justify-center p-8">
@@ -546,59 +596,43 @@ export default function SolicitacaoModal({
                 </div>
               ) : (
                 <div className="grid grid-cols-3 gap-4">
-                  {statusOptions.map((status) => {
-                    const prazoConfig = statusPrazos.find(p => p.statusCodigo.toString() === status.codigo);
+                  {statusOptions.map(status => {
+                    const prazoConfig = statusPrazos.find(p => p.idStatusSolicitacao === status.codigo);
                     const prazoAtual = prazoConfig?.nrPrazoInterno || 0;
-
                     return (
                       <div key={status.codigo} className="bg-gray-50 rounded-lg p-4">
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
                             <h4 className="font-medium text-gray-900">{status.nome}</h4>
                           </div>
-
                           <div className="space-y-2">
-                            <Label className="text-xs text-gray-600">
-                              Prazo Interno (horas)
-                            </Label>
+                            <Label className="text-xs text-gray-600">Prazo Interno (horas)</Label>
                             <div className="flex items-center gap-2">
                               <Button
                                 type="button"
                                 variant="outline"
                                 size="sm"
-                                onClick={() => {
-                                  const newValue = Math.max(0, prazoAtual - 1);
-                                  updateLocalPrazo(status.codigo, newValue);
-                                }}
+                                onClick={() => updateLocalPrazo(status.codigo, Math.max(0, prazoAtual - 1))}
+                                disabled={!prazoExcepcional}
                                 className="w-8 h-8 p-0 flex items-center justify-center"
-                              >
-                                -
-                              </Button>
-
+                              >-</Button>
                               <TextField
                                 key={`prazo-${status.codigo}`}
                                 type="number"
                                 value={prazoAtual.toString()}
-                                onChange={(e) => {
-                                  const valor = parseInt(e.target.value) || 0;
-                                  updateLocalPrazo(status.codigo, valor);
-                                }}
+                                onChange={(e) => updateLocalPrazo(status.codigo, parseInt(e.target.value) || 0)}
                                 placeholder="0"
+                                disabled={!prazoExcepcional}
                                 className="flex-1 text-center"
                               />
-
                               <Button
                                 type="button"
                                 variant="outline"
                                 size="sm"
-                                onClick={() => {
-                                  const newValue = prazoAtual + 1;
-                                  updateLocalPrazo(status.codigo, newValue);
-                                }}
+                                onClick={() => updateLocalPrazo(status.codigo, prazoAtual + 1)}
+                                disabled={!prazoExcepcional}
                                 className="w-8 h-8 p-0 flex items-center justify-center"
-                              >
-                                +
-                              </Button>
+                              >+</Button>
                             </div>
                           </div>
                         </div>
@@ -609,20 +643,10 @@ export default function SolicitacaoModal({
               )}
             </div>
           </div>
-        )}
+        ) : null}
       </div>
     );
-  }, [
-    formData.nrPrazo,
-    formData.tpPrazo,
-    formData.idTema,
-    prazoExcepcional,
-    handleSelectChange,
-    handleInputChange,
-    loadingStatusPrazos,
-    statusPrazos,
-    updateLocalPrazo
-  ]);
+  }, [prazoExcepcional, formData.nrPrazo, formData.tpPrazo, formData.idTema, handleInputChange, handleSelectChange, loadingStatusPrazos, statusPrazos, updateLocalPrazo, setFormData]);
 
   const renderStep4 = useCallback(() => (
     <div className="space-y-6">

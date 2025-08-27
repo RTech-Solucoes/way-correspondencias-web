@@ -80,3 +80,25 @@ export interface SolicitacaoFilterParams {
   size?: number;
   sort?: string;
 }
+
+export interface SolicitacaoPrazoItemRequest {
+  idStatusSolicitacao: number;
+  nrPrazoInterno?: number;
+  tpPrazo?: string; // 'U' ou 'C'
+  flExcepcional?: string; // 'S' | 'N'
+}
+
+export interface SolicitacaoEtapaPrazoRequest {
+  nrPrazoInterno?: number; // prazo geral interno
+  nrPrazoExterno?: number; // se vier a ser usado
+  solicitacoesPrazos: SolicitacaoPrazoItemRequest[];
+}
+
+export interface SolicitacaoTemaEtapaRequest {
+  idTema: number;
+  tpPrazo?: string; // TipoPrazo
+  nrPrazoInterno?: number;
+  nrPrazoExterno?: number;
+  flExcepcional?: string; // 'S' | 'N'
+  idsAreas?: number[];
+}
