@@ -43,7 +43,11 @@ import { Pagination } from '@/components/ui/pagination';
 import { useSolicitacoes } from '@/context/solicitacoes/SolicitacoesContext';
 import TramitacaoList from '@/components/solicitacoes/TramitacaoList';
 import anexosClient from '@/api/anexos/client';
-import { TipoObjetoAnexo } from '@/api/anexos/type';
+import { AnexoResponse, TipoObjetoAnexo } from '@/api/anexos/type';
+import { AreaSolicitacao, SolicitacaoResponse } from '@/api/solicitacoes/types';
+import { ResponsavelResponse } from '@/api/responsaveis/types';
+import { TemaResponse } from '@/api/temas/types';
+import { AreaResponse } from '@/api/areas/types';
 
 export default function SolicitacoesPage() {
   const {
@@ -95,7 +99,8 @@ export default function SolicitacoesPage() {
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const [showDetalhesModal, setShowDetalhesModal] = useState(false);
-  const [detalhesSolicitacao, setDetalhesSolicitacao] = useState<any | null>(null);
+  const [detalhesSolicitacao, setDetalhesSolicitacao] = useState<SolicitacaoResponse | null>(null);
+  const [detalhesAnexos, setDetalhesAnexos] = useState<AnexoResponse[]>([]);
 
   const loadSolicitacoes = useCallback(async () => {
     try {
@@ -216,7 +221,7 @@ export default function SolicitacoesPage() {
       const detalhes = await solicitacoesClient.buscarPorId(s.idSolicitacao);
       setDetalhesSolicitacao(detalhes || s);
       const anexos = await anexosClient.buscarPorIdObjetoETipoObjeto(s.idSolicitacao, TipoObjetoAnexo.S);
-
+      setDetalhesAnexos(anexos || []);
     } catch {
       toast.error('Erro ao carregar os detalhes da solicitação');
       setDetalhesSolicitacao(s);
@@ -376,7 +381,7 @@ export default function SolicitacoesPage() {
                 </StickyTableCell>
               </StickyTableRow>
             ) : (
-              sortedSolicitacoes()?.map((solicitacao: any) => (
+              sortedSolicitacoes()?.map((solicitacao: SolicitacaoResponse) => (
                 <React.Fragment key={solicitacao.idSolicitacao}>
                   <StickyTableRow
                     onClick={() => toggleRowExpansion(solicitacao.idSolicitacao)}
@@ -395,7 +400,7 @@ export default function SolicitacoesPage() {
                     <StickyTableCell>
                       {solicitacao.areas && solicitacao.areas.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
-                          {solicitacao.areas.slice(0, 2).map((area: any) => (
+                          {solicitacao.areas.slice(0, 2).map((area: AreaSolicitacao) => (
                             <span key={area.idArea} className="text-xs bg-gray-100 px-2 py-1 rounded">
                               {area.nmArea}
                             </span>
@@ -532,7 +537,7 @@ export default function SolicitacoesPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todos</SelectItem>
-                      {responsaveis.map((resp: any) => (
+                      {responsaveis.map((resp: ResponsavelResponse) => (
                         <SelectItem key={resp.idResponsavel} value={resp.idResponsavel.toString()}>
                           {resp.nmResponsavel}
                         </SelectItem>
@@ -551,7 +556,7 @@ export default function SolicitacoesPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todos</SelectItem>
-                      {temas.map((tema: any) => (
+                      {temas.map((tema: TemaResponse) => (
                         <SelectItem key={tema.idTema} value={tema.idTema.toString()}>
                           {tema.nmTema}
                         </SelectItem>
@@ -572,7 +577,7 @@ export default function SolicitacoesPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todas</SelectItem>
-                      {areas.map((area: any) => (
+                      {areas.map((area: AreaResponse) => (
                         <SelectItem key={area.idArea} value={area.idArea.toString()}>
                           {area.nmArea}
                         </SelectItem>
@@ -637,7 +642,7 @@ export default function SolicitacoesPage() {
             setDetalhesSolicitacao(null);
           }}
           solicitacao={detalhesSolicitacao ?? selectedSolicitacao}
-          anexos={(detalhesSolicitacao?.anexos ?? [])}
+          anexos={(detalhesAnexos ?? [])}
           statusLabel={getStatusText((detalhesSolicitacao ?? selectedSolicitacao)?.statusCodigo?.toString() || '')}
           onBaixarAnexo={baixarAnexo}
           onAbrirEmailOriginal={abrirEmailOriginal}

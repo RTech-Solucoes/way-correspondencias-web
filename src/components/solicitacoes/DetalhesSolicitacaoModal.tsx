@@ -18,21 +18,15 @@ import {
   Paperclip as PaperclipIcon,
 } from '@phosphor-icons/react';
 import { SolicitacaoResponse } from '@/api/solicitacoes/types';
+import { AnexoResponse } from '@/api/anexos/type';
 
-interface AnexoFromBackend {
-  idAnexo: number;
-  idObjeto: number;
-  nmArquivo: string;
-  dsCaminho: string;
-  tpObjeto: string; // 'A' | 'G' | 'S'
-}
 
 type DetalhesSolicitacaoModalProps = {
   open: boolean;
   onClose: () => void;
   solicitacao: SolicitacaoResponse | null;
-  anexos?: AnexoFromBackend[];
-  onBaixarAnexo?: (anexo: AnexoFromBackend) => Promise<void> | void;
+  anexos?: AnexoResponse[];
+  onBaixarAnexo?: (anexo: AnexoResponse) => Promise<void> | void;
   onHistoricoRespostas?: () => void;
   onAbrirEmailOriginal?: () => void;
   onEnviarDevolutiva?: (mensagem: string, arquivos: File[]) => Promise<void> | void;
@@ -89,23 +83,20 @@ export default function DetalhesSolicitacaoModal({
   statusLabel = solicitacao?.statusSolicitacao?.nmStatus ?? statusLabel;
   const criadorLine = useMemo(() => {
     const who = solicitacao?.nmUsuarioCriacao ?? '—';
-    const when = formatDateTime((solicitacao as any)?.dtCriacao);
+    const when = formatDateTime((solicitacao as SolicitacaoResponse)?.dtCriacao);
     return `Criado em: ${when}`;
     // return `Criado por ${who} em: ${when}`;
   }, [solicitacao?.nmUsuarioCriacao, solicitacao?.dtCriacao]);
 
-  const prazoLine = useMemo(() => formatDateTime((solicitacao as any)?.dtPrazo), [solicitacao?.dtPrazo]);
+  const prazoLine = useMemo(() => formatDateTime((solicitacao as SolicitacaoResponse)?.dtPrazo), [solicitacao?.dtPrazo]);
 
   const assunto = solicitacao?.dsAssunto ?? '';
   const descricao = solicitacao?.dsSolicitacao ?? '';
   const areas = Array.isArray(solicitacao?.tema?.areas) ? (solicitacao!.tema!.areas! as Array<{ nmArea: string; idArea?: number; cdArea?: string }>) : [];
 
-  const temaLabel = solicitacao?.tema?.nmTema ?? (solicitacao as any)?.nmTema ?? '—';
+  const temaLabel = solicitacao?.tema?.nmTema ?? (solicitacao as SolicitacaoResponse)?.nmTema ?? '—';
 
-  const anexosToShow: AnexoFromBackend[] =
-    (Array.isArray(anexos) && anexos.length > 0)
-      ? anexos
-      : ((solicitacao as any)?.anexos ?? []);
+  const anexosToShow: AnexoResponse[] = (Array.isArray(anexos) && anexos.length > 0) ? anexos : [];
 
   const measureDescricao = useCallback(() => {
     const el = descRef.current;
@@ -279,7 +270,7 @@ export default function DetalhesSolicitacaoModal({
           <section className="space-y-2">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">Descrição</h3>
-              {/* se quiser reabilitar o link do e-mail original, descomente:
+              {/*
               <button
                 type="button"
                 className="text-sm text-primary hover:underline"
@@ -416,8 +407,8 @@ function AnexoItem({
   anexos,
   onBaixar,
 }: {
-  anexos: AnexoFromBackend[];
-  onBaixar?: (a: AnexoFromBackend) => void | Promise<void>;
+  anexos: AnexoResponse[];
+  onBaixar?: (a: AnexoResponse) => void | Promise<void>;
 }) {
   if (!anexos || anexos.length === 0) {
     return <span className="text-sm text-muted-foreground">Nenhum documento</span>;
