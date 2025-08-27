@@ -76,13 +76,8 @@ export default function SolicitacoesPage() {
     filters,
     setFilters,
     activeFilters,
-    setActiveFilters,
-    expandedRows,
-    setExpandedRows,
     sortField,
-    setSortField,
     sortDirection,
-    setSortDirection,
     hasActiveFilters,
     handleEdit,
     handleDelete,
@@ -97,41 +92,27 @@ export default function SolicitacoesPage() {
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const [showDetalhesModal, setShowDetalhesModal] = useState(false);
-  const [anexosDetalhes, setAnexosDetalhes] = useState<any[]>([]);
+  const [anexosDetalhes, setAnexosDetalhes] = useState<{
+    id: number;
+    nomeArquivo: string;
+    tamanhoArquivo: number;
+    tipoArquivo: string;
+    dataCriacao: string;
+  }[]>([]);
+  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
 
-  const loadSolicitacoes = useCallback(async () => {
-    try {
-      setLoading(true);
-
-      const filterParts = [];
-      if (debouncedSearchQuery) filterParts.push(debouncedSearchQuery);
-      if (activeFilters.identificacao) filterParts.push(activeFilters.identificacao);
-      if (activeFilters.responsavel) filterParts.push(activeFilters.responsavel);
-      if (activeFilters.tema) filterParts.push(activeFilters.tema);
-      if (activeFilters.area) filterParts.push(activeFilters.area);
-      if (activeFilters.status) filterParts.push(activeFilters.status);
-      if (activeFilters.dateFrom) filterParts.push(activeFilters.dateFrom);
-      if (activeFilters.dateTo) filterParts.push(activeFilters.dateTo);
-
-      const filtro = filterParts.join(' ') || undefined;
-      const response = await solicitacoesClient.listar(filtro);
-      setSolicitacoes(response);
-      setTotalPages(1);
-      setTotalElements(response.length);
-
-    } catch (error) {
-      toast.error("Erro ao carregar solicitações");
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, activeFilters, debouncedSearchQuery, setSolicitacoes, setTotalPages, setTotalElements, setLoading]);
-
-  useEffect(() => {
-    loadSolicitacoes();
-    loadResponsaveis();
-    loadTemas();
-    loadAreas();
-  }, [loadSolicitacoes]);
+  // Function to toggle row expansion - use local state instead of context
+  const toggleLocalRowExpansion = useCallback((idSolicitacao: number) => {
+    setExpandedRows(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(idSolicitacao)) {
+        newSet.delete(idSolicitacao);
+      } else {
+        newSet.add(idSolicitacao);
+      }
+      return newSet;
+    });
+  }, []);
 
   const loadResponsaveis = useCallback(async () => {
     try {
@@ -156,6 +137,40 @@ export default function SolicitacoesPage() {
     } catch {
     }
   }, [setAreas]);
+
+  const loadSolicitacoes = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      const filterParts = [];
+      if (debouncedSearchQuery) filterParts.push(debouncedSearchQuery);
+      if (activeFilters.identificacao) filterParts.push(activeFilters.identificacao);
+      if (activeFilters.responsavel) filterParts.push(activeFilters.responsavel);
+      if (activeFilters.tema) filterParts.push(activeFilters.tema);
+      if (activeFilters.area) filterParts.push(activeFilters.area);
+      if (activeFilters.status) filterParts.push(activeFilters.status);
+      if (activeFilters.dateFrom) filterParts.push(activeFilters.dateFrom);
+      if (activeFilters.dateTo) filterParts.push(activeFilters.dateTo);
+
+      const filtro = filterParts.join(' ') || undefined;
+      const response = await solicitacoesClient.listar(filtro);
+      setSolicitacoes(response);
+      setTotalPages(1);
+      setTotalElements(response.length);
+
+    } catch {
+      toast.error("Erro ao carregar solicitações");
+    } finally {
+      setLoading(false);
+    }
+  }, [activeFilters, debouncedSearchQuery, setSolicitacoes, setTotalPages, setTotalElements, setLoading]);
+
+  useEffect(() => {
+    loadSolicitacoes();
+    loadResponsaveis();
+    loadTemas();
+    loadAreas();
+  }, [loadSolicitacoes, loadResponsaveis, loadTemas, loadAreas]);
 
   const confirmDelete = async () => {
     if (solicitacaoToDelete) {
@@ -203,32 +218,49 @@ export default function SolicitacoesPage() {
     return sorted;
   };
 
-  const openDetalhes = useCallback(async (s: any) => {
+  const openDetalhes = useCallback(async (solicitacao: { idSolicitacao: number; dsAssunto?: string; cdIdentificacao?: string }) => {
     try {
-      setSelectedSolicitacao(s);
+      setSelectedSolicitacao(solicitacao as any);
       setShowDetalhesModal(true);
-      const anexos = await solicitacoesClient.buscarAnexos(s.idSolicitacao);
+      const anexos = await solicitacoesClient.buscarAnexos(solicitacao.idSolicitacao);
       setAnexosDetalhes(anexos || []);
     } catch {
       toast.error('Erro ao carregar anexos da solicitação');
     }
   }, [setSelectedSolicitacao]);
 
-  const baixarAnexo = useCallback(async (anexo: any) => {
+  const baixarAnexo = useCallback(async (anexo: { idObjeto?: number; idAnexo?: number; nmArquivo?: string; nomeArquivo?: string }) => {
     try {
-      if (!anexo?.idObjeto || !anexo?.idAnexo) {
+      if (!anexo?.idObjeto || !anexo?.nomeArquivo) {
         toast.error('Dados do documento incompletos');
         return;
       }
-      const blob = await solicitacoesClient.downloadAnexo(anexo.idObjeto, anexo.idAnexo);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = anexo.nmArquivo || 'documento';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+
+      // O downloadAnexo espera idSolicitacao e nmArquivo, retorna ArquivoDTO[]
+      const arquivos = await solicitacoesClient.downloadAnexo(anexo.idObjeto, anexo.nomeArquivo);
+
+      if (arquivos.length > 0) {
+        const arquivo = arquivos[0];
+        // Converter base64 para blob
+        const byteCharacters = atob(arquivo.conteudoArquivo);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: arquivo.tipoArquivo });
+
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = arquivo.nomeArquivo || anexo.nomeArquivo || 'documento';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      } else {
+        toast.error('Arquivo não encontrado');
+      }
     } catch {
       toast.error('Erro ao baixar documento');
     }
@@ -249,11 +281,31 @@ export default function SolicitacoesPage() {
         await solicitacoesClient.enviarDevolutiva?.(selectedSolicitacao.idSolicitacao, { mensagem });
       }
       if (arquivos.length > 0) {
-        const fd = new FormData();
-        arquivos.forEach((f) => fd.append('files', f));
-        fd.append('idObjeto', String(selectedSolicitacao.idSolicitacao));
-        fd.append('tpObjeto', 'S');
-        await solicitacoesClient.uploadAnexos(fd);
+        // Converter arquivos para ArquivoDTO (base64)
+        const arquivosDTO = await Promise.all(
+          arquivos.map(async (file) => {
+            const base64 = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => {
+                const result = reader.result as string;
+                if (!result) {
+                  reject(new Error('Erro ao ler arquivo'));
+                  return;
+                }
+                resolve(result);
+              };
+              reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
+              reader.readAsDataURL(file);
+            });
+
+            return {
+              nomeArquivo: file.name,
+              conteudoArquivo: base64.split(',')[1], // Remove prefixo data:tipo;base64,
+              tipoArquivo: file.type || 'application/octet-stream'
+            };
+          })
+        );
+        await solicitacoesClient.uploadAnexos(selectedSolicitacao.idSolicitacao, arquivosDTO);
       }
       await loadSolicitacoes();
     } catch {
@@ -369,7 +421,7 @@ export default function SolicitacoesPage() {
               sortedSolicitacoes()?.map((solicitacao) => (
                 <React.Fragment key={solicitacao.idSolicitacao}>
                   <StickyTableRow
-                    onClick={() => toggleRowExpansion(solicitacao.idSolicitacao)}
+                    onClick={() => toggleLocalRowExpansion(solicitacao.idSolicitacao)}
                     className="cursor-pointer"
                   >
                     <StickyTableCell className="w-8">
@@ -627,12 +679,19 @@ export default function SolicitacoesPage() {
             setAnexosDetalhes([]);
           }}
           solicitacao={selectedSolicitacao}
-          anexos={anexosDetalhes}
+          anexos={anexosDetalhes.map(anexo => ({
+            idAnexo: anexo.id,
+            idObjeto: anexo.id,
+            nmArquivo: anexo.nomeArquivo,
+            dsCaminho: '',
+            tpObjeto: 'SOLICITACAO'
+          }))}
           statusLabel={getStatusText(selectedSolicitacao?.statusCodigo?.toString() || '')}
           onBaixarAnexo={baixarAnexo}
           onAbrirEmailOriginal={abrirEmailOriginal}
           onHistoricoRespostas={abrirHistorico}
           onEnviarDevolutiva={enviarDevolutiva}
+          onSuccess={loadSolicitacoes}
         />
       )}
 

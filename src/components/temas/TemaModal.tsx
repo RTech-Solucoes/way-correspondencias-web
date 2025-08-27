@@ -159,7 +159,7 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
             />
           </div>
 
-          <div className="space-y-4">
+          <div className="flex flex-col overflow-y-auto max-h-60">
             <MultiSelectAreas
               selectedAreaIds={selectedAreaIds}
               onSelectionChange={handleAreasSelectionChange}

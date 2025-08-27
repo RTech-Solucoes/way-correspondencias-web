@@ -32,7 +32,8 @@ import {CaretLeftIcon, CaretRightIcon, CheckIcon, ArrowBendUpRightIcon} from '@p
 import AnexoComponent from '../AnexoComponotent/AnexoComponent';
 import AnexoList from '../AnexoComponotent/AnexoList/AnexoList';
 import {statusSolicPrazoTemaClient} from '@/api/status-prazo-tema/client';
-import {StatusSolicitacaoPrazoTema, StatusSolicPrazoTemaResponse} from '@/api/status-prazo-tema/types';
+import {StatusSolicPrazoTemaResponse} from '@/api/status-prazo-tema/types';
+import { statusSolicitacaoClient, StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
 
 interface AnexoFromBackend {
   idAnexo: number;
@@ -98,6 +99,7 @@ export default function SolicitacaoModal({
   const [statusPrazos, setStatusPrazos] = useState<StatusSolicPrazoTemaResponse[]>([]);
   const [loadingStatusPrazos, setLoadingStatusPrazos] = useState(false);
   const [prazoExcepcional, setPrazoExcepcional] = useState(false);
+  const [statusList, setStatusList] = useState<StatusSolicitacaoResponse[]>([]);
 
   useEffect(() => {
     if (solicitacao) {
@@ -141,7 +143,15 @@ export default function SolicitacaoModal({
   useEffect(() => {
     if (solicitacao && solicitacao.idSolicitacao && open) {
       solicitacoesClient.buscarAnexos(solicitacao.idSolicitacao).then((anexos) => {
-        setAnexosBackend(anexos);
+        // Mapear AnexoResponse para AnexoFromBackend
+        const anexosMapeados = anexos.map(anexo => ({
+          idAnexo: anexo.id,
+          idObjeto: solicitacao.idSolicitacao,
+          nmArquivo: anexo.nomeArquivo,
+          dsCaminho: '', // Campo não existe em AnexoResponse
+          tpObjeto: 'S' // Tipo fixo para solicitações
+        }));
+        setAnexosBackend(anexosMapeados);
       });
     } else {
       setAnexosBackend([]);
@@ -220,12 +230,6 @@ export default function SolicitacaoModal({
     });
   }, [getResponsavelFromTema]);
 
-  const statusLetterToId = (letter?: string): number | undefined => {
-    if (!letter) return undefined;
-    const map: Record<string, number> = { P:1, V:2, A:3, T:4, R:5, O:6, S:7, C:8, X:9 };
-    return map[letter.toUpperCase()];
-  };
-
   const handleNextStep = useCallback(async () => {
     try {
       if (currentStep === 1) {
@@ -262,9 +266,9 @@ export default function SolicitacaoModal({
       } else if (currentStep === 3) {
         if (solicitacao) {
           const solicitacoesPrazos = statusPrazos
-            .filter(p => p.nrPrazoInterno && p.nrPrazoInterno > 0)
+            .filter(p => p.nrPrazoInterno && p.nrPrazoInterno > 0 && p.idStatusSolicitacao)
             .map(p => ({
-              idStatusSolicitacao: p.idStatusSolicitacao,
+              idStatusSolicitacao: p.idStatusSolicitacao!,
               nrPrazoInterno: p.nrPrazoInterno,
               tpPrazo: formData.tpPrazo || undefined,
               flExcepcional: prazoExcepcional ? 'S' : 'N'
@@ -278,11 +282,45 @@ export default function SolicitacaoModal({
       } else if (currentStep === 4) {
         if (solicitacao) {
           if (anexos.length > 0) {
-            const formDataAnexos = new FormData();
-            anexos.forEach((file) => formDataAnexos.append('files', file));
-            formDataAnexos.append('idObjeto', String(solicitacao.idSolicitacao));
-            formDataAnexos.append('tpObjeto', 'S');
-            try { await solicitacoesClient.uploadAnexos(formDataAnexos); } catch { toast.error('Erro ao anexar arquivos'); }
+            // Converter arquivos para ArquivoDTO (base64)
+            const arquivosDTO = await Promise.all(
+              anexos.map(async (file) => {
+                // Validar se o arquivo tem nome
+                if (!file.name || file.name.trim() === '') {
+                  throw new Error(`Arquivo sem nome válido: ${file.name || 'undefined'}`);
+                }
+
+                const base64 = await new Promise<string>((resolve, reject) => {
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    const result = reader.result as string;
+                    if (!result) {
+                      reject(new Error('Erro ao ler arquivo'));
+                      return;
+                    }
+                    resolve(result);
+                  };
+                  reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
+                  reader.readAsDataURL(file);
+                });
+
+                const base64Content = base64.split(',')[1];
+                if (!base64Content) {
+                  throw new Error('Erro ao converter arquivo para base64');
+                }
+
+                return {
+                  nomeArquivo: file.name.trim(),
+                  conteudoArquivo: base64Content,
+                  tipoArquivo: file.type || 'application/octet-stream'
+                };
+              })
+            );
+            try {
+              await solicitacoesClient.uploadAnexos(solicitacao.idSolicitacao, arquivosDTO);
+            } catch {
+              toast.error('Erro ao anexar arquivos');
+            }
           }
         }
         setCurrentStep(5);
@@ -345,20 +383,36 @@ export default function SolicitacaoModal({
   const handleDownloadAnexoBackend = useCallback(async (anexo: AnexoListItem) => {
     try {
       // Garantir que temos os dados necessários do anexo
-      if (!anexo.idObjeto || !anexo.idAnexo) {
+      if (!anexo.idObjeto || !anexo.nmArquivo) {
         toast.error('Dados do documento incompletos');
         return;
       }
 
-      const blob = await solicitacoesClient.downloadAnexo(anexo.idObjeto, anexo.idAnexo);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = anexo.nmArquivo || anexo.name || 'documento';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      // O downloadAnexo espera idSolicitacao e nmArquivo, e retorna ArquivoDTO[]
+      const arquivos = await solicitacoesClient.downloadAnexo(anexo.idObjeto, anexo.nmArquivo);
+
+      if (arquivos.length > 0) {
+        const arquivo = arquivos[0];
+        // Converter base64 para blob
+        const byteCharacters = atob(arquivo.conteudoArquivo);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: arquivo.tipoArquivo });
+
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = arquivo.nomeArquivo || anexo.name || 'documento';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      } else {
+        toast.error('Arquivo não encontrado');
+      }
     } catch {
       toast.error('Erro ao baixar documento');
     }
@@ -375,25 +429,44 @@ export default function SolicitacaoModal({
         if (!formData.cdIdentificacao?.trim()) { toast.error('Código de identificação é obrigatório'); setLoading(false); return; }
         if (!formData.idTema || formData.idTema === 0) { toast.error('Tema é obrigatório'); setLoading(false); return; }
 
+        // Step 1: Create the solicitation
         const created = await solicitacoesClient.criar({
           cdIdentificacao: formData.cdIdentificacao?.trim(),
           dsAssunto: formData.dsAssunto?.trim(),
-            dsSolicitacao: formData.dsSolicitacao?.trim(),
-            dsObservacao: formData.dsObservacao?.trim(),
-            nrOficio: formData.nrOficio?.trim(),
-            nrProcesso: formData.nrProcesso?.trim(),
-            idTema: formData.idTema,
-            nrPrazo: formData.nrPrazo,
-            tpPrazo: formData.tpPrazo || undefined,
+          dsSolicitacao: formData.dsSolicitacao?.trim(),
+          dsObservacao: formData.dsObservacao?.trim(),
+          nrOficio: formData.nrOficio?.trim(),
+          nrProcesso: formData.nrProcesso?.trim(),
+          idTema: formData.idTema,
+          nrPrazo: formData.nrPrazo,
+          tpPrazo: formData.tpPrazo || undefined,
         });
         id = created.idSolicitacao;
 
-        // Aplica prazos por status se configurados
+        // Step 2: Call etapaIdentificacao API
+        await solicitacoesClient.etapaIdentificacao(id, {
+          cdIdentificacao: formData.cdIdentificacao?.trim(),
+          dsAssunto: formData.dsAssunto?.trim(),
+          dsObservacao: formData.dsObservacao?.trim(),
+          nrOficio: formData.nrOficio?.trim(),
+          nrProcesso: formData.nrProcesso?.trim(),
+        });
+
+        // Step 3: Call etapaTema API
+        await solicitacoesClient.etapaTema(id, {
+          idTema: formData.idTema,
+          tpPrazo: formData.tpPrazo || undefined,
+          nrPrazoInterno: formData.nrPrazo,
+          flExcepcional: prazoExcepcional ? 'S' : 'N',
+          idsAreas: formData.idsAreas
+        });
+
+        // Step 4: Call etapaPrazo API if configured
         if (statusPrazos.length > 0) {
           const solicitacoesPrazos = statusPrazos
-            .filter(p => p.nrPrazoInterno && p.nrPrazoInterno > 0)
+            .filter(p => p.nrPrazoInterno && p.nrPrazoInterno > 0 && p.idStatusSolicitacao)
             .map(p => ({
-              idStatusSolicitacao: p.idStatusSolicitacao,
+              idStatusSolicitacao: p.idStatusSolicitacao!,
               nrPrazoInterno: p.nrPrazoInterno,
               tpPrazo: formData.tpPrazo || undefined,
               flExcepcional: prazoExcepcional ? 'S' : 'N'
@@ -403,32 +476,71 @@ export default function SolicitacaoModal({
           }
         }
 
-        // Upload anexos novos
+        // Step 5: Upload anexos if any
         if (anexos.length > 0) {
-          const formDataAnexos = new FormData();
-          anexos.forEach(f => formDataAnexos.append('files', f));
-          formDataAnexos.append('idObjeto', String(id));
-          formDataAnexos.append('tpObjeto', 'S');
-          try { await solicitacoesClient.uploadAnexos(formDataAnexos); } catch { toast.error('Erro ao anexar arquivos'); }
-        }
-      } else {
-        // Em edição: aplicar status final após etapas já salvas
-        const statusId = statusLetterToId(formData.flStatus);
-        if (statusId) {
+          // Converter arquivos para ArquivoDTO (base64)
+          const arquivosDTO = await Promise.all(
+            anexos.map(async (file) => {
+              // Validar se o arquivo tem nome
+              if (!file.name || file.name.trim() === '') {
+                throw new Error(`Arquivo sem nome válido: ${file.name || 'undefined'}`);
+              }
+
+              const base64 = await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                  const result = reader.result as string;
+                  if (!result) {
+                    reject(new Error('Erro ao ler arquivo'));
+                    return;
+                  }
+                  resolve(result);
+                };
+                reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
+                reader.readAsDataURL(file);
+              });
+
+              const base64Content = base64.split(',')[1];
+              if (!base64Content) {
+                throw new Error('Erro ao converter arquivo para base64');
+              }
+
+              return {
+                nomeArquivo: file.name.trim(),
+                conteudoArquivo: base64Content,
+                tipoArquivo: file.type || 'application/octet-stream'
+              };
+            })
+          );
           try {
-            await solicitacoesClient.etapaStatus(id, statusId);
-            await solicitacoesClient.aplicarStatus(id, statusId);
-          } catch { toast.error('Erro ao aplicar status'); }
+            await solicitacoesClient.uploadAnexos(id, arquivosDTO);
+          } catch {
+            toast.error('Erro ao anexar arquivos');
+          }
+        }
+
+        // Step 6: Call etapaStatus (step 5) to finalize the creation
+        await solicitacoesClient.etapaStatus(id);
+        toast.success('Solicitação criada com sucesso!');
+      } else {
+        // Para solicitação existente: usar endpoint de encaminhamento etapa05
+        try {
+          await solicitacoesClient.etapaStatus(id);
+          toast.success('Solicitação encaminhada com sucesso!');
+        } catch (error) {
+          console.error('Erro ao encaminhar solicitação:', error);
+          toast.error('Erro ao encaminhar solicitação');
+          setLoading(false);
+          return;
         }
       }
 
-      toast.success('Solicitação salva com sucesso!');
       onSave();
       onClose();
       router.refresh();
     } catch (err) {
       console.error(err);
-      toast.error('Erro ao salvar solicitação');
+      toast.error(solicitacao ? 'Erro ao encaminhar solicitação' : 'Erro ao criar solicitação');
     } finally {
       setLoading(false);
     }
@@ -524,7 +636,12 @@ export default function SolicitacaoModal({
   }, [formData.idTema, getSelectedTema]);
 
   const renderStep3 = useCallback((): JSX.Element => {
-    const statusOptions = [
+    // Usar statusList da API em vez do hardcode
+    const statusOptions = statusList.length > 0 ? statusList.map(status => ({
+      codigo: status.id,
+      nome: status.nome
+    })) : [
+      // Fallback caso a API não retorne dados
       {codigo: 1, nome: 'Pré-análise'},
       {codigo: 2, nome: 'Vencido Regulatório'},
       {codigo: 3, nome: 'Em análise Área Técnica'},
@@ -596,11 +713,11 @@ export default function SolicitacaoModal({
                 </div>
               ) : (
                 <div className="grid grid-cols-3 gap-4">
-                  {statusOptions.map(status => {
+                  {statusOptions.map((status, index) => {
                     const prazoConfig = statusPrazos.find(p => p.idStatusSolicitacao === status.codigo);
                     const prazoAtual = prazoConfig?.nrPrazoInterno || 0;
                     return (
-                      <div key={status.codigo} className="bg-gray-50 rounded-lg p-4">
+                      <div key={index} className="bg-gray-50 rounded-lg p-4">
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
                             <h4 className="font-medium text-gray-900">{status.nome}</h4>
@@ -646,7 +763,7 @@ export default function SolicitacaoModal({
         ) : null}
       </div>
     );
-  }, [prazoExcepcional, formData.nrPrazo, formData.tpPrazo, formData.idTema, handleInputChange, handleSelectChange, loadingStatusPrazos, statusPrazos, updateLocalPrazo, setFormData]);
+  }, [prazoExcepcional, formData.nrPrazo, formData.tpPrazo, formData.idTema, handleInputChange, handleSelectChange, loadingStatusPrazos, statusPrazos, updateLocalPrazo, setFormData, statusList]);
 
   const renderStep4 = useCallback(() => (
     <div className="space-y-6">
@@ -690,54 +807,186 @@ export default function SolicitacaoModal({
 
   const renderStep5 = useCallback(() => (
     <div className="space-y-6">
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">Resumo da Solicitação</h3>
+
+      {/* Informações Básicas */}
       <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <div>
-            <Label>Código de Identificação</Label>
-            <div className="p-4 bg-gray-50 border rounded-lg">
-              {formData.cdIdentificacao}
+            <Label className="text-sm font-semibold text-gray-700">Código de Identificação</Label>
+            <div className="p-3 bg-gray-50 border rounded-lg text-sm">
+              {formData.cdIdentificacao || 'Não informado'}
             </div>
           </div>
           <div>
-            <Label>Tema</Label>
-            <div className="p-4 bg-gray-50 border rounded-lg">
-              {getSelectedTema()?.nmTema}
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label>Responsável</Label>
-            <div className="p-4 bg-gray-50 border rounded-lg">
-              {responsaveis.find(r => r.idResponsavel === formData.idResponsavel)?.nmResponsavel || 'N/A'}
+            <Label className="text-sm font-semibold text-gray-700">Nº Ofício</Label>
+            <div className="p-3 bg-gray-50 border rounded-lg text-sm">
+              {formData.nrOficio || 'Não informado'}
             </div>
           </div>
           <div>
-            <Label>Status</Label>
-            <div className="p-4 bg-gray-50 border rounded-lg">
-              {formData.flStatus}
+            <Label className="text-sm font-semibold text-gray-700">Nº Processo</Label>
+            <div className="p-3 bg-gray-50 border rounded-lg text-sm">
+              {formData.nrProcesso || 'Não informado'}
             </div>
           </div>
         </div>
 
+        <div>
+          <Label className="text-sm font-semibold text-gray-700">Assunto</Label>
+          <div className="p-3 bg-gray-50 border rounded-lg text-sm">
+            {formData.dsAssunto || 'Não informado'}
+          </div>
+        </div>
+
+        <div>
+          <Label className="text-sm font-semibold text-gray-700">Descrição da Solicitação</Label>
+          <div className="p-3 bg-gray-50 border rounded-lg text-sm max-h-24 overflow-y-auto">
+            {formData.dsSolicitacao || 'Não informado'}
+          </div>
+        </div>
+
+        <div>
+          <Label className="text-sm font-semibold text-gray-700">Observações</Label>
+          <div className="p-3 bg-gray-50 border rounded-lg text-sm max-h-24 overflow-y-auto">
+            {formData.dsObservacao || 'Não informado'}
+          </div>
+        </div>
+      </div>
+
+      {/* Tema e Responsável */}
+      <div className="border-t pt-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label>Prazos</Label>
-            <div className="p-4 bg-gray-50 border rounded-lg">
-              {formData.nrPrazo ? `${formData.nrPrazo} horas` : 'Não definido'} {formData.tpPrazo === 'U' ? '(Horas úteis)' : formData.tpPrazo === 'C' ? '(Horas corridas)' : ''}
+            <Label className="text-sm font-semibold text-gray-700">Tema</Label>
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+              {getSelectedTema()?.nmTema || 'Não selecionado'}
             </div>
           </div>
           <div>
-            <Label>Anexos</Label>
-            <div className="p-4 bg-gray-50 border rounded-lg">
-              {anexos.length + anexosBackend.length}
+            <Label className="text-sm font-semibold text-gray-700">Responsável</Label>
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+              {responsaveis.find(r => r.idResponsavel === formData.idResponsavel)?.nmResponsavel || 'Não definido'}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Áreas Envolvidas */}
+      <div className="border-t pt-4">
+        <Label className="text-sm font-semibold text-gray-700">Áreas Envolvidas</Label>
+        <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-sm">
+          {formData.idsAreas && formData.idsAreas.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {formData.idsAreas.map(areaId => {
+                const tema = getSelectedTema();
+                const area = tema?.areas?.find(a => a.idArea === areaId);
+                return area ? (
+                  <span key={areaId} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    {area.nmArea}
+                  </span>
+                ) : null;
+              })}
+            </div>
+          ) : (
+            'Nenhuma área selecionada'
+          )}
+        </div>
+      </div>
+
+      {/* Prazos */}
+      <div className="border-t pt-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label className="text-sm font-semibold text-gray-700">Prazo Principal</Label>
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
+              {formData.nrPrazo && formData.nrPrazo > 0
+                ? `${formData.nrPrazo} ${formData.tpPrazo === 'U' ? 'horas úteis' : formData.tpPrazo === 'C' ? 'horas corridas' : 'horas'}`
+                : 'Prazo padrão do tema'
+              }
+              {prazoExcepcional && (
+                <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                  Excepcional
+                </span>
+              )}
+            </div>
+          </div>
+          <div>
+            <Label className="text-sm font-semibold text-gray-700">Status</Label>
+            <div className="p-3 bg-gray-50 border rounded-lg text-sm">
+              {(() => {
+                // Buscar o status pelo flStatus (letra) diretamente na lista da API
+                const statusAtual = statusList.find(s => {
+                  // Mapear IDs para letras conforme o padrão do sistema
+                  const idToLetter: Record<number, string> = { 1:'P', 2:'V', 3:'A', 4:'T', 5:'R', 6:'O', 7:'S', 8:'C', 9:'X' };
+                  return idToLetter[s.id] === formData.flStatus;
+                });
+                return statusAtual?.nome || formData.flStatus || 'Pendente';
+              })()}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Prazos por Status */}
+      {statusPrazos.length > 0 && (
+        <div className="border-t pt-4">
+          <Label className="text-sm font-semibold text-gray-700">Prazos Configurados por Status</Label>
+          <div className="mt-2 space-y-2">
+            {statusPrazos
+              .filter(p => p.nrPrazoInterno && p.nrPrazoInterno > 0)
+              .map(prazo => {
+                const status = statusList.find(s => s.id === prazo.idStatusSolicitacao);
+                return (
+                  <div key={prazo.idStatusSolicitacao} className="flex justify-between items-center p-2 bg-gray-50 rounded text-sm">
+                    <span className="font-medium">{status?.nome || `Status ${prazo.idStatusSolicitacao}`}</span>
+                    <span className="text-gray-600">{prazo.nrPrazoInterno} horas</span>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+      )}
+
+      {/* Anexos */}
+      <div className="border-t pt-4">
+        <Label className="text-sm font-semibold text-gray-700">Anexos ({anexos.length + anexosBackend.length})</Label>
+        <div className="mt-2 space-y-2">
+          {/* Anexos novos */}
+          {anexos.length > 0 && (
+            <div>
+              <div className="text-xs text-gray-500 mb-2">Novos anexos a serem enviados:</div>
+              {anexos.map((file, index) => (
+                <div key={index} className="flex items-center justify-between p-2 bg-blue-50 border border-blue-200 rounded text-sm">
+                  <span className="font-medium text-blue-800">{file.name}</span>
+                  <span className="text-xs text-blue-600">{Math.round(file.size / 1024)} KB</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Anexos já salvos */}
+          {anexosBackend.length > 0 && (
+            <div>
+              <div className="text-xs text-gray-500 mb-2">Anexos já salvos:</div>
+              {anexosBackend.map((anexo, index) => (
+                <div key={index} className="flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded text-sm">
+                  <span className="font-medium text-green-800">{anexo.nmArquivo}</span>
+                  <span className="text-xs text-green-600">Salvo</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {anexos.length === 0 && anexosBackend.length === 0 && (
+            <div className="p-3 bg-gray-50 border rounded-lg text-sm text-gray-500 text-center">
+              Nenhum anexo adicionado
+            </div>
+          )}
+        </div>
+      </div>
     </div>
-  ), [formData, getSelectedTema, responsaveis, anexos, anexosBackend]);
+  ), [formData, getSelectedTema, responsaveis, anexos, anexosBackend, statusPrazos, statusList, prazoExcepcional]);
 
   const renderStep1 = () => (
     <div className="space-y-6">
@@ -808,6 +1057,30 @@ export default function SolicitacaoModal({
       loadStatusPrazos();
     }
   }, [currentStep, formData.idTema, loadStatusPrazos]);
+
+  // Carregar lista de status quando o modal abrir
+  useEffect(() => {
+    const loadStatusList = async () => {
+      try {
+        const status = await statusSolicitacaoClient.listarTodos();
+        setStatusList(status);
+      } catch (error) {
+        console.error('Erro ao carregar lista de status:', error);
+      }
+    };
+
+    if (open) {
+      loadStatusList();
+    }
+  }, [open]);
+
+  // Carregar status de prazos quando tema mudar
+  useEffect(() => {
+    if (formData.idTema && open) {
+      loadStatusPrazos();
+    }
+  }, [formData.idTema, open, loadStatusPrazos]);
+
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
