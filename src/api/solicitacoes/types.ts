@@ -8,6 +8,24 @@ export interface AreaTema {
   nmTema: string;
 }
 
+export interface Email {
+  idEmail: number;
+  dsRemetente: string;
+  dsDestinatario: string;
+  dsAssunto: string;
+  dsCorpo: string;
+  dtRecebimento: string;
+  flAtivo: string;
+}
+
+export interface StatusSolicitacao {
+  idStatusSolicitacao: number;
+  nmStatus: string;
+  dsStatus?: string | null;
+  flAtiv?: string | null;
+  flAtivo?: string | null;
+}
+
 export interface SolicitacaoResponse {
   idSolicitacao: number;
   idEmail?: number;
@@ -25,13 +43,15 @@ export interface SolicitacaoResponse {
   tpPrazo?: string;
   dtCriacao?: string;
   dtAtualizacao?: string;
+  dtPrazo?: string;
   nmResponsavel?: string;
   nmTema?: string;
   areas?: AreaSolicitacao[];
-  nmUsuarioCriacao: string;
-  dtPrazo?: string;
-  area: AreaSolicitacao;
-  tema: AreaTema;
+  nmUsuarioCriacao?: string;
+  email?: Email;
+  statusSolicitacao?: StatusSolicitacao;
+  area?: AreaSolicitacao;
+  tema?: AreaTema;
 }
 
 export interface SolicitacaoRequest {
@@ -65,7 +85,6 @@ export interface SolicitacaoIdentificacaoRequest {
 }
 
 export interface SolicitacaoPrazoResponse {
-  // Estrutura a ser definida conforme necessário
   id: number;
   nrPrazoDias: number;
   statusCodigo?: number;
