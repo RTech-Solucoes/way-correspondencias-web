@@ -1,8 +1,3 @@
-export enum TipoPrazo {
-  DIAS_UTEIS = 'DIAS_UTEIS',
-  DIAS_CORRIDOS = 'DIAS_CORRIDOS'
-}
-
 export interface AreaSolicitacao {
   idArea: number;
   nmArea: string;
@@ -22,7 +17,7 @@ export interface SolicitacaoResponse {
   nrPrazo?: number;
   nrOficio?: string;
   nrProcesso?: string;
-  tpPrazo?: TipoPrazo | string;
+  tpPrazo?: string;
   dtCriacao?: string;
   dtAtualizacao?: string;
   nmResponsavel?: string; // Nome do responsável para exibição
@@ -43,8 +38,8 @@ export interface SolicitacaoRequest {
   nrPrazo?: number;
   nrOficio?: string;
   nrProcesso?: string;
-  tpPrazo?: TipoPrazo | string;
-  idsAreas?: number[]; // IDs das áreas para associar
+  tpPrazo?: string;
+  idsAreas?: number[];
 }
 
 export interface SolicitacaoTemaRequest {

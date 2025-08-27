@@ -101,13 +101,13 @@ export default function SolicitacaoModal({
     if (solicitacao) {
       setFormData({
         idEmail: solicitacao.idEmail,
-        cdIdentificacao: solicitacao.cdIdentificacao,
+        cdIdentificacao: solicitacao.cdIdentificacao || '',
         dsAssunto: solicitacao.dsAssunto || '',
         dsSolicitacao: solicitacao.dsSolicitacao || '',
         dsObservacao: solicitacao.dsObservacao || '',
-        flStatus: solicitacao.flStatus,
-        idResponsavel: solicitacao.idResponsavel,
-        idTema: solicitacao.idTema,
+        flStatus: solicitacao.flStatus || 'P',
+        idResponsavel: solicitacao.idResponsavel || 0,
+        idTema: solicitacao.idTema || 0,
         idsAreas: solicitacao.areas?.map(area => area.idArea) || [],
         nrPrazo: solicitacao.nrPrazo || undefined,
         tpPrazo: solicitacao.tpPrazo || '',
@@ -343,6 +343,23 @@ export default function SolicitacaoModal({
         const created = await solicitacoesClient.criar(finalFormData);
         solicitacaoId = created.idSolicitacao;
       }
+
+      if (formData.idTema && statusPrazos.length > 0) {
+        try {
+          for (const prazo of statusPrazos) {
+            if (prazo.nrPrazoInterno > 0) {
+              await statusPrazoTemaClient.upsertPrazoStatus(
+                formData.idTema,
+                prazo.statusCodigo,
+                { nrPrazoInterno: prazo.nrPrazoInterno }
+              );
+            }
+          }
+        } catch (error) {
+          toast.error('Erro ao salvar prazos internos');
+        }
+      }
+
       if (anexos.length > 0 && solicitacaoId) {
         const formDataAnexos = new FormData();
         anexos.forEach((file) => {
@@ -426,37 +443,32 @@ export default function SolicitacaoModal({
     }
   }, [formData.idTema]);
 
-  // Função para atualizar prazo de um status específico
-  const handleUpdateStatusPrazo = useCallback(async (statusCodigo: number, nrPrazoInterno: number) => {
-    if (!formData.idTema) return;
-
-    try {
-      const updated = await statusPrazoTemaClient.upsertPrazoStatus(
-        formData.idTema,
-        statusCodigo,
-        {nrPrazoInterno}
-      );
-
-      setStatusPrazos(prev => {
-        const index = prev.findIndex(p => p.statusCodigo === statusCodigo);
-        if (index >= 0) {
-          const newArray = [...prev];
-          newArray[index] = updated;
-          return newArray;
-        } else {
-          return [...prev, updated];
-        }
-      });
-
-      toast.success('Prazo interno atualizado com sucesso');
-    } catch (error) {
-      console.error('Erro ao atualizar prazo:', error);
-      toast.error('Erro ao atualizar prazo interno');
-    }
-  }, [formData.idTema]);
+  const updateLocalPrazo = useCallback((statusCodigo: string, valor: number) => {
+    setStatusPrazos(prev => {
+      const existing = prev.find(p => p.statusCodigo.toString() === statusCodigo);
+      if (existing) {
+        return prev.map(p =>
+          p.statusCodigo.toString() === statusCodigo
+            ? {...p, nrPrazoInterno: valor}
+            : p
+        );
+      } else {
+        const newPrazo = {
+          idStatusSolicPrazoTema: 0,
+          statusCodigo: parseInt(statusCodigo),
+          nrPrazoInterno: valor,
+          tema: {
+            idTema: formData.idTema || 0,
+            nmTema: getSelectedTema()?.nmTema || ''
+          },
+          flAtivo: 'S'
+        } as StatusSolicPrazoTemaResponse;
+        return [...prev, newPrazo];
+      }
+    });
+  }, [formData.idTema, getSelectedTema]);
 
   const renderStep3 = useCallback(() => {
-    // Definir os status disponíveis com suas descrições
     const statusOptions = [
       {codigo: 'P', nome: 'Pré-análise'},
       {codigo: 'V', nome: 'Vencido Regulatório'},
@@ -471,7 +483,6 @@ export default function SolicitacaoModal({
 
     return (
       <div className="space-y-6">
-        {/* Checkbox para Prazo Excepcional */}
         <div className="flex items-center space-x-2">
           <Checkbox
             id="prazoExcepcional"
@@ -492,27 +503,7 @@ export default function SolicitacaoModal({
           </Label>
         </div>
 
-        {/* Campos principais de status e prazos */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="status">Status *</Label>
-            <Select
-              value={formData.flStatus}
-              onValueChange={(value) => handleSelectChange('flStatus', value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o status"/>
-              </SelectTrigger>
-              <SelectContent>
-                {statusOptions.map((status) => (
-                  <SelectItem key={status.codigo} value={status.codigo}>
-                    {status.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
+        <div className="grid grid-cols-2 gap-4">
           <TextField
             id="nrPrazo"
             label="Prazo"
@@ -520,40 +511,33 @@ export default function SolicitacaoModal({
             type="number"
             value={formData.nrPrazo && formData.nrPrazo > 0 ? formData.nrPrazo.toString() : ''}
             onChange={handleInputChange}
-            placeholder="Dias"
+            placeholder="Horas"
             disabled={!prazoExcepcional}
-            className="mt-1.5"
           />
 
-          <div className="space-y-2">
+          <div className="flex flex-col gap-1">
             <Label htmlFor="tpPrazo">Tipo de Prazo</Label>
             <Select
               value={formData.tpPrazo}
               onValueChange={(value) => handleSelectChange('tpPrazo', value)}
               disabled={!prazoExcepcional}
             >
-              <SelectTrigger className={!prazoExcepcional ? 'bg-gray-100 cursor-not-allowed' : ''}>
+              <SelectTrigger>
                 <SelectValue placeholder="Selecione"/>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="U">Dias Úteis</SelectItem>
-                <SelectItem value="C">Dias Corridos</SelectItem>
+                <SelectItem value="U">Horas úteis</SelectItem>
+                <SelectItem value="C">Horas corridas</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
 
-        {/* Seção de configuração de prazos internos por status */}
         {formData.idTema && (
-          <div className="border rounded-lg p-4 bg-gray-50">
-            <div className="mb-4">
-              <h3 className="text-lg font-medium text-gray-900">
-                Configuração de Prazos Internos por Status
-              </h3>
-              <p className="text-sm text-gray-600">
-                Configure prazos específicos para cada status do tema &quot;{getSelectedTema()?.nmTema}&quot;
-              </p>
-            </div>
+          <div className="flex flex-col">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Configuração de Prazos Internos
+            </h3>
 
             <div className="space-y-4">
               {loadingStatusPrazos ? (
@@ -561,13 +545,13 @@ export default function SolicitacaoModal({
                   <div className="text-sm text-gray-500">Carregando configurações...</div>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   {statusOptions.map((status) => {
                     const prazoConfig = statusPrazos.find(p => p.statusCodigo.toString() === status.codigo);
-                    const prazoAtual = prazoConfig?.nrPrazoInterno || '';
+                    const prazoAtual = prazoConfig?.nrPrazoInterno || 0;
 
                     return (
-                      <div key={status.codigo} className="bg-white border rounded-lg p-4">
+                      <div key={status.codigo} className="bg-gray-50 rounded-lg p-4">
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
                             <h4 className="font-medium text-gray-900">{status.nome}</h4>
@@ -575,89 +559,77 @@ export default function SolicitacaoModal({
 
                           <div className="space-y-2">
                             <Label className="text-xs text-gray-600">
-                              Prazo Interno (dias)
+                              Prazo Interno (horas)
                             </Label>
-                            <div className="flex gap-2">
+                            <div className="flex items-center gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  const newValue = Math.max(0, prazoAtual - 1);
+                                  updateLocalPrazo(status.codigo, newValue);
+                                }}
+                                className="w-8 h-8 p-0 flex items-center justify-center"
+                              >
+                                -
+                              </Button>
+
                               <TextField
+                                key={`prazo-${status.codigo}`}
                                 type="number"
                                 value={prazoAtual.toString()}
                                 onChange={(e) => {
                                   const valor = parseInt(e.target.value) || 0;
-                                  if (valor > 0) {
-                                    handleUpdateStatusPrazo(parseInt(status.codigo, 10), valor);
-                                  }
+                                  updateLocalPrazo(status.codigo, valor);
                                 }}
                                 placeholder="0"
-                                className="flex-1"
+                                className="flex-1 text-center"
                               />
+
                               <Button
                                 type="button"
+                                variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                  const input = document.querySelector(`input[value="${prazoAtual}"]`) as HTMLInputElement;
-                                  if (input && input.value) {
-                                    const valor = parseInt(input.value) || 0;
-                                    if (valor > 0) {
-                                      handleUpdateStatusPrazo(parseInt(status.codigo, 10), valor);
-                                    }
-                                  }
+                                  const newValue = prazoAtual + 1;
+                                  updateLocalPrazo(status.codigo, newValue);
                                 }}
-                                disabled={!prazoAtual || prazoAtual === 0}
-                                className="px-3"
+                                className="w-8 h-8 p-0 flex items-center justify-center"
                               >
-                                Salvar
+                                +
                               </Button>
                             </div>
                           </div>
-
-                          {prazoConfig && (
-                            <div className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
-                              ✓ Configurado: {prazoConfig.nrPrazoInterno} dias
-                            </div>
-                          )}
                         </div>
                       </div>
                     );
                   })}
                 </div>
               )}
-
-              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex items-start gap-2">
-                  <div className="text-blue-500 mt-0.5">ℹ️</div>
-                  <div className="text-sm text-blue-700">
-                    <strong>Dica:</strong> Os prazos internos configurados aqui são específicos para este tema
-                    e podem ser diferentes dos prazos padrão. Deixe em branco para usar o prazo padrão do tema.
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         )}
       </div>
     );
   }, [
-    formData.flStatus,
     formData.nrPrazo,
     formData.tpPrazo,
     formData.idTema,
     prazoExcepcional,
     handleSelectChange,
     handleInputChange,
-    getSelectedTema,
     loadingStatusPrazos,
     statusPrazos,
-    handleUpdateStatusPrazo
+    updateLocalPrazo
   ]);
 
   const renderStep4 = useCallback(() => (
     <div className="space-y-6">
 
-      {/* Componente de Upload de Anexos */}
       <div className="flex flex-col space-y-4">
         <AnexoComponent onAddAnexos={handleAddAnexos}/>
 
-        {/* Lista de Anexos Novos (a serem enviados) */}
         {anexos.length > 0 && (
           <div>
             <Label className="text-sm font-medium mb-2 block">Anexos:</Label>
@@ -665,7 +637,6 @@ export default function SolicitacaoModal({
           </div>
         )}
 
-        {/* Lista de Anexos já Vinculados (do backend) */}
         {anexosBackend.length > 0 && (
           <div>
             <Label className="text-sm font-medium mb-2 block">Documentos já anexados:</Label>
@@ -730,7 +701,7 @@ export default function SolicitacaoModal({
           <div>
             <Label>Prazos</Label>
             <div className="p-4 bg-gray-50 border rounded-lg">
-              {formData.nrPrazo} {formData.tpPrazo === 'U' ? 'dias úteis' : 'dias corridos'}
+              {formData.nrPrazo ? `${formData.nrPrazo} horas` : 'Não definido'} {formData.tpPrazo === 'U' ? '(Horas úteis)' : formData.tpPrazo === 'C' ? '(Horas corridas)' : ''}
             </div>
           </div>
           <div>
@@ -816,7 +787,7 @@ export default function SolicitacaoModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="overflow-y-auto h-full">
         <DialogHeader className="pb-6">
           <DialogTitle className="text-xl font-semibold">
             {solicitacao ? 'Encaminhar Solicitação' : 'Nova Solicitação'}
@@ -825,8 +796,8 @@ export default function SolicitacaoModal({
 
         <form onSubmit={handleSubmit} className="flex flex-col overflow-y-auto space-y-8">
           {/* Stepper Navigation */}
-          <div className="flex justify-center mb-8">
-            <div className="flex items-center space-x-4">
+          <div className="flex justify-center mb-8 pt-1">
+            <div className="flex items-start space-x-4">
               {/* Etapa 1 */}
               <div className="flex flex-col items-center space-y-2">
                 <button
@@ -836,7 +807,7 @@ export default function SolicitacaoModal({
                     currentStep === 1
                       ? 'bg-blue-500 border-blue-500 text-white ring-2 ring-blue-200'
                       : currentStep > 1
-                        ? 'bg-blue-100 border-blue-300 text-blue-600'
+                        ? 'bg-blue-100 border-blue-300 text-primary'
                         : 'border-gray-300 text-gray-400'
                   }`}
                 >
@@ -844,7 +815,7 @@ export default function SolicitacaoModal({
                 </button>
                 <span className={`text-xs font-medium text-center ${
                   currentStep === 1
-                    ? 'text-blue-600'
+                    ? 'text-primary'
                     : currentStep > 1
                       ? 'text-blue-500'
                       : 'text-gray-400'
@@ -854,7 +825,7 @@ export default function SolicitacaoModal({
               </div>
 
               {/* Linha conectora 1-2 */}
-              <div className={`w-16 h-1 transition-colors ${
+              <div className={`w-16 my-auto h-1 transition-colors ${
                 currentStep >= 2 ? 'bg-blue-500' : 'bg-gray-300'
               }`}></div>
 
@@ -868,7 +839,7 @@ export default function SolicitacaoModal({
                     currentStep === 2
                       ? 'bg-blue-500 border-blue-500 text-white ring-2 ring-blue-200'
                       : currentStep > 2
-                        ? 'bg-blue-100 border-blue-300 text-blue-600'
+                        ? 'bg-blue-100 border-blue-300 text-primary'
                         : 'border-gray-300 text-gray-400'
                   }`}
                 >
@@ -876,11 +847,11 @@ export default function SolicitacaoModal({
                 </button>
                 <span className={`text-xs font-medium text-center ${
                   currentStep === 2
-                    ? 'text-blue-600'
+                    ? 'text-primary'
                     : currentStep > 2
                       ? 'text-blue-500'
                       : currentStep >= 2
-                        ? 'text-blue-600'
+                        ? 'text-primary'
                         : 'text-gray-400'
                 }`}>
                   Tema e<br/>Áreas
@@ -888,7 +859,7 @@ export default function SolicitacaoModal({
               </div>
 
               {/* Linha conectora 2-3 */}
-              <div className={`w-16 h-1 transition-colors ${
+              <div className={`w-16 my-auto h-1 transition-colors ${
                 currentStep >= 3 ? 'bg-blue-500' : 'bg-gray-300'
               }`}></div>
 
@@ -902,7 +873,7 @@ export default function SolicitacaoModal({
                     currentStep === 3
                       ? 'bg-blue-500 border-blue-500 text-white ring-2 ring-blue-200'
                       : currentStep > 3
-                        ? 'bg-blue-100 border-blue-300 text-blue-600'
+                        ? 'bg-blue-100 border-blue-300 text-primary'
                         : 'border-gray-300 text-gray-400'
                   }`}
                 >
@@ -910,11 +881,11 @@ export default function SolicitacaoModal({
                 </button>
                 <span className={`text-xs font-medium text-center ${
                   currentStep === 3
-                    ? 'text-blue-600'
+                    ? 'text-primary'
                     : currentStep > 3
                       ? 'text-blue-500'
                       : currentStep >= 3
-                        ? 'text-blue-600'
+                        ? 'text-primary'
                         : 'text-gray-400'
                 }`}>
                   Status e<br/>Prazos
@@ -922,7 +893,7 @@ export default function SolicitacaoModal({
               </div>
 
               {/* Linha conectora 3-4 */}
-              <div className={`w-16 h-1 transition-colors ${
+              <div className={`w-16 my-auto h-1 transition-colors ${
                 currentStep >= 4 ? 'bg-blue-500' : 'bg-gray-300'
               }`}></div>
 
@@ -936,7 +907,7 @@ export default function SolicitacaoModal({
                     currentStep === 4
                       ? 'bg-blue-500 border-blue-500 text-white ring-2 ring-blue-200'
                       : currentStep > 4
-                        ? 'bg-blue-100 border-blue-300 text-blue-600'
+                        ? 'bg-blue-100 border-blue-300 text-primary'
                         : 'border-gray-300 text-gray-400'
                   }`}
                 >
@@ -944,11 +915,11 @@ export default function SolicitacaoModal({
                 </button>
                 <span className={`text-xs font-medium text-center ${
                   currentStep === 4
-                    ? 'text-blue-600'
+                    ? 'text-primary'
                     : currentStep > 4
                       ? 'text-blue-500'
                       : currentStep >= 4
-                        ? 'text-blue-600'
+                        ? 'text-primary'
                         : 'text-gray-400'
                 }`}>
                   Anexos
@@ -956,7 +927,7 @@ export default function SolicitacaoModal({
               </div>
 
               {/* Linha conectora 4-5 */}
-              <div className={`w-16 h-1 transition-colors ${
+              <div className={`w-16 my-auto h-1 transition-colors ${
                 currentStep >= 5 ? 'bg-blue-500' : 'bg-gray-300'
               }`}></div>
 
@@ -970,7 +941,7 @@ export default function SolicitacaoModal({
                     currentStep === 5
                       ? 'bg-blue-500 border-blue-500 text-white ring-2 ring-blue-200'
                       : currentStep > 5
-                        ? 'bg-blue-100 border-blue-300 text-blue-600'
+                        ? 'bg-blue-100 border-blue-300 text-primary'
                         : 'border-gray-300 text-gray-400'
                   }`}
                 >
@@ -978,11 +949,11 @@ export default function SolicitacaoModal({
                 </button>
                 <span className={`text-xs font-medium text-center ${
                   currentStep === 5
-                    ? 'text-blue-600'
+                    ? 'text-primary'
                     : currentStep > 5
                       ? 'text-blue-500'
                       : currentStep >= 5
-                        ? 'text-blue-600'
+                        ? 'text-primary'
                         : 'text-gray-400'
                 }`}>
                   Resumo
@@ -1000,7 +971,7 @@ export default function SolicitacaoModal({
           </div>
 
         </form>
-        <DialogFooter className="flex gap-3 pt-6 border-t">
+        <DialogFooter className="flex gap-3 pt-6 border-t mt-auto">
           <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
             Cancelar
           </Button>

@@ -59,37 +59,59 @@ export default function TramitacaoList({ idSolicitacao, areas }: TramitacaoListP
   }
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col space-y-3">
       <h5 className="font-semibold text-gray-900 mb-3">Histórico de Tramitações</h5>
-      <div className="space-y-2">
-        {tramitacoes.map((tramitacao) => (
-          <div 
-            key={tramitacao.idTramitacao}
-            className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center space-x-2 text-sm">
-                <span className="font-medium text-blue-600">
-                  {getAreaName(tramitacao.idAreaOrigem)}
-                </span>
-                <ArrowRightIcon className="h-4 w-4 text-gray-400" />
-                <span className="font-medium text-green-600">
-                  {getAreaName(tramitacao.idAreaDestino)}
-                </span>
+      <div
+        className="relative w-full"
+        style={{
+          overflowX: 'auto',
+          overflowY: 'hidden',
+          maxWidth: '100%'
+        }}
+      >
+        <div
+          className="flex gap-12 pb-2"
+          style={{
+            width: 'max-content',
+            minWidth: '100%'
+          }}
+        >
+          {tramitacoes.map((tramitacao, index) => (
+            <div
+              key={tramitacao.idTramitacao}
+              className="flex flex-col bg-white border border-gray-200 rounded-lg p-4 shadow-sm relative"
+              style={{
+                minWidth: '200px',
+                width: '200px',
+                flexShrink: 0
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center text-sm">
+                  <span className="font-medium text-primary">
+                    {getAreaName(index === 0 ? tramitacao.idAreaOrigem : tramitacao.idAreaDestino)}
+                  </span>
+                  {index !== 0 && <ArrowRightIcon className="absolute h-8 w-8 text-primary -left-10 top-1/2 -translate-y-1/2" />}
+                </div>
               </div>
-              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                ID: {tramitacao.idTramitacao}
-              </span>
+              {tramitacoes[index - 1]?.dsObservacao ? (
+                <div className="mt-2">
+                  <p className="text-sm text-gray-700">
+                    <span className="font-medium">Observação:</span> {tramitacoes[index - 1].dsObservacao}
+                  </p>
+                </div>
+              ) : (
+                index === 0 && (
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-700">
+                      Área inicial
+                    </p>
+                  </div>
+                )
+              )}
             </div>
-            {tramitacao.dsObservacao && (
-              <div className="mt-2">
-                <p className="text-sm text-gray-700">
-                  <span className="font-medium">Observação:</span> {tramitacao.dsObservacao}
-                </p>
-              </div>
-            )}
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );

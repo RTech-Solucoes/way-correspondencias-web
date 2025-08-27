@@ -202,7 +202,7 @@ export default function TemasPage() {
               <StickyTableHead>Descrição</StickyTableHead>
               <StickyTableHead className="cursor-pointer" onClick={() => handleSort('nrPrazo')}>
                 <div className="flex items-center">
-                  Prazo
+                  Prazo (horas)
                   <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </StickyTableHead>
@@ -249,11 +249,11 @@ export default function TemasPage() {
                     {tema.dsTema || '-'}
                   </StickyTableCell>
                   <StickyTableCell>
-                    {tema.nrPrazo ? `${tema.nrPrazo}` : '-'}
+                    {tema.nrPrazo ? `${tema.nrPrazo} horas` : '-'}
                   </StickyTableCell>
                   <StickyTableCell>
-                    {tema.tpPrazo === 'C' ? 'Dias Corridos' :
-                     tema.tpPrazo === 'U' ? 'Dias Úteis' :
+                    {tema.tpPrazo === 'C' ? 'Horas corridas' :
+                     tema.tpPrazo === 'U' ? 'Horas úteis' :
                      tema.tpPrazo || '-'}
                   </StickyTableCell>
                   <StickyTableCell>
