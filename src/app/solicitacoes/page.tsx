@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import {
   StickyTable,
   StickyTableBody,
@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import SolicitacaoModal from '../../components/solicitacoes/SolicitacaoModal';
+import DetalhesSolicitacaoModal from '@/components/solicitacoes/DetalhesSolicitacaoModal';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import {
   FunnelSimpleIcon,
@@ -39,7 +40,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Pagination } from '@/components/ui/pagination';
-import { formatDate } from '@/utils/utils';
 import { useSolicitacoes } from '@/context/solicitacoes/SolicitacoesContext';
 import TramitacaoList from '@/components/solicitacoes/TramitacaoList';
 
@@ -96,12 +96,13 @@ export default function SolicitacoesPage() {
   } = useSolicitacoes();
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
+  const [showDetalhesModal, setShowDetalhesModal] = useState(false);
+  const [anexosDetalhes, setAnexosDetalhes] = useState<any[]>([]);
 
   const loadSolicitacoes = useCallback(async () => {
     try {
       setLoading(true);
 
-      // Com a nova API, usamos apenas o método listar com filtro
       const filterParts = [];
       if (debouncedSearchQuery) filterParts.push(debouncedSearchQuery);
       if (activeFilters.identificacao) filterParts.push(activeFilters.identificacao);
@@ -115,7 +116,7 @@ export default function SolicitacoesPage() {
       const filtro = filterParts.join(' ') || undefined;
       const response = await solicitacoesClient.listar(filtro);
       setSolicitacoes(response);
-      setTotalPages(1); // API não retorna paginação, ajustar conforme necessário
+      setTotalPages(1);
       setTotalElements(response.length);
 
     } catch (error) {
@@ -177,12 +178,15 @@ export default function SolicitacoesPage() {
   };
 
   const sortedSolicitacoes = () => {
+<<<<<<< HEAD
 
+=======
+>>>>>>> e64492d (modal de status da solicitacao)
     if (!solicitacoes || solicitacoes.length === 0) {
       return [];
     }
 
-    const sorted = [...solicitacoes]
+    const sorted = [...solicitacoes];
 
     if (sortField) {
       sorted.sort((a, b) => {
@@ -202,6 +206,65 @@ export default function SolicitacoesPage() {
 
     return sorted;
   };
+
+  const openDetalhes = useCallback(async (s: any) => {
+    try {
+      setSelectedSolicitacao(s);
+      setShowDetalhesModal(true);
+      const anexos = await solicitacoesClient.buscarAnexos(s.idSolicitacao);
+      setAnexosDetalhes(anexos || []);
+    } catch {
+      toast.error('Erro ao carregar anexos da solicitação');
+    }
+  }, [setSelectedSolicitacao]);
+
+  const baixarAnexo = useCallback(async (anexo: any) => {
+    try {
+      if (!anexo?.idObjeto || !anexo?.idAnexo) {
+        toast.error('Dados do documento incompletos');
+        return;
+      }
+      const blob = await solicitacoesClient.downloadAnexo(anexo.idObjeto, anexo.idAnexo);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = anexo.nmArquivo || 'documento';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch {
+      toast.error('Erro ao baixar documento');
+    }
+  }, []);
+
+  const abrirEmailOriginal = useCallback(() => {
+    toast.message('Abrir e-mail original (implemente a navegação/URL).');
+  }, [/* selectedSolicitacao */]);
+
+  const abrirHistorico = useCallback(() => {
+    toast.message('Abrir histórico de respostas (implemente a navegação).');
+  }, []);
+
+  const enviarDevolutiva = useCallback(async (mensagem: string, arquivos: File[]) => {
+    if (!selectedSolicitacao) return;
+    try {
+      if (mensagem?.trim()) {
+        await solicitacoesClient.enviarDevolutiva?.(selectedSolicitacao.idSolicitacao, { mensagem });
+      }
+      if (arquivos.length > 0) {
+        const fd = new FormData();
+        arquivos.forEach((f) => fd.append('files', f));
+        fd.append('idObjeto', String(selectedSolicitacao.idSolicitacao));
+        fd.append('tpObjeto', 'S');
+        await solicitacoesClient.uploadAnexos(fd);
+      }
+      await loadSolicitacoes();
+    } catch {
+      toast.error('Falha ao enviar a devolutiva.');
+      throw new Error('erro-devolutiva');
+    }
+  }, [selectedSolicitacao, loadSolicitacoes]);
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
@@ -326,7 +389,7 @@ export default function SolicitacoesPage() {
                     <StickyTableCell>
                       {solicitacao.areas && solicitacao.areas.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
-                          {solicitacao.areas.slice(0, 2).map((area, index) => (
+                          {solicitacao.areas.slice(0, 2).map((area) => (
                             <span key={area.idArea} className="text-xs bg-gray-100 px-2 py-1 rounded">
                               {area.nmArea}
                             </span>
@@ -350,20 +413,23 @@ export default function SolicitacoesPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleEdit(solicitacao)
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            await openDetalhes(solicitacao);
                           }}
+                          title="Detalhes"
                         >
                           <PaperPlaneRightIcon className="h-4 w-4"/>
                         </Button>
+
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={(e) => {
-                            e.stopPropagation()
-                            handleEdit(solicitacao)
+                            e.stopPropagation();
+                            handleEdit(solicitacao);
                           }}
+                          title="Editar"
                         >
                           <PencilSimpleIcon className="h-4 w-4"/>
                         </Button>
@@ -371,10 +437,11 @@ export default function SolicitacoesPage() {
                           variant="ghost"
                           size="sm"
                           onClick={(e) => {
-                            e.stopPropagation()
-                            handleDelete(solicitacao)
+                            e.stopPropagation();
+                            handleDelete(solicitacao);
                           }}
                           className="text-red-600 hover:text-red-700"
+                          title="Excluir"
                         >
                           <TrashIcon className="h-4 w-4"/>
                         </Button>
@@ -552,6 +619,24 @@ export default function SolicitacoesPage() {
           onSave={onSolicitacaoSave}
           responsaveis={responsaveis}
           temas={temas}
+        />
+      )}
+
+      {showDetalhesModal && (
+        <DetalhesSolicitacaoModal
+          open={showDetalhesModal}
+          onClose={() => {
+            setShowDetalhesModal(false);
+            setSelectedSolicitacao(null);
+            setAnexosDetalhes([]);
+          }}
+          solicitacao={selectedSolicitacao}
+          anexos={anexosDetalhes}
+          statusLabel={getStatusText(selectedSolicitacao?.statusCodigo?.toString() || '')}
+          onBaixarAnexo={baixarAnexo}
+          onAbrirEmailOriginal={abrirEmailOriginal}
+          onHistoricoRespostas={abrirHistorico}
+          onEnviarDevolutiva={enviarDevolutiva}
         />
       )}
 
