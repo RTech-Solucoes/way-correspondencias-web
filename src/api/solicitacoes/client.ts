@@ -10,6 +10,7 @@ import {
 import { solicitacaoAnexosClient, ArquivoDTO, AnexoResponse } from './anexos-client';
 
 class SolicitacoesClient {
+
   private client: ApiClient;
 
   constructor() {
@@ -138,6 +139,11 @@ class SolicitacoesClient {
   async downloadAnexo(idSolicitacao: number, nmArquivo?: string): Promise<ArquivoDTO[]> {
     return solicitacaoAnexosClient.download(idSolicitacao, nmArquivo);
   }
+
+  enviarDevolutiva(idSolicitacao: number, arg1: { mensagem: string; }) {
+    console.log('Método enviarDevolutiva chamado com:', idSolicitacao, arg1);
+  }
+  
 }
 
 export const solicitacoesClient = new SolicitacoesClient();
