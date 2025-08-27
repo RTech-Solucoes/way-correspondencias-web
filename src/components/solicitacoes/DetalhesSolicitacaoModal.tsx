@@ -24,7 +24,7 @@ interface AnexoFromBackend {
   idObjeto: number;
   nmArquivo: string;
   dsCaminho: string;
-  tpObjeto: string;
+  tpObjeto: string; // 'A' | 'G' | 'S'
 }
 
 type DetalhesSolicitacaoModalProps = {
@@ -40,7 +40,7 @@ type DetalhesSolicitacaoModalProps = {
 };
 
 const formatDateTime = (iso?: string | null) => {
-  if (!iso) return '';
+  if (!iso) return '—';
   const d = new Date(iso);
   return d.toLocaleDateString() + ' às ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
@@ -59,6 +59,7 @@ export default function DetalhesSolicitacaoModal({
   const [resposta, setResposta] = useState('');
   const [arquivos, setArquivos] = useState<File[]>([]);
   const [expandDescricao, setExpandDescricao] = useState(false);
+  const [expandAssunto, setExpandAssunto] = useState(false);
   const [sending, setSending] = useState(false);
 
   const identificador = useMemo(
@@ -68,16 +69,25 @@ export default function DetalhesSolicitacaoModal({
 
   const criadorLine = useMemo(() => {
     const who = solicitacao?.nmUsuarioCriacao ?? '—';
-    const when = solicitacao?.dtCriacao ? formatDateTime(solicitacao.dtCriacao as any) : '—';
+    const when = formatDateTime((solicitacao as any)?.dtCriacao);
     return `Criado por ${who} em: ${when}`;
   }, [solicitacao?.nmUsuarioCriacao, solicitacao?.dtCriacao]);
 
-  const prazoLine = useMemo(() => {
-    const prazo = solicitacao?.dtPrazo ? formatDateTime(solicitacao.dtPrazo as any) : undefined;
-    return prazo ?? '—';
-  }, [solicitacao?.dtPrazo]);
+  const prazoLine = useMemo(() => formatDateTime((solicitacao as any)?.dtPrazo), [solicitacao?.dtPrazo]);
 
-  const descricao = solicitacao?.dsSolicitacao || '';
+  const assunto = solicitacao?.dsAssunto ?? '';
+  const descricao = solicitacao?.dsSolicitacao ?? '';
+  const areaLabel =
+    solicitacao?.area?.nmArea ??
+    solicitacao?.areas?.[0]?.nmArea ??
+    (Array.isArray(solicitacao?.areas) && solicitacao!.areas!.length > 0 ? solicitacao!.areas!.map(a => a.nmArea).join(', ') : '—');
+
+  const temaLabel = solicitacao?.tema?.nmTema ?? (solicitacao as any)?.nmTema ?? '—';
+
+  const anexosToShow: AnexoFromBackend[] =
+    (Array.isArray(anexos) && anexos.length > 0)
+      ? anexos
+      : ((solicitacao as any)?.anexos ?? []);
 
   const handleUploadChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -141,36 +151,49 @@ export default function DetalhesSolicitacaoModal({
         <form id="detalhes-form" onSubmit={handleEnviar} className="px-6 pb-6 space-y-8 overflow-y-auto flex-1">
           <section className="space-y-2">
             <h3 className="text-sm font-semibold">Assunto</h3>
-
-            <div className="rounded-md border bg-muted/30">
-              <div className="grid grid-cols-12 gap-0">
-                <div className="col-span-2 px-4 py-3 text-xs text-muted-foreground">Área:</div>
-                <div className="col-span-10 px-4 py-3 text-sm">
-                  {solicitacao?.area?.nmArea ?? solicitacao?.areas?.[0]?.nmArea ?? '—'}
-                </div>
-              </div>
-              <div className="h-px bg-border" />
-              <div className="grid grid-cols-12 gap-0">
-                <div className="col-span-2 px-4 py-3 text-xs text-muted-foreground">Tema:</div>
-                <div className="col-span-10 px-4 py-3 text-sm">
-                  {solicitacao?.tema?.nmTema ?? solicitacao?.nmTema ?? '—'}
-                </div>
-              </div>
+            <div className="rounded-md border bg-muted/30 p-4">
+              <p className={`text-sm ${expandAssunto ? '' : 'line-clamp-2'}`}>
+                {assunto || '—'}
+              </p>
+              {assunto && assunto.length > 0 && (
+                <button
+                  type="button"
+                  className="mt-2 text-sm font-medium text-primary hover:underline"
+                  onClick={() => setExpandAssunto((v) => !v)}
+                >
+                  {expandAssunto ? 'Ver menos' : 'Ver mais'}
+                </button>
+              )}
             </div>
           </section>
 
           <section className="space-y-2">
+            <h3 className="text-sm font-semibold">Metadados</h3>
             <div className="rounded-md border bg-muted/30">
+              <div className="grid grid-cols-12 gap-0">
+                <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Área:</div>
+                <div className="col-span-9 px-4 py-3 text-sm">
+                  {areaLabel}
+                </div>
+              </div>
+              <div className="h-px bg-border" />
+              <div className="grid grid-cols-12 gap-0">
+                <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Tema:</div>
+                <div className="col-span-9 px-4 py-3 text-sm">
+                  {temaLabel}
+                </div>
+              </div>
+              <div className="h-px bg-border" />
               <div className="grid grid-cols-12">
-                <div className="col-span-2 px-4 py-3 text-xs text-muted-foreground">Nº do ofício:</div>
-                <div className="col-span-10 px-4 py-3 text-sm">
+                <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Nº do ofício:</div>
+                <div className="col-span-9 px-4 py-3 text-sm">
                   {solicitacao?.nrOficio || '—'}
                 </div>
               </div>
               <div className="h-px bg-border" />
               <div className="grid grid-cols-12">
-                <div className="col-span-2 px-4 py-3 text-xs text-muted-foreground">Nº do processo:</div>
-                <div className="col-span-10 px-4 py-3 text-sm">
+                <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Nº do processo:</div>
+                <div className="col-span-9 px-4 py-3 text-sm">
                   {solicitacao?.nrProcesso || '—'}
                 </div>
               </div>
@@ -180,19 +203,17 @@ export default function DetalhesSolicitacaoModal({
           <section className="space-y-2">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">Descrição</h3>
-              <button
+              {/* <button
                 type="button"
                 className="text-sm text-primary hover:underline"
                 onClick={onAbrirEmailOriginal}
               >
                 Ver e-mail original
-              </button>
+              </button> */}
             </div>
 
             <div className="rounded-md border bg-muted/30 p-4">
-              <p
-                className={`text-sm text-muted-foreground ${expandDescricao ? '' : 'line-clamp-4'}`}
-              >
+              <p className={`text-sm text-muted-foreground ${expandDescricao ? '' : 'line-clamp-4'}`}>
                 {descricao || '—'}
               </p>
               {descricao && descricao.length > 0 && (
@@ -217,7 +238,10 @@ export default function DetalhesSolicitacaoModal({
                     Anexado pelo Analista
                   </div>
                   <div className="col-span-9 px-4 py-3">
-                    <AnexoItem anexos={anexos.filter((a) => a.tpObjeto === 'A')} onBaixar={onBaixarAnexo} />
+                    <AnexoItem
+                      anexos={anexosToShow.filter((a) => a.tpObjeto === 'A')}
+                      onBaixar={onBaixarAnexo}
+                    />
                   </div>
                 </div>
               </div>
@@ -228,7 +252,10 @@ export default function DetalhesSolicitacaoModal({
                     Anexado pelo Gerente
                   </div>
                   <div className="col-span-9 px-4 py-3">
-                    <AnexoItem anexos={anexos.filter((a) => a.tpObjeto === 'G')} onBaixar={onBaixarAnexo} />
+                    <AnexoItem
+                      anexos={anexosToShow.filter((a) => a.tpObjeto === 'G')}
+                      onBaixar={onBaixarAnexo}
+                    />
                   </div>
                 </div>
               </div>
@@ -239,7 +266,10 @@ export default function DetalhesSolicitacaoModal({
                     Enviado pelo Regulatório
                   </div>
                   <div className="col-span-9 px-4 py-3">
-                    <AnexoItem anexos={anexos.filter((a) => a.tpObjeto === 'S')} onBaixar={onBaixarAnexo} />
+                    <AnexoItem
+                      anexos={anexosToShow.filter((a) => a.tpObjeto === 'S')}
+                      onBaixar={onBaixarAnexo}
+                    />
                   </div>
                 </div>
               </div>
@@ -249,13 +279,13 @@ export default function DetalhesSolicitacaoModal({
           <section className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">Enviar devolutiva ao Regulatório</h3>
-              <button
+              {/* <button
                 type="button"
                 className="text-sm text-primary hover:underline"
                 onClick={onHistoricoRespostas}
               >
                 Histórico de respostas
-              </button>
+              </button> */}
             </div>
 
             <div className="rounded-md border bg-muted/30 p-4">
