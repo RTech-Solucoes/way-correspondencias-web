@@ -1,8 +1,8 @@
-name: Deploy for Way Web DEV
+name: Deploy for Way Web PRD
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ main, master ]
 
 jobs:
   deploy:
@@ -32,8 +32,8 @@ jobs:
 
       - name: Testar VPN
         run: |
-          ping -c 3 10.132.4.128 || exit 1
+          ping -c 3 10.132.4.129 || exit 1
 
       - name: Deploy aplicação
         run: |
-          sshpass -p "Suporte@#0608" ssh -o StrictHostKeyChecking=no rtech@10.132.4.128 "cd /home/rtech/way-correspondencias-web && ./deploy.sh"
+          sshpass -p "Suporte@#0608" ssh -o StrictHostKeyChecking=no rtech@10.132.4.129 "cd /home/rtech/way-correspondencias-web && ./deploy.sh"
