@@ -212,12 +212,6 @@ export default function TemasPage() {
                   <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </StickyTableHead>
-              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('flAtivo')}>
-                <div className="flex items-center">
-                  Status
-                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
-                </div>
-              </StickyTableHead>
               <StickyTableHead>Áreas</StickyTableHead>
               <StickyTableHead className="text-right">Ações</StickyTableHead>
             </StickyTableRow>
@@ -255,15 +249,6 @@ export default function TemasPage() {
                     {tema.tpPrazo === 'C' ? 'Horas corridas' :
                      tema.tpPrazo === 'U' ? 'Horas úteis' :
                      tema.tpPrazo || '-'}
-                  </StickyTableCell>
-                  <StickyTableCell>
-                    <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
-                      tema.flAtivo === 'S' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {getStatusText(tema.flAtivo)}
-                    </span>
                   </StickyTableCell>
                   <StickyTableCell>
                     {tema.areas && tema.areas?.length > 0 ? (

@@ -1,39 +1,39 @@
 import ApiClient from '../client';
-import { StatusSolicPrazoTemaRequest, StatusSolicPrazoTemaResponse } from './types';
+import { StatusSolicPrazoTemaRequest, StatusSolicitacaoPrazoTema } from './types';
 
-class StatusPrazoTemaClient {
+class StatusSolicPrazoTemaClient {
   private client: ApiClient;
 
   constructor() {
-    this.client = new ApiClient('/temas');
+    this.client = new ApiClient('');
   }
 
   /**
-   * Atualiza ou cria um prazo interno para um status específico de um tema
+   * Criar ou atualizar status-prazo para um tema
    */
-  async upsertPrazoStatus(
-    idTema: number,
-    statusCodigo: number,
-    request: StatusSolicPrazoTemaRequest
-  ): Promise<StatusSolicPrazoTemaResponse> {
-    return this.client.request<StatusSolicPrazoTemaResponse>(`/${idTema}/status/${statusCodigo}/prazo`, {
-      method: 'PUT',
+  async upsert(idTema: number, request: StatusSolicPrazoTemaRequest): Promise<StatusSolicitacaoPrazoTema> {
+    return this.client.request<StatusSolicitacaoPrazoTema>(`/temas/${idTema}/status`, {
+      method: 'POST',
       body: JSON.stringify(request),
     });
   }
 
-  async listarPrazosTema(idTema: number): Promise<StatusSolicPrazoTemaResponse[]> {
-    return this.client.request<StatusSolicPrazoTemaResponse[]>(`/${idTema}/status/prazos`, {
+  /**
+   * Listar status-prazos de um tema
+   */
+  async listarPorTema(idTema: number): Promise<StatusSolicitacaoPrazoTema[]> {
+    return this.client.request<StatusSolicitacaoPrazoTema[]>(`/temas/${idTema}/status`, {
       method: 'GET',
     });
   }
 
-  async listarStatusPorTema(idTema: number): Promise<StatusSolicPrazoTemaResponse[]> {
-    return this.client.request<StatusSolicPrazoTemaResponse[]>(`/${idTema}/status`, {
-      method: 'GET',
-    });
+  /**
+   * Alias para compatibilidade (delegando para listarPorTema)
+   */
+  async listar(idTema: number): Promise<StatusSolicitacaoPrazoTema[]> {
+    return this.listarPorTema(idTema);
   }
 }
 
-export const statusPrazoTemaClient = new StatusPrazoTemaClient();
-export default statusPrazoTemaClient;
+export const statusSolicPrazoTemaClient = new StatusSolicPrazoTemaClient();
+export default statusSolicPrazoTemaClient;

@@ -53,6 +53,7 @@ export default function EmailDetail({
   const [responsaveis, setResponsaveis] = useState<ResponsavelResponse[]>([]);
   const [temas, setTemas] = useState<TemaResponse[]>([]);
   const [areas, setAreas] = useState<AreaResponse[]>([]);
+  const [isDestinatarioExpanded, setIsDestinatarioExpanded] = useState(false);
 
   useEffect(() => {
     const loadEmail = async () => {
@@ -108,11 +109,19 @@ export default function EmailDetail({
     setShowSolicitacaoModal(false);
   };
 
+  const toggleDestinatarioExpand = () => {
+    setIsDestinatarioExpanded(prev => !prev);
+  };
+
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <p className="text-gray-500">Buscando email...</p>
+          <div className="animate-pulse">
+            <div className="w-8 h-8 bg-gray-300 rounded-full mx-auto mb-4"></div>
+            <div className="w-32 h-4 bg-gray-300 rounded mx-auto"></div>
+          </div>
+          <p className="text-gray-500 mt-2">Buscando email...</p>
         </div>
       </div>
     );
@@ -120,11 +129,16 @@ export default function EmailDetail({
 
   if (!email) {
     return (
-      <div className="flex-1 flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <p className="text-gray-500">Email não encontrado</p>
-          <Button onClick={onBack} className="mt-4">
-            Voltar
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <FileTextIcon className="w-8 h-8 text-gray-400" />
+          </div>
+          <p className="text-gray-500 text-lg mb-2">Email não encontrado</p>
+          <p className="text-gray-400 text-sm mb-4">O email solicitado não existe ou foi removido</p>
+          <Button onClick={onBack} variant="outline">
+            <ArrowLeftIcon className="w-4 h-4 mr-2" />
+            Voltar para lista
           </Button>
         </div>
       </div>
@@ -132,62 +146,92 @@ export default function EmailDetail({
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-white">
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
+    <div className="flex flex-col h-full bg-white">
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white sticky top-0 z-10">
         <div className="flex items-center space-x-3">
           <Button
             variant="ghost"
             size="sm"
             onClick={onBack}
-            className="p-2"
+            className="p-2 hover:bg-gray-100"
           >
-            <ArrowLeftIcon className="h-4 w-4"/>
+            <ArrowLeftIcon className="h-5 w-5"/>
           </Button>
+          <div className="text-sm text-gray-500">
+            Email
+          </div>
         </div>
-
-        <Button
-          size="sm"
-          onClick={handleCreateSolicitacao}
-        >
-          <FileTextIcon className="h-4 w-4 mr-2"/>
-          Criar Solicitação
-        </Button>
       </div>
 
-      <div className="flex flex-col flex-1 overflow-y-auto gap-6 p-6">
-        <span className="text-sm text-gray-500">{formatDate(email?.dtRecebimento)}</span>
-        <h2 className="text-2xl font-semibold truncate">{email?.dsAssunto}</h2>
-        <div className="flex items-start space-x-4">
-          <Avatar className="h-12 w-12">
-            <AvatarImage src='/images/avatar.svg' />
-            <AvatarFallback>
-              {getInitials(email?.dsRemetente)}
-            </AvatarFallback>
-          </Avatar>
+      {/* Content */}
+      <div className="flex flex-col overflow-y-auto custom-scrollbar">
+        <div className="p-6 space-y-6">
+          {/* Email Header Info */}
+          <div className="space-y-4">
+            <div className="text-sm text-gray-500">
+              {formatDate(email?.dtRecebimento)}
+            </div>
+
+            <h1 className="text-2xl font-bold text-gray-900 leading-tight">
+              {email?.dsAssunto || 'Sem assunto'}
+            </h1>
+          </div>
+
+          {/* Sender/Recipient Info */}
           <div className="flex flex-col">
-            <h3 className="font-semibold text-gray-900">{email?.dsRemetente}</h3>
-            <p className="text-sm text-gray-600 mb-1">De: {email?.dsRemetente}</p>
-            <p className="inline-flex text-sm text-gray-600 max-w-[200px]">Para: {email?.dsDestinatario}</p>
-          </div>
-        </div>
+            <div className="flex items-start space-x-4">
+              <Avatar className="h-12 w-12 flex-shrink-0">
+                <AvatarImage src='/images/avatar.svg' />
+                <AvatarFallback className="bg-blue-100 text-blue-600 font-semibold">
+                  {getInitials(email?.dsRemetente)}
+                </AvatarFallback>
+              </Avatar>
 
-        <div className="prose max-w-none">
-          <div className="whitespace-pre-wrap text-gray-900 leading-relaxed">
-            {email?.dsCorpo}
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-gray-900 mb-2">
+                  {email?.dsRemetente || 'Remetente não informado'}
+                </h3>
+
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-start">
+                    <span className="text-gray-500 font-medium mr-2 flex-shrink-0 w-10">De:</span>
+                    <span className="text-gray-900 break-all">{email?.dsRemetente}</span>
+                  </div>
+
+                  <div className="flex items-start">
+                    <span className="text-gray-500 font-medium mr-2 flex-shrink-0 w-10">Para:</span>
+                    <div className="flex-1">
+                      <div className={`text-gray-900 break-all ${isDestinatarioExpanded ? '' : 'line-clamp-2'}`}>
+                        {email?.dsDestinatario}
+                      </div>
+                      {email?.dsDestinatario && email.dsDestinatario.split(';').length > 1 && (
+                        <Button
+                          variant="link"
+                          size="sm"
+                          onClick={toggleDestinatarioExpand}
+                          className="p-0 h-auto text-blue-600 hover:text-blue-800 mt-1 text-xs"
+                        >
+                          {isDestinatarioExpanded ? 'Ver menos' : `Ver todos (${email.dsDestinatario.split(';').length} destinatários)`}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Email Body */}
+          <div className="bg-white border rounded-lg p-6">
+            <div className="prose prose-gray max-w-none">
+              <div className="whitespace-pre-wrap text-gray-900 leading-relaxed text-base email-content">
+                {email?.dsCorpo || 'Conteúdo do email não disponível'}
+              </div>
+            </div>
           </div>
         </div>
       </div>
-
-      <SolicitacaoModal
-        solicitacao={null}
-        open={showSolicitacaoModal}
-        onClose={() => setShowSolicitacaoModal(false)}
-        onSave={handleSaveSolicitacao}
-        responsaveis={responsaveis}
-        temas={temas}
-        initialSubject={email?.dsAssunto}
-        initialDescription={email?.dsCorpo}
-      />
     </div>
   );
 }

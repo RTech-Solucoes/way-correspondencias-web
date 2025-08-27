@@ -1,14 +1,41 @@
 export interface AreaSolicitacao {
   idArea: number;
   nmArea: string;
+  cdArea?: string | null;
+  dsArea?: string | null;
+  flAtivo: string;
 }
 
 export interface AreaTema {
   idTema: number;
   nmTema: string;
+  dsTema?: string | null;
+  nrPrazo: number;
+  nrPrazoExterno: number;
+  tpPrazo: string;
+  flAtivo: string;
+  areas?: AreaSolicitacao[];
 }
 
-export interface SolicitacaoResponse {
+export interface Email {
+  idEmail: number;
+  dsRemetente: string;
+  dsDestinatario: string;
+  dsAssunto: string;
+  dsCorpo: string;
+  dtRecebimento: string;
+  flAtivo: string;
+}
+
+export interface StatusSolicitacao {
+  idStatusSolicitacao: number;
+  nmStatus: string;
+  dsStatus?: string | null;
+  flAtiv?: string | null;
+  flAtivo?: string | null;
+}
+
+export interface SolicitacaoResponse extends BaseResponse {
   idSolicitacao: number;
   idEmail?: number;
   idTema?: number;
@@ -23,21 +50,22 @@ export interface SolicitacaoResponse {
   nrOficio?: string;
   nrProcesso?: string;
   tpPrazo?: string;
-  dtCriacao?: string;
-  dtAtualizacao?: string;
+  dtPrazo?: string;
   nmResponsavel?: string;
   nmTema?: string;
   areas?: AreaSolicitacao[];
-  nmUsuarioCriacao: string;
-  dtPrazo?: string;
-  area: AreaSolicitacao;
-  tema: AreaTema;
+  nmUsuarioCriacao?: string;
+  email?: Email;
+  statusSolicitacao?: StatusSolicitacao;
+  area?: AreaSolicitacao;
+  tema?: AreaTema;
 }
 
 export interface SolicitacaoRequest {
   idEmail?: number;
   idTema?: number;
   idResponsavel?: number;
+  idStatusSolicitacao?: number; // adicionado para alinhar com backend
   statusCodigo?: number;
   flStatus?: string;
   cdIdentificacao?: string;
@@ -64,7 +92,6 @@ export interface SolicitacaoIdentificacaoRequest {
 }
 
 export interface SolicitacaoPrazoResponse {
-  // Estrutura a ser definida conforme necessário
   id: number;
   nrPrazoDias: number;
   statusCodigo?: number;
@@ -89,3 +116,34 @@ export interface SolicitacaoFilterParams {
   size?: number;
   sort?: string;
 }
+
+export interface BaseResponse {
+  dtCriacao: string;
+  dtAtualizacao?: string | null;
+  nrCpfCriacao?: string | null;
+  nrCpfAtualizacao?: string | null;
+  flAtivo: string;
+}
+
+export interface SolicitacaoPrazoItemRequest {
+  idStatusSolicitacao: number;
+  nrPrazoInterno?: number;
+  tpPrazo?: string; // 'U' ou 'C'
+  flExcepcional?: string; // 'S' | 'N'
+}
+
+export interface SolicitacaoEtapaPrazoRequest {
+  nrPrazoInterno?: number; // prazo geral interno
+  nrPrazoExterno?: number; // se vier a ser usado
+  solicitacoesPrazos: SolicitacaoPrazoItemRequest[];
+}
+
+export interface SolicitacaoTemaEtapaRequest {
+  idTema: number;
+  tpPrazo?: string; // TipoPrazo
+  nrPrazoInterno?: number;
+  nrPrazoExterno?: number;
+  flExcepcional?: string; // 'S' | 'N'
+  idsAreas?: number[];
+}
+

@@ -42,6 +42,12 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { Pagination } from '@/components/ui/pagination';
 import { useSolicitacoes } from '@/context/solicitacoes/SolicitacoesContext';
 import TramitacaoList from '@/components/solicitacoes/TramitacaoList';
+import anexosClient from '@/api/anexos/client';
+import { AnexoResponse, TipoObjetoAnexo } from '@/api/anexos/type';
+import { AreaSolicitacao, SolicitacaoResponse } from '@/api/solicitacoes/types';
+import { ResponsavelResponse } from '@/api/responsaveis/types';
+import { TemaResponse } from '@/api/temas/types';
+import { AreaResponse } from '@/api/areas/types';
 
 export default function SolicitacoesPage() {
   const {
@@ -76,13 +82,9 @@ export default function SolicitacoesPage() {
     filters,
     setFilters,
     activeFilters,
-    setActiveFilters,
     expandedRows,
-    setExpandedRows,
     sortField,
-    setSortField,
     sortDirection,
-    setSortDirection,
     hasActiveFilters,
     handleEdit,
     handleDelete,
@@ -97,34 +99,43 @@ export default function SolicitacoesPage() {
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const [showDetalhesModal, setShowDetalhesModal] = useState(false);
-  const [anexosDetalhes, setAnexosDetalhes] = useState<any[]>([]);
+  const [detalhesSolicitacao, setDetalhesSolicitacao] = useState<SolicitacaoResponse | null>(null);
+  const [detalhesAnexos, setDetalhesAnexos] = useState<AnexoResponse[]>([]);
 
   const loadSolicitacoes = useCallback(async () => {
     try {
       setLoading(true);
 
-      const filterParts = [];
+      const filterParts: Array<string> = [];
       if (debouncedSearchQuery) filterParts.push(debouncedSearchQuery);
-      if (activeFilters.identificacao) filterParts.push(activeFilters.identificacao);
-      if (activeFilters.responsavel) filterParts.push(activeFilters.responsavel);
-      if (activeFilters.tema) filterParts.push(activeFilters.tema);
-      if (activeFilters.area) filterParts.push(activeFilters.area);
-      if (activeFilters.status) filterParts.push(activeFilters.status);
-      if (activeFilters.dateFrom) filterParts.push(activeFilters.dateFrom);
-      if (activeFilters.dateTo) filterParts.push(activeFilters.dateTo);
+      if (activeFilters.identificacao) filterParts.push(`ident:${activeFilters.identificacao}`);
+      if (activeFilters.responsavel && activeFilters.responsavel !== 'all') filterParts.push(`resp:${activeFilters.responsavel}`);
+      if (activeFilters.tema && activeFilters.tema !== 'all') filterParts.push(`tema:${activeFilters.tema}`);
+      if (activeFilters.area && activeFilters.area !== 'all') filterParts.push(`area:${activeFilters.area}`);
+      if (activeFilters.status && activeFilters.status !== 'all') filterParts.push(`status:${activeFilters.status}`);
+      if (activeFilters.dateFrom) filterParts.push(`from:${activeFilters.dateFrom}`);
+      if (activeFilters.dateTo) filterParts.push(`to:${activeFilters.dateTo}`);
 
       const filtro = filterParts.join(' ') || undefined;
       const response = await solicitacoesClient.listar(filtro);
-      setSolicitacoes(response);
-      setTotalPages(1);
-      setTotalElements(response.length);
 
-    } catch (error) {
-      toast.error("Erro ao carregar solicitações");
+      setSolicitacoes(response ?? []);
+      setTotalPages(1);
+      setTotalElements((response ?? []).length);
+    } catch {
+      toast.error('Erro ao carregar solicitações');
     } finally {
       setLoading(false);
     }
-  }, [currentPage, activeFilters, debouncedSearchQuery, setSolicitacoes, setTotalPages, setTotalElements, setLoading]);
+  }, [
+    currentPage,
+    activeFilters,
+    debouncedSearchQuery,
+    setSolicitacoes,
+    setTotalPages,
+    setTotalElements,
+    setLoading
+  ]);
 
   useEffect(() => {
     loadSolicitacoes();
@@ -136,35 +147,32 @@ export default function SolicitacoesPage() {
   const loadResponsaveis = useCallback(async () => {
     try {
       const response = await responsaveisClient.buscarPorFiltro({ size: 100 });
-      setResponsaveis(response.content);
-    } catch {
-    }
+      setResponsaveis(response.content ?? []);
+    } catch {}
   }, [setResponsaveis]);
 
   const loadTemas = useCallback(async () => {
     try {
       const response = await temasClient.buscarPorFiltro({ size: 100 });
-      setTemas(response.content);
-    } catch {
-    }
+      setTemas(response.content ?? []);
+    } catch {}
   }, [setTemas]);
 
   const loadAreas = useCallback(async () => {
     try {
       const response = await areasClient.buscarPorFiltro({ size: 100 });
-      setAreas(response.content);
-    } catch {
-    }
+      setAreas(response.content ?? []);
+    } catch {}
   }, [setAreas]);
 
   const confirmDelete = async () => {
     if (solicitacaoToDelete) {
       try {
         await solicitacoesClient.deletar(solicitacaoToDelete.idSolicitacao);
-        toast.success("Solicitação excluída com sucesso");
+        toast.success('Solicitação excluída com sucesso');
         loadSolicitacoes();
       } catch {
-        toast.error("Erro ao excluir solicitação");
+        toast.error('Erro ao excluir solicitação');
       } finally {
         setShowDeleteDialog(false);
         setSolicitacaoToDelete(null);
@@ -178,25 +186,26 @@ export default function SolicitacoesPage() {
   };
 
   const sortedSolicitacoes = () => {
-    if (!solicitacoes || solicitacoes.length === 0) {
-      return [];
-    }
-
+    if (!solicitacoes || solicitacoes.length === 0) return [];
     const sorted = [...solicitacoes];
 
     if (sortField) {
-      sorted.sort((a, b) => {
-        const aValue = a[sortField];
-        const bValue = b[sortField];
+      sorted.sort((a: any, b: any) => {
+        const aValue = a?.[sortField];
+        const bValue = b?.[sortField];
 
         if (aValue === bValue) return 0;
-
         if (aValue == null && bValue == null) return 0;
         if (aValue == null) return 1;
         if (bValue == null) return -1;
 
-        const comparison = aValue < bValue ? -1 : 1;
-        return sortDirection === 'asc' ? comparison : -comparison;
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          const cmp = aValue.localeCompare(bValue, 'pt-BR', { numeric: true, sensitivity: 'base' });
+          return sortDirection === 'asc' ? cmp : -cmp;
+        }
+
+        const cmp = aValue < bValue ? -1 : 1;
+        return sortDirection === 'asc' ? cmp : -cmp;
       });
     }
 
@@ -204,13 +213,18 @@ export default function SolicitacoesPage() {
   };
 
   const openDetalhes = useCallback(async (s: any) => {
+    setSelectedSolicitacao(s);
+    setShowDetalhesModal(true);
+    setDetalhesSolicitacao(null);
+
     try {
-      setSelectedSolicitacao(s);
-      setShowDetalhesModal(true);
-      const anexos = await solicitacoesClient.buscarAnexos(s.idSolicitacao);
-      setAnexosDetalhes(anexos || []);
+      const detalhes = await solicitacoesClient.buscarPorId(s.idSolicitacao);
+      setDetalhesSolicitacao(detalhes || s);
+      const anexos = await anexosClient.buscarPorIdObjetoETipoObjeto(s.idSolicitacao, TipoObjetoAnexo.S);
+      setDetalhesAnexos(anexos || []);
     } catch {
-      toast.error('Erro ao carregar anexos da solicitação');
+      toast.error('Erro ao carregar os detalhes da solicitação');
+      setDetalhesSolicitacao(s);
     }
   }, [setSelectedSolicitacao]);
 
@@ -236,22 +250,23 @@ export default function SolicitacoesPage() {
 
   const abrirEmailOriginal = useCallback(() => {
     toast.message('Abrir e-mail original (implemente a navegação/URL).');
-  }, [/* selectedSolicitacao */]);
+  }, []);
 
   const abrirHistorico = useCallback(() => {
     toast.message('Abrir histórico de respostas (implemente a navegação).');
   }, []);
 
   const enviarDevolutiva = useCallback(async (mensagem: string, arquivos: File[]) => {
-    if (!selectedSolicitacao) return;
+    const alvo = detalhesSolicitacao ?? selectedSolicitacao;
+    if (!alvo) return;
     try {
       if (mensagem?.trim()) {
-        await solicitacoesClient.enviarDevolutiva?.(selectedSolicitacao.idSolicitacao, { mensagem });
+        await solicitacoesClient.enviarDevolutiva?.(alvo.idSolicitacao, { mensagem });
       }
       if (arquivos.length > 0) {
         const fd = new FormData();
         arquivos.forEach((f) => fd.append('files', f));
-        fd.append('idObjeto', String(selectedSolicitacao.idSolicitacao));
+        fd.append('idObjeto', String(alvo.idSolicitacao));
         fd.append('tpObjeto', 'S');
         await solicitacoesClient.uploadAnexos(fd);
       }
@@ -260,7 +275,7 @@ export default function SolicitacoesPage() {
       toast.error('Falha ao enviar a devolutiva.');
       throw new Error('erro-devolutiva');
     }
-  }, [selectedSolicitacao, loadSolicitacoes]);
+  }, [detalhesSolicitacao, selectedSolicitacao, loadSolicitacoes]);
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
@@ -366,7 +381,7 @@ export default function SolicitacoesPage() {
                 </StickyTableCell>
               </StickyTableRow>
             ) : (
-              sortedSolicitacoes()?.map((solicitacao) => (
+              sortedSolicitacoes()?.map((solicitacao: SolicitacaoResponse) => (
                 <React.Fragment key={solicitacao.idSolicitacao}>
                   <StickyTableRow
                     onClick={() => toggleRowExpansion(solicitacao.idSolicitacao)}
@@ -385,7 +400,7 @@ export default function SolicitacoesPage() {
                     <StickyTableCell>
                       {solicitacao.areas && solicitacao.areas.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
-                          {solicitacao.areas.slice(0, 2).map((area) => (
+                          {solicitacao.areas.slice(0, 2).map((area: AreaSolicitacao) => (
                             <span key={area.idArea} className="text-xs bg-gray-100 px-2 py-1 rounded">
                               {area.nmArea}
                             </span>
@@ -398,7 +413,7 @@ export default function SolicitacoesPage() {
                         <span className="text-gray-400 text-sm">-</span>
                       )}
                     </StickyTableCell>
-                    <StickyTableCell>{solicitacao.nmTema || '-'}</StickyTableCell>
+                    <StickyTableCell>{solicitacao.nmTema || solicitacao?.tema?.nmTema || '-'}</StickyTableCell>
                     <StickyTableCell>
                       <Badge variant={getStatusBadgeVariant(solicitacao.statusCodigo?.toString() || '')}>
                         {getStatusText(solicitacao.statusCodigo?.toString() || '')}
@@ -522,7 +537,7 @@ export default function SolicitacoesPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todos</SelectItem>
-                      {responsaveis.map((resp) => (
+                      {responsaveis.map((resp: ResponsavelResponse) => (
                         <SelectItem key={resp.idResponsavel} value={resp.idResponsavel.toString()}>
                           {resp.nmResponsavel}
                         </SelectItem>
@@ -541,7 +556,7 @@ export default function SolicitacoesPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todos</SelectItem>
-                      {temas.map((tema) => (
+                      {temas.map((tema: TemaResponse) => (
                         <SelectItem key={tema.idTema} value={tema.idTema.toString()}>
                           {tema.nmTema}
                         </SelectItem>
@@ -562,7 +577,7 @@ export default function SolicitacoesPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todas</SelectItem>
-                      {areas.map((area) => (
+                      {areas.map((area: AreaResponse) => (
                         <SelectItem key={area.idArea} value={area.idArea.toString()}>
                           {area.nmArea}
                         </SelectItem>
@@ -624,12 +639,11 @@ export default function SolicitacoesPage() {
           onClose={() => {
             setShowDetalhesModal(false);
             setSelectedSolicitacao(null);
-            setAnexosDetalhes([]);
+            setDetalhesSolicitacao(null);
           }}
-          solicitacao={selectedSolicitacao}
-          anexos={anexosDetalhes}
-          statusLabel={getStatusText(selectedSolicitacao?.statusCodigo?.toString() || '')}
-          onBaixarAnexo={baixarAnexo}
+          solicitacao={detalhesSolicitacao ?? selectedSolicitacao}
+          anexos={(detalhesAnexos ?? [])}
+          statusLabel={getStatusText((detalhesSolicitacao ?? selectedSolicitacao)?.statusCodigo?.toString() || '')}
           onAbrirEmailOriginal={abrirEmailOriginal}
           onHistoricoRespostas={abrirHistorico}
           onEnviarDevolutiva={enviarDevolutiva}

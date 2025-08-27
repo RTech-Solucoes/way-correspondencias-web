@@ -11,6 +11,11 @@ export const PAGES_DEF: PageDef[] = [
   //   icon: PresentationChartIcon
   // },
   {
+    path: "/solicitacoes",
+    label: "Solicitações",
+    icon: ClipboardTextIcon
+  },
+  {
     path: "/email",
     label: "Email",
     icon: EnvelopeSimpleIcon
@@ -29,11 +34,6 @@ export const PAGES_DEF: PageDef[] = [
     path: "/temas",
     label: "Temas",
     icon: TagIcon
-  },
-  {
-    path: "/solicitacoes",
-    label: "Solicitações",
-    icon: ClipboardTextIcon
   },
 ];
 
