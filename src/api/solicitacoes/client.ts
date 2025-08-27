@@ -7,6 +7,7 @@ import {
 } from './types';
 
 class SolicitacoesClient {
+
   private client: ApiClient;
 
   constructor() {
@@ -165,6 +166,11 @@ class SolicitacoesClient {
       throw error;
     }
   }
+
+  enviarDevolutiva(idSolicitacao: number, arg1: { mensagem: string; }) {
+    console.log('Método enviarDevolutiva chamado com:', idSolicitacao, arg1);
+  }
+  
 }
 
 export const solicitacoesClient = new SolicitacoesClient();
