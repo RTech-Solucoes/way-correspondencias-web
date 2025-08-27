@@ -102,6 +102,8 @@
 body {
   @apply bg-background text-foreground subpixel-antialiased;
   overflow-x: hidden;
+  color: rgb(var(--foreground));
+  background: rgb(var(--background));
 }
 
 article {
@@ -141,12 +143,49 @@ select {
   overflow: hidden;
 }
 
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .prose {
   @apply text-gray-700 leading-7;
+  color: var(--tw-prose-body);
+  max-width: 65ch;
 }
 
 .prose p {
   @apply mb-4;
+  margin-top: 1.25em;
+  margin-bottom: 1.25em;
+}
+
+.prose p:first-child {
+  margin-top: 0;
+}
+
+.prose p:last-child {
+  margin-bottom: 0;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
 
 .glass {
@@ -193,4 +232,20 @@ button, input[type="file"] {
 
 [data-sonner-toaster] [data-type="success"] {
   @apply bg-green-50 border-green-200 text-green-800;
+}
+
+/* Email content specific styles */
+.email-content {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+.email-content a {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.email-content a:hover {
+  color: #1d4ed8;
 }

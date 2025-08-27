@@ -616,8 +616,8 @@ export default function SolicitacaoModal({
 
   const renderStep3 = useCallback((): JSX.Element => {
     const statusOptions = statusList.length > 0 ? statusList.map(status => ({
-      codigo: status.id,
-      nome: status.nome
+      codigo: status.idStatusSolicitacao,
+      nome: status.nmStatus
     })) : [
       {codigo: 1, nome: 'Pré-análise'},
       {codigo: 2, nome: 'Vencido Regulatório'},
@@ -914,10 +914,10 @@ export default function SolicitacaoModal({
             {statusPrazos
               .filter(p => p.nrPrazoInterno && p.nrPrazoInterno > 0)
               .map(prazo => {
-                const status = statusList.find(s => s.id === prazo.idStatusSolicitacao);
+                const status = statusList.find(s => s.idStatusSolicitacao === prazo.idStatusSolicitacao);
                 return (
                   <div key={prazo.idStatusSolicitacao} className="flex justify-between items-center p-2 bg-gray-50 rounded text-sm">
-                    <span className="font-medium">{status?.nome || `Status ${prazo.idStatusSolicitacao}`}</span>
+                    <span className="font-medium">{status?.nmStatus || `Status ${prazo.idStatusSolicitacao}`}</span>
                     <span className="text-gray-600">{prazo.nrPrazoInterno} horas</span>
                   </div>
                 );
