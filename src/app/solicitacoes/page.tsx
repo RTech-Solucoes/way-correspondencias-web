@@ -673,7 +673,7 @@ export default function SolicitacoesPage() {
       {showDetalhesModal && (
         <DetalhesSolicitacaoModal
           open={showDetalhesModal}
-          onClose={() => {
+          onCloseAction={() => {
             setShowDetalhesModal(false);
             setSelectedSolicitacao(null);
             setAnexosDetalhes([]);
@@ -687,11 +687,11 @@ export default function SolicitacoesPage() {
             tpObjeto: 'SOLICITACAO'
           }))}
           statusLabel={getStatusText(selectedSolicitacao?.statusCodigo?.toString() || '')}
-          onBaixarAnexo={baixarAnexo}
-          onAbrirEmailOriginal={abrirEmailOriginal}
-          onHistoricoRespostas={abrirHistorico}
-          onEnviarDevolutiva={enviarDevolutiva}
-          onSuccess={loadSolicitacoes}
+          onBaixarAnexoAction={baixarAnexo}
+          onAbrirEmailOriginalAction={abrirEmailOriginal}
+          onHistoricoRespostasAction={abrirHistorico}
+          onEnviarDevolutivaAction={enviarDevolutiva}
+          onSuccessAction={loadSolicitacoes}
         />
       )}
 
