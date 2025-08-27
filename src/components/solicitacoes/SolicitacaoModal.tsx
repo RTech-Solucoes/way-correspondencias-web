@@ -101,13 +101,13 @@ export default function SolicitacaoModal({
     if (solicitacao) {
       setFormData({
         idEmail: solicitacao.idEmail,
-        cdIdentificacao: solicitacao.cdIdentificacao,
+        cdIdentificacao: solicitacao.cdIdentificacao || '',
         dsAssunto: solicitacao.dsAssunto || '',
         dsSolicitacao: solicitacao.dsSolicitacao || '',
         dsObservacao: solicitacao.dsObservacao || '',
-        flStatus: solicitacao.flStatus,
-        idResponsavel: solicitacao.idResponsavel,
-        idTema: solicitacao.idTema,
+        flStatus: solicitacao.flStatus || 'P',
+        idResponsavel: solicitacao.idResponsavel || 0,
+        idTema: solicitacao.idTema || 0,
         idsAreas: solicitacao.areas?.map(area => area.idArea) || [],
         nrPrazo: solicitacao.nrPrazo || undefined,
         tpPrazo: solicitacao.tpPrazo || '',
@@ -816,7 +816,7 @@ export default function SolicitacaoModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="overflow-y-auto h-full">
         <DialogHeader className="pb-6">
           <DialogTitle className="text-xl font-semibold">
             {solicitacao ? 'Encaminhar Solicitação' : 'Nova Solicitação'}
@@ -825,8 +825,8 @@ export default function SolicitacaoModal({
 
         <form onSubmit={handleSubmit} className="flex flex-col overflow-y-auto space-y-8">
           {/* Stepper Navigation */}
-          <div className="flex justify-center mb-8">
-            <div className="flex items-center space-x-4">
+          <div className="flex justify-center mb-8 pt-1">
+            <div className="flex items-start space-x-4">
               {/* Etapa 1 */}
               <div className="flex flex-col items-center space-y-2">
                 <button
@@ -836,7 +836,7 @@ export default function SolicitacaoModal({
                     currentStep === 1
                       ? 'bg-blue-500 border-blue-500 text-white ring-2 ring-blue-200'
                       : currentStep > 1
-                        ? 'bg-blue-100 border-blue-300 text-blue-600'
+                        ? 'bg-blue-100 border-blue-300 text-primary'
                         : 'border-gray-300 text-gray-400'
                   }`}
                 >
@@ -844,7 +844,7 @@ export default function SolicitacaoModal({
                 </button>
                 <span className={`text-xs font-medium text-center ${
                   currentStep === 1
-                    ? 'text-blue-600'
+                    ? 'text-primary'
                     : currentStep > 1
                       ? 'text-blue-500'
                       : 'text-gray-400'
@@ -854,7 +854,7 @@ export default function SolicitacaoModal({
               </div>
 
               {/* Linha conectora 1-2 */}
-              <div className={`w-16 h-1 transition-colors ${
+              <div className={`w-16 my-auto h-1 transition-colors ${
                 currentStep >= 2 ? 'bg-blue-500' : 'bg-gray-300'
               }`}></div>
 
@@ -868,7 +868,7 @@ export default function SolicitacaoModal({
                     currentStep === 2
                       ? 'bg-blue-500 border-blue-500 text-white ring-2 ring-blue-200'
                       : currentStep > 2
-                        ? 'bg-blue-100 border-blue-300 text-blue-600'
+                        ? 'bg-blue-100 border-blue-300 text-primary'
                         : 'border-gray-300 text-gray-400'
                   }`}
                 >
@@ -876,11 +876,11 @@ export default function SolicitacaoModal({
                 </button>
                 <span className={`text-xs font-medium text-center ${
                   currentStep === 2
-                    ? 'text-blue-600'
+                    ? 'text-primary'
                     : currentStep > 2
                       ? 'text-blue-500'
                       : currentStep >= 2
-                        ? 'text-blue-600'
+                        ? 'text-primary'
                         : 'text-gray-400'
                 }`}>
                   Tema e<br/>Áreas
@@ -888,7 +888,7 @@ export default function SolicitacaoModal({
               </div>
 
               {/* Linha conectora 2-3 */}
-              <div className={`w-16 h-1 transition-colors ${
+              <div className={`w-16 my-auto h-1 transition-colors ${
                 currentStep >= 3 ? 'bg-blue-500' : 'bg-gray-300'
               }`}></div>
 
@@ -902,7 +902,7 @@ export default function SolicitacaoModal({
                     currentStep === 3
                       ? 'bg-blue-500 border-blue-500 text-white ring-2 ring-blue-200'
                       : currentStep > 3
-                        ? 'bg-blue-100 border-blue-300 text-blue-600'
+                        ? 'bg-blue-100 border-blue-300 text-primary'
                         : 'border-gray-300 text-gray-400'
                   }`}
                 >
@@ -910,11 +910,11 @@ export default function SolicitacaoModal({
                 </button>
                 <span className={`text-xs font-medium text-center ${
                   currentStep === 3
-                    ? 'text-blue-600'
+                    ? 'text-primary'
                     : currentStep > 3
                       ? 'text-blue-500'
                       : currentStep >= 3
-                        ? 'text-blue-600'
+                        ? 'text-primary'
                         : 'text-gray-400'
                 }`}>
                   Status e<br/>Prazos
@@ -922,7 +922,7 @@ export default function SolicitacaoModal({
               </div>
 
               {/* Linha conectora 3-4 */}
-              <div className={`w-16 h-1 transition-colors ${
+              <div className={`w-16 my-auto h-1 transition-colors ${
                 currentStep >= 4 ? 'bg-blue-500' : 'bg-gray-300'
               }`}></div>
 
@@ -936,7 +936,7 @@ export default function SolicitacaoModal({
                     currentStep === 4
                       ? 'bg-blue-500 border-blue-500 text-white ring-2 ring-blue-200'
                       : currentStep > 4
-                        ? 'bg-blue-100 border-blue-300 text-blue-600'
+                        ? 'bg-blue-100 border-blue-300 text-primary'
                         : 'border-gray-300 text-gray-400'
                   }`}
                 >
@@ -944,11 +944,11 @@ export default function SolicitacaoModal({
                 </button>
                 <span className={`text-xs font-medium text-center ${
                   currentStep === 4
-                    ? 'text-blue-600'
+                    ? 'text-primary'
                     : currentStep > 4
                       ? 'text-blue-500'
                       : currentStep >= 4
-                        ? 'text-blue-600'
+                        ? 'text-primary'
                         : 'text-gray-400'
                 }`}>
                   Anexos
@@ -956,7 +956,7 @@ export default function SolicitacaoModal({
               </div>
 
               {/* Linha conectora 4-5 */}
-              <div className={`w-16 h-1 transition-colors ${
+              <div className={`w-16 my-auto h-1 transition-colors ${
                 currentStep >= 5 ? 'bg-blue-500' : 'bg-gray-300'
               }`}></div>
 
@@ -970,7 +970,7 @@ export default function SolicitacaoModal({
                     currentStep === 5
                       ? 'bg-blue-500 border-blue-500 text-white ring-2 ring-blue-200'
                       : currentStep > 5
-                        ? 'bg-blue-100 border-blue-300 text-blue-600'
+                        ? 'bg-blue-100 border-blue-300 text-primary'
                         : 'border-gray-300 text-gray-400'
                   }`}
                 >
@@ -978,11 +978,11 @@ export default function SolicitacaoModal({
                 </button>
                 <span className={`text-xs font-medium text-center ${
                   currentStep === 5
-                    ? 'text-blue-600'
+                    ? 'text-primary'
                     : currentStep > 5
                       ? 'text-blue-500'
                       : currentStep >= 5
-                        ? 'text-blue-600'
+                        ? 'text-primary'
                         : 'text-gray-400'
                 }`}>
                   Resumo
@@ -1000,7 +1000,7 @@ export default function SolicitacaoModal({
           </div>
 
         </form>
-        <DialogFooter className="flex gap-3 pt-6 border-t">
+        <DialogFooter className="flex gap-3 pt-6 border-t mt-auto">
           <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
             Cancelar
           </Button>

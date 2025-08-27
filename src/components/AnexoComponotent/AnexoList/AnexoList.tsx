@@ -67,7 +67,10 @@ export default function AnexoList({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onRemove(index)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemove(index)
+                }}
               >
                 <XIcon className="h-4 w-4"/>
               </Button>

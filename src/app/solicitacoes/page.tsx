@@ -25,7 +25,8 @@ import {
   SpinnerIcon,
   CaretDownIcon,
   CaretRightIcon,
-  ArrowsDownUpIcon
+  ArrowsDownUpIcon,
+  PencilSimpleIcon
 } from '@phosphor-icons/react';
 import PageTitle from '@/components/ui/page-title';
 import { solicitacoesClient } from '@/api/solicitacoes/client';
@@ -362,6 +363,16 @@ export default function SolicitacoesPage() {
                           size="sm"
                           onClick={(e) => {
                             e.stopPropagation()
+                            handleEdit(solicitacao)
+                          }}
+                        >
+                          <PencilSimpleIcon className="h-4 w-4"/>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
                             handleDelete(solicitacao)
                           }}
                           className="text-red-600 hover:text-red-700"
@@ -374,7 +385,9 @@ export default function SolicitacoesPage() {
                   {expandedRows.has(solicitacao.idSolicitacao) && (
                     <StickyTableRow>
                       <StickyTableCell colSpan={9} className="bg-gray-50 p-6">
-                        <TramitacaoList idSolicitacao={solicitacao.idSolicitacao} areas={areas} />
+                        <div className="relative" style={{ contain: 'layout' }}>
+                          <TramitacaoList idSolicitacao={solicitacao.idSolicitacao} areas={areas} />
+                        </div>
                       </StickyTableCell>
                     </StickyTableRow>
                   )}

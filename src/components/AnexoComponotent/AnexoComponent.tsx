@@ -34,7 +34,7 @@ export default function AnexoComponent({onAddAnexos}: AnexoProps) {
         {...getRootProps()}
         className={`w-full border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
           isDragActive
-            ? 'border-blue-500 bg-blue-50 text-blue-600'
+            ? 'border-blue-500 bg-blue-50 text-primary'
             : 'border-gray-300 hover:border-gray-400 text-gray-600'
         }`}
       >
@@ -45,7 +45,7 @@ export default function AnexoComponent({onAddAnexos}: AnexoProps) {
             className={isDragActive ? 'text-blue-500' : 'text-gray-400'}
           />
           {isDragActive ? (
-            <p className="text-blue-600 font-medium">
+            <p className="text-primary font-medium">
               Solte os arquivos aqui...
             </p>
           ) : (
