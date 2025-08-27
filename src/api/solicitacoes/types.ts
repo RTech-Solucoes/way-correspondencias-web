@@ -38,6 +38,7 @@ export interface SolicitacaoRequest {
   idEmail?: number;
   idTema?: number;
   idResponsavel?: number;
+  idStatusSolicitacao?: number; // adicionado para alinhar com backend
   statusCodigo?: number;
   flStatus?: string;
   cdIdentificacao?: string;

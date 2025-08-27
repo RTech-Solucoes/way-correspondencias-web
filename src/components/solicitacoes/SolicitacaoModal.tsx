@@ -100,6 +100,7 @@ export default function SolicitacaoModal({
   const [loadingStatusPrazos, setLoadingStatusPrazos] = useState(false);
   const [prazoExcepcional, setPrazoExcepcional] = useState(false);
   const [statusList, setStatusList] = useState<StatusSolicitacaoResponse[]>([]);
+  const [createdSolicitacao, setCreatedSolicitacao] = useState<SolicitacaoResponse | null>(null);
 
   useEffect(() => {
     if (solicitacao) {
@@ -114,7 +115,8 @@ export default function SolicitacaoModal({
         idTema: solicitacao.idTema || 0,
         idsAreas: solicitacao.areas?.map(area => area.idArea) || [],
         nrPrazo: solicitacao.nrPrazo || undefined,
-        tpPrazo: solicitacao.tpPrazo || '',
+        // mapear valor legado 'C' (corridas) para 'H' (horas) se vier do backend antigo
+        tpPrazo: solicitacao.tpPrazo === 'C' ? 'H' : (solicitacao.tpPrazo || ''),
         nrOficio: solicitacao.nrOficio || '',
         nrProcesso: solicitacao.nrProcesso || ''
       });
@@ -237,9 +239,48 @@ export default function SolicitacaoModal({
           toast.error("Código de identificação é obrigatório");
           return;
         }
-        // Apenas atualizar identificação se edição; novo só segue local
-        if (solicitacao) {
-          await solicitacoesClient.etapaIdentificacao(solicitacao.idSolicitacao, {
+
+        // For new solicitations, just move to step 2 to select tema first
+        // We'll create the solicitation later when we have the tema
+        if (!solicitacao) {
+          setCurrentStep(2);
+          return;
+        }
+
+        // For existing solicitations, call the identification API
+        await solicitacoesClient.etapaIdentificacao(solicitacao.idSolicitacao, {
+          cdIdentificacao: formData.cdIdentificacao?.trim(),
+          dsAssunto: formData.dsAssunto?.trim(),
+          dsObservacao: formData.dsObservacao?.trim(),
+          nrOficio: formData.nrOficio?.trim(),
+          nrProcesso: formData.nrProcesso?.trim(),
+        });
+
+        setCurrentStep(2);
+      } else if (currentStep === 2) {
+        if (!formData.idTema || formData.idTema === 0) {
+          toast.error("Tema é obrigatório");
+          return;
+        }
+
+        let solicitacaoId = solicitacao?.idSolicitacao || createdSolicitacao?.idSolicitacao;
+
+        // For new solicitations, create the solicitation now that we have both required fields
+        if (!solicitacaoId) {
+          const created = await solicitacoesClient.criar({
+            cdIdentificacao: formData.cdIdentificacao?.trim(),
+            dsAssunto: formData.dsAssunto?.trim(),
+            dsSolicitacao: formData.dsSolicitacao?.trim(),
+            dsObservacao: formData.dsObservacao?.trim(),
+            nrOficio: formData.nrOficio?.trim(),
+            nrProcesso: formData.nrProcesso?.trim(),
+            // idTema será definido na etapaTema para garantir defaults de criação
+          });
+          solicitacaoId = created.idSolicitacao;
+          setCreatedSolicitacao(created);
+
+          // Call step 1 API for new solicitation
+          await solicitacoesClient.etapaIdentificacao(solicitacaoId, {
             cdIdentificacao: formData.cdIdentificacao?.trim(),
             dsAssunto: formData.dsAssunto?.trim(),
             dsObservacao: formData.dsObservacao?.trim(),
@@ -247,89 +288,96 @@ export default function SolicitacaoModal({
             nrProcesso: formData.nrProcesso?.trim(),
           });
         }
-        setCurrentStep(2);
-      } else if (currentStep === 2) {
-        if (!formData.idTema || formData.idTema === 0) {
-          toast.error("Tema é obrigatório");
-          return;
-        }
-        if (solicitacao) {
-          await solicitacoesClient.etapaTema(solicitacao.idSolicitacao, {
-            idTema: formData.idTema,
-            tpPrazo: formData.tpPrazo || undefined,
-            nrPrazoInterno: formData.nrPrazo,
-            flExcepcional: prazoExcepcional ? 'S' : 'N',
-            idsAreas: formData.idsAreas
-          });
-        }
+
+        // Call step 2 API
+        await solicitacoesClient.etapaTema(solicitacaoId, {
+          idTema: formData.idTema,
+          tpPrazo: formData.tpPrazo || undefined,
+          nrPrazoInterno: formData.nrPrazo,
+          flExcepcional: prazoExcepcional ? 'S' : 'N',
+          idsAreas: formData.idsAreas
+        });
+
         setCurrentStep(3);
       } else if (currentStep === 3) {
-        if (solicitacao) {
-          const solicitacoesPrazos = statusPrazos
-            .filter(p => p.nrPrazoInterno && p.nrPrazoInterno > 0 && p.idStatusSolicitacao)
-            .map(p => ({
-              idStatusSolicitacao: p.idStatusSolicitacao!,
-              nrPrazoInterno: p.nrPrazoInterno,
-              tpPrazo: formData.tpPrazo || undefined,
-              flExcepcional: prazoExcepcional ? 'S' : 'N'
-            }));
-          await solicitacoesClient.etapaPrazo(solicitacao.idSolicitacao, {
-            nrPrazoInterno: formData.nrPrazo,
-            solicitacoesPrazos
-          });
+        const solicitacaoId = solicitacao?.idSolicitacao || createdSolicitacao?.idSolicitacao;
+        if (!solicitacaoId) {
+          toast.error("Erro: ID da solicitação não encontrado");
+          return;
         }
+
+        const solicitacoesPrazos = statusPrazos
+          .filter(p => p.nrPrazoInterno && p.nrPrazoInterno > 0 && p.idStatusSolicitacao)
+          .map(p => ({
+            idStatusSolicitacao: p.idStatusSolicitacao!,
+            nrPrazoInterno: p.nrPrazoInterno,
+            tpPrazo: formData.tpPrazo || undefined,
+            flExcepcional: prazoExcepcional ? 'S' : 'N'
+          }));
+
+        await solicitacoesClient.etapaPrazo(solicitacaoId, {
+          nrPrazoInterno: formData.nrPrazo,
+          solicitacoesPrazos
+        });
+
         setCurrentStep(4);
       } else if (currentStep === 4) {
-        if (solicitacao) {
-          if (anexos.length > 0) {
-            // Converter arquivos para ArquivoDTO (base64)
-            const arquivosDTO = await Promise.all(
-              anexos.map(async (file) => {
-                // Validar se o arquivo tem nome
-                if (!file.name || file.name.trim() === '') {
-                  throw new Error(`Arquivo sem nome válido: ${file.name || 'undefined'}`);
-                }
+        const solicitacaoId = solicitacao?.idSolicitacao || createdSolicitacao?.idSolicitacao;
+        if (!solicitacaoId) {
+          toast.error("Erro: ID da solicitação não encontrado");
+          return;
+        }
 
-                const base64 = await new Promise<string>((resolve, reject) => {
-                  const reader = new FileReader();
-                  reader.onload = () => {
-                    const result = reader.result as string;
-                    if (!result) {
-                      reject(new Error('Erro ao ler arquivo'));
-                      return;
-                    }
-                    resolve(result);
-                  };
-                  reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
-                  reader.readAsDataURL(file);
-                });
+        if (anexos.length > 0) {
+          // Converter arquivos para ArquivoDTO (base64)
+          const arquivosDTO = await Promise.all(
+            anexos.map(async (file) => {
+              // Validar se o arquivo tem nome
+              if (!file.name || file.name.trim() === '') {
+                throw new Error(`Arquivo sem nome válido: ${file.name || 'undefined'}`);
+              }
 
-                const base64Content = base64.split(',')[1];
-                if (!base64Content) {
-                  throw new Error('Erro ao converter arquivo para base64');
-                }
-
-                return {
-                  nomeArquivo: file.name.trim(),
-                  conteudoArquivo: base64Content,
-                  tipoArquivo: file.type || 'application/octet-stream'
+              const base64 = await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                  const result = reader.result as string;
+                  if (!result) {
+                    reject(new Error('Erro ao ler arquivo'));
+                    return;
+                  }
+                  resolve(result);
                 };
-              })
-            );
-            try {
-              await solicitacoesClient.uploadAnexos(solicitacao.idSolicitacao, arquivosDTO);
-            } catch {
-              toast.error('Erro ao anexar arquivos');
-            }
+                reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
+                reader.readAsDataURL(file);
+              });
+
+              const base64Content = base64.split(',')[1];
+              if (!base64Content) {
+                throw new Error('Erro ao converter arquivo para base64');
+              }
+
+              return {
+                nomeArquivo: file.name.trim(),
+                conteudoArquivo: base64Content,
+                tipoArquivo: file.type || 'application/octet-stream'
+              };
+            })
+          );
+
+          try {
+            await solicitacoesClient.uploadAnexos(solicitacaoId, arquivosDTO);
+          } catch {
+            toast.error('Erro ao anexar arquivos');
           }
         }
+
         setCurrentStep(5);
       }
     } catch (e) {
       console.error(e);
       toast.error('Erro ao avançar etapa');
     }
-  }, [currentStep, formData, solicitacao, prazoExcepcional, statusPrazos, anexos]);
+  }, [currentStep, formData, solicitacao, createdSolicitacao, prazoExcepcional, statusPrazos, anexos]);
 
   const handlePreviousStep = useCallback(() => {
     if (currentStep === 2) {
@@ -422,14 +470,21 @@ export default function SolicitacaoModal({
     e.preventDefault();
     try {
       setLoading(true);
-      let id = solicitacao?.idSolicitacao;
+      let id = solicitacao?.idSolicitacao || createdSolicitacao?.idSolicitacao;
 
-      // Criação consolidada para nova solicitação
-      if (!id) {
+      // If we already have a created solicitation from the steps, just call etapaStatus
+      if (createdSolicitacao?.idSolicitacao) {
+        await solicitacoesClient.etapaStatus(createdSolicitacao.idSolicitacao);
+        toast.success('Solicitação criada com sucesso!');
+      } else if (solicitacao?.idSolicitacao) {
+        // Para solicitação existente: usar endpoint de encaminhamento etapa05
+        await solicitacoesClient.etapaStatus(solicitacao.idSolicitacao);
+        toast.success('Solicitação encaminhada com sucesso!');
+      } else {
+        // Fallback: create new solicitation with all steps (shouldn't happen with new flow)
         if (!formData.cdIdentificacao?.trim()) { toast.error('Código de identificação é obrigatório'); setLoading(false); return; }
         if (!formData.idTema || formData.idTema === 0) { toast.error('Tema é obrigatório'); setLoading(false); return; }
 
-        // Step 1: Create the solicitation
         const created = await solicitacoesClient.criar({
           cdIdentificacao: formData.cdIdentificacao?.trim(),
           dsAssunto: formData.dsAssunto?.trim(),
@@ -437,13 +492,11 @@ export default function SolicitacaoModal({
           dsObservacao: formData.dsObservacao?.trim(),
           nrOficio: formData.nrOficio?.trim(),
           nrProcesso: formData.nrProcesso?.trim(),
-          idTema: formData.idTema,
-          nrPrazo: formData.nrPrazo,
-          tpPrazo: formData.tpPrazo || undefined,
+          // idTema, prazos e tipo serão definidos nas etapas seguintes
         });
         id = created.idSolicitacao;
 
-        // Step 2: Call etapaIdentificacao API
+        // Call all step APIs
         await solicitacoesClient.etapaIdentificacao(id, {
           cdIdentificacao: formData.cdIdentificacao?.trim(),
           dsAssunto: formData.dsAssunto?.trim(),
@@ -452,7 +505,6 @@ export default function SolicitacaoModal({
           nrProcesso: formData.nrProcesso?.trim(),
         });
 
-        // Step 3: Call etapaTema API
         await solicitacoesClient.etapaTema(id, {
           idTema: formData.idTema,
           tpPrazo: formData.tpPrazo || undefined,
@@ -461,7 +513,6 @@ export default function SolicitacaoModal({
           idsAreas: formData.idsAreas
         });
 
-        // Step 4: Call etapaPrazo API if configured
         if (statusPrazos.length > 0) {
           const solicitacoesPrazos = statusPrazos
             .filter(p => p.nrPrazoInterno && p.nrPrazoInterno > 0 && p.idStatusSolicitacao)
@@ -476,63 +527,28 @@ export default function SolicitacaoModal({
           }
         }
 
-        // Step 5: Upload anexos if any
         if (anexos.length > 0) {
-          // Converter arquivos para ArquivoDTO (base64)
           const arquivosDTO = await Promise.all(
             anexos.map(async (file) => {
-              // Validar se o arquivo tem nome
-              if (!file.name || file.name.trim() === '') {
-                throw new Error(`Arquivo sem nome válido: ${file.name || 'undefined'}`);
-              }
-
               const base64 = await new Promise<string>((resolve, reject) => {
                 const reader = new FileReader();
-                reader.onload = () => {
-                  const result = reader.result as string;
-                  if (!result) {
-                    reject(new Error('Erro ao ler arquivo'));
-                    return;
-                  }
-                  resolve(result);
-                };
+                reader.onload = () => resolve(reader.result as string);
                 reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
                 reader.readAsDataURL(file);
               });
 
-              const base64Content = base64.split(',')[1];
-              if (!base64Content) {
-                throw new Error('Erro ao converter arquivo para base64');
-              }
-
               return {
                 nomeArquivo: file.name.trim(),
-                conteudoArquivo: base64Content,
+                conteudoArquivo: base64.split(',')[1],
                 tipoArquivo: file.type || 'application/octet-stream'
               };
             })
           );
-          try {
-            await solicitacoesClient.uploadAnexos(id, arquivosDTO);
-          } catch {
-            toast.error('Erro ao anexar arquivos');
-          }
+          await solicitacoesClient.uploadAnexos(id, arquivosDTO);
         }
 
-        // Step 6: Call etapaStatus (step 5) to finalize the creation
         await solicitacoesClient.etapaStatus(id);
         toast.success('Solicitação criada com sucesso!');
-      } else {
-        // Para solicitação existente: usar endpoint de encaminhamento etapa05
-        try {
-          await solicitacoesClient.etapaStatus(id);
-          toast.success('Solicitação encaminhada com sucesso!');
-        } catch (error) {
-          console.error('Erro ao encaminhar solicitação:', error);
-          toast.error('Erro ao encaminhar solicitação');
-          setLoading(false);
-          return;
-        }
       }
 
       onSave();
@@ -540,7 +556,7 @@ export default function SolicitacaoModal({
       router.refresh();
     } catch (err) {
       console.error(err);
-      toast.error(solicitacao ? 'Erro ao encaminhar solicitação' : 'Erro ao criar solicitação');
+      toast.error(solicitacao || createdSolicitacao ? 'Erro ao encaminhar solicitação' : 'Erro ao criar solicitação');
     } finally {
       setLoading(false);
     }
@@ -548,6 +564,7 @@ export default function SolicitacaoModal({
 
   const handleClose = useCallback(() => {
     setCurrentStep(1);
+    setCreatedSolicitacao(null); // Reset created solicitation
     onClose();
   }, [onClose]);
 
@@ -636,12 +653,10 @@ export default function SolicitacaoModal({
   }, [formData.idTema, getSelectedTema]);
 
   const renderStep3 = useCallback((): JSX.Element => {
-    // Usar statusList da API em vez do hardcode
     const statusOptions = statusList.length > 0 ? statusList.map(status => ({
       codigo: status.id,
       nome: status.nome
     })) : [
-      // Fallback caso a API não retorne dados
       {codigo: 1, nome: 'Pré-análise'},
       {codigo: 2, nome: 'Vencido Regulatório'},
       {codigo: 3, nome: 'Em análise Área Técnica'},
@@ -697,8 +712,10 @@ export default function SolicitacaoModal({
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="U">Horas úteis</SelectItem>
-                <SelectItem value="C">Horas corridas</SelectItem>
+                <SelectItem value="H">Horas</SelectItem>
+                <SelectItem value="D">Dias</SelectItem>
+                <SelectItem value="U">Dias úteis</SelectItem>
+                <SelectItem value="M">Meses</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -762,8 +779,7 @@ export default function SolicitacaoModal({
           </div>
         ) : null}
       </div>
-    );
-  }, [prazoExcepcional, formData.nrPrazo, formData.tpPrazo, formData.idTema, handleInputChange, handleSelectChange, loadingStatusPrazos, statusPrazos, updateLocalPrazo, setFormData, statusList]);
+    )}, [prazoExcepcional, formData.nrPrazo, formData.tpPrazo, formData.idTema, handleInputChange, handleSelectChange, loadingStatusPrazos, statusPrazos, updateLocalPrazo, setFormData, statusList]);
 
   const renderStep4 = useCallback(() => (
     <div className="space-y-6">
@@ -901,7 +917,7 @@ export default function SolicitacaoModal({
             <Label className="text-sm font-semibold text-gray-700">Prazo Principal</Label>
             <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
               {formData.nrPrazo && formData.nrPrazo > 0
-                ? `${formData.nrPrazo} ${formData.tpPrazo === 'U' ? 'horas úteis' : formData.tpPrazo === 'C' ? 'horas corridas' : 'horas'}`
+                ? `${formData.nrPrazo} ${(() => { switch(formData.tpPrazo){ case 'H': return 'horas'; case 'D': return 'dias'; case 'U': return 'dias úteis'; case 'M': return 'meses'; default: return 'unid.'; } })()}`
                 : 'Prazo padrão do tema'
               }
               {prazoExcepcional && (
@@ -1091,7 +1107,7 @@ export default function SolicitacaoModal({
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="flex flex-col overflow-y-auto space-y-8">
+        <form id="solicitacao-form" onSubmit={handleSubmit} className="flex flex-col overflow-y-auto space-y-8">
           {/* Stepper Navigation */}
           <div className="flex justify-center mb-8 pt-1">
             <div className="flex items-start space-x-4">
@@ -1266,8 +1282,8 @@ export default function SolicitacaoModal({
             {currentStep === 4 && renderStep4()}
             {currentStep === 5 && renderStep5()}
           </div>
-
         </form>
+
         <DialogFooter className="flex gap-3 pt-6 border-t mt-auto">
           <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
             Cancelar
@@ -1371,6 +1387,7 @@ export default function SolicitacaoModal({
               </Button>
               <Button
                 type="submit"
+                form="solicitacao-form"
                 disabled={loading}
                 className="flex items-center gap-2"
               >
