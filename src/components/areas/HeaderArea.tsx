@@ -13,13 +13,13 @@ export default function HeaderArea(props: IHeaderArea) {
     return (
         <div className="flex items-start justify-between mb-4">
             <PageTitle />
-            <Button onClick={() => {
-                props.setSelectedArea(null);
-                props.setShowAreaModal(true);
-            }} className="bg-primary hover:bg-blue-700">
-                <PlusIcon className="h-4 w-4 mr-2" />
-                Nova Área
-            </Button>
+            {/*<Button onClick={() => {*/}
+            {/*    props.setSelectedArea(null);*/}
+            {/*    props.setShowAreaModal(true);*/}
+            {/*}} className="bg-primary hover:bg-blue-700">*/}
+            {/*    <PlusIcon className="h-4 w-4 mr-2" />*/}
+            {/*    Nova Área*/}
+            {/*</Button>*/}
         </div>
     )
 }

@@ -1,9 +1,9 @@
 import ApiClient from '../client';
 
 export interface StatusSolicitacaoResponse {
-  id: number;
-  nome: string;
-  descricao?: string;
+  idStatusSolicitacao: number;
+  nmStatus: string;
+  dsStatus?: string;
 }
 
 class StatusSolicitacaoClient {

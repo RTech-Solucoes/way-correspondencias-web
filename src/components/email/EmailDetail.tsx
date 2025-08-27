@@ -167,7 +167,7 @@ export default function EmailDetail({
           <div className="flex flex-col">
             <h3 className="font-semibold text-gray-900">{email?.dsRemetente}</h3>
             <p className="text-sm text-gray-600 mb-1">De: {email?.dsRemetente}</p>
-            <p className="inline-flex text-sm text-gray-600 max-w-[200px]">Para: {email?.dsDestinatario}</p>
+            <p className="inline-flex text-sm text-gray-600 max-w-[200px] truncate">Para: {email?.dsDestinatario}</p>
           </div>
         </div>
 

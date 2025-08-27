@@ -115,7 +115,6 @@ export default function SolicitacaoModal({
         idTema: solicitacao.idTema || 0,
         idsAreas: solicitacao.areas?.map(area => area.idArea) || [],
         nrPrazo: solicitacao.nrPrazo || undefined,
-        // mapear valor legado 'C' (corridas) para 'H' (horas) se vier do backend antigo
         tpPrazo: solicitacao.tpPrazo === 'C' ? 'H' : (solicitacao.tpPrazo || ''),
         nrOficio: solicitacao.nrOficio || '',
         nrProcesso: solicitacao.nrProcesso || ''
@@ -145,13 +144,12 @@ export default function SolicitacaoModal({
   useEffect(() => {
     if (solicitacao && solicitacao.idSolicitacao && open) {
       solicitacoesClient.buscarAnexos(solicitacao.idSolicitacao).then((anexos) => {
-        // Mapear AnexoResponse para AnexoFromBackend
         const anexosMapeados = anexos.map(anexo => ({
           idAnexo: anexo.id,
           idObjeto: solicitacao.idSolicitacao,
           nmArquivo: anexo.nomeArquivo,
-          dsCaminho: '', // Campo não existe em AnexoResponse
-          tpObjeto: 'S' // Tipo fixo para solicitações
+          dsCaminho: '',
+          tpObjeto: 'S'
         }));
         setAnexosBackend(anexosMapeados);
       });
@@ -232,6 +230,18 @@ export default function SolicitacaoModal({
     });
   }, [getResponsavelFromTema]);
 
+  const isStep1Valid = useCallback(() => {
+    return formData.cdIdentificacao?.trim() !== '';
+  }, [formData.cdIdentificacao]);
+
+  const isStep2Valid = useCallback(() => {
+    return formData.idTema !== undefined && formData.idTema > 0;
+  }, [formData.idTema]);
+
+  const getSelectedTema = useCallback(() => {
+    return temas.find(tema => tema.idTema === formData.idTema);
+  }, [temas, formData.idTema]);
+
   const handleNextStep = useCallback(async () => {
     try {
       if (currentStep === 1) {
@@ -240,14 +250,11 @@ export default function SolicitacaoModal({
           return;
         }
 
-        // For new solicitations, just move to step 2 to select tema first
-        // We'll create the solicitation later when we have the tema
         if (!solicitacao) {
           setCurrentStep(2);
           return;
         }
 
-        // For existing solicitations, call the identification API
         await solicitacoesClient.etapaIdentificacao(solicitacao.idSolicitacao, {
           cdIdentificacao: formData.cdIdentificacao?.trim(),
           dsAssunto: formData.dsAssunto?.trim(),
@@ -263,34 +270,12 @@ export default function SolicitacaoModal({
           return;
         }
 
-        let solicitacaoId = solicitacao?.idSolicitacao || createdSolicitacao?.idSolicitacao;
-
-        // For new solicitations, create the solicitation now that we have both required fields
-        if (!solicitacaoId) {
-          const created = await solicitacoesClient.criar({
-            cdIdentificacao: formData.cdIdentificacao?.trim(),
-            dsAssunto: formData.dsAssunto?.trim(),
-            dsSolicitacao: formData.dsSolicitacao?.trim(),
-            dsObservacao: formData.dsObservacao?.trim(),
-            nrOficio: formData.nrOficio?.trim(),
-            nrProcesso: formData.nrProcesso?.trim(),
-            // idTema será definido na etapaTema para garantir defaults de criação
-          });
-          solicitacaoId = created.idSolicitacao;
-          setCreatedSolicitacao(created);
-
-          // Call step 1 API for new solicitation
-          await solicitacoesClient.etapaIdentificacao(solicitacaoId, {
-            cdIdentificacao: formData.cdIdentificacao?.trim(),
-            dsAssunto: formData.dsAssunto?.trim(),
-            dsObservacao: formData.dsObservacao?.trim(),
-            nrOficio: formData.nrOficio?.trim(),
-            nrProcesso: formData.nrProcesso?.trim(),
-          });
+        if (!solicitacao) {
+          setCurrentStep(3);
+          return;
         }
 
-        // Call step 2 API
-        await solicitacoesClient.etapaTema(solicitacaoId, {
+        await solicitacoesClient.etapaTema(solicitacao.idSolicitacao, {
           idTema: formData.idTema,
           tpPrazo: formData.tpPrazo || undefined,
           nrPrazoInterno: formData.nrPrazo,
@@ -300,9 +285,8 @@ export default function SolicitacaoModal({
 
         setCurrentStep(3);
       } else if (currentStep === 3) {
-        const solicitacaoId = solicitacao?.idSolicitacao || createdSolicitacao?.idSolicitacao;
-        if (!solicitacaoId) {
-          toast.error("Erro: ID da solicitação não encontrado");
+        if (!solicitacao) {
+          setCurrentStep(4);
           return;
         }
 
@@ -315,24 +299,21 @@ export default function SolicitacaoModal({
             flExcepcional: prazoExcepcional ? 'S' : 'N'
           }));
 
-        await solicitacoesClient.etapaPrazo(solicitacaoId, {
+        await solicitacoesClient.etapaPrazo(solicitacao.idSolicitacao, {
           nrPrazoInterno: formData.nrPrazo,
           solicitacoesPrazos
         });
 
         setCurrentStep(4);
       } else if (currentStep === 4) {
-        const solicitacaoId = solicitacao?.idSolicitacao || createdSolicitacao?.idSolicitacao;
-        if (!solicitacaoId) {
-          toast.error("Erro: ID da solicitação não encontrado");
+        if (!solicitacao) {
+          setCurrentStep(5);
           return;
         }
 
         if (anexos.length > 0) {
-          // Converter arquivos para ArquivoDTO (base64)
           const arquivosDTO = await Promise.all(
             anexos.map(async (file) => {
-              // Validar se o arquivo tem nome
               if (!file.name || file.name.trim() === '') {
                 throw new Error(`Arquivo sem nome válido: ${file.name || 'undefined'}`);
               }
@@ -365,7 +346,7 @@ export default function SolicitacaoModal({
           );
 
           try {
-            await solicitacoesClient.uploadAnexos(solicitacaoId, arquivosDTO);
+            await solicitacoesClient.uploadAnexos(solicitacao.idSolicitacao, arquivosDTO);
           } catch {
             toast.error('Erro ao anexar arquivos');
           }
@@ -377,7 +358,7 @@ export default function SolicitacaoModal({
       console.error(e);
       toast.error('Erro ao avançar etapa');
     }
-  }, [currentStep, formData, solicitacao, createdSolicitacao, prazoExcepcional, statusPrazos, anexos]);
+  }, [currentStep, formData, solicitacao, prazoExcepcional, statusPrazos, anexos]);
 
   const handlePreviousStep = useCallback(() => {
     if (currentStep === 2) {
@@ -394,16 +375,16 @@ export default function SolicitacaoModal({
   const handleStepClick = useCallback((step: number) => {
     if (step === 1) {
       setCurrentStep(step);
-    } else if (step === 2 && formData.cdIdentificacao?.trim()) {
+    } else if (step === 2 && isStep1Valid()) {
       setCurrentStep(step);
-    } else if (step === 3 && formData.cdIdentificacao?.trim() && (formData.idTema && formData.idTema > 0)) {
+    } else if (step === 3 && isStep1Valid() && isStep2Valid()) {
       setCurrentStep(step);
-    } else if (step === 4 && formData.cdIdentificacao?.trim() && (formData.idTema && formData.idTema > 0)) {
+    } else if (step === 4 && isStep1Valid() && isStep2Valid()) {
       setCurrentStep(step);
-    } else if (step === 5 && formData.cdIdentificacao?.trim() && (formData.idTema && formData.idTema > 0)) {
+    } else if (step === 5 && isStep1Valid() && isStep2Valid()) {
       setCurrentStep(step);
     }
-  }, [formData.cdIdentificacao, formData.idTema]);
+  }, [isStep1Valid, isStep2Valid]);
 
   const handleAddAnexos = useCallback((files: FileList | null) => {
     if (files && files.length > 0) {
@@ -430,18 +411,15 @@ export default function SolicitacaoModal({
 
   const handleDownloadAnexoBackend = useCallback(async (anexo: AnexoListItem) => {
     try {
-      // Garantir que temos os dados necessários do anexo
       if (!anexo.idObjeto || !anexo.nmArquivo) {
         toast.error('Dados do documento incompletos');
         return;
       }
 
-      // O downloadAnexo espera idSolicitacao e nmArquivo, e retorna ArquivoDTO[]
       const arquivos = await solicitacoesClient.downloadAnexo(anexo.idObjeto, anexo.nmArquivo);
 
       if (arquivos.length > 0) {
         const arquivo = arquivos[0];
-        // Converter base64 para blob
         const byteCharacters = atob(arquivo.conteudoArquivo);
         const byteNumbers = new Array(byteCharacters.length);
         for (let i = 0; i < byteCharacters.length; i++) {
@@ -472,16 +450,13 @@ export default function SolicitacaoModal({
       setLoading(true);
       let id = solicitacao?.idSolicitacao || createdSolicitacao?.idSolicitacao;
 
-      // If we already have a created solicitation from the steps, just call etapaStatus
       if (createdSolicitacao?.idSolicitacao) {
         await solicitacoesClient.etapaStatus(createdSolicitacao.idSolicitacao);
         toast.success('Solicitação criada com sucesso!');
       } else if (solicitacao?.idSolicitacao) {
-        // Para solicitação existente: usar endpoint de encaminhamento etapa05
         await solicitacoesClient.etapaStatus(solicitacao.idSolicitacao);
         toast.success('Solicitação encaminhada com sucesso!');
       } else {
-        // Fallback: create new solicitation with all steps (shouldn't happen with new flow)
         if (!formData.cdIdentificacao?.trim()) { toast.error('Código de identificação é obrigatório'); setLoading(false); return; }
         if (!formData.idTema || formData.idTema === 0) { toast.error('Tema é obrigatório'); setLoading(false); return; }
 
@@ -492,11 +467,10 @@ export default function SolicitacaoModal({
           dsObservacao: formData.dsObservacao?.trim(),
           nrOficio: formData.nrOficio?.trim(),
           nrProcesso: formData.nrProcesso?.trim(),
-          // idTema, prazos e tipo serão definidos nas etapas seguintes
+          flExcepcional: prazoExcepcional ? 'S' : 'N',
         });
         id = created.idSolicitacao;
 
-        // Call all step APIs
         await solicitacoesClient.etapaIdentificacao(id, {
           cdIdentificacao: formData.cdIdentificacao?.trim(),
           dsAssunto: formData.dsAssunto?.trim(),
@@ -564,21 +538,9 @@ export default function SolicitacaoModal({
 
   const handleClose = useCallback(() => {
     setCurrentStep(1);
-    setCreatedSolicitacao(null); // Reset created solicitation
+    setCreatedSolicitacao(null);
     onClose();
   }, [onClose]);
-
-  const isStep1Valid = useCallback(() => {
-    return formData.cdIdentificacao?.trim() !== '';
-  }, [formData.cdIdentificacao]);
-
-  const isStep2Valid = useCallback(() => {
-    return formData.idTema !== undefined && formData.idTema > 0;
-  }, [formData.idTema]);
-
-  const getSelectedTema = useCallback(() => {
-    return temas.find(tema => tema.idTema === formData.idTema);
-  }, [temas, formData.idTema]);
 
   const renderStep2 = useCallback(() => (
     <div className="space-y-6">
@@ -726,7 +688,7 @@ export default function SolicitacaoModal({
             <div className="space-y-4">
               {loadingStatusPrazos ? (
                 <div className="flex items-center justify-center p-8">
-                  <div className="text-sm text-gray-500">Carregando configurações...</div>
+                  <div className="text-sm text-gray-500">Carregando configura��ões...</div>
                 </div>
               ) : (
                 <div className="grid grid-cols-3 gap-4">
@@ -931,13 +893,13 @@ export default function SolicitacaoModal({
             <Label className="text-sm font-semibold text-gray-700">Status</Label>
             <div className="p-3 bg-gray-50 border rounded-lg text-sm">
               {(() => {
-                // Buscar o status pelo flStatus (letra) diretamente na lista da API
-                const statusAtual = statusList.find(s => {
-                  // Mapear IDs para letras conforme o padrão do sistema
-                  const idToLetter: Record<number, string> = { 1:'P', 2:'V', 3:'A', 4:'T', 5:'R', 6:'O', 7:'S', 8:'C', 9:'X' };
-                  return idToLetter[s.id] === formData.flStatus;
-                });
-                return statusAtual?.nome || formData.flStatus || 'Pendente';
+                if (solicitacao?.statusCodigo) {
+                  const statusAtual = statusList.find(s => s.idStatusSolicitacao === solicitacao.statusCodigo);
+                  return statusAtual?.nmStatus || solicitacao.statusCodigo;
+                }
+
+                const statusAtual = statusList.find(s => s.idStatusSolicitacao === 1);
+                return statusAtual?.nmStatus;
               })()}
             </div>
           </div>
@@ -1074,12 +1036,12 @@ export default function SolicitacaoModal({
     }
   }, [currentStep, formData.idTema, loadStatusPrazos]);
 
-  // Carregar lista de status quando o modal abrir
   useEffect(() => {
     const loadStatusList = async () => {
       try {
         const status = await statusSolicitacaoClient.listarTodos();
         setStatusList(status);
+        console.log(status)
       } catch (error) {
         console.error('Erro ao carregar lista de status:', error);
       }
@@ -1090,7 +1052,6 @@ export default function SolicitacaoModal({
     }
   }, [open]);
 
-  // Carregar status de prazos quando tema mudar
   useEffect(() => {
     if (formData.idTema && open) {
       loadStatusPrazos();
@@ -1181,7 +1142,7 @@ export default function SolicitacaoModal({
                 <button
                   type="button"
                   onClick={() => handleStepClick(3)}
-                  disabled={!isStep1Valid()}
+                  disabled={!isStep1Valid() || !isStep2Valid()}
                   className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors disabled:cursor-not-allowed ${
                     currentStep === 3
                       ? 'bg-blue-500 border-blue-500 text-white ring-2 ring-blue-200'
@@ -1215,7 +1176,7 @@ export default function SolicitacaoModal({
                 <button
                   type="button"
                   onClick={() => handleStepClick(4)}
-                  disabled={!isStep1Valid()}
+                  disabled={!isStep1Valid() || !isStep2Valid()}
                   className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors disabled:cursor-not-allowed ${
                     currentStep === 4
                       ? 'bg-blue-500 border-blue-500 text-white ring-2 ring-blue-200'
@@ -1249,7 +1210,7 @@ export default function SolicitacaoModal({
                 <button
                   type="button"
                   onClick={() => handleStepClick(5)}
-                  disabled={!isStep1Valid()}
+                  disabled={!isStep1Valid() || !isStep2Valid()}
                   className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors disabled:cursor-not-allowed ${
                     currentStep === 5
                       ? 'bg-blue-500 border-blue-500 text-white ring-2 ring-blue-200'
