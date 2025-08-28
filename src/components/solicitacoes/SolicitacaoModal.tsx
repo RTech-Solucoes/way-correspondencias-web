@@ -28,7 +28,7 @@ import {solicitacoesClient} from '@/api/solicitacoes/client';
 import {toast} from 'sonner';
 import {capitalize, getRows} from '@/utils/utils';
 import {MultiSelectAreas} from '@/components/ui/multi-select-areas';
-import {CaretLeftIcon, CaretRightIcon} from '@phosphor-icons/react';
+import {ArrowArcRightIcon, CaretLeftIcon, CaretRightIcon} from '@phosphor-icons/react';
 import { Stepper } from '@/components/ui/stepper';
 import { Input } from '@nextui-org/react';
 import AnexoComponent from '../AnexoComponotent/AnexoComponent';
@@ -110,8 +110,8 @@ export default function SolicitacaoModal({
         dsObservacao: solicitacao.dsObservacao || '',
         flStatus: solicitacao.flStatus || 'P',
         idResponsavel: solicitacao.idResponsavel || 0,
-        idTema: solicitacao.idTema || 0,
-        idsAreas: solicitacao.areas?.map(area => area.idArea) || [],
+        idTema: solicitacao.tema?.idTema || solicitacao.idTema || 0,
+        idsAreas: solicitacao.areas?.map(area => area.idArea) || solicitacao.tema?.areas?.map(area => area.idArea) || [],
         nrPrazo: solicitacao.nrPrazo || undefined,
         tpPrazo: solicitacao.tpPrazo === 'C' ? 'H' : (solicitacao.tpPrazo || ''),
         nrOficio: solicitacao.nrOficio || '',
@@ -284,6 +284,7 @@ export default function SolicitacaoModal({
           }));
 
         await solicitacoesClient.etapaPrazo(solicitacao.idSolicitacao, {
+          idTema: formData.idTema,
           nrPrazoInterno: formData.nrPrazo,
           solicitacoesPrazos
         });
@@ -548,6 +549,12 @@ export default function SolicitacaoModal({
             <SelectValue placeholder="Selecione o tema"/>
           </SelectTrigger>
           <SelectContent>
+            {/* Show the current tema from solicitacao if it's not in the temas list */}
+            {solicitacao?.tema && !temas.find(t => t.idTema === solicitacao.tema!.idTema) && (
+              <SelectItem key={solicitacao.tema.idTema} value={solicitacao.tema.idTema.toString()}>
+                {solicitacao.tema.nmTema}
+              </SelectItem>
+            )}
             {temas.map((tema) => (
               <SelectItem key={tema.idTema} value={tema.idTema.toString()}>
                 {tema.nmTema}
@@ -564,7 +571,7 @@ export default function SolicitacaoModal({
         label="Áreas *"
       />
     </div>
-  ), [formData.idTema, formData.idsAreas, temas, getResponsavelFromTema, handleAreasSelectionChange]);
+  ), [formData.idTema, formData.idsAreas, temas, getResponsavelFromTema, handleAreasSelectionChange, solicitacao]);
 
   const loadStatusPrazos = useCallback(async () => {
     if (!formData.idTema) return;
@@ -893,7 +900,7 @@ export default function SolicitacaoModal({
           <div>
             <Label className="text-sm font-semibold text-gray-700">Tema</Label>
             <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
-              {getSelectedTema()?.nmTema || 'Não selecionado'}
+              {getSelectedTema()?.nmTema || solicitacao?.tema?.nmTema || solicitacao?.nmTema || 'Não selecionado'}
             </div>
           </div>
           <div>
@@ -961,13 +968,15 @@ export default function SolicitacaoModal({
             <Label className="text-sm font-semibold text-gray-700">Status</Label>
             <div className="p-3 bg-gray-50 border rounded-lg text-sm">
               {(() => {
+                if (solicitacao?.statusSolicitacao?.idStatusSolicitacao) {
+                  return solicitacao.statusSolicitacao.nmStatus;
+                }
                 if (solicitacao?.statusCodigo) {
                   const statusAtual = statusList.find(s => s.idStatusSolicitacao === solicitacao.statusCodigo);
                   return statusAtual?.nmStatus || solicitacao.statusCodigo;
                 }
-
                 const statusAtual = statusList.find(s => s.idStatusSolicitacao === 1);
-                return statusAtual?.nmStatus;
+                return statusAtual?.nmStatus || 'Pré-análise';
               })()}
             </div>
           </div>
@@ -1034,7 +1043,7 @@ export default function SolicitacaoModal({
         </div>
       </div>
     </div>
-  ), [formData, getSelectedTema, responsaveis, anexos, anexosBackend, statusPrazos, statusList, prazoExcepcional, solicitacao?.statusCodigo, allAreas, getResponsavelByArea]);
+  ), [formData, getSelectedTema, responsaveis, anexos, anexosBackend, statusPrazos, statusList, prazoExcepcional, solicitacao?.statusCodigo, solicitacao?.nmTema, solicitacao?.tema?.nmTema, solicitacao?.statusSolicitacao?.idStatusSolicitacao, solicitacao?.statusSolicitacao?.nmStatus, allAreas, getResponsavelByArea]);
 
   const renderStep1 = () => (
     <div className="space-y-6">
@@ -1169,7 +1178,7 @@ export default function SolicitacaoModal({
 
         <DialogFooter className="flex gap-3 pt-6 border-t flex-shrink-0">
           <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
-            Cancelar
+            Sair
           </Button>
 
           {currentStep === 1 && (
@@ -1274,7 +1283,8 @@ export default function SolicitacaoModal({
                 disabled={loading}
                 className="flex items-center gap-2"
               >
-                {loading ? 'Salvando...' : solicitacao ? 'Salvar alterações' : 'Criar Solicitação'}
+                {solicitacao && <ArrowArcRightIcon className={"w-4 h-4 mr-1"} />}
+                {loading ? 'Salvando...' : solicitacao ? 'Encaminhar solicitação' : 'Criar Solicitação'}
               </Button>
             </>
           )}

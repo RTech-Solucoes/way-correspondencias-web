@@ -177,7 +177,6 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
   const handleSubmit = async () => {
 
     try {
-      console.log("teste")
       setLoading(true);
 
       const responsavelRequest: ResponsavelRequest = {

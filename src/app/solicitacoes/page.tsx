@@ -383,12 +383,6 @@ export default function SolicitacoesPage() {
                   <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </StickyTableHead>
-              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('nmResponsavel')}>
-                <div className="flex items-center">
-                  Responsável
-                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
-                </div>
-              </StickyTableHead>
               <StickyTableHead>Áreas</StickyTableHead>
               <StickyTableHead className="cursor-pointer" onClick={() => handleSort('nmTema')}>
                 <div className="flex items-center">
@@ -408,7 +402,7 @@ export default function SolicitacoesPage() {
           <StickyTableBody>
             {loading ? (
               <StickyTableRow>
-                <StickyTableCell colSpan={9} className="text-center py-8">
+                <StickyTableCell colSpan={7} className="text-center py-8">
                   <div className="flex flex-1 items-center justify-center py-8">
                     <SpinnerIcon className="h-6 w-6 animate-spin text-gray-400" />
                     <span className="ml-2 text-gray-500">Buscando solicitações...</span>
@@ -417,7 +411,7 @@ export default function SolicitacoesPage() {
               </StickyTableRow>
             ) : solicitacoes?.length === 0 ? (
               <StickyTableRow>
-                <StickyTableCell colSpan={9} className="text-center py-8">
+                <StickyTableCell colSpan={7} className="text-center py-8">
                   <div className="flex flex-col items-center space-y-2">
                     <ClipboardTextIcon className="h-8 w-8 text-gray-400"/>
                     <p className="text-sm text-gray-500">Nenhuma solicitação encontrada</p>
@@ -440,17 +434,27 @@ export default function SolicitacoesPage() {
                     </StickyTableCell>
                     <StickyTableCell className="font-medium">{solicitacao.cdIdentificacao}</StickyTableCell>
                     <StickyTableCell className="max-w-xs truncate">{solicitacao.dsAssunto}</StickyTableCell>
-                    <StickyTableCell>{solicitacao.nmResponsavel || '-'}</StickyTableCell>
                     <StickyTableCell>
-                      {solicitacao.areas && solicitacao.areas.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
+                      {(solicitacao.areas && solicitacao.areas.length > 0) ? (
+                        <div className="flex items-center flex-wrap gap-1">
                           {solicitacao.areas.slice(0, 2).map((area: AreaSolicitacao) => (
                             <span key={area.idArea} className="text-xs bg-gray-100 px-2 py-1 rounded">
                               {area.nmArea}
                             </span>
                           ))}
                           {solicitacao.areas.length > 2 && (
-                            <span className="text-xs text-gray-500">+{solicitacao.areas.length - 2} mais</span>
+                            <span className="text-xs text-gray-500 h-fit">+{solicitacao.areas.length - 2} mais</span>
+                          )}
+                        </div>
+                      ) : (solicitacao.tema?.areas && solicitacao.tema.areas.length > 0) ? (
+                        <div className="flex flex-wrap gap-1">
+                          {solicitacao.tema.areas.slice(0, 2).map((area: AreaSolicitacao) => (
+                            <span key={area.idArea} className="text-xs bg-gray-100 px-2 py-1 rounded">
+                              {area.nmArea}
+                            </span>
+                          ))}
+                          {solicitacao.tema.areas.length > 2 && (
+                            <span className="text-xs text-gray-500">+{solicitacao.tema.areas.length - 2} mais</span>
                           )}
                         </div>
                       ) : (
@@ -459,23 +463,36 @@ export default function SolicitacoesPage() {
                     </StickyTableCell>
                     <StickyTableCell>{solicitacao.nmTema || solicitacao?.tema?.nmTema || '-'}</StickyTableCell>
                     <StickyTableCell>
-                      <Badge variant={getStatusBadgeVariant(solicitacao.statusCodigo?.toString() || '')}>
-                        {getStatusText(solicitacao.statusCodigo?.toString() || '')}
+                      <Badge variant={getStatusBadgeVariant(
+                        solicitacao.statusSolicitacao?.idStatusSolicitacao?.toString() ||
+                        solicitacao.statusCodigo?.toString() || ''
+                      )}>
+                        {solicitacao.statusSolicitacao?.nmStatus ||
+                         getStatusText(solicitacao.statusCodigo?.toString() || '') ||
+                         '-'}
                       </Badge>
                     </StickyTableCell>
                     <StickyTableCell className="text-right">
                       <div className="flex items-center justify-end space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            await openDetalhes(solicitacao);
-                          }}
-                          title="Detalhes"
-                        >
-                          <PaperPlaneRightIcon className="h-4 w-4"/>
-                        </Button>
+                        {/* Hide paper airplane icon when status is Pré-análise */}
+                        {!(
+                          solicitacao.statusSolicitacao?.nmStatus === 'Pré-análise' ||
+                          solicitacao.statusSolicitacao?.nmStatus === 'Pre-analise' ||
+                          solicitacao.statusSolicitacao?.idStatusSolicitacao === 1 ||
+                          getStatusText(solicitacao.statusCodigo?.toString() || '') === 'Pré-análise'
+                        ) && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              await openDetalhes(solicitacao);
+                            }}
+                            title="Detalhes"
+                          >
+                            <PaperPlaneRightIcon className="h-4 w-4"/>
+                          </Button>
+                        )}
 
                         <Button
                           variant="ghost"
@@ -505,7 +522,7 @@ export default function SolicitacoesPage() {
                   </StickyTableRow>
                   {expandedRows.has(solicitacao.idSolicitacao) && (
                     <StickyTableRow>
-                      <StickyTableCell colSpan={9} className="bg-gray-50 p-6">
+                      <StickyTableCell colSpan={7} className="bg-gray-50 p-6">
                         <div className="relative" style={{ contain: 'layout' }}>
                           <TramitacaoList idSolicitacao={solicitacao.idSolicitacao} areas={areas} />
                         </div>
