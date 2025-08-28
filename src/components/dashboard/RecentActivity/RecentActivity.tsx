@@ -9,7 +9,7 @@ export default function RecentActivity() {
     <Card className="flex flex-col">
       <CardHeader
         title="Atividade Recente"
-        description="Últimas ações no sistema"
+        description="Últimas ações no dia"
       />
       <CardContent>
         <div className="space-y-6">
@@ -32,7 +32,7 @@ export default function RecentActivity() {
         </div>
       </CardContent>
       <CardFooter className="border-t pt-4 mt-auto">
-        <Button variant="outline" className="w-full">Ver Todo o Histórico</Button>
+        <Button variant="outline" className="w-full">Ver mais</Button>
       </CardFooter>
     </Card>
   )

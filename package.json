@@ -10,6 +10,10 @@
   },
   "dependencies": {
     "@eslint/eslintrc": "^3",
+    "@heroicons/react": "^2.2.0",
+    "@nextui-org/react": "^2.6.11",
+    "@nextui-org/system": "^2.4.6",
+    "@nextui-org/theme": "^2.4.5",
     "@phosphor-icons/react": "^2.1.10",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
@@ -50,6 +54,7 @@
     "clsx": "^2.1.1",
     "eslint": "^9",
     "eslint-config-next": "15.4.6",
+    "framer-motion": "^12.23.12",
     "ldrs": "^1.1.7",
     "lucide-react": "^0.542.0",
     "mammoth": "^1.10.0",

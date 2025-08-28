@@ -1,10 +1,13 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { ReactNode } from 'react';
-import { cn } from "@/utils/utils";
-import Sidebar from "@/components/layout/sidebar/Sidebar";
+import { ReactNode, useEffect, useState } from 'react';
+import { AppLayout } from './AppLayout';
+import { SidebarProvider } from '@/context/sidebar/SidebarContext';
 import { PUBLIC_ROUTES } from "@/constants/pages";
+import { User } from "@/types/auth/types";
+import authClient from "@/api/auth/client";
+import responsaveisClient from "@/api/responsaveis/client";
 
 interface ConditionalLayoutProps {
   children: ReactNode;
@@ -12,8 +15,36 @@ interface ConditionalLayoutProps {
 
 export default function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const pathname = usePathname();
+  const [user, setUser] = useState<User | null>(null);
+  const [loadingUser, setLoadingUser] = useState<boolean>(false);
 
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
+
+  useEffect(() => {
+    if (!isPublicRoute) {
+      const loadUserData = async () => {
+        const userName = authClient.getUserName();
+        if (userName) {
+          setLoadingUser(true);
+          try {
+            const responsavel = await responsaveisClient.buscarPorNmUsuarioLogin(userName);
+            setUser({
+              name: responsavel.nmResponsavel,
+              username: responsavel.nmUsuarioLogin,
+              email: responsavel.dsEmail,
+              avatar: "/images/avatar.svg"
+            });
+          } catch (error) {
+            console.error('Erro ao buscar dados do usuário:', error);
+          } finally {
+            setLoadingUser(false);
+          }
+        }
+      };
+
+      loadUserData();
+    }
+  }, [isPublicRoute]);
 
   if (isPublicRoute) {
     return (
@@ -24,17 +55,14 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
   }
 
   return (
-    <main
-      className={cn(
-        "flex flex-col",
-        "min-h-screen max-h-screen w-full h-full scrollbar",
-        "bg-gray-50 flex flex-row min-w-0 transition-all duration-300 ease-in-out",
-      )}
-    >
-      <Sidebar />
-      <article>
+    <SidebarProvider>
+      <AppLayout 
+        userName={user?.name}
+        userLogin={user?.email}
+        userAvatar={user?.avatar}
+      >
         {children}
-      </article>
-    </main>
+      </AppLayout>
+    </SidebarProvider>
   );
 }

@@ -13,6 +13,9 @@ import HeaderArea from '@/components/areas/HeaderArea';
 import SearchArea from "@/components/areas/SearchArea";
 import TableArea from "@/components/areas/TableArea";
 import FilterModalArea from "@/components/areas/FilterModalArea";
+import PageTitle from '@/components/ui/page-title';
+import { ArrowClockwiseIcon } from '@phosphor-icons/react';
+import { Button } from '@nextui-org/react';
 
 export default function AreasPage() {
   const {
@@ -104,8 +107,40 @@ export default function AreasPage() {
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
-      <div className="bg-white border-b border-gray-200 p-6">
-        <HeaderArea setSelectedArea={setSelectedArea} setShowAreaModal={setShowAreaModal} />
+      {/* Header da página */}
+      <div className="flex items-center justify-between">
+        <PageTitle />
+
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              loadAreas();
+            }}
+          >
+            <ArrowClockwiseIcon className="h-4 w-4 mr-1" />
+          </Button>
+
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-gray-500">
+              {areas?.length} área(s)
+            </span>
+          </div>
+
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalElements={totalElements}
+            pageSize={15}
+            onPageChange={setCurrentPage}
+            loading={loading}
+            showOnlyPagginationButtons={true}
+          />
+        </div>
+      </div>
+
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
 
         <SearchArea
           clearFilters={clearFilters}
@@ -116,22 +151,16 @@ export default function AreasPage() {
         />
       </div>
 
-      <TableArea
-        areas={areas}
-        handleDelete={handleDelete}
-        handleEdit={handleEdit}
-        handleSort={handleSort}
-        loading={loading}
-      />
-
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalElements={totalElements}
-        pageSize={15}
-        onPageChange={setCurrentPage}
-        loading={loading}
-      />
+      {/* Área principal da tabela */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex-1 overflow-auto mb-6">
+        <TableArea
+          areas={areas}
+          handleDelete={handleDelete}
+          handleEdit={handleEdit}
+          handleSort={handleSort}
+          loading={loading}
+        />
+      </div>
 
       {showFilterModal && (
         <FilterModalArea

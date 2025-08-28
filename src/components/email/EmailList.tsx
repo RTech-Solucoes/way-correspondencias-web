@@ -68,27 +68,30 @@ const EmailItem = memo<{
       )}
       onClick={handleClick}
     >
-      <div className="flex items-start space-x-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-1">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm truncate font-semibold text-gray-700">
-                {email.dsRemetente}
-              </span>
-              {hasAttachment && (
-                <PaperclipIcon className="h-3 w-3 text-gray-400"/>
-              )}
-            </div>
-            <span className="text-xs text-gray-500">{formatDate(email.dtRecebimento)}</span>
+      <div className="flex items-start justify-between space-x-4">
+        {/* Lado esquerdo: Título e conteúdo */}
+        <div className="flex-1 min-w-0 space-y-1">
+          <div className="flex items-center space-x-2">
+            <h3 className="text-sm font-semibold text-gray-900 truncate">
+              {email.dsAssunto || 'Sem assunto'}
+            </h3>
+            {hasAttachment && (
+              <PaperclipIcon className="h-3 w-3 text-gray-400 flex-shrink-0"/>
+            )}
           </div>
-
-          <h3 className="text-sm mb-1 truncate font-bold text-gray-900">
-            {email.dsAssunto || 'Sem assunto'}
-          </h3>
-
           <p className="text-xs text-gray-500 line-clamp-2">
             {preview}
           </p>
+        </div>
+
+        {/* Lado direito: Email e data/hora */}
+        <div className="flex flex-col items-end space-y-1 flex-shrink-0 min-w-0 max-w-[200px]">
+          <span className="text-xs text-gray-600 truncate max-w-full">
+            {email.dsDestinatario || email.dsRemetente || 'debora@amit.gov.br'}
+          </span>
+          <span className="text-xs text-gray-500 whitespace-nowrap">
+            {formatDate(email.dtRecebimento) || '26/08/2025 12:00'}
+          </span>
         </div>
       </div>
     </div>
@@ -115,6 +118,9 @@ function EmailList({
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
+  const [numberOfElements, setNumberOfElements] = useState(0);
+  const [first, setFirst] = useState(true);
+  const [last, setLast] = useState(true);
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
@@ -133,6 +139,9 @@ function EmailList({
         setEmails([]);
         setTotalPages(0);
         setTotalElements(0);
+        setNumberOfElements(0);
+        setFirst(true);
+        setLast(true);
         return;
       }
 
@@ -142,18 +151,27 @@ function EmailList({
         setEmails([]);
         setTotalPages(0);
         setTotalElements(0);
+        setNumberOfElements(0);
+        setFirst(true);
+        setLast(true);
         return;
       }
 
       setEmails(response.content);
       setTotalPages(response.totalPages || 0);
       setTotalElements(response.totalElements || 0);
+      setNumberOfElements(response.numberOfElements || 0);
+      setFirst(response.first || false);
+      setLast(response.last || false);
     } catch (error) {
       console.error("Erro ao carregar emails:", error);
       toast.error("Erro ao carregar emails");
       setEmails([]);
       setTotalPages(0);
       setTotalElements(0);
+      setNumberOfElements(0);
+      setFirst(true);
+      setLast(true);
     } finally {
       setLoading(false);
     }
@@ -205,31 +223,7 @@ function EmailList({
   }, [loadEmails]);
 
   return (
-    <div className="flex-1 flex flex-col bg-white">
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
-        <div className="flex items-center space-x-2">
-          <span className="text-sm text-gray-500">
-            {filteredEmails?.length} email(s)
-          </span>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={syncLoading}
-          >
-            {syncLoading ? (
-              <SpinnerIcon className="h-4 w-4 mr-1 animate-spin" />
-            ) : (
-              <ArrowClockwiseIcon className="h-4 w-4 mr-1" />
-            )}
-            Atualizar
-          </Button>
-        </div>
-      </div>
-
+    <div className="flex-1 flex flex-col bg-white w-full">
       <div className="flex flex-col flex-1 overflow-y-auto">
         {loading ? (
           <div className="flex flex-1 items-center justify-center py-8">
@@ -262,15 +256,6 @@ function EmailList({
           ))
         )}
       </div>
-
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalElements={totalElements}
-        pageSize={15}
-        onPageChange={setCurrentPage}
-        loading={loading}
-      />
     </div>
   );
 }

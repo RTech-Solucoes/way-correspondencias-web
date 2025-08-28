@@ -33,7 +33,7 @@ export default function AnexoList({
           return (
             <div
               key={index}
-              className="flex w-full rounded-3xl border items-center justify-between bg-gray-50 px-4 py-2 text-sm cursor-pointer"
+              className="flex w-full rounded-2xl border items-center justify-between bg-gray-50 px-4 py-2 text-sm cursor-pointer"
               onClick={() => {
                 if (isBackend && onDownload) {
                   onDownload(file as AnexoBackend);
@@ -56,7 +56,6 @@ export default function AnexoList({
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="text-green-600 hover:text-green-600 hover:bg-green-100"
                   onClick={(e) => {
                     e.stopPropagation();
                     if (onDownload) onDownload(file as AnexoBackend);
