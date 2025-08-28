@@ -22,7 +22,7 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
-  { name: 'Dashboard', href: '/dashboard', icon: ChartBarIcon },
+  // { name: 'Dashboard', href: '/dashboard', icon: ChartBarIcon },
   { name: 'Caixa de entrada', href: '/email', icon: EnvelopeIcon },
   { name: 'Solicitações', href: '/solicitacoes', icon: DocumentTextIcon },
   { name: 'Temas', href: '/temas', icon: TagIcon },
