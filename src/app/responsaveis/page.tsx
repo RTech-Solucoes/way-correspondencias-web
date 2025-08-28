@@ -254,6 +254,7 @@ export default function ResponsaveisPage() {
                 </div>
               </StickyTableHead>
               <StickyTableHead>Perfil</StickyTableHead>
+              <StickyTableHead>Áreas</StickyTableHead>
               <StickyTableHead className="cursor-pointer" onClick={() => handleSort('flAtivo')}>
                 <div className="flex items-center">
                   Status
@@ -272,7 +273,7 @@ export default function ResponsaveisPage() {
           <StickyTableBody>
             {loading ? (
               <StickyTableRow>
-                <StickyTableCell colSpan={7} className="text-center py-8">
+                <StickyTableCell colSpan={8} className="text-center py-8">
                   <div className="flex flex-1 items-center justify-center py-8">
                     <SpinnerIcon className="h-6 w-6 animate-spin text-gray-400" />
                     <span className="ml-2 text-gray-500">Buscando responsáveis...</span>
@@ -281,7 +282,7 @@ export default function ResponsaveisPage() {
               </StickyTableRow>
             ) : responsaveis?.length === 0 ? (
               <StickyTableRow>
-                <StickyTableCell colSpan={7} className="text-center py-8">
+                <StickyTableCell colSpan={8} className="text-center py-8">
                   <div className="flex flex-col items-center space-y-2">
                     <UsersIcon className="h-8 w-8 text-gray-400"/>
                     <p className="text-sm text-gray-500">Nenhum responsável encontrado</p>
@@ -295,6 +296,24 @@ export default function ResponsaveisPage() {
                   <StickyTableCell>{responsavel.nmUsuarioLogin}</StickyTableCell>
                   <StickyTableCell>{responsavel.dsEmail}</StickyTableCell>
                   <StickyTableCell>{responsavel.nmPerfil || 'N/A'}</StickyTableCell>
+                  <StickyTableCell>
+                    {responsavel.areas && responsavel.areas?.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {responsavel.areas.slice(0, 2).map((area, index) => (
+                          <span key={index} className="inline-flex px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                            {area.nmArea}
+                          </span>
+                        ))}
+                        {responsavel.areas?.length > 2 && (
+                          <span className="inline-flex px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
+                            +{responsavel.areas?.length - 2}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-gray-400 text-sm">Nenhuma área</span>
+                    )}
+                  </StickyTableCell>
                   <StickyTableCell>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                       responsavel.flAtivo === 'S'
