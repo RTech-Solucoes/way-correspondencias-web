@@ -174,6 +174,9 @@ export default function TemasPage() {
               onPageChange={setCurrentPage}
               loading={loading}
               showOnlyPagginationButtons={true}
+              numberOfElements={totalElements}
+              first={true}
+              last={true}
             />
           </div>
         </div>

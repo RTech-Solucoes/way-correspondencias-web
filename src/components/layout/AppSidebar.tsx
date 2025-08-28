@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import {usePathname} from 'next/navigation';
-import {ChevronLeftIcon, ChevronRightIcon} from '@heroicons/react/24/outline';
+import {CaretLeftIcon, CaretRightIcon} from '@phosphor-icons/react';
 import {useSidebar} from '@/context/sidebar/SidebarContext';
 import {PAGES_DEF} from '@/constants/pages';
 import {PageDef} from "@/types/pages/pages";
@@ -54,10 +54,10 @@ export function AppSidebar() {
           title={isCollapsed ? 'Expandir sidebar' : 'Recolher sidebar'}
         >
           {isCollapsed ? (
-            <ChevronRightIcon className="h-5 w-5" />
+            <CaretRightIcon className="h-5 w-5" />
           ) : (
             <>
-              <ChevronLeftIcon className="h-5 w-5 mr-2" />
+              <CaretLeftIcon className="h-5 w-5 mr-2" />
               <span className="text-sm">Recolher</span>
             </>
           )}

@@ -14,24 +14,24 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import {
-  Clock as ClockIcon,
-  DownloadSimple as DownloadIcon,
-  Paperclip as PaperclipIcon,
+  ClockIcon,
+  DownloadIcon,
+  PaperclipIcon,
 } from '@phosphor-icons/react';
 import { SolicitacaoResponse } from '@/api/solicitacoes/types';
 import { AnexoResponse, ArquivoDTO, TipoObjetoAnexo } from '@/api/anexos/type';
 import { anexosClient } from '@/api/anexos/client';
 import { base64ToUint8Array, saveBlob } from '@/utils/utils';
-import { X } from 'lucide-react';
+import { XIcon } from '@phosphor-icons/react';
 
 type DetalhesSolicitacaoModalProps = {
   open: boolean;
-  onClose: () => void;
+  onClose(): void;
   solicitacao: SolicitacaoResponse | null;
   anexos?: AnexoResponse[];
-  onHistoricoRespostas?: () => void;
-  onAbrirEmailOriginal?: () => void;
-  onEnviarDevolutiva?: (mensagem: string, arquivos: File[]) => Promise<void> | void;
+  onHistoricoRespostas?(): void;
+  onAbrirEmailOriginal?(): void;
+  onEnviarDevolutiva?(mensagem: string, arquivos: File[]): Promise<void> | void;
   statusLabel?: string;
 };
 
@@ -235,13 +235,13 @@ export default function DetalhesSolicitacaoModal({
               </div>
 
               <DialogClose asChild>
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
                   className="flex items-center justify-center rounded-full bg-slate-800 text-white hover:bg-slate-700 transition-colors h-9 w-9"
                   aria-label="Fechar"
                 >
-                  <X className="h-4 w-4" />
-                </button>
+                  <XIcon className="h-4 w-4" />
+                </Button>
               </DialogClose>
             </div>
           </DialogHeader>

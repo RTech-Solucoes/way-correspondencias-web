@@ -28,7 +28,7 @@ import {solicitacoesClient} from '@/api/solicitacoes/client';
 import {toast} from 'sonner';
 import {capitalize, getRows} from '@/utils/utils';
 import {MultiSelectAreas} from '@/components/ui/multi-select-areas';
-import {CaretLeftIcon, CaretRightIcon, CheckIcon, ArrowBendUpRightIcon} from '@phosphor-icons/react';
+import {CaretLeftIcon, CaretRightIcon, ArrowBendUpRightIcon} from '@phosphor-icons/react';
 import { Stepper } from '@/components/ui/stepper';
 import { Input } from '@nextui-org/react';
 import AnexoComponent from '../AnexoComponotent/AnexoComponent';
@@ -36,7 +36,7 @@ import AnexoList from '../AnexoComponotent/AnexoList/AnexoList';
 import {statusSolicPrazoTemaClient} from '@/api/status-prazo-tema/client';
 import {StatusSolicPrazoTemaResponse} from '@/api/status-prazo-tema/types';
 import { statusSolicitacaoClient, StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
-import {AnexoResponse} from "@/api/anexos/type";
+import {AnexoResponse} from '@/api/solicitacoes/anexos-client';
 
 interface AnexoListItem {
   idAnexo?: number;
@@ -673,7 +673,7 @@ export default function SolicitacaoModal({
             <div className="space-y-4">
               {loadingStatusPrazos ? (
                 <div className="flex items-center justify-center p-8">
-                  <div className="text-sm text-gray-500">Carregando configura��ões...</div>
+                  <div className="text-sm text-gray-500">Carregando configurações...</div>
                 </div>
               ) : (
                 <div className="grid grid-cols-3 gap-4">
@@ -738,7 +738,7 @@ export default function SolicitacaoModal({
           </div>
         ) : null}
       </div>
-    )}, [prazoExcepcional, formData.nrPrazo, formData.tpPrazo, formData.idTema, handleInputChange, handleSelectChange, loadingStatusPrazos, statusPrazos, updateLocalPrazo, setFormData, statusList]);
+    )}, [prazoExcepcional, formData.idTema, loadingStatusPrazos, statusPrazos, updateLocalPrazo, setFormData, statusList]);
 
   const renderStep4 = useCallback(() => (
     <div className="space-y-6">
@@ -961,7 +961,7 @@ export default function SolicitacaoModal({
         </div>
       </div>
     </div>
-  ), [formData, getSelectedTema, responsaveis, anexos, anexosBackend, statusPrazos, statusList, prazoExcepcional]);
+  ), [formData, getSelectedTema, responsaveis, anexos, anexosBackend, statusPrazos, statusList, prazoExcepcional, solicitacao?.statusCodigo]);
 
   const renderStep1 = () => (
     <div className="space-y-6">
@@ -1059,7 +1059,7 @@ export default function SolicitacaoModal({
       <DialogContent className="h-full flex flex-col">
         <DialogHeader className="pb-6 flex-shrink-0">
           <DialogTitle className="text-xl font-semibold">
-            {solicitacao ? 'Encaminhar Solicitação' : 'Nova Solicitação'}
+            {solicitacao ? 'Editar Solicitação' : 'Nova Solicitação'}
           </DialogTitle>
         </DialogHeader>
 
@@ -1201,8 +1201,7 @@ export default function SolicitacaoModal({
                 disabled={loading}
                 className="flex items-center gap-2"
               >
-                {solicitacao && <ArrowBendUpRightIcon className="h-4 w-4 mr-2"/>}
-                {loading ? 'Salvando...' : solicitacao ? 'Encaminhar Solicitação' : 'Criar Solicitação'}
+                {loading ? 'Salvando...' : solicitacao ? 'Editar Solicitação' : 'Criar Solicitação'}
               </Button>
             </>
           )}
