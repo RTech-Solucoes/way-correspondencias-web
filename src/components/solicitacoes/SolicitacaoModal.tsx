@@ -38,7 +38,9 @@ import {StatusSolicPrazoTemaForUI} from '@/api/status-prazo-tema/types';
 import { statusSolicitacaoClient, StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
 import {AnexoResponse} from '@/api/solicitacoes/anexos-client';
 import {areasClient} from '@/api/areas/client';
+import {anexosClient} from '@/api/anexos/client';
 import {AreaResponse} from '@/api/areas/types';
+import {TipoObjetoAnexo} from '@/api/anexos/type';
 
 interface AnexoListItem {
   idAnexo?: number;
@@ -93,6 +95,7 @@ export default function SolicitacaoModal({
   const [loading, setLoading] = useState(false);
   const [anexos, setAnexos] = useState<File[]>([]);
   const [anexosBackend, setAnexosBackend] = useState<AnexoResponse[]>([]);
+  const [anexosTypeE, setAnexosTypeE] = useState<AnexoResponse[]>([]);
   const [statusPrazos, setStatusPrazos] = useState<StatusSolicPrazoTemaForUI[]>([]);
   const [loadingStatusPrazos, setLoadingStatusPrazos] = useState(false);
   const [prazoExcepcional, setPrazoExcepcional] = useState(false);
@@ -841,9 +844,66 @@ export default function SolicitacaoModal({
             />
           </div>
         )}
+
+        {anexosTypeE.length > 0 && (
+          <div>
+            <Label className="text-sm font-medium mb-2 block">Anexos do email</Label>
+            <AnexoList
+              anexos={anexosTypeE.map(a => ({
+                idAnexo: a.idAnexo,
+                idObjeto: a.idObjeto,
+                name: a.nmArquivo,
+                nmArquivo: a.nmArquivo,
+                dsCaminho: a.dsCaminho,
+                tpObjeto: a.tpObjeto,
+                size: 0
+              }))}
+              onRemove={(index) => {
+                const anexo = anexosTypeE[index];
+                if (anexo?.idAnexo) {
+                  console.log('Remove anexo type E:', anexo.idAnexo);
+                }
+              }}
+              onDownload={async (anexo) => {
+                try {
+                  if (!anexo.idObjeto || !anexo.nmArquivo) {
+                    toast.error('Dados do documento incompletos');
+                    return;
+                  }
+
+                  const arquivos = await anexosClient.download(anexo.idObjeto, TipoObjetoAnexo.E, anexo.nmArquivo);
+
+                  if (arquivos.length > 0) {
+                    const arquivo = arquivos[0];
+                    const byteCharacters = atob(arquivo.conteudoArquivo);
+                    const byteNumbers = new Array(byteCharacters.length);
+                    for (let i = 0; i < byteCharacters.length; i++) {
+                      byteNumbers[i] = byteCharacters.charCodeAt(i);
+                    }
+                    const byteArray = new Uint8Array(byteNumbers);
+                    const blob = new Blob([byteArray]);
+
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = arquivo.nomeArquivo || anexo.name || 'documento';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                  } else {
+                    toast.error('Arquivo não encontrado');
+                  }
+                } catch {
+                  toast.error('Erro ao baixar documento');
+                }
+              }}
+            />
+          </div>
+        )}
       </div>
     </div>
-  ), [anexos, anexosBackend, handleAddAnexos, handleRemoveAnexo, handleRemoveAnexoBackend, handleDownloadAnexoBackend]);
+  ), [anexos, anexosBackend, anexosTypeE, handleAddAnexos, handleRemoveAnexo, handleRemoveAnexoBackend, handleDownloadAnexoBackend]);
 
   const renderStep5 = useCallback(() => (
     <div className="space-y-6">
@@ -1135,6 +1195,29 @@ export default function SolicitacaoModal({
     }
   }, [formData.idTema, open, loadStatusPrazos]);
 
+  // Load anexos of type E when entering step 4
+  useEffect(() => {
+    const loadAnexosTypeE = async () => {
+      if (currentStep === 4 && solicitacao?.idSolicitacao) {
+        try {
+          const anexosE = await anexosClient.buscarPorIdObjetoETipoObjeto(
+            solicitacao.idSolicitacao,
+            TipoObjetoAnexo.E
+          );
+          setAnexosTypeE(anexosE);
+        } catch (error) {
+          console.error('Erro ao carregar anexos tipo E:', error);
+          setAnexosTypeE([]);
+        }
+      } else {
+        setAnexosTypeE([]);
+      }
+    };
+
+    if (open) {
+      loadAnexosTypeE();
+    }
+  }, [currentStep, open, solicitacao?.idSolicitacao]);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
