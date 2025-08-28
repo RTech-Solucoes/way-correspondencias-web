@@ -134,6 +134,7 @@ export interface SolicitacaoPrazoItemRequest {
 }
 
 export interface SolicitacaoEtapaPrazoRequest {
+  idTema?: number;
   nrPrazoInterno?: number;
   nrPrazoExterno?: number;
   solicitacoesPrazos: SolicitacaoPrazoItemRequest[];
@@ -147,4 +148,3 @@ export interface SolicitacaoTemaEtapaRequest {
   flExcepcional?: string;
   idsAreas?: number[];
 }
-
