@@ -2,33 +2,13 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { 
-  EnvelopeIcon, 
-  DocumentTextIcon, 
-  UsersIcon, 
-  TagIcon, 
-  MapIcon,
-  ChartBarIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon
-} from '@heroicons/react/24/outline';
-import { useSidebar } from '@/context/sidebar/SidebarContext';
+import {usePathname} from 'next/navigation';
+import {ChevronLeftIcon, ChevronRightIcon} from '@heroicons/react/24/outline';
+import {useSidebar} from '@/context/sidebar/SidebarContext';
+import PAGES_DEF from '@/constants/pages';
+import {PageDef} from "@/types/pages/pages";
 
-interface MenuItem {
-  name: string;
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-}
-
-const menuItems: MenuItem[] = [
-  // { name: 'Dashboard', href: '/dashboard', icon: ChartBarIcon },
-  { name: 'Caixa de entrada', href: '/email', icon: EnvelopeIcon },
-  { name: 'Solicitações', href: '/solicitacoes', icon: DocumentTextIcon },
-  { name: 'Temas', href: '/temas', icon: TagIcon },
-  { name: 'Áreas', href: '/areas', icon: MapIcon },
-  { name: 'Responsáveis', href: '/responsaveis', icon: UsersIcon },
-];
+const menuItems: PageDef[] = PAGES_DEF
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -46,7 +26,7 @@ export function AppSidebar() {
           
           return (
             <Link
-              key={item.name}
+              key={item.label}
               href={item.href}
               className={`
                 flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors
@@ -55,11 +35,11 @@ export function AppSidebar() {
                   : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                 }
               `}
-              title={isCollapsed ? item.name : undefined}
+              title={isCollapsed ? item.label : undefined}
             >
               <Icon className={`h-5 w-5 ${isActive ? 'text-blue-500' : 'text-gray-400'} ${isCollapsed ? 'mx-auto' : 'mr-3'}`} />
               {!isCollapsed && (
-                <span className="truncate">{item.name}</span>
+                <span className="truncate">{item.label}</span>
               )}
             </Link>
           );
