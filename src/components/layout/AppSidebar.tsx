@@ -21,13 +21,13 @@ export function AppSidebar() {
     >
       <nav className="p-4 space-y-2 flex-1">
         {menuItems.map((item) => {
-          const isActive = pathname.startsWith(item.href);
+          const isActive = pathname.startsWith(item.path);
           const Icon = item.icon;
           
           return (
             <Link
               key={item.label}
-              href={item.href}
+              href={item.path}
               className={`
                 flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors
                 ${isActive 
