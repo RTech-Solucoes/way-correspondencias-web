@@ -127,25 +127,20 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
     }));
   }, []);
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-
-    if (!formData.nmResponsavel.trim() ||
-        !formData.dsEmail.trim() ||
-        !formData.nmUsuarioLogin.trim() ||
-        !formData.nrCpf.trim() ||
-        !formData.dtNascimento.trim() ||
-        !formData.idPerfil) {
-      toast.error("Por favor, preencha todos os campos obrigatórios");
-      return;
-    }
+  const handleSubmit = async () => {
 
     try {
+      console.log("teste")
       setLoading(true);
 
       const responsavelRequest: ResponsavelRequest = {
-        ...formData,
-        idsAreas: selectedAreaIds.length > 0 ? selectedAreaIds : undefined
+        idPerfil: formData.idPerfil,
+        nmUsuarioLogin: formData.nmUsuarioLogin.trim(),
+        nmResponsavel: formData.nmResponsavel.trim(),
+        dsEmail: formData.dsEmail.trim(),
+        nrCpf: formData.nrCpf.trim(),
+        dtNascimento: formData.dtNascimento,
+        idsAreas: selectedAreaIds.length > 0 ? selectedAreaIds : []
       };
 
       if (responsavel) {
@@ -158,7 +153,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
 
       onSave();
       onClose();
-    } catch {
+    } catch (error) {
       toast.error(responsavel ? "Erro ao atualizar responsável" : "Erro ao criar responsável");
     } finally {
       setLoading(false);

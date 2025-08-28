@@ -17,7 +17,7 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
     setIsCollapsed(!isCollapsed);
   };
 
-  const sidebarWidth = isCollapsed ? 104 : 344;
+  const sidebarWidth = isCollapsed ? 104 : 230;
 
   return (
     <SidebarContext.Provider value={{ isCollapsed, toggleSidebar, sidebarWidth }}>

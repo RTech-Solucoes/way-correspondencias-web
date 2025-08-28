@@ -223,8 +223,9 @@ export default function SolicitacaoModal({
   }, [formData.cdIdentificacao]);
 
   const isStep2Valid = useCallback(() => {
-    return formData.idTema !== undefined && formData.idTema > 0;
-  }, [formData.idTema]);
+    return formData.idTema !== undefined && formData.idTema > 0 &&
+           formData.idsAreas && formData.idsAreas.length > 0;
+  }, [formData.idTema, formData.idsAreas]);
 
   const getSelectedTema = useCallback(() => {
     return temas.find(tema => tema.idTema === formData.idTema);
@@ -255,6 +256,11 @@ export default function SolicitacaoModal({
       } else if (currentStep === 2) {
         if (!formData.idTema || formData.idTema === 0) {
           toast.error("Tema é obrigatório");
+          return;
+        }
+
+        if (!formData.idsAreas || formData.idsAreas.length === 0) {
+          toast.error("Selecione pelo menos uma área");
           return;
         }
 
@@ -539,7 +545,13 @@ export default function SolicitacaoModal({
           value={formData.idTema ? formData.idTema.toString() : ''}
           onValueChange={(value) => {
             const temaId = parseInt(value);
-            fillDataFromTema(temaId);
+            setFormData(prev => ({
+              ...prev,
+              idTema: temaId,
+              idResponsavel: getResponsavelFromTema(temaId),
+              nrPrazo: temas.find(t => t.idTema === temaId)?.nrPrazo || undefined,
+              tpPrazo: temas.find(t => t.idTema === temaId)?.tpPrazo || ''
+            }));
           }}
         >
           <SelectTrigger>
@@ -558,10 +570,11 @@ export default function SolicitacaoModal({
       <MultiSelectAreas
         selectedAreaIds={formData.idsAreas || []}
         onSelectionChange={handleAreasSelectionChange}
-        disabled={formData.idTema === 0 || formData.idTema === null}
+        disabled={false}
+        label="Áreas *"
       />
     </div>
-  ), [formData.idTema, fillDataFromTema, temas, formData.idsAreas, handleAreasSelectionChange]);
+  ), [formData.idTema, formData.idsAreas, temas, responsaveis, getResponsavelFromTema, handleAreasSelectionChange]);
 
   const loadStatusPrazos = useCallback(async () => {
     if (!formData.idTema) return;

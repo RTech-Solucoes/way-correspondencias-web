@@ -117,6 +117,9 @@ export function saveBlob(
 }
 
 export const getRows = (string: string | undefined) => {
-  if (!string) return 5;
-  return string.split('\n').length / 5;
+  if (!string) return 1;
+
+  const lineBreaks = (string.match(/\n/g) || []).length;
+
+  return (string.split('\n').length) + lineBreaks;
 }
