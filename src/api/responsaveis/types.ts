@@ -1,5 +1,10 @@
 import { AreaResponse } from "@/api/areas/types";
 
+export interface ResponsavelAreaResponse {
+  idResponsavelArea: number;
+  area: AreaResponse;
+}
+
 export interface ResponsavelResponse {
   idResponsavel: number;
   idPerfil: number;
@@ -10,7 +15,7 @@ export interface ResponsavelResponse {
   nrCpf: string;
   dtNascimento: string;
   flAtivo: 'S' | 'N';
-  areas?: AreaResponse[];
+  areas?: ResponsavelAreaResponse[];
 }
 
 export interface ResponsavelRequest {

@@ -1,5 +1,5 @@
 import ApiClient from '../client';
-import { StatusSolicPrazoTemaRequest, StatusSolicitacaoPrazoTema } from './types';
+import { StatusSolicPrazoTemaRequest, StatusSolicPrazoTemaResponse, StatusSolicPrazoTemaForUI } from './types';
 
 class StatusSolicPrazoTemaClient {
   private client: ApiClient;
@@ -11,27 +11,39 @@ class StatusSolicPrazoTemaClient {
   /**
    * Criar ou atualizar status-prazo para um tema
    */
-  async upsert(idTema: number, request: StatusSolicPrazoTemaRequest): Promise<StatusSolicitacaoPrazoTema> {
-    return this.client.request<StatusSolicitacaoPrazoTema>(`/temas/${idTema}/status`, {
+  async upsert(idTema: number, request: StatusSolicPrazoTemaRequest): Promise<StatusSolicPrazoTemaResponse> {
+    return this.client.request<StatusSolicPrazoTemaResponse>(`/temas/${idTema}/status`, {
       method: 'POST',
       body: JSON.stringify(request),
     });
   }
 
   /**
-   * Listar status-prazos de um tema
+   * Listar status-prazos de um tema (raw backend response)
    */
-  async listarPorTema(idTema: number): Promise<StatusSolicitacaoPrazoTema[]> {
-    return this.client.request<StatusSolicitacaoPrazoTema[]>(`/temas/${idTema}/status`, {
+  async listarPorTema(idTema: number): Promise<StatusSolicPrazoTemaResponse[]> {
+    return this.client.request<StatusSolicPrazoTemaResponse[]>(`/temas/${idTema}/status`, {
       method: 'GET',
     });
   }
 
   /**
-   * Alias para compatibilidade (delegando para listarPorTema)
+   * Listar status-prazos de um tema (mapped for UI usage)
    */
-  async listar(idTema: number): Promise<StatusSolicitacaoPrazoTema[]> {
-    return this.listarPorTema(idTema);
+  async listar(idTema: number): Promise<StatusSolicPrazoTemaForUI[]> {
+    const backendResponse = await this.listarPorTema(idTema);
+
+    return backendResponse.map(item => ({
+      idStatusSolicPrazoTema: item.idStatusSolicPrazoTema,
+      idStatusSolicitacao: item.statusCodigo,
+      idTema: item.idTema,
+      nrPrazoInterno: item.nrPrazoInterno,
+      flAtivo: item.flAtivo,
+      tema: {
+        idTema: item.idTema,
+        nmTema: ''
+      }
+    }));
   }
 }
 

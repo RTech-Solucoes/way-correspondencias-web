@@ -28,15 +28,17 @@ import {solicitacoesClient} from '@/api/solicitacoes/client';
 import {toast} from 'sonner';
 import {capitalize, getRows} from '@/utils/utils';
 import {MultiSelectAreas} from '@/components/ui/multi-select-areas';
-import {CaretLeftIcon, CaretRightIcon, ArrowBendUpRightIcon} from '@phosphor-icons/react';
+import {CaretLeftIcon, CaretRightIcon} from '@phosphor-icons/react';
 import { Stepper } from '@/components/ui/stepper';
 import { Input } from '@nextui-org/react';
 import AnexoComponent from '../AnexoComponotent/AnexoComponent';
 import AnexoList from '../AnexoComponotent/AnexoList/AnexoList';
 import {statusSolicPrazoTemaClient} from '@/api/status-prazo-tema/client';
-import {StatusSolicPrazoTemaResponse} from '@/api/status-prazo-tema/types';
+import {StatusSolicPrazoTemaForUI} from '@/api/status-prazo-tema/types';
 import { statusSolicitacaoClient, StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
 import {AnexoResponse} from '@/api/solicitacoes/anexos-client';
+import {areasClient} from '@/api/areas/client';
+import {AreaResponse} from '@/api/areas/types';
 
 interface AnexoListItem {
   idAnexo?: number;
@@ -91,11 +93,12 @@ export default function SolicitacaoModal({
   const [loading, setLoading] = useState(false);
   const [anexos, setAnexos] = useState<File[]>([]);
   const [anexosBackend, setAnexosBackend] = useState<AnexoResponse[]>([]);
-  const [statusPrazos, setStatusPrazos] = useState<StatusSolicPrazoTemaResponse[]>([]);
+  const [statusPrazos, setStatusPrazos] = useState<StatusSolicPrazoTemaForUI[]>([]);
   const [loadingStatusPrazos, setLoadingStatusPrazos] = useState(false);
   const [prazoExcepcional, setPrazoExcepcional] = useState(false);
   const [statusList, setStatusList] = useState<StatusSolicitacaoResponse[]>([]);
   const [createdSolicitacao, setCreatedSolicitacao] = useState<SolicitacaoResponse | null>(null);
+  const [allAreas, setAllAreas] = useState<AreaResponse[]>([]);
 
   useEffect(() => {
     if (solicitacao) {
@@ -114,7 +117,8 @@ export default function SolicitacaoModal({
         nrOficio: solicitacao.nrOficio || '',
         nrProcesso: solicitacao.nrProcesso || ''
       });
-      setPrazoExcepcional(Boolean(solicitacao.nrPrazo && solicitacao.nrPrazo > 0));
+      // Corrigido: prazoExcepcional sempre inicia como false para evitar ser marcado por padrão
+      setPrazoExcepcional(false);
     } else {
       setFormData({
         cdIdentificacao: '',
@@ -149,6 +153,23 @@ export default function SolicitacaoModal({
     }
   }, [solicitacao, open, initialSubject, initialDescription]);
 
+  useEffect(() => {
+    const loadAllAreas = async () => {
+      try {
+        const areaResponse = await areasClient.buscarPorFiltro({ size: 1000 });
+        const areasAtivas = areaResponse.content.filter((area: AreaResponse) => area.flAtivo === 'S');
+        setAllAreas(areasAtivas);
+      } catch (error) {
+        console.error('Erro ao carregar áreas:', error);
+        setAllAreas([]);
+      }
+    };
+
+    if (open) {
+      loadAllAreas();
+    }
+  }, [open]);
+
   const getResponsavelFromTema = useCallback((temaId: number): number => {
     const tema = temas.find(t => t.idTema === temaId);
     if (tema && responsaveis.length > 0) {
@@ -156,23 +177,6 @@ export default function SolicitacaoModal({
     }
     return responsaveis.length > 0 ? responsaveis[0].idResponsavel : 0;
   }, [temas, responsaveis]);
-
-  const fillDataFromTema = useCallback((temaId: number) => {
-    const tema = temas.find(t => t.idTema === temaId);
-    if (tema) {
-      const areasIds = tema.areas?.map(area => area.idArea) || [];
-      const responsavelId = getResponsavelFromTema(temaId);
-
-      setFormData(prev => ({
-        ...prev,
-        idTema: temaId,
-        idResponsavel: responsavelId,
-        idsAreas: areasIds,
-        nrPrazo: tema.nrPrazo || undefined,
-        tpPrazo: tema.tpPrazo || ''
-      }));
-    }
-  }, [temas, getResponsavelFromTema]);
 
   const handleInputChange = useCallback((e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const {name, value} = e.target;
@@ -197,34 +201,14 @@ export default function SolicitacaoModal({
     }));
   }, []);
 
-  const handleSelectChange = useCallback((field: keyof SolicitacaoRequest, value: string) => {
-    let processedValue: string | number | undefined = value;
-
-    if (field.includes('id') && field !== 'cdIdentificacao') {
-      processedValue = value ? parseInt(value) : 0;
-    }
-
-    setFormData(prev => {
-      const newFormData = {
-        ...prev,
-        [field]: processedValue
-      };
-
-      if (field === 'idTema' && processedValue) {
-        newFormData.idResponsavel = getResponsavelFromTema(processedValue as number);
-      }
-
-      return newFormData;
-    });
-  }, [getResponsavelFromTema]);
 
   const isStep1Valid = useCallback(() => {
     return formData.cdIdentificacao?.trim() !== '';
   }, [formData.cdIdentificacao]);
 
   const isStep2Valid = useCallback(() => {
-    return formData.idTema !== undefined && formData.idTema > 0 &&
-           formData.idsAreas && formData.idsAreas.length > 0;
+    return (formData.idTema !== undefined && formData.idTema > 0 &&
+           formData.idsAreas && formData.idsAreas.length > 0) || false;
   }, [formData.idTema, formData.idsAreas]);
 
   const getSelectedTema = useCallback(() => {
@@ -550,7 +534,7 @@ export default function SolicitacaoModal({
               idTema: temaId,
               idResponsavel: getResponsavelFromTema(temaId),
               nrPrazo: temas.find(t => t.idTema === temaId)?.nrPrazo || undefined,
-              tpPrazo: temas.find(t => t.idTema === temaId)?.tpPrazo || ''
+              tpPrazo: 'H'
             }));
           }}
         >
@@ -574,7 +558,7 @@ export default function SolicitacaoModal({
         label="Áreas *"
       />
     </div>
-  ), [formData.idTema, formData.idsAreas, temas, responsaveis, getResponsavelFromTema, handleAreasSelectionChange]);
+  ), [formData.idTema, formData.idsAreas, temas, getResponsavelFromTema, handleAreasSelectionChange]);
 
   const loadStatusPrazos = useCallback(async () => {
     if (!formData.idTema) return;
@@ -582,14 +566,69 @@ export default function SolicitacaoModal({
     try {
       setLoadingStatusPrazos(true);
       const prazos = await statusSolicPrazoTemaClient.listar(formData.idTema);
-      setStatusPrazos(prazos);
+
+      const selectedTema = temas.find(t => t.idTema === formData.idTema);
+      const temaPrazo = selectedTema?.nrPrazo || 0;
+
+      if (prazos.length === 0 && temaPrazo > 0) {
+        // Configurar prazos padrão específicos para cada status
+        const defaultPrazos: StatusSolicPrazoTemaForUI[] = [
+          {
+            idStatusSolicPrazoTema: 0,
+            idStatusSolicitacao: 1, // Pré-análise
+            idTema: formData.idTema,
+            nrPrazoInterno: 72,
+            tema: {
+              idTema: formData.idTema,
+              nmTema: selectedTema?.nmTema || ''
+            },
+            flAtivo: 'S'
+          },
+          {
+            idStatusSolicPrazoTema: 0,
+            idStatusSolicitacao: 5, // Análise Regulatória
+            idTema: formData.idTema,
+            nrPrazoInterno: 72,
+            tema: {
+              idTema: formData.idTema,
+              nmTema: selectedTema?.nmTema || ''
+            },
+            flAtivo: 'S'
+          },
+          {
+            idStatusSolicPrazoTema: 0,
+            idStatusSolicitacao: 6, // Em Aprovação
+            idTema: formData.idTema,
+            nrPrazoInterno: 48,
+            tema: {
+              idTema: formData.idTema,
+              nmTema: selectedTema?.nmTema || ''
+            },
+            flAtivo: 'S'
+          },
+          {
+            idStatusSolicPrazoTema: 0,
+            idStatusSolicitacao: 7, // Em Assinatura
+            idTema: formData.idTema,
+            nrPrazoInterno: 48,
+            tema: {
+              idTema: formData.idTema,
+              nmTema: selectedTema?.nmTema || ''
+            },
+            flAtivo: 'S'
+          }
+        ];
+        setStatusPrazos(defaultPrazos);
+      } else {
+        setStatusPrazos(prazos);
+      }
     } catch (error) {
       console.error('Erro ao carregar prazos por status:', error);
       toast.error('Erro ao carregar configurações de prazos');
     } finally {
       setLoadingStatusPrazos(false);
     }
-  }, [formData.idTema]);
+  }, [formData.idTema, temas]);
 
   const updateLocalPrazo = useCallback((idStatus: number, valor: number) => {
     setStatusPrazos(prev => {
@@ -610,7 +649,7 @@ export default function SolicitacaoModal({
             nmTema: getSelectedTema()?.nmTema || ''
           },
           flAtivo: 'S'
-        } as StatusSolicPrazoTemaResponse;
+        } as StatusSolicPrazoTemaForUI;
         return [...prev, newPrazo];
       }
     });
@@ -632,16 +671,20 @@ export default function SolicitacaoModal({
       {codigo: 9, nome: 'Arquivado'}
     ];
 
+    const selectedTema = getSelectedTema();
+    const temaPrazoTotal = selectedTema?.nrPrazo || 0;
+    const currentPrazoTotal = prazoExcepcional
+      ? statusPrazos.reduce((acc, curr) => acc + (curr.nrPrazoInterno || 0), 0)
+      : temaPrazoTotal;
+
     return (
       <div className="space-y-6">
-
-
         {formData.idTema ? (
           <div className="flex flex-col">
             <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center space-x-3">
-                <h3 className="text-lg font-medium text-gray-900">Configuração de Prazos Internos</h3>
-                <div className="flex items-center space-x-2">
+              <div className="flex items-center w-full gap-3">
+                <h3 className="text-lg font-medium text-gray-900">Configuração de Prazos por Status</h3>
+                <div className="flex items-center gap-2">
                   <Checkbox
                     id="prazoExcepcional"
                     checked={prazoExcepcional}
@@ -651,11 +694,10 @@ export default function SolicitacaoModal({
                       
                       if (!ativo && formData.idTema) {
                         try {
-                          const prazosDefault = await statusSolicPrazoTemaClient.listar(formData.idTema);
-                          setStatusPrazos(prazosDefault);
+                          await loadStatusPrazos();
                           setFormData(prev => ({
                             ...prev,
-                            nrPrazo: undefined,
+                            nrPrazo: selectedTema?.nrPrazo || undefined,
                             tpPrazo: 'H'
                           }));
                         } catch (error) {
@@ -669,18 +711,15 @@ export default function SolicitacaoModal({
                     Prazo Excepcional
                   </Label>
                 </div>
-              </div>
-              <div className="text-right">
-                <div className="text-sm font-medium text-gray-600">Total de Horas</div>
-                <div className="text-lg font-semibold text-blue-600">
-                  {statusPrazos.reduce((acc, curr) => acc + (curr.nrPrazoInterno || 0), 0)}h
-                </div>
+                <h3 className="text-blue-500 font-bold ml-auto text-2xl">
+                  {currentPrazoTotal}h
+                </h3>
               </div>
             </div>
             <p className="text-sm text-gray-600 mb-4">
               {prazoExcepcional 
-                ? "Modo excepcional ativo: Configure prazos personalizados para cada etapa abaixo." 
-                : "Modo padrão: Os prazos seguirão a configuração padrão do tema selecionado. Ative o 'Prazo Excepcional' para personalizar."
+                ? "Modo excepcional ativo: Configure prazos personalizados para cada etapa abaixo. O prazo total será a soma de todos os prazos configurados."
+                : "Modo padrão: O prazo total será o prazo padrão do tema selecionado. Ative o 'Prazo Excepcional' para personalizar prazos por status."
               }
             </p>
             <div className="space-y-4">
@@ -694,10 +733,12 @@ export default function SolicitacaoModal({
                     const prazoConfig = statusPrazos.find(p => p.idStatusSolicitacao === status.codigo);
                     const prazoAtual = prazoConfig?.nrPrazoInterno || 0;
                     return (
-                      <div key={index} className="bg-gray-50 rounded-lg p-4">
+                      <div key={index} className={`rounded-lg p-4 ${prazoExcepcional ? 'bg-gray-50' : 'bg-gray-100'}`}>
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
-                            <h4 className="font-medium text-gray-900">{status.nome}</h4>
+                            <h4 className={`font-medium ${prazoExcepcional ? 'text-gray-900' : 'text-gray-500'}`}>
+                              {status.nome}
+                            </h4>
                           </div>
                           <div className="space-y-2">
                             <div className="flex items-center gap-2">
@@ -751,7 +792,7 @@ export default function SolicitacaoModal({
           </div>
         ) : null}
       </div>
-    )}, [prazoExcepcional, formData.idTema, loadingStatusPrazos, statusPrazos, updateLocalPrazo, setFormData, statusList]);
+    )}, [prazoExcepcional, formData.idTema, loadingStatusPrazos, statusPrazos, updateLocalPrazo, setFormData, statusList, getSelectedTema, loadStatusPrazos]);
 
   const renderStep4 = useCallback(() => (
     <div className="space-y-6">
@@ -867,8 +908,8 @@ export default function SolicitacaoModal({
           {formData.idsAreas && formData.idsAreas.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {formData.idsAreas.map(areaId => {
-                const tema = getSelectedTema();
-                const area = tema?.areas?.find(a => a.idArea === areaId);
+                // Corrigido: buscar área na lista de todas as áreas carregadas, não do tema
+                const area = allAreas.find(a => a.idArea === areaId);
                 return area ? (
                   <span key={areaId} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                     {area.nmArea}
@@ -957,12 +998,14 @@ export default function SolicitacaoModal({
           {anexosBackend.length > 0 && (
             <div>
               <div className="text-xs text-gray-500 mb-2">Anexos já salvos:</div>
-              {anexosBackend.map((anexo, index) => (
-                <div key={index} className="flex items-center justify-between p-2 bg-gray-50 border border-gray-200 rounded text-sm">
-                  <span className="font-medium text-gray-800">{anexo.nmArquivo}</span>
-                  <span className="text-xs text-gray-600">Salvo</span>
-                </div>
-              ))}
+              <div className="flex flex-col gap-2">
+                {anexosBackend.map((anexo, index) => (
+                  <div key={index} className="flex items-center justify-between p-2 bg-gray-50 border border-gray-200 rounded text-sm">
+                    <span className="font-medium text-gray-800">{anexo.nmArquivo}</span>
+                    <span className="text-xs text-gray-600">Salvo</span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
@@ -1087,11 +1130,11 @@ export default function SolicitacaoModal({
               { title: 'Resumo', description: 'Finalização' }
             ]}
             onStepClick={handleStepClick}
-            canNavigateToStep={(step) => {
+            canNavigateToStep={(step: number): boolean => {
               if (step === 1) return true;
               if (step === 2) return isStep1Valid();
               if (step >= 3) return isStep1Valid() && isStep2Valid();
-              return false;
+              return false; // Fallback para garantir que sempre retorna boolean
             }}
           />
         </div>
@@ -1214,7 +1257,7 @@ export default function SolicitacaoModal({
                 disabled={loading}
                 className="flex items-center gap-2"
               >
-                {loading ? 'Salvando...' : solicitacao ? 'Editar Solicitação' : 'Criar Solicitação'}
+                {loading ? 'Salvando...' : solicitacao ? 'Salvar alterações' : 'Criar Solicitação'}
               </Button>
             </>
           )}

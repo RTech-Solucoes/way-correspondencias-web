@@ -301,7 +301,7 @@ export default function ResponsaveisPage() {
                       <div className="flex flex-wrap gap-1">
                         {responsavel.areas.slice(0, 2).map((area, index) => (
                           <span key={index} className="inline-flex px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                            {area.nmArea}
+                            {area.area.nmArea}
                           </span>
                         ))}
                         {responsavel.areas?.length > 2 && (

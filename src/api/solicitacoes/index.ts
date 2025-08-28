@@ -1,4 +1,3 @@
-// Exportações principais
 export { default as solicitacoesClient } from './client';
 export { default as solicitacaoAnexosClient } from './anexos-client';
 

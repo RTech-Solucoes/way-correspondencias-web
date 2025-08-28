@@ -1,6 +1,6 @@
 'use client';
 
-import {useState, useEffect, ChangeEvent, FormEvent, useCallback} from 'react';
+import {useState, useEffect, ChangeEvent, useCallback} from 'react';
 import {
   Dialog, 
   DialogContent, 
@@ -51,11 +51,14 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
   const buscarPerfis = useCallback(async () => {
     try {
       setLoadingPerfis(true);
+      console.log('Carregando perfis...');
       const response = await perfisClient.buscarPorFiltro({ size: 100 });
+      console.log('Perfis carregados:', response);
       const perfisAtivos = response.content.filter(perfil => perfil.flAtivo === 'S');
+      console.log('Perfis ativos:', perfisAtivos);
       setPerfis(perfisAtivos);
-    } catch {
-      console.error('Erro ao carregar perfis');
+    } catch (error) {
+      console.error('Erro ao carregar perfis:', error);
       toast.error("Erro ao carregar perfis");
       setPerfis([]);
     } finally {
@@ -66,33 +69,70 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
   const buscarResponsavelComAreas = useCallback(async (idResponsavel: number) => {
     try {
       setLoadingResponsavel(true);
+      console.log('Buscando responsável com áreas para ID:', idResponsavel);
       const responsavelComAreas = await responsaveisClient.buscarPorIdComAreas(idResponsavel);
+      console.log('Responsável carregado:', responsavelComAreas);
+      console.log('ID do perfil do responsável:', responsavelComAreas.idPerfil);
 
-      setFormData({
+      const newFormData = {
         idPerfil: responsavelComAreas.idPerfil,
         nmUsuarioLogin: responsavelComAreas.nmUsuarioLogin,
         nmResponsavel: responsavelComAreas.nmResponsavel,
         dsEmail: responsavelComAreas.dsEmail,
         nrCpf: responsavelComAreas.nrCpf || '',
         dtNascimento: responsavelComAreas.dtNascimento || '',
-        idsAreas: responsavelComAreas.areas ? responsavelComAreas.areas.map(area => area.idArea) : []
-      });
+        idsAreas: responsavelComAreas.areas ? responsavelComAreas.areas.map(responsavelArea => responsavelArea.area.idArea) : []
+      };
+
+      console.log('Atualizando formData com:', newFormData);
+      setFormData(newFormData);
 
       if (responsavelComAreas.areas && responsavelComAreas.areas.length > 0) {
-        setSelectedAreaIds(responsavelComAreas.areas.map(area => area.idArea));
+        setSelectedAreaIds(responsavelComAreas.areas.map(responsavelArea => responsavelArea.area.idArea));
       } else {
         setSelectedAreaIds([]);
       }
-    } catch {
+    } catch (error) {
+      console.error('Erro ao buscar responsável:', error);
       toast.error("Erro ao carregar responsável");
+
+      // Fallback: usar os dados básicos do responsável se a busca com áreas falhar
+      if (responsavel) {
+        console.log('Usando fallback com dados básicos do responsável:', responsavel);
+        console.log('ID do perfil do responsável (fallback):', responsavel.idPerfil);
+
+        const fallbackFormData = {
+          idPerfil: responsavel.idPerfil,
+          nmUsuarioLogin: responsavel.nmUsuarioLogin,
+          nmResponsavel: responsavel.nmResponsavel,
+          dsEmail: responsavel.dsEmail,
+          nrCpf: responsavel.nrCpf || '',
+          dtNascimento: responsavel.dtNascimento || '',
+          idsAreas: responsavel.areas ? responsavel.areas.map(responsavelArea => responsavelArea.area.idArea) : []
+        };
+
+        console.log('Atualizando formData com fallback:', fallbackFormData);
+        setFormData(fallbackFormData);
+
+        if (responsavel.areas && responsavel.areas.length > 0) {
+          setSelectedAreaIds(responsavel.areas.map(responsavelArea => responsavelArea.area.idArea));
+        } else {
+          setSelectedAreaIds([]);
+        }
+      }
     } finally {
       setLoadingResponsavel(false);
     }
-  }, []);
+  }, [responsavel]);
 
   useEffect(() => {
     if (open) {
       buscarPerfis();
+    }
+  }, [open, buscarPerfis]);
+
+  useEffect(() => {
+    if (open && perfis.length > 0) {
       if (responsavel) {
         buscarResponsavelComAreas(responsavel.idResponsavel);
       } else {
@@ -108,7 +148,14 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
         setSelectedAreaIds([]);
       }
     }
-  }, [open, responsavel, buscarPerfis, buscarResponsavelComAreas]);
+  }, [open, responsavel, perfis.length, buscarResponsavelComAreas]);
+
+  // Debug useEffect to monitor formData changes
+  useEffect(() => {
+    console.log('FormData atualizado:', formData);
+    console.log('Perfil ID atual no formData:', formData.idPerfil);
+    console.log('Perfis disponíveis:', perfis);
+  }, [formData, perfis]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -153,7 +200,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
 
       onSave();
       onClose();
-    } catch (error) {
+    } catch {
       toast.error(responsavel ? "Erro ao atualizar responsável" : "Erro ao criar responsável");
     } finally {
       setLoading(false);

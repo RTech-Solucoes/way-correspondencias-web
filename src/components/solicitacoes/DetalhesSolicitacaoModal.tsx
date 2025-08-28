@@ -237,7 +237,7 @@ export default function DetalhesSolicitacaoModal({
               <DialogClose asChild>
                 <Button
                   variant="ghost"
-                  className="flex items-center justify-center rounded-full bg-slate-800 text-white hover:bg-slate-700 transition-colors h-9 w-9"
+                  className="flex items-center justify-center rounded-full text-white transition-colors h-9 w-9"
                   aria-label="Fechar"
                 >
                   <XIcon className="h-4 w-4" />

@@ -27,7 +27,6 @@ export function Pagination({
   loading = false,
   showOnlyPagginationButtons = false
 }: PaginationProps) {
-  // Cálculos simples usando dados diretos da API
   const startItem = totalElements > 0 ? (currentPage * pageSize) + 1 : 0;
   const endItem = totalElements > 0 ? startItem + numberOfElements - 1 : 0;
 
