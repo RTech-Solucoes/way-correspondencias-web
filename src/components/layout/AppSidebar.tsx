@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {usePathname} from 'next/navigation';
 import {ChevronLeftIcon, ChevronRightIcon} from '@heroicons/react/24/outline';
 import {useSidebar} from '@/context/sidebar/SidebarContext';
-import PAGES_DEF from '@/constants/pages';
+import {PAGES_DEF} from '@/constants/pages';
 import {PageDef} from "@/types/pages/pages";
 
 const menuItems: PageDef[] = PAGES_DEF
