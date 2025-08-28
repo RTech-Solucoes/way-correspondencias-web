@@ -17,13 +17,8 @@ export const PAGES_DEF: PageDef[] = [
   },
   {
     path: "/email",
-    label: "Email",
+    label: "Caixa de entrada",
     icon: EnvelopeSimpleIcon
-  },
-  {
-    path: "/responsaveis",
-    label: "Responsáveis",
-    icon: UsersIcon
   },
   {
     path: "/areas",
@@ -34,6 +29,11 @@ export const PAGES_DEF: PageDef[] = [
     path: "/temas",
     label: "Temas",
     icon: TagIcon
+  },
+  {
+    path: "/responsaveis",
+    label: "Responsáveis",
+    icon: UsersIcon
   },
 ];
 

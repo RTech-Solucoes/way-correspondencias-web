@@ -21,6 +21,7 @@ import {
   TagIcon,
   SpinnerIcon,
   ArrowsDownUpIcon,
+  ArrowClockwiseIcon,
 } from '@phosphor-icons/react';
 import {Dialog, DialogContent, DialogHeader, DialogTitle} from '@/components/ui/dialog';
 import {Label} from '@/components/ui/label';
@@ -144,20 +145,43 @@ export default function TemasPage() {
     return sorted;
   };
 
+  // refresh button
   return (
     <div className="flex flex-col min-h-0 flex-1">
-      <div className="bg-white border-b border-gray-200 p-6">
-        <div className="flex items-start justify-between mb-4">
+      <div className="flex items-center justify-between">
           <PageTitle />
-          <Button onClick={() => {
-            setSelectedTema(null);
-            setShowTemaModal(true);
-          }}>
-            <PlusIcon className="h-4 w-4 mr-2"/>
-            Novo Tema
-          </Button>
-        </div>
 
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            // onClick={handleRefresh}
+            onClick={() => {
+              loadTemas();
+            }}
+          >
+            <ArrowClockwiseIcon className="h-4 w-4 mr-1" />
+          </Button>
+
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-gray-500">
+              {temas?.length} tema(s)
+            </span>
+
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalElements={totalElements}
+              pageSize={15}
+              onPageChange={setCurrentPage}
+              loading={loading}
+              showOnlyPagginationButtons={true}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
         <div className="flex items-center space-x-4">
           <div className="flex-1 relative">
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400"/>
@@ -186,10 +210,17 @@ export default function TemasPage() {
             <FunnelSimpleIcon className="h-4 w-4 mr-2"/>
             Filtrar
           </Button>
+          <Button onClick={() => {
+            setSelectedTema(null);
+            setShowTemaModal(true);
+          }}>
+            <PlusIcon className="h-4 w-4 mr-2"/>
+            Novo Tema
+          </Button>
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden bg-white">
+      <div className="flex flex-1 overflow-hidden bg-white rounded-lg shadow-sm border border-gray-200">
         <StickyTable>
           <StickyTableHeader>
             <StickyTableRow>
@@ -293,15 +324,6 @@ export default function TemasPage() {
           </StickyTableBody>
         </StickyTable>
       </div>
-
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalElements={totalElements}
-        pageSize={15}
-        onPageChange={setCurrentPage}
-        loading={loading}
-      />
 
       {showFilterModal && (
         <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>

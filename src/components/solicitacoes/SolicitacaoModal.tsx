@@ -29,6 +29,8 @@ import {toast} from 'sonner';
 import {capitalize} from '@/utils/utils';
 import {MultiSelectAreas} from '@/components/ui/multi-select-areas';
 import {CaretLeftIcon, CaretRightIcon, CheckIcon, ArrowBendUpRightIcon} from '@phosphor-icons/react';
+import { Stepper } from '@/components/ui/stepper';
+import { Input } from '@nextui-org/react';
 import AnexoComponent from '../AnexoComponotent/AnexoComponent';
 import AnexoList from '../AnexoComponotent/AnexoList/AnexoList';
 import {statusSolicPrazoTemaClient} from '@/api/status-prazo-tema/client';
@@ -78,7 +80,7 @@ export default function SolicitacaoModal({
   initialDescription
 }: SolicitacaoModalProps) {
   const router = useRouter();
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(3);
   const [formData, setFormData] = useState<SolicitacaoRequest>({
     cdIdentificacao: '',
     dsAssunto: '',
@@ -144,14 +146,7 @@ export default function SolicitacaoModal({
   useEffect(() => {
     if (solicitacao && solicitacao.idSolicitacao && open) {
       solicitacoesClient.buscarAnexos(solicitacao.idSolicitacao).then((anexos) => {
-        const anexosMapeados = anexos.map(anexo => ({
-          idAnexo: anexo.id,
-          idObjeto: solicitacao.idSolicitacao,
-          nmArquivo: anexo.nomeArquivo,
-          dsCaminho: '',
-          tpObjeto: 'S'
-        }));
-        setAnexosBackend(anexosMapeados);
+        setAnexosBackend(anexos);
       });
     } else {
       setAnexosBackend([]);
@@ -398,6 +393,7 @@ export default function SolicitacaoModal({
   }, []);
 
   const handleRemoveAnexoBackend = useCallback(async (idAnexo: number) => {
+    console.log(idAnexo);
     if (!solicitacao?.idSolicitacao) return;
 
     try {
@@ -632,59 +628,56 @@ export default function SolicitacaoModal({
 
     return (
       <div className="space-y-6">
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="prazoExcepcional"
-            checked={prazoExcepcional}
-            onCheckedChange={(checked) => {
-              const ativo = !!checked;
-              setPrazoExcepcional(ativo);
-              if (!ativo) {
-                setFormData(prev => ({
-                  ...prev,
-                  nrPrazo: undefined,
-                  tpPrazo: ''
-                }));
-              }
-            }}
-          />
-          <Label htmlFor="prazoExcepcional" className="text-sm font-medium text-gray-700">
-            Prazo Excepcional
-          </Label>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <TextField
-            id="nrPrazo"
-            label="Prazo"
-            name="nrPrazo"
-            type="number"
-            value={formData.nrPrazo && formData.nrPrazo > 0 ? formData.nrPrazo.toString() : ''}
-            onChange={handleInputChange}
-            placeholder="Horas"
-            disabled={!prazoExcepcional}
-          />
-          <div className="flex flex-col gap-1">
-            <Label htmlFor="tpPrazo">Tipo de Prazo</Label>
-            <Select
-              value={formData.tpPrazo}
-              onValueChange={(value) => handleSelectChange('tpPrazo', value)}
-              disabled={!prazoExcepcional}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="H">Horas</SelectItem>
-                <SelectItem value="D">Dias</SelectItem>
-                <SelectItem value="U">Dias úteis</SelectItem>
-                <SelectItem value="M">Meses</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+
+
         {formData.idTema ? (
           <div className="flex flex-col">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Configuração de Prazos Internos</h3>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center space-x-3">
+                <h3 className="text-lg font-medium text-gray-900">Configuração de Prazos Internos</h3>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="prazoExcepcional"
+                    checked={prazoExcepcional}
+                    onCheckedChange={async (checked) => {
+                      const ativo = !!checked;
+                      setPrazoExcepcional(ativo);
+                      
+                      if (!ativo && formData.idTema) {
+                        // Restaurar valores padrão quando desativar o prazo excepcional
+                        try {
+                          const prazosDefault = await statusSolicPrazoTemaClient.listar(formData.idTema);
+                          setStatusPrazos(prazosDefault);
+                          setFormData(prev => ({
+                            ...prev,
+                            nrPrazo: undefined,
+                            tpPrazo: 'H'
+                          }));
+                        } catch (error) {
+                          console.error('Erro ao restaurar prazos padrão:', error);
+                          toast.error('Erro ao restaurar configurações padrão');
+                        }
+                      }
+                    }}
+                  />
+                  <Label htmlFor="prazoExcepcional" className="text-sm font-medium text-blue-600">
+                    Prazo Excepcional
+                  </Label>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-sm font-medium text-gray-600">Total de Horas</div>
+                <div className="text-lg font-semibold text-blue-600">
+                  {statusPrazos.reduce((acc, curr) => acc + (curr.nrPrazoInterno || 0), 0)}h
+                </div>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              {prazoExcepcional 
+                ? "Modo excepcional ativo: Configure prazos personalizados para cada etapa abaixo." 
+                : "Modo padrão: Os prazos seguirão a configuração padrão do tema selecionado. Ative o 'Prazo Excepcional' para personalizar."
+              }
+            </p>
             <div className="space-y-4">
               {loadingStatusPrazos ? (
                 <div className="flex items-center justify-center p-8">
@@ -702,7 +695,6 @@ export default function SolicitacaoModal({
                             <h4 className="font-medium text-gray-900">{status.nome}</h4>
                           </div>
                           <div className="space-y-2">
-                            <Label className="text-xs text-gray-600">Prazo Interno (horas)</Label>
                             <div className="flex items-center gap-2">
                               <Button
                                 type="button"
@@ -712,14 +704,27 @@ export default function SolicitacaoModal({
                                 disabled={!prazoExcepcional}
                                 className="w-8 h-8 p-0 flex items-center justify-center"
                               >-</Button>
-                              <TextField
+                              <Input
                                 key={`prazo-${status.codigo}`}
                                 type="number"
                                 value={prazoAtual.toString()}
-                                onChange={(e) => updateLocalPrazo(status.codigo, parseInt(e.target.value) || 0)}
+                                onValueChange={(value) => {
+                                  const numValue = parseInt(value || '0');
+                                  if (numValue >= 0 && numValue <= 300) {
+                                    updateLocalPrazo(status.codigo, numValue);
+                                  }
+                                }}
                                 placeholder="0"
-                                disabled={!prazoExcepcional}
-                                className="flex-1 text-center"
+                                isDisabled={!prazoExcepcional}
+                                className="flex-1"
+                                classNames={{
+                                  input: "text-center"
+                                }}
+                                size="sm"
+                                variant="bordered"
+                                min={0}
+                                max={300}
+                                step={1}
                               />
                               <Button
                                 type="button"
@@ -837,13 +842,13 @@ export default function SolicitacaoModal({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label className="text-sm font-semibold text-gray-700">Tema</Label>
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+            <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
               {getSelectedTema()?.nmTema || 'Não selecionado'}
             </div>
           </div>
           <div>
             <Label className="text-sm font-semibold text-gray-700">Responsável</Label>
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+            <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
               {responsaveis.find(r => r.idResponsavel === formData.idResponsavel)?.nmResponsavel || 'Não definido'}
             </div>
           </div>
@@ -853,7 +858,7 @@ export default function SolicitacaoModal({
       {/* Áreas Envolvidas */}
       <div className="border-t pt-4">
         <Label className="text-sm font-semibold text-gray-700">Áreas Envolvidas</Label>
-        <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-sm">
+        <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
           {formData.idsAreas && formData.idsAreas.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {formData.idsAreas.map(areaId => {
@@ -877,7 +882,7 @@ export default function SolicitacaoModal({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label className="text-sm font-semibold text-gray-700">Prazo Principal</Label>
-            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
+            <div className="p-3 border border-yellow-200 rounded-lg text-sm">
               {formData.nrPrazo && formData.nrPrazo > 0
                 ? `${formData.nrPrazo} ${(() => { switch(formData.tpPrazo){ case 'H': return 'horas'; case 'D': return 'dias'; case 'U': return 'dias úteis'; case 'M': return 'meses'; default: return 'unid.'; } })()}`
                 : 'Prazo padrão do tema'
@@ -935,9 +940,9 @@ export default function SolicitacaoModal({
             <div>
               <div className="text-xs text-gray-500 mb-2">Novos anexos a serem enviados:</div>
               {anexos.map((file, index) => (
-                <div key={index} className="flex items-center justify-between p-2 bg-blue-50 border border-blue-200 rounded text-sm">
-                  <span className="font-medium text-blue-800">{file.name}</span>
-                  <span className="text-xs text-blue-600">{Math.round(file.size / 1024)} KB</span>
+                <div key={index} className="flex items-center justify-between p-2 bg-gray-50 border rounded text-sm">
+                  <span className="font-medium">{file.name}</span>
+                  <span className="text-xs">{Math.round(file.size / 1024)} KB</span>
                 </div>
               ))}
             </div>
@@ -948,9 +953,9 @@ export default function SolicitacaoModal({
             <div>
               <div className="text-xs text-gray-500 mb-2">Anexos já salvos:</div>
               {anexosBackend.map((anexo, index) => (
-                <div key={index} className="flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded text-sm">
-                  <span className="font-medium text-green-800">{anexo.nmArquivo}</span>
-                  <span className="text-xs text-green-600">Salvo</span>
+                <div key={index} className="flex items-center justify-between p-2 bg-gray-50 border border-gray-200 rounded text-sm">
+                  <span className="font-medium text-gray-800">{anexo.nmArquivo}</span>
+                  <span className="text-xs text-gray-600">Salvo</span>
                 </div>
               ))}
             </div>
@@ -1041,7 +1046,6 @@ export default function SolicitacaoModal({
       try {
         const status = await statusSolicitacaoClient.listarTodos();
         setStatusList(status);
-        console.log(status)
       } catch (error) {
         console.error('Erro ao carregar lista de status:', error);
       }
@@ -1061,191 +1065,46 @@ export default function SolicitacaoModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="overflow-y-auto h-full">
-        <DialogHeader className="pb-6">
+      <DialogContent className="h-full flex flex-col">
+        <DialogHeader className="pb-6 flex-shrink-0">
           <DialogTitle className="text-xl font-semibold">
             {solicitacao ? 'Encaminhar Solicitação' : 'Nova Solicitação'}
           </DialogTitle>
         </DialogHeader>
 
-        <form id="solicitacao-form" onSubmit={handleSubmit} className="flex flex-col overflow-y-auto space-y-8">
-          {/* Stepper Navigation */}
-          <div className="flex justify-center mb-8 pt-1">
-            <div className="flex items-start space-x-4">
-              {/* Etapa 1 */}
-              <div className="flex flex-col items-center space-y-2">
-                <button
-                  type="button"
-                  onClick={() => handleStepClick(1)}
-                  className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors ${
-                    currentStep === 1
-                      ? 'bg-blue-500 border-blue-500 text-white ring-2 ring-blue-200'
-                      : currentStep > 1
-                        ? 'bg-blue-100 border-blue-300 text-primary'
-                        : 'border-gray-300 text-gray-400'
-                  }`}
-                >
-                  {currentStep > 1 ? <CheckIcon size={20}/> : '1'}
-                </button>
-                <span className={`text-xs font-medium text-center ${
-                  currentStep === 1
-                    ? 'text-primary'
-                    : currentStep > 1
-                      ? 'text-blue-500'
-                      : 'text-gray-400'
-                }`}>
-                  Dados da<br/>Solicitação
-                </span>
-              </div>
+        {/* Stepper Navigation - Fixed */}
+        <div className="flex-shrink-0 border-b border-gray-200 pb-4">
+          <Stepper
+            currentStep={currentStep}
+            steps={[
+              { title: 'Dados da Solicitação', description: 'Informações básicas' },
+              { title: 'Tema e Áreas', description: 'Configuração' },
+              { title: 'Status e Prazos', description: 'Definições de tempo' },
+              { title: 'Anexos', description: 'Documentos' },
+              { title: 'Resumo', description: 'Finalização' }
+            ]}
+            onStepClick={handleStepClick}
+            canNavigateToStep={(step) => {
+              if (step === 1) return true;
+              if (step === 2) return isStep1Valid();
+              if (step >= 3) return isStep1Valid() && isStep2Valid();
+              return false;
+            }}
+          />
+        </div>
 
-              {/* Linha conectora 1-2 */}
-              <div className={`w-16 my-auto h-1 transition-colors ${
-                currentStep >= 2 ? 'bg-blue-500' : 'bg-gray-300'
-              }`}></div>
-
-              {/* Etapa 2 */}
-              <div className="flex flex-col items-center space-y-2">
-                <button
-                  type="button"
-                  onClick={() => handleStepClick(2)}
-                  disabled={!isStep1Valid()}
-                  className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors disabled:cursor-not-allowed ${
-                    currentStep === 2
-                      ? 'bg-blue-500 border-blue-500 text-white ring-2 ring-blue-200'
-                      : currentStep > 2
-                        ? 'bg-blue-100 border-blue-300 text-primary'
-                        : 'border-gray-300 text-gray-400'
-                  }`}
-                >
-                  {currentStep > 2 ? <CheckIcon size={20}/> : '2'}
-                </button>
-                <span className={`text-xs font-medium text-center ${
-                  currentStep === 2
-                    ? 'text-primary'
-                    : currentStep > 2
-                      ? 'text-blue-500'
-                      : currentStep >= 2
-                        ? 'text-primary'
-                        : 'text-gray-400'
-                }`}>
-                  Tema e<br/>Áreas
-                </span>
-              </div>
-
-              {/* Linha conectora 2-3 */}
-              <div className={`w-16 my-auto h-1 transition-colors ${
-                currentStep >= 3 ? 'bg-blue-500' : 'bg-gray-300'
-              }`}></div>
-
-              {/* Etapa 3 */}
-              <div className="flex flex-col items-center space-y-2">
-                <button
-                  type="button"
-                  onClick={() => handleStepClick(3)}
-                  disabled={!isStep1Valid() || !isStep2Valid()}
-                  className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors disabled:cursor-not-allowed ${
-                    currentStep === 3
-                      ? 'bg-blue-500 border-blue-500 text-white ring-2 ring-blue-200'
-                      : currentStep > 3
-                        ? 'bg-blue-100 border-blue-300 text-primary'
-                        : 'border-gray-300 text-gray-400'
-                  }`}
-                >
-                  {currentStep > 3 ? <CheckIcon size={20}/> : '3'}
-                </button>
-                <span className={`text-xs font-medium text-center ${
-                  currentStep === 3
-                    ? 'text-primary'
-                    : currentStep > 3
-                      ? 'text-blue-500'
-                      : currentStep >= 3
-                        ? 'text-primary'
-                        : 'text-gray-400'
-                }`}>
-                  Status e<br/>Prazos
-                </span>
-              </div>
-
-              {/* Linha conectora 3-4 */}
-              <div className={`w-16 my-auto h-1 transition-colors ${
-                currentStep >= 4 ? 'bg-blue-500' : 'bg-gray-300'
-              }`}></div>
-
-              {/* Etapa 4 */}
-              <div className="flex flex-col items-center space-y-2">
-                <button
-                  type="button"
-                  onClick={() => handleStepClick(4)}
-                  disabled={!isStep1Valid() || !isStep2Valid()}
-                  className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors disabled:cursor-not-allowed ${
-                    currentStep === 4
-                      ? 'bg-blue-500 border-blue-500 text-white ring-2 ring-blue-200'
-                      : currentStep > 4
-                        ? 'bg-blue-100 border-blue-300 text-primary'
-                        : 'border-gray-300 text-gray-400'
-                  }`}
-                >
-                  {currentStep > 4 ? <CheckIcon size={20}/> : '4'}
-                </button>
-                <span className={`text-xs font-medium text-center ${
-                  currentStep === 4
-                    ? 'text-primary'
-                    : currentStep > 4
-                      ? 'text-blue-500'
-                      : currentStep >= 4
-                        ? 'text-primary'
-                        : 'text-gray-400'
-                }`}>
-                  Anexos
-                </span>
-              </div>
-
-              {/* Linha conectora 4-5 */}
-              <div className={`w-16 my-auto h-1 transition-colors ${
-                currentStep >= 5 ? 'bg-blue-500' : 'bg-gray-300'
-              }`}></div>
-
-              {/* Etapa 5 */}
-              <div className="flex flex-col items-center space-y-2">
-                <button
-                  type="button"
-                  onClick={() => handleStepClick(5)}
-                  disabled={!isStep1Valid() || !isStep2Valid()}
-                  className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors disabled:cursor-not-allowed ${
-                    currentStep === 5
-                      ? 'bg-blue-500 border-blue-500 text-white ring-2 ring-blue-200'
-                      : currentStep > 5
-                        ? 'bg-blue-100 border-blue-300 text-primary'
-                        : 'border-gray-300 text-gray-400'
-                  }`}
-                >
-                  {currentStep > 5 ? <CheckIcon size={20}/> : '5'}
-                </button>
-                <span className={`text-xs font-medium text-center ${
-                  currentStep === 5
-                    ? 'text-primary'
-                    : currentStep > 5
-                      ? 'text-blue-500'
-                      : currentStep >= 5
-                        ? 'text-primary'
-                        : 'text-gray-400'
-                }`}>
-                  Resumo
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="h-[500px]">
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-y-auto py-6">
+          <form id="solicitacao-form" onSubmit={handleSubmit}>
             {currentStep === 1 && renderStep1()}
             {currentStep === 2 && renderStep2()}
             {currentStep === 3 && renderStep3()}
             {currentStep === 4 && renderStep4()}
             {currentStep === 5 && renderStep5()}
-          </div>
-        </form>
+          </form>
+        </div>
 
-        <DialogFooter className="flex gap-3 pt-6 border-t mt-auto">
+        <DialogFooter className="flex gap-3 pt-6 border-t flex-shrink-0">
           <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
             Cancelar
           </Button>

@@ -82,14 +82,14 @@ export function MultiSelectAreas({
           <div className="text-sm text-gray-500">Buscando áreas...</div>
         </div>
       ) : (
-        <div className={cn("mt-2 grid grid-cols-1 md:grid-cols-2 gap-3 overflow-y-auto", disabled && "opacity-50 pointer-events-none")}>
+        <div className={cn("mt-2 grid grid-cols-1 md:grid-cols-3 gap-3 overflow-y-auto", disabled && "opacity-50 pointer-events-none")}>
           {areas.map((area, index) => {
             const isChecked = selectedAreaIds.includes(area.idArea);
             return (
               <div
                 key={area.idArea}
                 className={cn(
-                  "flex flex-col items-start gap-2 justify-between p-3 bg-gray-100 box-border rounded-3xl transition-colors min-w-0",
+                  "flex flex-row items-start gap-2 justify-between p-3 bg-gray-100 box-border rounded-3xl transition-colors min-w-0",
                   disabled ? "cursor-not-allowed bg-gray-100" : "cursor-pointer hover:bg-gray-100"
                 )}
                 onClick={() => handleAreaToggle(area.idArea)}

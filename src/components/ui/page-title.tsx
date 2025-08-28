@@ -10,8 +10,7 @@ export default function PageTitle () {
   if (currentPage) {
     return (
       <div className="flex flex-row gap-3 items-center text-gray-900">
-        <currentPage.icon className="h-9 w-9"/>
-        <h1 className="text-3xl font-bold">
+        <h1 className="text-xl font-semibold mb-4">
           {currentPage.label}
         </h1>
       </div>
