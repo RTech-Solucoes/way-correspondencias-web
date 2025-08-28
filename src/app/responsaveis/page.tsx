@@ -185,6 +185,9 @@ export default function ResponsaveisPage() {
             onPageChange={setCurrentPage}
             loading={loading}
             showOnlyPagginationButtons={true}
+            numberOfElements={0}
+            first={false}
+            last={false}
           />
         </div>
       </div>

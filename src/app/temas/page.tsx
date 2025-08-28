@@ -145,7 +145,6 @@ export default function TemasPage() {
     return sorted;
   };
 
-  // refresh button
   return (
     <div className="flex flex-col min-h-0 flex-1">
       <div className="flex items-center justify-between">
@@ -155,7 +154,6 @@ export default function TemasPage() {
           <Button
             variant="ghost"
             size="sm"
-            // onClick={handleRefresh}
             onClick={() => {
               loadTemas();
             }}

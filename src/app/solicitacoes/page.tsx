@@ -45,7 +45,7 @@ import { useSolicitacoes } from '@/context/solicitacoes/SolicitacoesContext';
 import TramitacaoList from '@/components/solicitacoes/TramitacaoList';
 import anexosClient from '@/api/anexos/client';
 import { AnexoResponse, TipoObjetoAnexo } from '@/api/anexos/type';
-import { AreaSolicitacao, SolicitacaoResponse } from '@/api/solicitacoes/types';
+import { AreaSolicitacao, SolicitacaoResponse, PagedResponse } from '@/api/solicitacoes/types';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { TemaResponse } from '@/api/temas/types';
 import { AreaResponse } from '@/api/areas/types';
@@ -98,6 +98,10 @@ export default function SolicitacoesPage() {
     handleSort,
   } = useSolicitacoes();
 
+  const [numberOfElements, setNumberOfElements] = useState(0);
+  const [first, setFirst] = useState(true);
+  const [last, setLast] = useState(true);
+
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const [showDetalhesModal, setShowDetalhesModal] = useState(false);
   const [detalhesSolicitacao, setDetalhesSolicitacao] = useState<SolicitacaoResponse | null>(null);
@@ -118,11 +122,30 @@ export default function SolicitacoesPage() {
       if (activeFilters.dateTo) filterParts.push(`to:${activeFilters.dateTo}`);
 
       const filtro = filterParts.join(' ') || undefined;
-      const response = await solicitacoesClient.listar(filtro);
 
-      setSolicitacoes(response ?? []);
-      setTotalPages(1);
-      setTotalElements((response ?? []).length);
+      let sortParam = undefined;
+      if (sortField && sortDirection) {
+        sortParam = `${sortField},${sortDirection}`;
+      }
+
+      const response = await solicitacoesClient.listar(filtro, currentPage, 10, sortParam);
+
+      if (response && typeof response === 'object' && 'content' in response) {
+        const paginatedResponse = response as unknown as PagedResponse<SolicitacaoResponse>;
+        setSolicitacoes(paginatedResponse.content ?? []);
+        setTotalPages(paginatedResponse.totalPages ?? 1);
+        setTotalElements(paginatedResponse.totalElements ?? 0);
+        setNumberOfElements(paginatedResponse.numberOfElements ?? 0);
+        setFirst(paginatedResponse.first ?? true);
+        setLast(paginatedResponse.last ?? true);
+      } else {
+        setSolicitacoes(response ?? []);
+        setTotalPages(1);
+        setTotalElements((response ?? []).length);
+        setNumberOfElements((response ?? []).length);
+        setFirst(true);
+        setLast(true);
+      }
     } catch {
       toast.error('Erro ao carregar solicitações');
     } finally {
@@ -132,18 +155,13 @@ export default function SolicitacoesPage() {
     currentPage,
     activeFilters,
     debouncedSearchQuery,
+    sortField,
+    sortDirection,
     setSolicitacoes,
     setTotalPages,
     setTotalElements,
     setLoading
   ]);
-
-  useEffect(() => {
-    loadSolicitacoes();
-    loadResponsaveis();
-    loadTemas();
-    loadAreas();
-  }, [loadSolicitacoes]);
 
   const loadResponsaveis = useCallback(async () => {
     try {
@@ -165,6 +183,13 @@ export default function SolicitacoesPage() {
       setAreas(response.content ?? []);
     } catch {}
   }, [setAreas]);
+
+  useEffect(() => {
+    loadSolicitacoes();
+    loadResponsaveis();
+    loadTemas();
+    loadAreas();
+  }, [loadSolicitacoes, loadResponsaveis, loadTemas, loadAreas]);
 
   const confirmDelete = async () => {
     if (solicitacaoToDelete) {
@@ -191,7 +216,7 @@ export default function SolicitacoesPage() {
     const sorted = [...solicitacoes];
 
     if (sortField) {
-      sorted.sort((a: any, b: any) => {
+      sorted.sort((a: SolicitacaoResponse, b: SolicitacaoResponse) => {
         const aValue = a?.[sortField];
         const bValue = b?.[sortField];
 
@@ -213,7 +238,7 @@ export default function SolicitacoesPage() {
     return sorted;
   };
 
-  const openDetalhes = useCallback(async (s: any) => {
+  const openDetalhes = useCallback(async (s: SolicitacaoResponse) => {
     setSelectedSolicitacao(s);
     setShowDetalhesModal(true);
     setDetalhesSolicitacao(null);
@@ -228,26 +253,6 @@ export default function SolicitacoesPage() {
       setDetalhesSolicitacao(s);
     }
   }, [setSelectedSolicitacao]);
-
-  const baixarAnexo = useCallback(async (anexo: any) => {
-    try {
-      if (!anexo?.idObjeto || !anexo?.idAnexo) {
-        toast.error('Dados do documento incompletos');
-        return;
-      }
-      const blob = await solicitacoesClient.downloadAnexo(anexo.idObjeto, anexo.idAnexo);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = anexo.nmArquivo || 'documento';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch {
-      toast.error('Erro ao baixar documento');
-    }
-  }, []);
 
   const abrirEmailOriginal = useCallback(() => {
     toast.message('Abrir e-mail original (implemente a navegação/URL).');
@@ -265,11 +270,18 @@ export default function SolicitacoesPage() {
         await solicitacoesClient.enviarDevolutiva?.(alvo.idSolicitacao, { mensagem });
       }
       if (arquivos.length > 0) {
-        const fd = new FormData();
-        arquivos.forEach((f) => fd.append('files', f));
-        fd.append('idObjeto', String(alvo.idSolicitacao));
-        fd.append('tpObjeto', 'S');
-        await solicitacoesClient.uploadAnexos(fd);
+        const arquivosDTO = await Promise.all(
+          arquivos.map(async (file) => {
+            const arrayBuffer = await file.arrayBuffer();
+            const base64String = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+            return {
+              nomeArquivo: file.name,
+              conteudoArquivo: base64String,
+              tipoArquivo: file.type || 'application/octet-stream'
+            };
+          })
+        );
+        await solicitacoesClient.uploadAnexos(alvo.idSolicitacao, arquivosDTO);
       }
       await loadSolicitacoes();
     } catch {
@@ -303,7 +315,10 @@ export default function SolicitacoesPage() {
             currentPage={currentPage}
             totalPages={totalPages}
             totalElements={totalElements}
-            pageSize={15}
+            pageSize={10}
+            numberOfElements={numberOfElements}
+            first={first}
+            last={last}
             onPageChange={setCurrentPage}
             loading={loading}
             showOnlyPagginationButtons={true}

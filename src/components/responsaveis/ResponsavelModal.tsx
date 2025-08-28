@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
+import { MultiSelectAreas } from '@/components/ui/multi-select-areas';
 import { ResponsavelResponse, ResponsavelRequest } from '@/api/responsaveis/types';
 import { responsaveisClient } from '@/api/responsaveis/client';
 import { PerfilResponse } from '@/api/perfis/types';
@@ -38,9 +39,12 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
     nmResponsavel: '',
     dsEmail: '',
     nrCpf: '',
-    dtNascimento: ''
+    dtNascimento: '',
+    idsAreas: []
   });
+  const [selectedAreaIds, setSelectedAreaIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingResponsavel, setLoadingResponsavel] = useState(false);
   const [perfis, setPerfis] = useState<PerfilResponse[]>([]);
   const [loadingPerfis, setLoadingPerfis] = useState(false);
 
@@ -59,33 +63,52 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
     }
   }, []);
 
+  const buscarResponsavelComAreas = useCallback(async (idResponsavel: number) => {
+    try {
+      setLoadingResponsavel(true);
+      const responsavelComAreas = await responsaveisClient.buscarPorIdComAreas(idResponsavel);
+
+      setFormData({
+        idPerfil: responsavelComAreas.idPerfil,
+        nmUsuarioLogin: responsavelComAreas.nmUsuarioLogin,
+        nmResponsavel: responsavelComAreas.nmResponsavel,
+        dsEmail: responsavelComAreas.dsEmail,
+        nrCpf: responsavelComAreas.nrCpf || '',
+        dtNascimento: responsavelComAreas.dtNascimento || '',
+        idsAreas: responsavelComAreas.areas ? responsavelComAreas.areas.map(area => area.idArea) : []
+      });
+
+      if (responsavelComAreas.areas && responsavelComAreas.areas.length > 0) {
+        setSelectedAreaIds(responsavelComAreas.areas.map(area => area.idArea));
+      } else {
+        setSelectedAreaIds([]);
+      }
+    } catch {
+      toast.error("Erro ao carregar responsável");
+    } finally {
+      setLoadingResponsavel(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (open) {
       buscarPerfis();
+      if (responsavel) {
+        buscarResponsavelComAreas(responsavel.idResponsavel);
+      } else {
+        setFormData({
+          idPerfil: 0,
+          nmUsuarioLogin: '',
+          nmResponsavel: '',
+          dsEmail: '',
+          nrCpf: '',
+          dtNascimento: '',
+          idsAreas: []
+        });
+        setSelectedAreaIds([]);
+      }
     }
-  }, [open, buscarPerfis]);
-
-  useEffect(() => {
-    if (responsavel) {
-      setFormData({
-        idPerfil: responsavel.idPerfil,
-        nmUsuarioLogin: responsavel.nmUsuarioLogin,
-        nmResponsavel: responsavel.nmResponsavel,
-        dsEmail: responsavel.dsEmail,
-        nrCpf: responsavel.nrCpf || '',
-        dtNascimento: responsavel.dtNascimento || ''
-      });
-    } else {
-      setFormData({
-        idPerfil: 0,
-        nmUsuarioLogin: '',
-        nmResponsavel: '',
-        dsEmail: '',
-        nrCpf: '',
-        dtNascimento: ''
-      });
-    }
-  }, [responsavel, open]);
+  }, [open, responsavel, buscarPerfis, buscarResponsavelComAreas]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -95,6 +118,14 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
               value
     }));
   };
+
+  const handleAreasSelectionChange = useCallback((selectedIds: number[]) => {
+    setSelectedAreaIds(selectedIds);
+    setFormData(prev => ({
+      ...prev,
+      idsAreas: selectedIds
+    }));
+  }, []);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -112,11 +143,16 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
     try {
       setLoading(true);
 
+      const responsavelRequest: ResponsavelRequest = {
+        ...formData,
+        idsAreas: selectedAreaIds.length > 0 ? selectedAreaIds : undefined
+      };
+
       if (responsavel) {
-        await responsaveisClient.atualizar(responsavel.idResponsavel, formData);
+        await responsaveisClient.atualizar(responsavel.idResponsavel, responsavelRequest);
         toast.success("Responsável atualizado com sucesso");
       } else {
-        await responsaveisClient.criar(formData);
+        await responsaveisClient.criar(responsavelRequest);
         toast.success("Responsável criado com sucesso");
       }
 
@@ -144,14 +180,14 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
 
   return (
     <Dialog open={open} onOpenChange={(newOpen) => !newOpen && onClose()}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
+      <DialogContent className="h-full flex flex-col">
+        <DialogHeader className="pb-6 flex-shrink-0">
+          <DialogTitle className="text-xl font-semibold">
             {responsavel ? 'Editar Responsável' : 'Novo Responsável'}
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form className="flex flex-col flex-1 overflow-y-auto gap-4">
 
           <TextField
             label="Nome *"
@@ -224,19 +260,26 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
             </Select>
           </div>
 
-          <DialogFooter className="flex gap-2">
-            <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              disabled={loading || !isFormValid()}
-              className="disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Salvando...' : responsavel ? 'Salvar Alterações' : 'Criar Responsável'}
-            </Button>
-          </DialogFooter>
+          <MultiSelectAreas
+            selectedAreaIds={selectedAreaIds}
+            onSelectionChange={handleAreasSelectionChange}
+            label="Áreas"
+            disabled={loadingResponsavel}
+          />
+
         </form>
+        <DialogFooter className="flex gap-2">
+          <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={loading || !isFormValid()}
+            className="disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? 'Salvando...' : responsavel ? 'Salvar Alterações' : 'Criar Responsável'}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

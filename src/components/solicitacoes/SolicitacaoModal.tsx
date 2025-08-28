@@ -36,14 +36,7 @@ import AnexoList from '../AnexoComponotent/AnexoList/AnexoList';
 import {statusSolicPrazoTemaClient} from '@/api/status-prazo-tema/client';
 import {StatusSolicPrazoTemaResponse} from '@/api/status-prazo-tema/types';
 import { statusSolicitacaoClient, StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
-
-interface AnexoFromBackend {
-  idAnexo: number;
-  idObjeto: number;
-  nmArquivo: string;
-  dsCaminho: string;
-  tpObjeto: string;
-}
+import {AnexoResponse} from "@/api/anexos/type";
 
 interface AnexoListItem {
   idAnexo?: number;
@@ -97,7 +90,7 @@ export default function SolicitacaoModal({
   });
   const [loading, setLoading] = useState(false);
   const [anexos, setAnexos] = useState<File[]>([]);
-  const [anexosBackend, setAnexosBackend] = useState<AnexoFromBackend[]>([]);
+  const [anexosBackend, setAnexosBackend] = useState<AnexoResponse[]>([]);
   const [statusPrazos, setStatusPrazos] = useState<StatusSolicPrazoTemaResponse[]>([]);
   const [loadingStatusPrazos, setLoadingStatusPrazos] = useState(false);
   const [prazoExcepcional, setPrazoExcepcional] = useState(false);
@@ -644,7 +637,6 @@ export default function SolicitacaoModal({
                       setPrazoExcepcional(ativo);
                       
                       if (!ativo && formData.idTema) {
-                        // Restaurar valores padrão quando desativar o prazo excepcional
                         try {
                           const prazosDefault = await statusSolicPrazoTemaClient.listar(formData.idTema);
                           setStatusPrazos(prazosDefault);
@@ -1072,7 +1064,6 @@ export default function SolicitacaoModal({
           </DialogTitle>
         </DialogHeader>
 
-        {/* Stepper Navigation - Fixed */}
         <div className="flex-shrink-0 border-b border-gray-200 pb-4">
           <Stepper
             currentStep={currentStep}

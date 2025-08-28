@@ -33,7 +33,11 @@ export function getFirstAndLastName(name: string | null): string {
   const firstName = names?.[0]
   const lastName = names?.[names?.length - 1]
 
-  return firstName + ' ' + lastName
+  if (firstName === lastName) {
+    return firstName
+  } else {
+    return firstName + ' ' + lastName
+  }
 }
 
 export function getStatusText(status: StatusAtivo | null): string {

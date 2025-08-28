@@ -9,7 +9,6 @@ interface AnexoProps {
 
 export default function AnexoComponent({onAddAnexos}: AnexoProps) {
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    // Filtrar arquivos válidos (com nome não vazio)
     const validFiles = acceptedFiles.filter(file => {
       if (!file.name || file.name.trim() === '') {
         console.warn('Arquivo rejeitado: sem nome válido', file);
@@ -19,7 +18,6 @@ export default function AnexoComponent({onAddAnexos}: AnexoProps) {
     });
 
     if (validFiles.length === 0) {
-      // Mostrar erro se nenhum arquivo foi válido
       import('sonner').then(({ toast }) => {
         toast.error('Nenhum arquivo válido foi selecionado');
       });
@@ -27,7 +25,6 @@ export default function AnexoComponent({onAddAnexos}: AnexoProps) {
     }
 
     if (validFiles.length < acceptedFiles.length) {
-      // Avisar se alguns arquivos foram rejeitados
       import('sonner').then(({ toast }) => {
         toast.warning(`${acceptedFiles.length - validFiles.length} arquivo(s) foram rejeitados por não terem nome válido`);
       });
@@ -92,7 +89,6 @@ export default function AnexoComponent({onAddAnexos}: AnexoProps) {
         multiple
         onChange={(e) => {
           if (e.target.files) {
-            // Aplicar a mesma validação do onDrop para o input manual
             const fileArray = Array.from(e.target.files);
             const validFiles = fileArray.filter(file => {
               if (!file.name || file.name.trim() === '') {

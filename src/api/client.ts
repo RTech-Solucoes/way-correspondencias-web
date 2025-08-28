@@ -56,7 +56,6 @@ export default class ApiClient {
       ...options,
     };
 
-    // Ajusta Content-Type se body for FormData
     if (config.body instanceof FormData) {
       delete headers['Content-Type'];
     }

@@ -100,10 +100,8 @@
 }
 
 body {
-  @apply bg-background text-foreground subpixel-antialiased;
+  @apply bg-gray-50 text-foreground subpixel-antialiased;
   overflow-x: hidden;
-  color: rgb(var(--foreground));
-  background: rgb(var(--background));
 }
 
 article {

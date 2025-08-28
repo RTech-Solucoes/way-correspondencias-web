@@ -1,4 +1,4 @@
-// Arquivo corrigido: definição apenas de tipos sem lógica de cliente
+
 
 export interface StatusSolicPrazoTemaRequest {
   idStatusSolicitacao: number;
@@ -18,9 +18,8 @@ export interface StatusSolicitacaoPrazoTema {
   dtAtualizacao?: string;
 }
 
-// Interface de resposta mais flexível usada no front
 export interface StatusSolicPrazoTemaResponse extends Partial<StatusSolicitacaoPrazoTema> {
-  idStatusSolicPrazoTema?: number; // id alternativo vindo do backend
+  idStatusSolicPrazoTema?: number;
   tema?: { idTema: number; nmTema: string };
   flAtivo?: string;
 }

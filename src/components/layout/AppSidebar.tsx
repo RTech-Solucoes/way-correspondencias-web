@@ -29,15 +29,15 @@ export function AppSidebar() {
               key={item.label}
               href={item.path}
               className={`
-                flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                flex items-center px-3 py-3 rounded-lg text-sm font-medium transition-colors
                 ${isActive 
-                  ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+                  ? 'bg-blue-100 text-blue-700' 
                   : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                 }
               `}
               title={isCollapsed ? item.label : undefined}
             >
-              <Icon className={`h-5 w-5 ${isActive ? 'text-blue-500' : 'text-gray-400'} ${isCollapsed ? 'mx-auto' : 'mr-3'}`} />
+              <Icon className={`h-5 w-5 ${isActive ? 'text-blue-700' : 'text-gray-400'} ${isCollapsed ? 'mx-auto' : 'mr-3'}`} />
               {!isCollapsed && (
                 <span className="truncate">{item.label}</span>
               )}

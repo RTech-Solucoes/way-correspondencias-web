@@ -36,7 +36,6 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
       setNmTema(temaComAreas.nmTema);
       setDsTema(temaComAreas.dsTema || '');
       setNrPrazo(temaComAreas.nrPrazo || 0);
-      // mapear legado 'C' (corridas) para 'H' (horas)
       setTpPrazo(temaComAreas.tpPrazo === 'C' ? 'H' : (temaComAreas.tpPrazo || ''));
 
       if (temaComAreas.areas && temaComAreas.areas?.length > 0) {

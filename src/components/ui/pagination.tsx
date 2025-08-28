@@ -3,13 +3,13 @@ import { Button } from '@/components/ui/button';
 import { CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react';
 
 interface PaginationProps {
-  currentPage: number; // API: number
-  totalPages: number; // API: totalPages
-  totalElements: number; // API: totalElements
-  pageSize: number; // API: size
-  numberOfElements: number; // API: numberOfElements
-  first: boolean; // API: first
-  last: boolean; // API: last
+  currentPage: number;
+  totalPages: number;
+  totalElements: number;
+  pageSize: number;
+  numberOfElements: number;
+  first: boolean;
+  last: boolean;
   onPageChange: (page: number) => void;
   loading?: boolean;
   showOnlyPagginationButtons?: boolean;

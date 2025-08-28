@@ -122,7 +122,7 @@ class SolicitacoesClient {
   /**
    * Upload de anexos (wrapper compatibilidade)
    */
-  async uploadAnexos(idSolicitacao: number, anexos: ArquivoDTO[]): Promise<void> { // anexos tipado evita TS7006
+  async uploadAnexos(idSolicitacao: number, anexos: ArquivoDTO[]): Promise<void> {
     return solicitacaoAnexosClient.upload(idSolicitacao, anexos);
   }
 
