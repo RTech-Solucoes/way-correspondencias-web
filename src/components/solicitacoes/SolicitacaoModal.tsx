@@ -178,6 +178,12 @@ export default function SolicitacaoModal({
     return responsaveis.length > 0 ? responsaveis[0].idResponsavel : 0;
   }, [temas, responsaveis]);
 
+  const getResponsavelByArea = useCallback((areaId: number) => {
+    return responsaveis.find(resp =>
+      resp.areas?.some(respArea => respArea.area.idArea === areaId)
+    );
+  }, [responsaveis]);
+
   const handleInputChange = useCallback((e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const {name, value} = e.target;
     let processedValue: string | number | undefined = value;
@@ -568,10 +574,8 @@ export default function SolicitacaoModal({
       const prazos = await statusSolicPrazoTemaClient.listar(formData.idTema);
 
       const selectedTema = temas.find(t => t.idTema === formData.idTema);
-      const temaPrazo = selectedTema?.nrPrazo || 0;
 
-      if (prazos.length === 0 && temaPrazo > 0) {
-        // Configurar prazos padrão específicos para cada status
+      if (prazos.length === 0) {
         const defaultPrazos: StatusSolicPrazoTemaForUI[] = [
           {
             idStatusSolicPrazoTema: 0,
@@ -906,14 +910,27 @@ export default function SolicitacaoModal({
         <Label className="text-sm font-semibold text-gray-700">Áreas Envolvidas</Label>
         <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
           {formData.idsAreas && formData.idsAreas.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
+            <div className="space-y-3">
               {formData.idsAreas.map(areaId => {
-                // Corrigido: buscar área na lista de todas as áreas carregadas, não do tema
                 const area = allAreas.find(a => a.idArea === areaId);
+                const responsavelArea = getResponsavelByArea(areaId);
                 return area ? (
-                  <span key={areaId} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    {area.nmArea}
-                  </span>
+                  <div key={areaId} className="flex items-center justify-between p-3 bg-white border rounded-lg shadow-sm">
+                    <div className="flex flex-col">
+                      <span className="font-medium text-gray-900">{area.nmArea}</span>
+                      <span className="text-xs text-gray-500">{area.cdArea}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-sm font-medium text-blue-600">
+                        {responsavelArea?.nmResponsavel || 'Sem responsável'}
+                      </span>
+                      {responsavelArea && (
+                        <div className="text-xs text-gray-500">
+                          {responsavelArea.dsEmail}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 ) : null;
               })}
             </div>
@@ -1017,7 +1034,7 @@ export default function SolicitacaoModal({
         </div>
       </div>
     </div>
-  ), [formData, getSelectedTema, responsaveis, anexos, anexosBackend, statusPrazos, statusList, prazoExcepcional, solicitacao?.statusCodigo]);
+  ), [formData, getSelectedTema, responsaveis, anexos, anexosBackend, statusPrazos, statusList, prazoExcepcional, solicitacao?.statusCodigo, allAreas, getResponsavelByArea]);
 
   const renderStep1 = () => (
     <div className="space-y-6">
