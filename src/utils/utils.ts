@@ -115,3 +115,8 @@ export function saveBlob(
   a.remove();
   URL.revokeObjectURL(url);
 }
+
+export const getRows = (string: string | undefined) => {
+  if (!string) return 5;
+  return string.split('\n').length / 5;
+}

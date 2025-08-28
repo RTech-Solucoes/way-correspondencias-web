@@ -26,7 +26,7 @@ import {ResponsavelResponse} from '@/api/responsaveis/types';
 import {TemaResponse} from '@/api/temas/types';
 import {solicitacoesClient} from '@/api/solicitacoes/client';
 import {toast} from 'sonner';
-import {capitalize} from '@/utils/utils';
+import {capitalize, getRows} from '@/utils/utils';
 import {MultiSelectAreas} from '@/components/ui/multi-select-areas';
 import {CaretLeftIcon, CaretRightIcon, CheckIcon, ArrowBendUpRightIcon} from '@phosphor-icons/react';
 import { Stepper } from '@/components/ui/stepper';
@@ -965,7 +965,7 @@ export default function SolicitacaoModal({
 
   const renderStep1 = () => (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <TextField
           label="Código de Identificação *"
           name="cdIdentificacao"
@@ -975,16 +975,6 @@ export default function SolicitacaoModal({
           autoFocus
           maxLength={50}
         />
-        <TextField
-          label="Assunto"
-          name="dsAssunto"
-          value={formData.dsAssunto}
-          onChange={handleInputChange}
-          maxLength={500}
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
         <TextField
           label="Nº Ofício"
           name="nrOficio"
@@ -1002,14 +992,24 @@ export default function SolicitacaoModal({
       </div>
 
       <div className="space-y-2">
+        <Label htmlFor="dsAssunto">Assunto</Label>
+        <Textarea
+          id="dsAssunto"
+          name="dsAssunto"
+          value={formData.dsAssunto}
+          onChange={handleInputChange}
+          rows={getRows(formData.dsAssunto)}
+        />
+      </div>
+
+      <div className="space-y-2">
         <Label htmlFor="dsSolicitacao">Descrição da Solicitação</Label>
         <Textarea
           id="dsSolicitacao"
           name="dsSolicitacao"
           value={formData.dsSolicitacao}
           onChange={handleInputChange}
-          rows={3}
-          maxLength={1000}
+          rows={getRows(formData.dsSolicitacao)}
         />
       </div>
 
@@ -1020,8 +1020,7 @@ export default function SolicitacaoModal({
           name="dsObservacao"
           value={formData.dsObservacao}
           onChange={handleInputChange}
-          rows={3}
-          maxLength={1000}
+          rows={getRows(formData.dsObservacao)}
         />
       </div>
     </div>
