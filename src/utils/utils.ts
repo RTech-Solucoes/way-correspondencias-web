@@ -33,7 +33,11 @@ export function getFirstAndLastName(name: string | null): string {
   const firstName = names?.[0]
   const lastName = names?.[names?.length - 1]
 
-  return firstName + ' ' + lastName
+  if (firstName === lastName) {
+    return firstName
+  } else {
+    return firstName + ' ' + lastName
+  }
 }
 
 export function getStatusText(status: StatusAtivo | null): string {
@@ -110,4 +114,12 @@ export function saveBlob(
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
+}
+
+export const getRows = (string: string | undefined) => {
+  if (!string) return 1;
+
+  const lineBreaks = (string.match(/\n/g) || []).length;
+
+  return (string.split('\n').length) + lineBreaks;
 }

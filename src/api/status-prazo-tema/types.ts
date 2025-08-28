@@ -1,10 +1,18 @@
-// Arquivo corrigido: definição apenas de tipos sem lógica de cliente
-
 export interface StatusSolicPrazoTemaRequest {
-  idStatusSolicitacao: number;
-  nrPrazoInterno?: number;
-  tpPrazo?: string;
-  flExcepcional?: string;
+  IdStatusSolicitacao: number;
+  nrPrazoInterno: number;
+}
+
+export interface StatusSolicPrazoTemaResponse {
+  idStatusSolicPrazoTema: number;
+  statusCodigo: number;
+  idTema: number;
+  nrPrazoInterno: number;
+  dtCriacao: string;
+  dtAtualizacao?: string;
+  nrCpfCriacao: string;
+  nrCpfAtualizacao?: string;
+  flAtivo: string;
 }
 
 export interface StatusSolicitacaoPrazoTema {
@@ -18,9 +26,11 @@ export interface StatusSolicitacaoPrazoTema {
   dtAtualizacao?: string;
 }
 
-// Interface de resposta mais flexível usada no front
-export interface StatusSolicPrazoTemaResponse extends Partial<StatusSolicitacaoPrazoTema> {
-  idStatusSolicPrazoTema?: number; // id alternativo vindo do backend
+export interface StatusSolicPrazoTemaForUI {
+  idStatusSolicPrazoTema: number;
+  idStatusSolicitacao: number;
+  idTema: number;
+  nrPrazoInterno: number;
+  flAtivo: string;
   tema?: { idTema: number; nmTema: string };
-  flAtivo?: string;
 }

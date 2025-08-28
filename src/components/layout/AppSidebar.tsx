@@ -2,33 +2,13 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { 
-  EnvelopeIcon, 
-  DocumentTextIcon, 
-  UsersIcon, 
-  TagIcon, 
-  MapIcon,
-  ChartBarIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon
-} from '@heroicons/react/24/outline';
-import { useSidebar } from '@/context/sidebar/SidebarContext';
+import {usePathname} from 'next/navigation';
+import {CaretLeftIcon, CaretRightIcon} from '@phosphor-icons/react';
+import {useSidebar} from '@/context/sidebar/SidebarContext';
+import {PAGES_DEF} from '@/constants/pages';
+import {PageDef} from "@/types/pages/pages";
 
-interface MenuItem {
-  name: string;
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-}
-
-const menuItems: MenuItem[] = [
-  // { name: 'Dashboard', href: '/dashboard', icon: ChartBarIcon },
-  { name: 'Caixa de entrada', href: '/email', icon: EnvelopeIcon },
-  { name: 'Solicitações', href: '/solicitacoes', icon: DocumentTextIcon },
-  { name: 'Temas', href: '/temas', icon: TagIcon },
-  { name: 'Áreas', href: '/areas', icon: MapIcon },
-  { name: 'Responsáveis', href: '/responsaveis', icon: UsersIcon },
-];
+const menuItems: PageDef[] = PAGES_DEF
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -41,25 +21,25 @@ export function AppSidebar() {
     >
       <nav className="p-4 space-y-2 flex-1">
         {menuItems.map((item) => {
-          const isActive = pathname.startsWith(item.href);
+          const isActive = pathname.startsWith(item.path);
           const Icon = item.icon;
           
           return (
             <Link
-              key={item.name}
-              href={item.href}
+              key={item.label}
+              href={item.path}
               className={`
-                flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                flex items-center px-3 py-3 rounded-lg text-sm font-medium transition-colors
                 ${isActive 
-                  ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+                  ? 'bg-blue-100 text-blue-700' 
                   : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                 }
               `}
-              title={isCollapsed ? item.name : undefined}
+              title={isCollapsed ? item.label : undefined}
             >
-              <Icon className={`h-5 w-5 ${isActive ? 'text-blue-500' : 'text-gray-400'} ${isCollapsed ? 'mx-auto' : 'mr-3'}`} />
+              <Icon className={`h-5 w-5 ${isActive ? 'text-blue-700' : 'text-gray-400'} ${isCollapsed ? 'mx-auto' : 'mr-3'}`} />
               {!isCollapsed && (
-                <span className="truncate">{item.name}</span>
+                <span className="truncate">{item.label}</span>
               )}
             </Link>
           );
@@ -74,10 +54,10 @@ export function AppSidebar() {
           title={isCollapsed ? 'Expandir sidebar' : 'Recolher sidebar'}
         >
           {isCollapsed ? (
-            <ChevronRightIcon className="h-5 w-5" />
+            <CaretRightIcon className="h-5 w-5" />
           ) : (
             <>
-              <ChevronLeftIcon className="h-5 w-5 mr-2" />
+              <CaretLeftIcon className="h-5 w-5 mr-2" />
               <span className="text-sm">Recolher</span>
             </>
           )}

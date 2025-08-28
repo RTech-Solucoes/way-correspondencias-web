@@ -26,9 +26,7 @@ export function Stepper({
 
   return (
     <div className="w-full mx-auto mb-6">
-      {/* Simple Progress Header */}
       <div className="flex items-center justify-between mb-4">
-        {/* Current Step Info */}
         <div className="flex-1">
           <h3 className="text-lg font-semibold text-gray-900 mb-1">
             {currentStepData?.title}
@@ -40,7 +38,6 @@ export function Stepper({
           )}
         </div>
 
-        {/* Step Counter */}
         <div className="text-right">
           <div className="text-sm font-medium text-gray-500 mb-1">
             Etapa {currentStep} de {steps.length}
@@ -51,8 +48,7 @@ export function Stepper({
         </div>
       </div>
 
-      {/* Progress Bar */}
-      <div className="w-full">
+      <div className="w-full bg-gray-100 rounded-md">
         <Progress 
           value={progressValue}
           color="primary"
@@ -61,7 +57,6 @@ export function Stepper({
         />
       </div>
 
-      {/* Navigation Dots (optional) */}
       <div className="flex justify-center mt-4 space-x-2">
         {steps.map((_, index) => {
           const stepNumber = index + 1;
@@ -76,11 +71,11 @@ export function Stepper({
               onClick={() => canNavigate && onStepClick?.(stepNumber)}
               disabled={!canNavigate}
               className={`
-                w-2 h-2 rounded-full transition-all duration-200
+                w-4 h-4 rounded-full transition-all duration-200
                 ${isActive 
                   ? 'bg-blue-500 scale-125' 
                   : isCompleted
-                    ? 'bg-blue-400'
+                    ? 'bg-blue-200'
                     : canNavigate
                       ? 'bg-gray-300 hover:bg-gray-400'
                       : 'bg-gray-200 cursor-not-allowed'

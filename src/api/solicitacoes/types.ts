@@ -65,7 +65,7 @@ export interface SolicitacaoRequest {
   idEmail?: number;
   idTema?: number;
   idResponsavel?: number;
-  idStatusSolicitacao?: number; // adicionado para alinhar com backend
+  idStatusSolicitacao?: number;
   statusCodigo?: number;
   flStatus?: string;
   cdIdentificacao?: string;
@@ -77,6 +77,7 @@ export interface SolicitacaoRequest {
   nrProcesso?: string;
   tpPrazo?: string;
   idsAreas?: number[];
+  flExcepcional?: string;
 }
 
 export interface SolicitacaoTemaRequest {
@@ -128,22 +129,22 @@ export interface BaseResponse {
 export interface SolicitacaoPrazoItemRequest {
   idStatusSolicitacao: number;
   nrPrazoInterno?: number;
-  tpPrazo?: string; // 'U' ou 'C'
-  flExcepcional?: string; // 'S' | 'N'
+  tpPrazo?: string;
+  flExcepcional?: string;
 }
 
 export interface SolicitacaoEtapaPrazoRequest {
-  nrPrazoInterno?: number; // prazo geral interno
-  nrPrazoExterno?: number; // se vier a ser usado
+  nrPrazoInterno?: number;
+  nrPrazoExterno?: number;
   solicitacoesPrazos: SolicitacaoPrazoItemRequest[];
 }
 
 export interface SolicitacaoTemaEtapaRequest {
   idTema: number;
-  tpPrazo?: string; // TipoPrazo
+  tpPrazo?: string;
   nrPrazoInterno?: number;
   nrPrazoExterno?: number;
-  flExcepcional?: string; // 'S' | 'N'
+  flExcepcional?: string;
   idsAreas?: number[];
 }
 

@@ -2,16 +2,16 @@ import ApiClient from '../client';
 
 export interface ArquivoDTO {
   nomeArquivo: string;
-  conteudoArquivo: string; // Base64
+  conteudoArquivo: string;
   tipoArquivo: string;
 }
 
 export interface AnexoResponse {
-  id: number;
-  nomeArquivo: string;
-  tamanhoArquivo: number;
-  tipoArquivo: string;
-  dataCriacao: string;
+  idAnexo: number;
+  idObjeto: number;
+  nmArquivo: string;
+  dsCaminho: string;
+  tpObjeto: string;
 }
 
 class SolicitacaoAnexosClient {

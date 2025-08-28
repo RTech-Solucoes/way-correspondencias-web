@@ -126,7 +126,7 @@ export function MultiSelectAreas({
             );
           })}
           {areas?.length === 0 && !loading && (
-            <div className="text-sm text-gray-500 p-4 text-center col-span-2">
+            <div className="text-sm text-gray-500 p-4 text-center col-span-3">
               Nenhuma área encontrada
             </div>
           )}

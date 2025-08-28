@@ -29,7 +29,6 @@ import {TemaModal} from '@/components/temas/TemaModal';
 import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
 import PageTitle from '@/components/ui/page-title';
 import { Pagination } from '@/components/ui/pagination';
-import {getStatusText} from "@/utils/utils";
 import { useTemas } from '@/context/temas/TemasContext';
 import { temasClient } from '@/api/temas/client';
 import { TemaFilterParams } from '@/api/temas/types';
@@ -145,7 +144,6 @@ export default function TemasPage() {
     return sorted;
   };
 
-  // refresh button
   return (
     <div className="flex flex-col min-h-0 flex-1">
       <div className="flex items-center justify-between">
@@ -155,7 +153,6 @@ export default function TemasPage() {
           <Button
             variant="ghost"
             size="sm"
-            // onClick={handleRefresh}
             onClick={() => {
               loadTemas();
             }}
@@ -176,6 +173,9 @@ export default function TemasPage() {
               onPageChange={setCurrentPage}
               loading={loading}
               showOnlyPagginationButtons={true}
+              numberOfElements={totalElements}
+              first={true}
+              last={true}
             />
           </div>
         </div>
@@ -233,24 +233,17 @@ export default function TemasPage() {
               <StickyTableHead>Descrição</StickyTableHead>
               <StickyTableHead className="cursor-pointer" onClick={() => handleSort('nrPrazo')}>
                 <div className="flex items-center">
-                  Prazo (horas)
+                  Prazo (horas corridas)
                   <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </StickyTableHead>
-              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('tpPrazo')}>
-                <div className="flex items-center">
-                  Tipo Prazo
-                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
-                </div>
-              </StickyTableHead>
-              <StickyTableHead>Áreas</StickyTableHead>
               <StickyTableHead className="text-right">Ações</StickyTableHead>
             </StickyTableRow>
           </StickyTableHeader>
           <StickyTableBody>
             {loading ? (
               <StickyTableRow>
-                <StickyTableCell colSpan={7} className="text-center py-8">
+                <StickyTableCell colSpan={4} className="text-center py-8">
                   <div className="flex flex-1 items-center justify-center py-8">
                     <SpinnerIcon className="h-6 w-6 animate-spin text-gray-400" />
                     <span className="ml-2 text-gray-500">Buscando temas...</span>
@@ -259,7 +252,7 @@ export default function TemasPage() {
               </StickyTableRow>
             ) : temas?.length === 0 ? (
               <StickyTableRow>
-                <StickyTableCell colSpan={7} className="text-center py-8">
+                <StickyTableCell colSpan={4} className="text-center py-8">
                   <div className="flex flex-col items-center space-y-2">
                     <TagIcon className="h-8 w-8 text-gray-400"/>
                     <p className="text-sm text-gray-500">Nenhum tema encontrado</p>
@@ -275,29 +268,6 @@ export default function TemasPage() {
                   </StickyTableCell>
                   <StickyTableCell>
                     {tema.nrPrazo ? `${tema.nrPrazo} horas` : '-'}
-                  </StickyTableCell>
-                  <StickyTableCell>
-                    {tema.tpPrazo === 'C' ? 'Horas corridas' :
-                     tema.tpPrazo === 'U' ? 'Horas úteis' :
-                     tema.tpPrazo || '-'}
-                  </StickyTableCell>
-                  <StickyTableCell>
-                    {tema.areas && tema.areas?.length > 0 ? (
-                      <div className="flex flex-wrap gap-1">
-                        {tema.areas.slice(0, 2).map((area, index) => (
-                          <span key={index} className="inline-flex px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                            {area.nmArea}
-                          </span>
-                        ))}
-                        {tema.areas?.length > 2 && (
-                          <span className="inline-flex px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
-                            +{tema.areas?.length - 2}
-                          </span>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-gray-400 text-sm">Nenhuma área</span>
-                    )}
                   </StickyTableCell>
                   <StickyTableCell className="text-right">
                     <div className="flex items-center justify-end space-x-2">

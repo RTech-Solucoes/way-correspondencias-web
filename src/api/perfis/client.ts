@@ -5,7 +5,7 @@ class PerfisClient {
   private client: ApiClient;
 
   constructor() {
-    this.client = new ApiClient('/api/perfis'); // Corrigindo para usar /api/perfis
+    this.client = new ApiClient('/api/perfis');
   }
 
   async buscarPorId(id: number): Promise<PerfilResponse> {

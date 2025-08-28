@@ -17,7 +17,7 @@ export type ArquivoDTO = {
 };
 
 export enum TipoObjetoAnexo {
-  E = "E", // E-mail
-  T = "T", // Tramitação
-  S = "S"  // Solicitação
+  E = "E",
+  T = "T",
+  S = "S"
 }

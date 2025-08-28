@@ -146,7 +146,7 @@ export default function EmailDetail({
   }
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full bg-white rounded-lg shadow-sm overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white sticky top-0 z-10">
         <div className="flex items-center space-x-3">
