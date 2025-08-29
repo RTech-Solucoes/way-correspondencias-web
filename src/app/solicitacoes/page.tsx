@@ -49,6 +49,9 @@ import { AreaSolicitacao, SolicitacaoResponse, PagedResponse } from '@/api/solic
 import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { TemaResponse } from '@/api/temas/types';
 import { AreaResponse } from '@/api/areas/types';
+import { useTramitacoesMutation } from '@/hooks/use-tramitacoes';
+
+
 
 export default function SolicitacoesPage() {
   const {
@@ -98,9 +101,32 @@ export default function SolicitacoesPage() {
     handleSort,
   } = useSolicitacoes();
 
+  const tramitacoesMutation = useTramitacoesMutation();
+
   const [numberOfElements, setNumberOfElements] = useState(0);
   const [first, setFirst] = useState(true);
   const [last, setLast] = useState(true);
+
+  const userHasOpenedDetailsModal = useCallback((solicitacao: SolicitacaoResponse) => {
+    const payload = {
+      idSolicitacao: solicitacao.idSolicitacao,
+      idAreaOrigem: 0,
+      idAreaDestino: 0,
+      dsObservacao: "",
+      idResponsavel: 0,
+      flAcao: "V"
+    };
+
+    tramitacoesMutation.mutate(payload, {
+      onSuccess: (data) => {
+        console.log('Tramitação criada com sucesso:', data);
+      },
+      onError: (error) => {
+        console.error('Erro ao criar tramitação:', error);
+        toast.error('Erro ao criar tramitação');
+      }
+    });
+  }, [tramitacoesMutation]);
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const [showDetalhesModal, setShowDetalhesModal] = useState(false);
@@ -242,6 +268,7 @@ export default function SolicitacoesPage() {
     setSelectedSolicitacao(s);
     setShowDetalhesModal(true);
     setDetalhesSolicitacao(null);
+    userHasOpenedDetailsModal(s);
 
     try {
       const detalhes = await solicitacoesClient.buscarPorId(s.idSolicitacao);
@@ -252,7 +279,7 @@ export default function SolicitacoesPage() {
       toast.error('Erro ao carregar os detalhes da solicitação');
       setDetalhesSolicitacao(s);
     }
-  }, [setSelectedSolicitacao]);
+  }, [setSelectedSolicitacao, userHasOpenedDetailsModal]);
 
   const abrirEmailOriginal = useCallback(() => {
     toast.message('Abrir e-mail original (implemente a navegação/URL).');
@@ -289,6 +316,14 @@ export default function SolicitacoesPage() {
       throw new Error('erro-devolutiva');
     }
   }, [detalhesSolicitacao, selectedSolicitacao, loadSolicitacoes]);
+
+  const onShowDetalhesModalChange = useCallback((open: boolean) => {
+    if (!open) {
+      setShowDetalhesModal(false);
+      setSelectedSolicitacao(null);
+      setDetalhesSolicitacao(null);
+    }
+  }, [setSelectedSolicitacao]);
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
@@ -703,6 +738,7 @@ export default function SolicitacoesPage() {
             setShowDetalhesModal(false);
             setSelectedSolicitacao(null);
             setDetalhesSolicitacao(null);
+            onShowDetalhesModalChange(false);
           }}
           solicitacao={detalhesSolicitacao ?? selectedSolicitacao}
           anexos={(detalhesAnexos ?? [])}

@@ -484,7 +484,9 @@ export default function SolicitacaoModal({
             .filter(p => p.nrPrazoInterno && p.nrPrazoInterno > 0 && p.idStatusSolicitacao)
             .map(p => ({
               idStatusSolicitacao: p.idStatusSolicitacao!,
+              idTema: formData.idTema,
               nrPrazoInterno: p.nrPrazoInterno,
+              nrPrazoExterno: p.nrPrazoExterno,
               tpPrazo: formData.tpPrazo || undefined,
               flExcepcional: prazoExcepcional ? 'S' : 'N'
             }));

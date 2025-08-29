@@ -1,6 +1,7 @@
 'use client'
 
 import {ReactNode} from 'react';
+import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {AreasProvider} from '@/context/areas/AreasContext';
 import {EmailProvider} from '@/context/email/EmailContext';
 import {ResponsaveisProvider} from '@/context/responsaveis/ResponsaveisContext';
@@ -9,26 +10,37 @@ import {TemasProvider} from '@/context/temas/TemasContext';
 import {ApiProvider} from "@/providers/ApiProvider";
 import IconProvider from "@/providers/IconProvider";
 
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
 interface ProvidersProps {
   children: ReactNode;
 }
 
 export default function Providers({children}: ProvidersProps) {
   return (
-    <ApiProvider>
-      <AreasProvider>
-        <EmailProvider>
-          <ResponsaveisProvider>
-            <SolicitacoesProvider>
-              <TemasProvider>
-                <IconProvider>
-                  {children}
-                </IconProvider>
-              </TemasProvider>
-            </SolicitacoesProvider>
-          </ResponsaveisProvider>
-        </EmailProvider>
-      </AreasProvider>
-    </ApiProvider>
+    <QueryClientProvider client={queryClient}>
+      <ApiProvider>
+        <AreasProvider>
+          <EmailProvider>
+            <ResponsaveisProvider>
+              <SolicitacoesProvider>
+                <TemasProvider>
+                  <IconProvider>
+                    {children}
+                  </IconProvider>
+                </TemasProvider>
+              </SolicitacoesProvider>
+            </ResponsaveisProvider>
+          </EmailProvider>
+        </AreasProvider>
+      </ApiProvider>
+    </QueryClientProvider>
   );
 }
