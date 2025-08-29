@@ -1,12 +1,12 @@
 'use client';
 
-import {useState, useEffect, ChangeEvent, useCallback} from 'react';
+import { useState, useEffect, ChangeEvent, useCallback } from 'react';
 import {
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogFooter 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { TextField } from '@/components/ui/text-field';
@@ -157,14 +157,27 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
     console.log('Perfis disponíveis:', perfis);
   }, [formData, perfis]);
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLTextAreaElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+
+    let newValue = value;
+
+    switch (name) {
+      case "dtNascimento":
+        const regex = /^\d{0,4}-?\d{0,2}-?\d{0,2}$/;
+        if (!regex.test(value)) return;
+        break;
+
+      default:
+        break;
+    }
+
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'idPerfil' ? parseInt(value) || 1 :
-              value
+      [name]: newValue,
     }));
   };
+
 
   const handleAreasSelectionChange = useCallback((selectedIds: number[]) => {
     setSelectedAreaIds(selectedIds);
@@ -212,11 +225,11 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
 
   const isFormValid = useCallback(() => {
     return formData.nmResponsavel.trim() !== '' &&
-           formData.dsEmail.trim() !== '' &&
-           formData.nmUsuarioLogin.trim() !== '' &&
-           formData.nrCpf.trim() !== '' &&
-           formData.dtNascimento.trim() !== '' &&
-           formData.idPerfil > 0;
+      formData.dsEmail.trim() !== '' &&
+      formData.nmUsuarioLogin.trim() !== '' &&
+      formData.nrCpf.trim() !== '' &&
+      formData.dtNascimento.trim() !== '' &&
+      formData.idPerfil > 0;
   }, [formData]);
 
   return (
