@@ -674,6 +674,11 @@ export default function SolicitacaoModal({
     });
   }, [formData.idTema, getSelectedTema]);
 
+  const selectedTema = getSelectedTema();
+  
+  const currentPrazoTotal =
+    statusPrazos.reduce((acc, curr) => acc + curr.nrPrazoInterno, 0)
+
   const renderStep3 = useCallback((): JSX.Element => {
     const statusOptions = statusList.length > 0 ? statusList.map(status => ({
       codigo: status.idStatusSolicitacao,
@@ -689,12 +694,6 @@ export default function SolicitacaoModal({
       { codigo: 8, nome: 'Concluído' },
       { codigo: 9, nome: 'Arquivado' }
     ];
-
-    const selectedTema = getSelectedTema();
-    const temaPrazoTotal = selectedTema?.nrPrazo || 0;
-    const currentPrazoTotal = prazoExcepcional
-      ? statusPrazos.reduce((acc, curr) => acc + (curr.nrPrazoInterno || 0), 0)
-      : temaPrazoTotal;
 
     return (
       <div className="space-y-6">
