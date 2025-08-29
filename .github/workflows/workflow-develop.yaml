@@ -45,9 +45,9 @@ jobs:
         run: |
           ping -c 3 10.132.4.128 || exit 1
 
-      # - name: Deploy aplicação
-      #   run: |
-      #     sshpass -p "Suporte@#0608" ssh -o StrictHostKeyChecking=no rtech@10.132.4.128 "cd /home/rtech/way-correspondencias-web && ./deploy.sh"
+      - name: Deploy aplicação
+        run: |
+          sshpass -p "Suporte@#0608" ssh -o StrictHostKeyChecking=no rtech@10.132.4.128 "cd /home/rtech/way-correspondencias-web && ./deploy.sh"
 
       - name: Send failure message to Google Chat
         if: failure()
