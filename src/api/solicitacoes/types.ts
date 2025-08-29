@@ -57,7 +57,7 @@ export interface SolicitacaoResponse extends BaseResponse {
   nmUsuarioCriacao?: string;
   email?: Email;
   statusSolicitacao?: StatusSolicitacao;
-  area?: AreaSolicitacao;
+  area?: AreaSolicitacao[];
   tema?: AreaTema;
 }
 

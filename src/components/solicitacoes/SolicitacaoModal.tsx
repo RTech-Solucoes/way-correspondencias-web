@@ -1,6 +1,6 @@
 'use client';
 
-import {useState, useEffect, FormEvent, useCallback, ChangeEvent} from 'react';
+import { useState, useEffect, FormEvent, useCallback, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Dialog,
@@ -9,11 +9,11 @@ import {
   DialogTitle,
   DialogFooter
 } from '@/components/ui/dialog';
-import {Button} from '@/components/ui/button';
-import {TextField} from '@/components/ui/text-field';
-import {Textarea} from '@/components/ui/textarea';
-import {Label} from '@/components/ui/label';
-import {Checkbox} from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
+import { TextField } from '@/components/ui/text-field';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -21,26 +21,26 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import {SolicitacaoResponse, SolicitacaoRequest} from '@/api/solicitacoes/types';
-import {ResponsavelResponse} from '@/api/responsaveis/types';
-import {TemaResponse} from '@/api/temas/types';
-import {solicitacoesClient} from '@/api/solicitacoes/client';
-import {toast} from 'sonner';
-import {capitalize, getRows} from '@/utils/utils';
-import {MultiSelectAreas} from '@/components/ui/multi-select-areas';
-import {ArrowArcRightIcon, CaretLeftIcon, CaretRightIcon} from '@phosphor-icons/react';
+import { SolicitacaoResponse, SolicitacaoRequest } from '@/api/solicitacoes/types';
+import { ResponsavelResponse } from '@/api/responsaveis/types';
+import { TemaResponse } from '@/api/temas/types';
+import { solicitacoesClient } from '@/api/solicitacoes/client';
+import { toast } from 'sonner';
+import { capitalize, getRows } from '@/utils/utils';
+import { MultiSelectAreas } from '@/components/ui/multi-select-areas';
+import { ArrowArcRightIcon, CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react';
 import { Stepper } from '@/components/ui/stepper';
 import { Input } from '@nextui-org/react';
 import AnexoComponent from '../AnexoComponotent/AnexoComponent';
 import AnexoList from '../AnexoComponotent/AnexoList/AnexoList';
-import {statusSolicPrazoTemaClient} from '@/api/status-prazo-tema/client';
-import {StatusSolicPrazoTemaForUI} from '@/api/status-prazo-tema/types';
+import { statusSolicPrazoTemaClient } from '@/api/status-prazo-tema/client';
+import { StatusSolicPrazoTemaForUI } from '@/api/status-prazo-tema/types';
 import { statusSolicitacaoClient, StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
-import {AnexoResponse} from '@/api/solicitacoes/anexos-client';
-import {areasClient} from '@/api/areas/client';
-import {anexosClient} from '@/api/anexos/client';
-import {AreaResponse} from '@/api/areas/types';
-import {TipoObjetoAnexo} from '@/api/anexos/type';
+import { AnexoResponse } from '@/api/solicitacoes/anexos-client';
+import { areasClient } from '@/api/areas/client';
+import { anexosClient } from '@/api/anexos/client';
+import { AreaResponse } from '@/api/areas/types';
+import { TipoObjetoAnexo } from '@/api/anexos/type';
 
 interface AnexoListItem {
   idAnexo?: number;
@@ -105,6 +105,7 @@ export default function SolicitacaoModal({
 
   useEffect(() => {
     if (solicitacao) {
+      console.log("Solicitação nas etapas", solicitacao)
       setFormData({
         idEmail: solicitacao.idEmail,
         cdIdentificacao: solicitacao.cdIdentificacao || '',
@@ -114,7 +115,10 @@ export default function SolicitacaoModal({
         flStatus: solicitacao.flStatus || 'P',
         idResponsavel: solicitacao.idResponsavel || 0,
         idTema: solicitacao.tema?.idTema || solicitacao.idTema || 0,
-        idsAreas: solicitacao.areas?.map(area => area.idArea) || solicitacao.tema?.areas?.map(area => area.idArea) || [],
+        idsAreas: [
+          ...(solicitacao.area?.map(a => a.idArea) || []),
+          ...(solicitacao.tema?.areas?.map(a => a.idArea) || [])
+        ],
         nrPrazo: solicitacao.nrPrazo || undefined,
         tpPrazo: solicitacao.tpPrazo === 'C' ? 'H' : (solicitacao.tpPrazo || ''),
         nrOficio: solicitacao.nrOficio || '',
@@ -188,7 +192,7 @@ export default function SolicitacaoModal({
   }, [responsaveis]);
 
   const handleInputChange = useCallback((e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const {name, value} = e.target;
+    const { name, value } = e.target;
     let processedValue: string | number | undefined = value;
 
     if (name === 'dsAssunto') {
@@ -217,7 +221,7 @@ export default function SolicitacaoModal({
 
   const isStep2Valid = useCallback(() => {
     return (formData.idTema !== undefined && formData.idTema > 0 &&
-           formData.idsAreas && formData.idsAreas.length > 0) || false;
+      formData.idsAreas && formData.idsAreas.length > 0) || false;
   }, [formData.idTema, formData.idsAreas]);
 
   const getSelectedTema = useCallback(() => {
@@ -549,7 +553,7 @@ export default function SolicitacaoModal({
           }}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Selecione o tema"/>
+            <SelectValue placeholder="Selecione o tema" />
           </SelectTrigger>
           <SelectContent>
             {/* Show the current tema from solicitacao if it's not in the temas list */}
@@ -650,7 +654,7 @@ export default function SolicitacaoModal({
       if (existing) {
         return prev.map(p =>
           p.idStatusSolicitacao === idStatus
-            ? {...p, nrPrazoInterno: valor}
+            ? { ...p, nrPrazoInterno: valor }
             : p
         );
       } else {
@@ -674,15 +678,15 @@ export default function SolicitacaoModal({
       codigo: status.idStatusSolicitacao,
       nome: status.nmStatus
     })) : [
-      {codigo: 1, nome: 'Pré-análise'},
-      {codigo: 2, nome: 'Vencido Regulatório'},
-      {codigo: 3, nome: 'Em análise Área Técnica'},
-      {codigo: 4, nome: 'Vencido Área Técnica'},
-      {codigo: 5, nome: 'Análise Regulatória'},
-      {codigo: 6, nome: 'Em Aprovação'},
-      {codigo: 7, nome: 'Em Assinatura'},
-      {codigo: 8, nome: 'Concluído'},
-      {codigo: 9, nome: 'Arquivado'}
+      { codigo: 1, nome: 'Pré-análise' },
+      { codigo: 2, nome: 'Vencido Regulatório' },
+      { codigo: 3, nome: 'Em análise Área Técnica' },
+      { codigo: 4, nome: 'Vencido Área Técnica' },
+      { codigo: 5, nome: 'Análise Regulatória' },
+      { codigo: 6, nome: 'Em Aprovação' },
+      { codigo: 7, nome: 'Em Assinatura' },
+      { codigo: 8, nome: 'Concluído' },
+      { codigo: 9, nome: 'Arquivado' }
     ];
 
     const selectedTema = getSelectedTema();
@@ -705,7 +709,7 @@ export default function SolicitacaoModal({
                     onCheckedChange={async (checked) => {
                       const ativo = !!checked;
                       setPrazoExcepcional(ativo);
-                      
+
                       if (!ativo && formData.idTema) {
                         try {
                           await loadStatusPrazos();
@@ -731,7 +735,7 @@ export default function SolicitacaoModal({
               </div>
             </div>
             <p className="text-sm text-gray-600 mb-4">
-              {prazoExcepcional 
+              {prazoExcepcional
                 ? "Modo excepcional ativo: Configure prazos personalizados para cada etapa abaixo. O prazo total será a soma de todos os prazos configurados."
                 : "Modo padrão: O prazo total será o prazo padrão do tema selecionado. Ative o 'Prazo Excepcional' para personalizar prazos por status."
               }
@@ -806,18 +810,19 @@ export default function SolicitacaoModal({
           </div>
         ) : null}
       </div>
-    )}, [prazoExcepcional, formData.idTema, loadingStatusPrazos, statusPrazos, updateLocalPrazo, setFormData, statusList, getSelectedTema, loadStatusPrazos]);
+    )
+  }, [prazoExcepcional, formData.idTema, loadingStatusPrazos, statusPrazos, updateLocalPrazo, setFormData, statusList, getSelectedTema, loadStatusPrazos]);
 
   const renderStep4 = useCallback(() => (
     <div className="space-y-6">
 
       <div className="flex flex-col space-y-4">
-        <AnexoComponent onAddAnexos={handleAddAnexos}/>
+        <AnexoComponent onAddAnexos={handleAddAnexos} />
 
         {anexos.length > 0 && (
           <div>
             <Label className="text-sm font-medium mb-2 block">Anexos:</Label>
-            <AnexoList anexos={anexos} onRemove={handleRemoveAnexo}/>
+            <AnexoList anexos={anexos} onRemove={handleRemoveAnexo} />
           </div>
         )}
 
@@ -1014,7 +1019,7 @@ export default function SolicitacaoModal({
             <Label className="text-sm font-semibold text-gray-700">Prazo Principal</Label>
             <div className="p-3 border border-yellow-200 rounded-lg text-sm">
               {formData.nrPrazo && formData.nrPrazo > 0
-                ? `${formData.nrPrazo} ${(() => { switch(formData.tpPrazo){ case 'H': return 'horas'; case 'D': return 'dias'; case 'U': return 'dias úteis'; case 'M': return 'meses'; default: return 'unid.'; } })()}`
+                ? `${formData.nrPrazo} ${(() => { switch (formData.tpPrazo) { case 'H': return 'horas'; case 'D': return 'dias'; case 'U': return 'dias úteis'; case 'M': return 'meses'; default: return 'unid.'; } })()}`
                 : 'Prazo padrão do tema'
               }
               {prazoExcepcional && (
@@ -1272,7 +1277,7 @@ export default function SolicitacaoModal({
               className="flex items-center gap-2"
             >
               Próximo
-              <CaretRightIcon size={16}/>
+              <CaretRightIcon size={16} />
             </Button>
           )}
 
@@ -1285,7 +1290,7 @@ export default function SolicitacaoModal({
                 disabled={loading}
                 className="flex items-center gap-2"
               >
-                <CaretLeftIcon size={16}/>
+                <CaretLeftIcon size={16} />
                 Anterior
               </Button>
               <Button
@@ -1295,7 +1300,7 @@ export default function SolicitacaoModal({
                 className="flex items-center gap-2"
               >
                 Próximo
-                <CaretRightIcon size={16}/>
+                <CaretRightIcon size={16} />
               </Button>
             </>
           )}
@@ -1309,7 +1314,7 @@ export default function SolicitacaoModal({
                 disabled={loading}
                 className="flex items-center gap-2"
               >
-                <CaretLeftIcon size={16}/>
+                <CaretLeftIcon size={16} />
                 Anterior
               </Button>
               <Button
@@ -1319,7 +1324,7 @@ export default function SolicitacaoModal({
                 className="flex items-center gap-2"
               >
                 Próximo
-                <CaretRightIcon size={16}/>
+                <CaretRightIcon size={16} />
               </Button>
             </>
           )}
@@ -1333,7 +1338,7 @@ export default function SolicitacaoModal({
                 disabled={loading}
                 className="flex items-center gap-2"
               >
-                <CaretLeftIcon size={16}/>
+                <CaretLeftIcon size={16} />
                 Anterior
               </Button>
               <Button
@@ -1343,7 +1348,7 @@ export default function SolicitacaoModal({
                 className="flex items-center gap-2"
               >
                 Próximo
-                <CaretRightIcon size={16}/>
+                <CaretRightIcon size={16} />
               </Button>
             </>
           )}
@@ -1357,7 +1362,7 @@ export default function SolicitacaoModal({
                 disabled={loading}
                 className="flex items-center gap-2"
               >
-                <CaretLeftIcon size={16}/>
+                <CaretLeftIcon size={16} />
                 Anterior
               </Button>
               <Button
