@@ -105,7 +105,6 @@ export default function SolicitacaoModal({
 
   useEffect(() => {
     if (solicitacao) {
-      console.log("Solicitação nas etapas", solicitacao)
       setFormData({
         idEmail: solicitacao.idEmail,
         cdIdentificacao: solicitacao.cdIdentificacao || '',
