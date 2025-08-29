@@ -7,10 +7,21 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      WEBHOOK_URL: "https://chat.googleapis.com/v1/spaces/AAQA5qsWFdQ/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=VyWYfeqljUfRTIYU-mvpjOntN4ykR2me8p6Cn_ROEPg"
+      GIT_BRANCH: "master"
 
     steps:
       - name: Checkout código
         uses: actions/checkout@v3
+
+      - name: Configurar Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Testar build da imagem Docker
+        id: docker-build
+        run: |
+          docker build --no-cache -t way-web .
 
       - name: Instalar openfortivpn
         run: |
@@ -37,3 +48,59 @@ jobs:
       - name: Deploy aplicação
         run: |
           sshpass -p "Suporte@#0608" ssh -o StrictHostKeyChecking=no rtech@10.132.4.129 "cd /home/rtech/way-correspondencias-web && ./deploy.sh"
+
+      - name: Send failure message to Google Chat
+        if: failure()
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          # Preparar payload no formato do webhook
+          PAYLOAD=$(cat << EOF
+          {
+            "text": "Deploy do projeto Way",
+            "cards": [
+              {
+                "sections": [
+                  {
+                    "widgets": [
+                      {
+                        "keyValue": {
+                          "topLabel": "Projeto",
+                          "content": "way-correspondencias-web"
+                        }
+                      },
+                      {
+                        "keyValue": {
+                          "topLabel": "Branch",
+                          "content": "$GIT_BRANCH"
+                        }
+                      },
+                      {
+                        "keyValue": {
+                          "topLabel": "Status",
+                          "content": "FAILED"
+                        }
+                      },
+                      {
+                        "keyValue": {
+                          "topLabel": "Mensagem",
+                          "content": "Deploy falhou na Pipeline CI/CD"
+                        }
+                      },
+                      {
+                        "keyValue": {
+                          "topLabel": "Commit",
+                          "content": "$COMMIT_MESSAGE"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+          EOF
+          )
+          
+          # Enviar webhook
+          curl -s -X POST -H "Content-Type: application/json" -d "$PAYLOAD" "$WEBHOOK_URL"
