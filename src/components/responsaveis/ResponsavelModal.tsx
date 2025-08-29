@@ -187,7 +187,35 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
     }));
   }, []);
 
+  const calculateAge = (birthDate: string): number => {
+    if (!birthDate) return 0;
+
+    const today = new Date();
+    const birth = new Date(birthDate);
+
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+
+    return age;
+  };
+
   const handleSubmit = async () => {
+    // Validação específica do CPF
+    if (formData.nrCpf.trim().length !== 11) {
+      toast.error("CPF inválido");
+      return;
+    }
+
+    // Validação de idade mínima (10 anos)
+    const age = calculateAge(formData.dtNascimento);
+    if (age < 10) {
+      toast.error("Usuário deve ter pelo menos 10 anos de idade");
+      return;
+    }
 
     try {
       setLoading(true);
