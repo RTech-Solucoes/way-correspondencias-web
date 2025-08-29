@@ -31,6 +31,7 @@ export interface StatusSolicPrazoTemaForUI {
   idStatusSolicitacao: number;
   idTema: number;
   nrPrazoInterno: number;
+  nrPrazoExterno: number;
   flAtivo: string;
   tema?: { idTema: number; nmTema: string };
 }

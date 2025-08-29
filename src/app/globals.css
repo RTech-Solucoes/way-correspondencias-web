@@ -151,7 +151,6 @@ select {
 .prose {
   @apply text-gray-700 leading-7;
   color: var(--tw-prose-body);
-  max-width: 65ch;
 }
 
 .prose p {

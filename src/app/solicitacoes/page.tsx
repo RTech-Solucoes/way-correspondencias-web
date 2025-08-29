@@ -49,6 +49,9 @@ import { AreaSolicitacao, SolicitacaoResponse, PagedResponse } from '@/api/solic
 import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { TemaResponse } from '@/api/temas/types';
 import { AreaResponse } from '@/api/areas/types';
+import { useTramitacoesMutation } from '@/hooks/use-tramitacoes';
+
+
 
 export default function SolicitacoesPage() {
   const {
@@ -98,9 +101,32 @@ export default function SolicitacoesPage() {
     handleSort,
   } = useSolicitacoes();
 
+  const tramitacoesMutation = useTramitacoesMutation();
+
   const [numberOfElements, setNumberOfElements] = useState(0);
   const [first, setFirst] = useState(true);
   const [last, setLast] = useState(true);
+
+  const userHasOpenedDetailsModal = useCallback((solicitacao: SolicitacaoResponse) => {
+    const payload = {
+      idSolicitacao: solicitacao.idSolicitacao,
+      idAreaOrigem: 0,
+      idAreaDestino: 0,
+      dsObservacao: "",
+      idResponsavel: 0,
+      flAcao: "V"
+    };
+
+    tramitacoesMutation.mutate(payload, {
+      onSuccess: (data) => {
+        console.log('Tramitação criada com sucesso:', data);
+      },
+      onError: (error) => {
+        console.error('Erro ao criar tramitação:', error);
+        toast.error('Erro ao criar tramitação');
+      }
+    });
+  }, [tramitacoesMutation]);
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const [showDetalhesModal, setShowDetalhesModal] = useState(false);
@@ -167,21 +193,21 @@ export default function SolicitacoesPage() {
     try {
       const response = await responsaveisClient.buscarPorFiltro({ size: 100 });
       setResponsaveis(response.content ?? []);
-    } catch {}
+    } catch { }
   }, [setResponsaveis]);
 
   const loadTemas = useCallback(async () => {
     try {
       const response = await temasClient.buscarPorFiltro({ size: 100 });
       setTemas(response.content ?? []);
-    } catch {}
+    } catch { }
   }, [setTemas]);
 
   const loadAreas = useCallback(async () => {
     try {
       const response = await areasClient.buscarPorFiltro({ size: 100 });
       setAreas(response.content ?? []);
-    } catch {}
+    } catch { }
   }, [setAreas]);
 
   useEffect(() => {
@@ -242,6 +268,7 @@ export default function SolicitacoesPage() {
     setSelectedSolicitacao(s);
     setShowDetalhesModal(true);
     setDetalhesSolicitacao(null);
+    userHasOpenedDetailsModal(s);
 
     try {
       const detalhes = await solicitacoesClient.buscarPorId(s.idSolicitacao);
@@ -252,7 +279,7 @@ export default function SolicitacoesPage() {
       toast.error('Erro ao carregar os detalhes da solicitação');
       setDetalhesSolicitacao(s);
     }
-  }, [setSelectedSolicitacao]);
+  }, [setSelectedSolicitacao, userHasOpenedDetailsModal]);
 
   const abrirEmailOriginal = useCallback(() => {
     toast.message('Abrir e-mail original (implemente a navegação/URL).');
@@ -289,6 +316,14 @@ export default function SolicitacoesPage() {
       throw new Error('erro-devolutiva');
     }
   }, [detalhesSolicitacao, selectedSolicitacao, loadSolicitacoes]);
+
+  const onShowDetalhesModalChange = useCallback((open: boolean) => {
+    if (!open) {
+      setShowDetalhesModal(false);
+      setSelectedSolicitacao(null);
+      setDetalhesSolicitacao(null);
+    }
+  }, [setSelectedSolicitacao]);
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
@@ -329,7 +364,7 @@ export default function SolicitacoesPage() {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
         <div className="flex items-center space-x-4">
           <div className="flex-1 relative">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400"/>
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               placeholder="Pesquisar solicitações..."
               value={searchQuery}
@@ -343,7 +378,7 @@ export default function SolicitacoesPage() {
               className="h-10 px-4"
               onClick={clearFilters}
             >
-              <XIcon className="h-4 w-4 mr-2"/>
+              <XIcon className="h-4 w-4 mr-2" />
               Limpar Filtros
             </Button>
           )}
@@ -352,14 +387,14 @@ export default function SolicitacoesPage() {
             className="h-10 px-4"
             onClick={() => setShowFilterModal(true)}
           >
-            <FunnelSimpleIcon className="h-4 w-4 mr-2"/>
+            <FunnelSimpleIcon className="h-4 w-4 mr-2" />
             Filtrar
           </Button>
           <Button onClick={() => {
             setSelectedSolicitacao(null);
             setShowSolicitacaoModal(true);
           }}>
-            <PlusIcon className="h-4 w-4 mr-2"/>
+            <PlusIcon className="h-4 w-4 mr-2" />
             Nova Solicitação
           </Button>
         </div>
@@ -413,7 +448,7 @@ export default function SolicitacoesPage() {
               <StickyTableRow>
                 <StickyTableCell colSpan={7} className="text-center py-8">
                   <div className="flex flex-col items-center space-y-2">
-                    <ClipboardTextIcon className="h-8 w-8 text-gray-400"/>
+                    <ClipboardTextIcon className="h-8 w-8 text-gray-400" />
                     <p className="text-sm text-gray-500">Nenhuma solicitação encontrada</p>
                   </div>
                 </StickyTableCell>
@@ -435,26 +470,36 @@ export default function SolicitacoesPage() {
                     <StickyTableCell className="font-medium">{solicitacao.cdIdentificacao}</StickyTableCell>
                     <StickyTableCell className="max-w-xs truncate">{solicitacao.dsAssunto}</StickyTableCell>
                     <StickyTableCell>
-                      {(solicitacao.areas && solicitacao.areas.length > 0) ? (
+                      {(solicitacao.area && solicitacao.area.length > 0) ? (
                         <div className="flex items-center flex-wrap gap-1">
-                          {solicitacao.areas.slice(0, 2).map((area: AreaSolicitacao) => (
-                            <span key={area.idArea} className="text-xs bg-gray-100 px-2 py-1 rounded">
+                          {solicitacao.area.slice(0, 2).map((area: AreaSolicitacao) => (
+                            <span
+                              key={area.idArea}
+                              className="text-xs bg-gray-100 px-2 py-1 rounded"
+                            >
                               {area.nmArea}
                             </span>
                           ))}
-                          {solicitacao.areas.length > 2 && (
-                            <span className="text-xs text-gray-500 h-fit">+{solicitacao.areas.length - 2} mais</span>
+                          {solicitacao.area.length > 2 && (
+                            <span className="text-xs text-gray-500 h-fit">
+                              +{solicitacao.area.length - 2} mais
+                            </span>
                           )}
                         </div>
                       ) : (solicitacao.tema?.areas && solicitacao.tema.areas.length > 0) ? (
                         <div className="flex flex-wrap gap-1">
                           {solicitacao.tema.areas.slice(0, 2).map((area: AreaSolicitacao) => (
-                            <span key={area.idArea} className="text-xs bg-gray-100 px-2 py-1 rounded">
+                            <span
+                              key={area.idArea}
+                              className="text-xs bg-gray-100 px-2 py-1 rounded"
+                            >
                               {area.nmArea}
                             </span>
                           ))}
                           {solicitacao.tema.areas.length > 2 && (
-                            <span className="text-xs text-gray-500">+{solicitacao.tema.areas.length - 2} mais</span>
+                            <span className="text-xs text-gray-500">
+                              +{solicitacao.tema.areas.length - 2} mais
+                            </span>
                           )}
                         </div>
                       ) : (
@@ -468,8 +513,8 @@ export default function SolicitacoesPage() {
                         solicitacao.statusCodigo?.toString() || ''
                       )}>
                         {solicitacao.statusSolicitacao?.nmStatus ||
-                         getStatusText(solicitacao.statusCodigo?.toString() || '') ||
-                         '-'}
+                          getStatusText(solicitacao.statusCodigo?.toString() || '') ||
+                          '-'}
                       </Badge>
                     </StickyTableCell>
                     <StickyTableCell className="text-right">
@@ -481,18 +526,18 @@ export default function SolicitacoesPage() {
                           solicitacao.statusSolicitacao?.idStatusSolicitacao === 1 ||
                           getStatusText(solicitacao.statusCodigo?.toString() || '') === 'Pré-análise'
                         ) && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={async (e) => {
-                              e.stopPropagation();
-                              await openDetalhes(solicitacao);
-                            }}
-                            title="Detalhes"
-                          >
-                            <PaperPlaneRightIcon className="h-4 w-4"/>
-                          </Button>
-                        )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                await openDetalhes(solicitacao);
+                              }}
+                              title="Detalhes"
+                            >
+                              <PaperPlaneRightIcon className="h-4 w-4" />
+                            </Button>
+                          )}
 
                         <Button
                           variant="ghost"
@@ -503,7 +548,7 @@ export default function SolicitacoesPage() {
                           }}
                           title="Editar"
                         >
-                          <PencilSimpleIcon className="h-4 w-4"/>
+                          <PencilSimpleIcon className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
@@ -515,7 +560,7 @@ export default function SolicitacoesPage() {
                           className="text-red-600 hover:text-red-700"
                           title="Excluir"
                         >
-                          <TrashIcon className="h-4 w-4"/>
+                          <TrashIcon className="h-4 w-4" />
                         </Button>
                       </div>
                     </StickyTableCell>
@@ -550,7 +595,7 @@ export default function SolicitacoesPage() {
                   <Input
                     id="identificacao"
                     value={filters.identificacao}
-                    onChange={(e) => setFilters({...filters, identificacao: e.target.value})}
+                    onChange={(e) => setFilters({ ...filters, identificacao: e.target.value })}
                     placeholder="Código de identificação"
                   />
                 </div>
@@ -558,7 +603,7 @@ export default function SolicitacoesPage() {
                   <Label htmlFor="status">Status</Label>
                   <Select
                     value={filters.status}
-                    onValueChange={(value) => setFilters({...filters, status: value})}
+                    onValueChange={(value) => setFilters({ ...filters, status: value })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o status" />
@@ -583,7 +628,7 @@ export default function SolicitacoesPage() {
                   <Label htmlFor="responsavel">Responsável</Label>
                   <Select
                     value={filters.responsavel}
-                    onValueChange={(value) => setFilters({...filters, responsavel: value})}
+                    onValueChange={(value) => setFilters({ ...filters, responsavel: value })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o responsável" />
@@ -602,7 +647,7 @@ export default function SolicitacoesPage() {
                   <Label htmlFor="tema">Tema</Label>
                   <Select
                     value={filters.tema}
-                    onValueChange={(value) => setFilters({...filters, tema: value})}
+                    onValueChange={(value) => setFilters({ ...filters, tema: value })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o tema" />
@@ -623,7 +668,7 @@ export default function SolicitacoesPage() {
                   <Label htmlFor="area">Área</Label>
                   <Select
                     value={filters.area}
-                    onValueChange={(value) => setFilters({...filters, area: value})}
+                    onValueChange={(value) => setFilters({ ...filters, area: value })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione a área" />
@@ -646,7 +691,7 @@ export default function SolicitacoesPage() {
                     id="dateFrom"
                     type="date"
                     value={filters.dateFrom}
-                    onChange={(e) => setFilters({...filters, dateFrom: e.target.value})}
+                    onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
                   />
                 </div>
                 <div>
@@ -655,7 +700,7 @@ export default function SolicitacoesPage() {
                     id="dateTo"
                     type="date"
                     value={filters.dateTo}
-                    onChange={(e) => setFilters({...filters, dateTo: e.target.value})}
+                    onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
                   />
                 </div>
               </div>
@@ -693,6 +738,7 @@ export default function SolicitacoesPage() {
             setShowDetalhesModal(false);
             setSelectedSolicitacao(null);
             setDetalhesSolicitacao(null);
+            onShowDetalhesModalChange(false);
           }}
           solicitacao={detalhesSolicitacao ?? selectedSolicitacao}
           anexos={(detalhesAnexos ?? [])}

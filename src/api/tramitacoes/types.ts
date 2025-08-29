@@ -11,4 +11,6 @@ export interface TramitacaoRequest {
   idAreaOrigem?: number;
   idAreaDestino?: number;
   dsObservacao?: string;
+  idResponsavel?: number;
+  flAcao?: string;
 }
