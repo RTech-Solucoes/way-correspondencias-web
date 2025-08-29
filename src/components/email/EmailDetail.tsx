@@ -202,17 +202,24 @@ export default function EmailDetail({
                   <div className="flex items-start">
                     <span className="text-gray-500 font-medium mr-2 flex-shrink-0 w-10">Para:</span>
                     <div className="flex-1">
-                      <div className={`text-gray-900 break-all ${isDestinatarioExpanded ? '' : 'line-clamp-2'}`}>
-                        {email?.dsDestinatario}
+                      <div className={`flex flex-wrap gap-2 ${isDestinatarioExpanded ? '' : 'max-h-16 overflow-hidden'}`}>
+                        {email?.dsDestinatario.split(';').filter(d => d.trim()).map((destinatario: string, index: number) => (
+                          <span 
+                            className="text-xs bg-gray-100 px-2 py-1 rounded inline-block" 
+                            key={`${destinatario.trim()}-${index}`}
+                          >
+                            {destinatario.trim()}
+                          </span>
+                        ))}
                       </div>
-                      {email?.dsDestinatario && email.dsDestinatario.split(';').length > 1 && (
+                      {email?.dsDestinatario && email.dsDestinatario.split(';').filter(d => d.trim()).length > 1 && (
                         <Button
                           variant="link"
                           size="sm"
                           onClick={toggleDestinatarioExpand}
-                          className="p-0 h-auto text-blue-600 hover:text-blue-800 mt-1 text-xs"
+                          className="p-0 h-auto text-blue-600 hover:text-blue-800 mt-2 text-xs"
                         >
-                          {isDestinatarioExpanded ? 'Ver menos' : `Ver todos (${email.dsDestinatario.split(';').length} destinatários)`}
+                          {isDestinatarioExpanded ? 'Ver menos' : `Ver todos (${email.dsDestinatario.split(';').filter(d => d.trim()).length} destinatários)`}
                         </Button>
                       )}
                     </div>
