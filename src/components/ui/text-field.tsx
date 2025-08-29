@@ -57,37 +57,37 @@ export interface TextFieldProps {
 
 const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, TextFieldProps>(
   ({
-     label,
-     placeholder,
-     value,
-     onChange,
-     onBlur,
-     onFocus,
-     type = 'text',
-     as = 'input',
-     rows = 3,
-     disabled = false,
-     readOnly = false,
-     required = false,
-     loading = false,
-     error,
-     warning,
-     helperText,
-     startIcon: StartIcon,
-     endIcon: EndIcon,
-     variant = 'default',
-     size = 'md',
-     id,
-     name,
-     autoComplete,
-     autoFocus,
-     maxLength,
-     minLength,
-     className,
-     labelClassName,
-     inputClassName,
-     containerClassName,
-   }, ref) => {
+    label,
+    placeholder,
+    value,
+    onChange,
+    onBlur,
+    onFocus,
+    type = 'text',
+    as = 'input',
+    rows = 3,
+    disabled = false,
+    readOnly = false,
+    required = false,
+    loading = false,
+    error,
+    warning,
+    helperText,
+    startIcon: StartIcon,
+    endIcon: EndIcon,
+    variant = 'default',
+    size = 'md',
+    id,
+    name,
+    autoComplete,
+    autoFocus,
+    maxLength,
+    minLength,
+    className,
+    labelClassName,
+    inputClassName,
+    containerClassName,
+  }, ref) => {
     const reactId = useId();
     const fieldId = id || reactId;
 
@@ -152,7 +152,7 @@ const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, TextFieldPr
         <div className="relative">
           {hasStartIcon && (
             <div className={cn(
-              'absolute left-0 top-0 h-full flex items-center justify-center',
+              'absolute left-4 top-0 h-full flex items-center justify-center',
               size === 'sm' ? 'w-8' : size === 'md' ? 'w-10' : 'w-12',
               disabled && 'opacity-50'
             )}>

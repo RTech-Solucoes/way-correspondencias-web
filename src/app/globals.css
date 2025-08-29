@@ -197,15 +197,6 @@ button, input[type="file"] {
   @apply cursor-pointer;
 }
 
-.bg-landscape {
-  background-image: url('/images/background.jpg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  width: 100%;
-  height: 100vh;
-}
-
 .pop-in {
   animation: pop-in .5s ease-in-out;
 }
