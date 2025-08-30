@@ -1,7 +1,6 @@
 'use client';
 
 import authClient from "@/api/auth/client";
-import ImageLogin from "@/components/layout/ImageLogin";
 import { Button } from '@/components/ui/button';
 import { TextField } from '@/components/ui/text-field';
 import { PAGES_DEF } from "@/constants/pages";
@@ -65,7 +64,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex flex-row items-center justify-center min-h-screen overflow-hidden gap-16 px-12">
-      <form onSubmit={handleSubmit} className="flex flex-col items-center w-[45%] max-w-xl gap-28 p-8 rounded-4xl m-auto mb-80">
+      <form onSubmit={handleSubmit} className="flex flex-col items-center w-[45%] max-w-xl gap-28 p-8 rounded-4xl m-auto mb-80 max-[1460px]:w-[30%]">
         <div>
           <Image
             src="/images/way-logo.png"
@@ -78,7 +77,7 @@ export default function LoginPage() {
 
         <div className="flex flex-col justify-center items-center gap-8 w-full ">
           <div className="flex gap-6 items-center">
-            <h2 className="text-[#101A2D] font-semibold text-2xl">Software Regulatório <span className="text-[#276EEB]">Way 262</span></h2>
+            <h2 className="text-[#101A2D] font-semibold text-2xl text-center">Software Regulatório <span className="text-[#276EEB]">Way 262</span></h2>
           </div>
 
           <div className="flex flex-col gap-6 w-full">
@@ -128,7 +127,16 @@ export default function LoginPage() {
 
       </form>
 
-      <ImageLogin />
+      <div className="relative w-[55%] h-[90vh] rounded-4xl overflow-hidden [--gap:16px] max-[1460px]:w-[70%]">
+        {/* Imagem de fundo */}
+        <Image
+          src="/images/background-login.png"
+          alt="Rodovia"
+          fill
+          className="object-center"
+          priority
+        />
+      </div>
     </div>
   );
 }
