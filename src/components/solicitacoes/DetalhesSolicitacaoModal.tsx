@@ -220,12 +220,16 @@ export default function DetalhesSolicitacaoModal({
         <div className="px-6 pt-6">
           <DialogHeader className="p-0">
             <div className="flex items-start justify-between gap-4">
-              <div>
+              <div className='w-full'>
                 <DialogTitle className="text-[20px] font-semibold">
                   Solicitação {identificador || ''}
                 </DialogTitle>
-
-                <div className="mt-1 text-sm text-muted-foreground">{criadorLine}</div>
+                <div className='flex items-center gap-2 justify-between w-full'>
+                  <div className="mt-1 text-sm text-muted-foreground">{criadorLine}</div>
+                  <div className='text-[#EC6B20] text-sm bg-[#EC6B2014] px-2 py-1 rounded-md'>
+                    {statusLabel}
+                  </div>
+                </div>
 
                 <div className="mt-3 flex items-center gap-2 text-sm">
                   <ClockIcon className="h-4 w-4" />
@@ -262,7 +266,6 @@ export default function DetalhesSolicitacaoModal({
           </section>
 
           <section className="space-y-2">
-            <h3 className="text-sm font-semibold">Metadados</h3>
             <div className="rounded-md border bg-muted/30">
               <div className="grid grid-cols-12 gap-0">
                 <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Áreas:</div>
