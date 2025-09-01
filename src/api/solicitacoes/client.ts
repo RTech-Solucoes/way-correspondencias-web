@@ -18,9 +18,6 @@ class SolicitacoesClient {
     this.client = new ApiClient('/solicitacoes');
   }
 
-  /**
-   * Lista todas as solicitações ou filtra por critério
-   */
   async listar(
     filtro?: string,
     page?: number,
@@ -118,30 +115,18 @@ class SolicitacoesClient {
     return this.client.request<void>(`/encaminhar/${id}/etapa05${qs}`, { method: 'PUT' });
   }
 
-  /**
-   * Lista anexos (wrapper compatibilidade)
-   */
   async buscarAnexos(idSolicitacao: number): Promise<AnexoResponse[]> {
     return solicitacaoAnexosClient.listar(idSolicitacao);
   }
 
-  /**
-   * Upload de anexos (wrapper compatibilidade)
-   */
   async uploadAnexos(idSolicitacao: number, anexos: ArquivoDTO[]): Promise<void> {
     return solicitacaoAnexosClient.upload(idSolicitacao, anexos);
   }
 
-  /**
-   * Remover anexo específico (wrapper compatibilidade)
-   */
   async removerAnexo(idSolicitacao: number, idAnexo: number): Promise<void> {
     return solicitacaoAnexosClient.deletar(idSolicitacao, idAnexo);
   }
 
-  /**
-   * Download de anexos (wrapper compatibilidade)
-   */
   async downloadAnexo(idSolicitacao: number, nmArquivo?: string): Promise<ArquivoDTO[]> {
     return solicitacaoAnexosClient.download(idSolicitacao, nmArquivo);
   }
@@ -149,7 +134,13 @@ class SolicitacoesClient {
   enviarDevolutiva(idSolicitacao: number, arg1: { mensagem: string; }) {
     console.log('Método enviarDevolutiva chamado com:', idSolicitacao, arg1);
   }
-  
+
+  async buscarDetalhesPorId(id: number): Promise<SolicitacaoResponse> {
+    return this.client.request<SolicitacaoResponse>(`/detalhe/${id}`, {
+      method: 'GET',
+    });
+  }
+
 }
 
 export const solicitacoesClient = new SolicitacoesClient();

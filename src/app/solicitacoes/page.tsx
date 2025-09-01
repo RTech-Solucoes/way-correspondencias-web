@@ -269,11 +269,8 @@ export default function SolicitacoesPage() {
     setShowDetalhesModal(true);
     setDetalhesSolicitacao(null);
 
-    // ⛔ NÃO registrar tramitação ao abrir o modal de detalhes
-    // userHasOpenedDetailsModal(s);
-
     try {
-      const detalhes = await solicitacoesClient.buscarPorId(s.idSolicitacao);
+      const detalhes = await solicitacoesClient.buscarDetalhesPorId(s.idSolicitacao);
       setDetalhesSolicitacao(detalhes || s);
       const anexos = await anexosClient.buscarPorIdObjetoETipoObjeto(s.idSolicitacao, TipoObjetoAnexo.S);
       setDetalhesAnexos(anexos || []);
@@ -335,7 +332,6 @@ export default function SolicitacoesPage() {
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
-      {/* Header da página com título e controles */}
       <div className="flex items-center justify-between">
         <PageTitle />
 
@@ -408,7 +404,6 @@ export default function SolicitacoesPage() {
         </div>
       </div>
 
-      {/* Área principal da tabela */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-1 overflow-auto">
         <StickyTable>
           <StickyTableHeader>
@@ -527,7 +522,6 @@ export default function SolicitacoesPage() {
                     </StickyTableCell>
                     <StickyTableCell className="text-right">
                       <div className="flex items-center justify-end space-x-2">
-                        {/* Hide paper airplane icon when status is Pré-análise */}
                         {!(
                           solicitacao.statusSolicitacao?.nmStatus === 'Pré-análise' ||
                           solicitacao.statusSolicitacao?.nmStatus === 'Pre-analise' ||
