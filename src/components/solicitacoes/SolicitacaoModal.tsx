@@ -1231,6 +1231,7 @@ export default function SolicitacaoModal({
           value={formData.dsSolicitacao}
           onChange={handleInputChange}
           rows={getRows(formData.dsSolicitacao)}
+          disabled
         />
       </div>
 
