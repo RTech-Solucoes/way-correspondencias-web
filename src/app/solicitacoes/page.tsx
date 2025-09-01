@@ -292,7 +292,7 @@ export default function SolicitacoesPage() {
 
     try {
       const detalhes = await solicitacoesClient.buscarDetalhesPorId(s.idSolicitacao);
-      setDetalhesSolicitacao(detalhes || s);
+      setDetalhesSolicitacao(detalhes?.solicitacao || s);
       const anexos = await anexosClient.buscarPorIdObjetoETipoObjeto(s.idSolicitacao, TipoObjetoAnexo.S);
       setDetalhesAnexos(anexos || []);
     } catch {
@@ -311,16 +311,19 @@ export default function SolicitacoesPage() {
 
   const enviarDevolutiva = useCallback(async (mensagem: string, arquivos: File[]) => {
     const alvo = detalhesSolicitacao ?? selectedSolicitacao;
-    console.log('Enviando devolutiva para a solicitação:', alvo);
-    console.log('Mensagem:', mensagem);
-    if (!alvo) return;
+    const id = alvo?.idSolicitacao;
+    if (!id) {
+      toast.error('ID da solicitação não encontrado.');
+      return;
+    }
     try {
       if (mensagem?.trim()) {
         const data = {
           dsObservacao: mensagem,
-          idSolicitacao: alvo.idSolicitacao,
-        }
-        await tramitacoesClient.tramitar?.(data);
+          idSolicitacao: id,
+        };
+        await tramitacoesClient.tramitar(data);
+        toast.success('Resposta enviada com sucesso!');
       }
       if (arquivos.length > 0) {
         const arquivosDTO = await Promise.all(
@@ -334,10 +337,15 @@ export default function SolicitacoesPage() {
             };
           })
         );
-        await solicitacoesClient.uploadAnexos(alvo.idSolicitacao, arquivosDTO);
+        await solicitacoesClient.uploadAnexos(id, arquivosDTO);
       }
       await loadSolicitacoes();
-    } catch {
+    } catch (err: unknown) {
+      const e = err as { status?: number };
+      if (e?.status === 409) {
+        toast.warning('Tramitação já registrada para esta etapa. Aguarde a resposta da área responsável');
+        return;
+      }
       toast.error('Falha ao enviar a devolutiva.');
       throw new Error('erro-devolutiva');
     }
