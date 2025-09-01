@@ -215,8 +215,9 @@ export default function SolicitacaoModal({
 
 
   const isStep1Valid = useCallback(() => {
-    return formData.cdIdentificacao?.trim() !== '';
-  }, [formData.cdIdentificacao]);
+    return formData.cdIdentificacao?.trim() !== '' && 
+           (formData.flAnaliseGerenteDiretor === 'S' || formData.flAnaliseGerenteDiretor === 'N');
+  }, [formData.cdIdentificacao, formData.flAnaliseGerenteDiretor]);
 
   const isStep2Valid = useCallback(() => {
     return (formData.idTema !== undefined && formData.idTema > 0 &&
@@ -460,6 +461,11 @@ export default function SolicitacaoModal({
       } else {
         if (!formData.cdIdentificacao?.trim()) { toast.error('Código de identificação é obrigatório'); setLoading(false); return; }
         if (!formData.idTema || formData.idTema === 0) { toast.error('Tema é obrigatório'); setLoading(false); return; }
+        if (!formData.flAnaliseGerenteDiretor || (formData.flAnaliseGerenteDiretor !== 'S' && formData.flAnaliseGerenteDiretor !== 'N')) { 
+          toast.error('É obrigatório informar se exige análise do Gerente ou Diretor'); 
+          setLoading(false); 
+          return; 
+        }
 
         const created = await solicitacoesClient.criar({
           cdIdentificacao: formData.cdIdentificacao?.trim(),
@@ -469,6 +475,7 @@ export default function SolicitacaoModal({
           nrOficio: formData.nrOficio?.trim(),
           nrProcesso: formData.nrProcesso?.trim(),
           flExcepcional: prazoExcepcional ? 'S' : 'N',
+          flAnaliseGerenteDiretor: formData.flAnaliseGerenteDiretor,
         });
         id = created.idSolicitacao;
 
@@ -1173,6 +1180,36 @@ export default function SolicitacaoModal({
           onChange={handleInputChange}
           maxLength={50}
         />
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="flAnaliseGerenteDiretor" className="text-sm font-medium text-gray-700">
+            Exige análise do Gerente ou Diretor? <span className="text-red-500">*</span>
+          </Label>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={formData.flAnaliseGerenteDiretor === 'S'}
+                onCheckedChange={() => setFormData(prev => ({
+                  ...prev,
+                  flAnaliseGerenteDiretor: 'S'
+                }))}
+              />
+              <Label>Sim</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={formData.flAnaliseGerenteDiretor === 'N'}
+                onCheckedChange={() => setFormData(prev => ({
+                  ...prev,
+                  flAnaliseGerenteDiretor: 'N'
+                }))}
+              />
+              <Label>Não</Label>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="space-y-2">
