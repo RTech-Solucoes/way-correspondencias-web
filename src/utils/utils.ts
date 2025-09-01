@@ -1,6 +1,7 @@
 import {type ClassValue, clsx} from 'clsx';
 import {twMerge} from 'tailwind-merge';
 import {StatusAtivo} from "@/types/misc/types";
+import { ArquivoDTO } from '@/api/anexos/type';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -122,4 +123,26 @@ export const getRows = (string: string | undefined) => {
   const lineBreaks = (string.match(/\n/g) || []).length;
 
   return (string.split('\n').length) + lineBreaks;
+}
+
+export function fileToBase64String(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result || "");
+      const b64 = result.includes("base64,") ? result.split("base64,")[1] : result;
+      resolve(b64);
+    };
+    reader.onerror = (e) => reject(e);
+    reader.readAsDataURL(file);
+  });
+}
+
+export async function fileToArquivoDTO(file: File): Promise<ArquivoDTO> {
+  const conteudoArquivo = await fileToBase64String(file);
+  return {
+    nomeArquivo: file.name,
+    tipoConteudo: file.type || null,
+    conteudoArquivo,
+  };
 }
