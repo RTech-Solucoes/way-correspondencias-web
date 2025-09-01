@@ -203,6 +203,7 @@ export default function EmailPage() {
           searchQuery={searchQuery}
           selectedEmail={selectedEmail}
           onEmailSelect={onEmailSelect}
+          currentPage={currentPage}
           emailFilters={{
             isRead: '',
             hasAttachment: '',
