@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { TramitacaoResponse } from '@/api/tramitacoes/types';
 import { tramitacoesClient } from '@/api/tramitacoes/client';
 import { AreaResponse } from '@/api/areas/types';
-import { SpinnerIcon, ArrowRightIcon } from '@phosphor-icons/react';
+import { SpinnerIcon, CaretRightIcon } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 
 interface TramitacaoListProps {
@@ -21,7 +21,7 @@ export default function TramitacaoList({ idSolicitacao, areas }: TramitacaoListP
       try {
         setLoading(true);
         const response = await tramitacoesClient.listarPorSolicitacao(idSolicitacao);
-        setTramitacoes(response);
+        setTramitacoes(response.reverse());
       } catch (error) {
         console.error('Erro ao carregar tramitações:', error);
         toast.error('Erro ao carregar tramitações');
@@ -35,10 +35,22 @@ export default function TramitacaoList({ idSolicitacao, areas }: TramitacaoListP
     }
   }, [idSolicitacao]);
 
-  const getAreaName = (idArea?: number) => {
-    if (!idArea) return 'Não informado';
-    const area = areas.find(a => a.idArea === idArea);
-    return area?.nmArea || `Área ${idArea}`;
+  const formatDate = (dateString?: string): string => {
+    if (!dateString) return '';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return '';
+
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+
+      return `${day}/${month}/${year} ${hours}:${minutes}`;
+    } catch {
+      return '';
+    }
   };
 
   if (loading) {
@@ -62,53 +74,52 @@ export default function TramitacaoList({ idSolicitacao, areas }: TramitacaoListP
     <div className="flex flex-col space-y-3">
       <h5 className="font-semibold text-gray-900 mb-3">Histórico de Tramitações</h5>
       <div
-        className="relative w-full"
-        style={{
-          overflowX: 'auto',
-          overflowY: 'hidden',
-          maxWidth: '100%'
-        }}
+        className="relative w-full overflow-y-hidden overflow-x-auto max-w-full"
       >
         <div
-          className="flex gap-12 pb-2"
-          style={{
-            width: 'max-content',
-            minWidth: '100%'
-          }}
+          className="flex gap-12 pb-2 w-max min-h-full"
         >
           {tramitacoes.map((tramitacao, index) => (
             <div
               key={tramitacao.idTramitacao}
               className="flex flex-col bg-white border border-gray-200 rounded-lg p-4 shadow-sm relative"
               style={{
-                minWidth: '200px',
-                width: '200px',
+                minWidth: '280px',
+                width: '280px',
                 flexShrink: 0
               }}
             >
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center text-sm">
                   <span className="font-medium text-primary">
-                    {getAreaName(index === 0 ? tramitacao.idAreaOrigem : tramitacao.idAreaDestino)}
+                    {index === 0 ? tramitacao.areaOrigem.nmArea : tramitacao.areaDestino.nmArea}
                   </span>
-                  {index !== 0 && <ArrowRightIcon className="absolute h-8 w-8 text-primary -left-10 top-1/2 -translate-y-1/2" />}
+                  {index !== 0 && <CaretRightIcon className="absolute h-8 w-8 text-primary -left-10 top-1/2 -translate-y-1/2" />}
                 </div>
               </div>
-              {tramitacoes[index - 1]?.dsObservacao ? (
-                <div className="mt-2">
-                  <p className="text-sm text-gray-700">
-                    <span className="font-medium">Observação:</span> {tramitacoes[index - 1].dsObservacao}
-                  </p>
+
+              <div className="space-y-2">
+                <div className="text-xs text-gray-500">
+                  <span className="font-medium">Código:</span> {index === 0 ? tramitacao.areaOrigem.cdArea : tramitacao.areaDestino.cdArea}
                 </div>
-              ) : (
-                index === 0 && (
-                  <div className="mt-2">
-                    <p className="text-sm text-gray-700">
-                      Área inicial
+
+                {tramitacao.dsObservacao && (
+                  <div className="text-xs text-gray-600">
+                    <span className="font-medium">Observação:</span>
+                    <p className="mt-1 text-gray-700">{tramitacao.dsObservacao}</p>
+                  </div>
+                )}
+
+                {tramitacao.tramitacaoAcao && tramitacao.tramitacaoAcao.length > 0 && (
+                  <div className="text-xs text-gray-600">
+                    <span className="font-medium">Responsável:</span>
+                    <p className="text-gray-700">{tramitacao.tramitacaoAcao[0].responsavelArea.responsavel.nmResponsavel}</p>
+                    <p className="text-gray-500">
+                      {formatDate(tramitacao.tramitacaoAcao[0].dtCriacao)}
                     </p>
                   </div>
-                )
-              )}
+                )}
+              </div>
             </div>
           ))}
         </div>

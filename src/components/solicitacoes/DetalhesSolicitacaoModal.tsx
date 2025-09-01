@@ -12,13 +12,12 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { ClockIcon, DownloadIcon, PaperclipIcon } from '@phosphor-icons/react';
+import { ClockIcon, DownloadIcon, PaperclipIcon, X as XIcon } from '@phosphor-icons/react';
 import { SolicitacaoResponse } from '@/api/solicitacoes/types';
 import { AnexoResponse, ArquivoDTO, TipoObjetoAnexo } from '@/api/anexos/type';
 import { anexosClient } from '@/api/anexos/client';
 import { base64ToUint8Array, saveBlob } from '@/utils/utils';
-import authClient from '@/api/auth/client';
-import responsaveisClient from '@/api/responsaveis/client';
+import tramitacoesClient from '@/api/tramitacoes/client';
 
 type DetalhesSolicitacaoModalProps = {
   open: boolean;
@@ -53,7 +52,6 @@ export default function DetalhesSolicitacaoModal({
   const [arquivos, setArquivos] = useState<File[]>([]);
   const [expandDescricao, setExpandDescricao] = useState(false);
   const [sending, setSending] = useState(false);
-  const [perfilNome, setPerfilNome] = useState<string | null>(null);
 
   const descRef = useRef<HTMLParagraphElement | null>(null);
   const [canToggleDescricao, setCanToggleDescricao] = useState(false);
@@ -65,19 +63,6 @@ export default function DetalhesSolicitacaoModal({
   );
 
   const statusText = solicitacao?.statusSolicitacao?.nmStatus ?? statusLabel;
-
-  useEffect(() => {
-    const userName = authClient.getUserName?.();
-    if (!userName) return;
-    responsaveisClient
-      .buscarPorNmUsuarioLogin(userName)
-      .then((resp) => setPerfilNome(resp.nmPerfil))
-      .catch(() => {});
-  }, []);
-
-  const isStatusValid = statusText === 'Análise Regulatória';
-  const isRoleResponsavel = perfilNome?.toLowerCase() === 'executor avançado';
-  const disableButtonPorRole = isStatusValid && (!isRoleResponsavel);
 
   const criadorLine = useMemo(() => {
     const when = formatDateTime((solicitacao as SolicitacaoResponse)?.dtCriacao);
@@ -140,30 +125,49 @@ export default function DetalhesSolicitacaoModal({
     const files = e.target.files;
     if (!files) return;
     setArquivos((prev) => [...prev, ...Array.from(files)]);
+    e.currentTarget.value = '';
+  }, []);
+
+  const handleRemoveArquivo = useCallback((index: number) => {
+    setArquivos((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
   const handleEnviar = useCallback(
     async (e: FormEvent) => {
       e.preventDefault();
       if (!onEnviarDevolutiva) return;
+
       if (!resposta.trim() && arquivos.length === 0) {
         toast.error('Escreva uma devolutiva ou anexe um arquivo.');
         return;
       }
+
+      if (!solicitacao?.idSolicitacao) {
+        toast.error('ID da solicitação não encontrado.');
+        return;
+      }
+
       try {
         setSending(true);
-        await onEnviarDevolutiva(resposta.trim(), arquivos);
+
+        if (arquivos.length > 0) {
+          await tramitacoesClient.uploadAnexos(solicitacao.idSolicitacao, arquivos);
+        }
+
+        await onEnviarDevolutiva(resposta.trim(), []);
+
         toast.success('Resposta enviada com sucesso!');
         setResposta('');
         setArquivos([]);
         onClose();
-      } catch {
+      } catch (err) {
+        console.error(err);
         toast.error('Não foi possível enviar a resposta.');
       } finally {
         setSending(false);
       }
     },
-    [onEnviarDevolutiva, resposta, arquivos, onClose]
+    [onEnviarDevolutiva, resposta, arquivos, solicitacao?.idSolicitacao, onClose]
   );
 
   const handleBaixarAnexo = useCallback(
@@ -372,13 +376,14 @@ export default function DetalhesSolicitacaoModal({
                 value={resposta}
                 onChange={(e) => setResposta(e.target.value)}
                 rows={5}
+                disabled={sending}
               />
 
               <div className="mt-3 flex items-center gap-3">
                 <label className="inline-flex items-center gap-2 text-sm text-primary hover:underline cursor-pointer">
                   <PaperclipIcon className="h-4 w-4" />
                   Fazer upload de arquivo
-                  <input type="file" className="hidden" multiple onChange={handleUploadChange} />
+                  <input type="file" className="hidden" multiple onChange={handleUploadChange} disabled={sending} />
                 </label>
 
                 {arquivos.length > 0 && (
@@ -387,20 +392,39 @@ export default function DetalhesSolicitacaoModal({
                   </span>
                 )}
               </div>
+
+              {arquivos.length > 0 && (
+                <ul className="mt-3 flex flex-col gap-2">
+                  {arquivos.map((f, idx) => (
+                    <li
+                      key={`${f.name}-${idx}`}
+                      className="flex items-center justify-between rounded-md border bg-white px-3 py-2"
+                    >
+                      <span className="truncate text-sm">{f.name}</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => handleRemoveArquivo(idx)}
+                        title="Remover"
+                        disabled={sending}
+                      >
+                        <XIcon className="h-4 w-4" />
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </section>
         </form>
 
         <DialogFooter className="flex gap-3 px-6 pb-6">
-          <Button type="button" variant="outline" onClick={onClose}>
+          <Button type="button" variant="outline" onClick={onClose} disabled={sending}>
             Cancelar
           </Button>
-          <Button
-            type="submit"
-            form="detalhes-form"
-            disabled={sending || disableButtonPorRole}
-            tooltip={disableButtonPorRole ? 'Apenas executor avançado pode enviar resposta' : ''}
-          >
+          <Button type="submit" form="detalhes-form" disabled={sending}>
             {sending ? 'Enviando...' : 'Enviar resposta'}
           </Button>
         </DialogFooter>
