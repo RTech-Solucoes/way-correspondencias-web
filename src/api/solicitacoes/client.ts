@@ -5,7 +5,8 @@ import {
   SolicitacaoIdentificacaoRequest,
   SolicitacaoTemaEtapaRequest,
   SolicitacaoEtapaPrazoRequest,
-  SolicitacaoPrazoResponse
+  SolicitacaoPrazoResponse,
+  PagedResponse
 } from './types';
 import { solicitacaoAnexosClient, ArquivoDTO, AnexoResponse } from './anexos-client';
 
@@ -20,14 +21,19 @@ class SolicitacoesClient {
   /**
    * Lista todas as solicitações ou filtra por critério
    */
-  async listar(filtro?: string, page?: number, size?: number, sort?: string): Promise<SolicitacaoResponse[]> {
+  async listar(
+    filtro?: string,
+    page?: number,
+    size?: number,
+    sort?: string
+  ): Promise<PagedResponse<SolicitacaoResponse> | SolicitacaoResponse[]> {
     const queryParams = new URLSearchParams();
     if (filtro) queryParams.append('filtro', filtro);
     if (page !== undefined) queryParams.append('page', page.toString());
     if (size !== undefined) queryParams.append('size', size.toString());
     if (sort) queryParams.append('sort', sort);
     const qs = queryParams.toString();
-    return this.client.request<SolicitacaoResponse[]>(qs ? `?${qs}` : '', { method: 'GET' });
+    return this.client.request<PagedResponse<SolicitacaoResponse> | SolicitacaoResponse[]>(qs ? `?${qs}` : '', { method: 'GET' });
   }
 
   async buscarPorId(id: number): Promise<SolicitacaoResponse> {
