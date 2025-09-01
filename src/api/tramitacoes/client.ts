@@ -39,6 +39,14 @@ class TramitacoesClient {
       method: 'DELETE',
     });
   }
+
+   async tramitar(data: TramitacaoRequest): Promise<TramitacaoResponse> {
+    return this.client.request<TramitacaoResponse>(`/tramitar`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
 }
 
 export const tramitacoesClient = new TramitacoesClient();

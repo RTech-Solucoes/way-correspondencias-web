@@ -50,8 +50,7 @@ import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { TemaResponse } from '@/api/temas/types';
 import { AreaResponse } from '@/api/areas/types';
 import { useTramitacoesMutation } from '@/hooks/use-tramitacoes';
-
-
+import tramitacoesClient from '@/api/tramitacoes/client';
 
 export default function SolicitacoesPage() {
   const {
@@ -107,14 +106,15 @@ export default function SolicitacoesPage() {
   const [first, setFirst] = useState(true);
   const [last, setLast] = useState(true);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const userHasOpenedDetailsModal = useCallback((solicitacao: SolicitacaoResponse) => {
     const payload = {
       idSolicitacao: solicitacao.idSolicitacao,
       idAreaOrigem: 0,
       idAreaDestino: 0,
-      dsObservacao: "",
+      dsObservacao: '',
       idResponsavel: 0,
-      flAcao: "V"
+      flAcao: 'V',
     };
 
     tramitacoesMutation.mutate(payload, {
@@ -124,7 +124,7 @@ export default function SolicitacoesPage() {
       onError: (error) => {
         console.error('Erro ao criar tramitação:', error);
         toast.error('Erro ao criar tramitação');
-      }
+      },
     });
   }, [tramitacoesMutation]);
 
@@ -268,7 +268,9 @@ export default function SolicitacoesPage() {
     setSelectedSolicitacao(s);
     setShowDetalhesModal(true);
     setDetalhesSolicitacao(null);
-    userHasOpenedDetailsModal(s);
+
+    // ⛔ NÃO registrar tramitação ao abrir o modal de detalhes
+    // userHasOpenedDetailsModal(s);
 
     try {
       const detalhes = await solicitacoesClient.buscarPorId(s.idSolicitacao);
@@ -279,7 +281,7 @@ export default function SolicitacoesPage() {
       toast.error('Erro ao carregar os detalhes da solicitação');
       setDetalhesSolicitacao(s);
     }
-  }, [setSelectedSolicitacao, userHasOpenedDetailsModal]);
+  }, [setSelectedSolicitacao]);
 
   const abrirEmailOriginal = useCallback(() => {
     toast.message('Abrir e-mail original (implemente a navegação/URL).');
@@ -291,10 +293,16 @@ export default function SolicitacoesPage() {
 
   const enviarDevolutiva = useCallback(async (mensagem: string, arquivos: File[]) => {
     const alvo = detalhesSolicitacao ?? selectedSolicitacao;
+    console.log('Enviando devolutiva para a solicitação:', alvo);
+    console.log('Mensagem:', mensagem);
     if (!alvo) return;
     try {
       if (mensagem?.trim()) {
-        await solicitacoesClient.enviarDevolutiva?.(alvo.idSolicitacao, { mensagem });
+        const data = {
+          dsObservacao: mensagem,
+          idSolicitacao: alvo.idSolicitacao,
+        }
+        await tramitacoesClient.tramitar?.(data);
       }
       if (arquivos.length > 0) {
         const arquivosDTO = await Promise.all(
@@ -580,7 +588,6 @@ export default function SolicitacoesPage() {
           </StickyTableBody>
         </StickyTable>
       </div>
-
 
       {showFilterModal && (
         <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
