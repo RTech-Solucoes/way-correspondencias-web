@@ -34,6 +34,7 @@ interface EmailListProps {
   searchQuery: string;
   selectedEmail: string | null;
   onEmailSelect: (emailId: string) => void;
+  currentPage?: number;
   emailFilters?: {
     isRead: string;
     hasAttachment: string;
@@ -104,6 +105,7 @@ function EmailList({
   searchQuery,
   selectedEmail,
   onEmailSelect,
+  currentPage: externalPage,
   emailFilters = {
     isRead: '',
     hasAttachment: '',
@@ -129,7 +131,7 @@ function EmailList({
       setLoading(true);
       const response = await emailClient.buscarPorFiltro({
         filtro: debouncedSearchQuery || undefined,
-        page: currentPage,
+        page: typeof externalPage === 'number' ? externalPage : currentPage,
         size: 15
       });
 
@@ -175,7 +177,7 @@ function EmailList({
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearchQuery, currentPage]);
+  }, [debouncedSearchQuery, currentPage, externalPage]);
 
   useEffect(() => {
     loadEmails();

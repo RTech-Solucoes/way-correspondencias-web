@@ -1,5 +1,7 @@
+import { ArquivoDTO } from "../anexos/type";
 import ApiClient from "../client";
 import { TramitacaoResponse, TramitacaoRequest } from './types';
+import { fileToArquivoDTO } from "@/utils/utils";
 
 class TramitacoesClient {
   private client: ApiClient;
@@ -44,6 +46,14 @@ class TramitacoesClient {
     return this.client.request<TramitacaoResponse>(`/tramitar`, {
       method: 'POST',
       body: JSON.stringify(data),
+    });
+  }
+
+async uploadAnexos(id: number, files: File[]): Promise<TramitacaoResponse> {
+    const arquivos: ArquivoDTO[] = await Promise.all(files.map(fileToArquivoDTO));
+    return this.client.request<TramitacaoResponse>(`/${id}/anexos`, {
+      method: "POST",
+      body: JSON.stringify(arquivos),
     });
   }
 

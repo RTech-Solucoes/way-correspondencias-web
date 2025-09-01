@@ -78,6 +78,7 @@ export interface SolicitacaoRequest {
   tpPrazo?: string;
   idsAreas?: number[];
   flExcepcional?: string;
+  flAnaliseGerenteDiretor?: string;
 }
 
 export interface SolicitacaoTemaRequest {

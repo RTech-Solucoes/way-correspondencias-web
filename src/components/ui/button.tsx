@@ -4,6 +4,7 @@ import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
 
 import { cn } from '@/utils/utils';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from './tooltip';
 
 const buttonVariants = cva(
   'inline-flex items-center justify-center whitespace-nowrap rounded-3xl text-sm font-medium outline-none transition-colors disabled:pointer-events-none disabled:opacity-50',
@@ -40,13 +41,14 @@ export interface ButtonProps
   asChild?: boolean;
   isLoading?: boolean;
   label?: string;
+  tooltip?: string;
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, isLoading, variant, label, size, asChild = false, children, ...props }, ref) => {
+  ({ className, isLoading, variant, label, size, asChild = false, children, tooltip, ...props }, ref) => {
     const Comp = asChild ? Slot : 'button';
 
-    return (
+    const buttonElement = (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
@@ -63,6 +65,25 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         )}
       </Comp>
     );
+
+    if (tooltip) {
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-block">
+                {buttonElement}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{tooltip}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+
+    return buttonElement;
   }
 );
 Button.displayName = 'Button';
