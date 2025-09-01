@@ -17,6 +17,8 @@ import { SolicitacaoResponse } from '@/api/solicitacoes/types';
 import { AnexoResponse, ArquivoDTO, TipoObjetoAnexo } from '@/api/anexos/type';
 import { anexosClient } from '@/api/anexos/client';
 import { base64ToUint8Array, saveBlob } from '@/utils/utils';
+import authClient from '@/api/auth/client';
+import responsaveisClient from '@/api/responsaveis/client';
 
 type DetalhesSolicitacaoModalProps = {
   open: boolean;
@@ -51,6 +53,7 @@ export default function DetalhesSolicitacaoModal({
   const [arquivos, setArquivos] = useState<File[]>([]);
   const [expandDescricao, setExpandDescricao] = useState(false);
   const [sending, setSending] = useState(false);
+  const [perfilNome, setPerfilNome] = useState<string | null>(null);
 
   const descRef = useRef<HTMLParagraphElement | null>(null);
   const [canToggleDescricao, setCanToggleDescricao] = useState(false);
@@ -62,6 +65,19 @@ export default function DetalhesSolicitacaoModal({
   );
 
   const statusText = solicitacao?.statusSolicitacao?.nmStatus ?? statusLabel;
+
+  useEffect(() => {
+    const userName = authClient.getUserName?.();
+    if (!userName) return;
+    responsaveisClient
+      .buscarPorNmUsuarioLogin(userName)
+      .then((resp) => setPerfilNome(resp.nmPerfil))
+      .catch(() => {});
+  }, []);
+
+  const isStatusValid = statusText === 'Análise Regulatória';
+  const isRoleResponsavel = perfilNome?.toLowerCase() === 'executor avançado';
+  const disableButtonPorRole = isStatusValid && (!isRoleResponsavel);
 
   const criadorLine = useMemo(() => {
     const when = formatDateTime((solicitacao as SolicitacaoResponse)?.dtCriacao);
@@ -379,7 +395,12 @@ export default function DetalhesSolicitacaoModal({
           <Button type="button" variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-          <Button type="submit" form="detalhes-form" disabled={sending}>
+          <Button
+            type="submit"
+            form="detalhes-form"
+            disabled={sending || disableButtonPorRole}
+            tooltip={disableButtonPorRole ? 'Apenas executor avançado pode enviar resposta' : ''}
+          >
             {sending ? 'Enviando...' : 'Enviar resposta'}
           </Button>
         </DialogFooter>
