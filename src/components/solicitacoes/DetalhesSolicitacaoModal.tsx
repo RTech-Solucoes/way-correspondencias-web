@@ -7,22 +7,16 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogClose,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import {
-  ClockIcon,
-  DownloadIcon,
-  PaperclipIcon,
-} from '@phosphor-icons/react';
+import { ClockIcon, DownloadIcon, PaperclipIcon } from '@phosphor-icons/react';
 import { SolicitacaoResponse } from '@/api/solicitacoes/types';
 import { AnexoResponse, ArquivoDTO, TipoObjetoAnexo } from '@/api/anexos/type';
 import { anexosClient } from '@/api/anexos/client';
 import { base64ToUint8Array, saveBlob } from '@/utils/utils';
-import { XIcon } from '@phosphor-icons/react';
 
 type DetalhesSolicitacaoModalProps = {
   open: boolean;
@@ -38,19 +32,8 @@ type DetalhesSolicitacaoModalProps = {
 const formatDateTime = (iso?: string | null) => {
   if (!iso) return '—';
   const d = new Date(iso);
-
-  const date = d.toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
-
-  const time = d.toLocaleTimeString('pt-BR', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
-
+  const date = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const time = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false });
   return `${date} às ${time}`;
 };
 
@@ -61,8 +44,6 @@ export default function DetalhesSolicitacaoModal({
   onClose,
   solicitacao,
   anexos = [],
-  onHistoricoRespostas,
-  onAbrirEmailOriginal,
   onEnviarDevolutiva,
   statusLabel = 'Status',
 }: DetalhesSolicitacaoModalProps) {
@@ -80,7 +61,7 @@ export default function DetalhesSolicitacaoModal({
     [solicitacao?.cdIdentificacao]
   );
 
-  statusLabel = solicitacao?.statusSolicitacao?.nmStatus ?? statusLabel;
+  const statusText = solicitacao?.statusSolicitacao?.nmStatus ?? statusLabel;
 
   const criadorLine = useMemo(() => {
     const when = formatDateTime((solicitacao as SolicitacaoResponse)?.dtCriacao);
@@ -101,8 +82,7 @@ export default function DetalhesSolicitacaoModal({
   const temaLabel =
     solicitacao?.tema?.nmTema ?? (solicitacao as SolicitacaoResponse)?.nmTema ?? '—';
 
-  const anexosToShow: AnexoResponse[] =
-    Array.isArray(anexos) && anexos.length > 0 ? anexos : [];
+  const anexosToShow: AnexoResponse[] = Array.isArray(anexos) && anexos.length > 0 ? anexos : [];
 
   const measureDescricao = useCallback(() => {
     const el = descRef.current;
@@ -116,7 +96,6 @@ export default function DetalhesSolicitacaoModal({
 
     const prevMaxHeight = el.style.maxHeight;
     const prevOverflow = el.style.overflow;
-
     el.style.maxHeight = 'none';
     el.style.overflow = 'visible';
 
@@ -136,10 +115,7 @@ export default function DetalhesSolicitacaoModal({
   useEffect(() => {
     const el = descRef.current;
     if (!el) return;
-
-    const ro = new ResizeObserver(() => {
-      measureDescricao();
-    });
+    const ro = new ResizeObserver(() => measureDescricao());
     ro.observe(el);
     return () => ro.disconnect();
   }, [measureDescricao]);
@@ -181,25 +157,21 @@ export default function DetalhesSolicitacaoModal({
           toast.error('ID da solicitação não encontrado.');
           return;
         }
-
         const arquivos = await anexosClient.download(
           solicitacao.idSolicitacao,
           TipoObjetoAnexo.S,
           anexo.nmArquivo
         );
-
         if (!arquivos || arquivos.length === 0) {
           toast.error('Nenhum arquivo retornado.');
           return;
         }
-
         arquivos.forEach((arq: ArquivoDTO) => {
           const bytes = base64ToUint8Array(arq.conteudoArquivo);
           const name = arq.nomeArquivo || anexo.nmArquivo || 'arquivo';
           const mime = arq.tipoConteudo || 'application/octet-stream';
           saveBlob(bytes, mime, name);
         });
-
         toast.success('Download iniciado.');
       } catch (e) {
         console.error(e);
@@ -216,19 +188,20 @@ export default function DetalhesSolicitacaoModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl md:max-w-4xl lg:max-w-5xl p-0 flex flex-col max-h-[85vh] [&>button.absolute.right-4.top-4]:hidden">
+      <DialogContent className="max-w-3xl md:max-w-4xl lg:max-w-5xl p-0 flex flex-col max-h-[85vh]">
         <div className="px-6 pt-6">
           <DialogHeader className="p-0">
             <div className="flex items-start justify-between gap-4">
-              <div className='w-full'>
+              <div className="w-full">
                 <DialogTitle className="text-[20px] font-semibold">
                   Solicitação {identificador || ''}
                 </DialogTitle>
-                <div className='flex items-center gap-2 justify-between w-full'>
-                  <div className="mt-1 text-sm text-muted-foreground">{criadorLine}</div>
-                  <div className='text-[#EC6B20] text-sm bg-[#EC6B2014] px-2 py-1 rounded-md'>
-                    {statusLabel}
-                  </div>
+
+                <div className="mt-1 flex items-center justify-between">
+                  <div className="text-sm text-muted-foreground">{criadorLine}</div>
+                  <span className="inline-flex items-center rounded-full bg-orange-500/10 text-orange-600 px-3 py-1 text-xs font-medium">
+                    {statusText}
+                  </span>
                 </div>
 
                 <div className="mt-3 flex items-center gap-2 text-sm">
@@ -237,16 +210,6 @@ export default function DetalhesSolicitacaoModal({
                   <span className="font-medium">{prazoLine}</span>
                 </div>
               </div>
-
-              <DialogClose asChild>
-                <Button
-                  variant="ghost"
-                  className="flex items-center justify-center rounded-full text-white transition-colors h-9 w-9"
-                  aria-label="Fechar"
-                >
-                  <XIcon className="h-4 w-4" />
-                </Button>
-              </DialogClose>
             </div>
           </DialogHeader>
         </div>
@@ -289,23 +252,17 @@ export default function DetalhesSolicitacaoModal({
               <div className="h-px bg-border" />
               <div className="grid grid-cols-12 gap-0">
                 <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Tema:</div>
-                <div className="col-span-9 px-4 py-3 text-sm">
-                  {temaLabel}
-                </div>
+                <div className="col-span-9 px-4 py-3 text-sm">{temaLabel}</div>
               </div>
               <div className="h-px bg-border" />
               <div className="grid grid-cols-12">
                 <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Nº do ofício:</div>
-                <div className="col-span-9 px-4 py-3 text-sm">
-                  {solicitacao?.nrOficio || '—'}
-                </div>
+                <div className="col-span-9 px-4 py-3 text-sm">{solicitacao?.nrOficio || '—'}</div>
               </div>
               <div className="h-px bg-border" />
               <div className="grid grid-cols-12">
                 <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Nº do processo:</div>
-                <div className="col-span-9 px-4 py-3 text-sm">
-                  {solicitacao?.nrProcesso || '—'}
-                </div>
+                <div className="col-span-9 px-4 py-3 text-sm">{solicitacao?.nrProcesso || '—'}</div>
               </div>
             </div>
           </section>

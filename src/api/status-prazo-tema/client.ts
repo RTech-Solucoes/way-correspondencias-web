@@ -1,5 +1,5 @@
 import ApiClient from '../client';
-import { StatusSolicPrazoTemaRequest, StatusSolicPrazoTemaResponse, StatusSolicPrazoTemaForUI } from './types';
+import { StatusSolicPrazoTemaRequest, StatusSolicPrazoTemaResponse, StatusSolicPrazoTemaForUI, StatusPrazoPadraoResponse } from './types';
 
 class StatusSolicPrazoTemaClient {
   private client: ApiClient;
@@ -42,6 +42,29 @@ class StatusSolicPrazoTemaClient {
       tema: {
         idTema: item.idTema,
         nmTema: ''
+      }
+    }));
+  }
+
+  async buscarPrazosPadrao(idTema: number): Promise<StatusPrazoPadraoResponse[]> {
+    return this.client.request<StatusPrazoPadraoResponse[]>(`/temas/${idTema}/status`, {
+      method: 'GET',
+    });
+  }
+
+  async buscarPrazosPadraoParaUI(idTema: number): Promise<StatusSolicPrazoTemaForUI[]> {
+    const backendResponse = await this.buscarPrazosPadrao(idTema);
+
+    return backendResponse.map(item => ({
+      idStatusSolicPrazoTema: item.idStatusSolicPrazoTema,
+      idStatusSolicitacao: item.statusCodigo.idStatusSolicitacao,
+      idTema: item.tema.idTema,
+      nrPrazoInterno: item.nrPrazoInterno,
+      nrPrazoExterno: item.tema.nrPrazoExterno,
+      flAtivo: item.flAtivo,
+      tema: {
+        idTema: item.tema.idTema,
+        nmTema: item.tema.nmTema
       }
     }));
   }

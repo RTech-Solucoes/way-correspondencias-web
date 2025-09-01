@@ -63,8 +63,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex flex-row items-center justify-center min-h-screen overflow-hidden gap-16 px-12">
-      <form onSubmit={handleSubmit} className="flex flex-col items-center w-[45%] max-w-xl gap-28 p-8 rounded-4xl m-auto mb-80 max-[1460px]:w-[30%]">
+    <div className="flex flex-row justify-center min-h-screen overflow-hidden gap-16 max-[1024px]:gap-0 px-12">
+      <form onSubmit={handleSubmit} className="flex flex-col w-[45%] max-md:w-full md:mt-32 max-w-xl gap-12 p-8 max-[1024px]:p-2 rounded-4xl max-[1460px]:w-[40%] max-[768px]:justify-center">
         <div>
           <Image
             src="/images/way-logo.png"
@@ -127,10 +127,9 @@ export default function LoginPage() {
 
       </form>
 
-      <div className="relative w-[55%] h-[90vh] rounded-4xl overflow-hidden [--gap:16px] max-[1460px]:w-[70%]">
-        {/* Imagem de fundo */}
+      <div className="relative w-[55%] h-[90vh] m-auto rounded-4xl overflow-hidden max-[1460px]:w-[60%] hidden md:block">
         <Image
-          src="/images/background-login.png"
+          src="/images/Background-login.png"
           alt="Rodovia"
           fill
           className="object-center"

@@ -260,6 +260,15 @@ export default function SolicitacaoModal({
           return;
         }
 
+        try {
+          const prazosPadrao = await statusSolicPrazoTemaClient.buscarPrazosPadraoParaUI(formData.idTema);
+          if (prazosPadrao.length > 0) {
+            setStatusPrazos(prazosPadrao);
+          }
+        } catch (error) {
+          console.error('Erro ao carregar prazos padrão:', error);
+        }
+
         if (!solicitacao) {
           setCurrentStep(3);
           return;
@@ -591,53 +600,81 @@ export default function SolicitacaoModal({
       const selectedTema = temas.find(t => t.idTema === formData.idTema);
 
       if (prazos.length === 0) {
-        const defaultPrazos: StatusSolicPrazoTemaForUI[] = [
-          {
-            idStatusSolicPrazoTema: 0,
-            idStatusSolicitacao: 1, // Pré-análise
-            idTema: formData.idTema,
-            nrPrazoInterno: 72,
-            tema: {
-              idTema: formData.idTema,
-              nmTema: selectedTema?.nmTema || ''
-            },
-            flAtivo: 'S'
-          },
-          {
-            idStatusSolicPrazoTema: 0,
-            idStatusSolicitacao: 5, // Análise Regulatória
-            idTema: formData.idTema,
-            nrPrazoInterno: 72,
-            tema: {
-              idTema: formData.idTema,
-              nmTema: selectedTema?.nmTema || ''
-            },
-            flAtivo: 'S'
-          },
-          {
-            idStatusSolicPrazoTema: 0,
-            idStatusSolicitacao: 6, // Em Aprovação
-            idTema: formData.idTema,
-            nrPrazoInterno: 48,
-            tema: {
-              idTema: formData.idTema,
-              nmTema: selectedTema?.nmTema || ''
-            },
-            flAtivo: 'S'
-          },
-          {
-            idStatusSolicPrazoTema: 0,
-            idStatusSolicitacao: 7, // Em Assinatura
-            idTema: formData.idTema,
-            nrPrazoInterno: 48,
-            tema: {
-              idTema: formData.idTema,
-              nmTema: selectedTema?.nmTema || ''
-            },
-            flAtivo: 'S'
+        try {
+          const prazosPadrao = await statusSolicPrazoTemaClient.buscarPrazosPadraoParaUI(formData.idTema);
+          if (prazosPadrao.length > 0) {
+            setStatusPrazos(prazosPadrao);
+          } else {
+            const defaultPrazos: StatusSolicPrazoTemaForUI[] = [
+              {
+                idStatusSolicPrazoTema: 0,
+                idStatusSolicitacao: 1, // Pré-análise
+                idTema: formData.idTema,
+                nrPrazoInterno: 72,
+                nrPrazoExterno: 0,
+                tema: {
+                  idTema: formData.idTema,
+                  nmTema: selectedTema?.nmTema || ''
+                },
+                flAtivo: 'S'
+              },
+              {
+                idStatusSolicPrazoTema: 0,
+                idStatusSolicitacao: 5, // Análise Regulatória
+                idTema: formData.idTema,
+                nrPrazoInterno: 72,
+                nrPrazoExterno: 0,
+                tema: {
+                  idTema: formData.idTema,
+                  nmTema: selectedTema?.nmTema || ''
+                },
+                flAtivo: 'S'
+              },
+              {
+                idStatusSolicPrazoTema: 0,
+                idStatusSolicitacao: 6, // Em Aprovação
+                idTema: formData.idTema,
+                nrPrazoInterno: 48,
+                nrPrazoExterno: 0,
+                tema: {
+                  idTema: formData.idTema,
+                  nmTema: selectedTema?.nmTema || ''
+                },
+                flAtivo: 'S'
+              },
+              {
+                idStatusSolicPrazoTema: 0,
+                idStatusSolicitacao: 7, // Em Assinatura
+                idTema: formData.idTema,
+                nrPrazoInterno: 48,
+                nrPrazoExterno: 0,
+                tema: {
+                  idTema: formData.idTema,
+                  nmTema: selectedTema?.nmTema || ''
+                },
+                flAtivo: 'S'
+              }
+            ];
+            setStatusPrazos(defaultPrazos);
           }
-        ];
-        setStatusPrazos(defaultPrazos);
+        } catch (errorPadrao) {
+          console.error('Erro ao carregar prazos padrão:', errorPadrao);
+          const defaultPrazos: StatusSolicPrazoTemaForUI[] = [
+            {
+              idStatusSolicPrazoTema: 0,
+              idStatusSolicitacao: 1,
+              idTema: formData.idTema,
+              nrPrazoInterno: 72,
+              nrPrazoExterno: 0,
+              tema: {
+                idTema: formData.idTema,
+                nmTema: selectedTema?.nmTema || ''
+              },
+              flAtivo: 'S'
+            }
+          ];
+          setStatusPrazos(defaultPrazos);
+        }
       } else {
         setStatusPrazos(prazos);
       }

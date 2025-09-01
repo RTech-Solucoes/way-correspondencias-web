@@ -35,3 +35,40 @@ export interface StatusSolicPrazoTemaForUI {
   flAtivo: string;
   tema?: { idTema: number; nmTema: string };
 }
+
+// Interface para o retorno dos prazos padrão do endpoint /temas/{idTema}/status
+export interface StatusPrazoPadraoResponse {
+  idStatusSolicPrazoTema: number;
+  statusCodigo: {
+    idStatusSolicitacao: number;
+    nmStatus: string;
+    dsStatus: string;
+    dtCriacao: string;
+    dtAtualizacao?: string;
+    nrCpfCriacao: string;
+    nrCpfAtualizacao?: string;
+    flAtivo: string;
+  };
+  nrPrazoInterno: number;
+  tema: {
+    idTema: number;
+    nmTema: string;
+    dsTema: string;
+    nrPrazo: number;
+    nrPrazoExterno: number;
+    tpPrazo: string;
+    flAtivo: string;
+    areas: Array<{
+      idArea: number;
+      cdArea: string;
+      nmArea: string;
+      dsArea: string;
+      flAtivo: string;
+    }>;
+  };
+  dtCriacao: string;
+  dtAtualizacao?: string;
+  nrCpfCriacao: string;
+  nrCpfAtualizacao?: string;
+  flAtivo: string;
+}
