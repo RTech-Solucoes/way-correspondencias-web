@@ -149,9 +149,20 @@ export default function SolicitacoesPage() {
 
       const filtro = filterParts.join(' ') || undefined;
 
+      const mapSortFieldForApi = (field: keyof SolicitacaoResponse): string => {
+        switch (field) {
+          case 'nmTema':
+            return 'tema.nmTema';
+          case 'flStatus':
+            return 'statusSolicitacao.nmStatus';
+          default:
+            return String(field);
+        }
+      };
+
       let sortParam = undefined;
       if (sortField && sortDirection) {
-        sortParam = `${sortField},${sortDirection}`;
+        sortParam = `${mapSortFieldForApi(sortField)},${sortDirection}`;
       }
 
       const response = await solicitacoesClient.listar(filtro, currentPage, 10, sortParam);
@@ -242,9 +253,19 @@ export default function SolicitacoesPage() {
     const sorted = [...solicitacoes];
 
     if (sortField) {
+      const getComparableValue = (s: SolicitacaoResponse) => {
+        if (sortField === 'nmTema') {
+          return s.tema?.nmTema || '';
+        }
+        if (sortField === 'flStatus') {
+          return s.statusSolicitacao?.nmStatus || getStatusText(s.statusCodigo?.toString() || '');
+        }
+        return (s as unknown as Record<string, unknown>)?.[sortField as string] as unknown;
+      };
+
       sorted.sort((a: SolicitacaoResponse, b: SolicitacaoResponse) => {
-        const aValue = a?.[sortField];
-        const bValue = b?.[sortField];
+        const aValue = getComparableValue(a);
+        const bValue = getComparableValue(b);
 
         if (aValue === bValue) return 0;
         if (aValue == null && bValue == null) return 0;
@@ -269,11 +290,8 @@ export default function SolicitacoesPage() {
     setShowDetalhesModal(true);
     setDetalhesSolicitacao(null);
 
-    // ⛔ NÃO registrar tramitação ao abrir o modal de detalhes
-    // userHasOpenedDetailsModal(s);
-
     try {
-      const detalhes = await solicitacoesClient.buscarPorId(s.idSolicitacao);
+      const detalhes = await solicitacoesClient.buscarDetalhesPorId(s.idSolicitacao);
       setDetalhesSolicitacao(detalhes || s);
       const anexos = await anexosClient.buscarPorIdObjetoETipoObjeto(s.idSolicitacao, TipoObjetoAnexo.S);
       setDetalhesAnexos(anexos || []);
@@ -335,7 +353,6 @@ export default function SolicitacoesPage() {
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
-      {/* Header da página com título e controles */}
       <div className="flex items-center justify-between">
         <PageTitle />
 
@@ -408,7 +425,6 @@ export default function SolicitacoesPage() {
         </div>
       </div>
 
-      {/* Área principal da tabela */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-1 overflow-auto">
         <StickyTable>
           <StickyTableHeader>
@@ -527,7 +543,6 @@ export default function SolicitacoesPage() {
                     </StickyTableCell>
                     <StickyTableCell className="text-right">
                       <div className="flex items-center justify-end space-x-2">
-                        {/* Hide paper airplane icon when status is Pré-análise */}
                         {!(
                           solicitacao.statusSolicitacao?.nmStatus === 'Pré-análise' ||
                           solicitacao.statusSolicitacao?.nmStatus === 'Pre-analise' ||

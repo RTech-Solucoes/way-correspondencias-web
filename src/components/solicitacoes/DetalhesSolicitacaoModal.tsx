@@ -13,17 +13,23 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { ClockIcon, DownloadIcon, PaperclipIcon, X as XIcon } from '@phosphor-icons/react';
-import { SolicitacaoResponse } from '@/api/solicitacoes/types';
-import { AnexoResponse, ArquivoDTO, TipoObjetoAnexo } from '@/api/anexos/type';
+import { SolicitacaoDetalheResponse } from '@/api/solicitacoes/types';
+import { ArquivoDTO, TipoObjetoAnexo } from '@/api/anexos/type';
 import { anexosClient } from '@/api/anexos/client';
 import { base64ToUint8Array, saveBlob } from '@/utils/utils';
 import tramitacoesClient from '@/api/tramitacoes/client';
 
+type AnexoItemShape = {
+  idAnexo: number;
+  nmArquivo: string;
+  tpObjeto: string;
+};
+
 type DetalhesSolicitacaoModalProps = {
   open: boolean;
   onClose(): void;
-  solicitacao: SolicitacaoResponse | null;
-  anexos?: AnexoResponse[];
+  solicitacao: SolicitacaoDetalheResponse | null;
+  anexos?: AnexoItemShape[];
   onHistoricoRespostas?(): void;
   onAbrirEmailOriginal?(): void;
   onEnviarDevolutiva?(mensagem: string, arquivos: File[]): Promise<void> | void;
@@ -57,33 +63,45 @@ export default function DetalhesSolicitacaoModal({
   const [canToggleDescricao, setCanToggleDescricao] = useState(false);
   const [lineHeightPx, setLineHeightPx] = useState<number | null>(null);
 
+  const sol = solicitacao?.solicitacao ?? null;
+
   const identificador = useMemo(
-    () => (solicitacao?.cdIdentificacao ? `#${solicitacao.cdIdentificacao}` : ''),
-    [solicitacao?.cdIdentificacao]
+    () => (sol?.cdIdentificacao ? `#${sol.cdIdentificacao}` : ''),
+    [sol?.cdIdentificacao]
   );
 
-  const statusText = solicitacao?.statusSolicitacao?.nmStatus ?? statusLabel;
+  const statusText = sol?.statusSolicitacao?.nmStatus ?? statusLabel;
 
-  const criadorLine = useMemo(() => {
-    const when = formatDateTime((solicitacao as SolicitacaoResponse)?.dtCriacao);
-    return `Criado em: ${when}`;
-  }, [solicitacao?.dtCriacao]);
+  const criadorLine = useMemo(() => formatDateTime(sol?.dtCriacao), [sol?.dtCriacao]);
+  const prazoLine = useMemo(() => formatDateTime(sol?.dtPrazo), [sol?.dtPrazo]);
 
-  const prazoLine = useMemo(
-    () => formatDateTime((solicitacao as SolicitacaoResponse)?.dtPrazo),
-    [solicitacao?.dtPrazo]
-  );
-
-  const assunto = solicitacao?.dsAssunto ?? '';
-  const descricao = solicitacao?.dsSolicitacao ?? '';
-  const areas = Array.isArray(solicitacao?.tema?.areas)
-    ? (solicitacao!.tema!.areas! as Array<{ nmArea: string; idArea?: number; cdArea?: string }>)
+  const assunto = sol?.dsAssunto ?? '';
+  const descricao = sol?.dsSolicitacao ?? '';
+  const areas = Array.isArray(sol?.tema?.areas)
+    ? (sol!.tema!.areas! as Array<{ nmArea: string; idArea?: number; cdArea?: string }>)
     : [];
 
-  const temaLabel =
-    solicitacao?.tema?.nmTema ?? (solicitacao as SolicitacaoResponse)?.nmTema ?? '—';
+  const temaLabel = sol?.tema?.nmTema ?? sol?.nmTema ?? '—';
 
-  const anexosToShow: AnexoResponse[] = Array.isArray(anexos) && anexos.length > 0 ? anexos : [];
+  const anexosSolic = solicitacao?.anexosSolicitacao ?? [];
+  const mapToItem = (a: { idAnexo: number; nmArquivo: string; tpObjeto: string }): AnexoItemShape => ({
+    idAnexo: a.idAnexo,
+    nmArquivo: a.nmArquivo,
+    tpObjeto: a.tpObjeto,
+  });
+
+  const anexosAnalista: AnexoItemShape[] = anexosSolic
+    .filter((a) => a.tpObjeto === 'A')
+    .map(mapToItem);
+
+  const anexosGerente: AnexoItemShape[] = anexosSolic
+    .filter((a) => a.tpObjeto === 'G')
+    .map(mapToItem);
+
+  const anexosRegulatorio: AnexoItemShape[] =
+    anexos.length > 0
+      ? anexos.map(mapToItem)
+      : anexosSolic.filter((a) => a.tpObjeto === 'S').map(mapToItem);
 
   const measureDescricao = useCallback(() => {
     const el = descRef.current;
@@ -142,7 +160,7 @@ export default function DetalhesSolicitacaoModal({
         return;
       }
 
-      if (!solicitacao?.idSolicitacao) {
+      if (!sol?.idSolicitacao) {
         toast.error('ID da solicitação não encontrado.');
         return;
       }
@@ -151,7 +169,7 @@ export default function DetalhesSolicitacaoModal({
         setSending(true);
 
         if (arquivos.length > 0) {
-          await tramitacoesClient.uploadAnexos(solicitacao.idSolicitacao, arquivos);
+          await tramitacoesClient.uploadAnexos(sol.idSolicitacao, arquivos);
         }
 
         await onEnviarDevolutiva(resposta.trim(), []);
@@ -167,18 +185,18 @@ export default function DetalhesSolicitacaoModal({
         setSending(false);
       }
     },
-    [onEnviarDevolutiva, resposta, arquivos, solicitacao?.idSolicitacao, onClose]
+    [onEnviarDevolutiva, resposta, arquivos, sol?.idSolicitacao, onClose]
   );
 
   const handleBaixarAnexo = useCallback(
-    async (anexo: AnexoResponse) => {
+    async (anexo: AnexoItemShape) => {
       try {
-        if (!solicitacao?.idSolicitacao) {
+        if (!sol?.idSolicitacao) {
           toast.error('ID da solicitação não encontrado.');
           return;
         }
         const arquivos = await anexosClient.download(
-          solicitacao.idSolicitacao,
+          sol.idSolicitacao,
           TipoObjetoAnexo.S,
           anexo.nmArquivo
         );
@@ -198,7 +216,7 @@ export default function DetalhesSolicitacaoModal({
         toast.error('Não foi possível baixar o anexo.');
       }
     },
-    [solicitacao?.idSolicitacao]
+    [sol?.idSolicitacao]
   );
 
   const descricaoCollapsedStyle: React.CSSProperties =
@@ -218,7 +236,7 @@ export default function DetalhesSolicitacaoModal({
                 </DialogTitle>
 
                 <div className="mt-1 flex items-center justify-between">
-                  <div className="text-sm text-muted-foreground">{criadorLine}</div>
+                  <div className="text-sm text-muted-foreground">{`Criado em: ${criadorLine}`}</div>
                   <span className="inline-flex items-center rounded-full bg-orange-500/10 text-orange-600 px-3 py-1 text-xs font-medium">
                     {statusText}
                   </span>
@@ -277,12 +295,12 @@ export default function DetalhesSolicitacaoModal({
               <div className="h-px bg-border" />
               <div className="grid grid-cols-12">
                 <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Nº do ofício:</div>
-                <div className="col-span-9 px-4 py-3 text-sm">{solicitacao?.nrOficio || '—'}</div>
+                <div className="col-span-9 px-4 py-3 text-sm">{sol?.nrOficio || '—'}</div>
               </div>
               <div className="h-px bg-border" />
               <div className="grid grid-cols-12">
                 <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Nº do processo:</div>
-                <div className="col-span-9 px-4 py-3 text-sm">{solicitacao?.nrProcesso || '—'}</div>
+                <div className="col-span-9 px-4 py-3 text-sm">{sol?.nrProcesso || '—'}</div>
               </div>
             </div>
           </section>
@@ -323,10 +341,7 @@ export default function DetalhesSolicitacaoModal({
                     Anexado pelo Analista
                   </div>
                   <div className="col-span-9 px-4 py-3">
-                    <AnexoItem
-                      anexos={anexosToShow.filter((a) => a.tpObjeto === 'A')}
-                      onBaixar={handleBaixarAnexo}
-                    />
+                    <AnexoItem anexos={anexosAnalista} onBaixar={handleBaixarAnexo} />
                   </div>
                 </div>
               </div>
@@ -337,10 +352,7 @@ export default function DetalhesSolicitacaoModal({
                     Anexado pelo Gerente
                   </div>
                   <div className="col-span-9 px-4 py-3">
-                    <AnexoItem
-                      anexos={anexosToShow.filter((a) => a.tpObjeto === 'G')}
-                      onBaixar={handleBaixarAnexo}
-                    />
+                    <AnexoItem anexos={anexosGerente} onBaixar={handleBaixarAnexo} />
                   </div>
                 </div>
               </div>
@@ -351,10 +363,7 @@ export default function DetalhesSolicitacaoModal({
                     Enviado pelo Regulatório
                   </div>
                   <div className="col-span-9 px-4 py-3">
-                    <AnexoItem
-                      anexos={anexosToShow.filter((a) => a.tpObjeto === 'S')}
-                      onBaixar={handleBaixarAnexo}
-                    />
+                    <AnexoItem anexos={anexosRegulatorio} onBaixar={handleBaixarAnexo} />
                   </div>
                 </div>
               </div>
@@ -437,8 +446,8 @@ function AnexoItem({
   anexos,
   onBaixar,
 }: {
-  anexos: AnexoResponse[];
-  onBaixar?: (a: AnexoResponse) => void | Promise<void>;
+  anexos: AnexoItemShape[];
+  onBaixar?: (a: AnexoItemShape) => void | Promise<void>;
 }) {
   if (!anexos || anexos.length === 0) {
     return <span className="text-sm text-muted-foreground">Nenhum documento</span>;
@@ -472,7 +481,6 @@ function Pill({ children, title }: { children: React.ReactNode; title?: string }
     <span
       title={title}
       className="inline-flex min-w-0 items-center rounded-full border border-border bg-muted/40 px-2.5 py-0.5 text-xs font-medium text-foreground/90"
-      style={{ backgroundColor: 'rgba(147, 197, 253, 0.3)' }}
     >
       <span className="truncate max-w-[160px]">{children}</span>
     </span>

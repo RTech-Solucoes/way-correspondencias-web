@@ -35,6 +35,14 @@ export interface StatusSolicitacao {
   flAtivo?: string | null;
 }
 
+export interface BaseResponse {
+  dtCriacao: string;
+  dtAtualizacao?: string | null;
+  nrCpfCriacao?: string | null;
+  nrCpfAtualizacao?: string | null;
+  flAtivo: string;
+}
+
 export interface SolicitacaoResponse extends BaseResponse {
   idSolicitacao: number;
   idEmail?: number;
@@ -119,14 +127,6 @@ export interface SolicitacaoFilterParams {
   sort?: string;
 }
 
-export interface BaseResponse {
-  dtCriacao: string;
-  dtAtualizacao?: string | null;
-  nrCpfCriacao?: string | null;
-  nrCpfAtualizacao?: string | null;
-  flAtivo: string;
-}
-
 export interface SolicitacaoPrazoItemRequest {
   idStatusSolicitacao: number;
   nrPrazoInterno?: number;
@@ -148,4 +148,37 @@ export interface SolicitacaoTemaEtapaRequest {
   nrPrazoExterno?: number;
   flExcepcional?: string;
   idsAreas?: number[];
+}
+
+export interface AnexoResponse {
+  idAnexo: number;
+  idObjeto: number;
+  tpObjeto: string;
+  nmArquivo: string;
+  dsCaminho: string;
+  flAtivo: string;
+}
+
+export interface EmailComAnexosResponse {
+  email: Email;
+  anexos: AnexoResponse[];
+}
+
+export interface TramitacaoResponse extends BaseResponse {
+  idTramitacao: number;
+  idSolicitacao: number;
+  dsTramitacao?: string;
+  dtTramitacao?: string;
+}
+
+export interface TramitacaoComAnexosResponse {
+  tramitacao: TramitacaoResponse;
+  anexos: AnexoResponse[];
+}
+
+export interface SolicitacaoDetalheResponse extends BaseResponse {
+  solicitacao: SolicitacaoResponse;
+  anexosSolicitacao: AnexoResponse[];
+  email: EmailComAnexosResponse;
+  tramitacoes: TramitacaoComAnexosResponse[];
 }
