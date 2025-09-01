@@ -149,9 +149,20 @@ export default function SolicitacoesPage() {
 
       const filtro = filterParts.join(' ') || undefined;
 
+      const mapSortFieldForApi = (field: keyof SolicitacaoResponse): string => {
+        switch (field) {
+          case 'nmTema':
+            return 'tema.nmTema';
+          case 'flStatus':
+            return 'statusSolicitacao.nmStatus';
+          default:
+            return String(field);
+        }
+      };
+
       let sortParam = undefined;
       if (sortField && sortDirection) {
-        sortParam = `${sortField},${sortDirection}`;
+        sortParam = `${mapSortFieldForApi(sortField)},${sortDirection}`;
       }
 
       const response = await solicitacoesClient.listar(filtro, currentPage, 10, sortParam);
@@ -242,9 +253,19 @@ export default function SolicitacoesPage() {
     const sorted = [...solicitacoes];
 
     if (sortField) {
+      const getComparableValue = (s: SolicitacaoResponse) => {
+        if (sortField === 'nmTema') {
+          return s.tema?.nmTema || '';
+        }
+        if (sortField === 'flStatus') {
+          return s.statusSolicitacao?.nmStatus || getStatusText(s.statusCodigo?.toString() || '');
+        }
+        return (s as unknown as Record<string, unknown>)?.[sortField as string] as unknown;
+      };
+
       sorted.sort((a: SolicitacaoResponse, b: SolicitacaoResponse) => {
-        const aValue = a?.[sortField];
-        const bValue = b?.[sortField];
+        const aValue = getComparableValue(a);
+        const bValue = getComparableValue(b);
 
         if (aValue === bValue) return 0;
         if (aValue == null && bValue == null) return 0;
