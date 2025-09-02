@@ -146,6 +146,38 @@ export default function ResponsaveisPage() {
     return sorted;
   };
 
+  const filtrosAplicados = [
+    ...(searchQuery ? [{
+      key: 'search',
+      label: 'Busca',
+      value: searchQuery,
+      color: 'blue' as const,
+      onRemove: () => setSearchQuery('')
+    }] : []),
+    ...(activeFilters.usuario ? [{
+      key: 'usuario',
+      label: 'Usuário',
+      value: activeFilters.usuario,
+      color: 'green' as const,
+      onRemove: () => {
+        const newFilters = { ...activeFilters, usuario: '' };
+        setActiveFilters(newFilters);
+        setFilters(newFilters);
+      }
+    }] : []),
+    ...(activeFilters.email ? [{
+      key: 'email',
+      label: 'Email',
+      value: activeFilters.email,
+      color: 'purple' as const,
+      onRemove: () => {
+        const newFilters = { ...activeFilters, email: '' };
+        setActiveFilters(newFilters);
+        setFilters(newFilters);
+      }
+    }] : [])
+  ];
+
   return (
     <div className="flex flex-col min-h-0 flex-1">
       <div className="flex items-center justify-between">
@@ -221,37 +253,7 @@ export default function ResponsaveisPage() {
       </div>
 
       <FiltrosAplicados
-        filters={[
-          ...(searchQuery ? [{
-            key: 'search',
-            label: 'Busca',
-            value: searchQuery,
-            color: 'blue' as const,
-            onRemove: () => setSearchQuery('')
-          }] : []),
-          ...(activeFilters.usuario ? [{
-            key: 'usuario',
-            label: 'Usuário',
-            value: activeFilters.usuario,
-            color: 'green' as const,
-            onRemove: () => {
-              const newFilters = { ...activeFilters, usuario: '' };
-              setActiveFilters(newFilters);
-              setFilters(newFilters);
-            }
-          }] : []),
-          ...(activeFilters.email ? [{
-            key: 'email',
-            label: 'Email',
-            value: activeFilters.email,
-            color: 'purple' as const,
-            onRemove: () => {
-              const newFilters = { ...activeFilters, email: '' };
-              setActiveFilters(newFilters);
-              setFilters(newFilters);
-            }
-          }] : [])
-        ]}
+        filters={filtrosAplicados}
         showClearAll={false}
         className="mb-4"
       />
