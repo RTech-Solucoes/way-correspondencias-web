@@ -29,12 +29,14 @@ import ResponsavelModal from '@/components/responsaveis/ResponsavelModal';
 import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
 import PageTitle from '@/components/ui/page-title';
 import { Pagination } from '@/components/ui/pagination';
-import {getStatusText} from "@/utils/utils";
+import {formatCPF, getStatusText} from "@/utils/utils";
 import { useResponsaveis } from '@/context/responsaveis/ResponsaveisContext';
 import { responsaveisClient } from '@/api/responsaveis/client';
 import { ResponsavelFilterParams } from '@/api/responsaveis/types';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/use-debounce';
+import { FiltrosAplicados } from '@/components/ui/applied-filters';
+
 
 export default function ResponsaveisPage() {
   const {
@@ -63,6 +65,7 @@ export default function ResponsaveisPage() {
     filters,
     setFilters,
     activeFilters,
+    setActiveFilters,
     hasActiveFilters,
     sortField,
     sortDirection,
@@ -80,32 +83,18 @@ export default function ResponsaveisPage() {
     try {
       setLoading(true);
 
-      if (activeFilters.usuario && !activeFilters.email && !debouncedSearchQuery) {
-        const result = await responsaveisClient.buscarPorNmUsuarioLogin(activeFilters.usuario);
-        setResponsaveis([result]);
-        setTotalPages(1);
-        setTotalElements(1);
-      } else if (activeFilters.email && !activeFilters.usuario && !debouncedSearchQuery) {
-        const result = await responsaveisClient.buscarPorDsEmail(activeFilters.email);
-        setResponsaveis([result]);
-        setTotalPages(1);
-        setTotalElements(1);
-      } else {
-        const filterParts = [];
-        if (debouncedSearchQuery) filterParts.push(debouncedSearchQuery);
-        if (activeFilters.usuario) filterParts.push(activeFilters.usuario);
+      const params: ResponsavelFilterParams = {
+        filtro: debouncedSearchQuery || undefined,
+        nmUsuarioLogin: activeFilters.usuario || undefined,
+        dsEmail: activeFilters.email || undefined,
+        page: currentPage,
+        size: 10,
+      };
 
-        const params: ResponsavelFilterParams = {
-          filtro: filterParts.join(' ') || undefined,
-          page: currentPage,
-          size: 10,
-        };
-
-        const response = await responsaveisClient.buscarPorFiltro(params);
-        setResponsaveis(response.content);
-        setTotalPages(response.totalPages);
-        setTotalElements(response.totalElements);
-      }
+      const response = await responsaveisClient.buscarPorFiltro(params);
+      setResponsaveis(response.content);
+      setTotalPages(response.totalPages);
+      setTotalElements(response.totalElements);
     } catch {
       toast.error("Erro ao carregar responsáveis");
     } finally {
@@ -174,7 +163,7 @@ export default function ResponsaveisPage() {
           </Button>
 
           <span className="text-sm text-gray-500">
-            {responsaveis?.length} responsável(s)
+            {totalElements} responsável(s)
           </span>
 
           <Pagination
@@ -231,6 +220,42 @@ export default function ResponsaveisPage() {
         </div>
       </div>
 
+      <FiltrosAplicados
+        filters={[
+          ...(searchQuery ? [{
+            key: 'search',
+            label: 'Busca',
+            value: searchQuery,
+            color: 'blue' as const,
+            onRemove: () => setSearchQuery('')
+          }] : []),
+          ...(activeFilters.usuario ? [{
+            key: 'usuario',
+            label: 'Usuário',
+            value: activeFilters.usuario,
+            color: 'green' as const,
+            onRemove: () => {
+              const newFilters = { ...activeFilters, usuario: '' };
+              setActiveFilters(newFilters);
+              setFilters(newFilters);
+            }
+          }] : []),
+          ...(activeFilters.email ? [{
+            key: 'email',
+            label: 'Email',
+            value: activeFilters.email,
+            color: 'purple' as const,
+            onRemove: () => {
+              const newFilters = { ...activeFilters, email: '' };
+              setActiveFilters(newFilters);
+              setFilters(newFilters);
+            }
+          }] : [])
+        ]}
+        showClearAll={false}
+        className="mb-4"
+      />
+
       <div className="flex flex-1 overflow-hidden bg-white rounded-lg shadow-sm border border-gray-200">
         <StickyTable>
           <StickyTableHeader>
@@ -261,7 +286,7 @@ export default function ResponsaveisPage() {
                   <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </StickyTableHead>
-              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('nrCpf')}>
+              <StickyTableHead className="cursor-pointer w-36" onClick={() => handleSort('nrCpf')}>
                 <div className="flex items-center">
                   CPF
                   <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
@@ -323,7 +348,7 @@ export default function ResponsaveisPage() {
                       {getStatusText(responsavel.flAtivo)}
                     </span>
                   </StickyTableCell>
-                  <StickyTableCell>{responsavel.nrCpf}</StickyTableCell>
+                  <StickyTableCell className="w-36">{formatCPF(responsavel.nrCpf)}</StickyTableCell>
                   <StickyTableCell className="text-right">
                     <div className="flex items-center justify-end space-x-2">
                       <Button
