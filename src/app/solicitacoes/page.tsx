@@ -28,7 +28,8 @@ import {
   CaretRightIcon,
   ArrowsDownUpIcon,
   PencilSimpleIcon,
-  ArrowClockwiseIcon
+  ArrowClockwiseIcon,
+  ClockCounterClockwiseIcon
 } from '@phosphor-icons/react';
 import PageTitle from '@/components/ui/page-title';
 import { solicitacoesClient } from '@/api/solicitacoes/client';
@@ -42,7 +43,7 @@ import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Pagination } from '@/components/ui/pagination';
 import { useSolicitacoes } from '@/context/solicitacoes/SolicitacoesContext';
-import TramitacaoList from '@/components/solicitacoes/TramitacaoList';
+import TramitacaoModal from '@/components/solicitacoes/TramitacaoModal';
 import anexosClient from '@/api/anexos/client';
 import { AnexoResponse, TipoObjetoAnexo, TipoResponsavelAnexo } from '@/api/anexos/type';
 import { AreaSolicitacao, SolicitacaoResponse, PagedResponse, SolicitacaoDetalheResponse } from '@/api/solicitacoes/types';
@@ -132,6 +133,18 @@ export default function SolicitacoesPage() {
   const [showDetalhesModal, setShowDetalhesModal] = useState(false);
   const [detalhesSolicitacao, setDetalhesSolicitacao] = useState<SolicitacaoDetalheResponse | null>(null);
   const [detalhesAnexos, setDetalhesAnexos] = useState<AnexoResponse[]>([]);
+  const [showTramitacaoModal, setShowTramitacaoModal] = useState(false);
+  const [tramitacaoSolicitacaoId, setTramitacaoSolicitacaoId] = useState<number | null>(null);
+
+  const handleTramitacoes = (solicitacao: SolicitacaoResponse) => {
+    setTramitacaoSolicitacaoId(solicitacao.idSolicitacao);
+    setShowTramitacaoModal(true);
+  };
+
+  const handleCloseTramitacaoModal = () => {
+    setShowTramitacaoModal(false);
+    setTramitacaoSolicitacaoId(null);
+  };
 
   const loadSolicitacoes = useCallback(async () => {
     try {
@@ -548,6 +561,17 @@ export default function SolicitacoesPage() {
                           size="sm"
                           onClick={(e) => {
                             e.stopPropagation();
+                            handleTramitacoes(solicitacao);
+                          }}
+                          title="Ver Tramitações"
+                        >
+                          <ClockCounterClockwiseIcon className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
                             handleEdit(solicitacao);
                           }}
                           title="Editar"
@@ -569,15 +593,7 @@ export default function SolicitacoesPage() {
                       </div>
                     </StickyTableCell>
                   </StickyTableRow>
-                  {expandedRows.has(solicitacao.idSolicitacao) && (
-                    <StickyTableRow>
-                      <StickyTableCell colSpan={7} className="bg-gray-50 p-6">
-                        <div className="relative" style={{ contain: 'layout' }}>
-                          <TramitacaoList idSolicitacao={solicitacao.idSolicitacao} areas={areas} />
-                        </div>
-                      </StickyTableCell>
-                    </StickyTableRow>
-                  )}
+
                 </React.Fragment>
               ))
             )}
@@ -751,6 +767,13 @@ export default function SolicitacoesPage() {
           onEnviarDevolutiva={enviarDevolutiva}
         />
       )}
+
+      <TramitacaoModal
+        idSolicitacao={tramitacaoSolicitacaoId}
+        open={showTramitacaoModal}
+        onClose={handleCloseTramitacaoModal}
+        areas={areas}
+      />
 
       <ConfirmationDialog
         open={showDeleteDialog}
