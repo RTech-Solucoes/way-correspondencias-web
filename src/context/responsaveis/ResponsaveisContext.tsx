@@ -109,6 +109,7 @@ export const ResponsaveisProvider = ({ children }: { children: ReactNode }) => {
     };
     setFilters(clearedFilters);
     setActiveFilters(clearedFilters);
+    setSearchQuery('');
     setCurrentPage(0);
     setShowFilterModal(false);
   };
