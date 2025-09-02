@@ -61,6 +61,7 @@ export interface SolicitacaoResponse extends BaseResponse {
   nrProcesso?: string;
   tpPrazo?: string;
   dtPrazo?: string;
+  flAnaliseGerenteDiretor?: string;
   nmResponsavel?: string;
   nmTema?: string;
   areas?: AreaSolicitacao[];
@@ -101,6 +102,7 @@ export interface SolicitacaoIdentificacaoRequest {
   dsObservacao?: string;
   nrOficio?: string;
   nrProcesso?: string;
+  flAnaliseGerenteDiretor?: string;
 }
 
 export interface SolicitacaoPrazoResponse {
@@ -171,6 +173,7 @@ export interface TramitacaoComAnexosResponse {
 
 export interface SolicitacaoDetalheResponse extends BaseResponse {
   solicitacao: SolicitacaoResponse;
+  statusSolicitacao: StatusSolicitacao;
   anexosSolicitacao: AnexoResponse[];
   email: EmailComAnexosResponse;
   tramitacoes: TramitacaoComAnexosResponse[];
