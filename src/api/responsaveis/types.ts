@@ -42,6 +42,8 @@ export interface PagedResponse<T> {
 
 export interface ResponsavelFilterParams {
   filtro?: string;
+  nmUsuarioLogin?: string;
+  dsEmail?: string;
   page?: number;
   size?: number;
   sort?: string;
