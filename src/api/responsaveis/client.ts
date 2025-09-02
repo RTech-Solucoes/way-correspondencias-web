@@ -44,11 +44,7 @@ class ResponsaveisClient {
     });
   }
 
-  async buscarPorIdComAreas(id: number): Promise<ResponsavelResponse> {
-    return this.client.request<ResponsavelResponse>(`/${id}/areas`, {
-      method: 'GET',
-    });
-  }
+
 
   async criar(responsavel: ResponsavelRequest): Promise<ResponsavelResponse> {
     return this.client.request<ResponsavelResponse>('', {

@@ -44,7 +44,6 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
   });
   const [selectedAreaIds, setSelectedAreaIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
-  const [loadingResponsavel, setLoadingResponsavel] = useState(false);
   const [perfis, setPerfis] = useState<PerfilResponse[]>([]);
   const [loadingPerfis, setLoadingPerfis] = useState(false);
 
@@ -66,62 +65,29 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
     }
   }, []);
 
-  const buscarResponsavelComAreas = useCallback(async (idResponsavel: number) => {
-    try {
-      setLoadingResponsavel(true);
-      console.log('Buscando responsável com áreas para ID:', idResponsavel);
-      const responsavelComAreas = await responsaveisClient.buscarPorIdComAreas(idResponsavel);
-      console.log('Responsável carregado:', responsavelComAreas);
-      console.log('ID do perfil do responsável:', responsavelComAreas.idPerfil);
+  const carregarDadosResponsavel = useCallback(() => {
+    if (responsavel) {
+      console.log('Carregando dados do responsável:', responsavel);
+      console.log('ID do perfil do responsável:', responsavel.idPerfil);
 
-      const newFormData = {
-        idPerfil: responsavelComAreas.idPerfil,
-        nmUsuarioLogin: responsavelComAreas.nmUsuarioLogin,
-        nmResponsavel: responsavelComAreas.nmResponsavel,
-        dsEmail: responsavelComAreas.dsEmail,
-        nrCpf: responsavelComAreas.nrCpf || '',
-        dtNascimento: responsavelComAreas.dtNascimento || '',
-        idsAreas: responsavelComAreas.areas ? responsavelComAreas.areas.map(responsavelArea => responsavelArea.area.idArea) : []
+      const formDataResponsavel = {
+        idPerfil: responsavel.idPerfil,
+        nmUsuarioLogin: responsavel.nmUsuarioLogin,
+        nmResponsavel: responsavel.nmResponsavel,
+        dsEmail: responsavel.dsEmail,
+        nrCpf: responsavel.nrCpf || '',
+        dtNascimento: responsavel.dtNascimento || '',
+        idsAreas: responsavel.areas ? responsavel.areas.map(responsavelArea => responsavelArea.area.idArea) : []
       };
 
-      console.log('Atualizando formData com:', newFormData);
-      setFormData(newFormData);
+      console.log('Atualizando formData com:', formDataResponsavel);
+      setFormData(formDataResponsavel);
 
-      if (responsavelComAreas.areas && responsavelComAreas.areas.length > 0) {
-        setSelectedAreaIds(responsavelComAreas.areas.map(responsavelArea => responsavelArea.area.idArea));
+      if (responsavel.areas && responsavel.areas.length > 0) {
+        setSelectedAreaIds(responsavel.areas.map(responsavelArea => responsavelArea.area.idArea));
       } else {
         setSelectedAreaIds([]);
       }
-    } catch (error) {
-      console.error('Erro ao buscar responsável:', error);
-      toast.error("Erro ao carregar responsável");
-
-      // Fallback: usar os dados básicos do responsável se a busca com áreas falhar
-      if (responsavel) {
-        console.log('Usando fallback com dados básicos do responsável:', responsavel);
-        console.log('ID do perfil do responsável (fallback):', responsavel.idPerfil);
-
-        const fallbackFormData = {
-          idPerfil: responsavel.idPerfil,
-          nmUsuarioLogin: responsavel.nmUsuarioLogin,
-          nmResponsavel: responsavel.nmResponsavel,
-          dsEmail: responsavel.dsEmail,
-          nrCpf: responsavel.nrCpf || '',
-          dtNascimento: responsavel.dtNascimento || '',
-          idsAreas: responsavel.areas ? responsavel.areas.map(responsavelArea => responsavelArea.area.idArea) : []
-        };
-
-        console.log('Atualizando formData com fallback:', fallbackFormData);
-        setFormData(fallbackFormData);
-
-        if (responsavel.areas && responsavel.areas.length > 0) {
-          setSelectedAreaIds(responsavel.areas.map(responsavelArea => responsavelArea.area.idArea));
-        } else {
-          setSelectedAreaIds([]);
-        }
-      }
-    } finally {
-      setLoadingResponsavel(false);
     }
   }, [responsavel]);
 
@@ -134,7 +100,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
   useEffect(() => {
     if (open && perfis.length > 0) {
       if (responsavel) {
-        buscarResponsavelComAreas(responsavel.idResponsavel);
+        carregarDadosResponsavel();
       } else {
         setFormData({
           idPerfil: 0,
@@ -148,7 +114,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
         setSelectedAreaIds([]);
       }
     }
-  }, [open, responsavel, perfis.length, buscarResponsavelComAreas]);
+  }, [open, responsavel, perfis.length, carregarDadosResponsavel]);
 
   // Debug useEffect to monitor formData changes
   useEffect(() => {
@@ -346,7 +312,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
             selectedAreaIds={selectedAreaIds}
             onSelectionChange={handleAreasSelectionChange}
             label="Áreas"
-            disabled={loadingResponsavel}
+            disabled={false}
           />
 
         </form>
