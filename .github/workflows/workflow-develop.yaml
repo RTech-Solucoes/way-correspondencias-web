@@ -46,8 +46,11 @@ jobs:
           ping -c 3 10.132.4.128 || exit 1
 
       - name: Deploy aplicação
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
-          sshpass -p "Suporte@#0608" ssh -o StrictHostKeyChecking=no rtech@10.132.4.128 "cd /home/rtech/way-correspondencias-web && ./deploy.sh"
+          sshpass -p "Suporte@#0608" ssh -o StrictHostKeyChecking=no rtech@10.132.4.129 \
+          "cd /home/rtech/way-correspondencias-web && ./deploy.sh \"${COMMIT_MESSAGE//$'\n'/ }\""
 
       - name: Send failure message to Google Chat
         if: failure()

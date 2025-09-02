@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       WEBHOOK_URL: "https://chat.googleapis.com/v1/spaces/AAQA5qsWFdQ/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=VyWYfeqljUfRTIYU-mvpjOntN4ykR2me8p6Cn_ROEPg"
-      GIT_BRANCH: "master"
+      GIT_BRANCH: "main"
 
     steps:
       - name: Checkout código
@@ -46,8 +46,11 @@ jobs:
           ping -c 3 10.132.4.129 || exit 1
 
       - name: Deploy aplicação
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
-          sshpass -p "Suporte@#0608" ssh -o StrictHostKeyChecking=no rtech@10.132.4.129 "cd /home/rtech/way-correspondencias-web && ./deploy.sh"
+          sshpass -p "Suporte@#0608" ssh -o StrictHostKeyChecking=no rtech@10.132.4.128 \
+          "cd /home/rtech/way-correspondencias-web && ./deploy.sh \"${COMMIT_MESSAGE//$'\n'/ }\""
 
       - name: Send failure message to Google Chat
         if: failure()
