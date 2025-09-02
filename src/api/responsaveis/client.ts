@@ -1,5 +1,8 @@
 import ApiClient from "../client";
-import { ResponsavelResponse, ResponsavelRequest, PagedResponse, ResponsavelFilterParams } from "./types";
+import { PagedResponse } from "../interfaces/request/PagedResponse";
+import { ResponsavelFilterParams } from "../interfaces/request/ResponsavelFilterParams";
+import { ResponsavelRequest } from "../interfaces/request/ResponsavelRequest";
+import { ResponsavelResponse } from "../interfaces/response/ResponsavelResponse";
 
 class ResponsaveisClient {
   private client: ApiClient;

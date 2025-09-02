@@ -1,16 +1,17 @@
 import ApiClient from '../client';
-import {
-  SolicitacaoResponse,
-  SolicitacaoRequest,
-  SolicitacaoIdentificacaoRequest,
-  SolicitacaoTemaEtapaRequest,
-  SolicitacaoEtapaPrazoRequest,
-  SolicitacaoPrazoResponse,
-  PagedResponse,
-  SolicitacaoDetalheResponse
-} from './types';
-import { solicitacaoAnexosClient } from './anexos-client';
-import { AnexoResponse, ArquivoDTO } from '../anexos/type';
+import { ArquivoRequest } from '../interfaces/request/ArquivoRequest';
+import { PagedResponse } from '../interfaces/request/PagedResponse';
+import { SolicitacaoEtapaPrazoRequest } from '../interfaces/request/SolicitacaoEtapaPrazoRequest';
+import { SolicitacaoIdentificacaoRequest } from '../interfaces/request/SolicitacaoIdentificacaoRequest';
+import { SolicitacaoRequest } from '../interfaces/request/SolicitacaoRequest';
+import { SolicitacaoTemaEtapaRequest } from '../interfaces/request/SolicitacaoTemaEtapaRequest';
+import { AnexoResponse } from '../interfaces/response/AnexoResponse';
+import { ArquivoResponse } from '../interfaces/response/ArquivoResponse';
+import { SolicitacaoDetalheResponse } from '../interfaces/response/SolicitacaoDetalheResponse';
+import { SolicitacaoPrazoResponse } from '../interfaces/response/SolicitacaoPrazoResponse';
+import { SolicitacaoResponse } from '../interfaces/response/SolicitacaoResponse';
+import solicitacaoAnexosClient from './anexos-client';
+
 
 class SolicitacoesClient {
 
@@ -121,7 +122,7 @@ class SolicitacoesClient {
     return solicitacaoAnexosClient.listar(idSolicitacao);
   }
 
-  async uploadAnexos(idSolicitacao: number, anexos: ArquivoDTO[]): Promise<void> {
+  async uploadAnexos(idSolicitacao: number, anexos: ArquivoRequest[]): Promise<void> {
     return solicitacaoAnexosClient.upload(idSolicitacao, anexos);
   }
 
@@ -129,7 +130,7 @@ class SolicitacoesClient {
     return solicitacaoAnexosClient.deletar(idSolicitacao, idAnexo);
   }
 
-  async downloadAnexo(idSolicitacao: number, nmArquivo?: string): Promise<ArquivoDTO[]> {
+  async downloadAnexo(idSolicitacao: number, nmArquivo?: string): Promise<ArquivoResponse[]> {
     return solicitacaoAnexosClient.download(idSolicitacao, nmArquivo);
   }
 

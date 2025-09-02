@@ -1,5 +1,7 @@
 import ApiClient from "../client";
-import { EmailResponse, PagedResponse, EmailFilterParams } from "./types";
+import { EmailFilterParams } from "../interfaces/request/EmailFilterParams";
+import { PagedResponse } from "../interfaces/request/PagedResponse";
+import { EmailResponse } from "../interfaces/response/EmailResponse";
 
 class EmailClient {
   private client: ApiClient;

@@ -1,5 +1,8 @@
 import ApiClient from "../client";
-import { PerfilResponse, PerfilRequest, PagedResponse, PerfilFilterParams } from "./types";
+import { PagedResponse } from "../interfaces/request/PagedResponse";
+import { PerfilFilterParams } from "../interfaces/request/PerfilFilterParams";
+import { PerfilRequest } from "../interfaces/request/PerfilRequest";
+import { PerfilResponse } from "../interfaces/response/PerfilResponse";
 
 class PerfisClient {
   private client: ApiClient;

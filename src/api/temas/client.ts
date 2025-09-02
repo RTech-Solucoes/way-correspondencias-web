@@ -1,5 +1,8 @@
 import ApiClient from "../client";
-import { TemaResponse, TemaRequest, PagedResponse, TemaFilterParams } from "./types";
+import { PagedResponse } from "../interfaces/request/PagedResponse";
+import { TemaFilterParams } from "../interfaces/request/TemaFilterParams";
+import { TemaRequest } from "../interfaces/request/TemaRequest";
+import { TemaResponse } from "../interfaces/response/TemaResponse";
 
 class TemasClient {
   private client: ApiClient;

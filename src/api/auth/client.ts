@@ -1,5 +1,6 @@
 import ApiClient from "../client";
-import {LoginRequest, LoginResponse} from "./types";
+import { LoginRequest } from "../interfaces/request/LoginRequest";
+import { LoginResponse } from "../interfaces/response/LoginResponse";
 
 class AuthClient {
   private client: ApiClient;

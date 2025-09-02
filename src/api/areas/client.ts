@@ -1,5 +1,8 @@
 import ApiClient from "../client";
-import { AreaResponse, AreaRequest, PagedResponse, AreaFilterParams } from "./types";
+import { AreaFilterParams } from "../interfaces/request/AreaFilterParams";
+import { AreaRequest } from "../interfaces/request/AreaRequest";
+import { PagedResponse } from "../interfaces/request/PagedResponse";
+import { AreaResponse } from "../interfaces/response/AreaResponse";
 
 class AreasClient {
   private client: ApiClient;

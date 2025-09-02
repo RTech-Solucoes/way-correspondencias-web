@@ -1,5 +1,7 @@
-import { AnexoResponse, ArquivoDTO } from '../anexos/type';
 import ApiClient from '../client';
+import { ArquivoRequest } from '../interfaces/request/ArquivoRequest';
+import { AnexoResponse } from '../interfaces/response/AnexoResponse';
+import { ArquivoResponse } from '../interfaces/response/ArquivoResponse';
 
 
 class SolicitacaoAnexosClient {
@@ -15,7 +17,7 @@ class SolicitacaoAnexosClient {
     });
   }
  
-  async upload(idSolicitacao: number, arquivos: ArquivoDTO[]): Promise<void> {
+  async upload(idSolicitacao: number, arquivos: ArquivoRequest[]): Promise<void> {
     return this.client.request<void>(`/solicitacao/${idSolicitacao}/anexos`, {
       method: 'POST',
       body: JSON.stringify(arquivos),
@@ -23,12 +25,12 @@ class SolicitacaoAnexosClient {
   }
 
   
-  async download(idSolicitacao: number, nmArquivo?: string): Promise<ArquivoDTO[]> {
+  async download(idSolicitacao: number, nmArquivo?: string): Promise<ArquivoResponse[]> {
     const queryParams = new URLSearchParams();
     if (nmArquivo) queryParams.append('nmArquivo', nmArquivo);
     const qs = queryParams.toString();
 
-    return this.client.request<ArquivoDTO[]>(`/solicitacao/${idSolicitacao}/anexos/download${qs ? `?${qs}` : ''}`, {
+    return this.client.request<ArquivoResponse[]>(`/solicitacao/${idSolicitacao}/anexos/download${qs ? `?${qs}` : ''}`, {
       method: 'GET',
     });
   }
