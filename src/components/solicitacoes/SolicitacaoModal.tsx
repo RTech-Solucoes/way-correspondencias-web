@@ -1204,7 +1204,7 @@ export default function SolicitacaoModal({
                   flAnaliseGerenteDiretor: 'G'
                 }))}
               />
-              <Label className="text-sm font-medium ">Gerente</Label>
+              <Label className="text-sm font-light">Gerente</Label>
             </div>
             <div className="flex items-center gap-2">
               <Checkbox
@@ -1214,7 +1214,7 @@ export default function SolicitacaoModal({
                   flAnaliseGerenteDiretor: 'D'
                 }))}
               />
-              <Label>Diretor</Label>
+              <Label className="text-sm font-light ">Diretor</Label>
             </div>
             <div className="flex items-center gap-2">
               <Checkbox
@@ -1224,7 +1224,7 @@ export default function SolicitacaoModal({
                   flAnaliseGerenteDiretor: 'A'
                 }))}
               />
-              <Label>Ambos</Label>
+              <Label className="text-sm font-light">Ambos</Label>
             </div>
             <div className="flex items-center gap-2">
               <Checkbox
@@ -1234,7 +1234,7 @@ export default function SolicitacaoModal({
                   flAnaliseGerenteDiretor: 'N'
                 }))}
               />
-              <Label>Não necessita</Label>
+              <Label className="text-sm font-light">Não necessita</Label>
             </div>
           </div>
         </div>
