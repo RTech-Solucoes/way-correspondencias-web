@@ -989,16 +989,16 @@ export default function SolicitacaoModal({
         </div>
 
         <div>
-          <Label className="text-sm font-semibold text-gray-700">Descrição da Solicitação</Label>
+          <Label className="text-sm font-semibold text-gray-700">Observações</Label>
           <div className="p-3 bg-gray-50 border rounded-lg text-sm max-h-24 overflow-y-auto">
-            {formData.dsSolicitacao || 'Não informado'}
+            {formData.dsObservacao || 'Não informado'}
           </div>
         </div>
 
         <div>
-          <Label className="text-sm font-semibold text-gray-700">Observações</Label>
+          <Label className="text-sm font-semibold text-gray-700">Descrição da Solicitação</Label>
           <div className="p-3 bg-gray-50 border rounded-lg text-sm max-h-24 overflow-y-auto">
-            {formData.dsObservacao || 'Não informado'}
+            {formData.dsSolicitacao || 'Não informado'}
           </div>
         </div>
       </div>
@@ -1224,6 +1224,17 @@ export default function SolicitacaoModal({
       </div>
 
       <div className="space-y-2">
+        <Label htmlFor="dsObservacao">Observações</Label>
+        <Textarea
+          id="dsObservacao"
+          name="dsObservacao"
+          value={formData.dsObservacao}
+          onChange={handleInputChange}
+          rows={getRows(formData.dsObservacao)}
+        />
+      </div>
+
+      <div className="space-y-2">
         <Label htmlFor="dsSolicitacao">Descrição da Solicitação</Label>
         <Textarea
           id="dsSolicitacao"
@@ -1232,17 +1243,6 @@ export default function SolicitacaoModal({
           onChange={handleInputChange}
           rows={getRows(formData.dsSolicitacao)}
           disabled
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="dsObservacao">Observações</Label>
-        <Textarea
-          id="dsObservacao"
-          name="dsObservacao"
-          value={formData.dsObservacao}
-          onChange={handleInputChange}
-          rows={getRows(formData.dsObservacao)}
         />
       </div>
     </div>
