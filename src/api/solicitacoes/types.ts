@@ -1,3 +1,5 @@
+import { AnexoResponse } from "../anexos/type";
+
 export interface AreaSolicitacao {
   idArea: number;
   nmArea: string;
@@ -148,15 +150,6 @@ export interface SolicitacaoTemaEtapaRequest {
   nrPrazoExterno?: number;
   flExcepcional?: string;
   idsAreas?: number[];
-}
-
-export interface AnexoResponse {
-  idAnexo: number;
-  idObjeto: number;
-  tpObjeto: string;
-  nmArquivo: string;
-  dsCaminho: string;
-  flAtivo: string;
 }
 
 export interface EmailComAnexosResponse {

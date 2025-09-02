@@ -44,8 +44,8 @@ import { Pagination } from '@/components/ui/pagination';
 import { useSolicitacoes } from '@/context/solicitacoes/SolicitacoesContext';
 import TramitacaoList from '@/components/solicitacoes/TramitacaoList';
 import anexosClient from '@/api/anexos/client';
-import { AnexoResponse, TipoObjetoAnexo } from '@/api/anexos/type';
-import { AreaSolicitacao, SolicitacaoResponse, PagedResponse } from '@/api/solicitacoes/types';
+import { AnexoResponse, TipoObjetoAnexo, TipoResponsavelAnexo } from '@/api/anexos/type';
+import { AreaSolicitacao, SolicitacaoResponse, PagedResponse, SolicitacaoDetalheResponse } from '@/api/solicitacoes/types';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { TemaResponse } from '@/api/temas/types';
 import { AreaResponse } from '@/api/areas/types';
@@ -130,7 +130,7 @@ export default function SolicitacoesPage() {
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const [showDetalhesModal, setShowDetalhesModal] = useState(false);
-  const [detalhesSolicitacao, setDetalhesSolicitacao] = useState<SolicitacaoResponse | null>(null);
+  const [detalhesSolicitacao, setDetalhesSolicitacao] = useState<SolicitacaoDetalheResponse | null>(null);
   const [detalhesAnexos, setDetalhesAnexos] = useState<AnexoResponse[]>([]);
 
   const loadSolicitacoes = useCallback(async () => {
@@ -149,20 +149,9 @@ export default function SolicitacoesPage() {
 
       const filtro = filterParts.join(' ') || undefined;
 
-      const mapSortFieldForApi = (field: keyof SolicitacaoResponse): string => {
-        switch (field) {
-          case 'nmTema':
-            return 'tema.nmTema';
-          case 'flStatus':
-            return 'statusSolicitacao.nmStatus';
-          default:
-            return String(field);
-        }
-      };
-
       let sortParam = undefined;
       if (sortField && sortDirection) {
-        sortParam = `${mapSortFieldForApi(sortField)},${sortDirection}`;
+        sortParam = `${sortField},${sortDirection}`;
       }
 
       const response = await solicitacoesClient.listar(filtro, currentPage, 10, sortParam);
@@ -253,19 +242,9 @@ export default function SolicitacoesPage() {
     const sorted = [...solicitacoes];
 
     if (sortField) {
-      const getComparableValue = (s: SolicitacaoResponse) => {
-        if (sortField === 'nmTema') {
-          return s.tema?.nmTema || '';
-        }
-        if (sortField === 'flStatus') {
-          return s.statusSolicitacao?.nmStatus || getStatusText(s.statusCodigo?.toString() || '');
-        }
-        return (s as unknown as Record<string, unknown>)?.[sortField as string] as unknown;
-      };
-
       sorted.sort((a: SolicitacaoResponse, b: SolicitacaoResponse) => {
-        const aValue = getComparableValue(a);
-        const bValue = getComparableValue(b);
+        const aValue = a?.[sortField];
+        const bValue = b?.[sortField];
 
         if (aValue === bValue) return 0;
         if (aValue == null && bValue == null) return 0;
@@ -292,12 +271,12 @@ export default function SolicitacoesPage() {
 
     try {
       const detalhes = await solicitacoesClient.buscarDetalhesPorId(s.idSolicitacao);
-      setDetalhesSolicitacao(detalhes?.solicitacao || s);
+      setDetalhesSolicitacao(detalhes);
       const anexos = await anexosClient.buscarPorIdObjetoETipoObjeto(s.idSolicitacao, TipoObjetoAnexo.S);
       setDetalhesAnexos(anexos || []);
     } catch {
       toast.error('Erro ao carregar os detalhes da solicitação');
-      setDetalhesSolicitacao(s);
+      setDetalhesSolicitacao(null);
     }
   }, [setSelectedSolicitacao]);
 
@@ -310,20 +289,18 @@ export default function SolicitacoesPage() {
   }, []);
 
   const enviarDevolutiva = useCallback(async (mensagem: string, arquivos: File[]) => {
-    const alvo = detalhesSolicitacao ?? selectedSolicitacao;
-    const id = alvo?.idSolicitacao;
-    if (!id) {
-      toast.error('ID da solicitação não encontrado.');
-      return;
-    }
+    const alvo = detalhesSolicitacao;
+    console.log('Enviando devolutiva para a solicitação:', alvo);
+    console.log('Mensagem:', mensagem);
+    if (!alvo) return;
     try {
       if (mensagem?.trim()) {
         const data = {
           dsObservacao: mensagem,
-          idSolicitacao: id,
-        };
-        await tramitacoesClient.tramitar(data);
-        toast.success('Resposta enviada com sucesso!');
+          idSolicitacao: alvo.solicitacao.idSolicitacao,
+        }
+        console.log(alvo)
+        await tramitacoesClient.tramitar?.(data);
       }
       if (arquivos.length > 0) {
         const arquivosDTO = await Promise.all(
@@ -333,19 +310,15 @@ export default function SolicitacoesPage() {
             return {
               nomeArquivo: file.name,
               conteudoArquivo: base64String,
+              tpResponsavel: TipoResponsavelAnexo.A, // Assumindo que o analista está enviando a devolutiva 
               tipoArquivo: file.type || 'application/octet-stream'
             };
           })
         );
-        await solicitacoesClient.uploadAnexos(id, arquivosDTO);
+        await solicitacoesClient.uploadAnexos(alvo.solicitacao.idSolicitacao, arquivosDTO);
       }
       await loadSolicitacoes();
-    } catch (err: unknown) {
-      const e = err as { status?: number };
-      if (e?.status === 409) {
-        toast.warning('Tramitação já registrada para esta etapa. Aguarde a resposta da área responsável');
-        return;
-      }
+    } catch {
       toast.error('Falha ao enviar a devolutiva.');
       throw new Error('erro-devolutiva');
     }

@@ -7,9 +7,10 @@ import {
   SolicitacaoEtapaPrazoRequest,
   SolicitacaoPrazoResponse,
   PagedResponse,
-  SolicitacaoDetalheResponse,
+  SolicitacaoDetalheResponse
 } from './types';
-import { solicitacaoAnexosClient, ArquivoDTO, AnexoResponse } from './anexos-client';
+import { solicitacaoAnexosClient } from './anexos-client';
+import { AnexoResponse, ArquivoDTO } from '../anexos/type';
 
 class SolicitacoesClient {
 
