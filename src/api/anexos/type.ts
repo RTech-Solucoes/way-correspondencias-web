@@ -14,7 +14,7 @@ export interface AnexoResponse {
 export type ArquivoDTO = {
   nomeArquivo?: string;
   tipoConteudo?: string;
-  tpResponsavel?: TipoResponsavelAnexo;
+  tpResponsavel: TipoResponsavelAnexo;
   conteudoArquivo: string;
 };
 

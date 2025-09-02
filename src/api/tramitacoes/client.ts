@@ -49,11 +49,10 @@ class TramitacoesClient {
     });
   }
 
-async uploadAnexos(id: number, files: File[]): Promise<TramitacaoResponse> {
-    const arquivos: ArquivoDTO[] = await Promise.all(files.map(fileToArquivoDTO));
+async uploadAnexos(id: number, files: ArquivoDTO[]): Promise<TramitacaoResponse> {
     return this.client.request<TramitacaoResponse>(`/${id}/anexos`, {
       method: "POST",
-      body: JSON.stringify(arquivos),
+      body: JSON.stringify(files),
     });
   }
 

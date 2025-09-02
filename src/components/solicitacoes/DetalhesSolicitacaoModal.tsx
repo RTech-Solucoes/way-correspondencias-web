@@ -14,9 +14,9 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { ClockIcon, DownloadIcon, PaperclipIcon, X as XIcon } from '@phosphor-icons/react';
 import { SolicitacaoDetalheResponse } from '@/api/solicitacoes/types';
-import { ArquivoDTO, TipoObjetoAnexo } from '@/api/anexos/type';
+import { ArquivoDTO, TipoObjetoAnexo, TipoResponsavelAnexo } from '@/api/anexos/type';
 import { anexosClient } from '@/api/anexos/client';
-import { base64ToUint8Array, saveBlob } from '@/utils/utils';
+import { base64ToUint8Array, fileToArquivoDTO, saveBlob } from '@/utils/utils';
 import tramitacoesClient from '@/api/tramitacoes/client';
 
 type AnexoItemShape = {
@@ -184,7 +184,11 @@ export default function DetalhesSolicitacaoModal({
         setSending(true);
 
         if (arquivos.length > 0) {
-          await tramitacoesClient.uploadAnexos(sol.idSolicitacao, arquivos);
+          const arquivosDTO: ArquivoDTO[] = await Promise.all(arquivos.map(fileToArquivoDTO));
+          arquivosDTO.forEach((a) => {
+            a.tpResponsavel = TipoResponsavelAnexo.A; // TODO: tornar dinâmico
+          });
+          await tramitacoesClient.uploadAnexos(sol.idSolicitacao, arquivosDTO);
         }
 
         await onEnviarDevolutiva(resposta.trim(), []);
