@@ -160,7 +160,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
 
-    let newValue = value;
+    const newValue = value;
 
     switch (name) {
       case "dtNascimento":

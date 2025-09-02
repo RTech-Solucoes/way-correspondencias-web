@@ -6,16 +6,15 @@ import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
 import {Pagination} from '@/components/ui/pagination';
 import { useAreas } from '@/context/areas/AreasContext';
 import { areasClient } from '@/api/areas/client';
-import { AreaFilterParams } from '@/api/areas/types';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/use-debounce';
-import HeaderArea from '@/components/areas/HeaderArea';
 import SearchArea from "@/components/areas/SearchArea";
 import TableArea from "@/components/areas/TableArea";
 import FilterModalArea from "@/components/areas/FilterModalArea";
 import PageTitle from '@/components/ui/page-title';
 import { ArrowClockwiseIcon } from '@phosphor-icons/react';
 import { Button } from '@nextui-org/react';
+import { AreaFilterParams } from '@/api/interfaces/request/AreaFilterParams';
 
 export default function AreasPage() {
   const {
