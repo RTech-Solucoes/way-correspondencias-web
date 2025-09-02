@@ -46,6 +46,19 @@ const formatDateTime = (iso?: string | null) => {
 
 const MAX_DESC_LINES = 6;
 
+/** Apenas para DESCRIÇÃO: remove \r e transforma \n em <br/> */
+function renderDescricaoWithBreaks(text?: string | null) {
+  if (!text) return '—';
+  const cleaned = text.replace(/\r/g, '');
+  const parts = cleaned.split('\n');
+  return parts.map((line, i) => (
+    <span key={i}>
+      {line}
+      {i < parts.length - 1 && <br />}
+    </span>
+  ));
+}
+
 export default function DetalhesSolicitacaoModal({
   open,
   onClose,
@@ -59,6 +72,7 @@ export default function DetalhesSolicitacaoModal({
   const [expandDescricao, setExpandDescricao] = useState(false);
   const [sending, setSending] = useState(false);
 
+  // ref e medição APENAS para a Descrição
   const descRef = useRef<HTMLParagraphElement | null>(null);
   const [canToggleDescricao, setCanToggleDescricao] = useState(false);
   const [lineHeightPx, setLineHeightPx] = useState<number | null>(null);
@@ -77,8 +91,9 @@ export default function DetalhesSolicitacaoModal({
 
   const assunto = sol?.dsAssunto ?? '';
   const descricao = sol?.dsSolicitacao ?? '';
-  const areas = Array.isArray(sol?.tema?.areas)
-    ? (sol!.tema!.areas! as Array<{ nmArea: string; idArea?: number; cdArea?: string }>)
+  const observacao = sol?.dsObservacao && sol?.dsObservacao.trim().length > 0 ? sol?.dsObservacao : null;
+  const areas = Array.isArray(sol?.area)
+    ? (sol!.area! as Array<{ nmArea: string; idArea?: number; cdArea?: string }>)
     : [];
 
   const temaLabel = sol?.tema?.nmTema ?? sol?.nmTema ?? '—';
@@ -307,6 +322,19 @@ export default function DetalhesSolicitacaoModal({
 
           <section className="space-y-2">
             <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Observação</h3>
+            </div>
+
+            <div className="rounded-md border bg-muted/30 p-4">
+              {/* Observação permanece sem interpretação especial de \n/\r */}
+              <p className="text-sm text-muted-foreground">
+                { observacao ?? '—'}
+              </p>
+            </div>
+          </section>
+
+          <section className="space-y-2">
+            <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">Descrição</h3>
             </div>
 
@@ -316,7 +344,7 @@ export default function DetalhesSolicitacaoModal({
                 className="text-sm text-muted-foreground"
                 style={descricaoCollapsedStyle}
               >
-                {descricao || '—'}
+                {descricao ? renderDescricaoWithBreaks(descricao) : '—'}
               </p>
 
               {descricao && descricao.length > 0 && canToggleDescricao && (

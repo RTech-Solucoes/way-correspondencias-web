@@ -44,8 +44,8 @@ import { Pagination } from '@/components/ui/pagination';
 import { useSolicitacoes } from '@/context/solicitacoes/SolicitacoesContext';
 import TramitacaoList from '@/components/solicitacoes/TramitacaoList';
 import anexosClient from '@/api/anexos/client';
-import { AnexoResponse, TipoObjetoAnexo } from '@/api/anexos/type';
-import { AreaSolicitacao, SolicitacaoResponse, PagedResponse } from '@/api/solicitacoes/types';
+import { AnexoResponse, TipoObjetoAnexo, TipoResponsavelAnexo } from '@/api/anexos/type';
+import { AreaSolicitacao, SolicitacaoResponse, PagedResponse, SolicitacaoDetalheResponse } from '@/api/solicitacoes/types';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { TemaResponse } from '@/api/temas/types';
 import { AreaResponse } from '@/api/areas/types';
@@ -130,7 +130,7 @@ export default function SolicitacoesPage() {
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const [showDetalhesModal, setShowDetalhesModal] = useState(false);
-  const [detalhesSolicitacao, setDetalhesSolicitacao] = useState<SolicitacaoResponse | null>(null);
+  const [detalhesSolicitacao, setDetalhesSolicitacao] = useState<SolicitacaoDetalheResponse | null>(null);
   const [detalhesAnexos, setDetalhesAnexos] = useState<AnexoResponse[]>([]);
 
   const loadSolicitacoes = useCallback(async () => {
@@ -271,12 +271,12 @@ export default function SolicitacoesPage() {
 
     try {
       const detalhes = await solicitacoesClient.buscarDetalhesPorId(s.idSolicitacao);
-      setDetalhesSolicitacao(detalhes || s);
+      setDetalhesSolicitacao(detalhes);
       const anexos = await anexosClient.buscarPorIdObjetoETipoObjeto(s.idSolicitacao, TipoObjetoAnexo.S);
       setDetalhesAnexos(anexos || []);
     } catch {
       toast.error('Erro ao carregar os detalhes da solicitação');
-      setDetalhesSolicitacao(s);
+      setDetalhesSolicitacao(null);
     }
   }, [setSelectedSolicitacao]);
 
@@ -289,7 +289,7 @@ export default function SolicitacoesPage() {
   }, []);
 
   const enviarDevolutiva = useCallback(async (mensagem: string, arquivos: File[]) => {
-    const alvo = detalhesSolicitacao ?? selectedSolicitacao;
+    const alvo = detalhesSolicitacao;
     console.log('Enviando devolutiva para a solicitação:', alvo);
     console.log('Mensagem:', mensagem);
     if (!alvo) return;
@@ -297,8 +297,9 @@ export default function SolicitacoesPage() {
       if (mensagem?.trim()) {
         const data = {
           dsObservacao: mensagem,
-          idSolicitacao: alvo.idSolicitacao,
+          idSolicitacao: alvo.solicitacao.idSolicitacao,
         }
+        console.log(alvo)
         await tramitacoesClient.tramitar?.(data);
       }
       if (arquivos.length > 0) {
@@ -309,11 +310,12 @@ export default function SolicitacoesPage() {
             return {
               nomeArquivo: file.name,
               conteudoArquivo: base64String,
+              tpResponsavel: TipoResponsavelAnexo.A, // Assumindo que o analista está enviando a devolutiva 
               tipoArquivo: file.type || 'application/octet-stream'
             };
           })
         );
-        await solicitacoesClient.uploadAnexos(alvo.idSolicitacao, arquivosDTO);
+        await solicitacoesClient.uploadAnexos(alvo.solicitacao.idSolicitacao, arquivosDTO);
       }
       await loadSolicitacoes();
     } catch {

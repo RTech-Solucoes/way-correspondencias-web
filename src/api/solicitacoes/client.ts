@@ -6,9 +6,11 @@ import {
   SolicitacaoTemaEtapaRequest,
   SolicitacaoEtapaPrazoRequest,
   SolicitacaoPrazoResponse,
-  PagedResponse
+  PagedResponse,
+  SolicitacaoDetalheResponse
 } from './types';
-import { solicitacaoAnexosClient, ArquivoDTO, AnexoResponse } from './anexos-client';
+import { solicitacaoAnexosClient } from './anexos-client';
+import { AnexoResponse, ArquivoDTO } from '../anexos/type';
 
 class SolicitacoesClient {
 
@@ -135,8 +137,8 @@ class SolicitacoesClient {
     console.log('Método enviarDevolutiva chamado com:', idSolicitacao, arg1);
   }
 
-  async buscarDetalhesPorId(id: number): Promise<SolicitacaoResponse> {
-    return this.client.request<SolicitacaoResponse>(`/detalhe/${id}`, {
+  async buscarDetalhesPorId(id: number): Promise<SolicitacaoDetalheResponse> {
+    return this.client.request<SolicitacaoDetalheResponse>(`/detalhe/${id}`, {
       method: 'GET',
     });
   }
