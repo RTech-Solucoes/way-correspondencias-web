@@ -13,21 +13,23 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { solicitacoesClient } from '@/api/solicitacoes/client';
+import { SolicitacaoResponse } from '@/api/solicitacoes/types';
 
-interface TramitacaoModalProps {
+interface HistoricoRespostasModalProps {
   idSolicitacao: number | null;
   open: boolean;
   onClose: () => void;
   areas: AreaResponse[];
 }
 
-export default function TramitacaoModal({ 
+export default function HistoricoRespostasModal({ 
   idSolicitacao, 
   open, 
   onClose, 
   areas 
-}: TramitacaoModalProps) {
-  const [tramitacoes, setTramitacoes] = useState<TramitacaoResponse[]>([]);
+}: HistoricoRespostasModalProps) {
+  const [respostas, setRespostas] = useState<TramitacaoResponse[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -36,11 +38,12 @@ export default function TramitacaoModal({
       
       try {
         setLoading(true);
+        // const response = await solicitacoesClient.listarRespostasPorSolicitacao(idSolicitacao);
         const response = await tramitacoesClient.listarPorSolicitacao(idSolicitacao);
-        setTramitacoes(response.reverse());
+        setRespostas(response);
       } catch (error) {
-        console.error('Erro ao carregar tramitações:', error);
-        toast.error('Erro ao carregar tramitações');
+        console.error('Erro ao carregar respostas:', error);
+        toast.error('Erro ao carregar respostas');
       } finally {
         setLoading(false);
       }
@@ -68,7 +71,7 @@ export default function TramitacaoModal({
   };
 
   const handleClose = () => {
-    setTramitacoes([]);
+    setRespostas([]);
     onClose();
   };
 
@@ -76,31 +79,31 @@ export default function TramitacaoModal({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-4xl max-h-[80vh]">
         <DialogHeader>
-          <DialogTitle>Histórico de Tramitações</DialogTitle>
+          <DialogTitle>Histórico de Respostas</DialogTitle>
         </DialogHeader>
         
         <div className="flex-1 overflow-auto">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <SpinnerIcon className="h-5 w-5 animate-spin text-gray-400" />
-              <span className="ml-2 text-gray-500">Carregando tramitações...</span>
+              <span className="ml-2 text-gray-500">Carregando respostas...</span>
             </div>
-          ) : tramitacoes.length === 0 ? (
+          ) : respostas.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-500 text-sm">Nenhuma tramitação encontrada para esta solicitação.</p>
+              <p className="text-gray-500 text-sm">Nenhuma resposta encontrada para esta solicitação.</p>
             </div>
           ) : (
             <div className="space-y-4">
-              {tramitacoes.map((tramitacao) => (
+              {respostas.map((resposta) => (
                 <div 
-                  key={tramitacao.idTramitacao}
+                  key={resposta.idTramitacao}
                   className="bg-[#f1f1f1] rounded-lg p-4 border border-gray-300"
                 >
                   {/* Primeira linha: Descrição */}
                   <div className="mb-3">
-                    {tramitacao.dsObservacao ? (
+                    {resposta.dsObservacao ? (
                       <p className="text-sm text-gray-800 font-medium leading-relaxed">
-                        {tramitacao.dsObservacao}
+                        {resposta.dsObservacao}
                       </p>
                     ) : (
                       <p className="text-sm text-gray-600 italic">
@@ -112,38 +115,21 @@ export default function TramitacaoModal({
                   {/* Segunda linha: Layout principal */}
                   <div className="flex items-center justify-between">
                     {/* Lado esquerdo: Responsável e Data/Hora */}
-                    <div className="flex flex-col space-y-1">
+                    <div className="flex items-center space-x-2">
                       <div className="text-sm font-medium text-gray-800">
-                        {tramitacao.tramitacaoAcao && tramitacao.tramitacaoAcao.length > 0 ? (
-                          tramitacao.tramitacaoAcao[0].responsavelArea.responsavel.nmResponsavel
+                        {resposta.tramitacaoAcao && resposta.tramitacaoAcao.length > 0 ? (
+                          resposta.tramitacaoAcao[0].responsavelArea.responsavel.nmResponsavel
                         ) : (
                           'Responsável não informado'
                         )}
                       </div>
                       <div className="text-xs text-gray-600">
-                        {tramitacao.tramitacaoAcao && tramitacao.tramitacaoAcao.length > 0 ? (
-                          formatDate(tramitacao.tramitacaoAcao[0].dtCriacao)
+                        {resposta.tramitacaoAcao && resposta.tramitacaoAcao.length > 0 ? (
+                          formatDate(resposta.tramitacaoAcao[0].dtCriacao)
                         ) : (
                           'Data não informada'
                         )}
                       </div>
-                    </div>
-
-                    {/* Lado direito: Chip com áreas e seta */}
-                    <div className="flex items-center space-x-2">
-                      <Badge 
-                        variant="secondary" 
-                        className="bg-white/70 text-gray-800 border border-gray-400 text-xs font-medium px-2 py-1"
-                      >
-                        {tramitacao.areaOrigem.nmArea}
-                      </Badge>
-                      <ArrowRight className="h-4 w-4 text-gray-600" />
-                      <Badge 
-                        variant="secondary" 
-                        className="bg-white/70 text-gray-800 border border-gray-400 text-xs font-medium px-2 py-1"
-                      >
-                        {tramitacao.areaDestino.nmArea}
-                      </Badge>
                     </div>
                   </div>
                 </div>

@@ -18,6 +18,8 @@ import { ArquivoDTO, TipoObjetoAnexo, TipoResponsavelAnexo } from '@/api/anexos/
 import { anexosClient } from '@/api/anexos/client';
 import { base64ToUint8Array, fileToArquivoDTO, saveBlob } from '@/utils/utils';
 import tramitacoesClient from '@/api/tramitacoes/client';
+import HistoricoRespostasModal from './HistoricoRespostasModal';
+import { AreaResponse } from '@/api/areas/types';
 
 type AnexoItemShape = {
   idAnexo: number;
@@ -71,6 +73,7 @@ export default function DetalhesSolicitacaoModal({
   const [arquivos, setArquivos] = useState<File[]>([]);
   const [expandDescricao, setExpandDescricao] = useState(false);
   const [sending, setSending] = useState(false);
+  const [showHistoricoRespostasModal, setShowHistoricoRespostasModal] = useState(false);
 
   // ref e medição APENAS para a Descrição
   const descRef = useRef<HTMLParagraphElement | null>(null);
@@ -237,6 +240,10 @@ export default function DetalhesSolicitacaoModal({
     },
     [sol?.idSolicitacao]
   );
+
+  const onHistoricoRespostas = useCallback(() => {
+    setShowHistoricoRespostasModal(true);
+  }, []);
 
   const descricaoCollapsedStyle: React.CSSProperties =
     !expandDescricao && lineHeightPx
@@ -405,6 +412,15 @@ export default function DetalhesSolicitacaoModal({
           <section className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">Enviar devolutiva ao Regulatório</h3>
+              <Button type="button" variant="link" onClick={onHistoricoRespostas}>
+                Histórico de Respostas
+              </Button>
+              <HistoricoRespostasModal
+                idSolicitacao={sol?.idSolicitacao ?? null}
+                open={showHistoricoRespostasModal}
+                onClose={() => setShowHistoricoRespostasModal(false)}
+                areas={areas as AreaResponse[]}
+              />
             </div>
 
             <div className="rounded-md border bg-muted/30 p-4">

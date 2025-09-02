@@ -7,7 +7,8 @@ import {
   SolicitacaoEtapaPrazoRequest,
   SolicitacaoPrazoResponse,
   PagedResponse,
-  SolicitacaoDetalheResponse
+  SolicitacaoDetalheResponse,
+  TramitacaoResponse
 } from './types';
 import { solicitacaoAnexosClient } from './anexos-client';
 import { AnexoResponse, ArquivoDTO } from '../anexos/type';
@@ -143,6 +144,11 @@ class SolicitacoesClient {
     });
   }
 
+  async listarRespostasPorSolicitacao(idSolicitacao: number): Promise<TramitacaoResponse[]> {
+    return this.client.request<TramitacaoResponse[]>(`/solicitacao/${idSolicitacao}`, {
+      method: 'GET',
+    });
+  }
 }
 
 export const solicitacoesClient = new SolicitacoesClient();
