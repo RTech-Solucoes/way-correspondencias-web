@@ -1,10 +1,10 @@
 'use client';
 
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
-import { CheckIcon, CaretRightIcon, CircleIcon } from '@phosphor-icons/react';
+import {CaretRightIcon, CheckIcon, CircleIcon} from '@phosphor-icons/react';
 
-import { cn } from '@/utils/utils';
-import {forwardRef, ComponentPropsWithoutRef, ElementRef, HTMLAttributes} from 'react';
+import {cn} from '@/utils/utils';
+import {ComponentPropsWithoutRef, ElementRef, forwardRef, HTMLAttributes} from 'react';
 
 const DropdownMenu = DropdownMenuPrimitive.Root;
 

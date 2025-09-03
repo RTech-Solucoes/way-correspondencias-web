@@ -12,7 +12,7 @@ import {responsaveisClient} from '@/api/responsaveis/client';
 import {PerfilResponse} from '@/api/perfis/types';
 import {perfisClient} from '@/api/perfis/client';
 import {toast} from 'sonner';
-import {validateCPF} from "@/utils/utils";
+import {validateCPF, formatCPF} from "@/utils/utils";
 
 interface ResponsavelModalProps {
   responsavel: ResponsavelResponse | null;
@@ -249,7 +249,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
       formData.dtNascimento.trim() !== '' && !dataError &&
       formData.idPerfil > 0 &&
       !cpfError && formData.nrCpf.length === 11 && validateCPF(formData.nrCpf);
-  }, [formData, cpfError]);
+  }, [formData, cpfError, dataError]);
 
   return (
     <Dialog open={open} onOpenChange={(newOpen) => !newOpen && onClose()}>
@@ -291,9 +291,9 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
           <TextField
             label="CPF *"
             name="nrCpf"
-            value={formData.nrCpf}
+            value={formatCPF(formData.nrCpf)}
             onChange={handleChange}
-            maxLength={11}
+            maxLength={14}
             required
             onBlur={() => {
               if (formData.nrCpf.length < 11) {

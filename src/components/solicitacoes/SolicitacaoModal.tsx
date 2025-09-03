@@ -1,33 +1,21 @@
 'use client';
 
-import { useState, useEffect, FormEvent, useCallback, ChangeEvent } from 'react';
-import { useRouter } from 'next/navigation';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { TextField } from '@/components/ui/text-field';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
-import { SolicitacaoResponse, SolicitacaoRequest } from '@/api/solicitacoes/types';
-import { ResponsavelResponse } from '@/api/responsaveis/types';
-import { TemaResponse } from '@/api/temas/types';
-import { solicitacoesClient } from '@/api/solicitacoes/client';
-import { toast } from 'sonner';
-import { capitalize, getRows, base64ToUint8Array, saveBlob } from '@/utils/utils';
-import { MultiSelectAreas } from '@/components/ui/multi-select-areas';
+import {ChangeEvent, FormEvent, useCallback, useEffect, useState} from 'react';
+import {useRouter} from 'next/navigation';
+import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog';
+import {Button} from '@/components/ui/button';
+import {TextField} from '@/components/ui/text-field';
+import {Textarea} from '@/components/ui/textarea';
+import {Label} from '@/components/ui/label';
+import {Checkbox} from '@/components/ui/checkbox';
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
+import {SolicitacaoRequest, SolicitacaoResponse} from '@/api/solicitacoes/types';
+import {ResponsavelResponse} from '@/api/responsaveis/types';
+import {TemaResponse} from '@/api/temas/types';
+import {solicitacoesClient} from '@/api/solicitacoes/client';
+import {toast} from 'sonner';
+import {base64ToUint8Array, capitalize, getRows, saveBlob} from '@/utils/utils';
+import {MultiSelectAreas} from '@/components/ui/multi-select-areas';
 import {
   ArrowArcRightIcon,
   CaretLeftIcon,
@@ -35,18 +23,18 @@ import {
   DownloadSimpleIcon,
   FloppyDiskIcon
 } from '@phosphor-icons/react';
-import { Stepper } from '@/components/ui/stepper';
-import { Input } from '@nextui-org/react';
+import {Stepper} from '@/components/ui/stepper';
+import {Input} from '@nextui-org/react';
 import AnexoComponent from '../AnexoComponotent/AnexoComponent';
 import AnexoList from '../AnexoComponotent/AnexoList/AnexoList';
-import { statusSolicPrazoTemaClient } from '@/api/status-prazo-tema/client';
-import { StatusSolicPrazoTemaForUI } from '@/api/status-prazo-tema/types';
-import { statusSolicitacaoClient, StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
-import { AnexoResponse } from '@/api/anexos/type';
-import { areasClient } from '@/api/areas/client';
-import { anexosClient } from '@/api/anexos/client';
-import { AreaResponse } from '@/api/areas/types';
-import { TipoObjetoAnexo } from '@/api/anexos/type';
+import {statusSolicPrazoTemaClient} from '@/api/status-prazo-tema/client';
+import {StatusSolicPrazoTemaForUI} from '@/api/status-prazo-tema/types';
+import {statusSolicitacaoClient, StatusSolicitacaoResponse} from '@/api/status-solicitacao/client';
+import {AnexoResponse, TipoObjetoAnexo, TipoResponsavelAnexo} from '@/api/anexos/type';
+import {areasClient} from '@/api/areas/client';
+import {anexosClient} from '@/api/anexos/client';
+import {AreaResponse} from '@/api/areas/types';
+import {usePermissoes} from "@/context/permissoes/PermissoesContext";
 
 interface AnexoListItem {
   idAnexo?: number;
@@ -109,6 +97,7 @@ export default function SolicitacaoModal({
   const [statusList, setStatusList] = useState<StatusSolicitacaoResponse[]>([]);
   const [createdSolicitacao, setCreatedSolicitacao] = useState<SolicitacaoResponse | null>(null);
   const [allAreas, setAllAreas] = useState<AreaResponse[]>([]);
+  const { canListarAnexo, canInserirAnexo, canAtualizarAnexo, canDeletarAnexo } = usePermissoes();
 
   useEffect(() => {
     if (solicitacao) {
@@ -131,7 +120,6 @@ export default function SolicitacaoModal({
         nrProcesso: solicitacao.nrProcesso || '',
         flAnaliseGerenteDiretor: solicitacao.flAnaliseGerenteDiretor || ''
       });
-      // Corrigido: prazoExcepcional sempre inicia como false para evitar ser marcado por padrão
       setPrazoExcepcional(false);
     } else {
       setFormData({
@@ -354,7 +342,8 @@ export default function SolicitacaoModal({
               return {
                 nomeArquivo: file.name.trim(),
                 conteudoArquivo: base64Content,
-                tipoArquivo: file.type || 'application/octet-stream'
+                tipoArquivo: file.type || 'application/octet-stream',
+                tpResponsavel: TipoResponsavelAnexo.A // TODO: Colocado apenas para remover erro, necessário ajustar depois
               };
             })
           );
@@ -551,7 +540,8 @@ export default function SolicitacaoModal({
               return {
                 nomeArquivo: file.name.trim(),
                 conteudoArquivo: base64.split(',')[1],
-                tipoArquivo: file.type || 'application/octet-stream'
+                tipoArquivo: file.type || 'application/octet-stream',
+                tpResponsavel: TipoResponsavelAnexo.A // TODO: Colocado apenas para remover erro, necessário ajustar depois
               };
             })
           );
@@ -579,6 +569,120 @@ export default function SolicitacaoModal({
     onClose();
   }, [onClose]);
 
+  const renderStep1 = () => (
+    <div className="space-y-6">
+      <div className="grid grid-cols-3 gap-4">
+        <TextField
+          label="Código de Identificação *"
+          name="cdIdentificacao"
+          value={formData.cdIdentificacao}
+          onChange={handleInputChange}
+          required
+          autoFocus
+          maxLength={50}
+        />
+        <TextField
+          label="Nº Ofício"
+          name="nrOficio"
+          value={formData.nrOficio}
+          onChange={handleInputChange}
+          maxLength={50}
+        />
+        <TextField
+          label="Nº Processo"
+          name="nrProcesso"
+          value={formData.nrProcesso}
+          onChange={handleInputChange}
+          maxLength={50}
+        />
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="flAnaliseGerenteDiretor" className="text-sm font-medium">
+            Exige análise do Gerente ou Diretor? *
+          </Label>
+          <div className="flex items-center gap-4 mt-2">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={formData.flAnaliseGerenteDiretor === 'G'}
+                onCheckedChange={() => setFormData(prev => ({
+                  ...prev,
+                  flAnaliseGerenteDiretor: 'G'
+                }))}
+              />
+              <Label className="text-sm font-light">Gerente</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={formData.flAnaliseGerenteDiretor === 'D'}
+                onCheckedChange={() => setFormData(prev => ({
+                  ...prev,
+                  flAnaliseGerenteDiretor: 'D'
+                }))}
+              />
+              <Label className="text-sm font-light ">Diretor</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={formData.flAnaliseGerenteDiretor === 'A'}
+                onCheckedChange={() => setFormData(prev => ({
+                  ...prev,
+                  flAnaliseGerenteDiretor: 'A'
+                }))}
+              />
+              <Label className="text-sm font-light">Ambos</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={formData.flAnaliseGerenteDiretor === 'N'}
+                onCheckedChange={() => setFormData(prev => ({
+                  ...prev,
+                  flAnaliseGerenteDiretor: 'N'
+                }))}
+              />
+              <Label className="text-sm font-light">Não necessita</Label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="dsAssunto">Assunto</Label>
+        <Textarea
+          id="dsAssunto"
+          name="dsAssunto"
+          value={formData.dsAssunto}
+          onChange={handleInputChange}
+          rows={getRows(formData.dsAssunto)}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="dsObservacao">Observações</Label>
+        <Textarea
+          id="dsObservacao"
+          name="dsObservacao"
+          value={formData.dsObservacao}
+          onChange={handleInputChange}
+          rows={getRows(formData.dsObservacao)}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="dsSolicitacao">Descrição da Solicitação</Label>
+        <Textarea
+          id="dsSolicitacao"
+          name="dsSolicitacao"
+          value={formData.dsSolicitacao}
+          onChange={handleInputChange}
+          rows={getRows(formData.dsSolicitacao)}
+          disabled
+        />
+      </div>
+    </div>
+  );
+
   const renderStep2 = useCallback(() => (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -600,7 +704,6 @@ export default function SolicitacaoModal({
             <SelectValue placeholder="Selecione o tema" />
           </SelectTrigger>
           <SelectContent>
-            {/* Show the current tema from solicitacao if it's not in the temas list */}
             {solicitacao?.tema && !temas.find(t => t.idTema === solicitacao.tema!.idTema) && (
               <SelectItem key={solicitacao.tema.idTema} value={solicitacao.tema.idTema.toString()}>
                 {solicitacao.tema.nmTema}
@@ -888,16 +991,16 @@ export default function SolicitacaoModal({
     <div className="space-y-6">
 
       <div className="flex flex-col space-y-4">
-        <AnexoComponent onAddAnexos={handleAddAnexos} />
+        {canInserirAnexo && <AnexoComponent onAddAnexos={handleAddAnexos} />}
 
-        {anexos.length > 0 && (
+        {canListarAnexo && anexos.length > 0 && (
           <div>
             <Label className="text-sm font-medium mb-2 block">Anexos:</Label>
             <AnexoList anexos={anexos} onRemove={handleRemoveAnexo} />
           </div>
         )}
 
-        {anexosBackend.length > 0 && (
+        {canListarAnexo && anexosBackend.length > 0 && (
           <div>
             <Label className="text-sm font-medium mb-2 block">Documentos já anexados:</Label>
             <AnexoList
@@ -921,7 +1024,7 @@ export default function SolicitacaoModal({
           </div>
         )}
 
-        {anexosTypeE.length > 0 && (
+        {canListarAnexo && anexosTypeE.length > 0 && (
           <div>
             <Label className="text-sm font-medium mb-2 block">Anexos do email</Label>
             <AnexoList
@@ -951,13 +1054,12 @@ export default function SolicitacaoModal({
         )}
       </div>
     </div>
-  ), [anexos, anexosBackend, anexosTypeE, handleAddAnexos, handleRemoveAnexo, handleRemoveAnexoBackend, handleDownloadAnexoBackend, handleDownloadAnexoEmail]);
+  ), [anexos, anexosBackend, anexosTypeE, handleAddAnexos, handleRemoveAnexo, handleRemoveAnexoBackend, handleDownloadAnexoBackend, handleDownloadAnexoEmail, canListarAnexo, canInserirAnexo]);
 
   const renderStep5 = useCallback(() => (
     <div className="space-y-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">Resumo da Solicitação</h3>
 
-      {/* Informações Básicas */}
       <div className="space-y-4">
         <div className="grid grid-cols-3 gap-4">
           <div>
@@ -1002,7 +1104,6 @@ export default function SolicitacaoModal({
         </div>
       </div>
 
-      {/* Tema e Responsável */}
       <div className="border-t pt-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -1020,7 +1121,6 @@ export default function SolicitacaoModal({
         </div>
       </div>
 
-      {/* Áreas Envolvidas */}
       <div className="border-t pt-4">
         <Label className="text-sm font-semibold text-gray-700">Áreas Envolvidas</Label>
         <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
@@ -1055,7 +1155,6 @@ export default function SolicitacaoModal({
         </div>
       </div>
 
-      {/* Prazos */}
       <div className="border-t pt-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -1091,7 +1190,6 @@ export default function SolicitacaoModal({
         </div>
       </div>
 
-      {/* Prazos por Status */}
       {statusPrazos.length > 0 && (
         <div className="border-t pt-4">
           <Label className="text-sm font-semibold text-gray-700">Prazos Configurados por Status</Label>
@@ -1111,12 +1209,10 @@ export default function SolicitacaoModal({
         </div>
       )}
 
-      {/* Anexos */}
       <div className="border-t pt-4">
         <Label className="text-sm font-semibold text-gray-700">Anexos ({anexos.length + anexosBackend.length + anexosTypeE.length})</Label>
         <div className="mt-2 space-y-2">
-          {/* Anexos novos */}
-          {anexos.length > 0 && (
+          {canListarAnexo && anexos.length > 0 && (
             <div>
               <div className="text-xs text-gray-500 mb-2">Novos anexos a serem enviados:</div>
               {anexos.map((file, index) => (
@@ -1149,8 +1245,7 @@ export default function SolicitacaoModal({
             </div>
           )}
 
-          {/* Anexos já salvos */}
-          {anexosBackend.length > 0 && (
+          {canListarAnexo && anexosBackend.length > 0 && (
             <div>
               <div className="text-xs text-gray-500 mb-2">Anexos já salvos:</div>
               <div className="flex flex-col gap-2">
@@ -1188,7 +1283,7 @@ export default function SolicitacaoModal({
             </div>
           )}
 
-          {anexosTypeE.length > 0 && (
+          {canListarAnexo && anexosTypeE.length > 0 && (
             <div>
               <div className="text-xs text-gray-500 mb-2">Anexos do email:</div>
               <div className="flex flex-col gap-2">
@@ -1216,129 +1311,17 @@ export default function SolicitacaoModal({
             </div>
           )}
 
-          {anexos.length === 0 && anexosBackend.length === 0 && anexosTypeE.length === 0 && (
+          {(!canListarAnexo || (anexos.length === 0 && anexosBackend.length === 0 && anexosTypeE.length === 0)) && (
             <div className="p-3 bg-gray-50 border rounded-lg text-sm text-gray-500 text-center">
-              Nenhum anexo adicionado
+              {!canListarAnexo ? 'Sem permissão para visualizar anexos' : 'Nenhum anexo adicionado'}
             </div>
           )}
         </div>
       </div>
     </div>
-  ), [formData, getSelectedTema, responsaveis, anexos, anexosBackend, anexosTypeE, statusPrazos, statusList, prazoExcepcional, solicitacao?.statusCodigo, solicitacao?.nmTema, solicitacao?.tema?.nmTema, solicitacao?.statusSolicitacao?.idStatusSolicitacao, solicitacao?.statusSolicitacao?.nmStatus, allAreas, getResponsavelByArea, handleDownloadAnexoEmail, handleDownloadAnexoBackend]);
+  ), [formData.cdIdentificacao, formData.nrOficio, formData.nrProcesso, formData.dsAssunto, formData.dsObservacao, formData.dsSolicitacao, formData.idsAreas, formData.nrPrazo, formData.idResponsavel, formData.tpPrazo, getSelectedTema, solicitacao?.tema?.nmTema, solicitacao?.nmTema, responsaveis, prazoExcepcional, statusPrazos, anexos, anexosBackend, anexosTypeE, canListarAnexo, allAreas, getResponsavelByArea, statusList, handleDownloadAnexoBackend, handleDownloadAnexoEmail]);
 
-  const renderStep1 = () => (
-    <div className="space-y-6">
-      <div className="grid grid-cols-3 gap-4">
-        <TextField
-          label="Código de Identificação *"
-          name="cdIdentificacao"
-          value={formData.cdIdentificacao}
-          onChange={handleInputChange}
-          required
-          autoFocus
-          maxLength={50}
-        />
-        <TextField
-          label="Nº Ofício"
-          name="nrOficio"
-          value={formData.nrOficio}
-          onChange={handleInputChange}
-          maxLength={50}
-        />
-        <TextField
-          label="Nº Processo"
-          name="nrProcesso"
-          value={formData.nrProcesso}
-          onChange={handleInputChange}
-          maxLength={50}
-        />
-      </div>
 
-      <div className="grid grid-cols-3 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="flAnaliseGerenteDiretor" className="text-sm font-medium">
-          Exige análise do Gerente ou Diretor? *
-          </Label>
-          <div className="flex items-center gap-4 mt-2">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                checked={formData.flAnaliseGerenteDiretor === 'G'}
-                onCheckedChange={() => setFormData(prev => ({
-                  ...prev,
-                  flAnaliseGerenteDiretor: 'G'
-                }))}
-              />
-              <Label className="text-sm font-light">Gerente</Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Checkbox
-                checked={formData.flAnaliseGerenteDiretor === 'D'}
-                onCheckedChange={() => setFormData(prev => ({
-                  ...prev,
-                  flAnaliseGerenteDiretor: 'D'
-                }))}
-              />
-              <Label className="text-sm font-light ">Diretor</Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Checkbox
-                checked={formData.flAnaliseGerenteDiretor === 'A'}
-                onCheckedChange={() => setFormData(prev => ({
-                  ...prev,
-                  flAnaliseGerenteDiretor: 'A'
-                }))}
-              />
-              <Label className="text-sm font-light">Ambos</Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Checkbox
-                checked={formData.flAnaliseGerenteDiretor === 'N'}
-                onCheckedChange={() => setFormData(prev => ({
-                  ...prev,
-                  flAnaliseGerenteDiretor: 'N'
-                }))}
-              />
-              <Label className="text-sm font-light">Não necessita</Label>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="dsAssunto">Assunto</Label>
-        <Textarea
-          id="dsAssunto"
-          name="dsAssunto"
-          value={formData.dsAssunto}
-          onChange={handleInputChange}
-          rows={getRows(formData.dsAssunto)}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="dsObservacao">Observações</Label>
-        <Textarea
-          id="dsObservacao"
-          name="dsObservacao"
-          value={formData.dsObservacao}
-          onChange={handleInputChange}
-          rows={getRows(formData.dsObservacao)}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="dsSolicitacao">Descrição da Solicitação</Label>
-        <Textarea
-          id="dsSolicitacao"
-          name="dsSolicitacao"
-          value={formData.dsSolicitacao}
-          onChange={handleInputChange}
-          rows={getRows(formData.dsSolicitacao)}
-          disabled
-        />
-      </div>
-    </div>
-  );
 
   useEffect(() => {
     if (currentStep === 3 && formData.idTema) {
@@ -1367,7 +1350,6 @@ export default function SolicitacaoModal({
     }
   }, [formData.idTema, open, loadStatusPrazos]);
 
-  // Load anexos of type E when entering step 4 or step 5
   useEffect(() => {
     const loadAnexosTypeE = async () => {
       if ((currentStep === 4 || currentStep === 5) && solicitacao?.idSolicitacao) {
@@ -1415,12 +1397,11 @@ export default function SolicitacaoModal({
               if (step === 1) return true;
               if (step === 2) return isStep1Valid();
               if (step >= 3) return isStep1Valid() && isStep2Valid();
-              return false; // Fallback para garantir que sempre retorna boolean
+              return false;
             }}
           />
         </div>
 
-        {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto py-6">
           <form id="solicitacao-form" onSubmit={handleSubmit}>
             {currentStep === 1 && renderStep1()}

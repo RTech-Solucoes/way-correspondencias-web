@@ -5,13 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="98226f2c-f64e-43be-946e-e89028627d5c" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/constants/permissoes.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/responsaveis/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/responsaveis/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/solicitacoes/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/solicitacoes/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/temas/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/temas/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/solicitacoes/DetalhesSolicitacaoModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/solicitacoes/DetalhesSolicitacaoModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/solicitacoes/HistoricoRespostasModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/solicitacoes/HistoricoRespostasModal.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/components/solicitacoes/SolicitacaoModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/solicitacoes/SolicitacaoModal.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/context/solicitacoes/SolicitacoesContext.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/context/solicitacoes/SolicitacoesContext.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -21,8 +18,8 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="TypeScript File" />
         <option value="TypeScript JSX File" />
+        <option value="TypeScript File" />
       </list>
     </option>
   </component>
@@ -63,7 +60,7 @@
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;develop&quot;,
     &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/Work/projetos/rtech/way/way-correspondencias-web&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/Work/projetos/rtech/way/way-correspondencias-web/src/context/permissoes&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
@@ -88,11 +85,11 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\Work\projetos\rtech\way\way-correspondencias-web\src\context\permissoes" />
+      <recent name="D:\Work\projetos\rtech\way\way-correspondencias-web\src\hooks" />
       <recent name="D:\Work\projetos\rtech\way\way-correspondencias-web\src\app\email\[id]" />
       <recent name="D:\Work\projetos\rtech\way-correspondencias-web\src\types\solicitacoes" />
       <recent name="D:\Work\projetos\rtech\way-correspondencias-web\src\api\areas" />
-      <recent name="D:\Work\projetos\rtech\way-correspondencias-web\src\api\temas" />
-      <recent name="D:\Work\projetos\rtech\way-correspondencias-web\src\api\solicitacoes" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="D:\Work\projetos\rtech\way\way-correspondencias-web\src" />
@@ -187,6 +184,8 @@
       <workItem from="1756899791770" duration="3266000" />
       <workItem from="1756903113069" duration="3257000" />
       <workItem from="1756906854149" duration="922000" />
+      <workItem from="1756907948502" duration="7688000" />
+      <workItem from="1756915738351" duration="1573000" />
     </task>
     <task id="LOCAL-00001" summary="Alteração biblioteca de Ícones&#10;lucide-react -&gt; @phosphor-icons/react">
       <option name="closed" value="true" />

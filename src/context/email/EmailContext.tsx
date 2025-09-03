@@ -1,21 +1,16 @@
 'use client'
 
-import {
-  Dispatch,
-  SetStateAction,
-  createContext,
-  useContext,
-  useState,
-  ReactNode,
-} from "react";
+import {createContext, Dispatch, ReactNode, SetStateAction, useContext, useState,} from "react";
 import {useRouter} from "next/navigation";
 
-interface EmailFiltersState {
+export interface EmailFiltersState {
   remetente: string;
   destinatario: string;
   status: string;
   dateFrom: string;
   dateTo: string;
+  isRead: string;
+  hasAttachments: string;
 }
 
 export interface EmailContextProps {
@@ -47,6 +42,8 @@ export const EmailProvider = ({ children }: { children: ReactNode }) => {
     status: '',
     dateFrom: '',
     dateTo: '',
+    isRead: '',
+    hasAttachments: '',
   });
 
   const [activeEmailFilters, setActiveEmailFilters] = useState<EmailFiltersState>({
@@ -55,6 +52,8 @@ export const EmailProvider = ({ children }: { children: ReactNode }) => {
     status: '',
     dateFrom: '',
     dateTo: '',
+    isRead: '',
+    hasAttachments: '',
   });
 
   const router = useRouter();
@@ -71,6 +70,8 @@ export const EmailProvider = ({ children }: { children: ReactNode }) => {
       status: '',
       dateFrom: '',
       dateTo: '',
+      isRead: '',
+      hasAttachments: '',
     };
     setEmailFilters(clearedFilters);
     setActiveEmailFilters(clearedFilters);
