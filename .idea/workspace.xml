@@ -5,14 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="98226f2c-f64e-43be-946e-e89028627d5c" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/stores/permissoes-store.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bun.lock" beforeDir="false" afterPath="$PROJECT_DIR$/bun.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/app/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/page.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/components/responsaveis/ResponsavelModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/responsaveis/ResponsavelModal.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/components/ui/text-field.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ui/text-field.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/constants/pages.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/constants/pages.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/utils/utils.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils/utils.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -187,7 +183,7 @@
       <workItem from="1756130474134" duration="207000" />
       <workItem from="1756732910580" duration="1743000" />
       <workItem from="1756899791770" duration="3266000" />
-      <workItem from="1756903113069" duration="1251000" />
+      <workItem from="1756903113069" duration="2649000" />
     </task>
     <task id="LOCAL-00001" summary="Alteração biblioteca de Ícones&#10;lucide-react -&gt; @phosphor-icons/react">
       <option name="closed" value="true" />

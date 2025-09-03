@@ -27,7 +27,6 @@ export default function LoginPage() {
   const [usernameError, setUsernameError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const permissoes = usePermissoesState()
   const setPermissoes = useSetPermissoes()
 
   const router = useRouter();

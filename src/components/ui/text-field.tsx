@@ -26,6 +26,8 @@ export interface TextFieldProps {
   type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'search' | 'date';
   as?: 'input' | 'textarea';
   rows?: number;
+  max?: string | number
+  min?: string | number
 
   disabled?: boolean;
   readOnly?: boolean;
@@ -66,6 +68,8 @@ const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, TextFieldPr
     type = 'text',
     as = 'input',
     rows = 3,
+    max,
+    min,
     disabled = false,
     readOnly = false,
     required = false,
@@ -209,6 +213,8 @@ const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, TextFieldPr
               autoFocus={autoFocus}
               maxLength={maxLength}
               minLength={minLength}
+              max={max}
+              min={min}
               variant={variant}
               inputSize={size}
               className={inputClassNames}
