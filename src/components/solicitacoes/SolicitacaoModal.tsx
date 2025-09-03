@@ -90,7 +90,8 @@ export default function SolicitacaoModal({
     nrPrazo: undefined,
     tpPrazo: '',
     nrOficio: '',
-    nrProcesso: ''
+    nrProcesso: '',
+    flAnaliseGerenteDiretor: ''
   });
   const [loading, setLoading] = useState(false);
   const [anexos, setAnexos] = useState<File[]>([]);
@@ -121,7 +122,8 @@ export default function SolicitacaoModal({
         nrPrazo: solicitacao.nrPrazo || undefined,
         tpPrazo: solicitacao.tpPrazo === 'C' ? 'H' : (solicitacao.tpPrazo || ''),
         nrOficio: solicitacao.nrOficio || '',
-        nrProcesso: solicitacao.nrProcesso || ''
+        nrProcesso: solicitacao.nrProcesso || '',
+        flAnaliseGerenteDiretor: solicitacao.flAnaliseGerenteDiretor || ''
       });
       // Corrigido: prazoExcepcional sempre inicia como false para evitar ser marcado por padrão
       setPrazoExcepcional(false);
@@ -138,7 +140,8 @@ export default function SolicitacaoModal({
         nrPrazo: undefined,
         tpPrazo: '',
         nrOficio: '',
-        nrProcesso: ''
+        nrProcesso: '',
+        flAnaliseGerenteDiretor: ''
       });
       setPrazoExcepcional(false);
     }
@@ -216,7 +219,10 @@ export default function SolicitacaoModal({
 
   const isStep1Valid = useCallback(() => {
     return formData.cdIdentificacao?.trim() !== '' && 
-           (formData.flAnaliseGerenteDiretor === 'S' || formData.flAnaliseGerenteDiretor === 'N');
+      (formData.flAnaliseGerenteDiretor === 'D' ||
+      formData.flAnaliseGerenteDiretor === 'G' ||
+      formData.flAnaliseGerenteDiretor === 'N' ||
+      formData.flAnaliseGerenteDiretor === 'A');
   }, [formData.cdIdentificacao, formData.flAnaliseGerenteDiretor]);
 
   const isStep2Valid = useCallback(() => {
@@ -247,6 +253,7 @@ export default function SolicitacaoModal({
           dsObservacao: formData.dsObservacao?.trim(),
           nrOficio: formData.nrOficio?.trim(),
           nrProcesso: formData.nrProcesso?.trim(),
+          flAnaliseGerenteDiretor: formData.flAnaliseGerenteDiretor
         });
 
         setCurrentStep(2);
@@ -485,6 +492,7 @@ export default function SolicitacaoModal({
           dsObservacao: formData.dsObservacao?.trim(),
           nrOficio: formData.nrOficio?.trim(),
           nrProcesso: formData.nrProcesso?.trim(),
+          flAnaliseGerenteDiretor: formData.flAnaliseGerenteDiretor
         });
 
         await solicitacoesClient.etapaTema(id, {
@@ -1184,19 +1192,39 @@ export default function SolicitacaoModal({
 
       <div className="grid grid-cols-3 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="flAnaliseGerenteDiretor" className="text-sm font-medium text-gray-700">
-            Exige análise do Gerente ou Diretor? <span className="text-red-500">*</span>
+          <Label htmlFor="flAnaliseGerenteDiretor" className="text-sm font-medium">
+          Exige análise do Gerente ou Diretor? *
           </Label>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 mt-2">
             <div className="flex items-center gap-2">
               <Checkbox
-                checked={formData.flAnaliseGerenteDiretor === 'S'}
+                checked={formData.flAnaliseGerenteDiretor === 'G'}
                 onCheckedChange={() => setFormData(prev => ({
                   ...prev,
-                  flAnaliseGerenteDiretor: 'S'
+                  flAnaliseGerenteDiretor: 'G'
                 }))}
               />
-              <Label>Sim</Label>
+              <Label className="text-sm font-light">Gerente</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={formData.flAnaliseGerenteDiretor === 'D'}
+                onCheckedChange={() => setFormData(prev => ({
+                  ...prev,
+                  flAnaliseGerenteDiretor: 'D'
+                }))}
+              />
+              <Label className="text-sm font-light ">Diretor</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={formData.flAnaliseGerenteDiretor === 'A'}
+                onCheckedChange={() => setFormData(prev => ({
+                  ...prev,
+                  flAnaliseGerenteDiretor: 'A'
+                }))}
+              />
+              <Label className="text-sm font-light">Ambos</Label>
             </div>
             <div className="flex items-center gap-2">
               <Checkbox
@@ -1206,7 +1234,7 @@ export default function SolicitacaoModal({
                   flAnaliseGerenteDiretor: 'N'
                 }))}
               />
-              <Label>Não</Label>
+              <Label className="text-sm font-light">Não necessita</Label>
             </div>
           </div>
         </div>
