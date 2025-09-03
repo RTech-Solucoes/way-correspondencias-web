@@ -5,14 +5,15 @@ import Link from 'next/link';
 import {usePathname} from 'next/navigation';
 import {CaretLeftIcon, CaretRightIcon} from '@phosphor-icons/react';
 import {useSidebar} from '@/context/sidebar/SidebarContext';
-import {PAGES_DEF} from '@/constants/pages';
 import {PageDef} from "@/types/pages/pages";
+import {usePermittedPages} from "@/hooks/use-permitted-pages";
 
-const menuItems: PageDef[] = PAGES_DEF
 
 export function AppSidebar() {
   const pathname = usePathname();
   const { isCollapsed, toggleSidebar, sidebarWidth } = useSidebar();
+
+  const menuItems: PageDef[] = usePermittedPages()
 
   return (
     <aside 

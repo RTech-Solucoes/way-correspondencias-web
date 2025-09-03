@@ -50,7 +50,7 @@ import { TemaResponse } from '@/api/temas/types';
 import { AreaResponse } from '@/api/areas/types';
 import { useTramitacoesMutation } from '@/hooks/use-tramitacoes';
 import tramitacoesClient from '@/api/tramitacoes/client';
-import {hasPermissao} from "@/utils/utils";
+import {useHasPermissao} from "@/hooks/use-has-permissao";
 import {Permissoes} from "@/constants/permissoes"
 
 export default function SolicitacoesPage() {
@@ -106,6 +106,10 @@ export default function SolicitacoesPage() {
   const [numberOfElements, setNumberOfElements] = useState(0);
   const [first, setFirst] = useState(true);
   const [last, setLast] = useState(true);
+
+  const canInserirSolicitacao = useHasPermissao(Permissoes.SOLICITACAO_INSERIR);
+  const canAtualizarSolicitacao = useHasPermissao(Permissoes.SOLICITACAO_ATUALIZAR);
+  const canDeletarSolicitacao = useHasPermissao(Permissoes.SOLICITACAO_DELETAR);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const userHasOpenedDetailsModal = useCallback((solicitacao: SolicitacaoResponse) => {
@@ -409,7 +413,7 @@ export default function SolicitacoesPage() {
             <FunnelSimpleIcon className="h-4 w-4 mr-2" />
             Filtrar
           </Button>
-          {hasPermissao(Permissoes.SOLICITACAO_INSERIR) &&
+          {canInserirSolicitacao &&
             <Button onClick={() => {
               setSelectedSolicitacao(null);
               setShowSolicitacaoModal(true);
@@ -517,7 +521,7 @@ export default function SolicitacoesPage() {
                     </StickyTableCell>
                     <StickyTableCell>{solicitacao.nmTema || solicitacao?.tema?.nmTema || '-'}</StickyTableCell>
                     <StickyTableCell>
-                      <Badge variant={getStatusBadgeVariant(
+                      <Badge className="whitespace-nowrap truncate" variant={getStatusBadgeVariant(
                         solicitacao.statusSolicitacao?.idStatusSolicitacao?.toString() ||
                         solicitacao.statusCodigo?.toString() || ''
                       )}>
@@ -558,33 +562,36 @@ export default function SolicitacoesPage() {
                         >
                           <ClockCounterClockwiseIcon className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEdit(solicitacao);
-                          }}
-                          title="Editar"
-                        >
-                          <PencilSimpleIcon className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(solicitacao);
-                          }}
-                          className="text-red-600 hover:text-red-700"
-                          title="Excluir"
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                        </Button>
+                        {canAtualizarSolicitacao &&
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEdit(solicitacao);
+                            }}
+                            title="Editar"
+                          >
+                            <PencilSimpleIcon className="h-4 w-4" />
+                          </Button>
+                        }
+                        {canDeletarSolicitacao &&
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(solicitacao);
+                            }}
+                            className="text-red-600 hover:text-red-700"
+                            title="Excluir"
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </Button>
+                        }
                       </div>
                     </StickyTableCell>
                   </StickyTableRow>
-
                 </React.Fragment>
               ))
             )}

@@ -183,14 +183,3 @@ export const validateCPF = (cpf: string): boolean => {
 
   return parseInt(cpfLimpo[10]) === digito2;
 };
-
-export const hasPermissao = (permissao: string): boolean | null => {
-  const permissoesStorage = sessionStorage.getItem("permissoes-storage");
-
-  if (!permissoesStorage) {
-    return null;
-  } else {
-    const parsed = JSON.parse(permissoesStorage);
-    return parsed?.state?.permissoes?.includes(permissao) ?? null;
-  }
-}
