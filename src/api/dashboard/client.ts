@@ -1,0 +1,25 @@
+import ApiClient from "../client";
+import { DashboardListSummary, DashboardOverview } from "./type";
+
+class DashboardClient {
+    private client: ApiClient;
+
+    constructor() {
+        this.client = new ApiClient('/dashboard');
+    }
+
+    async getOverview(): Promise<DashboardOverview[]> {
+        return this.client.request<DashboardOverview[]>(`/overview`, {
+            method: 'GET',
+        });
+    }
+
+    async getRecentOverview(qtd: number): Promise<DashboardListSummary[]> {
+        return this.client.request<DashboardListSummary[]>(`/list-summary?qtd=${qtd}`, {
+            method: "GET",
+        });
+    }
+}
+
+export const dashboardClient = new DashboardClient();
+export default dashboardClient;

@@ -11,12 +11,23 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useState } from 'react';
 import { toast } from 'sonner';
 
+import { jwtDecode } from "jwt-decode";
+import {usePermissoesState, useSetPermissoes} from "@/stores/permissoes-store";
+
+
+interface TokenPayload {
+  sub: string;
+  exp: number;
+  permissoes: string[];
+}
+
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [usernameError, setUsernameError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const setPermissoes = useSetPermissoes()
 
   const router = useRouter();
 
@@ -49,6 +60,13 @@ export default function LoginPage() {
           password: password
         });
 
+        const token = localStorage.getItem("authToken");
+
+        if (token) {
+          const decoded = jwtDecode<TokenPayload>(token);
+          console.log(decoded.sub, decoded.exp, decoded.permissoes);
+          setPermissoes(decoded.permissoes)
+        }
 
         toast.success("Login Realizado com Sucesso.")
         router.push(PAGES_DEF[0].path);
@@ -64,7 +82,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex flex-row justify-center min-h-screen overflow-hidden gap-16 max-[1024px]:gap-0 px-12">
-      <form onSubmit={handleSubmit} className="flex flex-col w-[45%] max-md:w-full md:mt-32 max-w-xl gap-12 p-8 max-[1024px]:p-2 rounded-4xl max-[1460px]:w-[40%] max-[768px]:justify-center">
+      <form onSubmit={handleSubmit} className="flex flex-col w-[45%] max-md:w-full md:mt-48 max-w-xl gap-12 p-8 max-[1024px]:p-2 rounded-4xl max-[1460px]:w-[40%] max-[768px]:justify-center">
         <div>
           <Image
             src="/images/way-logo.png"

@@ -215,7 +215,7 @@ export default function TemasPage() {
             setShowTemaModal(true);
           }}>
             <PlusIcon className="h-4 w-4 mr-2"/>
-            Novo Tema
+            Criar Tema
           </Button>
         </div>
       </div>
