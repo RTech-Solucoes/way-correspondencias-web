@@ -1,5 +1,5 @@
 import ApiClient from "../client";
-import { DashboardListSummary, DashboardOverview, SolicitacaoPrazo } from "./type";
+import { DashboardListSummary, DashboardOverview, IRecentActivity, SolicitacaoPrazo } from "./type";
 
 class DashboardClient {
     private client: ApiClient;
@@ -22,6 +22,12 @@ class DashboardClient {
 
     async getRecentDeadline(): Promise<SolicitacaoPrazo[]> {
         return this.client.request<SolicitacaoPrazo[]>(`/recent-deadline`, {
+            method: "GET",
+        });
+    }
+
+    async getRecentActivity(dia: number): Promise<IRecentActivity[]> {
+        return this.client.request<IRecentActivity[]>(`/recent-activity?dia=${dia}`, {
             method: "GET",
         });
     }

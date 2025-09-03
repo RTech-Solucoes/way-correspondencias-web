@@ -25,3 +25,9 @@ export interface SolicitacaoPrazo {
     estourou: 0 | 1;
     nmTema: string;
 }
+
+export interface IRecentActivity {
+    id: number;
+    assunto: string;
+    dtCriacao: string;
+}
