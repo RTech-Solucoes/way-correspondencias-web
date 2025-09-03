@@ -1,7 +1,7 @@
 'use client';
 
 import {useEffect, useState} from 'react';
-import {ArrowRight, SpinnerIcon} from '@phosphor-icons/react';
+import {ArrowRightIcon, SpinnerIcon} from '@phosphor-icons/react';
 import {toast} from 'sonner';
 import {Dialog, DialogContent, DialogHeader, DialogTitle,} from '@/components/ui/dialog';
 import {solicitacoesClient} from '@/api/solicitacoes/client';
@@ -119,7 +119,7 @@ export default function HistoricoRespostasModal({
                           {resposta.tramitacao.areaOrigem.nmArea}
                         </Badge>
 
-                        <ArrowRight className="h-4 w-4 text-gray-600" />
+                        <ArrowRightIcon className="h-4 w-4 text-gray-600" />
 
                         <Badge 
                           variant="secondary" 

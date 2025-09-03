@@ -991,16 +991,16 @@ export default function SolicitacaoModal({
     <div className="space-y-6">
 
       <div className="flex flex-col space-y-4">
-        <AnexoComponent onAddAnexos={handleAddAnexos} />
+        {canInserirAnexo && <AnexoComponent onAddAnexos={handleAddAnexos} />}
 
-        {anexos.length > 0 && (
+        {canListarAnexo && anexos.length > 0 && (
           <div>
             <Label className="text-sm font-medium mb-2 block">Anexos:</Label>
             <AnexoList anexos={anexos} onRemove={handleRemoveAnexo} />
           </div>
         )}
 
-        {anexosBackend.length > 0 && (
+        {canListarAnexo && anexosBackend.length > 0 && (
           <div>
             <Label className="text-sm font-medium mb-2 block">Documentos já anexados:</Label>
             <AnexoList
@@ -1024,7 +1024,7 @@ export default function SolicitacaoModal({
           </div>
         )}
 
-        {anexosTypeE.length > 0 && (
+        {canListarAnexo && anexosTypeE.length > 0 && (
           <div>
             <Label className="text-sm font-medium mb-2 block">Anexos do email</Label>
             <AnexoList
@@ -1054,7 +1054,7 @@ export default function SolicitacaoModal({
         )}
       </div>
     </div>
-  ), [anexos, anexosBackend, anexosTypeE, handleAddAnexos, handleRemoveAnexo, handleRemoveAnexoBackend, handleDownloadAnexoBackend, handleDownloadAnexoEmail]);
+  ), [anexos, anexosBackend, anexosTypeE, handleAddAnexos, handleRemoveAnexo, handleRemoveAnexoBackend, handleDownloadAnexoBackend, handleDownloadAnexoEmail, canListarAnexo, canInserirAnexo]);
 
   const renderStep5 = useCallback(() => (
     <div className="space-y-6">
@@ -1212,7 +1212,7 @@ export default function SolicitacaoModal({
       <div className="border-t pt-4">
         <Label className="text-sm font-semibold text-gray-700">Anexos ({anexos.length + anexosBackend.length + anexosTypeE.length})</Label>
         <div className="mt-2 space-y-2">
-          {anexos.length > 0 && (
+          {canListarAnexo && anexos.length > 0 && (
             <div>
               <div className="text-xs text-gray-500 mb-2">Novos anexos a serem enviados:</div>
               {anexos.map((file, index) => (
@@ -1245,7 +1245,7 @@ export default function SolicitacaoModal({
             </div>
           )}
 
-          {anexosBackend.length > 0 && (
+          {canListarAnexo && anexosBackend.length > 0 && (
             <div>
               <div className="text-xs text-gray-500 mb-2">Anexos já salvos:</div>
               <div className="flex flex-col gap-2">
@@ -1283,7 +1283,7 @@ export default function SolicitacaoModal({
             </div>
           )}
 
-          {anexosTypeE.length > 0 && (
+          {canListarAnexo && anexosTypeE.length > 0 && (
             <div>
               <div className="text-xs text-gray-500 mb-2">Anexos do email:</div>
               <div className="flex flex-col gap-2">
@@ -1311,15 +1311,15 @@ export default function SolicitacaoModal({
             </div>
           )}
 
-          {anexos.length === 0 && anexosBackend.length === 0 && anexosTypeE.length === 0 && (
+          {(!canListarAnexo || (anexos.length === 0 && anexosBackend.length === 0 && anexosTypeE.length === 0)) && (
             <div className="p-3 bg-gray-50 border rounded-lg text-sm text-gray-500 text-center">
-              Nenhum anexo adicionado
+              {!canListarAnexo ? 'Sem permissão para visualizar anexos' : 'Nenhum anexo adicionado'}
             </div>
           )}
         </div>
       </div>
     </div>
-  ), [formData, getSelectedTema, responsaveis, anexos, anexosBackend, anexosTypeE, statusPrazos, statusList, prazoExcepcional, solicitacao?.statusCodigo, solicitacao?.nmTema, solicitacao?.tema?.nmTema, solicitacao?.statusSolicitacao?.idStatusSolicitacao, solicitacao?.statusSolicitacao?.nmStatus, allAreas, getResponsavelByArea, handleDownloadAnexoEmail, handleDownloadAnexoBackend]);
+  ), [formData.cdIdentificacao, formData.nrOficio, formData.nrProcesso, formData.dsAssunto, formData.dsObservacao, formData.dsSolicitacao, formData.idsAreas, formData.nrPrazo, formData.idResponsavel, formData.tpPrazo, getSelectedTema, solicitacao?.tema?.nmTema, solicitacao?.nmTema, responsaveis, prazoExcepcional, statusPrazos, anexos, anexosBackend, anexosTypeE, canListarAnexo, allAreas, getResponsavelByArea, statusList, handleDownloadAnexoBackend, handleDownloadAnexoEmail]);
 
 
 

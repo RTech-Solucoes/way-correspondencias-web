@@ -12,13 +12,14 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { ClockIcon, DownloadIcon, PaperclipIcon, X as XIcon } from '@phosphor-icons/react';
+import { ClockIcon, DownloadIcon, PaperclipIcon, XIcon } from '@phosphor-icons/react';
 import {SolicitacaoDetalheResponse, SolicitacaoResponse} from '@/api/solicitacoes/types';
 import { ArquivoDTO, TipoObjetoAnexo, TipoResponsavelAnexo } from '@/api/anexos/type';
 import { anexosClient } from '@/api/anexos/client';
 import { base64ToUint8Array, fileToArquivoDTO, saveBlob } from '@/utils/utils';
 import tramitacoesClient from '@/api/tramitacoes/client';
 import { HistoricoRespostasModalButton } from './HistoricoRespostasModal';
+import { usePermissoes } from "@/context/permissoes/PermissoesContext";
 
 type AnexoItemShape = {
   idAnexo: number;
@@ -76,6 +77,8 @@ export default function DetalhesSolicitacaoModal({
   const descRef = useRef<HTMLParagraphElement | null>(null);
   const [canToggleDescricao, setCanToggleDescricao] = useState(false);
   const [lineHeightPx, setLineHeightPx] = useState<number | null>(null);
+
+  const { canListarAnexo, canInserirAnexo, canDeletarAnexo } = usePermissoes();
 
   const sol = solicitacao ?? null;
 
@@ -364,44 +367,46 @@ export default function DetalhesSolicitacaoModal({
             </div>
           </section>
 
-          <section className="space-y-3">
-            <h3 className="text-sm font-semibold">Anexos</h3>
+          {canListarAnexo && (
+            <section className="space-y-3">
+              <h3 className="text-sm font-semibold">Anexos</h3>
 
-            <div className="space-y-2">
-              <div className="rounded-md border">
-                <div className="grid grid-cols-12 items-center">
-                  <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
-                    Anexado pelo Analista
+              <div className="space-y-2">
+                <div className="rounded-md border">
+                  <div className="grid grid-cols-12 items-center">
+                    <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
+                      Anexado pelo Analista
+                    </div>
+                    <div className="col-span-9 px-4 py-3">
+                      <AnexoItem anexos={anexosAnalista} onBaixar={handleBaixarAnexo} />
+                    </div>
                   </div>
-                  <div className="col-span-9 px-4 py-3">
-                    <AnexoItem anexos={anexosAnalista} onBaixar={handleBaixarAnexo} />
+                </div>
+
+                <div className="rounded-md border">
+                  <div className="grid grid-cols-12 items-center">
+                    <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
+                      Anexado pelo Gerente
+                    </div>
+                    <div className="col-span-9 px-4 py-3">
+                      <AnexoItem anexos={anexosGerente} onBaixar={handleBaixarAnexo} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-md border">
+                  <div className="grid grid-cols-12 items-center">
+                    <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
+                      Enviado pelo Regulatório
+                    </div>
+                    <div className="col-span-9 px-4 py-3">
+                      <AnexoItem anexos={anexosRegulatorio} onBaixar={handleBaixarAnexo} />
+                    </div>
                   </div>
                 </div>
               </div>
-
-              <div className="rounded-md border">
-                <div className="grid grid-cols-12 items-center">
-                  <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
-                    Anexado pelo Gerente
-                  </div>
-                  <div className="col-span-9 px-4 py-3">
-                    <AnexoItem anexos={anexosGerente} onBaixar={handleBaixarAnexo} />
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-md border">
-                <div className="grid grid-cols-12 items-center">
-                  <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
-                    Enviado pelo Regulatório
-                  </div>
-                  <div className="col-span-9 px-4 py-3">
-                    <AnexoItem anexos={anexosRegulatorio} onBaixar={handleBaixarAnexo} />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
+            </section>
+          )}
 
           <section className="space-y-3">
             <div className="flex items-center justify-between">
@@ -428,11 +433,13 @@ export default function DetalhesSolicitacaoModal({
               />
 
               <div className="mt-3 flex items-center gap-3">
-                <label className="inline-flex items-center gap-2 text-sm text-primary hover:underline cursor-pointer">
-                  <PaperclipIcon className="h-4 w-4" />
-                  Fazer upload de arquivo
-                  <input type="file" className="hidden" multiple onChange={handleUploadChange} disabled={sending} />
-                </label>
+                {canInserirAnexo && (
+                  <label className="inline-flex items-center gap-2 text-sm text-primary hover:underline cursor-pointer">
+                    <PaperclipIcon className="h-4 w-4" />
+                    Fazer upload de arquivo
+                    <input type="file" className="hidden" multiple onChange={handleUploadChange} disabled={sending} />
+                  </label>
+                )}
 
                 {arquivos.length > 0 && (
                   <span className="text-xs text-muted-foreground">
@@ -449,17 +456,19 @@ export default function DetalhesSolicitacaoModal({
                       className="flex items-center justify-between rounded-md border bg-white px-3 py-2"
                     >
                       <span className="truncate text-sm">{f.name}</span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => handleRemoveArquivo(idx)}
-                        title="Remover"
-                        disabled={sending}
-                      >
-                        <XIcon className="h-4 w-4" />
-                      </Button>
+                      {canDeletarAnexo && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleRemoveArquivo(idx)}
+                          title="Remover"
+                          disabled={sending}
+                        >
+                          <XIcon className="h-4 w-4" />
+                        </Button>
+                      )}
                     </li>
                   ))}
                 </ul>
