@@ -28,7 +28,13 @@ import { solicitacoesClient } from '@/api/solicitacoes/client';
 import { toast } from 'sonner';
 import { capitalize, getRows, base64ToUint8Array, saveBlob } from '@/utils/utils';
 import { MultiSelectAreas } from '@/components/ui/multi-select-areas';
-import { ArrowArcRightIcon, CaretLeftIcon, CaretRightIcon, DownloadSimpleIcon } from '@phosphor-icons/react';
+import {
+  ArrowArcRightIcon,
+  CaretLeftIcon,
+  CaretRightIcon,
+  DownloadSimpleIcon,
+  FloppyDiskIcon
+} from '@phosphor-icons/react';
 import { Stepper } from '@/components/ui/stepper';
 import { Input } from '@nextui-org/react';
 import AnexoComponent from '../AnexoComponotent/AnexoComponent';
@@ -36,7 +42,7 @@ import AnexoList from '../AnexoComponotent/AnexoList/AnexoList';
 import { statusSolicPrazoTemaClient } from '@/api/status-prazo-tema/client';
 import { StatusSolicPrazoTemaForUI } from '@/api/status-prazo-tema/types';
 import { statusSolicitacaoClient, StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
-import { AnexoResponse } from '@/api/solicitacoes/anexos-client';
+import { AnexoResponse } from '@/api/anexos/type';
 import { areasClient } from '@/api/areas/client';
 import { anexosClient } from '@/api/anexos/client';
 import { AreaResponse } from '@/api/areas/types';
@@ -1152,7 +1158,7 @@ export default function SolicitacaoModal({
                   <div key={index} className="flex items-center justify-between p-2 bg-gray-50 border border-gray-200 rounded text-sm">
                     <span className="font-medium text-gray-800">{anexo.nmArquivo}</span>
                     <div className="flex items-center gap-2">
-                    <span className="text-xs">{Math.round(anexo.size / 1024)} KB</span>
+                    {/*<span className="text-xs">{Math.round(anexo.size / 1024)} KB</span>*/}
                       <Button
                         type="button"
                         variant="ghost"
@@ -1171,7 +1177,7 @@ export default function SolicitacaoModal({
                         }}
                         className="h-6 w-6 p-0 hover:bg-gray-200"
                       >
-                        <span className="text-xs">{Math.round(anexo.size / 1024)} KB</span>
+                        {/*<span className="text-xs">{Math.round(anexo.size / 1024)} KB</span>*/}
 
                         <DownloadSimpleIcon size={14} className="text-gray-600" />
                       </Button>
@@ -1427,7 +1433,8 @@ export default function SolicitacaoModal({
 
         <DialogFooter className="flex gap-3 pt-6 border-t flex-shrink-0">
           <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
-            Sair
+            <FloppyDiskIcon size={16} className="mr-2"/>
+            Salvar
           </Button>
 
           {currentStep === 1 && (

@@ -247,7 +247,7 @@ export default function ResponsaveisPage() {
             setShowResponsavelModal(true);
           }}>
             <PlusIcon className="h-4 w-4 mr-2"/>
-            Novo Responsável
+            Criar Responsável
           </Button>
         </div>
       </div>

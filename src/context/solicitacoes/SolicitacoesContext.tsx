@@ -14,8 +14,8 @@ import { SolicitacaoResponse } from '@/api/solicitacoes/types';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { TemaResponse } from '@/api/temas/types';
 import { AreaResponse } from '@/api/areas/types';
-import { StatusSolicPrazoTemaResponse } from '@/api/status-prazo-tema/types';
-import { statusPrazoTemaClient } from '@/api/status-prazo-tema/client';
+import {StatusSolicPrazoTemaForUI, StatusSolicPrazoTemaResponse} from '@/api/status-prazo-tema/types';
+import { statusSolicPrazoTemaClient } from '@/api/status-prazo-tema/client';
 
 interface FiltersState {
   identificacao: string;
@@ -99,15 +99,15 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
   const [sortField, setSortField] = useState<keyof SolicitacaoResponse | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
-  const [statusCache, setStatusCache] = useState<Map<number, StatusSolicPrazoTemaResponse[]>>(new Map());
+  const [statusCache, setStatusCache] = useState<Map<number, StatusSolicPrazoTemaForUI[]>>(new Map());
 
-  const fetchStatusForTema = useCallback(async (idTema: number): Promise<StatusSolicPrazoTemaResponse[]> => {
+  const fetchStatusForTema = useCallback(async (idTema: number): Promise<StatusSolicPrazoTemaForUI[]> => {
     if (statusCache.has(idTema)) {
       return statusCache.get(idTema) || [];
     }
 
     try {
-      const status = await statusPrazoTemaClient.listar(idTema);
+      const status = await statusSolicPrazoTemaClient.listar(idTema);
       setStatusCache(prev => new Map(prev).set(idTema, status));
       return status;
     } catch (error) {

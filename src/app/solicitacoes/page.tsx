@@ -24,8 +24,6 @@ import {
   ClipboardTextIcon,
   XIcon,
   SpinnerIcon,
-  CaretDownIcon,
-  CaretRightIcon,
   ArrowsDownUpIcon,
   PencilSimpleIcon,
   ArrowClockwiseIcon,
@@ -52,6 +50,8 @@ import { TemaResponse } from '@/api/temas/types';
 import { AreaResponse } from '@/api/areas/types';
 import { useTramitacoesMutation } from '@/hooks/use-tramitacoes';
 import tramitacoesClient from '@/api/tramitacoes/client';
+import {hasPermissao} from "@/utils/utils";
+import {Permissoes} from "@/constants/permissoes"
 
 export default function SolicitacoesPage() {
   const {
@@ -409,13 +409,15 @@ export default function SolicitacoesPage() {
             <FunnelSimpleIcon className="h-4 w-4 mr-2" />
             Filtrar
           </Button>
-          <Button onClick={() => {
-            setSelectedSolicitacao(null);
-            setShowSolicitacaoModal(true);
-          }}>
-            <PlusIcon className="h-4 w-4 mr-2" />
-            Nova Solicitação
-          </Button>
+          {hasPermissao(Permissoes.SOLICITACAO_INSERIR) &&
+            <Button onClick={() => {
+              setSelectedSolicitacao(null);
+              setShowSolicitacaoModal(true);
+            }}>
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Criar Solicitação
+            </Button>
+          }
         </div>
       </div>
 
