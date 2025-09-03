@@ -301,7 +301,6 @@ export default function SolicitacoesPage() {
     console.log('Mensagem:', mensagem);
     if (!alvo) return;
     try {
-      let tramitacaoId: number | null = null;
       if (mensagem?.trim()) {
         const data = {
           dsObservacao: mensagem,
@@ -309,8 +308,6 @@ export default function SolicitacoesPage() {
           flAprovado: flAprovado,
         };
         const created = await tramitacoesClient.tramitar(data);
-        tramitacaoId = created?.idTramitacao ?? null;
-        console.log('[Tramitar] Criado idTramitacao:', tramitacaoId, 'para idSolicitacao:', alvo.solicitacao.idSolicitacao);
       }
 
       if (arquivos.length > 0) {
