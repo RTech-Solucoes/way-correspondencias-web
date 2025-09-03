@@ -15,12 +15,13 @@ import { toast } from 'sonner';
 import { ClockIcon, DownloadIcon, PaperclipIcon, X as XIcon } from '@phosphor-icons/react';
 import { SolicitacaoDetalheResponse } from '@/api/solicitacoes/types';
 import type { AnexoResponse } from '@/api/anexos/type';
-import { ArquivoDTO, TipoObjetoAnexo } from '@/api/anexos/type';
+import { ArquivoDTO, TipoObjetoAnexo, TipoResponsavelAnexo } from '@/api/anexos/type';
 import { anexosClient } from '@/api/anexos/client';
-import { base64ToUint8Array, hasPermissao, saveBlob } from '@/utils/utils';
+import { base64ToUint8Array, fileToArquivoDTO, hasPermissao, saveBlob } from '@/utils/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
 import { HistoricoRespostasModalButton } from './HistoricoRespostasModal';
+import tramitacoesClient from '@/api/tramitacoes/client';
 
 
 type AnexoItemShape = {
@@ -209,6 +210,14 @@ export default function DetalhesSolicitacaoModal({
 
       try {
         setSending(true);
+
+        if (arquivos.length > 0) {
+          const arquivosDTO: ArquivoDTO[] = await Promise.all(arquivos.map(fileToArquivoDTO));
+          arquivosDTO.forEach((a) => {
+            a.tpResponsavel = TipoResponsavelAnexo.A; // TODO: tornar dinâmico
+          });
+        //  await tramitacoesClient.uploadAnexos(sol?.solicitacao?.idSolicitacao, arquivosDTO);
+        }
 
         await onEnviarDevolutiva(resposta.trim(), arquivos, flAprovado || undefined);
 
