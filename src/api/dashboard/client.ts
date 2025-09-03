@@ -1,5 +1,5 @@
 import ApiClient from "../client";
-import { DashboardListSummary, DashboardOverview } from "./type";
+import { DashboardListSummary, DashboardOverview, SolicitacaoPrazo } from "./type";
 
 class DashboardClient {
     private client: ApiClient;
@@ -16,6 +16,12 @@ class DashboardClient {
 
     async getRecentOverview(qtd: number): Promise<DashboardListSummary[]> {
         return this.client.request<DashboardListSummary[]>(`/list-summary?qtd=${qtd}`, {
+            method: "GET",
+        });
+    }
+
+    async getRecentDeadline(): Promise<SolicitacaoPrazo[]> {
+        return this.client.request<SolicitacaoPrazo[]>(`/recent-deadline`, {
             method: "GET",
         });
     }

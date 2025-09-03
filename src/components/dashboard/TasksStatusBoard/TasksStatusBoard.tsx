@@ -24,7 +24,7 @@ export default function TasksStatusBoard() {
 
     const getRecentOverview = async () => {
       try {
-        const data = await dashboardClient.getRecentOverview(5);
+        const data = await dashboardClient.getRecentOverview(3);
         setListSummary(data);
       } catch (error) {
         console.error("Erro ao buscar overview:", error);
@@ -73,10 +73,9 @@ export default function TasksStatusBoard() {
                     <div className="text-xs text-gray-500">{task.nmTema}</div>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm" className="text-xs">Ver</Button>
               </div>
             ))}
-            {listSummary.length === 0 && (<div className="text-sm text-gray-500">Nenhuma tearefa foi realizada recentemente.</div>)}
+            {listSummary.length === 0 && (<div className="text-sm text-gray-500">Nenhuma tarefa foi realizada recentemente.</div>)}
           </div>
         </div>
       </CardContent>
