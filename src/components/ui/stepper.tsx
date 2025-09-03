@@ -1,6 +1,5 @@
 import React from 'react';
-import { Progress } from '@nextui-org/react';
-import { CheckIcon } from '@phosphor-icons/react';
+import {Progress} from '@nextui-org/react';
 
 interface Step {
   title: string;

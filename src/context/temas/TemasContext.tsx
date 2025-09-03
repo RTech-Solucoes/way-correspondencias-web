@@ -1,14 +1,7 @@
 'use client'
 
-import {
-  Dispatch,
-  SetStateAction,
-  createContext,
-  useContext,
-  useState,
-  ReactNode
-} from "react";
-import { TemaResponse } from '@/api/temas/types';
+import {createContext, Dispatch, ReactNode, SetStateAction, useContext, useState} from "react";
+import {TemaResponse} from '@/api/temas/types';
 
 interface FiltersState {
   nome: string;

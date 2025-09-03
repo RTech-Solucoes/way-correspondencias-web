@@ -1,5 +1,5 @@
 import CustomCardHeader from "../../card-header";
-import { Button } from "@/components/ui/button";
+import {Button} from "@/components/ui/button";
 
 type CalendarView = 'month' | 'week' | 'year';
 

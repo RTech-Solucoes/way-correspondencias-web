@@ -1,7 +1,7 @@
 'use client'
 
-import { IconContext } from "@phosphor-icons/react";
-import { ReactNode } from 'react';
+import {IconContext} from "@phosphor-icons/react";
+import {ReactNode} from 'react';
 
 interface IconProviderProps {
   children: ReactNode;

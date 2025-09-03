@@ -1,8 +1,10 @@
 import {type ClassValue, clsx} from 'clsx';
 import {twMerge} from 'tailwind-merge';
 import {StatusAtivo} from "@/types/misc/types";
-import { ArquivoDTO } from '@/api/anexos/type';
-import {usePermissoesState} from "@/stores/permissoes-store";
+import {ArquivoDTO, TipoResponsavelAnexo} from '@/api/anexos/type';
+import { z } from "zod";
+import { cpf } from "cpf-cnpj-validator";
+import dayjs from "dayjs";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -139,12 +141,15 @@ export function fileToBase64String(file: File): Promise<string> {
   });
 }
 
-export async function fileToArquivoDTO(file: File): Promise<ArquivoDTO> {
+export async function fileToArquivoDTO(file: File, tpResponsavel: TipoResponsavelAnexo): Promise<ArquivoDTO> {
   const conteudoArquivo = await fileToBase64String(file);
   return {
     nomeArquivo: file.name,
-    tipoConteudo: file.type || null,
+    tipoConteudo: file.type || undefined,
+    tpResponsavel,
     conteudoArquivo,
+    tipoConteudo: file.type || null || undefined,
+    tpResponsavel: TipoResponsavelAnexo.A, // TODO: Colocado apenas para remover erro, necessário ajustar depois
   };
 }
 
@@ -159,6 +164,32 @@ export const formatCPF = (cpf: string): string => {
   return cpf; 
 };
 
+export const validateCPF = (cpf: string): boolean => {
+  const cpfLimpo = cpf.replace(/\D/g, '');
+
+  if (cpfLimpo.length !== 11) return false;
+
+  if (/^(\d)\1{10}$/.test(cpfLimpo)) return false;
+
+  let soma = 0;
+  for (let i = 0; i < 9; i++) {
+    soma += parseInt(cpfLimpo[i]) * (10 - i);
+  }
+  let resto = soma % 11;
+  const digito1 = resto < 2 ? 0 : 11 - resto;
+
+  if (parseInt(cpfLimpo[9]) !== digito1) return false;
+
+  soma = 0;
+  for (let i = 0; i < 10; i++) {
+    soma += parseInt(cpfLimpo[i]) * (11 - i);
+  }
+  resto = soma % 11;
+  const digito2 = resto < 2 ? 0 : 11 - resto;
+
+  return parseInt(cpfLimpo[10]) === digito2;
+};
+
 export const hasPermissao = (permissao: string): boolean | null => {
   const permissoesStorage = sessionStorage.getItem("permissoes-storage");
 
@@ -169,3 +200,82 @@ export const hasPermissao = (permissao: string): boolean | null => {
     return parsed?.state?.permissoes?.includes(permissao) ?? null;
   }
 }
+
+function maskCPF(value: string): string {
+  return value
+    .replace(/\D/g, "")
+    .slice(0, 11)
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d{1,2})$/, "$1-$2"); 
+}
+
+export const mask = {
+  cpf: maskCPF,
+}
+
+const cpfSchema = z
+    .string()
+    .min(1, "CPF é obrigatório")
+    .refine((value) => cpf.isValid(value), {
+      message: "CPF inválido",
+    })
+
+const usernameSchema = z
+    .string()
+    .min(1, "Usuário é obrigatório")
+    .min(3, "Usuário deve ter pelo menos 3 caracteres")
+    .max(30, "Usuário deve ter no máximo 30 caracteres")
+
+const emailSchema = z
+    .string()
+    .min(1, "Email é obrigatório")
+    .email("Email inválido")
+
+const birthDateSchema = z
+    .string()
+    .min(1, "Data de nascimento é obrigatória")
+    .refine((value) => dayjs(value, "YYYY-MM-DD", true).isValid(), {
+      message: "Data inválida (use o formato YYYY-MM-DD)",
+    })
+    .refine((value) => {
+      const date = dayjs(value, "YYYY-MM-DD");
+      const now = dayjs();
+
+      if (!date.isValid()) return false;
+      if (date.isAfter(now)) return false;
+
+      const MIN_AGE = 1;
+      const MAX_AGE = 120;
+
+      const age = now.diff(date, "year");
+      return age >= MIN_AGE && age <= MAX_AGE;
+    }, {
+      message: `Data de nascimento deve representar uma idade entre 1 e 120 anos`,
+    })
+
+const nameSchema = z
+    .string()
+    .min(1, "Nome é obrigatório")
+    .min(2, "Nome deve ter pelo menos 2 caracteres")
+    .refine((value) => /^[a-zA-ZÀ-ÿ\s]+$/.test(value.trim()), {
+      message: "Nome deve conter apenas letras e espaços",
+    })
+    .transform((value) => value.trim())
+
+const onlyLettersSchema = z
+    .string()
+    .min(1, "Nome é obrigatório")
+    .refine((value) => /^[a-zA-Z]+$/.test(value), {
+      message: "Nome deve conter apenas letras",
+    })
+
+export const formValidator = {
+  name: nameSchema,
+  onlyLetters: onlyLettersSchema,
+  username: usernameSchema,
+  cpf: cpfSchema,
+  email: emailSchema,
+  birthDate: birthDateSchema,
+  id: z.number().positive("ID é obrigatório"),
+};

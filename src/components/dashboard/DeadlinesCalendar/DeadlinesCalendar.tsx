@@ -1,5 +1,5 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { useState } from "react";
+import {Card, CardContent} from "@/components/ui/card";
+import {useState} from "react";
 import CalendarHeader from "./CalendarHeader/CalendarHeader";
 import CalendarMonth from "./CalendarMonth/CalendarMonth";
 import CalendarWeek from "./CalendarWeek/CalendarWeek";

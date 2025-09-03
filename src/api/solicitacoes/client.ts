@@ -143,12 +143,6 @@ class SolicitacoesClient {
       method: 'GET',
     });
   }
-
-  async listarRespostasPorSolicitacao(idSolicitacao: number): Promise<TramitacaoResponse[]> {
-    return this.client.request<TramitacaoResponse[]>(`/solicitacao/${idSolicitacao}`, {
-      method: 'GET',
-    });
-  }
 }
 
 export const solicitacoesClient = new SolicitacoesClient();

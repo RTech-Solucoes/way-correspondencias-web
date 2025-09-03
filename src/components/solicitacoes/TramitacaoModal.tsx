@@ -1,18 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { TramitacaoResponse } from '@/api/tramitacoes/types';
-import { tramitacoesClient } from '@/api/tramitacoes/client';
-import { AreaResponse } from '@/api/areas/types';
-import { SpinnerIcon, ArrowRight } from '@phosphor-icons/react';
-import { toast } from 'sonner';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
+import {useEffect, useState} from 'react';
+import {TramitacaoResponse} from '@/api/tramitacoes/types';
+import {tramitacoesClient} from '@/api/tramitacoes/client';
+import {AreaResponse} from '@/api/areas/types';
+import {ArrowRight, SpinnerIcon} from '@phosphor-icons/react';
+import {toast} from 'sonner';
+import {Dialog, DialogContent, DialogHeader, DialogTitle,} from '@/components/ui/dialog';
+import {Badge} from '@/components/ui/badge';
 
 interface TramitacaoModalProps {
   idSolicitacao: number | null;
@@ -96,7 +91,6 @@ export default function TramitacaoModal({
                   key={tramitacao.idTramitacao}
                   className="bg-[#f1f1f1] rounded-lg p-4 border border-gray-300"
                 >
-                  {/* Primeira linha: Descrição */}
                   <div className="mb-3">
                     {tramitacao.dsObservacao ? (
                       <p className="text-sm text-gray-800 font-medium leading-relaxed">
@@ -109,9 +103,7 @@ export default function TramitacaoModal({
                     )}
                   </div>
 
-                  {/* Segunda linha: Layout principal */}
                   <div className="flex items-center justify-between">
-                    {/* Lado esquerdo: Responsável e Data/Hora */}
                     <div className="flex flex-col space-y-1">
                       <div className="text-sm font-medium text-gray-800">
                         {tramitacao.tramitacaoAcao && tramitacao.tramitacaoAcao.length > 0 ? (
@@ -129,7 +121,6 @@ export default function TramitacaoModal({
                       </div>
                     </div>
 
-                    {/* Lado direito: Chip com áreas e seta */}
                     <div className="flex items-center space-x-2">
                       <Badge 
                         variant="secondary" 

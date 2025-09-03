@@ -1,7 +1,7 @@
-import { Button } from "@/components/ui/button";
-import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { DotsThreeIcon } from "@phosphor-icons/react";
-import { ReactNode } from "react";
+import {Button} from "@/components/ui/button";
+import {CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import {DotsThreeIcon} from "@phosphor-icons/react";
+import {ReactNode} from "react";
 
 interface ICardHeader {
   title: string;

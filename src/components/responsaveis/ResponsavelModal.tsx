@@ -1,29 +1,19 @@
 'use client';
 
-import { useState, useEffect, ChangeEvent, useCallback } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { TextField } from '@/components/ui/text-field';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
-import { MultiSelectAreas } from '@/components/ui/multi-select-areas';
-import { ResponsavelResponse, ResponsavelRequest } from '@/api/responsaveis/types';
-import { responsaveisClient } from '@/api/responsaveis/client';
-import { PerfilResponse } from '@/api/perfis/types';
-import { perfisClient } from '@/api/perfis/client';
-import { toast } from 'sonner';
+import {ChangeEvent, useCallback, useEffect, useState} from 'react';
+import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog';
+import {Button} from '@/components/ui/button';
+import {TextField} from '@/components/ui/text-field';
+import {Label} from '@/components/ui/label';
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
+import {MultiSelectAreas} from '@/components/ui/multi-select-areas';
+import {ResponsavelRequest, ResponsavelResponse} from '@/api/responsaveis/types';
+import {responsaveisClient} from '@/api/responsaveis/client';
+import {PerfilResponse} from '@/api/perfis/types';
+import {perfisClient} from '@/api/perfis/client';
+import {toast} from 'sonner';
+import {formValidator, mask} from "@/utils/utils";
+import {z} from 'zod';
 
 interface ResponsavelModalProps {
   responsavel: ResponsavelResponse | null;
@@ -46,6 +36,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
   const [loading, setLoading] = useState(false);
   const [perfis, setPerfis] = useState<PerfilResponse[]>([]);
   const [loadingPerfis, setLoadingPerfis] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const buscarPerfis = useCallback(async () => {
     try {
@@ -64,9 +55,6 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
 
   const carregarDadosResponsavel = useCallback(() => {
     if (responsavel) {
-      console.log('Carregando dados do responsável:', responsavel);
-      console.log('ID do perfil do responsável:', responsavel.idPerfil);
-
       const formDataResponsavel = {
         idPerfil: responsavel.idPerfil,
         nmUsuarioLogin: responsavel.nmUsuarioLogin,
@@ -77,7 +65,6 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
         idsAreas: responsavel.areas ? responsavel.areas.map(responsavelArea => responsavelArea.area.idArea) : []
       };
 
-      console.log('Atualizando formData com:', formDataResponsavel);
       setFormData(formDataResponsavel);
 
       if (responsavel.areas && responsavel.areas.length > 0) {
@@ -91,6 +78,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
   useEffect(() => {
     if (open) {
       buscarPerfis();
+      setErrors({});
     }
   }, [open, buscarPerfis]);
 
@@ -113,34 +101,65 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
     }
   }, [open, responsavel, perfis.length, carregarDadosResponsavel]);
 
-  // Debug useEffect to monitor formData changes
-  useEffect(() => {
-    console.log('FormData atualizado:', formData);
-    console.log('Perfil ID atual no formData:', formData.idPerfil);
-    console.log('Perfis disponíveis:', perfis);
-  }, [formData, perfis]);
+  const validateField = (name: string, value: string) => {
+    const newErrors = { ...errors };
+    
+    try {
+      switch (name) {
+        case 'nmResponsavel':
+          formValidator.name.parse(value);
+          delete newErrors[name];
+          break;
+        case 'nmUsuarioLogin':
+          formValidator.username.parse(value);
+          delete newErrors[name];
+          break;
+        case 'dsEmail':
+          formValidator.email.parse(value);
+          delete newErrors[name];
+          break;
+        case 'nrCpf':
+          formValidator.cpf.parse(value);
+          delete newErrors[name];
+          break;
+        case 'dtNascimento':
+          formValidator.birthDate.parse(value);
+          delete newErrors[name];
+          break;
+        default:
+          break;
+      }
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        newErrors[name] = error.issues[0]?.message || 'Campo inválido';
+      }
+    }
+    
+    setErrors(newErrors);
+  };
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    let processedValue = value;
 
-    const newValue = value;
-
-    switch (name) {
-      case "dtNascimento":
-        const regex = /^\d{0,4}-?\d{0,2}-?\d{0,2}$/;
-        if (!regex.test(value)) return;
-        break;
-
-      default:
-        break;
+    if (name === 'nrCpf') {
+      processedValue = value.replace(/\D/g, '');
+      if (processedValue.length > 11) return;
     }
 
     setFormData(prev => ({
       ...prev,
-      [name]: newValue,
+      [name]: processedValue,
     }));
-  };
 
+    if (processedValue) {
+      validateField(name, processedValue);
+    } else {
+      const newErrors = { ...errors };
+      delete newErrors[name];
+      setErrors(newErrors);
+    }
+  };
 
   const handleAreasSelectionChange = useCallback((selectedIds: number[]) => {
     setSelectedAreaIds(selectedIds);
@@ -150,32 +169,29 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
     }));
   }, []);
 
-  const calculateAge = (birthDate: string): number => {
-    if (!birthDate) return 0;
 
-    const today = new Date();
-    const birth = new Date(birthDate);
 
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-      age--;
-    }
-
-    return age;
-  };
+  const responsavelSchema = z.object({
+    nmResponsavel: formValidator.name,
+    nmUsuarioLogin: formValidator.username,
+    dsEmail: formValidator.email,
+    nrCpf: formValidator.cpf,
+    dtNascimento: formValidator.birthDate,
+    idPerfil: formValidator.id,
+    idsAreas: z.array(z.number()).optional().default([]),
+  });
 
   const handleSubmit = async () => {
-    if (formData.nrCpf.trim().length !== 11) {
-      toast.error("CPF inválido");
-      return;
-    }
+    const result = responsavelSchema.safeParse(formData);
 
-    const age = calculateAge(formData.dtNascimento);
-
-    if (age < 10) {
-      toast.error("Usuário deve ter pelo menos 10 anos de idade");
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+      result.error.issues.forEach((issue) => {
+        const path = issue.path[0] as string;
+        fieldErrors[path] = issue.message;
+      });
+      setErrors(fieldErrors);
+      toast.error('Por favor, corrija os erros no formulário');
       return;
     }
 
@@ -214,13 +230,9 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
   };
 
   const isFormValid = useCallback(() => {
-    return formData.nmResponsavel.trim() !== '' &&
-      formData.dsEmail.trim() !== '' &&
-      formData.nmUsuarioLogin.trim() !== '' &&
-      formData.nrCpf.trim() !== '' &&
-      formData.dtNascimento.trim() !== '' &&
-      formData.idPerfil > 0;
-  }, [formData]);
+    const result = responsavelSchema.safeParse(formData);
+    return result.success && Object.keys(errors).length === 0;
+  }, [formData, errors]);
 
   return (
     <Dialog open={open} onOpenChange={(newOpen) => !newOpen && onClose()}>
@@ -238,6 +250,8 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
             name="nmResponsavel"
             value={formData.nmResponsavel}
             onChange={handleChange}
+            onBlur={() => validateField('nmResponsavel', formData.nmResponsavel)}
+            error={errors.nmResponsavel}
             required
             autoFocus
           />
@@ -247,6 +261,8 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
             name="nmUsuarioLogin"
             value={formData.nmUsuarioLogin}
             onChange={handleChange}
+            onBlur={() => validateField('nmUsuarioLogin', formData.nmUsuarioLogin)}
+            error={errors.nmUsuarioLogin}
             required
           />
 
@@ -256,17 +272,20 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
             type="email"
             value={formData.dsEmail}
             onChange={handleChange}
+            onBlur={() => validateField('dsEmail', formData.dsEmail)}
+            error={errors.dsEmail}
             required
           />
 
           <TextField
             label="CPF *"
             name="nrCpf"
-            value={formData.nrCpf}
+            value={mask.cpf(formData.nrCpf)}
             onChange={handleChange}
-            placeholder="000.000.000-00"
-            maxLength={11}
+            maxLength={14}
             required
+            onBlur={() => validateField('nrCpf', formData.nrCpf)}
+            error={errors.nrCpf}
           />
 
           <TextField
@@ -275,6 +294,8 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
             type="date"
             value={formData.dtNascimento}
             onChange={handleChange}
+            onBlur={() => validateField('dtNascimento', formData.dtNascimento)}
+            error={errors.dtNascimento}
             required
           />
 

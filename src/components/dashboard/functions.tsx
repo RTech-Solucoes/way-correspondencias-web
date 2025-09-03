@@ -1,4 +1,4 @@
-import { CheckCircleIcon, ClockIcon, WarningCircleIcon, XCircleIcon } from "@phosphor-icons/react";
+import {CheckCircleIcon, ClockIcon, WarningCircleIcon, XCircleIcon} from "@phosphor-icons/react";
 
 export function renderIcon(status: string) {
     switch (status) {

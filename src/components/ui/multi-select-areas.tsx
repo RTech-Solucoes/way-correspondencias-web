@@ -1,14 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { AreaResponse } from '@/api/areas/types';
-import { ResponsavelResponse } from '@/api/responsaveis/types';
-import { areasClient } from '@/api/areas/client';
-import { responsaveisClient } from '@/api/responsaveis/client';
-import { cn } from '@/utils/utils';
-import { CheckIcon } from '@phosphor-icons/react';
+import {useEffect, useState} from 'react';
+import {Label} from '@/components/ui/label';
+import {Badge} from '@/components/ui/badge';
+import {AreaResponse} from '@/api/areas/types';
+import {ResponsavelResponse} from '@/api/responsaveis/types';
+import {areasClient} from '@/api/areas/client';
+import {responsaveisClient} from '@/api/responsaveis/client';
+import {cn} from '@/utils/utils';
+import {CheckIcon} from '@phosphor-icons/react';
 
 interface MultiSelectAreasProps {
   selectedAreaIds: number[];

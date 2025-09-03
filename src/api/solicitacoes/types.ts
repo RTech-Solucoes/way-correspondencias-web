@@ -1,4 +1,5 @@
 import { AnexoResponse } from "../anexos/type";
+import { TramitacaoAcao } from "../tramitacoes/types";
 
 export interface AreaSolicitacao {
   idArea: number;
@@ -167,6 +168,8 @@ export interface TramitacaoResponse extends BaseResponse {
   idStatusSolicitacao?: number;
   dsTramitacao?: string;
   dtTramitacao?: string;
+  solicitacao: SolicitacaoResponse;
+  tramitacaoAcao: TramitacaoAcao[];
 }
 
 export interface TramitacaoComAnexosResponse {

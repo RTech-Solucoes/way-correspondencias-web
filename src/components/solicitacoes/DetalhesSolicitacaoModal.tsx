@@ -18,12 +18,9 @@ import type { AnexoResponse } from '@/api/anexos/type';
 import { ArquivoDTO, TipoObjetoAnexo } from '@/api/anexos/type';
 import { anexosClient } from '@/api/anexos/client';
 import { base64ToUint8Array, hasPermissao, saveBlob } from '@/utils/utils';
-import tramitacoesClient from '@/api/tramitacoes/client';
-import HistoricoRespostasModal from './HistoricoRespostasModal';
-import { AreaResponse } from '@/api/areas/types';
 import { Checkbox } from '@/components/ui/checkbox';
-import { authClient } from '@/api/auth/client';
-import { responsaveisClient } from '@/api/responsaveis/client';
+import { usePermissoes } from '@/context/permissoes/PermissoesContext';
+import { HistoricoRespostasModalButton } from './HistoricoRespostasModal';
 
 
 type AnexoItemShape = {
@@ -78,36 +75,35 @@ export default function DetalhesSolicitacaoModal({
   const [arquivos, setArquivos] = useState<File[]>([]);
   const [expandDescricao, setExpandDescricao] = useState(false);
   const [sending, setSending] = useState(false);
-  const [showHistoricoRespostasModal, setShowHistoricoRespostasModal] = useState(false);
   const [flAprovado, setFlAprovado] = useState<'S' | 'N' | ''>('');
-  const [canSendDevolutiva, setCanSendDevolutiva] = useState<boolean>(true);
-  const [disabledReason, setDisabledReason] = useState<string | null>(null);
 
-  // ref e medição APENAS para a Descrição
+
   const descRef = useRef<HTMLParagraphElement | null>(null);
   const [canToggleDescricao, setCanToggleDescricao] = useState(false);
   const [lineHeightPx, setLineHeightPx] = useState<number | null>(null);
 
-  const sol = solicitacao?.solicitacao ?? null;
+  const { canListarAnexo, canInserirAnexo, canDeletarAnexo } = usePermissoes();
+
+  const sol = solicitacao ?? null;
 
   const identificador = useMemo(
-    () => (sol?.cdIdentificacao ? `#${sol.cdIdentificacao}` : ''),
-    [sol?.cdIdentificacao]
+    () => (sol?.solicitacao?.cdIdentificacao ? `#${sol.solicitacao.cdIdentificacao}` : ''),
+    [sol?.solicitacao?.cdIdentificacao]
   );
 
   const statusText = sol?.statusSolicitacao?.nmStatus ?? statusLabel;
 
   const criadorLine = useMemo(() => formatDateTime(sol?.dtCriacao), [sol?.dtCriacao]);
-  const prazoLine = useMemo(() => formatDateTime(sol?.dtPrazo), [sol?.dtPrazo]);
+  const prazoLine = useMemo(() => formatDateTime(sol?.solicitacao?.dtPrazo), [sol?.solicitacao?.dtPrazo]);
 
-  const assunto = sol?.dsAssunto ?? '';
-  const descricao = sol?.dsSolicitacao ?? '';
-  const observacao = sol?.dsObservacao && sol?.dsObservacao.trim().length > 0 ? sol?.dsObservacao : null;
-  const areas = Array.isArray(sol?.area)
-    ? (sol!.area! as Array<{ nmArea: string; idArea?: number; cdArea?: string }>)
+  const assunto = sol?.solicitacao?.dsAssunto ?? '';
+  const descricao = sol?.solicitacao?.dsSolicitacao ?? '';
+  const observacao = sol?.solicitacao?.dsObservacao && sol?.solicitacao?.dsObservacao.trim().length > 0 ? sol?.solicitacao?.dsObservacao : null;
+  const areas = Array.isArray(sol?.solicitacao?.area)
+    ? (sol!.solicitacao!.area! as Array<{ nmArea: string; idArea?: number; cdArea?: string }>)
     : [];
 
-  const temaLabel = sol?.tema?.nmTema ?? sol?.nmTema ?? '—';
+  const temaLabel = sol?.solicitacao?.tema?.nmTema ?? sol?.solicitacao?.nmTema ?? '—';
 
   const anexosSolic: AnexoResponse[] = solicitacao?.anexosSolicitacao ?? [];
   const mapToItem = (a: { idAnexo: number; nmArquivo: string; tpObjeto: string }): AnexoItemShape => ({
@@ -212,7 +208,7 @@ export default function DetalhesSolicitacaoModal({
         return;
       }
 
-      if (!sol?.idSolicitacao) {
+      if (!sol?.solicitacao?.idSolicitacao) {
         toast.error('ID da solicitação não encontrado.');
         return;
       }
@@ -233,18 +229,18 @@ export default function DetalhesSolicitacaoModal({
         setSending(false);
       }
     },
-    [onEnviarDevolutiva, resposta, arquivos, sol?.idSolicitacao, onClose, isEmAprovacao, flAprovado]
+    [onEnviarDevolutiva, resposta, arquivos, sol?.solicitacao?.idSolicitacao, onClose, isEmAprovacao, flAprovado]
   );
 
   const handleBaixarAnexo = useCallback(
     async (anexo: AnexoItemShape) => {
       try {
-        if (!sol?.idSolicitacao) {
+        if (!sol?.solicitacao?.idSolicitacao) {
           toast.error('ID da solicitação não encontrado.');
           return;
         }
         const arquivos = await anexosClient.download(
-          sol.idSolicitacao,
+          sol.solicitacao.idSolicitacao,
           TipoObjetoAnexo.S,
           anexo.nmArquivo
         );
@@ -264,17 +260,15 @@ export default function DetalhesSolicitacaoModal({
         toast.error('Não foi possível baixar o anexo.');
       }
     },
-    [sol?.idSolicitacao]
+    [sol?.solicitacao?.idSolicitacao]
   );
-
-  const onHistoricoRespostas = useCallback(() => {
-    setShowHistoricoRespostasModal(true);
-  }, []);
 
   const descricaoCollapsedStyle: React.CSSProperties =
     !expandDescricao && lineHeightPx
       ? { maxHeight: `${lineHeightPx * MAX_DESC_LINES}px`, overflow: 'hidden' }
       : {};
+
+  const quantidadeDevolutivas = solicitacao?.tramitacoes?.filter(t => !!t?.tramitacao?.solicitacao?.dsObservacao)?.length ?? 0;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -347,12 +341,12 @@ export default function DetalhesSolicitacaoModal({
               <div className="h-px bg-border" />
               <div className="grid grid-cols-12">
                 <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Nº do ofício:</div>
-                <div className="col-span-9 px-4 py-3 text-sm">{sol?.nrOficio || '—'}</div>
+                <div className="col-span-9 px-4 py-3 text-sm">{sol?.solicitacao?.nrOficio || '—'}</div>
               </div>
               <div className="h-px bg-border" />
               <div className="grid grid-cols-12">
                 <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Nº do processo:</div>
-                <div className="col-span-9 px-4 py-3 text-sm">{sol?.nrProcesso || '—'}</div>
+                <div className="col-span-9 px-4 py-3 text-sm">{sol?.solicitacao?.nrProcesso || '—'}</div>
               </div>
             </div>
           </section>
@@ -363,7 +357,6 @@ export default function DetalhesSolicitacaoModal({
             </div>
 
             <div className="rounded-md border bg-muted/30 p-4">
-              {/* Observação permanece sem interpretação especial de \n/\r */}
               <p className="text-sm text-muted-foreground">
                 { observacao ?? '—'}
               </p>
@@ -396,44 +389,46 @@ export default function DetalhesSolicitacaoModal({
             </div>
           </section>
 
-          <section className="space-y-3">
-            <h3 className="text-sm font-semibold">Anexos</h3>
+          {canListarAnexo && (
+            <section className="space-y-3">
+              <h3 className="text-sm font-semibold">Anexos</h3>
 
-            <div className="space-y-2">
-              <div className="rounded-md border">
-                <div className="grid grid-cols-12 items-center">
-                  <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
-                    Anexado pelo Analista
+              <div className="space-y-2">
+                <div className="rounded-md border">
+                  <div className="grid grid-cols-12 items-center">
+                    <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
+                      Anexado pelo Analista
+                    </div>
+                    <div className="col-span-9 px-4 py-3">
+                      <AnexoItem anexos={anexosAnalista} onBaixar={handleBaixarAnexo} />
+                    </div>
                   </div>
-                  <div className="col-span-9 px-4 py-3">
-                    <AnexoItem anexos={anexosAnalista} onBaixar={handleBaixarAnexo} />
+                </div>
+
+                <div className="rounded-md border">
+                  <div className="grid grid-cols-12 items-center">
+                    <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
+                      Anexado pelo Gerente
+                    </div>
+                    <div className="col-span-9 px-4 py-3">
+                      <AnexoItem anexos={anexosGerente} onBaixar={handleBaixarAnexo} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-md border">
+                  <div className="grid grid-cols-12 items-center">
+                    <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
+                      Enviado pelo Regulatório
+                    </div>
+                    <div className="col-span-9 px-4 py-3">
+                      <AnexoItem anexos={anexosRegulatorio} onBaixar={handleBaixarAnexo} />
+                    </div>
                   </div>
                 </div>
               </div>
-
-              <div className="rounded-md border">
-                <div className="grid grid-cols-12 items-center">
-                  <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
-                    Anexado pelo Gerente
-                  </div>
-                  <div className="col-span-9 px-4 py-3">
-                    <AnexoItem anexos={anexosGerente} onBaixar={handleBaixarAnexo} />
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-md border">
-                <div className="grid grid-cols-12 items-center">
-                  <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
-                    Enviado pelo Regulatório
-                  </div>
-                  <div className="col-span-9 px-4 py-3">
-                    <AnexoItem anexos={anexosRegulatorio} onBaixar={handleBaixarAnexo} />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
+            </section>
+          )}
 
           {isEmAprovacaoGerente && (
             <section className="space-y-3">
@@ -466,14 +461,11 @@ export default function DetalhesSolicitacaoModal({
           <section className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">Enviar devolutiva ao Regulatório</h3>
-              <Button type="button" variant="link" onClick={onHistoricoRespostas}>
-                Histórico de Respostas
-              </Button>
-              <HistoricoRespostasModal
-                idSolicitacao={sol?.idSolicitacao ?? null}
-                open={showHistoricoRespostasModal}
-                onClose={() => setShowHistoricoRespostasModal(false)}
-                areas={areas as AreaResponse[]}
+
+              <HistoricoRespostasModalButton
+                idSolicitacao={sol?.solicitacao?.idSolicitacao ?? null}
+                showButton={!!quantidadeDevolutivas}
+                quantidadeDevolutivas={quantidadeDevolutivas}
               />
             </div>
 
@@ -487,23 +479,19 @@ export default function DetalhesSolicitacaoModal({
                 value={resposta}
                 onChange={(e) => setResposta(e.target.value)}
                 rows={5}
-                disabled={sending || !canSendDevolutiva}
+                disabled={sending }
               />
 
-              {(!canSendDevolutiva) &&  (
-                <p className="mt-2 text-xs text-red-500">
-                  {isPermissaoEnviandoDevolutiva
-                    ? 'Apenas gerente da área pode enviar resposta em "Em Aprovação".'
-                    : (disabledReason || '')}
-                </p>
-              )}
+    
 
               <div className="mt-3 flex items-center gap-3">
-                <label className="inline-flex items-center gap-2 text-sm text-primary hover:underline cursor-pointer">
-                  <PaperclipIcon className="h-4 w-4" />
-                  Fazer upload de arquivo
-                  <input type="file" className="hidden" multiple onChange={handleUploadChange} disabled={sending} />
-                </label>
+                {canInserirAnexo && (
+                  <label className="inline-flex items-center gap-2 text-sm text-primary hover:underline cursor-pointer">
+                    <PaperclipIcon className="h-4 w-4" />
+                    Fazer upload de arquivo
+                    <input type="file" className="hidden" multiple onChange={handleUploadChange} disabled={sending} />
+                  </label>
+                )}
 
                 {arquivos.length > 0 && (
                   <span className="text-xs text-muted-foreground">
@@ -520,17 +508,19 @@ export default function DetalhesSolicitacaoModal({
                       className="flex items-center justify-between rounded-md border bg-white px-3 py-2"
                     >
                       <span className="truncate text-sm">{f.name}</span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => handleRemoveArquivo(idx)}
-                        title="Remover"
-                        disabled={sending}
-                      >
-                        <XIcon className="h-4 w-4" />
-                      </Button>
+                      {canDeletarAnexo && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleRemoveArquivo(idx)}
+                          title="Remover"
+                          disabled={sending}
+                        >
+                          <XIcon className="h-4 w-4" />
+                        </Button>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -546,8 +536,8 @@ export default function DetalhesSolicitacaoModal({
           <Button
             type="submit"
             form="detalhes-form"
-            disabled={sending || isPermissaoEnviandoDevolutiva || !canSendDevolutiva}
-            tooltip={isPermissaoEnviandoDevolutiva ? 'Apenas gerent/diretores da área pode enviar resposta da devolutiva' : (!canSendDevolutiva ? (disabledReason || 'Não permitido no momento') : '')}
+            disabled={sending || isPermissaoEnviandoDevolutiva }
+            tooltip={isPermissaoEnviandoDevolutiva ? 'Apenas gerent/diretores da área pode enviar resposta da devolutiva' : ''}
           >
             {sending ? 'Enviando...' : 'Enviar resposta'}
           </Button>

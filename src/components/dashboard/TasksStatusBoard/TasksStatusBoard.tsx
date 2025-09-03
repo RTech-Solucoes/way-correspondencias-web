@@ -1,11 +1,11 @@
 import dashboardClient from "@/api/dashboard/client";
-import { DashboardListSummary, DashboardOverview } from "@/api/dashboard/type";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import {DashboardListSummary, DashboardOverview} from "@/api/dashboard/type";
+import {Button} from "@/components/ui/button";
+import {Card, CardContent, CardFooter} from "@/components/ui/card";
+import {useEffect, useState} from "react";
+import {toast} from "sonner";
 import CardHeader from "../card-header";
-import { getStatusColor, renderIcon } from "../functions";
+import {getStatusColor, renderIcon} from "../functions";
 
 export default function TasksStatusBoard() {
   const [visionGeral, setVisionGeral] = useState<DashboardOverview[]>([]);
@@ -24,14 +24,13 @@ export default function TasksStatusBoard() {
 
     const getRecentOverview = async () => {
       try {
-        const data = await dashboardClient.getRecentOverview(5);
+        const data = await dashboardClient.getRecentOverview(3);
         setListSummary(data);
       } catch (error) {
         console.error("Erro ao buscar overview:", error);
         toast.error("Não foi possível carregar os dados do dashboard.");
       }
     };
-
 
     getRecentOverview();
     getOverview();
@@ -74,10 +73,9 @@ export default function TasksStatusBoard() {
                     <div className="text-xs text-gray-500">{task.nmTema}</div>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm" className="text-xs">Ver</Button>
               </div>
             ))}
-            {listSummary.length === 0 && (<div className="text-sm text-gray-500">Nenhuma tearefa foi realizada recentemente.</div>)}
+            {listSummary.length === 0 && (<div className="text-sm text-gray-500">Nenhuma tarefa foi realizada recentemente.</div>)}
           </div>
         </div>
       </CardContent>

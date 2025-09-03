@@ -1,13 +1,16 @@
-import {PaperclipIcon, CloudArrowUpIcon} from "@phosphor-icons/react";
+import {CloudArrowUpIcon} from "@phosphor-icons/react";
 import {Input} from "../ui/input";
-import { useDropzone } from 'react-dropzone';
-import { useCallback } from 'react';
+import {useDropzone} from 'react-dropzone';
+import {useCallback} from 'react';
+import {usePermissoes} from "@/context/permissoes/PermissoesContext";
 
 interface AnexoProps {
   onAddAnexos: (files: FileList | null) => void;
 }
 
 export default function AnexoComponent({onAddAnexos}: AnexoProps) {
+  const { canInserirAnexo } = usePermissoes();
+
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const validFiles = acceptedFiles.filter(file => {
       if (!file.name || file.name.trim() === '') {
@@ -48,9 +51,21 @@ export default function AnexoComponent({onAddAnexos}: AnexoProps) {
     }
   });
 
+  if (!canInserirAnexo) {
+    return (
+      <div className="w-full border-2 border-dashed rounded-lg p-8 text-center border-gray-200 bg-gray-50">
+        <div className="flex flex-col items-center space-y-2">
+          <CloudArrowUpIcon size={48} className="text-gray-300" />
+          <p className="text-gray-500">
+            Sem permissão para anexar arquivos
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col items-center space-y-4">
-      {/* Área de Dropzone */}
       <div
         {...getRootProps()}
         className={`w-full border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${

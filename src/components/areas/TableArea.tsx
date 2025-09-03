@@ -1,4 +1,4 @@
-import { ArrowsDownUpIcon, BuildingIcon, PencilSimpleIcon, SpinnerIcon, TrashIcon } from "@phosphor-icons/react";
+import {ArrowsDownUpIcon, BuildingIcon, PencilSimpleIcon, SpinnerIcon, TrashIcon} from "@phosphor-icons/react";
 import {
   StickyTable,
   StickyTableBody,
@@ -7,9 +7,10 @@ import {
   StickyTableHeader,
   StickyTableRow
 } from "../ui/sticky-table";
-import { Button } from "../ui/button";
-import { AreaResponse } from "@/api/areas/types";
-import { getStatusText } from "@/utils/utils";
+import {Button} from "../ui/button";
+import {AreaResponse} from "@/api/areas/types";
+import {getStatusText} from "@/utils/utils";
+import {usePermissoes} from "@/context/permissoes/PermissoesContext";
 
 interface ITableArea {
   handleSort: (field: keyof AreaResponse) => void;
@@ -20,6 +21,8 @@ interface ITableArea {
 }
 
 export default function TableArea(props: ITableArea) {
+  const { canInserirArea, canAtualizarArea, canDeletarArea } = usePermissoes()
+
   return (
     <div className="flex flex-1 overflow-hidden bg-white">
       <StickyTable>
@@ -82,21 +85,25 @@ export default function TableArea(props: ITableArea) {
                 </StickyTableCell>
                 <StickyTableCell className="text-right">
                   <div className="flex items-center justify-end space-x-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => props.handleEdit(area)}
-                    >
-                      <PencilSimpleIcon className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => props.handleDelete(area.idArea)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                    </Button>
+                    {canAtualizarArea &&
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => props.handleEdit(area)}
+                      >
+                        <PencilSimpleIcon className="h-4 w-4" />
+                      </Button>
+                    }
+                    {canDeletarArea &&
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => props.handleDelete(area.idArea)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </Button>
+                    }
                   </div>
                 </StickyTableCell>
               </StickyTableRow>

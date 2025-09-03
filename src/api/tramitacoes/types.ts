@@ -78,7 +78,7 @@ interface Solicitacao {
   area?: Area;
 }
 
-interface TramitacaoAcao {
+export interface TramitacaoAcao {
   idTramitacaoAcao: number;
   tramitacao: TramitacaoResponse;
   responsavelArea: ResponsavelArea;

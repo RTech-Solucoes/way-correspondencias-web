@@ -1,18 +1,18 @@
 'use client';
 
 import authClient from "@/api/auth/client";
-import { Button } from '@/components/ui/button';
-import { TextField } from '@/components/ui/text-field';
-import { PAGES_DEF } from "@/constants/pages";
-import { cn } from '@/utils/utils';
-import { LockIcon, UserIcon } from '@phosphor-icons/react';
+import {Button} from '@/components/ui/button';
+import {TextField} from '@/components/ui/text-field';
+import {PAGES_DEF} from "@/constants/pages";
+import {cn} from '@/utils/utils';
+import {LockIcon, UserIcon} from '@phosphor-icons/react';
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { FormEvent, useState } from 'react';
-import { toast } from 'sonner';
+import {useRouter} from "next/navigation";
+import {FormEvent, useState} from 'react';
+import {toast} from 'sonner';
 
-import { jwtDecode } from "jwt-decode";
-import {usePermissoesState, useSetPermissoes} from "@/stores/permissoes-store";
+import {jwtDecode} from "jwt-decode";
+import {useSetPermissoes} from "@/stores/permissoes-store";
 
 
 interface TokenPayload {
@@ -27,7 +27,6 @@ export default function LoginPage() {
   const [usernameError, setUsernameError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const permissoes = usePermissoesState()
   const setPermissoes = useSetPermissoes()
 
   const router = useRouter();
