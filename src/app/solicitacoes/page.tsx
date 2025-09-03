@@ -424,7 +424,6 @@ export default function SolicitacoesPage() {
         <StickyTable>
           <StickyTableHeader>
             <StickyTableRow>
-              <StickyTableHead className="w-8"></StickyTableHead>
               <StickyTableHead className="cursor-pointer" onClick={() => handleSort('cdIdentificacao')}>
                 <div className="flex items-center">
                   Identificação
@@ -475,17 +474,7 @@ export default function SolicitacoesPage() {
             ) : (
               sortedSolicitacoes()?.map((solicitacao: SolicitacaoResponse) => (
                 <React.Fragment key={solicitacao.idSolicitacao}>
-                  <StickyTableRow
-                    onClick={() => toggleRowExpansion(solicitacao.idSolicitacao)}
-                    className="cursor-pointer"
-                  >
-                    <StickyTableCell className="w-8">
-                      {expandedRows.has(solicitacao.idSolicitacao) ? (
-                        <CaretDownIcon className="h-4 w-4" />
-                      ) : (
-                        <CaretRightIcon className="h-4 w-4" />
-                      )}
-                    </StickyTableCell>
+                  <StickyTableRow>
                     <StickyTableCell className="font-medium">{solicitacao.cdIdentificacao}</StickyTableCell>
                     <StickyTableCell className="max-w-xs truncate">{solicitacao.dsAssunto}</StickyTableCell>
                     <StickyTableCell>

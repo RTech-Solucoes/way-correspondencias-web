@@ -145,7 +145,6 @@ const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, TextFieldPr
             )}
           >
             {label}
-            {/*{required && <span className="text-orange-500 ml-1">*</span>}*/}
           </Label>
         )}
 
@@ -182,6 +181,8 @@ const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, TextFieldPr
               onFocus={onFocus}
               disabled={disabled || loading}
               readOnly={readOnly}
+              required={required}
+              autoComplete={autoComplete}
               autoFocus={autoFocus}
               maxLength={maxLength}
               minLength={minLength}
@@ -203,6 +204,7 @@ const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, TextFieldPr
               onFocus={onFocus}
               disabled={disabled || loading}
               readOnly={readOnly}
+              required={required}
               autoComplete={autoComplete}
               autoFocus={autoFocus}
               maxLength={maxLength}
