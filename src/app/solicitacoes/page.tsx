@@ -301,7 +301,7 @@ export default function SolicitacoesPage() {
     toast.message('Abrir histórico de respostas (implemente a navegação).');
   }, []);
 
-  const enviarDevolutiva = useCallback(async (mensagem: string, arquivos: File[]) => {
+  const enviarDevolutiva = useCallback(async (mensagem: string, arquivos: File[], flAprovado?: 'S' | 'N') => {
     const alvo = detalhesSolicitacao;
     console.log('Enviando devolutiva para a solicitação:', alvo);
     console.log('Mensagem:', mensagem);
@@ -311,6 +311,7 @@ export default function SolicitacoesPage() {
         const data = {
           dsObservacao: mensagem,
           idSolicitacao: alvo.solicitacao.idSolicitacao,
+          flAprovado: flAprovado,
         }
         console.log(alvo)
         await tramitacoesClient.tramitar?.(data);
@@ -750,7 +751,7 @@ export default function SolicitacoesPage() {
         />
       )}
 
-      {showDetalhesModal && (
+      {showDetalhesModal && detalhesSolicitacao && (
         <DetalhesSolicitacaoModal
           open={showDetalhesModal}
           onClose={() => {
@@ -759,9 +760,9 @@ export default function SolicitacoesPage() {
             setDetalhesSolicitacao(null);
             onShowDetalhesModalChange(false);
           }}
-          solicitacao={detalhesSolicitacao ?? selectedSolicitacao}
+          solicitacao={detalhesSolicitacao}
           anexos={(detalhesAnexos ?? [])}
-          statusLabel={getStatusText((detalhesSolicitacao ?? selectedSolicitacao)?.statusCodigo?.toString() || '')}
+          statusLabel={getStatusText((detalhesSolicitacao)?.statusSolicitacao?.idStatusSolicitacao?.toString() || '')}
           onAbrirEmailOriginal={abrirEmailOriginal}
           onHistoricoRespostas={abrirHistorico}
           onEnviarDevolutiva={enviarDevolutiva}

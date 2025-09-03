@@ -162,6 +162,8 @@ export interface EmailComAnexosResponse {
 export interface TramitacaoResponse extends BaseResponse {
   idTramitacao: number;
   idSolicitacao: number;
+  flAprovado?: string;
+  idStatusSolicitacao?: number;
   dsTramitacao?: string;
   dtTramitacao?: string;
 }

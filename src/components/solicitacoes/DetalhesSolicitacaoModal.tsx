@@ -14,12 +14,15 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { ClockIcon, DownloadIcon, PaperclipIcon, X as XIcon } from '@phosphor-icons/react';
 import { SolicitacaoDetalheResponse } from '@/api/solicitacoes/types';
+import type { AnexoResponse } from '@/api/anexos/type';
 import { ArquivoDTO, TipoObjetoAnexo, TipoResponsavelAnexo } from '@/api/anexos/type';
 import { anexosClient } from '@/api/anexos/client';
 import { base64ToUint8Array, fileToArquivoDTO, saveBlob } from '@/utils/utils';
 import tramitacoesClient from '@/api/tramitacoes/client';
 import HistoricoRespostasModal from './HistoricoRespostasModal';
 import { AreaResponse } from '@/api/areas/types';
+import { Checkbox } from '@/components/ui/checkbox';
+
 
 type AnexoItemShape = {
   idAnexo: number;
@@ -34,7 +37,7 @@ type DetalhesSolicitacaoModalProps = {
   anexos?: AnexoItemShape[];
   onHistoricoRespostas?(): void;
   onAbrirEmailOriginal?(): void;
-  onEnviarDevolutiva?(mensagem: string, arquivos: File[]): Promise<void> | void;
+  onEnviarDevolutiva?(mensagem: string, arquivos: File[], flAprovado?: 'S' | 'N'): Promise<void> | void;
   statusLabel?: string;
 };
 
@@ -74,6 +77,7 @@ export default function DetalhesSolicitacaoModal({
   const [expandDescricao, setExpandDescricao] = useState(false);
   const [sending, setSending] = useState(false);
   const [showHistoricoRespostasModal, setShowHistoricoRespostasModal] = useState(false);
+  const [flAprovado, setFlAprovado] = useState<'S' | 'N' | ''>('');
 
   // ref e medição APENAS para a Descrição
   const descRef = useRef<HTMLParagraphElement | null>(null);
@@ -101,7 +105,7 @@ export default function DetalhesSolicitacaoModal({
 
   const temaLabel = sol?.tema?.nmTema ?? sol?.nmTema ?? '—';
 
-  const anexosSolic = solicitacao?.anexosSolicitacao ?? [];
+  const anexosSolic: AnexoResponse[] = solicitacao?.anexosSolicitacao ?? [];
   const mapToItem = (a: { idAnexo: number; nmArquivo: string; tpObjeto: string }): AnexoItemShape => ({
     idAnexo: a.idAnexo,
     nmArquivo: a.nmArquivo,
@@ -109,17 +113,22 @@ export default function DetalhesSolicitacaoModal({
   });
 
   const anexosAnalista: AnexoItemShape[] = anexosSolic
-    .filter((a) => a.tpObjeto === 'A')
+    .filter((a: AnexoResponse) => a.tpObjeto === 'A')
     .map(mapToItem);
 
   const anexosGerente: AnexoItemShape[] = anexosSolic
-    .filter((a) => a.tpObjeto === 'G')
+    .filter((a: AnexoResponse) => a.tpObjeto === 'G')
     .map(mapToItem);
 
   const anexosRegulatorio: AnexoItemShape[] =
     anexos.length > 0
       ? anexos.map(mapToItem)
-      : anexosSolic.filter((a) => a.tpObjeto === 'S').map(mapToItem);
+      : anexosSolic.filter((a: AnexoResponse) => a.tpObjeto === 'S').map(mapToItem);
+
+  const isEmAprovacao =
+    (sol?.statusSolicitacao?.idStatusSolicitacao === 6) ||
+    (sol?.statusSolicitacao?.nmStatus?.toLowerCase?.() === 'em aprovação') ||
+    (statusText?.toLowerCase?.() === 'em aprovação');
 
   const measureDescricao = useCallback(() => {
     const el = descRef.current;
@@ -178,6 +187,11 @@ export default function DetalhesSolicitacaoModal({
         return;
       }
 
+      if (isEmAprovacao && !flAprovado) {
+        toast.error('Selecione se a devolutiva está aprovada (Sim/Não).');
+        return;
+      }
+
       if (!sol?.idSolicitacao) {
         toast.error('ID da solicitação não encontrado.');
         return;
@@ -194,7 +208,7 @@ export default function DetalhesSolicitacaoModal({
           await tramitacoesClient.uploadAnexos(sol.idSolicitacao, arquivosDTO);
         }
 
-        await onEnviarDevolutiva(resposta.trim(), []);
+        await onEnviarDevolutiva(resposta.trim(), [], flAprovado || undefined);
 
         toast.success('Resposta enviada com sucesso!');
         setResposta('');
@@ -207,7 +221,7 @@ export default function DetalhesSolicitacaoModal({
         setSending(false);
       }
     },
-    [onEnviarDevolutiva, resposta, arquivos, sol?.idSolicitacao, onClose]
+    [onEnviarDevolutiva, resposta, arquivos, sol?.idSolicitacao, onClose, isEmAprovacao, flAprovado]
   );
 
   const handleBaixarAnexo = useCallback(
@@ -408,6 +422,34 @@ export default function DetalhesSolicitacaoModal({
               </div>
             </div>
           </section>
+
+          {isEmAprovacao && (
+            <section className="space-y-3">
+              <div className="space-y-2">
+                <Label htmlFor="aprovarDevolutiva" className="text-sm font-medium">
+                  Aprovar devolutiva? *
+                </Label>
+                <div className="flex items-center gap-4 mt-2">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={flAprovado === 'S'}
+                      onCheckedChange={() => setFlAprovado('S')}
+                      id="aprovarDevolutiva-s"
+                    />
+                    <Label htmlFor="aprovarDevolutiva-s" className="text-sm font-light">Sim</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={flAprovado === 'N'}
+                      onCheckedChange={() => setFlAprovado('N')}
+                      id="aprovarDevolutiva-n"
+                    />
+                    <Label htmlFor="aprovarDevolutiva-n" className="text-sm font-light ">Não</Label>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
 
           <section className="space-y-3">
             <div className="flex items-center justify-between">

@@ -98,6 +98,7 @@ export interface TramitacaoResponse {
   tramitacaoAcao: TramitacaoAcao[] | null;
   flAtivo: string;
   dsObservacao?: string;
+  flAprovado?: 'S' | 'N';
 }
 
 export interface TramitacaoRequest {
@@ -107,4 +108,5 @@ export interface TramitacaoRequest {
   dsObservacao?: string;
   idResponsavel?: number;
   flAcao?: string;
+  flAprovado?: 'S' | 'N';
 }
