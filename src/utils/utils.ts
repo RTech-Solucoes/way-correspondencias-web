@@ -145,11 +145,9 @@ export async function fileToArquivoDTO(file: File, tpResponsavel: TipoResponsave
   const conteudoArquivo = await fileToBase64String(file);
   return {
     nomeArquivo: file.name,
-    tipoConteudo: file.type || undefined,
+    tipoConteudo: file.type,
     tpResponsavel,
     conteudoArquivo,
-    tipoConteudo: file.type || null || undefined,
-    tpResponsavel: TipoResponsavelAnexo.A, // TODO: Colocado apenas para remover erro, necessário ajustar depois
   };
 }
 

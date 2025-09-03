@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { ClockIcon, DownloadIcon, PaperclipIcon, XIcon } from '@phosphor-icons/react';
-import {SolicitacaoDetalheResponse, SolicitacaoResponse} from '@/api/solicitacoes/types';
+import { SolicitacaoDetalheResponse } from '@/api/solicitacoes/types';
 import { ArquivoDTO, TipoObjetoAnexo, TipoResponsavelAnexo } from '@/api/anexos/type';
 import { anexosClient } from '@/api/anexos/client';
 import { base64ToUint8Array, fileToArquivoDTO, saveBlob } from '@/utils/utils';
@@ -30,7 +30,7 @@ type AnexoItemShape = {
 type DetalhesSolicitacaoModalProps = {
   open: boolean;
   onClose(): void;
-  solicitacao: SolicitacaoResponse | SolicitacaoDetalheResponse | null;
+  solicitacao: SolicitacaoDetalheResponse | null;
   anexos?: AnexoItemShape[];
   onHistoricoRespostas?(): void;
   onAbrirEmailOriginal?(): void;
@@ -48,7 +48,6 @@ const formatDateTime = (iso?: string | null) => {
 
 const MAX_DESC_LINES = 6;
 
-/** Apenas para DESCRIÇÃO: remove \r e transforma \n em <br/> */
 function renderDescricaoWithBreaks(text?: string | null) {
   if (!text) return '—';
   const cleaned = text.replace(/\r/g, '');
@@ -80,7 +79,9 @@ export default function DetalhesSolicitacaoModal({
 
   const { canListarAnexo, canInserirAnexo, canDeletarAnexo } = usePermissoes();
 
-  const sol = solicitacao ?? null;
+  const sol = solicitacao?.solicitacao ?? null;
+
+  console.log(sol);
 
   const identificador = useMemo(
     () => (sol?.cdIdentificacao ? `#${sol.cdIdentificacao}` : ''),
@@ -187,10 +188,7 @@ export default function DetalhesSolicitacaoModal({
         setSending(true);
 
         if (arquivos.length > 0) {
-          const arquivosDTO: ArquivoDTO[] = await Promise.all(arquivos.map(fileToArquivoDTO));
-          arquivosDTO.forEach((a) => {
-            a.tpResponsavel = TipoResponsavelAnexo.A; // TODO: tornar dinâmico
-          });
+          const arquivosDTO: ArquivoDTO[] = await Promise.all(arquivos.map(file => fileToArquivoDTO(file, TipoResponsavelAnexo.A)));
           await tramitacoesClient.uploadAnexos(sol.idSolicitacao, arquivosDTO);
         }
 
@@ -336,7 +334,7 @@ export default function DetalhesSolicitacaoModal({
 
             <div className="rounded-md border bg-muted/30 p-4">
               <p className="text-sm text-muted-foreground">
-                { observacao ?? '—'}
+                {observacao ?? '—'}
               </p>
             </div>
           </section>
