@@ -1,10 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { TramitacaoResponse } from '@/api/tramitacoes/types';
-import { tramitacoesClient } from '@/api/tramitacoes/client';
-import { AreaResponse } from '@/api/areas/types';
-import { SpinnerIcon, ArrowRight } from '@phosphor-icons/react';
+import { ArrowRight, SpinnerIcon } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -12,24 +9,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
 import { solicitacoesClient } from '@/api/solicitacoes/client';
-import { SolicitacaoResponse } from '@/api/solicitacoes/types';
+import { TramitacaoComAnexosResponse } from '@/api/solicitacoes/types';
+import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
 
 interface HistoricoRespostasModalProps {
   idSolicitacao: number | null;
   open: boolean;
   onClose: () => void;
-  areas: AreaResponse[];
 }
 
 export default function HistoricoRespostasModal({ 
   idSolicitacao, 
   open, 
   onClose, 
-  areas 
 }: HistoricoRespostasModalProps) {
-  const [respostas, setRespostas] = useState<TramitacaoResponse[]>([]);
+  const [respostas, setRespostas] = useState<TramitacaoComAnexosResponse[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -38,9 +34,8 @@ export default function HistoricoRespostasModal({
       
       try {
         setLoading(true);
-        // const response = await solicitacoesClient.listarRespostasPorSolicitacao(idSolicitacao);
-        const response = await tramitacoesClient.listarPorSolicitacao(idSolicitacao);
-        setRespostas(response);
+        const response = await solicitacoesClient.buscarDetalhesPorId(idSolicitacao);
+        setRespostas(response.tramitacoes);
       } catch (error) {
         console.error('Erro ao carregar respostas:', error);
         toast.error('Erro ao carregar respostas');
@@ -74,6 +69,8 @@ export default function HistoricoRespostasModal({
     setRespostas([]);
     onClose();
   };
+  
+  if (!open) return null;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -94,16 +91,60 @@ export default function HistoricoRespostasModal({
             </div>
           ) : (
             <div className="space-y-4">
-              {respostas.map((resposta) => (
-                <div 
-                  key={resposta.idTramitacao}
-                  className="bg-[#f1f1f1] rounded-lg p-4 border border-gray-300"
-                >
-                  {/* Primeira linha: Descrição */}
+              {respostas.map((resposta) => {
+                const observacao = resposta.tramitacao.solicitacao.dsObservacao;
+                
+                const tramitacaoAcao = resposta.tramitacao.tramitacaoAcao;
+
+                const responsavel = !!tramitacaoAcao?.length ? (
+                  tramitacaoAcao[0]?.responsavelArea?.responsavel?.nmResponsavel
+                ) : (
+                  'Responsável não informado'
+                );
+
+                const dataResposta = !!tramitacaoAcao?.length ? (
+                  formatDate(tramitacaoAcao[0].dtCriacao)
+                ) : (
+                  'Data não informada'
+                )
+
+                if (!observacao) return null;
+
+                return (
+                  <div 
+                    key={resposta.tramitacao.idTramitacao}
+                    className="bg-[#f1f1f1] rounded-lg p-4 border border-gray-300"
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-2">
+                        <Badge 
+                          variant="secondary" 
+                          className="bg-white/70 text-gray-800 border border-gray-400 text-xs font-medium px-2 py-1"
+                        >
+                          {resposta.tramitacao.areaOrigem.nmArea}
+                        </Badge>
+
+                        <ArrowRight className="h-4 w-4 text-gray-600" />
+
+                        <Badge 
+                          variant="secondary" 
+                          className="bg-white/70 text-gray-800 border border-gray-400 text-xs font-medium px-2 py-1"
+                        >
+                          {resposta.tramitacao.areaDestino.nmArea}
+                        </Badge>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs text-gray-600">
+                          {dataResposta}
+                        </div>
+                      </div>
+                    </div>
+
                   <div className="mb-3">
-                    {resposta.dsObservacao ? (
+                    {observacao ? (
                       <p className="text-sm text-gray-800 font-medium leading-relaxed">
-                        {resposta.dsObservacao}
+                        {observacao}
                       </p>
                     ) : (
                       <p className="text-sm text-gray-600 italic">
@@ -112,32 +153,50 @@ export default function HistoricoRespostasModal({
                     )}
                   </div>
 
-                  {/* Segunda linha: Layout principal */}
-                  <div className="flex items-center justify-between">
-                    {/* Lado esquerdo: Responsável e Data/Hora */}
-                    <div className="flex items-center space-x-2">
-                      <div className="text-sm font-medium text-gray-800">
-                        {resposta.tramitacaoAcao && resposta.tramitacaoAcao.length > 0 ? (
-                          resposta.tramitacaoAcao[0].responsavelArea.responsavel.nmResponsavel
-                        ) : (
-                          'Responsável não informado'
-                        )}
-                      </div>
-                      <div className="text-xs text-gray-600">
-                        {resposta.tramitacaoAcao && resposta.tramitacaoAcao.length > 0 ? (
-                          formatDate(resposta.tramitacaoAcao[0].dtCriacao)
-                        ) : (
-                          'Data não informada'
-                        )}
-                      </div>
-                    </div>
+                  <div className="text-sm text-right font-medium text-gray-800">
+                    {responsavel}
                   </div>
                 </div>
-              ))}
+              );
+            })}
             </div>
           )}
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+interface HistoricoRespostasModalButtonProps {
+  idSolicitacao: number | null;
+  showButton?: boolean;
+  quantidadeDevolutivas?: number;
+}
+
+export function HistoricoRespostasModalButton({ idSolicitacao, showButton = true, quantidadeDevolutivas = 0 }: HistoricoRespostasModalButtonProps) {
+  const [open, setOpen] = useState(false);
+
+  const handleToggleModal = () => {
+    setOpen(state => !state);
+  };
+  
+  if (!showButton) return null;
+
+  return (
+    <>
+      <div>
+        <span className="text-xs text-color-p text-[#EA5600]">{quantidadeDevolutivas} devolutivas</span>
+
+        <Button type="button" variant="link" onClick={handleToggleModal}>
+          Histórico de Respostas
+        </Button>
+      </div>
+
+      <HistoricoRespostasModal
+        idSolicitacao={idSolicitacao}
+        open={open}
+        onClose={handleToggleModal}
+      />
+    </>
   );
 }
