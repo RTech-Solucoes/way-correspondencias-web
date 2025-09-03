@@ -216,6 +216,7 @@ export default function DetalhesSolicitacaoModal({
           arquivosDTO.forEach((a) => {
             a.tpResponsavel = TipoResponsavelAnexo.A; // TODO: tornar dinâmico
           });
+          // TODO: ver com Daniel como mandar esse arquivo da tramitação
         //  await tramitacoesClient.uploadAnexos(sol?.solicitacao?.idSolicitacao, arquivosDTO);
         }
 
