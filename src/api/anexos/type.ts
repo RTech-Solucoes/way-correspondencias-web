@@ -19,10 +19,10 @@ export type ArquivoDTO = {
 };
 
 export enum TipoResponsavelAnexo {
-  A, // Analista
-  G, // Gestor
-  D, // Diretor
-  R  // Regulatório
+  A = "A", // Analista
+  G = "G", // Gestor
+  D = "D", // Diretor
+  R = "R" // Regulatório
 }
 
 export enum TipoObjetoAnexo {
