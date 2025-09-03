@@ -15,13 +15,15 @@ import { toast } from 'sonner';
 import { ClockIcon, DownloadIcon, PaperclipIcon, X as XIcon } from '@phosphor-icons/react';
 import { SolicitacaoDetalheResponse } from '@/api/solicitacoes/types';
 import type { AnexoResponse } from '@/api/anexos/type';
-import { ArquivoDTO, TipoObjetoAnexo, TipoResponsavelAnexo } from '@/api/anexos/type';
+import { ArquivoDTO, TipoObjetoAnexo } from '@/api/anexos/type';
 import { anexosClient } from '@/api/anexos/client';
-import { base64ToUint8Array, fileToArquivoDTO, saveBlob } from '@/utils/utils';
+import { base64ToUint8Array, hasPermissao, saveBlob } from '@/utils/utils';
 import tramitacoesClient from '@/api/tramitacoes/client';
 import HistoricoRespostasModal from './HistoricoRespostasModal';
 import { AreaResponse } from '@/api/areas/types';
 import { Checkbox } from '@/components/ui/checkbox';
+import { authClient } from '@/api/auth/client';
+import { responsaveisClient } from '@/api/responsaveis/client';
 
 
 type AnexoItemShape = {
@@ -78,6 +80,8 @@ export default function DetalhesSolicitacaoModal({
   const [sending, setSending] = useState(false);
   const [showHistoricoRespostasModal, setShowHistoricoRespostasModal] = useState(false);
   const [flAprovado, setFlAprovado] = useState<'S' | 'N' | ''>('');
+  const [canSendDevolutiva, setCanSendDevolutiva] = useState<boolean>(true);
+  const [disabledReason, setDisabledReason] = useState<string | null>(null);
 
   // ref e medição APENAS para a Descrição
   const descRef = useRef<HTMLParagraphElement | null>(null);
@@ -125,6 +129,22 @@ export default function DetalhesSolicitacaoModal({
       ? anexos.map(mapToItem)
       : anexosSolic.filter((a: AnexoResponse) => a.tpObjeto === 'S').map(mapToItem);
 
+
+    const isEmAprovacaoGerente =
+    (
+    (sol?.statusSolicitacao?.idStatusSolicitacao === 6) ||
+    (sol?.statusSolicitacao?.nmStatus?.toLowerCase?.() === 'em aprovação') ||
+      (statusText?.toLowerCase?.() === 'em aprovação')
+    ) ||
+    (
+      (sol?.statusSolicitacao?.idStatusSolicitacao === 8) ||
+      (sol?.statusSolicitacao?.nmStatus?.toLowerCase?.() === 'em assinatura diretores') ||
+      (statusText?.toLowerCase?.() === 'em assinatura diretores')
+    )
+    
+  const isPermissaoEnviandoDevolutiva = (isEmAprovacaoGerente && !hasPermissao('SOLICITACAO_APROVAR'));
+  
+    
   const isEmAprovacao =
     (sol?.statusSolicitacao?.idStatusSolicitacao === 6) ||
     (sol?.statusSolicitacao?.nmStatus?.toLowerCase?.() === 'em aprovação') ||
@@ -187,7 +207,7 @@ export default function DetalhesSolicitacaoModal({
         return;
       }
 
-      if (isEmAprovacao && !flAprovado) {
+      if (isEmAprovacaoGerente && !flAprovado) {
         toast.error('Selecione se a devolutiva está aprovada (Sim/Não).');
         return;
       }
@@ -200,15 +220,7 @@ export default function DetalhesSolicitacaoModal({
       try {
         setSending(true);
 
-        if (arquivos.length > 0) {
-          const arquivosDTO: ArquivoDTO[] = await Promise.all(arquivos.map(fileToArquivoDTO));
-          arquivosDTO.forEach((a) => {
-            a.tpResponsavel = TipoResponsavelAnexo.A; // TODO: tornar dinâmico
-          });
-          await tramitacoesClient.uploadAnexos(sol.idSolicitacao, arquivosDTO);
-        }
-
-        await onEnviarDevolutiva(resposta.trim(), [], flAprovado || undefined);
+        await onEnviarDevolutiva(resposta.trim(), arquivos, flAprovado || undefined);
 
         toast.success('Resposta enviada com sucesso!');
         setResposta('');
@@ -423,7 +435,7 @@ export default function DetalhesSolicitacaoModal({
             </div>
           </section>
 
-          {isEmAprovacao && (
+          {isEmAprovacaoGerente && (
             <section className="space-y-3">
               <div className="space-y-2">
                 <Label htmlFor="aprovarDevolutiva" className="text-sm font-medium">
@@ -475,8 +487,16 @@ export default function DetalhesSolicitacaoModal({
                 value={resposta}
                 onChange={(e) => setResposta(e.target.value)}
                 rows={5}
-                disabled={sending}
+                disabled={sending || !canSendDevolutiva}
               />
+
+              {(!canSendDevolutiva) &&  (
+                <p className="mt-2 text-xs text-red-500">
+                  {isPermissaoEnviandoDevolutiva
+                    ? 'Apenas gerente da área pode enviar resposta em "Em Aprovação".'
+                    : (disabledReason || '')}
+                </p>
+              )}
 
               <div className="mt-3 flex items-center gap-3">
                 <label className="inline-flex items-center gap-2 text-sm text-primary hover:underline cursor-pointer">
@@ -523,7 +543,12 @@ export default function DetalhesSolicitacaoModal({
           <Button type="button" variant="outline" onClick={onClose} disabled={sending}>
             Cancelar
           </Button>
-          <Button type="submit" form="detalhes-form" disabled={sending}>
+          <Button
+            type="submit"
+            form="detalhes-form"
+            disabled={sending || isPermissaoEnviandoDevolutiva || !canSendDevolutiva}
+            tooltip={isPermissaoEnviandoDevolutiva ? 'Apenas gerent/diretores da área pode enviar resposta da devolutiva' : (!canSendDevolutiva ? (disabledReason || 'Não permitido no momento') : '')}
+          >
             {sending ? 'Enviando...' : 'Enviar resposta'}
           </Button>
         </DialogFooter>
