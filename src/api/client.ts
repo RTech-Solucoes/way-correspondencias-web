@@ -42,7 +42,6 @@ export default class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    // const baseUrl = process.env.NEXT_PUBLIC_API_URL;
     const baseUrl = 'http://api.way.correspondencias.rtechsolution.com.br/api'
     const url = `${baseUrl}${this.module}${endpoint}`;
 

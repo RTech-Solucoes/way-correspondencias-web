@@ -1060,7 +1060,6 @@ export default function SolicitacaoModal({
     <div className="space-y-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">Resumo da Solicitação</h3>
 
-      {/* Informações Básicas */}
       <div className="space-y-4">
         <div className="grid grid-cols-3 gap-4">
           <div>
@@ -1105,7 +1104,6 @@ export default function SolicitacaoModal({
         </div>
       </div>
 
-      {/* Tema e Responsável */}
       <div className="border-t pt-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -1123,7 +1121,6 @@ export default function SolicitacaoModal({
         </div>
       </div>
 
-      {/* Áreas Envolvidas */}
       <div className="border-t pt-4">
         <Label className="text-sm font-semibold text-gray-700">Áreas Envolvidas</Label>
         <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
@@ -1158,7 +1155,6 @@ export default function SolicitacaoModal({
         </div>
       </div>
 
-      {/* Prazos */}
       <div className="border-t pt-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -1194,7 +1190,6 @@ export default function SolicitacaoModal({
         </div>
       </div>
 
-      {/* Prazos por Status */}
       {statusPrazos.length > 0 && (
         <div className="border-t pt-4">
           <Label className="text-sm font-semibold text-gray-700">Prazos Configurados por Status</Label>
@@ -1214,11 +1209,9 @@ export default function SolicitacaoModal({
         </div>
       )}
 
-      {/* Anexos */}
       <div className="border-t pt-4">
         <Label className="text-sm font-semibold text-gray-700">Anexos ({anexos.length + anexosBackend.length + anexosTypeE.length})</Label>
         <div className="mt-2 space-y-2">
-          {/* Anexos novos */}
           {anexos.length > 0 && (
             <div>
               <div className="text-xs text-gray-500 mb-2">Novos anexos a serem enviados:</div>
@@ -1252,7 +1245,6 @@ export default function SolicitacaoModal({
             </div>
           )}
 
-          {/* Anexos já salvos */}
           {anexosBackend.length > 0 && (
             <div>
               <div className="text-xs text-gray-500 mb-2">Anexos já salvos:</div>
@@ -1358,7 +1350,6 @@ export default function SolicitacaoModal({
     }
   }, [formData.idTema, open, loadStatusPrazos]);
 
-  // Load anexos of type E when entering step 4 or step 5
   useEffect(() => {
     const loadAnexosTypeE = async () => {
       if ((currentStep === 4 || currentStep === 5) && solicitacao?.idSolicitacao) {
@@ -1406,12 +1397,11 @@ export default function SolicitacaoModal({
               if (step === 1) return true;
               if (step === 2) return isStep1Valid();
               if (step >= 3) return isStep1Valid() && isStep2Valid();
-              return false; // Fallback para garantir que sempre retorna boolean
+              return false;
             }}
           />
         </div>
 
-        {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto py-6">
           <form id="solicitacao-form" onSubmit={handleSubmit}>
             {currentStep === 1 && renderStep1()}

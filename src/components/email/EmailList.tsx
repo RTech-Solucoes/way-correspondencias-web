@@ -7,6 +7,7 @@ import {toast} from 'sonner';
 import {emailClient} from '@/api/email/client';
 import {EmailResponse} from '@/api/email/types';
 import {useDebounce} from '@/hooks/use-debounce';
+import {EmailFiltersState} from "@/context/email/EmailContext";
 
 const formatDate = (dateString?: string): string => {
   if (!dateString) return '';
@@ -33,13 +34,7 @@ interface EmailListProps {
   selectedEmail: string | null;
   onEmailSelect: (emailId: string) => void;
   currentPage?: number;
-  emailFilters?: {
-    isRead: string;
-    hasAttachment: string;
-    dateFrom: string;
-    dateTo: string;
-    sender: string;
-  };
+  emailFilters?: EmailFiltersState;
 }
 
 const EmailItem = memo<{

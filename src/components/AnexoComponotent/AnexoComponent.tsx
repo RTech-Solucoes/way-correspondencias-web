@@ -50,7 +50,6 @@ export default function AnexoComponent({onAddAnexos}: AnexoProps) {
 
   return (
     <div className="flex flex-col items-center space-y-4">
-      {/* Área de Dropzone */}
       <div
         {...getRootProps()}
         className={`w-full border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${

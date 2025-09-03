@@ -73,7 +73,6 @@ export default function DetalhesSolicitacaoModal({
   const [expandDescricao, setExpandDescricao] = useState(false);
   const [sending, setSending] = useState(false);
 
-  // ref e medição APENAS para a Descrição
   const descRef = useRef<HTMLParagraphElement | null>(null);
   const [canToggleDescricao, setCanToggleDescricao] = useState(false);
   const [lineHeightPx, setLineHeightPx] = useState<number | null>(null);
@@ -333,7 +332,6 @@ export default function DetalhesSolicitacaoModal({
             </div>
 
             <div className="rounded-md border bg-muted/30 p-4">
-              {/* Observação permanece sem interpretação especial de \n/\r */}
               <p className="text-sm text-muted-foreground">
                 { observacao ?? '—'}
               </p>

@@ -317,7 +317,7 @@ export default function SolicitacoesPage() {
             return {
               nomeArquivo: file.name,
               conteudoArquivo: base64String,
-              tpResponsavel: TipoResponsavelAnexo.A, // Assumindo que o analista está enviando a devolutiva 
+              tpResponsavel: TipoResponsavelAnexo.A,
               tipoArquivo: file.type || 'application/octet-stream'
             };
           })

@@ -4,18 +4,12 @@ import {Button} from "../ui/button";
 import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from "../ui/dialog";
 import {Input} from "../ui/input";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "../ui/select";
+import {EmailFiltersState} from "@/context/email/EmailContext";
 
-interface IEmailFilters {
-  remetente: string;
-  destinatario: string;
-  status: string;
-  dateFrom: string;
-  dateTo: string;
-}
 
 interface IFilterProps {
-  emailFilters: IEmailFilters;
-  setEmailFilters: Dispatch<SetStateAction<IEmailFilters>>;
+  emailFilters: EmailFiltersState;
+  setEmailFilters: Dispatch<SetStateAction<EmailFiltersState>>;
   showFilterModal: boolean;
   setShowFilterModal: Dispatch<SetStateAction<boolean>>;
   clearFilters: () => void;

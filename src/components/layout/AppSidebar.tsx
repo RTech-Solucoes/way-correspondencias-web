@@ -48,7 +48,6 @@ export function AppSidebar() {
         })}
       </nav>
 
-      {/* Botão de toggle no final da sidebar */}
       <div className="p-4 border-t border-gray-200">
         <button
           onClick={toggleSidebar}

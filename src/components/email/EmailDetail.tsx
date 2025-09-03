@@ -146,7 +146,6 @@ export default function EmailDetail({
 
   return (
     <div className="flex flex-col h-full bg-white rounded-lg shadow-sm overflow-hidden">
-      {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white sticky top-0 z-10">
         <div className="flex items-center space-x-3">
           <Button
@@ -163,10 +162,8 @@ export default function EmailDetail({
         </div>
       </div>
 
-      {/* Content */}
       <div className="flex flex-col overflow-y-auto custom-scrollbar">
         <div className="p-6 space-y-6">
-          {/* Email Header Info */}
           <div className="space-y-4">
             <div className="text-sm text-gray-500">
               {formatDate(email?.dtRecebimento)}
@@ -177,7 +174,6 @@ export default function EmailDetail({
             </h1>
           </div>
 
-          {/* Sender/Recipient Info */}
           <div className="flex flex-col">
             <div className="flex items-start space-x-4">
               <Avatar className="h-12 w-12 flex-shrink-0">
@@ -228,7 +224,6 @@ export default function EmailDetail({
             </div>
           </div>
 
-          {/* Email Body */}
           <div className="bg-white border rounded-lg p-6">
             <div className="prose prose-gray max-w-none">
               <div className="whitespace-pre-wrap text-gray-900 leading-relaxed text-base email-content">

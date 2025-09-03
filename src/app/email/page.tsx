@@ -5,7 +5,7 @@ import PageTitle from "@/components/ui/page-title";
 import useEmail from "@/context/email/EmailContext";
 import EmailSearch from "@/components/email/EmailSearch";
 import FilterDialog from "@/components/email/FilterDialog";
-import {Button} from "@nextui-org/react";
+import {Button} from "@/components/ui/button";
 import {Pagination} from '@/components/ui/pagination';
 
 import {ArrowClockwiseIcon} from "@phosphor-icons/react";
@@ -56,9 +56,6 @@ export default function EmailPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
-  const [numberOfElements, setNumberOfElements] = useState(0);
-  const [first, setFirst] = useState(true);
-  const [last, setLast] = useState(true);
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
@@ -77,9 +74,6 @@ export default function EmailPage() {
         setEmails([]);
         setTotalPages(0);
         setTotalElements(0);
-        setNumberOfElements(0);
-        setFirst(true);
-        setLast(true);
         return;
       }
 
@@ -89,27 +83,18 @@ export default function EmailPage() {
         setEmails([]);
         setTotalPages(0);
         setTotalElements(0);
-        setNumberOfElements(0);
-        setFirst(true);
-        setLast(true);
         return;
       }
 
       setEmails(response.content);
       setTotalPages(response.totalPages || 0);
       setTotalElements(response.totalElements || 0);
-      setNumberOfElements(response.numberOfElements || 0);
-      setFirst(response.first || false);
-      setLast(response.last || false);
     } catch (error) {
       console.error("Erro ao carregar emails:", error);
       toast.error("Erro ao carregar emails");
       setEmails([]);
       setTotalPages(0);
       setTotalElements(0);
-      setNumberOfElements(0);
-      setFirst(true);
-      setLast(true);
     } finally {
       setLoading(false);
     }
@@ -122,20 +107,20 @@ export default function EmailPage() {
   const filteredEmails = useMemo(() => {
     return emails.filter(email => {
       const isRead = email.flAtivo === 'S';
-      const hasAttachment = false;
+      const hasAttachments = false;
 
       const matchesReadStatus = !emailFilters.isRead ||
         emailFilters.isRead === 'all' ||
         (emailFilters.isRead === 'read' && isRead) ||
         (emailFilters.isRead === 'unread' && !isRead);
 
-      const matchesAttachment = !emailFilters.hasAttachment ||
-        emailFilters.hasAttachment === 'all' ||
-        (emailFilters.hasAttachment === 'true' && hasAttachment) ||
-        (emailFilters.hasAttachment === 'false' && !hasAttachment);
+      const matchesAttachment = !emailFilters.hasAttachments ||
+        emailFilters.hasAttachments === 'all' ||
+        (emailFilters.hasAttachments === 'true' && hasAttachments) ||
+        (emailFilters.hasAttachments === 'false' && !hasAttachments);
 
-      const matchesSender = !emailFilters.sender ||
-        email.dsRemetente.toLowerCase().includes(emailFilters.sender.toLowerCase());
+      const matchesSender = !emailFilters.remetente ||
+        email.dsRemetente.toLowerCase().includes(emailFilters.remetente.toLowerCase());
 
       const emailDate = new Date(formatDate(email.dtRecebimento).split(' ')[0].split('/').reverse().join('-'));
       const matchesDateFrom = !emailFilters.dateFrom ||
@@ -154,7 +139,6 @@ export default function EmailPage() {
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
-      {/* Header da página com título e busca */}
 
       <div className="flex items-center justify-between">
         <PageTitle />
@@ -192,7 +176,6 @@ export default function EmailPage() {
         />
       </div>
 
-      {/* Área principal de conteúdo */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-1 overflow-hidden min-h-[600px]">
         <EmailList
           searchQuery={searchQuery}
@@ -200,16 +183,17 @@ export default function EmailPage() {
           onEmailSelect={onEmailSelect}
           currentPage={currentPage}
           emailFilters={{
-            isRead: '',
-            hasAttachment: '',
+            remetente: activeEmailFilters.remetente,
+            destinatario: '',
+            status: '',
             dateFrom: activeEmailFilters.dateFrom,
             dateTo: activeEmailFilters.dateTo,
-            sender: activeEmailFilters.remetente
+            isRead: '',
+            hasAttachments: '',
           }}
         />
       </div>
 
-      {/* Modal de filtros */}
       {showFilterModal && (
         <FilterDialog
           emailFilters={emailFilters}

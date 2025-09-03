@@ -3,11 +3,6 @@ import {BuildingIcon, ClipboardTextIcon, EnvelopeSimpleIcon, TagIcon, UsersIcon}
 import {Permissoes} from "@/constants/permissoes";
 
 export const PAGES_DEF: PageDef[] = [
-  // {
-  //   path: "/dashboard",
-  //   label: "Dashboard",
-  //   icon: PresentationChartIcon
-  // },
   {
     path: "/solicitacoes",
     label: "Solicitações",
