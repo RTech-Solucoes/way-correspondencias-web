@@ -1,34 +1,29 @@
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react';
+import {Button} from '@/components/ui/button';
+import {CaretLeftIcon, CaretRightIcon} from '@phosphor-icons/react';
 
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
   totalElements: number;
-  pageSize: number;
-  numberOfElements: number;
-  first: boolean;
-  last: boolean;
   onPageChange: (page: number) => void;
   loading?: boolean;
-  showOnlyPagginationButtons?: boolean;
+  showOnlyPaginationButtons?: boolean;
 }
 
 export function Pagination({
   currentPage,
   totalPages,
   totalElements,
-  pageSize,
-  numberOfElements,
-  first,
-  last,
   onPageChange,
   loading = false,
-  showOnlyPagginationButtons = false
+  showOnlyPaginationButtons = false
 }: PaginationProps) {
-  const startItem = totalElements > 0 ? (currentPage * pageSize) + 1 : 0;
-  const endItem = totalElements > 0 ? startItem + numberOfElements - 1 : 0;
+  const first = currentPage === 0;
+  const last = currentPage === totalPages - 1;
+
+  const showBackButton = !first && totalPages > 1
+  const showNextButton = !last && totalPages > 1
 
   const getVisiblePages = () => {
     const delta = 2;
@@ -70,22 +65,24 @@ export function Pagination({
 
   return (
     <div className="flex items-center justify-between px-6 py-3">
-      {!showOnlyPagginationButtons && (
+      {!showOnlyPaginationButtons && (
         <div className="text-sm text-gray-700">
           {totalElements} Resultados Encontrados
         </div>
       )}
 
       <div className="flex items-center space-x-1">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={first || loading}
-          className="p-2"
-        >
-          <CaretLeftIcon className="h-4 w-4" />
-        </Button>
+        {showBackButton &&
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={loading}
+            className="p-2"
+          >
+            <CaretLeftIcon className="h-4 w-4" />
+          </Button>
+        }
 
         {getVisiblePages().map((page, index) => (
           <React.Fragment key={index}>
@@ -105,15 +102,17 @@ export function Pagination({
           </React.Fragment>
         ))}
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={last || loading}
-          className="p-2"
-        >
-          <CaretRightIcon className="h-4 w-4" />
-        </Button>
+        {showNextButton &&
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={loading}
+            className="p-2"
+          >
+            <CaretRightIcon className="h-4 w-4" />
+          </Button>
+        }
       </div>
     </div>
   );

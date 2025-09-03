@@ -1,18 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { TramitacaoResponse } from '@/api/tramitacoes/types';
-import { tramitacoesClient } from '@/api/tramitacoes/client';
-import { AreaResponse } from '@/api/areas/types';
-import { SpinnerIcon, ArrowRight } from '@phosphor-icons/react';
-import { toast } from 'sonner';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
+import {useEffect, useState} from 'react';
+import {TramitacaoResponse} from '@/api/tramitacoes/types';
+import {tramitacoesClient} from '@/api/tramitacoes/client';
+import {AreaResponse} from '@/api/areas/types';
+import {ArrowRight, SpinnerIcon} from '@phosphor-icons/react';
+import {toast} from 'sonner';
+import {Dialog, DialogContent, DialogHeader, DialogTitle,} from '@/components/ui/dialog';
+import {Badge} from '@/components/ui/badge';
 
 interface TramitacaoModalProps {
   idSolicitacao: number | null;

@@ -1,11 +1,11 @@
 'use client';
 
 import * as React from 'react';
+import {ComponentPropsWithoutRef, ElementRef, forwardRef, HTMLAttributes} from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
-import { XIcon } from '@phosphor-icons/react';
+import {XIcon} from '@phosphor-icons/react';
 
-import { cn } from '@/utils/utils';
-import { forwardRef, ComponentPropsWithoutRef, ElementRef, HTMLAttributes } from 'react';
+import {cn} from '@/utils/utils';
 
 const Dialog = DialogPrimitive.Root;
 

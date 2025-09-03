@@ -1,18 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { ArrowRight, SpinnerIcon } from '@phosphor-icons/react';
-import { toast } from 'sonner';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { solicitacoesClient } from '@/api/solicitacoes/client';
-import { TramitacaoComAnexosResponse } from '@/api/solicitacoes/types';
-import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
+import {useEffect, useState} from 'react';
+import {ArrowRight, SpinnerIcon} from '@phosphor-icons/react';
+import {toast} from 'sonner';
+import {Dialog, DialogContent, DialogHeader, DialogTitle,} from '@/components/ui/dialog';
+import {solicitacoesClient} from '@/api/solicitacoes/client';
+import {TramitacaoComAnexosResponse} from '@/api/solicitacoes/types';
+import {Button} from '../ui/button';
+import {Badge} from '../ui/badge';
 
 interface HistoricoRespostasModalProps {
   idSolicitacao: number | null;

@@ -1,8 +1,8 @@
-import { mockUsersEmail } from "@/components/dashboard/MockDados";
+import {mockUsersEmail} from "@/components/dashboard/MockDados";
 import CardHeader from "../card-header";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@radix-ui/react-avatar";
+import {Button} from "@/components/ui/button";
+import {Card, CardContent, CardFooter} from "@/components/ui/card";
+import {Avatar, AvatarFallback} from "@radix-ui/react-avatar";
 
 export default function RecentActivity() {
   return (

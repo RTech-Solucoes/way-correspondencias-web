@@ -1,8 +1,8 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
-import { Label } from '@/components/ui/label';
-import { Input } from "../ui/input";
-import { Button } from "../ui/button";
-import { Dispatch, SetStateAction } from "react";
+import {Dialog, DialogContent, DialogHeader, DialogTitle} from "../ui/dialog";
+import {Label} from '@/components/ui/label';
+import {Input} from "../ui/input";
+import {Button} from "../ui/button";
+import {Dispatch, SetStateAction} from "react";
 
 interface IFilterModal {
 	setShowFilterModal: Dispatch<SetStateAction<boolean>>;

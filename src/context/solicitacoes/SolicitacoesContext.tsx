@@ -1,21 +1,12 @@
 'use client'
 
-import {
-  Dispatch,
-  SetStateAction,
-  createContext,
-  useContext,
-  useState,
-  ReactNode,
-  useCallback,
-  useMemo
-} from "react";
-import { SolicitacaoResponse } from '@/api/solicitacoes/types';
-import { ResponsavelResponse } from '@/api/responsaveis/types';
-import { TemaResponse } from '@/api/temas/types';
-import { AreaResponse } from '@/api/areas/types';
-import {StatusSolicPrazoTemaForUI, StatusSolicPrazoTemaResponse} from '@/api/status-prazo-tema/types';
-import { statusSolicPrazoTemaClient } from '@/api/status-prazo-tema/client';
+import {createContext, Dispatch, ReactNode, SetStateAction, useCallback, useContext, useState} from "react";
+import {SolicitacaoResponse} from '@/api/solicitacoes/types';
+import {ResponsavelResponse} from '@/api/responsaveis/types';
+import {TemaResponse} from '@/api/temas/types';
+import {AreaResponse} from '@/api/areas/types';
+import {StatusSolicPrazoTemaForUI} from '@/api/status-prazo-tema/types';
+import {statusSolicPrazoTemaClient} from '@/api/status-prazo-tema/client';
 
 interface FiltersState {
   identificacao: string;
@@ -60,8 +51,6 @@ export interface SolicitacoesContextProps {
   setFilters: Dispatch<SetStateAction<FiltersState>>;
   activeFilters: FiltersState;
   setActiveFilters: Dispatch<SetStateAction<FiltersState>>;
-  expandedRows: Set<number>;
-  setExpandedRows: Dispatch<SetStateAction<Set<number>>>;
   sortField: keyof SolicitacaoResponse | null;
   setSortField: Dispatch<SetStateAction<keyof SolicitacaoResponse | null>>;
   sortDirection: 'asc' | 'desc';
@@ -74,7 +63,6 @@ export interface SolicitacoesContextProps {
   clearFilters: () => void;
   getStatusBadgeVariant: (status: string) => "default" | "secondary" | "destructive" | "outline";
   getStatusText: (status: string) => string;
-  toggleRowExpansion: (solicitacaoId: number) => void;
   handleSort: (field: keyof SolicitacaoResponse) => void;
 }
 
@@ -95,7 +83,6 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
-  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
   const [sortField, setSortField] = useState<keyof SolicitacaoResponse | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
@@ -283,16 +270,6 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const toggleRowExpansion = (solicitacaoId: number) => {
-    const newExpandedRows = new Set(expandedRows);
-    if (newExpandedRows.has(solicitacaoId)) {
-      newExpandedRows.delete(solicitacaoId);
-    } else {
-      newExpandedRows.add(solicitacaoId);
-    }
-    setExpandedRows(newExpandedRows);
-  };
-
   const handleSort = (field: keyof SolicitacaoResponse) => {
     let newSortDirection: 'asc' | 'desc' = 'asc';
     if (sortField === field && sortDirection === 'asc') {
@@ -338,8 +315,6 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
         setFilters,
         activeFilters,
         setActiveFilters,
-        expandedRows,
-        setExpandedRows,
         sortField,
         setSortField,
         sortDirection,
@@ -352,7 +327,6 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
         clearFilters,
         getStatusBadgeVariant,
         getStatusText: getStatusTextSync,
-        toggleRowExpansion,
         handleSort,
       }}
     >

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useCallback } from 'react';
+import React, {useCallback, useEffect} from 'react';
 import {
   StickyTable,
   StickyTableBody,
@@ -10,32 +10,33 @@ import {
   StickyTableRow
 } from '@/components/ui/sticky-table';
 import {Button} from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import {Input} from '@/components/ui/input';
 import {
+  ArrowClockwiseIcon,
+  ArrowsDownUpIcon,
   FunnelSimpleIcon,
   MagnifyingGlassIcon,
   PencilSimpleIcon,
   PlusIcon,
-  TrashIcon,
-  XIcon,
-  UsersIcon,
   SpinnerIcon,
-  ArrowsDownUpIcon,
-  ArrowClockwiseIcon,
+  TrashIcon,
+  UsersIcon,
+  XIcon,
 } from '@phosphor-icons/react';
 import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog';
 import {Label} from '@/components/ui/label';
 import ResponsavelModal from '@/components/responsaveis/ResponsavelModal';
 import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
 import PageTitle from '@/components/ui/page-title';
-import { Pagination } from '@/components/ui/pagination';
+import {Pagination} from '@/components/ui/pagination';
 import {formatCPF, getStatusText} from "@/utils/utils";
-import { useResponsaveis } from '@/context/responsaveis/ResponsaveisContext';
-import { responsaveisClient } from '@/api/responsaveis/client';
-import { ResponsavelFilterParams } from '@/api/responsaveis/types';
-import { toast } from 'sonner';
-import { useDebounce } from '@/hooks/use-debounce';
-import { FiltrosAplicados } from '@/components/ui/applied-filters';
+import {useResponsaveis} from '@/context/responsaveis/ResponsaveisContext';
+import {responsaveisClient} from '@/api/responsaveis/client';
+import {ResponsavelFilterParams} from '@/api/responsaveis/types';
+import {toast} from 'sonner';
+import {useDebounce} from '@/hooks/use-debounce';
+import {FiltrosAplicados} from '@/components/ui/applied-filters';
+import {usePermissoes} from "@/context/permissoes/PermissoesContext";
 
 
 export default function ResponsaveisPage() {
@@ -78,6 +79,7 @@ export default function ResponsaveisPage() {
   } = useResponsaveis();
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
+  const { canInserirResponsavel, canAtualizarResponsavel, canDeletarResponsavel } = usePermissoes()
 
   const loadResponsaveis = useCallback(async () => {
     try {
@@ -195,20 +197,16 @@ export default function ResponsaveisPage() {
           </Button>
 
           <span className="text-sm text-gray-500">
-            {totalElements} responsável(s)
+            {totalElements} {totalElements > 1 ? "responsáveis" : "responsável"}
           </span>
 
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
             totalElements={totalElements}
-            pageSize={15}
             onPageChange={setCurrentPage}
             loading={loading}
-            showOnlyPagginationButtons={true}
-            numberOfElements={0}
-            first={false}
-            last={false}
+            showOnlyPaginationButtons={true}
           />
         </div>
       </div>
@@ -242,13 +240,15 @@ export default function ResponsaveisPage() {
             <FunnelSimpleIcon className="h-4 w-4 mr-2"/>
             Filtrar
           </Button>
-          <Button onClick={() => {
-            setSelectedResponsavel(null);
-            setShowResponsavelModal(true);
-          }}>
-            <PlusIcon className="h-4 w-4 mr-2"/>
-            Criar Responsável
-          </Button>
+          {canInserirResponsavel &&
+            <Button onClick={() => {
+              setSelectedResponsavel(null);
+              setShowResponsavelModal(true);
+            }}>
+              <PlusIcon className="h-4 w-4 mr-2"/>
+              Criar Responsável
+            </Button>
+          }
         </div>
       </div>
 
@@ -353,21 +353,25 @@ export default function ResponsaveisPage() {
                   <StickyTableCell className="w-36">{formatCPF(responsavel.nrCpf)}</StickyTableCell>
                   <StickyTableCell className="text-right">
                     <div className="flex items-center justify-end space-x-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(responsavel)}
-                      >
-                        <PencilSimpleIcon className="h-4 w-4"/>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(responsavel)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <TrashIcon className="h-4 w-4"/>
-                      </Button>
+                      {canAtualizarResponsavel &&
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(responsavel)}
+                        >
+                          <PencilSimpleIcon className="h-4 w-4"/>
+                        </Button>
+                      }
+                      {canDeletarResponsavel &&
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(responsavel)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <TrashIcon className="h-4 w-4"/>
+                        </Button>
+                      }
                     </div>
                   </StickyTableCell>
                 </StickyTableRow>

@@ -1,7 +1,7 @@
 import {type ClassValue, clsx} from 'clsx';
 import {twMerge} from 'tailwind-merge';
 import {StatusAtivo} from "@/types/misc/types";
-import {ArquivoDTO} from '@/api/anexos/type';
+import {ArquivoDTO, TipoResponsavelAnexo} from '@/api/anexos/type';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -142,8 +142,9 @@ export async function fileToArquivoDTO(file: File): Promise<ArquivoDTO> {
   const conteudoArquivo = await fileToBase64String(file);
   return {
     nomeArquivo: file.name,
-    tipoConteudo: file.type || null,
     conteudoArquivo,
+    tipoConteudo: file.type || null || undefined,
+    tpResponsavel: TipoResponsavelAnexo.A, // TODO: Colocado apenas para remover erro, necessário ajustar depois
   };
 }
 

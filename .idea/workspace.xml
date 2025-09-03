@@ -5,7 +5,49 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="98226f2c-f64e-43be-946e-e89028627d5c" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/src/constants/pages.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/constants/pages.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/context/permissoes/PermissoesContext.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/areas/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/areas/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/email/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/email/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/layout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/responsaveis/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/responsaveis/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/solicitacoes/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/solicitacoes/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/temas/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/temas/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/AnexoComponotent/AnexoComponent.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/AnexoComponotent/AnexoComponent.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/AnexoComponotent/functions.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/areas/AreaModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/areas/AreaModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/areas/FilterModalArea.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/areas/FilterModalArea.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/areas/HeaderArea.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/areas/SearchArea.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/areas/SearchArea.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/areas/TableArea.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/areas/TableArea.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/dashboard/DashboardHeader/DashboardHeader.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/dashboard/DashboardHeader/DashboardHeader.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/dashboard/DashboardView.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/dashboard/DashboardView.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/dashboard/DeadlinesCalendar/CalendarHeader/CalendarHeader.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/dashboard/DeadlinesCalendar/CalendarHeader/CalendarHeader.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/dashboard/DeadlinesCalendar/CalendarMonth/CalendarMonth.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/dashboard/DeadlinesCalendar/CalendarMonth/CalendarMonth.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/dashboard/DeadlinesCalendar/CalendarWeek/CalendarWeek.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/dashboard/DeadlinesCalendar/CalendarWeek/CalendarWeek.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/dashboard/DeadlinesCalendar/DeadlinesCalendar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/dashboard/DeadlinesCalendar/DeadlinesCalendar.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/dashboard/MockDados.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/dashboard/MockDados.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/dashboard/NextDeadlines/NextDeadlines.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/dashboard/NextDeadlines/NextDeadlines.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/dashboard/RecentActivity/RecentActivity.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/dashboard/RecentActivity/RecentActivity.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/dashboard/TasksStatusBoard/TasksStatusBoard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/dashboard/TasksStatusBoard/TasksStatusBoard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/dashboard/card-header.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/dashboard/card-header.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/dashboard/functions.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/dashboard/functions.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/email/EmailDetail.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/email/EmailDetail.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/email/EmailList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/email/EmailList.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/email/EmailSearch.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/email/EmailSearch.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/email/FilterDialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/email/FilterDialog.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/layout/AppHeader.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/layout/AppHeader.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/layout/AppLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/layout/AppLayout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/layout/AppSidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/layout/AppSidebar.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/layout/ConditionalLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/layout/ConditionalLayout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/solicitacoes/DetalhesSolicitacaoModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/solicitacoes/DetalhesSolicitacaoModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/solicitacoes/HistoricoRespostasModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/solicitacoes/HistoricoRespostasModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/solicitacoes/SolicitacaoModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/solicitacoes/SolicitacaoModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/ui/pagination.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/ui/pagination.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/context/solicitacoes/SolicitacoesContext.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/context/solicitacoes/SolicitacoesContext.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/providers/Providers.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/providers/Providers.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/utils/utils.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils/utils.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -49,28 +91,28 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "develop",
-    "junie.onboarding.icon.badge.shown": "true",
-    "last_opened_file_path": "D:/Work/projetos/rtech/way/way-correspondencias-web/src/hooks",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "bun",
-    "npm.Next.js: server-side.executor": "Run",
-    "run.code.analysis.last.selected.profile": "pProject Default",
-    "settings.editor.selected.configurable": "preferences.pluginManager",
-    "to.speed.mode.migration.done": "true",
-    "ts.external.directory.path": "D:\\Work\\projetos\\rtech\\way\\way-correspondencias-web\\node_modules\\typescript\\lib",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;develop&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/Work/projetos/rtech/way/way-correspondencias-web/src/context/permissoes&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;bun&quot;,
+    &quot;npm.Next.js: server-side.executor&quot;: &quot;Run&quot;,
+    &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;D:\\Work\\projetos\\rtech\\way\\way-correspondencias-web\\node_modules\\typescript\\lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="ReactDesignerToolWindowState">
     <option name="myId2Visible">
       <map>
@@ -82,11 +124,11 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\Work\projetos\rtech\way\way-correspondencias-web\src\context\permissoes" />
       <recent name="D:\Work\projetos\rtech\way\way-correspondencias-web\src\hooks" />
       <recent name="D:\Work\projetos\rtech\way\way-correspondencias-web\src\app\email\[id]" />
       <recent name="D:\Work\projetos\rtech\way-correspondencias-web\src\types\solicitacoes" />
       <recent name="D:\Work\projetos\rtech\way-correspondencias-web\src\api\areas" />
-      <recent name="D:\Work\projetos\rtech\way-correspondencias-web\src\api\temas" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="D:\Work\projetos\rtech\way\way-correspondencias-web\src" />
@@ -181,7 +223,7 @@
       <workItem from="1756899791770" duration="3266000" />
       <workItem from="1756903113069" duration="3257000" />
       <workItem from="1756906854149" duration="922000" />
-      <workItem from="1756907948502" duration="3211000" />
+      <workItem from="1756907948502" duration="7079000" />
     </task>
     <task id="LOCAL-00001" summary="Alteração biblioteca de Ícones&#10;lucide-react -&gt; @phosphor-icons/react">
       <option name="closed" value="true" />

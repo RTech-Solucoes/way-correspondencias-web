@@ -1,11 +1,11 @@
 import dashboardClient from "@/api/dashboard/client";
-import { DashboardListSummary, DashboardOverview } from "@/api/dashboard/type";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import {DashboardListSummary, DashboardOverview} from "@/api/dashboard/type";
+import {Button} from "@/components/ui/button";
+import {Card, CardContent, CardFooter} from "@/components/ui/card";
+import {useEffect, useState} from "react";
+import {toast} from "sonner";
 import CardHeader from "../card-header";
-import { getStatusColor, renderIcon } from "../functions";
+import {getStatusColor, renderIcon} from "../functions";
 
 export default function TasksStatusBoard() {
   const [visionGeral, setVisionGeral] = useState<DashboardOverview[]>([]);
@@ -31,7 +31,6 @@ export default function TasksStatusBoard() {
         toast.error("Não foi possível carregar os dados do dashboard.");
       }
     };
-
 
     getRecentOverview();
     getOverview();

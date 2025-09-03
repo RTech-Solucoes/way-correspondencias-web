@@ -1,4 +1,4 @@
-import { months } from "@/components/dashboard/MockDados";
+import {months} from "@/components/dashboard/MockDados";
 
 export default function CalendarWeek() {
   return (

@@ -5,7 +5,6 @@ import {ArrowLeftIcon, FileTextIcon} from '@phosphor-icons/react';
 import {Button} from '@/components/ui/button';
 import {Avatar, AvatarFallback, AvatarImage} from '@/components/ui/avatar';
 import {toast} from 'sonner';
-import SolicitacaoModal from '@/components/solicitacoes/SolicitacaoModal';
 import {ResponsavelResponse} from '@/api/responsaveis/types';
 import {TemaResponse} from '@/api/temas/types';
 import {AreaResponse} from '@/api/areas/types';

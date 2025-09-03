@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { ClockIcon, DownloadIcon, PaperclipIcon, X as XIcon } from '@phosphor-icons/react';
-import { SolicitacaoDetalheResponse } from '@/api/solicitacoes/types';
+import {SolicitacaoDetalheResponse, SolicitacaoResponse} from '@/api/solicitacoes/types';
 import { ArquivoDTO, TipoObjetoAnexo, TipoResponsavelAnexo } from '@/api/anexos/type';
 import { anexosClient } from '@/api/anexos/client';
 import { base64ToUint8Array, fileToArquivoDTO, saveBlob } from '@/utils/utils';
@@ -29,7 +29,7 @@ type AnexoItemShape = {
 type DetalhesSolicitacaoModalProps = {
   open: boolean;
   onClose(): void;
-  solicitacao: SolicitacaoDetalheResponse | null;
+  solicitacao: SolicitacaoResponse | SolicitacaoDetalheResponse | null;
   anexos?: AnexoItemShape[];
   onHistoricoRespostas?(): void;
   onAbrirEmailOriginal?(): void;
@@ -78,7 +78,7 @@ export default function DetalhesSolicitacaoModal({
   const [canToggleDescricao, setCanToggleDescricao] = useState(false);
   const [lineHeightPx, setLineHeightPx] = useState<number | null>(null);
 
-  const sol = solicitacao?.solicitacao ?? null;
+  const sol = solicitacao ?? null;
 
   const identificador = useMemo(
     () => (sol?.cdIdentificacao ? `#${sol.cdIdentificacao}` : ''),

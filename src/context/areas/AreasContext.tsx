@@ -1,14 +1,7 @@
 'use client'
 
-import {
-  Dispatch,
-  SetStateAction,
-  createContext,
-  useContext,
-  useState,
-  ReactNode
-} from "react";
-import { AreaResponse } from '@/api/areas/types';
+import {createContext, Dispatch, ReactNode, SetStateAction, useContext, useState} from "react";
+import {AreaResponse} from '@/api/areas/types';
 
 interface FiltersState {
   codigo: string;

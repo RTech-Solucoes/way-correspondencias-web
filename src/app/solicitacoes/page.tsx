@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useCallback, useState } from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   StickyTable,
   StickyTableBody,
@@ -9,49 +9,53 @@ import {
   StickyTableHeader,
   StickyTableRow
 } from '@/components/ui/sticky-table';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import {Button} from '@/components/ui/button';
+import {Input} from '@/components/ui/input';
+import {Badge} from '@/components/ui/badge';
 import SolicitacaoModal from '../../components/solicitacoes/SolicitacaoModal';
 import DetalhesSolicitacaoModal from '@/components/solicitacoes/DetalhesSolicitacaoModal';
-import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
 import {
+  ArrowClockwiseIcon,
+  ArrowsDownUpIcon,
+  ClipboardTextIcon,
+  ClockCounterClockwiseIcon,
   FunnelSimpleIcon,
   MagnifyingGlassIcon,
   PaperPlaneRightIcon,
-  PlusIcon,
-  TrashIcon,
-  ClipboardTextIcon,
-  XIcon,
-  SpinnerIcon,
-  ArrowsDownUpIcon,
   PencilSimpleIcon,
-  ArrowClockwiseIcon,
-  ClockCounterClockwiseIcon
+  PlusIcon,
+  SpinnerIcon,
+  TrashIcon,
+  XIcon
 } from '@phosphor-icons/react';
 import PageTitle from '@/components/ui/page-title';
-import { solicitacoesClient } from '@/api/solicitacoes/client';
-import { responsaveisClient } from '@/api/responsaveis/client';
-import { temasClient } from '@/api/temas/client';
-import { areasClient } from '@/api/areas/client';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from 'sonner';
-import { useDebounce } from '@/hooks/use-debounce';
-import { Pagination } from '@/components/ui/pagination';
-import { useSolicitacoes } from '@/context/solicitacoes/SolicitacoesContext';
+import {solicitacoesClient} from '@/api/solicitacoes/client';
+import {responsaveisClient} from '@/api/responsaveis/client';
+import {temasClient} from '@/api/temas/client';
+import {areasClient} from '@/api/areas/client';
+import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog';
+import {Label} from '@/components/ui/label';
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
+import {toast} from 'sonner';
+import {useDebounce} from '@/hooks/use-debounce';
+import {Pagination} from '@/components/ui/pagination';
+import {useSolicitacoes} from '@/context/solicitacoes/SolicitacoesContext';
 import TramitacaoModal from '@/components/solicitacoes/TramitacaoModal';
 import anexosClient from '@/api/anexos/client';
-import { AnexoResponse, TipoObjetoAnexo, TipoResponsavelAnexo } from '@/api/anexos/type';
-import { AreaSolicitacao, SolicitacaoResponse, PagedResponse, SolicitacaoDetalheResponse } from '@/api/solicitacoes/types';
-import { ResponsavelResponse } from '@/api/responsaveis/types';
-import { TemaResponse } from '@/api/temas/types';
-import { AreaResponse } from '@/api/areas/types';
-import { useTramitacoesMutation } from '@/hooks/use-tramitacoes';
+import {AnexoResponse, TipoObjetoAnexo, TipoResponsavelAnexo} from '@/api/anexos/type';
+import {
+  AreaSolicitacao,
+  PagedResponse,
+  SolicitacaoDetalheResponse,
+  SolicitacaoResponse
+} from '@/api/solicitacoes/types';
+import {ResponsavelResponse} from '@/api/responsaveis/types';
+import {TemaResponse} from '@/api/temas/types';
+import {AreaResponse} from '@/api/areas/types';
+import {useTramitacoesMutation} from '@/hooks/use-tramitacoes';
 import tramitacoesClient from '@/api/tramitacoes/client';
-import {useHasPermissao} from "@/hooks/use-has-permissao";
-import {Permissoes} from "@/constants/permissoes"
+import {usePermissoes} from "@/context/permissoes/PermissoesContext";
 
 export default function SolicitacoesPage() {
   const {
@@ -86,7 +90,6 @@ export default function SolicitacoesPage() {
     filters,
     setFilters,
     activeFilters,
-    expandedRows,
     sortField,
     sortDirection,
     hasActiveFilters,
@@ -97,19 +100,19 @@ export default function SolicitacoesPage() {
     clearFilters,
     getStatusBadgeVariant,
     getStatusText,
-    toggleRowExpansion,
     handleSort,
   } = useSolicitacoes();
 
   const tramitacoesMutation = useTramitacoesMutation();
+  const { canInserirSolicitacao, canAtualizarSolicitacao, canDeletarSolicitacao } = usePermissoes()
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
-  const [numberOfElements, setNumberOfElements] = useState(0);
-  const [first, setFirst] = useState(true);
-  const [last, setLast] = useState(true);
 
-  const canInserirSolicitacao = useHasPermissao(Permissoes.SOLICITACAO_INSERIR);
-  const canAtualizarSolicitacao = useHasPermissao(Permissoes.SOLICITACAO_ATUALIZAR);
-  const canDeletarSolicitacao = useHasPermissao(Permissoes.SOLICITACAO_DELETAR);
+  const [showDetalhesModal, setShowDetalhesModal] = useState(false);
+  const [detalhesSolicitacao, setDetalhesSolicitacao] = useState<SolicitacaoDetalheResponse | null>(null);
+  const [detalhesAnexos, setDetalhesAnexos] = useState<AnexoResponse[]>([]);
+  const [showTramitacaoModal, setShowTramitacaoModal] = useState(false);
+  const [tramitacaoSolicitacaoId, setTramitacaoSolicitacaoId] = useState<number | null>(null);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const userHasOpenedDetailsModal = useCallback((solicitacao: SolicitacaoResponse) => {
@@ -132,13 +135,6 @@ export default function SolicitacoesPage() {
       },
     });
   }, [tramitacoesMutation]);
-
-  const debouncedSearchQuery = useDebounce(searchQuery, 500);
-  const [showDetalhesModal, setShowDetalhesModal] = useState(false);
-  const [detalhesSolicitacao, setDetalhesSolicitacao] = useState<SolicitacaoDetalheResponse | null>(null);
-  const [detalhesAnexos, setDetalhesAnexos] = useState<AnexoResponse[]>([]);
-  const [showTramitacaoModal, setShowTramitacaoModal] = useState(false);
-  const [tramitacaoSolicitacaoId, setTramitacaoSolicitacaoId] = useState<number | null>(null);
 
   const handleTramitacoes = (solicitacao: SolicitacaoResponse) => {
     setTramitacaoSolicitacaoId(solicitacao.idSolicitacao);
@@ -178,16 +174,10 @@ export default function SolicitacoesPage() {
         setSolicitacoes(paginatedResponse.content ?? []);
         setTotalPages(paginatedResponse.totalPages ?? 1);
         setTotalElements(paginatedResponse.totalElements ?? 0);
-        setNumberOfElements(paginatedResponse.numberOfElements ?? 0);
-        setFirst(paginatedResponse.first ?? true);
-        setLast(paginatedResponse.last ?? true);
       } else {
         setSolicitacoes(response ?? []);
         setTotalPages(1);
         setTotalElements((response ?? []).length);
-        setNumberOfElements((response ?? []).length);
-        setFirst(true);
-        setLast(true);
       }
     } catch {
       toast.error('Erro ao carregar solicitações');
@@ -366,20 +356,16 @@ export default function SolicitacoesPage() {
           </Button>
 
           <span className="text-sm text-gray-500">
-            {solicitacoes?.length} solicitação(s)
+            {solicitacoes?.length} {solicitacoes?.length > 1 ? "solicitações" : "solicitação"}
           </span>
 
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
             totalElements={totalElements}
-            pageSize={10}
-            numberOfElements={numberOfElements}
-            first={first}
-            last={last}
             onPageChange={setCurrentPage}
             loading={loading}
-            showOnlyPagginationButtons={true}
+            showOnlyPaginationButtons={true}
           />
         </div>
       </div>
@@ -759,7 +745,7 @@ export default function SolicitacoesPage() {
           }}
           solicitacao={detalhesSolicitacao ?? selectedSolicitacao}
           anexos={(detalhesAnexos ?? [])}
-          statusLabel={getStatusText((detalhesSolicitacao ?? selectedSolicitacao)?.statusCodigo?.toString() || '')}
+          statusLabel={getStatusText((detalhesSolicitacao ?? selectedSolicitacao)?.statusSolicitacao?.nmStatus?.toString() || '')}
           onAbrirEmailOriginal={abrirEmailOriginal}
           onHistoricoRespostas={abrirHistorico}
           onEnviarDevolutiva={enviarDevolutiva}

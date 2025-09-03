@@ -1,11 +1,11 @@
 import './globals.css';
-import type { Metadata } from 'next';
-import { Lexend as DefaultFont } from 'next/font/google';
-import { ReactNode } from 'react'
+import type {Metadata} from 'next';
+import {Lexend as DefaultFont} from 'next/font/google';
+import {ReactNode} from 'react'
 import Providers from "@/providers/Providers";
 import AuthGuard from "@/providers/AuthGuard";
 import ConditionalLayout from "@/components/layout/ConditionalLayout";
-import { Toaster } from "sonner";
+import {Toaster} from "sonner";
 
 const defaultFont = DefaultFont({
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
