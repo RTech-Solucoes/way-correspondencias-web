@@ -45,13 +45,14 @@ import { Pagination } from '@/components/ui/pagination';
 import { useSolicitacoes } from '@/context/solicitacoes/SolicitacoesContext';
 import TramitacaoModal from '@/components/solicitacoes/TramitacaoModal';
 import anexosClient from '@/api/anexos/client';
-import { AnexoResponse, TipoObjetoAnexo, TipoResponsavelAnexo } from '@/api/anexos/type';
+import { AnexoResponse, TipoObjetoAnexo, ArquivoDTO } from '@/api/anexos/type';
 import { AreaSolicitacao, SolicitacaoResponse, PagedResponse, SolicitacaoDetalheResponse } from '@/api/solicitacoes/types';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { TemaResponse } from '@/api/temas/types';
 import { AreaResponse } from '@/api/areas/types';
 import { useTramitacoesMutation } from '@/hooks/use-tramitacoes';
 import tramitacoesClient from '@/api/tramitacoes/client';
+import { fileToArquivoDTO } from '@/utils/utils';
 
 export default function SolicitacoesPage() {
   const {
@@ -307,29 +308,43 @@ export default function SolicitacoesPage() {
     console.log('Mensagem:', mensagem);
     if (!alvo) return;
     try {
+      let tramitacaoId: number | null = null;
       if (mensagem?.trim()) {
         const data = {
           dsObservacao: mensagem,
           idSolicitacao: alvo.solicitacao.idSolicitacao,
           flAprovado: flAprovado,
-        }
-        console.log(alvo)
-        await tramitacoesClient.tramitar?.(data);
+        };
+        const created = await tramitacoesClient.tramitar(data);
+        tramitacaoId = created?.idTramitacao ?? null;
+        console.log('[Tramitar] Criado idTramitacao:', tramitacaoId, 'para idSolicitacao:', alvo.solicitacao.idSolicitacao);
       }
+
       if (arquivos.length > 0) {
-        const arquivosDTO = await Promise.all(
-          arquivos.map(async (file) => {
-            const arrayBuffer = await file.arrayBuffer();
-            const base64String = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-            return {
-              nomeArquivo: file.name,
-              conteudoArquivo: base64String,
-              tpResponsavel: TipoResponsavelAnexo.A, // Assumindo que o analista está enviando a devolutiva 
-              tipoArquivo: file.type || 'application/octet-stream'
-            };
-          })
-        );
-        await solicitacoesClient.uploadAnexos(alvo.solicitacao.idSolicitacao, arquivosDTO);
+        // Se ainda não criou uma tramitação por mensagem, cria uma vazia para anexar
+        if (!tramitacaoId) {
+          const created = await tramitacoesClient.tramitar({
+            idSolicitacao: alvo.solicitacao.idSolicitacao,
+            dsObservacao: '',
+          });
+          tramitacaoId = created?.idTramitacao ?? null;
+          console.log('[Tramitar] Criado idTramitacao vazio para anexos:', tramitacaoId);
+        }
+
+        if (tramitacaoId) {
+          const arquivosDTO: ArquivoDTO[] = await Promise.all(
+            arquivos.map(async (file) => {
+              const dto = await fileToArquivoDTO(file);
+              return {
+                ...dto,
+                // se vier 0, enviar null; como não temos papel aqui, forçamos null
+                tpResponsavel: null,
+              } as ArquivoDTO;
+            })
+          );
+          console.log('[UploadAnexos] Enviando', arquivosDTO?.length, 'anexo(s) para idTramitacao:', tramitacaoId);
+          await tramitacoesClient.uploadAnexos(tramitacaoId, arquivosDTO as unknown as ArquivoDTO[]);
+        }
       }
       await loadSolicitacoes();
     } catch {

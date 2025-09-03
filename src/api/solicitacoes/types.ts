@@ -110,6 +110,7 @@ export interface SolicitacaoPrazoResponse {
   nrPrazoDias: number;
   statusCodigo?: number;
   tpPrazo?: string;
+  dtPrazoLimite?: string;
 }
 
 export interface PagedResponse<T> {
@@ -176,6 +177,7 @@ export interface TramitacaoComAnexosResponse {
 export interface SolicitacaoDetalheResponse extends BaseResponse {
   solicitacao: SolicitacaoResponse;
   statusSolicitacao: StatusSolicitacao;
+  solcitacaoPrazos: SolicitacaoPrazoResponse[];
   anexosSolicitacao: AnexoResponse[];
   email: EmailComAnexosResponse;
   tramitacoes: TramitacaoComAnexosResponse[];
