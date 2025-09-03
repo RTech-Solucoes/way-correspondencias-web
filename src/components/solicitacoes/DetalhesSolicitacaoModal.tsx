@@ -18,8 +18,7 @@ import { ArquivoDTO, TipoObjetoAnexo, TipoResponsavelAnexo } from '@/api/anexos/
 import { anexosClient } from '@/api/anexos/client';
 import { base64ToUint8Array, fileToArquivoDTO, saveBlob } from '@/utils/utils';
 import tramitacoesClient from '@/api/tramitacoes/client';
-import HistoricoRespostasModal from './HistoricoRespostasModal';
-import { AreaResponse } from '@/api/areas/types';
+import { HistoricoRespostasModalButton } from './HistoricoRespostasModal';
 
 type AnexoItemShape = {
   idAnexo: number;
@@ -73,7 +72,6 @@ export default function DetalhesSolicitacaoModal({
   const [arquivos, setArquivos] = useState<File[]>([]);
   const [expandDescricao, setExpandDescricao] = useState(false);
   const [sending, setSending] = useState(false);
-  const [showHistoricoRespostasModal, setShowHistoricoRespostasModal] = useState(false);
 
   // ref e medição APENAS para a Descrição
   const descRef = useRef<HTMLParagraphElement | null>(null);
@@ -241,14 +239,12 @@ export default function DetalhesSolicitacaoModal({
     [sol?.idSolicitacao]
   );
 
-  const onHistoricoRespostas = useCallback(() => {
-    setShowHistoricoRespostasModal(true);
-  }, []);
-
   const descricaoCollapsedStyle: React.CSSProperties =
     !expandDescricao && lineHeightPx
       ? { maxHeight: `${lineHeightPx * MAX_DESC_LINES}px`, overflow: 'hidden' }
       : {};
+
+  const quantidadeDevolutivas = solicitacao?.tramitacoes?.filter(t => !!t?.tramitacao?.solicitacao?.dsObservacao)?.length ?? 0;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -412,14 +408,11 @@ export default function DetalhesSolicitacaoModal({
           <section className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">Enviar devolutiva ao Regulatório</h3>
-              <Button type="button" variant="link" onClick={onHistoricoRespostas}>
-                Histórico de Respostas
-              </Button>
-              <HistoricoRespostasModal
+
+              <HistoricoRespostasModalButton
                 idSolicitacao={sol?.idSolicitacao ?? null}
-                open={showHistoricoRespostasModal}
-                onClose={() => setShowHistoricoRespostasModal(false)}
-                areas={areas as AreaResponse[]}
+                showButton={!!quantidadeDevolutivas}
+                quantidadeDevolutivas={quantidadeDevolutivas}
               />
             </div>
 
