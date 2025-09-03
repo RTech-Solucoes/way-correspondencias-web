@@ -50,11 +50,8 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
   const buscarPerfis = useCallback(async () => {
     try {
       setLoadingPerfis(true);
-      console.log('Carregando perfis...');
       const response = await perfisClient.buscarPorFiltro({ size: 100 });
-      console.log('Perfis carregados:', response);
       const perfisAtivos = response.content.filter(perfil => perfil.flAtivo === 'S');
-      console.log('Perfis ativos:', perfisAtivos);
       setPerfis(perfisAtivos);
     } catch (error) {
       console.error('Erro ao carregar perfis:', error);
@@ -126,7 +123,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
 
-    let newValue = value;
+    const newValue = value;
 
     switch (name) {
       case "dtNascimento":
@@ -170,14 +167,13 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
   };
 
   const handleSubmit = async () => {
-    // Validação específica do CPF
     if (formData.nrCpf.trim().length !== 11) {
       toast.error("CPF inválido");
       return;
     }
 
-    // Validação de idade mínima (10 anos)
     const age = calculateAge(formData.dtNascimento);
+
     if (age < 10) {
       toast.error("Usuário deve ter pelo menos 10 anos de idade");
       return;

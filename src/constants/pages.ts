@@ -5,11 +5,11 @@ import {
 } from "@phosphor-icons/react";
 
 export const PAGES_DEF: PageDef[] = [
-  {
-    path: "/dashboard",
-    label: "Dashboard",
-    icon: PresentationChartIcon
-  },
+  // {
+  //   path: "/dashboard",
+  //   label: "Dashboard",
+  //   icon: PresentationChartIcon
+  // },
   {
     path: "/solicitacoes",
     label: "Solicitações",

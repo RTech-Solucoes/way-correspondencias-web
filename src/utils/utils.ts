@@ -2,6 +2,7 @@ import {type ClassValue, clsx} from 'clsx';
 import {twMerge} from 'tailwind-merge';
 import {StatusAtivo} from "@/types/misc/types";
 import { ArquivoDTO } from '@/api/anexos/type';
+import {usePermissoesState} from "@/stores/permissoes-store";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -157,3 +158,14 @@ export const formatCPF = (cpf: string): string => {
   
   return cpf; 
 };
+
+export const hasPermissao = (permissao: string): boolean | null => {
+  const permissoesStorage = sessionStorage.getItem("permissoes-storage");
+
+  if (!permissoesStorage) {
+    return null;
+  } else {
+    const parsed = JSON.parse(permissoesStorage);
+    return parsed?.state?.permissoes?.includes(permissao) ?? null;
+  }
+}

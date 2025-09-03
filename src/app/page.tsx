@@ -11,12 +11,24 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useState } from 'react';
 import { toast } from 'sonner';
 
+import { jwtDecode } from "jwt-decode";
+import {usePermissoesState, useSetPermissoes} from "@/stores/permissoes-store";
+
+
+interface TokenPayload {
+  sub: string;
+  exp: number;
+  permissoes: string[];
+}
+
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [usernameError, setUsernameError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const permissoes = usePermissoesState()
+  const setPermissoes = useSetPermissoes()
 
   const router = useRouter();
 
@@ -49,6 +61,13 @@ export default function LoginPage() {
           password: password
         });
 
+        const token = localStorage.getItem("authToken");
+
+        if (token) {
+          const decoded = jwtDecode<TokenPayload>(token);
+          console.log(decoded.sub, decoded.exp, decoded.permissoes);
+          setPermissoes(decoded.permissoes)
+        }
 
         toast.success("Login Realizado com Sucesso.")
         router.push(PAGES_DEF[0].path);
