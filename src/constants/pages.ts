@@ -36,7 +36,7 @@ export const PAGES_DEF: PageDef[] = [
     path: "/responsaveis",
     label: "Responsáveis",
     icon: UsersIcon,
-    permission: "banana"
+    permission: Permissoes.RESPONSAVEL_LISTAR
   },
 ];
 
