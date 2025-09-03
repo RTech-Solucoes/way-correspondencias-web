@@ -26,9 +26,9 @@ import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { TemaResponse } from '@/api/temas/types';
 import { solicitacoesClient } from '@/api/solicitacoes/client';
 import { toast } from 'sonner';
-import { capitalize, getRows } from '@/utils/utils';
+import { capitalize, getRows, base64ToUint8Array, saveBlob } from '@/utils/utils';
 import { MultiSelectAreas } from '@/components/ui/multi-select-areas';
-import { ArrowArcRightIcon, CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react';
+import { ArrowArcRightIcon, CaretLeftIcon, CaretRightIcon, DownloadSimpleIcon } from '@phosphor-icons/react';
 import { Stepper } from '@/components/ui/stepper';
 import { Input } from '@nextui-org/react';
 import AnexoComponent from '../AnexoComponotent/AnexoComponent';
@@ -421,23 +421,36 @@ export default function SolicitacaoModal({
       const arquivos = await solicitacoesClient.downloadAnexo(anexo.idObjeto, anexo.nmArquivo);
 
       if (arquivos.length > 0) {
-        const arquivo = arquivos[0];
-        const byteCharacters = atob(arquivo.conteudoArquivo);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: arquivo.tipoArquivo });
+        arquivos.forEach((arquivo) => {
+          const bytes = base64ToUint8Array(arquivo.conteudoArquivo);
+          const filename = arquivo.nomeArquivo || anexo.name || 'documento';
+          const mime = arquivo.tipoConteudo || 'application/octet-stream';
+          saveBlob(bytes, mime, filename);
+        });
+      } else {
+        toast.error('Arquivo não encontrado');
+      }
+    } catch {
+      toast.error('Erro ao baixar documento');
+    }
+  }, []);
 
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = arquivo.nomeArquivo || anexo.name || 'documento';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
+  const handleDownloadAnexoEmail = useCallback(async (anexo: AnexoResponse) => {
+    try {
+      if (!anexo.idObjeto || !anexo.nmArquivo) {
+        toast.error('Dados do documento incompletos');
+        return;
+      }
+
+      const arquivos = await anexosClient.download(anexo.idObjeto, TipoObjetoAnexo.E, anexo.nmArquivo);
+
+      if (arquivos.length > 0) {
+        arquivos.forEach((arquivo) => {
+          const bytes = base64ToUint8Array(arquivo.conteudoArquivo);
+          const filename = arquivo.nomeArquivo || anexo.nmArquivo || 'documento';
+          const mime = arquivo.tipoConteudo || 'application/octet-stream';
+          saveBlob(bytes, mime, filename);
+        });
       } else {
         toast.error('Arquivo não encontrado');
       }
@@ -913,38 +926,10 @@ export default function SolicitacaoModal({
                   console.log('Remove anexo type E:', anexo.idAnexo);
                 }
               }}
-              onDownload={async (anexo) => {
-                try {
-                  if (!anexo.idObjeto || !anexo.nmArquivo) {
-                    toast.error('Dados do documento incompletos');
-                    return;
-                  }
-
-                  const arquivos = await anexosClient.download(anexo.idObjeto, TipoObjetoAnexo.E, anexo.nmArquivo);
-
-                  if (arquivos.length > 0) {
-                    const arquivo = arquivos[0];
-                    const byteCharacters = atob(arquivo.conteudoArquivo);
-                    const byteNumbers = new Array(byteCharacters.length);
-                    for (let i = 0; i < byteCharacters.length; i++) {
-                      byteNumbers[i] = byteCharacters.charCodeAt(i);
-                    }
-                    const byteArray = new Uint8Array(byteNumbers);
-                    const blob = new Blob([byteArray]);
-
-                    const url = window.URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = arquivo.nomeArquivo || anexo.name || 'documento';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    window.URL.revokeObjectURL(url);
-                  } else {
-                    toast.error('Arquivo não encontrado');
-                  }
-                } catch {
-                  toast.error('Erro ao baixar documento');
+              onDownload={async (anexoListItem) => {
+                const anexoOriginal = anexosTypeE.find(a => a.idAnexo === anexoListItem.idAnexo);
+                if (anexoOriginal) {
+                  await handleDownloadAnexoEmail(anexoOriginal);
                 }
               }}
             />
@@ -952,7 +937,7 @@ export default function SolicitacaoModal({
         )}
       </div>
     </div>
-  ), [anexos, anexosBackend, anexosTypeE, handleAddAnexos, handleRemoveAnexo, handleRemoveAnexoBackend, handleDownloadAnexoBackend]);
+  ), [anexos, anexosBackend, anexosTypeE, handleAddAnexos, handleRemoveAnexo, handleRemoveAnexoBackend, handleDownloadAnexoBackend, handleDownloadAnexoEmail]);
 
   const renderStep5 = useCallback(() => (
     <div className="space-y-6">
@@ -1114,7 +1099,7 @@ export default function SolicitacaoModal({
 
       {/* Anexos */}
       <div className="border-t pt-4">
-        <Label className="text-sm font-semibold text-gray-700">Anexos ({anexos.length + anexosBackend.length})</Label>
+        <Label className="text-sm font-semibold text-gray-700">Anexos ({anexos.length + anexosBackend.length + anexosTypeE.length})</Label>
         <div className="mt-2 space-y-2">
           {/* Anexos novos */}
           {anexos.length > 0 && (
@@ -1123,7 +1108,28 @@ export default function SolicitacaoModal({
               {anexos.map((file, index) => (
                 <div key={index} className="flex items-center justify-between p-2 bg-gray-50 border rounded text-sm">
                   <span className="font-medium">{file.name}</span>
-                  <span className="text-xs">{Math.round(file.size / 1024)} KB</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs">{Math.round(file.size / 1024)} KB</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const fileURL = URL.createObjectURL(file);
+                        const link = document.createElement('a');
+                        link.href = fileURL;
+                        link.download = file.name;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(fileURL);
+                      }}
+                      className="h-6 w-6 p-0 hover:bg-gray-200"
+                    >
+                      <DownloadSimpleIcon size={14} className="text-gray-600" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -1137,14 +1143,66 @@ export default function SolicitacaoModal({
                 {anexosBackend.map((anexo, index) => (
                   <div key={index} className="flex items-center justify-between p-2 bg-gray-50 border border-gray-200 rounded text-sm">
                     <span className="font-medium text-gray-800">{anexo.nmArquivo}</span>
-                    <span className="text-xs text-gray-600">Salvo</span>
+                    <div className="flex items-center gap-2">
+                    <span className="text-xs">{Math.round(anexo.size / 1024)} KB</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownloadAnexoBackend({
+                            idAnexo: anexo.idAnexo,
+                            idObjeto: anexo.idObjeto,
+                            name: anexo.nmArquivo,
+                            nmArquivo: anexo.nmArquivo,
+                            dsCaminho: anexo.dsCaminho,
+                            tpObjeto: anexo.tpObjeto,
+                            size: 0
+                          });
+                        }}
+                        className="h-6 w-6 p-0 hover:bg-gray-200"
+                      >
+                        <span className="text-xs">{Math.round(anexo.size / 1024)} KB</span>
+
+                        <DownloadSimpleIcon size={14} className="text-gray-600" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {anexos.length === 0 && anexosBackend.length === 0 && (
+          {anexosTypeE.length > 0 && (
+            <div>
+              <div className="text-xs text-gray-500 mb-2">Anexos do email:</div>
+              <div className="flex flex-col gap-2">
+                {anexosTypeE.map((anexo, index) => (
+                  <div key={index} className="flex items-center justify-between p-2 bg-gray-50 border border-gray-200 rounded text-sm">
+                  <span className="font-medium text-gray-800">{anexo.nmArquivo}</span>
+
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownloadAnexoEmail(anexo);
+                        }}
+                        className="h-6 w-6 p-0 hover:bg-blue-100"
+                      >
+                        <DownloadSimpleIcon size={14} className="text-gray-600" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {anexos.length === 0 && anexosBackend.length === 0 && anexosTypeE.length === 0 && (
             <div className="p-3 bg-gray-50 border rounded-lg text-sm text-gray-500 text-center">
               Nenhum anexo adicionado
             </div>
@@ -1152,7 +1210,7 @@ export default function SolicitacaoModal({
         </div>
       </div>
     </div>
-  ), [formData, getSelectedTema, responsaveis, anexos, anexosBackend, statusPrazos, statusList, prazoExcepcional, solicitacao?.statusCodigo, solicitacao?.nmTema, solicitacao?.tema?.nmTema, solicitacao?.statusSolicitacao?.idStatusSolicitacao, solicitacao?.statusSolicitacao?.nmStatus, allAreas, getResponsavelByArea]);
+  ), [formData, getSelectedTema, responsaveis, anexos, anexosBackend, anexosTypeE, statusPrazos, statusList, prazoExcepcional, solicitacao?.statusCodigo, solicitacao?.nmTema, solicitacao?.tema?.nmTema, solicitacao?.statusSolicitacao?.idStatusSolicitacao, solicitacao?.statusSolicitacao?.nmStatus, allAreas, getResponsavelByArea, handleDownloadAnexoEmail, handleDownloadAnexoBackend]);
 
   const renderStep1 = () => (
     <div className="space-y-6">
@@ -1275,10 +1333,10 @@ export default function SolicitacaoModal({
     }
   }, [formData.idTema, open, loadStatusPrazos]);
 
-  // Load anexos of type E when entering step 4
+  // Load anexos of type E when entering step 4 or step 5
   useEffect(() => {
     const loadAnexosTypeE = async () => {
-      if (currentStep === 4 && solicitacao?.idSolicitacao) {
+      if ((currentStep === 4 || currentStep === 5) && solicitacao?.idSolicitacao) {
         try {
           const anexosE = await anexosClient.buscarPorIdObjetoETipoObjeto(
             solicitacao.idSolicitacao,
