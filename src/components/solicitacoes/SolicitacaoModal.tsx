@@ -1160,10 +1160,7 @@ export default function SolicitacaoModal({
           <div>
             <Label className="text-sm font-semibold text-gray-700">Prazo Principal</Label>
             <div className="p-3 border border-yellow-200 rounded-lg text-sm">
-              {formData.nrPrazo && formData.nrPrazo > 0
-                ? `${formData.nrPrazo} ${(() => { switch (formData.tpPrazo) { case 'H': return 'horas'; case 'D': return 'dias'; case 'U': return 'dias úteis'; case 'M': return 'meses'; default: return 'unid.'; } })()}`
-                : 'Prazo padrão do tema'
-              }
+              {currentPrazoTotal} Horas
               {prazoExcepcional && (
                 <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
                   Excepcional
