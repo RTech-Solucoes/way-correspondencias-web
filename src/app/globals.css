@@ -104,6 +104,10 @@ body {
   overflow-x: hidden;
 }
 
+textarea {
+  @apply border border-input shadow-sm focus:shadow-md focus:ring-1 focus:ring-ring rounded-3xl;
+}
+
 article {
   @apply flex flex-col w-full overflow-auto min-h-screen;
 }
