@@ -1,3 +1,6 @@
+import { AnexoResponse } from "../anexos/type";
+import { TramitacaoAcao } from "../tramitacoes/types";
+
 export interface AreaSolicitacao {
   idArea: number;
   nmArea: string;
@@ -59,6 +62,7 @@ export interface SolicitacaoResponse extends BaseResponse {
   nrProcesso?: string;
   tpPrazo?: string;
   dtPrazo?: string;
+  flAnaliseGerenteDiretor?: string;
   nmResponsavel?: string;
   nmTema?: string;
   areas?: AreaSolicitacao[];
@@ -99,6 +103,7 @@ export interface SolicitacaoIdentificacaoRequest {
   dsObservacao?: string;
   nrOficio?: string;
   nrProcesso?: string;
+  flAnaliseGerenteDiretor?: string;
 }
 
 export interface SolicitacaoPrazoResponse {
@@ -150,15 +155,6 @@ export interface SolicitacaoTemaEtapaRequest {
   idsAreas?: number[];
 }
 
-export interface AnexoResponse {
-  idAnexo: number;
-  idObjeto: number;
-  tpObjeto: string;
-  nmArquivo: string;
-  dsCaminho: string;
-  flAtivo: string;
-}
-
 export interface EmailComAnexosResponse {
   email: Email;
   anexos: AnexoResponse[];
@@ -169,6 +165,8 @@ export interface TramitacaoResponse extends BaseResponse {
   idSolicitacao: number;
   dsTramitacao?: string;
   dtTramitacao?: string;
+  solicitacao: SolicitacaoResponse;
+  tramitacaoAcao: TramitacaoAcao[];
 }
 
 export interface TramitacaoComAnexosResponse {
@@ -178,6 +176,7 @@ export interface TramitacaoComAnexosResponse {
 
 export interface SolicitacaoDetalheResponse extends BaseResponse {
   solicitacao: SolicitacaoResponse;
+  statusSolicitacao: StatusSolicitacao;
   anexosSolicitacao: AnexoResponse[];
   email: EmailComAnexosResponse;
   tramitacoes: TramitacaoComAnexosResponse[];

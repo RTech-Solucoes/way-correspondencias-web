@@ -1,4 +1,4 @@
-import { deadlines } from "@/components/dashboard/MockDados";
+import {deadlines} from "@/components/dashboard/MockDados";
 import CardHeader from "../card-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { SolicitacaoPrazo } from "@/api/dashboard/type";
 import { getStatusColor } from "../functions";
 import { formatarDataHora } from "@/utils/FormattDate";
+
 
 export default function NextDeadlines() {
 

@@ -1,21 +1,20 @@
 'use client';
 
-import React, { useEffect, useCallback } from 'react';
+import React, {useCallback, useEffect} from 'react';
 import AreaModal from '../../components/areas/AreaModal';
 import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
 import {Pagination} from '@/components/ui/pagination';
-import { useAreas } from '@/context/areas/AreasContext';
-import { areasClient } from '@/api/areas/client';
-import { AreaFilterParams } from '@/api/areas/types';
-import { toast } from 'sonner';
-import { useDebounce } from '@/hooks/use-debounce';
-import HeaderArea from '@/components/areas/HeaderArea';
+import {useAreas} from '@/context/areas/AreasContext';
+import {areasClient} from '@/api/areas/client';
+import {AreaFilterParams} from '@/api/areas/types';
+import {toast} from 'sonner';
+import {useDebounce} from '@/hooks/use-debounce';
 import SearchArea from "@/components/areas/SearchArea";
 import TableArea from "@/components/areas/TableArea";
 import FilterModalArea from "@/components/areas/FilterModalArea";
 import PageTitle from '@/components/ui/page-title';
-import { ArrowClockwiseIcon } from '@phosphor-icons/react';
-import { Button } from '@nextui-org/react';
+import {ArrowClockwiseIcon} from '@phosphor-icons/react';
+import {Button} from '@nextui-org/react';
 
 export default function AreasPage() {
   const {
@@ -107,7 +106,6 @@ export default function AreasPage() {
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
-      {/* Header da página */}
       <div className="flex items-center justify-between">
         <PageTitle />
 
@@ -124,7 +122,7 @@ export default function AreasPage() {
 
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-500">
-              {areas?.length} área(s)
+              {areas?.length} {areas?.length > 1 ? "áreas" : "área"}
             </span>
           </div>
 
@@ -132,10 +130,9 @@ export default function AreasPage() {
             currentPage={currentPage}
             totalPages={totalPages}
             totalElements={totalElements}
-            pageSize={15}
             onPageChange={setCurrentPage}
             loading={loading}
-            showOnlyPagginationButtons={true}
+            showOnlyPaginationButtons={true}
           />
         </div>
       </div>
@@ -151,7 +148,6 @@ export default function AreasPage() {
         />
       </div>
 
-      {/* Área principal da tabela */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex-1 overflow-auto mb-6">
         <TableArea
           areas={areas}

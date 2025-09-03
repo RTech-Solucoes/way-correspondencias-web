@@ -8,8 +8,10 @@ import {
   SolicitacaoPrazoResponse,
   PagedResponse,
   SolicitacaoDetalheResponse,
+  TramitacaoResponse
 } from './types';
-import { solicitacaoAnexosClient, ArquivoDTO, AnexoResponse } from './anexos-client';
+import { solicitacaoAnexosClient } from './anexos-client';
+import { AnexoResponse, ArquivoDTO } from '../anexos/type';
 
 class SolicitacoesClient {
 
@@ -141,7 +143,6 @@ class SolicitacoesClient {
       method: 'GET',
     });
   }
-
 }
 
 export const solicitacoesClient = new SolicitacoesClient();

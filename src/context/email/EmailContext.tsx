@@ -1,13 +1,6 @@
 'use client'
 
-import {
-  Dispatch,
-  SetStateAction,
-  createContext,
-  useContext,
-  useState,
-  ReactNode,
-} from "react";
+import {createContext, Dispatch, ReactNode, SetStateAction, useContext, useState,} from "react";
 import {useRouter} from "next/navigation";
 
 interface EmailFiltersState {

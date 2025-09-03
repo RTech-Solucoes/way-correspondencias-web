@@ -1,14 +1,12 @@
 'use client';
 
-import React, {memo, useCallback, useMemo, useState, useEffect} from 'react';
-import {ArrowClockwiseIcon, EnvelopeSimpleIcon, SpinnerIcon, PaperclipIcon} from '@phosphor-icons/react';
-import {Button} from '@/components/ui/button';
+import React, {memo, useCallback, useEffect, useMemo, useState} from 'react';
+import {EnvelopeSimpleIcon, PaperclipIcon, SpinnerIcon} from '@phosphor-icons/react';
 import {cn} from '@/utils/utils';
-import { toast } from 'sonner';
-import { emailClient } from '@/api/email/client';
-import { EmailResponse } from '@/api/email/types';
-import { useDebounce } from '@/hooks/use-debounce';
-import { Pagination } from '@/components/ui/pagination';
+import {toast} from 'sonner';
+import {emailClient} from '@/api/email/client';
+import {EmailResponse} from '@/api/email/types';
+import {useDebounce} from '@/hooks/use-debounce';
 
 const formatDate = (dateString?: string): string => {
   if (!dateString) return '';
@@ -70,7 +68,6 @@ const EmailItem = memo<{
       onClick={handleClick}
     >
       <div className="flex items-start justify-between space-x-4">
-        {/* Lado esquerdo: Título e conteúdo */}
         <div className="flex-1 min-w-0 space-y-1">
           <div className="flex items-center space-x-2">
             <h3 className="text-sm font-semibold text-gray-900 truncate">
@@ -85,7 +82,6 @@ const EmailItem = memo<{
           </p>
         </div>
 
-        {/* Lado direito: Email e data/hora */}
         <div className="flex flex-col items-end space-y-1 flex-shrink-0 min-w-0 max-w-[200px]">
           <span className="text-xs text-gray-600 truncate max-w-full">
             {email.dsDestinatario || email.dsRemetente || 'debora@amit.gov.br'}

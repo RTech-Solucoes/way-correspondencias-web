@@ -1,11 +1,11 @@
 'use client';
 
 import * as React from 'react';
+import {ComponentPropsWithoutRef, ElementRef, forwardRef} from 'react';
 import * as CheckboxPrimitive from '@radix-ui/react-checkbox';
-import { CheckIcon } from '@phosphor-icons/react';
+import {CheckIcon} from '@phosphor-icons/react';
 
-import { cn } from '@/utils/utils';
-import {forwardRef, ComponentPropsWithoutRef, ElementRef} from 'react';
+import {cn} from '@/utils/utils';
 
 const Checkbox = forwardRef<
   ElementRef<typeof CheckboxPrimitive.Root>,

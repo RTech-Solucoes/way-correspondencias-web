@@ -1,7 +1,7 @@
-import {PaperclipIcon, CloudArrowUpIcon} from "@phosphor-icons/react";
+import {CloudArrowUpIcon} from "@phosphor-icons/react";
 import {Input} from "../ui/input";
-import { useDropzone } from 'react-dropzone';
-import { useCallback } from 'react';
+import {useDropzone} from 'react-dropzone';
+import {useCallback} from 'react';
 
 interface AnexoProps {
   onAddAnexos: (files: FileList | null) => void;

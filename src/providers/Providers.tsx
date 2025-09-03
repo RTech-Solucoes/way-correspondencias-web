@@ -9,6 +9,7 @@ import {SolicitacoesProvider} from '@/context/solicitacoes/SolicitacoesContext';
 import {TemasProvider} from '@/context/temas/TemasContext';
 import {ApiProvider} from "@/providers/ApiProvider";
 import IconProvider from "@/providers/IconProvider";
+import {PermissoesProvider} from "@/context/permissoes/PermissoesContext";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,19 +28,21 @@ export default function Providers({children}: ProvidersProps) {
   return (
     <QueryClientProvider client={queryClient}>
       <ApiProvider>
-        <AreasProvider>
-          <EmailProvider>
-            <ResponsaveisProvider>
-              <SolicitacoesProvider>
-                <TemasProvider>
-                  <IconProvider>
-                    {children}
-                  </IconProvider>
-                </TemasProvider>
-              </SolicitacoesProvider>
-            </ResponsaveisProvider>
-          </EmailProvider>
-        </AreasProvider>
+        <PermissoesProvider>
+          <AreasProvider>
+            <EmailProvider>
+              <ResponsaveisProvider>
+                <SolicitacoesProvider>
+                  <TemasProvider>
+                    <IconProvider>
+                      {children}
+                    </IconProvider>
+                  </TemasProvider>
+                </SolicitacoesProvider>
+              </ResponsaveisProvider>
+            </EmailProvider>
+          </AreasProvider>
+        </PermissoesProvider>
       </ApiProvider>
     </QueryClientProvider>
   );

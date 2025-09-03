@@ -1,20 +1,19 @@
 "use client";
 
 import EmailList from "@/components/email/EmailList";
-import EmailDetail from "@/components/email/EmailDetail";
 import PageTitle from "@/components/ui/page-title";
 import useEmail from "@/context/email/EmailContext";
 import EmailSearch from "@/components/email/EmailSearch";
 import FilterDialog from "@/components/email/FilterDialog";
-import { Button } from "@nextui-org/react";
-import { Pagination } from '@/components/ui/pagination';
+import {Button} from "@nextui-org/react";
+import {Pagination} from '@/components/ui/pagination';
 
-import { ArrowClockwiseIcon, SpinnerIcon } from "@phosphor-icons/react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
-import { emailClient } from "@/api/email/client";
-import { useDebounce } from "@/hooks/use-debounce";
-import { EmailResponse } from "@/api/email/types";
+import {ArrowClockwiseIcon} from "@phosphor-icons/react";
+import {useCallback, useEffect, useMemo, useState} from "react";
+import {toast} from "sonner";
+import {emailClient} from "@/api/email/client";
+import {useDebounce} from "@/hooks/use-debounce";
+import {EmailResponse} from "@/api/email/types";
 
 const formatDate = (dateString?: string): string => {
   if (!dateString) return '';
@@ -169,20 +168,16 @@ export default function EmailPage() {
           </Button>
 
           <span className="text-sm text-gray-500">
-            {filteredEmails?.length} email(s)
+            {filteredEmails?.length} {filteredEmails?.length > 1 ? "emails" : "email"}
           </span>
 
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
             totalElements={totalElements}
-            pageSize={15}
-            numberOfElements={numberOfElements}
-            first={first}
-            last={last}
             onPageChange={setCurrentPage}
             loading={loading}
-            showOnlyPagginationButtons={true}
+            showOnlyPaginationButtons={true}
           />
         </div>
       </div>

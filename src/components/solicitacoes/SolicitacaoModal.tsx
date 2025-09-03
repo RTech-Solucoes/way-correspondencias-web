@@ -1,46 +1,40 @@
 'use client';
 
-import { useState, useEffect, FormEvent, useCallback, ChangeEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import {ChangeEvent, FormEvent, useCallback, useEffect, useState} from 'react';
+import {useRouter} from 'next/navigation';
+import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog';
+import {Button} from '@/components/ui/button';
+import {TextField} from '@/components/ui/text-field';
+import {Textarea} from '@/components/ui/textarea';
+import {Label} from '@/components/ui/label';
+import {Checkbox} from '@/components/ui/checkbox';
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
+import {SolicitacaoRequest, SolicitacaoResponse} from '@/api/solicitacoes/types';
+import {ResponsavelResponse} from '@/api/responsaveis/types';
+import {TemaResponse} from '@/api/temas/types';
+import {solicitacoesClient} from '@/api/solicitacoes/client';
+import {toast} from 'sonner';
+import {base64ToUint8Array, capitalize, getRows, saveBlob} from '@/utils/utils';
+import {MultiSelectAreas} from '@/components/ui/multi-select-areas';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { TextField } from '@/components/ui/text-field';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
-import { SolicitacaoResponse, SolicitacaoRequest } from '@/api/solicitacoes/types';
-import { ResponsavelResponse } from '@/api/responsaveis/types';
-import { TemaResponse } from '@/api/temas/types';
-import { solicitacoesClient } from '@/api/solicitacoes/client';
-import { toast } from 'sonner';
-import { capitalize, getRows } from '@/utils/utils';
-import { MultiSelectAreas } from '@/components/ui/multi-select-areas';
-import { ArrowArcRightIcon, CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react';
-import { Stepper } from '@/components/ui/stepper';
-import { Input } from '@nextui-org/react';
+  ArrowArcRightIcon,
+  CaretLeftIcon,
+  CaretRightIcon,
+  DownloadSimpleIcon,
+  FloppyDiskIcon
+} from '@phosphor-icons/react';
+import {Stepper} from '@/components/ui/stepper';
+import {Input} from '@nextui-org/react';
 import AnexoComponent from '../AnexoComponotent/AnexoComponent';
 import AnexoList from '../AnexoComponotent/AnexoList/AnexoList';
-import { statusSolicPrazoTemaClient } from '@/api/status-prazo-tema/client';
-import { StatusSolicPrazoTemaForUI } from '@/api/status-prazo-tema/types';
-import { statusSolicitacaoClient, StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
-import { AnexoResponse } from '@/api/solicitacoes/anexos-client';
-import { areasClient } from '@/api/areas/client';
-import { anexosClient } from '@/api/anexos/client';
-import { AreaResponse } from '@/api/areas/types';
-import { TipoObjetoAnexo } from '@/api/anexos/type';
+import {statusSolicPrazoTemaClient} from '@/api/status-prazo-tema/client';
+import {StatusSolicPrazoTemaForUI} from '@/api/status-prazo-tema/types';
+import {statusSolicitacaoClient, StatusSolicitacaoResponse} from '@/api/status-solicitacao/client';
+import {AnexoResponse, TipoObjetoAnexo, TipoResponsavelAnexo} from '@/api/anexos/type';
+import {areasClient} from '@/api/areas/client';
+import {anexosClient} from '@/api/anexos/client';
+import {AreaResponse} from '@/api/areas/types';
+import {usePermissoes} from "@/context/permissoes/PermissoesContext";
 
 interface AnexoListItem {
   idAnexo?: number;
@@ -90,7 +84,8 @@ export default function SolicitacaoModal({
     nrPrazo: undefined,
     tpPrazo: '',
     nrOficio: '',
-    nrProcesso: ''
+    nrProcesso: '',
+    flAnaliseGerenteDiretor: ''
   });
   const [loading, setLoading] = useState(false);
   const [anexos, setAnexos] = useState<File[]>([]);
@@ -102,6 +97,7 @@ export default function SolicitacaoModal({
   const [statusList, setStatusList] = useState<StatusSolicitacaoResponse[]>([]);
   const [createdSolicitacao, setCreatedSolicitacao] = useState<SolicitacaoResponse | null>(null);
   const [allAreas, setAllAreas] = useState<AreaResponse[]>([]);
+  const { canListarAnexo, canInserirAnexo, canAtualizarAnexo, canDeletarAnexo } = usePermissoes();
 
   useEffect(() => {
     if (solicitacao) {
@@ -121,9 +117,9 @@ export default function SolicitacaoModal({
         nrPrazo: solicitacao.nrPrazo || undefined,
         tpPrazo: solicitacao.tpPrazo === 'C' ? 'H' : (solicitacao.tpPrazo || ''),
         nrOficio: solicitacao.nrOficio || '',
-        nrProcesso: solicitacao.nrProcesso || ''
+        nrProcesso: solicitacao.nrProcesso || '',
+        flAnaliseGerenteDiretor: solicitacao.flAnaliseGerenteDiretor || ''
       });
-      // Corrigido: prazoExcepcional sempre inicia como false para evitar ser marcado por padrão
       setPrazoExcepcional(false);
     } else {
       setFormData({
@@ -138,7 +134,8 @@ export default function SolicitacaoModal({
         nrPrazo: undefined,
         tpPrazo: '',
         nrOficio: '',
-        nrProcesso: ''
+        nrProcesso: '',
+        flAnaliseGerenteDiretor: ''
       });
       setPrazoExcepcional(false);
     }
@@ -216,7 +213,10 @@ export default function SolicitacaoModal({
 
   const isStep1Valid = useCallback(() => {
     return formData.cdIdentificacao?.trim() !== '' && 
-           (formData.flAnaliseGerenteDiretor === 'S' || formData.flAnaliseGerenteDiretor === 'N');
+      (formData.flAnaliseGerenteDiretor === 'D' ||
+      formData.flAnaliseGerenteDiretor === 'G' ||
+      formData.flAnaliseGerenteDiretor === 'N' ||
+      formData.flAnaliseGerenteDiretor === 'A');
   }, [formData.cdIdentificacao, formData.flAnaliseGerenteDiretor]);
 
   const isStep2Valid = useCallback(() => {
@@ -247,6 +247,7 @@ export default function SolicitacaoModal({
           dsObservacao: formData.dsObservacao?.trim(),
           nrOficio: formData.nrOficio?.trim(),
           nrProcesso: formData.nrProcesso?.trim(),
+          flAnaliseGerenteDiretor: formData.flAnaliseGerenteDiretor
         });
 
         setCurrentStep(2);
@@ -341,7 +342,8 @@ export default function SolicitacaoModal({
               return {
                 nomeArquivo: file.name.trim(),
                 conteudoArquivo: base64Content,
-                tipoArquivo: file.type || 'application/octet-stream'
+                tipoArquivo: file.type || 'application/octet-stream',
+                tpResponsavel: TipoResponsavelAnexo.A // TODO: Colocado apenas para remover erro, necessário ajustar depois
               };
             })
           );
@@ -421,23 +423,36 @@ export default function SolicitacaoModal({
       const arquivos = await solicitacoesClient.downloadAnexo(anexo.idObjeto, anexo.nmArquivo);
 
       if (arquivos.length > 0) {
-        const arquivo = arquivos[0];
-        const byteCharacters = atob(arquivo.conteudoArquivo);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: arquivo.tipoArquivo });
+        arquivos.forEach((arquivo) => {
+          const bytes = base64ToUint8Array(arquivo.conteudoArquivo);
+          const filename = arquivo.nomeArquivo || anexo.name || 'documento';
+          const mime = arquivo.tipoConteudo || 'application/octet-stream';
+          saveBlob(bytes, mime, filename);
+        });
+      } else {
+        toast.error('Arquivo não encontrado');
+      }
+    } catch {
+      toast.error('Erro ao baixar documento');
+    }
+  }, []);
 
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = arquivo.nomeArquivo || anexo.name || 'documento';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
+  const handleDownloadAnexoEmail = useCallback(async (anexo: AnexoResponse) => {
+    try {
+      if (!anexo.idObjeto || !anexo.nmArquivo) {
+        toast.error('Dados do documento incompletos');
+        return;
+      }
+
+      const arquivos = await anexosClient.download(anexo.idObjeto, TipoObjetoAnexo.E, anexo.nmArquivo);
+
+      if (arquivos.length > 0) {
+        arquivos.forEach((arquivo) => {
+          const bytes = base64ToUint8Array(arquivo.conteudoArquivo);
+          const filename = arquivo.nomeArquivo || anexo.nmArquivo || 'documento';
+          const mime = arquivo.tipoConteudo || 'application/octet-stream';
+          saveBlob(bytes, mime, filename);
+        });
       } else {
         toast.error('Arquivo não encontrado');
       }
@@ -485,6 +500,7 @@ export default function SolicitacaoModal({
           dsObservacao: formData.dsObservacao?.trim(),
           nrOficio: formData.nrOficio?.trim(),
           nrProcesso: formData.nrProcesso?.trim(),
+          flAnaliseGerenteDiretor: formData.flAnaliseGerenteDiretor
         });
 
         await solicitacoesClient.etapaTema(id, {
@@ -524,7 +540,8 @@ export default function SolicitacaoModal({
               return {
                 nomeArquivo: file.name.trim(),
                 conteudoArquivo: base64.split(',')[1],
-                tipoArquivo: file.type || 'application/octet-stream'
+                tipoArquivo: file.type || 'application/octet-stream',
+                tpResponsavel: TipoResponsavelAnexo.A // TODO: Colocado apenas para remover erro, necessário ajustar depois
               };
             })
           );
@@ -552,6 +569,120 @@ export default function SolicitacaoModal({
     onClose();
   }, [onClose]);
 
+  const renderStep1 = () => (
+    <div className="space-y-6">
+      <div className="grid grid-cols-3 gap-4">
+        <TextField
+          label="Código de Identificação *"
+          name="cdIdentificacao"
+          value={formData.cdIdentificacao}
+          onChange={handleInputChange}
+          required
+          autoFocus
+          maxLength={50}
+        />
+        <TextField
+          label="Nº Ofício"
+          name="nrOficio"
+          value={formData.nrOficio}
+          onChange={handleInputChange}
+          maxLength={50}
+        />
+        <TextField
+          label="Nº Processo"
+          name="nrProcesso"
+          value={formData.nrProcesso}
+          onChange={handleInputChange}
+          maxLength={50}
+        />
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="flAnaliseGerenteDiretor" className="text-sm font-medium">
+            Exige análise do Gerente ou Diretor? *
+          </Label>
+          <div className="flex items-center gap-4 mt-2">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={formData.flAnaliseGerenteDiretor === 'G'}
+                onCheckedChange={() => setFormData(prev => ({
+                  ...prev,
+                  flAnaliseGerenteDiretor: 'G'
+                }))}
+              />
+              <Label className="text-sm font-light">Gerente</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={formData.flAnaliseGerenteDiretor === 'D'}
+                onCheckedChange={() => setFormData(prev => ({
+                  ...prev,
+                  flAnaliseGerenteDiretor: 'D'
+                }))}
+              />
+              <Label className="text-sm font-light ">Diretor</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={formData.flAnaliseGerenteDiretor === 'A'}
+                onCheckedChange={() => setFormData(prev => ({
+                  ...prev,
+                  flAnaliseGerenteDiretor: 'A'
+                }))}
+              />
+              <Label className="text-sm font-light">Ambos</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={formData.flAnaliseGerenteDiretor === 'N'}
+                onCheckedChange={() => setFormData(prev => ({
+                  ...prev,
+                  flAnaliseGerenteDiretor: 'N'
+                }))}
+              />
+              <Label className="text-sm font-light">Não necessita</Label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="dsAssunto">Assunto</Label>
+        <Textarea
+          id="dsAssunto"
+          name="dsAssunto"
+          value={formData.dsAssunto}
+          onChange={handleInputChange}
+          rows={getRows(formData.dsAssunto)}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="dsObservacao">Observações</Label>
+        <Textarea
+          id="dsObservacao"
+          name="dsObservacao"
+          value={formData.dsObservacao}
+          onChange={handleInputChange}
+          rows={getRows(formData.dsObservacao)}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="dsSolicitacao">Descrição da Solicitação</Label>
+        <Textarea
+          id="dsSolicitacao"
+          name="dsSolicitacao"
+          value={formData.dsSolicitacao}
+          onChange={handleInputChange}
+          rows={getRows(formData.dsSolicitacao)}
+          disabled
+        />
+      </div>
+    </div>
+  );
+
   const renderStep2 = useCallback(() => (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -573,7 +704,6 @@ export default function SolicitacaoModal({
             <SelectValue placeholder="Selecione o tema" />
           </SelectTrigger>
           <SelectContent>
-            {/* Show the current tema from solicitacao if it's not in the temas list */}
             {solicitacao?.tema && !temas.find(t => t.idTema === solicitacao.tema!.idTema) && (
               <SelectItem key={solicitacao.tema.idTema} value={solicitacao.tema.idTema.toString()}>
                 {solicitacao.tema.nmTema}
@@ -913,38 +1043,10 @@ export default function SolicitacaoModal({
                   console.log('Remove anexo type E:', anexo.idAnexo);
                 }
               }}
-              onDownload={async (anexo) => {
-                try {
-                  if (!anexo.idObjeto || !anexo.nmArquivo) {
-                    toast.error('Dados do documento incompletos');
-                    return;
-                  }
-
-                  const arquivos = await anexosClient.download(anexo.idObjeto, TipoObjetoAnexo.E, anexo.nmArquivo);
-
-                  if (arquivos.length > 0) {
-                    const arquivo = arquivos[0];
-                    const byteCharacters = atob(arquivo.conteudoArquivo);
-                    const byteNumbers = new Array(byteCharacters.length);
-                    for (let i = 0; i < byteCharacters.length; i++) {
-                      byteNumbers[i] = byteCharacters.charCodeAt(i);
-                    }
-                    const byteArray = new Uint8Array(byteNumbers);
-                    const blob = new Blob([byteArray]);
-
-                    const url = window.URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = arquivo.nomeArquivo || anexo.name || 'documento';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    window.URL.revokeObjectURL(url);
-                  } else {
-                    toast.error('Arquivo não encontrado');
-                  }
-                } catch {
-                  toast.error('Erro ao baixar documento');
+              onDownload={async (anexoListItem) => {
+                const anexoOriginal = anexosTypeE.find(a => a.idAnexo === anexoListItem.idAnexo);
+                if (anexoOriginal) {
+                  await handleDownloadAnexoEmail(anexoOriginal);
                 }
               }}
             />
@@ -952,7 +1054,7 @@ export default function SolicitacaoModal({
         )}
       </div>
     </div>
-  ), [anexos, anexosBackend, anexosTypeE, handleAddAnexos, handleRemoveAnexo, handleRemoveAnexoBackend, handleDownloadAnexoBackend]);
+  ), [anexos, anexosBackend, anexosTypeE, handleAddAnexos, handleRemoveAnexo, handleRemoveAnexoBackend, handleDownloadAnexoBackend, handleDownloadAnexoEmail]);
 
   const renderStep5 = useCallback(() => (
     <div className="space-y-6">
@@ -989,16 +1091,16 @@ export default function SolicitacaoModal({
         </div>
 
         <div>
-          <Label className="text-sm font-semibold text-gray-700">Descrição da Solicitação</Label>
+          <Label className="text-sm font-semibold text-gray-700">Observações</Label>
           <div className="p-3 bg-gray-50 border rounded-lg text-sm max-h-24 overflow-y-auto">
-            {formData.dsSolicitacao || 'Não informado'}
+            {formData.dsObservacao || 'Não informado'}
           </div>
         </div>
 
         <div>
-          <Label className="text-sm font-semibold text-gray-700">Observações</Label>
+          <Label className="text-sm font-semibold text-gray-700">Descrição da Solicitação</Label>
           <div className="p-3 bg-gray-50 border rounded-lg text-sm max-h-24 overflow-y-auto">
-            {formData.dsObservacao || 'Não informado'}
+            {formData.dsSolicitacao || 'Não informado'}
           </div>
         </div>
       </div>
@@ -1114,7 +1216,7 @@ export default function SolicitacaoModal({
 
       {/* Anexos */}
       <div className="border-t pt-4">
-        <Label className="text-sm font-semibold text-gray-700">Anexos ({anexos.length + anexosBackend.length})</Label>
+        <Label className="text-sm font-semibold text-gray-700">Anexos ({anexos.length + anexosBackend.length + anexosTypeE.length})</Label>
         <div className="mt-2 space-y-2">
           {/* Anexos novos */}
           {anexos.length > 0 && (
@@ -1123,7 +1225,28 @@ export default function SolicitacaoModal({
               {anexos.map((file, index) => (
                 <div key={index} className="flex items-center justify-between p-2 bg-gray-50 border rounded text-sm">
                   <span className="font-medium">{file.name}</span>
-                  <span className="text-xs">{Math.round(file.size / 1024)} KB</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs">{Math.round(file.size / 1024)} KB</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const fileURL = URL.createObjectURL(file);
+                        const link = document.createElement('a');
+                        link.href = fileURL;
+                        link.download = file.name;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(fileURL);
+                      }}
+                      className="h-6 w-6 p-0 hover:bg-gray-200"
+                    >
+                      <DownloadSimpleIcon size={14} className="text-gray-600" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -1137,14 +1260,66 @@ export default function SolicitacaoModal({
                 {anexosBackend.map((anexo, index) => (
                   <div key={index} className="flex items-center justify-between p-2 bg-gray-50 border border-gray-200 rounded text-sm">
                     <span className="font-medium text-gray-800">{anexo.nmArquivo}</span>
-                    <span className="text-xs text-gray-600">Salvo</span>
+                    <div className="flex items-center gap-2">
+                    {/*<span className="text-xs">{Math.round(anexo.size / 1024)} KB</span>*/}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownloadAnexoBackend({
+                            idAnexo: anexo.idAnexo,
+                            idObjeto: anexo.idObjeto,
+                            name: anexo.nmArquivo,
+                            nmArquivo: anexo.nmArquivo,
+                            dsCaminho: anexo.dsCaminho,
+                            tpObjeto: anexo.tpObjeto,
+                            size: 0
+                          });
+                        }}
+                        className="h-6 w-6 p-0 hover:bg-gray-200"
+                      >
+                        {/*<span className="text-xs">{Math.round(anexo.size / 1024)} KB</span>*/}
+
+                        <DownloadSimpleIcon size={14} className="text-gray-600" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {anexos.length === 0 && anexosBackend.length === 0 && (
+          {anexosTypeE.length > 0 && (
+            <div>
+              <div className="text-xs text-gray-500 mb-2">Anexos do email:</div>
+              <div className="flex flex-col gap-2">
+                {anexosTypeE.map((anexo, index) => (
+                  <div key={index} className="flex items-center justify-between p-2 bg-gray-50 border border-gray-200 rounded text-sm">
+                  <span className="font-medium text-gray-800">{anexo.nmArquivo}</span>
+
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownloadAnexoEmail(anexo);
+                        }}
+                        className="h-6 w-6 p-0 hover:bg-blue-100"
+                      >
+                        <DownloadSimpleIcon size={14} className="text-gray-600" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {anexos.length === 0 && anexosBackend.length === 0 && anexosTypeE.length === 0 && (
             <div className="p-3 bg-gray-50 border rounded-lg text-sm text-gray-500 text-center">
               Nenhum anexo adicionado
             </div>
@@ -1152,101 +1327,9 @@ export default function SolicitacaoModal({
         </div>
       </div>
     </div>
-  ), [formData, getSelectedTema, responsaveis, anexos, anexosBackend, statusPrazos, statusList, prazoExcepcional, solicitacao?.statusCodigo, solicitacao?.nmTema, solicitacao?.tema?.nmTema, solicitacao?.statusSolicitacao?.idStatusSolicitacao, solicitacao?.statusSolicitacao?.nmStatus, allAreas, getResponsavelByArea]);
+  ), [formData, getSelectedTema, responsaveis, anexos, anexosBackend, anexosTypeE, statusPrazos, statusList, prazoExcepcional, solicitacao?.statusCodigo, solicitacao?.nmTema, solicitacao?.tema?.nmTema, solicitacao?.statusSolicitacao?.idStatusSolicitacao, solicitacao?.statusSolicitacao?.nmStatus, allAreas, getResponsavelByArea, handleDownloadAnexoEmail, handleDownloadAnexoBackend]);
 
-  const renderStep1 = () => (
-    <div className="space-y-6">
-      <div className="grid grid-cols-3 gap-4">
-        <TextField
-          label="Código de Identificação *"
-          name="cdIdentificacao"
-          value={formData.cdIdentificacao}
-          onChange={handleInputChange}
-          required
-          autoFocus
-          maxLength={50}
-        />
-        <TextField
-          label="Nº Ofício"
-          name="nrOficio"
-          value={formData.nrOficio}
-          onChange={handleInputChange}
-          maxLength={50}
-        />
-        <TextField
-          label="Nº Processo"
-          name="nrProcesso"
-          value={formData.nrProcesso}
-          onChange={handleInputChange}
-          maxLength={50}
-        />
-      </div>
 
-      <div className="grid grid-cols-3 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="flAnaliseGerenteDiretor" className="text-sm font-medium text-gray-700">
-            Exige análise do Gerente ou Diretor? <span className="text-red-500">*</span>
-          </Label>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                checked={formData.flAnaliseGerenteDiretor === 'S'}
-                onCheckedChange={() => setFormData(prev => ({
-                  ...prev,
-                  flAnaliseGerenteDiretor: 'S'
-                }))}
-              />
-              <Label>Sim</Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Checkbox
-                checked={formData.flAnaliseGerenteDiretor === 'N'}
-                onCheckedChange={() => setFormData(prev => ({
-                  ...prev,
-                  flAnaliseGerenteDiretor: 'N'
-                }))}
-              />
-              <Label>Não</Label>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="dsAssunto">Assunto</Label>
-        <Textarea
-          id="dsAssunto"
-          name="dsAssunto"
-          value={formData.dsAssunto}
-          onChange={handleInputChange}
-          rows={getRows(formData.dsAssunto)}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="dsSolicitacao">Descrição da Solicitação</Label>
-        <Textarea
-          id="dsSolicitacao"
-          name="dsSolicitacao"
-          value={formData.dsSolicitacao}
-          onChange={handleInputChange}
-          rows={getRows(formData.dsSolicitacao)}
-          disabled
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="dsObservacao">Observações</Label>
-        <Textarea
-          id="dsObservacao"
-          name="dsObservacao"
-          value={formData.dsObservacao}
-          onChange={handleInputChange}
-          rows={getRows(formData.dsObservacao)}
-        />
-      </div>
-    </div>
-  );
 
   useEffect(() => {
     if (currentStep === 3 && formData.idTema) {
@@ -1275,10 +1358,10 @@ export default function SolicitacaoModal({
     }
   }, [formData.idTema, open, loadStatusPrazos]);
 
-  // Load anexos of type E when entering step 4
+  // Load anexos of type E when entering step 4 or step 5
   useEffect(() => {
     const loadAnexosTypeE = async () => {
-      if (currentStep === 4 && solicitacao?.idSolicitacao) {
+      if ((currentStep === 4 || currentStep === 5) && solicitacao?.idSolicitacao) {
         try {
           const anexosE = await anexosClient.buscarPorIdObjetoETipoObjeto(
             solicitacao.idSolicitacao,
@@ -1341,7 +1424,8 @@ export default function SolicitacaoModal({
 
         <DialogFooter className="flex gap-3 pt-6 border-t flex-shrink-0">
           <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
-            Sair
+            <FloppyDiskIcon size={16} className="mr-2"/>
+            Salvar
           </Button>
 
           {currentStep === 1 && (

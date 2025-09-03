@@ -1,7 +1,7 @@
 import {type ClassValue, clsx} from 'clsx';
 import {twMerge} from 'tailwind-merge';
 import {StatusAtivo} from "@/types/misc/types";
-import { ArquivoDTO } from '@/api/anexos/type';
+import {ArquivoDTO, TipoResponsavelAnexo} from '@/api/anexos/type';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -142,7 +142,45 @@ export async function fileToArquivoDTO(file: File): Promise<ArquivoDTO> {
   const conteudoArquivo = await fileToBase64String(file);
   return {
     nomeArquivo: file.name,
-    tipoConteudo: file.type || null,
     conteudoArquivo,
+    tipoConteudo: file.type || null || undefined,
+    tpResponsavel: TipoResponsavelAnexo.A, // TODO: Colocado apenas para remover erro, necessário ajustar depois
   };
 }
+
+export const formatCPF = (cpf: string): string => {
+  if (!cpf) return '';
+    const cleanCPF = cpf.replace(/\D/g, '');
+  
+  if (cleanCPF.length === 11) {
+    return cleanCPF.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+  }
+  
+  return cpf; 
+};
+
+export const validateCPF = (cpf: string): boolean => {
+  const cpfLimpo = cpf.replace(/\D/g, '');
+
+  if (cpfLimpo.length !== 11) return false;
+
+  if (/^(\d)\1{10}$/.test(cpfLimpo)) return false;
+
+  let soma = 0;
+  for (let i = 0; i < 9; i++) {
+    soma += parseInt(cpfLimpo[i]) * (10 - i);
+  }
+  let resto = soma % 11;
+  const digito1 = resto < 2 ? 0 : 11 - resto;
+
+  if (parseInt(cpfLimpo[9]) !== digito1) return false;
+
+  soma = 0;
+  for (let i = 0; i < 10; i++) {
+    soma += parseInt(cpfLimpo[i]) * (11 - i);
+  }
+  resto = soma % 11;
+  const digito2 = resto < 2 ? 0 : 11 - resto;
+
+  return parseInt(cpfLimpo[10]) === digito2;
+};

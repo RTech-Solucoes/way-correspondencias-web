@@ -1,18 +1,12 @@
 'use client';
 
-import React, {useState, useEffect, useCallback, FormEvent} from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter
-} from '@/components/ui/dialog';
+import React, {FormEvent, useCallback, useEffect, useState} from 'react';
+import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog';
 import {Button} from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import {Input} from '@/components/ui/input';
 import {Label} from '@/components/ui/label';
 import {Textarea} from '@/components/ui/textarea';
-import {AreaResponse, AreaRequest} from '@/api/areas/types';
+import {AreaRequest, AreaResponse} from '@/api/areas/types';
 import areasClient from '@/api/areas/client';
 import {SpinnerIcon, WarningCircleIcon, WarningIcon} from "@phosphor-icons/react";
 

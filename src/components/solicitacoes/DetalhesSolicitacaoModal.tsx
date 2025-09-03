@@ -13,11 +13,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { ClockIcon, DownloadIcon, PaperclipIcon, X as XIcon } from '@phosphor-icons/react';
-import { SolicitacaoDetalheResponse, SolicitacaoResponse } from '@/api/solicitacoes/types';
-import { ArquivoDTO, TipoObjetoAnexo } from '@/api/anexos/type';
+import {SolicitacaoDetalheResponse, SolicitacaoResponse} from '@/api/solicitacoes/types';
+import { ArquivoDTO, TipoObjetoAnexo, TipoResponsavelAnexo } from '@/api/anexos/type';
 import { anexosClient } from '@/api/anexos/client';
-import { base64ToUint8Array, saveBlob } from '@/utils/utils';
+import { base64ToUint8Array, fileToArquivoDTO, saveBlob } from '@/utils/utils';
 import tramitacoesClient from '@/api/tramitacoes/client';
+import { HistoricoRespostasModalButton } from './HistoricoRespostasModal';
 
 type AnexoItemShape = {
   idAnexo: number;
@@ -28,7 +29,7 @@ type AnexoItemShape = {
 type DetalhesSolicitacaoModalProps = {
   open: boolean;
   onClose(): void;
-  solicitacao: SolicitacaoDetalheResponse | SolicitacaoResponse | null;
+  solicitacao: SolicitacaoResponse | SolicitacaoDetalheResponse | null;
   anexos?: AnexoItemShape[];
   onHistoricoRespostas?(): void;
   onAbrirEmailOriginal?(): void;
@@ -46,6 +47,19 @@ const formatDateTime = (iso?: string | null) => {
 
 const MAX_DESC_LINES = 6;
 
+/** Apenas para DESCRIÇÃO: remove \r e transforma \n em <br/> */
+function renderDescricaoWithBreaks(text?: string | null) {
+  if (!text) return '—';
+  const cleaned = text.replace(/\r/g, '');
+  const parts = cleaned.split('\n');
+  return parts.map((line, i) => (
+    <span key={i}>
+      {line}
+      {i < parts.length - 1 && <br />}
+    </span>
+  ));
+}
+
 export default function DetalhesSolicitacaoModal({
   open,
   onClose,
@@ -58,38 +72,13 @@ export default function DetalhesSolicitacaoModal({
   const [arquivos, setArquivos] = useState<File[]>([]);
   const [expandDescricao, setExpandDescricao] = useState(false);
   const [sending, setSending] = useState(false);
-  const [dsObservacao, setDsObservacao] = useState('');
+
+  // ref e medição APENAS para a Descrição
   const descRef = useRef<HTMLParagraphElement | null>(null);
   const [canToggleDescricao, setCanToggleDescricao] = useState(false);
   const [lineHeightPx, setLineHeightPx] = useState<number | null>(null);
 
-  const isSolicitacaoDetalheResponse = (
-    value: unknown
-  ): value is SolicitacaoDetalheResponse => {
-    return (
-      !!value &&
-      typeof value === 'object' &&
-      'solicitacao' in (value as Record<string, unknown>) &&
-      !!(value as { solicitacao?: unknown }).solicitacao &&
-      typeof (value as { solicitacao?: unknown }).solicitacao === 'object' &&
-      'idSolicitacao' in ((value as { solicitacao: Record<string, unknown> }).solicitacao as Record<string, unknown>)
-    );
-  };
-
-  const sol = useMemo(() => {
-    if (!solicitacao) return null;
-    return isSolicitacaoDetalheResponse(solicitacao)
-      ? solicitacao.solicitacao
-      : (solicitacao as SolicitacaoResponse);
-  }, [solicitacao]);
-
-  useEffect(() => {
-    if (open && sol?.dsObservacao) {
-      setDsObservacao(sol.dsObservacao);
-    } else if (open) {
-      setDsObservacao('');
-    }
-  }, [open, sol?.dsObservacao]);
+  const sol = solicitacao ?? null;
 
   const identificador = useMemo(
     () => (sol?.cdIdentificacao ? `#${sol.cdIdentificacao}` : ''),
@@ -103,14 +92,14 @@ export default function DetalhesSolicitacaoModal({
 
   const assunto = sol?.dsAssunto ?? '';
   const descricao = sol?.dsSolicitacao ?? '';
-  const areas = Array.isArray(sol?.tema?.areas)
-    ? (sol!.tema!.areas! as Array<{ nmArea: string; idArea?: number; cdArea?: string }>)
+  const observacao = sol?.dsObservacao && sol?.dsObservacao.trim().length > 0 ? sol?.dsObservacao : null;
+  const areas = Array.isArray(sol?.area)
+    ? (sol!.area! as Array<{ nmArea: string; idArea?: number; cdArea?: string }>)
     : [];
 
   const temaLabel = sol?.tema?.nmTema ?? sol?.nmTema ?? '—';
 
-  const anexosSolic: { idAnexo: number; nmArquivo: string; tpObjeto: string }[] =
-    isSolicitacaoDetalheResponse(solicitacao) ? solicitacao.anexosSolicitacao : [];
+  const anexosSolic = solicitacao?.anexosSolicitacao ?? [];
   const mapToItem = (a: { idAnexo: number; nmArquivo: string; tpObjeto: string }): AnexoItemShape => ({
     idAnexo: a.idAnexo,
     nmArquivo: a.nmArquivo,
@@ -196,10 +185,16 @@ export default function DetalhesSolicitacaoModal({
         setSending(true);
 
         if (arquivos.length > 0) {
-          await tramitacoesClient.uploadAnexos(sol.idSolicitacao, arquivos);
+          const arquivosDTO: ArquivoDTO[] = await Promise.all(arquivos.map(fileToArquivoDTO));
+          arquivosDTO.forEach((a) => {
+            a.tpResponsavel = TipoResponsavelAnexo.A; // TODO: tornar dinâmico
+          });
+          await tramitacoesClient.uploadAnexos(sol.idSolicitacao, arquivosDTO);
         }
 
         await onEnviarDevolutiva(resposta.trim(), []);
+
+        toast.success('Resposta enviada com sucesso!');
         setResposta('');
         setArquivos([]);
         onClose();
@@ -248,6 +243,8 @@ export default function DetalhesSolicitacaoModal({
     !expandDescricao && lineHeightPx
       ? { maxHeight: `${lineHeightPx * MAX_DESC_LINES}px`, overflow: 'hidden' }
       : {};
+
+  const quantidadeDevolutivas = solicitacao?.tramitacoes?.filter(t => !!t?.tramitacao?.solicitacao?.dsObservacao)?.length ?? 0;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -332,6 +329,19 @@ export default function DetalhesSolicitacaoModal({
 
           <section className="space-y-2">
             <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Observação</h3>
+            </div>
+
+            <div className="rounded-md border bg-muted/30 p-4">
+              {/* Observação permanece sem interpretação especial de \n/\r */}
+              <p className="text-sm text-muted-foreground">
+                { observacao ?? '—'}
+              </p>
+            </div>
+          </section>
+
+          <section className="space-y-2">
+            <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">Descrição</h3>
             </div>
 
@@ -341,7 +351,7 @@ export default function DetalhesSolicitacaoModal({
                 className="text-sm text-muted-foreground"
                 style={descricaoCollapsedStyle}
               >
-                {descricao || '—'}
+                {descricao ? renderDescricaoWithBreaks(descricao) : '—'}
               </p>
 
               {descricao && descricao.length > 0 && canToggleDescricao && (
@@ -397,30 +407,18 @@ export default function DetalhesSolicitacaoModal({
 
           <section className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Observação da Solicitação</h3>
-            </div>
-          <div className="space-y-2">
-              <div className="rounded-md border bg-muted/30 p-4">
-                <Textarea
-                  id="dsObservacao"
-                  placeholder="Observações sobre esta solicitação..."
-                  value={dsObservacao}
-                  onChange={(e) => setDsObservacao(e.target.value)}
-                  rows={4}
-                  className="bg-gray-50"
-                  disabled
-                />
-              </div>
-            </div>
-          </section>
-
-          <section className="space-y-3">
-            <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">Enviar devolutiva ao Regulatório</h3>
+
+              <HistoricoRespostasModalButton
+                idSolicitacao={sol?.idSolicitacao ?? null}
+                showButton={!!quantidadeDevolutivas}
+                quantidadeDevolutivas={quantidadeDevolutivas}
+              />
             </div>
-              <div className="rounded-md border bg-muted/30 p-4">
-                <Label htmlFor="resposta" className="sr-only">
-                  Escreva aqui…
+
+            <div className="rounded-md border bg-muted/30 p-4">
+              <Label htmlFor="resposta" className="sr-only">
+                Escreva aqui…
               </Label>
               <Textarea
                 id="resposta"

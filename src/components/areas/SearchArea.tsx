@@ -1,7 +1,7 @@
-import { FunnelSimpleIcon, MagnifyingGlassIcon, XIcon } from "@phosphor-icons/react";
-import { Dispatch, SetStateAction } from "react";
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
+import {FunnelSimpleIcon, MagnifyingGlassIcon, XIcon} from "@phosphor-icons/react";
+import {Dispatch, SetStateAction} from "react";
+import {Button} from "../ui/button";
+import {Input} from "../ui/input";
 
 interface ISearchArea {
     setSearchQuery: Dispatch<SetStateAction<string>>;

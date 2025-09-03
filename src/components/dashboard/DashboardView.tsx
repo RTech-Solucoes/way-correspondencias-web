@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import {useEffect, useState} from 'react';
 import DashboardHeader from './DashboardHeader/DashboardHeader';
 import DeadlinesCalendar from './DeadlinesCalendar/DeadlinesCalendar';
 import NextDeadlines from './NextDeadlines/NextDeadlines';

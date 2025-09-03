@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { forwardRef, HTMLAttributes, TdHTMLAttributes, ThHTMLAttributes } from 'react';
-import { cn } from '@/utils/utils';
+import {forwardRef, HTMLAttributes, TdHTMLAttributes, ThHTMLAttributes} from 'react';
+import {cn} from '@/utils/utils';
 
 const StickyTable = forwardRef<
   HTMLTableElement,

@@ -1,11 +1,11 @@
 'use client';
 
 import * as React from 'react';
+import {ComponentPropsWithoutRef, ElementRef, forwardRef} from 'react';
 import * as SelectPrimitive from '@radix-ui/react-select';
-import { CheckIcon, CaretDownIcon, CaretUpIcon } from '@phosphor-icons/react';
+import {CaretDownIcon, CaretUpIcon, CheckIcon} from '@phosphor-icons/react';
 
-import { cn } from '@/utils/utils';
-import {forwardRef, ComponentPropsWithoutRef, ElementRef} from 'react';
+import {cn} from '@/utils/utils';
 
 const Select = SelectPrimitive.Root;
 
