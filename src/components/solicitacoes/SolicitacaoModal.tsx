@@ -98,6 +98,7 @@ export default function SolicitacaoModal({
   const [createdSolicitacao, setCreatedSolicitacao] = useState<SolicitacaoResponse | null>(null);
   const [allAreas, setAllAreas] = useState<AreaResponse[]>([]);
   const { canListarAnexo, canInserirAnexo, canAtualizarAnexo, canDeletarAnexo } = usePermissoes();
+  const [hasLoadedStatusPrazos, setHasLoadedStatusPrazos] = useState(false);
 
   useEffect(() => {
     if (solicitacao) {
@@ -727,8 +728,8 @@ export default function SolicitacaoModal({
     </div>
   ), [formData.idTema, formData.idsAreas, temas, getResponsavelFromTema, handleAreasSelectionChange, solicitacao]);
 
-  const loadStatusPrazos = useCallback(async () => {
-    if (!formData.idTema) return;
+  const loadStatusPrazos = useCallback(async (isRefresh: boolean = false) => {
+    if (!formData.idTema || (hasLoadedStatusPrazos && !isRefresh)) return;
 
     try {
       setLoadingStatusPrazos(true);
@@ -820,6 +821,7 @@ export default function SolicitacaoModal({
       toast.error('Erro ao carregar configurações de prazos');
     } finally {
       setLoadingStatusPrazos(false);
+      setHasLoadedStatusPrazos(true);
     }
   }, [formData.idTema, temas]);
 
@@ -886,7 +888,7 @@ export default function SolicitacaoModal({
 
                       if (!ativo && formData.idTema) {
                         try {
-                          await loadStatusPrazos();
+                          await loadStatusPrazos(true);
                           setFormData(prev => ({
                             ...prev,
                             nrPrazo: selectedTema?.nrPrazo || undefined,
