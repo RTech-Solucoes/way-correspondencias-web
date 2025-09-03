@@ -87,7 +87,7 @@ export default function HistoricoRespostasModal({
           ) : (
             <div className="space-y-4">
               {respostas.map((resposta) => {
-                const observacao = resposta.tramitacao.solicitacao.dsObservacao;
+                const observacao = resposta.tramitacao.dsObservacao;
                 
                 const tramitacaoAcao = resposta.tramitacao.tramitacaoAcao;
 

@@ -168,6 +168,7 @@ export interface TramitacaoResponse extends BaseResponse {
   idStatusSolicitacao?: number;
   dsTramitacao?: string;
   dtTramitacao?: string;
+  dsObservacao?: string;
   solicitacao: SolicitacaoResponse;
   tramitacaoAcao: TramitacaoAcao[];
 }

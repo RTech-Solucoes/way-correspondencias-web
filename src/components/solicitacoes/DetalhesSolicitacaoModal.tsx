@@ -139,12 +139,6 @@ export default function DetalhesSolicitacaoModal({
     )
     
   const isPermissaoEnviandoDevolutiva = (isEmAprovacaoGerente && !hasPermissao('SOLICITACAO_APROVAR'));
-  
-    
-  const isEmAprovacao =
-    (sol?.statusSolicitacao?.idStatusSolicitacao === 6) ||
-    (sol?.statusSolicitacao?.nmStatus?.toLowerCase?.() === 'em aprovação') ||
-    (statusText?.toLowerCase?.() === 'em aprovação');
 
   const measureDescricao = useCallback(() => {
     const el = descRef.current;
@@ -229,7 +223,7 @@ export default function DetalhesSolicitacaoModal({
         setSending(false);
       }
     },
-    [onEnviarDevolutiva, resposta, arquivos, sol?.solicitacao?.idSolicitacao, onClose, isEmAprovacao, flAprovado]
+    [onEnviarDevolutiva, resposta, arquivos, sol?.solicitacao?.idSolicitacao, onClose, flAprovado, isEmAprovacaoGerente]
   );
 
   const handleBaixarAnexo = useCallback(
