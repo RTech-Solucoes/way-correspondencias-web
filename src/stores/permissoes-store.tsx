@@ -14,7 +14,7 @@ export const usePermissoesStore = create<PermissoesStore>()(
     }),
     {
       name: 'permissoes-storage',
-      storage: createJSONStorage(() => sessionStorage),
+      storage: createJSONStorage(() => localStorage),
     },
   ),
 )

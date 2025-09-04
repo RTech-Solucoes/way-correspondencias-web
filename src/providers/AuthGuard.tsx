@@ -68,17 +68,18 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
     };
   }, [pathname, router, isPublicRoute, permittedRoutes]);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loading
-          size="120"
-          speed="1.5"
-          color="#155dfc"
-        />
-      </div>
-    );
-  } else {
-    return <>{children}</>;
-  }
+  return (
+    <>
+      {children}
+      {isLoading &&
+        <div className="fixed top-0 left-0 bg-background min-h-screen min-w-screen flex items-center justify-center">
+          <Loading
+            size="120"
+            speed="1.5"
+            color="#155dfc"
+          />
+        </div>
+      }
+    </>
+  );
 }
