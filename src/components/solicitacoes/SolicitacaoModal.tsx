@@ -1412,7 +1412,7 @@ export default function SolicitacaoModal({
         </div>
 
         <DialogFooter className="flex gap-3 pt-6 border-t flex-shrink-0">
-          <Button
+          {/* <Button
             type="button"
             variant="outline"
             onClick={() => {
@@ -1423,7 +1423,7 @@ export default function SolicitacaoModal({
           >
             <FloppyDiskIcon size={16} className="mr-2"/>
             Salvar e sair
-          </Button>
+          </Button> */}
 
           {currentStep === 1 && (
             <Button
