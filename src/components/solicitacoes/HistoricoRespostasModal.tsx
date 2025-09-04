@@ -69,7 +69,7 @@ export default function HistoricoRespostasModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh]">
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Histórico de Respostas</DialogTitle>
         </DialogHeader>
@@ -85,7 +85,7 @@ export default function HistoricoRespostasModal({
               <p className="text-gray-500 text-sm">Nenhuma resposta encontrada para esta solicitação.</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 overflow-y-auto">
               {respostas.map((resposta) => {
                 const observacao = resposta.tramitacao.dsObservacao;
                 
