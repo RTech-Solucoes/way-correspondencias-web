@@ -18,7 +18,7 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const checkAuth = () => {
-      const authToken = sessionStorage.getItem('authToken');
+      const authToken = localStorage.getItem('authToken');
 
       if (authToken) {
         if (isPublicRoute) {
@@ -48,7 +48,7 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
       setIsLoading(false);
     };
 
-    const authToken = sessionStorage.getItem('authToken');
+    const authToken = localStorage.getItem('authToken');
     if (authToken && permittedRoutes.length === 0) {
       return;
     }

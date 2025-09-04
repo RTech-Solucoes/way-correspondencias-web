@@ -103,7 +103,7 @@ O sistema possui autenticação baseada em token JWT. Para fazer login:
 
 1. Acesse a página inicial (`/`)
 2. Insira email e senha
-3. O token será armazenado no sessionStorage
+3. O token será armazenado no localStorage
 4. Você será redirecionado para o dashboard
 
 ## 📧 Gestão de Emails

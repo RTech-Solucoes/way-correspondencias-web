@@ -15,32 +15,32 @@ class AuthClient {
     });
 
     if (response.accessToken) {
-      sessionStorage.setItem('authToken', response.accessToken);
-      sessionStorage.setItem('tokenType', response.tokenType);
-      sessionStorage.setItem('userName', data.username);
+      localStorage.setItem('authToken', response.accessToken);
+      localStorage.setItem('tokenType', response.tokenType);
+      localStorage.setItem('userName', data.username);
     }
 
     return response;
   }
 
   logout(): void {
-    sessionStorage.removeItem('authToken');
-    sessionStorage.removeItem('tokenType');
-    sessionStorage.removeItem('userName');
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('tokenType');
+    localStorage.removeItem('userName');
     sessionStorage.removeItem('permissoes-storage');
     window.location.href = '/';
   }
 
   isAuthenticated(): boolean {
-    return !!sessionStorage.getItem('authToken');
+    return !!localStorage.getItem('authToken');
   }
 
   getToken(): string | null {
-    return sessionStorage.getItem('authToken');
+    return localStorage.getItem('authToken');
   }
 
   getUserName(): string | null {
-    return sessionStorage.getItem('userName');
+    return localStorage.getItem('userName');
   }
 }
 

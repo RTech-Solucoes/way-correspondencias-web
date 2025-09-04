@@ -14,7 +14,6 @@ import {toast} from 'sonner';
 import {jwtDecode} from "jwt-decode";
 import {useSetPermissoes} from "@/stores/permissoes-store";
 
-
 interface TokenPayload {
   sub: string;
   exp: number;
@@ -60,7 +59,7 @@ export default function LoginPage() {
           password: password
         });
 
-        const token = sessionStorage.getItem("authToken");
+        const token = localStorage.getItem("authToken");
 
         if (token) {
           const decoded = jwtDecode<TokenPayload>(token);
@@ -84,10 +83,6 @@ export default function LoginPage() {
     localStorage.removeItem('authToken');
     localStorage.removeItem('tokenType');
     localStorage.removeItem('userName');
-
-    sessionStorage.removeItem('authToken');
-    sessionStorage.removeItem('tokenType');
-    sessionStorage.removeItem('userName');
     sessionStorage.removeItem('permissoes-storage');
   }, []);
 
