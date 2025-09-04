@@ -1,3 +1,5 @@
+import { ArquivoDTO } from "../anexos/type";
+
 interface Email {
   idEmail: number;
   dsRemetente: string;
@@ -108,5 +110,6 @@ export interface TramitacaoRequest {
   dsObservacao?: string;
   idResponsavel?: number;
   flAcao?: string;
+  arquivos?: ArquivoDTO[];
   flAprovado?: 'S' | 'N';
 }

@@ -72,7 +72,7 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
     <>
       {children}
       {isLoading &&
-        <div className="fixed top-0 left-0 bg-background min-h-screen min-w-screen flex items-center justify-center">
+        <div className="fixed z-9999 top-0 left-0 bg-background min-h-screen min-w-screen flex items-center justify-center">
           <Loading
             size="120"
             speed="1.5"

@@ -277,3 +277,7 @@ export const formValidator = {
   birthDate: birthDateSchema,
   id: z.number().positive("ID é obrigatório"),
 };
+
+export const repeat = (times: number): undefined[] => {
+  return Array.from({length: times}, () => undefined);
+}

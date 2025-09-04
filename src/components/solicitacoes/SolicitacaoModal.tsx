@@ -601,7 +601,7 @@ export default function SolicitacaoModal({
       <div className="grid grid-cols-3 gap-4">
         <div className="space-y-2">
           <Label htmlFor="flAnaliseGerenteDiretor" className="text-sm font-medium">
-            Exige análise do Gerente ou Diretor? *
+            Exige aprovação especial? *
           </Label>
           <div className="flex items-center gap-4 mt-2">
             <div className="flex items-center gap-2">
@@ -1412,10 +1412,18 @@ export default function SolicitacaoModal({
         </div>
 
         <DialogFooter className="flex gap-3 pt-6 border-t flex-shrink-0">
-          {/* <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              handleNextStep()
+              handleClose()
+            }}
+            disabled={loading}
+          >
             <FloppyDiskIcon size={16} className="mr-2"/>
-            Salvar
-          </Button> */}
+            Salvar e sair
+          </Button>
 
           {currentStep === 1 && (
             <Button

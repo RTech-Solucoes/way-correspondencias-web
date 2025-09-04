@@ -5,10 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="98226f2c-f64e-43be-946e-e89028627d5c" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/layout.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/app/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/providers/AuthGuard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/providers/AuthGuard.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -18,8 +15,8 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="TypeScript JSX File" />
         <option value="TypeScript File" />
+        <option value="TypeScript JSX File" />
       </list>
     </option>
   </component>
@@ -58,7 +55,7 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "develop",
+    "git-widget-placeholder": "Merging develop",
     "junie.onboarding.icon.badge.shown": "true",
     "last_opened_file_path": "D:/Work/projetos/rtech/way/way-correspondencias-web",
     "node.js.detected.package.eslint": "true",
@@ -187,7 +184,7 @@
       <workItem from="1756907948502" duration="7688000" />
       <workItem from="1756915738351" duration="1933000" />
       <workItem from="1756920716545" duration="347000" />
-      <workItem from="1756985990612" duration="2764000" />
+      <workItem from="1756985990612" duration="8041000" />
     </task>
     <task id="LOCAL-00001" summary="Alteração biblioteca de Ícones&#10;lucide-react -&gt; @phosphor-icons/react">
       <option name="closed" value="true" />

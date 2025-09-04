@@ -7,7 +7,7 @@ export interface AnexoResponse {
   tpObjeto: string;
   nmArquivo: string;
   dsCaminho: string;
-  tpResponsavel: TipoResponsavelAnexo;
+  tpResponsavel: TipoResponsavelAnexo | string;
   flAtivo: StatusAtivo;
 }
 
