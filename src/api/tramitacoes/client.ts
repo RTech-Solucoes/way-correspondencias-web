@@ -1,7 +1,6 @@
 import { ArquivoDTO } from "../anexos/type";
 import ApiClient from "../client";
 import { TramitacaoResponse, TramitacaoRequest } from './types';
-import { fileToArquivoDTO } from "@/utils/utils";
 
 class TramitacoesClient {
   private client: ApiClient;

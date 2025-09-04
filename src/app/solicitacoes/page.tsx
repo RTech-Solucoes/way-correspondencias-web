@@ -43,7 +43,7 @@ import {Pagination} from '@/components/ui/pagination';
 import {useSolicitacoes} from '@/context/solicitacoes/SolicitacoesContext';
 import TramitacaoModal from '@/components/solicitacoes/TramitacaoModal';
 import anexosClient from '@/api/anexos/client';
-import {AnexoResponse, TipoObjetoAnexo, TipoResponsavelAnexo} from '@/api/anexos/type';
+import {AnexoResponse, TipoObjetoAnexo, ArquivoDTO} from '@/api/anexos/type';
 import {
   AreaSolicitacao,
   PagedResponse,
@@ -296,50 +296,26 @@ export default function SolicitacoesPage() {
     toast.message('Abrir histórico de respostas (implemente a navegação).');
   }, []);
 
-  const enviarDevolutiva = useCallback(async (mensagem: string, arquivos: File[], flAprovado?: 'S' | 'N') => {
+  const enviarDevolutiva = useCallback(async (mensagem: string, arquivos: ArquivoDTO[], flAprovado?: 'S' | 'N') => {
     const alvo = detalhesSolicitacao;
     console.log('Enviando devolutiva para a solicitação:', alvo);
     console.log('Mensagem:', mensagem);
     if (!alvo) return;
     try {
-      if (mensagem?.trim()) {
-        const data = {
-          dsObservacao: mensagem,
-          idSolicitacao: alvo.solicitacao.idSolicitacao,
-          flAprovado: flAprovado,
-        };
-        const created = await tramitacoesClient.tramitar(data);
-      }
-
-      if (arquivos.length > 0) {
-        const arquivosDTO = await Promise.all(
-          arquivos.map(async (file) => {
-            const arrayBuffer = await file.arrayBuffer();
-            const base64String = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-            return {
-              nomeArquivo: file.name,
-              conteudoArquivo: base64String,
-              tpResponsavel: TipoResponsavelAnexo.A,
-              tipoArquivo: file.type || 'application/octet-stream'
-            };
-          })
-        );
-        await solicitacoesClient.uploadAnexos(alvo.solicitacao.idSolicitacao, arquivosDTO);
-      }
+      const data = {
+        dsObservacao: mensagem || '',
+        idSolicitacao: alvo.solicitacao.idSolicitacao,
+        flAprovado: flAprovado,
+        arquivos: arquivos,
+      };
+      await tramitacoesClient.tramitar(data);
       await loadSolicitacoes();
     } catch {
       toast.error('Falha ao enviar a devolutiva.');
       throw new Error('erro-devolutiva');
     }
-  }, [detalhesSolicitacao, selectedSolicitacao, loadSolicitacoes]);
+  }, [detalhesSolicitacao, loadSolicitacoes]);
 
-  const onShowDetalhesModalChange = useCallback((open: boolean) => {
-    if (!open) {
-      setShowDetalhesModal(false);
-      setSelectedSolicitacao(null);
-      setDetalhesSolicitacao(null);
-    }
-  }, [setSelectedSolicitacao]);
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
