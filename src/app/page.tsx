@@ -80,6 +80,17 @@ export default function LoginPage() {
     }
   };
 
+  useEffect(() => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('tokenType');
+    localStorage.removeItem('userName');
+
+    sessionStorage.removeItem('authToken');
+    sessionStorage.removeItem('tokenType');
+    sessionStorage.removeItem('userName');
+    sessionStorage.removeItem('permissoes-storage');
+  }, []);
+
   return (
     <div className="flex flex-row justify-center min-h-screen overflow-hidden gap-16 max-[1024px]:gap-0 px-12">
       <form onSubmit={handleSubmit} className="flex flex-col w-[45%] max-md:w-full md:mt-48 max-w-xl gap-12 p-8 max-[1024px]:p-2 rounded-4xl max-[1460px]:w-[40%] max-[768px]:justify-center">
