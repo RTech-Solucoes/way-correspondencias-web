@@ -68,6 +68,14 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
     };
   }, [pathname, router, isPublicRoute, permittedRoutes]);
 
+  useEffect(() => {
+    console.log('useEffect');
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('tokenType');
+    localStorage.removeItem('userName');
+    sessionStorage.removeItem('permissoes-storage');
+  }, []);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
