@@ -111,6 +111,7 @@ export interface SolicitacaoPrazoResponse {
   nrPrazoDias: number;
   statusCodigo?: number;
   tpPrazo?: string;
+  dtPrazoLimite?: string;
 }
 
 export interface PagedResponse<T> {
@@ -163,8 +164,11 @@ export interface EmailComAnexosResponse {
 export interface TramitacaoResponse extends BaseResponse {
   idTramitacao: number;
   idSolicitacao: number;
+  flAprovado?: string;
+  idStatusSolicitacao?: number;
   dsTramitacao?: string;
   dtTramitacao?: string;
+  dsObservacao?: string;
   solicitacao: SolicitacaoResponse;
   tramitacaoAcao: TramitacaoAcao[];
 }
@@ -177,6 +181,7 @@ export interface TramitacaoComAnexosResponse {
 export interface SolicitacaoDetalheResponse extends BaseResponse {
   solicitacao: SolicitacaoResponse;
   statusSolicitacao: StatusSolicitacao;
+  solcitacaoPrazos: SolicitacaoPrazoResponse[];
   anexosSolicitacao: AnexoResponse[];
   email: EmailComAnexosResponse;
   tramitacoes: TramitacaoComAnexosResponse[];
