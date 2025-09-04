@@ -8,7 +8,7 @@ import {cn} from '@/utils/utils';
 import {LockIcon, UserIcon} from '@phosphor-icons/react';
 import Image from "next/image";
 import {useRouter} from "next/navigation";
-import {FormEvent, useState} from 'react';
+import {FormEvent, useEffect, useState} from 'react';
 import {toast} from 'sonner';
 
 import {jwtDecode} from "jwt-decode";
@@ -60,7 +60,7 @@ export default function LoginPage() {
           password: password
         });
 
-        const token = localStorage.getItem("authToken");
+        const token = sessionStorage.getItem("authToken");
 
         if (token) {
           const decoded = jwtDecode<TokenPayload>(token);

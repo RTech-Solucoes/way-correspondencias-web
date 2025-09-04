@@ -8,8 +8,8 @@ export default class ApiClient {
   }
 
   public getAuthHeaders(): HeadersInit {
-    const authToken = localStorage.getItem('authToken');
-    const tokenType = localStorage.getItem('tokenType');
+    const authToken = sessionStorage.getItem('authToken');
+    const tokenType = sessionStorage.getItem('tokenType');
 
     if (authToken) {
       return {
@@ -20,9 +20,9 @@ export default class ApiClient {
   }
 
   private handleUnauthorized(): void {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('tokenType');
-    localStorage.removeItem('user');
+    sessionStorage.removeItem('authToken');
+    sessionStorage.removeItem('tokenType');
+    sessionStorage.removeItem('user');
 
     import('sonner').then(({ toast }) => {
       toast.error('Seu token expirou, faça login novamente');
