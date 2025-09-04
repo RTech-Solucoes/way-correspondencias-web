@@ -248,8 +248,25 @@ export default function SolicitacoesPage() {
 
     if (sortField) {
       sorted.sort((a: SolicitacaoResponse, b: SolicitacaoResponse) => {
-        const aValue = a?.[sortField];
-        const bValue = b?.[sortField];
+        let aValue: string | number | null = null;
+        let bValue: string | number | null = null;
+
+        switch (sortField) {
+          case 'nmTema':
+            aValue = a.nmTema || a?.tema?.nmTema || '';
+            bValue = b.nmTema || b?.tema?.nmTema || '';
+            break;
+
+          case 'flStatus':
+            aValue = a.statusSolicitacao?.nmStatus || getStatusText(a.statusCodigo?.toString() || '') || '';
+            bValue = b.statusSolicitacao?.nmStatus || getStatusText(b.statusCodigo?.toString() || '') || '';
+            break;
+
+          default:
+            aValue = a?.[sortField] as string | number | null;
+            bValue = b?.[sortField] as string | number | null;
+            break;
+        }
 
         if (aValue === bValue) return 0;
         if (aValue == null && bValue == null) return 0;
@@ -799,4 +816,3 @@ export default function SolicitacoesPage() {
     </div>
   );
 }
-
