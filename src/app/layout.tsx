@@ -31,7 +31,7 @@ export default function RootLayout({
 
   return (
     <html lang="en">
-      <body className={`${defaultFont.className} ${defaultFont.variable}`}>
+      <body className={`${defaultFont.className} ${defaultFont.variable} relative`}>
         <AuthGuard>
           <Providers>
             <ConditionalLayout>

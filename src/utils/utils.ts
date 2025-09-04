@@ -189,7 +189,7 @@ export const validateCPF = (cpf: string): boolean => {
 };
 
 export const hasPermissao = (permissao: string): boolean | null => {
-  const permissoesStorage = sessionStorage.getItem("permissoes-storage");
+  const permissoesStorage = localStorage.getItem("permissoes-storage");
 
   if (!permissoesStorage) {
     return null;
