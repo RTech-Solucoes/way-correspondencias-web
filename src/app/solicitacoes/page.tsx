@@ -310,9 +310,9 @@ export default function SolicitacoesPage() {
       };
       await tramitacoesClient.tramitar(data);
       await loadSolicitacoes();
-    } catch {
-      toast.error('Falha ao enviar a devolutiva.');
-      throw new Error('erro-devolutiva');
+    } catch (err) {
+      // Propagar erro para o modal tratar e exibir a mensagem do backend
+      throw err;
     }
   }, [detalhesSolicitacao, loadSolicitacoes]);
 

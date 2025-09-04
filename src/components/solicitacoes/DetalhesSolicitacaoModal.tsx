@@ -38,7 +38,7 @@ type DetalhesSolicitacaoModalProps = {
   open: boolean;
   onClose(): void;
   solicitacao: SolicitacaoDetalheResponse | null;
-  anexos?: AnexoItemShape[];
+  anexos?: AnexoResponse[];
   onHistoricoRespostas?(): void;
   onAbrirEmailOriginal?(): void;
   onEnviarDevolutiva?(mensagem: string, arquivos: ArquivoDTO[], flAprovado?: 'S' | 'N'): Promise<void> | void;
@@ -293,7 +293,8 @@ export default function DetalhesSolicitacaoModal({
         onClose();
       } catch (err) {
         console.error(err);
-        toast.error('Não foi possível enviar a resposta.');
+        const msg = err instanceof Error && err.message ? err.message : 'Não foi possível enviar a resposta.';
+        toast.error(msg);
       } finally {
         setSending(false);
       }
