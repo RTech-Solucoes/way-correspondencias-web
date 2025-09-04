@@ -17,7 +17,7 @@ import { SolicitacaoDetalheResponse } from '@/api/solicitacoes/types';
 import type { AnexoResponse } from '@/api/anexos/type';
 import { ArquivoDTO, TipoObjetoAnexo, TipoResponsavelAnexo } from '@/api/anexos/type';
 import { anexosClient } from '@/api/anexos/client';
-import { base64ToUint8Array, fileToArquivoDTO, hasPermissao, saveBlob } from '@/utils/utils';
+import { base64ToUint8Array, fileToArquivoDTO, hasPermissao, normalizeText, saveBlob } from '@/utils/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
 import { HistoricoRespostasModalButton } from './HistoricoRespostasModal';
@@ -82,7 +82,7 @@ export default function DetalhesSolicitacaoModal({
   const [sending, setSending] = useState(false);
   const [flAprovado, setFlAprovado] = useState<'S' | 'N' | ''>('');
   const [tpResponsavelUpload, setTpResponsavelUpload] = useState<TipoResponsavelAnexo>(TipoResponsavelAnexo.A);
-
+  const [hasAreaInicial, setHasAreaInicial] = useState(false);
 
   const descRef = useRef<HTMLParagraphElement | null>(null);
   const [canToggleDescricao, setCanToggleDescricao] = useState(false);
@@ -100,7 +100,12 @@ export default function DetalhesSolicitacaoModal({
   const statusText = sol?.statusSolicitacao?.nmStatus ?? statusLabel;
 
   const criadorLine = useMemo(() => formatDateTime(sol?.dtCriacao), [sol?.dtCriacao]);
-  const prazoLine = useMemo(() => formatDateTime(sol?.solicitacao?.dtPrazo), [sol?.solicitacao?.dtPrazo]);
+  const prazoLine = useMemo(() => {
+    const prazoAtual = sol?.solcitacaoPrazos?.find(
+      (p) => +(p?.idStatusSolicitacao) === (sol?.statusSolicitacao?.idStatusSolicitacao)
+    );
+    return formatDateTime(prazoAtual?.dtPrazoLimite);
+  }, [sol?.statusSolicitacao?.idStatusSolicitacao, sol?.solcitacaoPrazos]);
 
   const assunto = sol?.solicitacao?.dsAssunto ?? '';
   const descricao = sol?.solicitacao?.dsSolicitacao ?? '';
@@ -112,6 +117,8 @@ export default function DetalhesSolicitacaoModal({
   const temaLabel = sol?.solicitacao?.tema?.nmTema ?? sol?.solicitacao?.nmTema ?? '—';
 
   const anexosTramitacoes: AnexoResponse[] = (solicitacao?.tramitacoes ?? []).flatMap((t) => t?.anexos ?? []);
+  const anexosSolic: AnexoResponse[] = solicitacao?.anexosSolicitacao ?? [];
+  const anexosEmail: AnexoResponse[] = solicitacao?.email?.anexos ?? [];
 
   const mapToItem = (
     a: Partial<AnexoResponse> & { idAnexo: number; idObjeto: number; nmArquivo: string; tpObjeto?: string }
@@ -140,11 +147,13 @@ export default function DetalhesSolicitacaoModal({
       ? anexos.map(mapToItem)
       : anexosTramitacoes.filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexo.R).map(mapToItem);
 
+  const itensSolicitacao: AnexoItemShape[] = anexosSolic.map(mapToItem);
+  const itensEmail: AnexoItemShape[] = anexosEmail.map(mapToItem);
 
-    const isEmAprovacaoGerente =
+  const isEmAprovacao =
     (
-    (sol?.statusSolicitacao?.idStatusSolicitacao === 6) ||
-    (sol?.statusSolicitacao?.nmStatus?.toLowerCase?.() === 'em aprovação') ||
+      (sol?.statusSolicitacao?.idStatusSolicitacao === 6) ||
+      (sol?.statusSolicitacao?.nmStatus?.toLowerCase?.() === 'em aprovação') ||
       (statusText?.toLowerCase?.() === 'em aprovação')
     ) ||
     (
@@ -153,7 +162,7 @@ export default function DetalhesSolicitacaoModal({
       (statusText?.toLowerCase?.() === 'em assinatura diretores')
     )
     
-  const isPermissaoEnviandoDevolutiva = (isEmAprovacaoGerente && !hasPermissao('SOLICITACAO_APROVAR'));
+  const isPermissaoEnviandoDevolutiva = (isEmAprovacao && !hasPermissao('SOLICITACAO_APROVAR'));
 
   useEffect(() => {
     const checkResponsavelInicial = async () => {
@@ -161,21 +170,38 @@ export default function DetalhesSolicitacaoModal({
         const userName = authClient.getUserName();
         if (!userName) {
           setTpResponsavelUpload(TipoResponsavelAnexo.A);
+          setHasAreaInicial(false);
           return;
         }
         const resp = await responsaveisClient.buscarPorNmUsuarioLogin(userName);
+        console.log('resp', resp);
         const perfilName = (resp?.nmPerfil || '').toLowerCase();
 
-        const areasSolic = Array.isArray(sol?.solicitacao?.area)
-          ? (sol!.solicitacao!.area as Array<{ idArea?: number }>)
-          : [];
-        const initialAreaId = areasSolic?.[0]?.idArea ?? null;
-        const isInitialArea = !!initialAreaId && !!resp?.areas?.some(a => a?.area?.idArea === initialAreaId);
+        const idAreaInicial = sol?.solicitacao?.idAreaInicial;
+        const userAreaIds = (resp?.areas || [])
+          .map((a: { area?: { idArea?: number | string; nmArea?: string } } | null | undefined) => a?.area?.idArea)
+          .map((id) => +((id as unknown) as number))
+          .filter((id) => !Number.isNaN(id));
 
-        const tp = computeTpResponsavel(perfilName, isInitialArea);
+        let isInSolicAreas = false;
+        if (idAreaInicial) {
+          const areaInicialNum = +idAreaInicial;
+          isInSolicAreas = !Number.isNaN(areaInicialNum) && userAreaIds.includes(areaInicialNum);
+        } else {
+          const areasSolic = Array.isArray(sol?.solicitacao?.area)
+            ? (sol!.solicitacao!.area as Array<{ idArea?: number; nmArea?: string }>)
+            : [];
+          const solicitacaoAreaIds = areasSolic
+            .map(a => +((a?.idArea as unknown) as number))
+            .filter((id) => !Number.isNaN(id));
+          isInSolicAreas = userAreaIds.some(id => solicitacaoAreaIds.includes(id));
+        }
+        const tp = computeTpResponsavel(perfilName, isInSolicAreas);
         setTpResponsavelUpload(tp);
+        setHasAreaInicial(isInSolicAreas);
       } catch {
         setTpResponsavelUpload(TipoResponsavelAnexo.A);
+        setHasAreaInicial(false);
       }
     };
 
@@ -183,6 +209,17 @@ export default function DetalhesSolicitacaoModal({
       checkResponsavelInicial();
     }
   }, [open, sol?.solicitacao?.idSolicitacao, sol?.solicitacao?.area, sol]);
+
+  const isStatusPermitidoEnviar = useMemo(() => {
+    const current = normalizeText(sol?.statusSolicitacao?.nmStatus ?? statusLabel);
+    const allStatusPermitido = [
+      'Análise regulatória',
+      'Em assinatura Regulatório',
+      'Em assinatura Diretores',
+    ];
+    const statusPermitido = allStatusPermitido.map((t) => normalizeText(t));
+    return statusPermitido.includes(current);
+  }, [sol?.statusSolicitacao?.nmStatus, statusLabel]);
 
   function computeTpResponsavel(perfilNameLower: string, isInitialArea: boolean): TipoResponsavelAnexo {
     const p = perfilNameLower.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
@@ -266,7 +303,7 @@ export default function DetalhesSolicitacaoModal({
         return;
       }
 
-      if (isEmAprovacaoGerente && !flAprovado) {
+      if (isEmAprovacao && !flAprovado) {
         toast.error('Selecione se a devolutiva está aprovada (Sim/Não).');
         return;
       }
@@ -299,7 +336,7 @@ export default function DetalhesSolicitacaoModal({
         setSending(false);
       }
     },
-    [onEnviarDevolutiva, resposta, arquivos, sol?.solicitacao?.idSolicitacao, onClose, flAprovado, isEmAprovacaoGerente, tpResponsavelUpload]
+    [onEnviarDevolutiva, resposta, arquivos, sol?.solicitacao?.idSolicitacao, onClose, flAprovado, isEmAprovacao, tpResponsavelUpload]
   );
 
   const handleBaixarAnexo = useCallback(
@@ -457,7 +494,28 @@ export default function DetalhesSolicitacaoModal({
 
           {canListarAnexo && (
             <section className="space-y-3">
-              <h3 className="text-sm font-semibold">Anexos</h3>
+              <h3 className="text-sm font-semibold">Anexos </h3>
+              <div className="rounded-md border">
+                <div className="grid grid-cols-12 items-center">
+                  <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
+                    Anexos do E-mail
+                  </div>
+                  <div className="col-span-9 px-4 py-3">
+                    <AnexoItem anexos={itensEmail} onBaixar={handleBaixarAnexo} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-md border">
+                <div className="grid grid-cols-12 items-center">
+                  <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
+                    Anexos da Solicitação
+                  </div>
+                  <div className="col-span-9 px-4 py-3">
+                    <AnexoItem anexos={itensSolicitacao} onBaixar={handleBaixarAnexo} />
+                  </div>
+                </div>
+            </div>
 
               <div className="space-y-2">
                 <div className="rounded-md border">
@@ -507,7 +565,7 @@ export default function DetalhesSolicitacaoModal({
             </section>
           )}
 
-          {isEmAprovacaoGerente && (
+          {isEmAprovacao && (
             <section className="space-y-3">
               <div className="space-y-2">
                 <Label htmlFor="aprovarDevolutiva" className="text-sm font-medium">
@@ -613,11 +671,16 @@ export default function DetalhesSolicitacaoModal({
           <Button
             type="submit"
             form="detalhes-form"
-            disabled={sending ||isPermissaoEnviandoDevolutiva }
+            disabled={
+              sending || isPermissaoEnviandoDevolutiva
+              || (isStatusPermitidoEnviar && !hasAreaInicial)
+            }
             tooltip={
               isPermissaoEnviandoDevolutiva
-                ? 'Apenas gerent/diretores da área pode enviar resposta da devolutiva'
-                : ''
+                ? 'Apenas gerente/diretores da área pode enviar resposta da devolutiva'
+                : (isStatusPermitidoEnviar && !hasAreaInicial)
+                  ? 'Disponível apenas para responsáveis das áreas da solicitação'
+                  : ''
             }
           >
             {sending ? 'Enviando...' : 'Enviar resposta'}
