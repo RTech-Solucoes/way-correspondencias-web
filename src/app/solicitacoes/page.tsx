@@ -277,6 +277,7 @@ export default function SolicitacoesPage() {
     setDetalhesSolicitacao(null);
 
     try {
+      console.log('123')
       const detalhes = await solicitacoesClient.buscarDetalhesPorId(s.idSolicitacao);
       setDetalhesSolicitacao(detalhes);
       const anexos = await anexosClient.buscarPorIdObjetoETipoObjeto(s.idSolicitacao, TipoObjetoAnexo.S);
@@ -742,11 +743,10 @@ export default function SolicitacoesPage() {
             setShowDetalhesModal(false);
             setSelectedSolicitacao(null);
             setDetalhesSolicitacao(null);
-            onShowDetalhesModalChange(false);
           }}
           solicitacao={detalhesSolicitacao}
           anexos={(detalhesAnexos ?? [])}
-          statusLabel={getStatusText((detalhesSolicitacao ?? selectedSolicitacao)?.statusSolicitacao?.nmStatus?.toString() || '')}
+          statusLabel={getStatusText((detalhesSolicitacao)?.statusSolicitacao?.nmStatus?.toString() || '')}
           onAbrirEmailOriginal={abrirEmailOriginal}
           onHistoricoRespostas={abrirHistorico}
           onEnviarDevolutiva={enviarDevolutiva}
