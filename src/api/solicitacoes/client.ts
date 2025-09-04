@@ -25,13 +25,15 @@ class SolicitacoesClient {
     filtro?: string,
     page?: number,
     size?: number,
-    sort?: string
+    idStatusSolicitacao?: number,
+    idArea?: number,
   ): Promise<PagedResponse<SolicitacaoResponse> | SolicitacaoResponse[]> {
     const queryParams = new URLSearchParams();
     if (filtro) queryParams.append('filtro', filtro);
     if (page !== undefined) queryParams.append('page', page.toString());
     if (size !== undefined) queryParams.append('size', size.toString());
-    if (sort) queryParams.append('sort', sort);
+    if (idStatusSolicitacao !== undefined) queryParams.append('idStatusSolicitacao', idStatusSolicitacao.toString());
+    if (idArea !== undefined) queryParams.append('idArea', idArea.toString());
     const qs = queryParams.toString();
     return this.client.request<PagedResponse<SolicitacaoResponse> | SolicitacaoResponse[]>(qs ? `?${qs}` : '', { method: 'GET' });
   }

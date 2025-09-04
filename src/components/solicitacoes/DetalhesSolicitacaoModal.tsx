@@ -541,7 +541,7 @@ export default function DetalhesSolicitacaoModal({
 
               <HistoricoRespostasModalButton
                 idSolicitacao={sol?.solicitacao?.idSolicitacao ?? null}
-                showButton={!!quantidadeDevolutivas}
+                showButton={quantidadeDevolutivas > 1}
                 quantidadeDevolutivas={quantidadeDevolutivas}
               />
             </div>
