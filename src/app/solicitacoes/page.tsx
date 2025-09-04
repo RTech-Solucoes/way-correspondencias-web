@@ -25,7 +25,6 @@ import {
   PaperPlaneRightIcon,
   PencilSimpleIcon,
   PlusIcon,
-  SpinnerIcon,
   TrashIcon,
   XIcon
 } from '@phosphor-icons/react';
@@ -34,14 +33,12 @@ import {solicitacoesClient} from '@/api/solicitacoes/client';
 import {responsaveisClient} from '@/api/responsaveis/client';
 import {temasClient} from '@/api/temas/client';
 import {areasClient} from '@/api/areas/client';
-import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog';
-import {Label} from '@/components/ui/label';
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
 import {toast} from 'sonner';
 import {useDebounce} from '@/hooks/use-debounce';
 import {Pagination} from '@/components/ui/pagination';
 import {useSolicitacoes} from '@/context/solicitacoes/SolicitacoesContext';
 import TramitacaoModal from '@/components/solicitacoes/TramitacaoModal';
+import FilterModal from '@/components/solicitacoes/FilterModal';
 import anexosClient from '@/api/anexos/client';
 import {AnexoResponse, TipoObjetoAnexo, TipoResponsavelAnexo} from '@/api/anexos/type';
 import {
@@ -56,7 +53,6 @@ import {AreaResponse} from '@/api/areas/types';
 import {useTramitacoesMutation} from '@/hooks/use-tramitacoes';
 import tramitacoesClient from '@/api/tramitacoes/client';
 import {usePermissoes} from "@/context/permissoes/PermissoesContext";
-import {repeat} from "@/utils/utils";
 import LoadingRows from "@/components/solicitacoes/LoadingRows";
 
 export default function SolicitacoesPage() {
@@ -157,14 +153,19 @@ export default function SolicitacoesPage() {
       if (activeFilters.identificacao) filterParts.push(`ident:${activeFilters.identificacao}`);
       if (activeFilters.responsavel && activeFilters.responsavel !== 'all') filterParts.push(`resp:${activeFilters.responsavel}`);
       if (activeFilters.tema && activeFilters.tema !== 'all') filterParts.push(`tema:${activeFilters.tema}`);
-      if (activeFilters.area && activeFilters.area !== 'all') filterParts.push(`area:${activeFilters.area}`);
-      if (activeFilters.status && activeFilters.status !== 'all') filterParts.push(`status:${activeFilters.status}`);
       if (activeFilters.dateFrom) filterParts.push(`from:${activeFilters.dateFrom}`);
       if (activeFilters.dateTo) filterParts.push(`to:${activeFilters.dateTo}`);
 
       const filtro = filterParts.join(' ') || undefined;
 
-      const response = await solicitacoesClient.listar(filtro, currentPage, 10);
+      const idStatusSolicitacao = activeFilters.status && activeFilters.status !== 'all'
+        ? getStatusIdFromFilter(activeFilters.status)
+        : undefined;
+      const idArea = activeFilters.area && activeFilters.area !== 'all'
+        ? parseInt(activeFilters.area)
+        : undefined;
+
+      const response = await solicitacoesClient.listar(filtro, currentPage, 10, idStatusSolicitacao, idArea);
 
       if (response && typeof response === 'object' && 'content' in response) {
         const paginatedResponse = response as unknown as PagedResponse<SolicitacaoResponse>;
@@ -190,6 +191,21 @@ export default function SolicitacoesPage() {
     setTotalElements,
     setLoading
   ]);
+
+  const getStatusIdFromFilter = (statusCode: string): number | undefined => {
+    const statusMap: Record<string, number> = {
+      'P': 1, // Pré-análise
+      'V': 2, // Vencido Regulatório
+      'A': 3, // Em análise Área Técnica
+      'T': 4, // Vencido Área Técnica
+      'R': 5, // Análise Regulatória
+      'O': 6, // Em Aprovação
+      'S': 7, // Em Assinatura
+      'C': 8, // Concluído
+      'X': 9, // Arquivado
+    };
+    return statusMap[statusCode];
+  };
 
   const loadResponsaveis = useCallback(async () => {
     try {
@@ -248,8 +264,8 @@ export default function SolicitacoesPage() {
 
     if (sortField) {
       sorted.sort((a: SolicitacaoResponse, b: SolicitacaoResponse) => {
-        let aValue: string | number | null = null;
-        let bValue: string | number | null = null;
+        let aValue: string | number | null;
+        let bValue: string | number | null;
 
         switch (sortField) {
           case 'nmTema':
@@ -618,155 +634,17 @@ export default function SolicitacoesPage() {
         </StickyTable>
       </div>
 
-      {showFilterModal && (
-        <Dialog
-          open={showFilterModal}
-          onOpenChange={setShowFilterModal}
-        >
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Filtrar Solicitações</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="identificacao">Código de Identificação</Label>
-                  <Input
-                    id="identificacao"
-                    value={filters.identificacao}
-                    onChange={(e) => setFilters({...filters, identificacao: e.target.value})}
-                    placeholder="Código de identificação"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="status">Status</Label>
-                  <Select
-                    value={filters.status}
-                    onValueChange={(value) => setFilters({...filters, status: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos</SelectItem>
-                      <SelectItem value="P">Pré-análise</SelectItem>
-                      <SelectItem value="V">Vencido Regulatório</SelectItem>
-                      <SelectItem value="A">Em análise Área Técnica</SelectItem>
-                      <SelectItem value="T">Vencido Área Técnica</SelectItem>
-                      <SelectItem value="R">Análise Regulatória</SelectItem>
-                      <SelectItem value="O">Em Aprovação</SelectItem>
-                      <SelectItem value="S">Em Assinatura</SelectItem>
-                      <SelectItem value="C">Concluído</SelectItem>
-                      <SelectItem value="X">Arquivado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="responsavel">Responsável</Label>
-                  <Select
-                    value={filters.responsavel}
-                    onValueChange={(value) => setFilters({...filters, responsavel: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o responsável" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos</SelectItem>
-                      {responsaveis.map((resp: ResponsavelResponse) => (
-                        <SelectItem
-                          key={resp.idResponsavel}
-                          value={resp.idResponsavel.toString()}
-                        >
-                          {resp.nmResponsavel}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="tema">Tema</Label>
-                  <Select
-                    value={filters.tema}
-                    onValueChange={(value) => setFilters({...filters, tema: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o tema" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos</SelectItem>
-                      {temas.map((tema: TemaResponse) => (
-                        <SelectItem
-                          key={tema.idTema}
-                          value={tema.idTema.toString()}
-                        >
-                          {tema.nmTema}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="area">Área</Label>
-                  <Select
-                    value={filters.area}
-                    onValueChange={(value) => setFilters({...filters, area: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a área" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas</SelectItem>
-                      {areas.map((area: AreaResponse) => (
-                        <SelectItem
-                          key={area.idArea}
-                          value={area.idArea.toString()}
-                        >
-                          {area.nmArea}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="dateFrom">Data Início</Label>
-                  <Input
-                    id="dateFrom"
-                    type="date"
-                    value={filters.dateFrom}
-                    onChange={(e) => setFilters({...filters, dateFrom: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="dateTo">Data Fim</Label>
-                  <Input
-                    id="dateTo"
-                    type="date"
-                    value={filters.dateTo}
-                    onChange={(e) => setFilters({...filters, dateTo: e.target.value})}
-                  />
-                </div>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={clearFilters}
-              >
-                Limpar Filtros
-              </Button>
-              <Button onClick={applyFilters}>
-                Aplicar Filtros
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+      <FilterModal
+        open={showFilterModal}
+        onOpenChange={setShowFilterModal}
+        filters={filters}
+        setFilters={setFilters}
+        responsaveis={responsaveis}
+        temas={temas}
+        areas={areas}
+        onApplyFilters={applyFilters}
+        onClearFilters={clearFilters}
+      />
 
       {showSolicitacaoModal && (
         <SolicitacaoModal
