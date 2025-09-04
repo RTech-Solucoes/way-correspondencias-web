@@ -229,7 +229,7 @@ export default function SolicitacaoModal({
     return temas.find(tema => tema.idTema === formData.idTema);
   }, [temas, formData.idTema]);
 
-  const handleNextStep = useCallback(async () => {
+  const handleNextStep = useCallback(async (onFinish?: () => void) => {
     try {
       if (currentStep === 1) {
         if (!formData.cdIdentificacao?.trim()) {
@@ -361,6 +361,8 @@ export default function SolicitacaoModal({
     } catch (e) {
       console.error(e);
       toast.error('Erro ao avançar etapa');
+    } finally {
+      onFinish?.();
     }
   }, [currentStep, formData, solicitacao, prazoExcepcional, statusPrazos, anexos]);
 
@@ -1412,18 +1414,20 @@ export default function SolicitacaoModal({
         </div>
 
         <DialogFooter className="flex gap-3 pt-6 border-t flex-shrink-0">
-          {/* <Button
+          <Button
             type="button"
             variant="outline"
             onClick={() => {
-              handleNextStep()
-              handleClose()
+              handleNextStep(() => {
+                onSave()
+                onClose()
+              })
             }}
             disabled={loading}
           >
             <FloppyDiskIcon size={16} className="mr-2"/>
             Salvar e sair
-          </Button> */}
+          </Button>
 
           {currentStep === 1 && (
             <Button

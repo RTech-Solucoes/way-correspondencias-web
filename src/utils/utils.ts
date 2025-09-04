@@ -249,7 +249,7 @@ const birthDateSchema = z
       const age = now.diff(date, "year");
       return age >= MIN_AGE && age <= MAX_AGE;
     }, {
-      message: `Data de nascimento deve representar uma idade entre 1 e 120 anos`,
+      message: `Data inválida.`,
     })
 
 const nameSchema = z
