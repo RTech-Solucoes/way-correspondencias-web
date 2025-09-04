@@ -51,6 +51,7 @@ export interface SolicitacaoResponse extends BaseResponse {
   idEmail?: number;
   idTema?: number;
   idResponsavel?: number;
+  idAreaInicial?: number;
   statusCodigo?: number;
   flStatus?: string;
   cdIdentificacao?: string;
@@ -107,7 +108,10 @@ export interface SolicitacaoIdentificacaoRequest {
 }
 
 export interface SolicitacaoPrazoResponse {
-  id: number;
+  idSolicitacaoPrazo: number;
+  idStatusSolicitacao: number;
+  idSolicitacao: number;
+  nrPrazoInterno: number;
   nrPrazoDias: number;
   statusCodigo?: number;
   tpPrazo?: string;
