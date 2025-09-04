@@ -81,7 +81,6 @@ export default function DetalhesSolicitacaoModal({
   const [expandDescricao, setExpandDescricao] = useState(false);
   const [sending, setSending] = useState(false);
   const [flAprovado, setFlAprovado] = useState<'S' | 'N' | ''>('');
-  const [isResponsavelAreaInicial, setIsResponsavelAreaInicial] = useState(false);
   const [tpResponsavelUpload, setTpResponsavelUpload] = useState<TipoResponsavelAnexo>(TipoResponsavelAnexo.A);
 
 
@@ -157,47 +156,19 @@ export default function DetalhesSolicitacaoModal({
     
   const isPermissaoEnviandoDevolutiva = (isEmAprovacaoGerente && !hasPermissao('SOLICITACAO_APROVAR'));
 
-  const isStatusPermitidoParaResponsavelInicial = useMemo(() => {
-    const id = sol?.statusSolicitacao?.idStatusSolicitacao;
-    const name = (sol?.statusSolicitacao?.nmStatus || statusText || '').toLowerCase();
-    if (id === 5) return true;
-    if (id === 7) return true;
-    if (id === 8) return true;
-    if (name.includes('análise regulatória') || name.includes('analise regulatoria')) return true;
-    if (name.includes('em assinatura regulatório') || name.includes('em assinatura regulatorio')) return true;
-    if (name.includes('em assinatura diretores')) return true;
-    return false;
-  }, [sol?.statusSolicitacao?.idStatusSolicitacao, sol?.statusSolicitacao?.nmStatus, statusText]);
-
   useEffect(() => {
     const checkResponsavelInicial = async () => {
       try {
         const userName = authClient.getUserName();
         if (!userName) {
-          setIsResponsavelAreaInicial(false);
           setTpResponsavelUpload(TipoResponsavelAnexo.A);
           return;
         }
         const resp = await responsaveisClient.buscarPorNmUsuarioLogin(userName);
-        const areasSolic = Array.isArray(sol?.solicitacao?.area)
-          ? (sol!.solicitacao!.area as Array<{ idArea?: number }>)
-          : [];
-        const initialAreaId = areasSolic?.[0]?.idArea ?? null;
-        if (!initialAreaId) {
-          setIsResponsavelAreaInicial(false);
-          const perfilName = (resp?.nmPerfil || '').toLowerCase();
-          const tp = computeTpResponsavel(perfilName, false);
-          setTpResponsavelUpload(tp);
-          return;
-        }
-        const isRespInicial = resp?.areas?.some(a => a.area?.idArea === initialAreaId) || false;
-        setIsResponsavelAreaInicial(!!isRespInicial);
-
         const perfilName = (resp?.nmPerfil || '').toLowerCase();
-        const tp = computeTpResponsavel(perfilName, isRespInicial);
+        const tp = computeTpResponsavel(perfilName, false);
         setTpResponsavelUpload(tp);
       } catch {
-        setIsResponsavelAreaInicial(false);
         setTpResponsavelUpload(TipoResponsavelAnexo.A);
       }
     };
@@ -629,17 +600,11 @@ export default function DetalhesSolicitacaoModal({
           <Button
             type="submit"
             form="detalhes-form"
-            disabled={
-              sending ||
-              isPermissaoEnviandoDevolutiva ||
-              (isResponsavelAreaInicial && !isStatusPermitidoParaResponsavelInicial)
-            }
+            disabled={sending ||isPermissaoEnviandoDevolutiva }
             tooltip={
               isPermissaoEnviandoDevolutiva
                 ? 'Apenas gerent/diretores da área pode enviar resposta da devolutiva'
-                : (isResponsavelAreaInicial && !isStatusPermitidoParaResponsavelInicial)
-                  ? 'Somente permitido em: Análise Regulatória, Em Assinatura Regulatório ou Diretores'
-                  : ''
+                : ''
             }
           >
             {sending ? 'Enviando...' : 'Enviar resposta'}
