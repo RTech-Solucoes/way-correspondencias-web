@@ -113,7 +113,6 @@ export default function DetalhesSolicitacaoModal({
 
   const anexosTramitacoes: AnexoResponse[] = (solicitacao?.tramitacoes ?? []).flatMap((t) => t?.anexos ?? []);
 
-  console.log(anexosTramitacoes);
   const mapToItem = (
     a: Partial<AnexoResponse> & { idAnexo: number; idObjeto: number; nmArquivo: string; tpObjeto?: string }
   ): AnexoItemShape => ({
@@ -166,7 +165,14 @@ export default function DetalhesSolicitacaoModal({
         }
         const resp = await responsaveisClient.buscarPorNmUsuarioLogin(userName);
         const perfilName = (resp?.nmPerfil || '').toLowerCase();
-        const tp = computeTpResponsavel(perfilName, false);
+
+        const areasSolic = Array.isArray(sol?.solicitacao?.area)
+          ? (sol!.solicitacao!.area as Array<{ idArea?: number }>)
+          : [];
+        const initialAreaId = areasSolic?.[0]?.idArea ?? null;
+        const isInitialArea = !!initialAreaId && !!resp?.areas?.some(a => a?.area?.idArea === initialAreaId);
+
+        const tp = computeTpResponsavel(perfilName, isInitialArea);
         setTpResponsavelUpload(tp);
       } catch {
         setTpResponsavelUpload(TipoResponsavelAnexo.A);
@@ -179,18 +185,24 @@ export default function DetalhesSolicitacaoModal({
   }, [open, sol?.solicitacao?.idSolicitacao, sol?.solicitacao?.area, sol]);
 
   function computeTpResponsavel(perfilNameLower: string, isInitialArea: boolean): TipoResponsavelAnexo {
-    const isDiretor = perfilNameLower.includes('diretor');
-    const isGerenteJuridico = perfilNameLower.includes('gerente jurídico') || perfilNameLower.includes('gerente juridico');
-    const isAnalCoordReg = perfilNameLower.includes('analista/coord. reg') || perfilNameLower.includes('analista') || perfilNameLower.includes('coord');
-    const isGerenteSetor = perfilNameLower.includes('gerentes de setor') || perfilNameLower.includes('gerente de setor');
-    const isCoordSup = perfilNameLower.includes('coordenadores/supervisores') || perfilNameLower.includes('coordenador') || perfilNameLower.includes('supervisor');
-    const isAssistente = perfilNameLower.includes('assistente');
-    const isTiSuporte = perfilNameLower.includes('ti/suporte') || perfilNameLower.includes('suporte');
+    const p = perfilNameLower.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
 
-    if (isDiretor) return TipoResponsavelAnexo.D;
-    if (isGerenteJuridico || isAnalCoordReg || isGerenteSetor) return TipoResponsavelAnexo.G;
+    if (
+      p.includes('administrador') ||
+      p.includes('gestor do sistema') ||
+      p.includes('validador / assinante') || p.includes('validador')
+    ) {
+      return TipoResponsavelAnexo.D;
+    }
 
-    if (isCoordSup || isAssistente || isTiSuporte) {
+    if (p.includes('executor avancado')) {
+      return TipoResponsavelAnexo.G;
+    }
+
+    if (
+      p === 'executor' || p.includes('executor restrito') ||
+      p.includes('tecnico / suporte') || p.includes('tecnico') || p.includes('suporte')
+    ) {
       return isInitialArea ? TipoResponsavelAnexo.R : TipoResponsavelAnexo.A;
     }
 
