@@ -601,7 +601,7 @@ export default function SolicitacaoModal({
       <div className="grid grid-cols-3 gap-4">
         <div className="space-y-2">
           <Label htmlFor="flAnaliseGerenteDiretor" className="text-sm font-medium">
-            Exige análise do Gerente ou Diretor? *
+            Exige aprovação especial? *
           </Label>
           <div className="flex items-center gap-4 mt-2">
             <div className="flex items-center gap-2">

@@ -56,6 +56,8 @@ import {AreaResponse} from '@/api/areas/types';
 import {useTramitacoesMutation} from '@/hooks/use-tramitacoes';
 import tramitacoesClient from '@/api/tramitacoes/client';
 import {usePermissoes} from "@/context/permissoes/PermissoesContext";
+import {repeat} from "@/utils/utils";
+import LoadingRows from "@/components/solicitacoes/LoadingRows";
 
 export default function SolicitacoesPage() {
   const {
@@ -104,7 +106,7 @@ export default function SolicitacoesPage() {
   } = useSolicitacoes();
 
   const tramitacoesMutation = useTramitacoesMutation();
-  const { canInserirSolicitacao, canAtualizarSolicitacao, canDeletarSolicitacao } = usePermissoes()
+  const {canInserirSolicitacao, canAtualizarSolicitacao, canDeletarSolicitacao} = usePermissoes()
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
 
@@ -162,12 +164,7 @@ export default function SolicitacoesPage() {
 
       const filtro = filterParts.join(' ') || undefined;
 
-      let sortParam = undefined;
-      if (sortField && sortDirection) {
-        sortParam = `${sortField},${sortDirection}`;
-      }
-
-      const response = await solicitacoesClient.listar(filtro, currentPage, 10, sortParam);
+      const response = await solicitacoesClient.listar(filtro, currentPage, 10);
 
       if (response && typeof response === 'object' && 'content' in response) {
         const paginatedResponse = response as unknown as PagedResponse<SolicitacaoResponse>;
@@ -188,8 +185,6 @@ export default function SolicitacoesPage() {
     currentPage,
     activeFilters,
     debouncedSearchQuery,
-    sortField,
-    sortDirection,
     setSolicitacoes,
     setTotalPages,
     setTotalElements,
@@ -198,23 +193,26 @@ export default function SolicitacoesPage() {
 
   const loadResponsaveis = useCallback(async () => {
     try {
-      const response = await responsaveisClient.buscarPorFiltro({ size: 100 });
+      const response = await responsaveisClient.buscarPorFiltro({size: 100});
       setResponsaveis(response.content ?? []);
-    } catch { }
+    } catch {
+    }
   }, [setResponsaveis]);
 
   const loadTemas = useCallback(async () => {
     try {
-      const response = await temasClient.buscarPorFiltro({ size: 100 });
+      const response = await temasClient.buscarPorFiltro({size: 100});
       setTemas(response.content ?? []);
-    } catch { }
+    } catch {
+    }
   }, [setTemas]);
 
   const loadAreas = useCallback(async () => {
     try {
-      const response = await areasClient.buscarPorFiltro({ size: 100 });
+      const response = await areasClient.buscarPorFiltro({size: 100});
       setAreas(response.content ?? []);
-    } catch { }
+    } catch {
+    }
   }, [setAreas]);
 
   useEffect(() => {
@@ -259,7 +257,7 @@ export default function SolicitacoesPage() {
         if (bValue == null) return -1;
 
         if (typeof aValue === 'string' && typeof bValue === 'string') {
-          const cmp = aValue.localeCompare(bValue, 'pt-BR', { numeric: true, sensitivity: 'base' });
+          const cmp = aValue.localeCompare(bValue, 'pt-BR', {numeric: true, sensitivity: 'base'});
           return sortDirection === 'asc' ? cmp : -cmp;
         }
 
@@ -402,10 +400,12 @@ export default function SolicitacoesPage() {
             Filtrar
           </Button>
           {canInserirSolicitacao &&
-            <Button onClick={() => {
-              setSelectedSolicitacao(null);
-              setShowSolicitacaoModal(true);
-            }}>
+            <Button
+              onClick={() => {
+                setSelectedSolicitacao(null);
+                setShowSolicitacaoModal(true);
+              }}
+            >
               <PlusIcon className="h-4 w-4 mr-2" />
               Criar Solicitação
             </Button>
@@ -417,26 +417,38 @@ export default function SolicitacoesPage() {
         <StickyTable>
           <StickyTableHeader>
             <StickyTableRow>
-              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('cdIdentificacao')}>
+              <StickyTableHead
+                className="cursor-pointer"
+                onClick={() => handleSort('cdIdentificacao')}
+              >
                 <div className="flex items-center">
                   Identificação
                   <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </StickyTableHead>
-              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('dsAssunto')}>
+              <StickyTableHead
+                className="cursor-pointer"
+                onClick={() => handleSort('dsAssunto')}
+              >
                 <div className="flex items-center">
                   Assunto
                   <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </StickyTableHead>
               <StickyTableHead>Áreas</StickyTableHead>
-              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('nmTema')}>
+              <StickyTableHead
+                className="cursor-pointer"
+                onClick={() => handleSort('nmTema')}
+              >
                 <div className="flex items-center">
                   Tema
                   <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </StickyTableHead>
-              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('flStatus')}>
+              <StickyTableHead
+                className="cursor-pointer"
+                onClick={() => handleSort('flStatus')}
+              >
                 <div className="flex items-center">
                   Status
                   <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
@@ -447,17 +459,16 @@ export default function SolicitacoesPage() {
           </StickyTableHeader>
           <StickyTableBody>
             {loading ? (
-              <StickyTableRow>
-                <StickyTableCell colSpan={7} className="text-center py-8">
-                  <div className="flex flex-1 items-center justify-center py-8">
-                    <SpinnerIcon className="h-6 w-6 animate-spin text-gray-400" />
-                    <span className="ml-2 text-gray-500">Buscando solicitações...</span>
-                  </div>
-                </StickyTableCell>
-              </StickyTableRow>
+              <LoadingRows
+                canAtualizarSolicitacao={canAtualizarSolicitacao}
+                canDeletarSolicitacao={canDeletarSolicitacao}
+              />
             ) : solicitacoes?.length === 0 ? (
               <StickyTableRow>
-                <StickyTableCell colSpan={7} className="text-center py-8">
+                <StickyTableCell
+                  colSpan={7}
+                  className="text-center py-8"
+                >
                   <div className="flex flex-col items-center space-y-2">
                     <ClipboardTextIcon className="h-8 w-8 text-gray-400" />
                     <p className="text-sm text-gray-500">Nenhuma solicitação encontrada</p>
@@ -509,10 +520,13 @@ export default function SolicitacoesPage() {
                     </StickyTableCell>
                     <StickyTableCell>{solicitacao.nmTema || solicitacao?.tema?.nmTema || '-'}</StickyTableCell>
                     <StickyTableCell>
-                      <Badge className="whitespace-nowrap truncate" variant={getStatusBadgeVariant(
-                        solicitacao.statusSolicitacao?.idStatusSolicitacao?.toString() ||
-                        solicitacao.statusCodigo?.toString() || ''
-                      )}>
+                      <Badge
+                        className="whitespace-nowrap truncate"
+                        variant={getStatusBadgeVariant(
+                          solicitacao.statusSolicitacao?.idStatusSolicitacao?.toString() ||
+                          solicitacao.statusCodigo?.toString() || ''
+                        )}
+                      >
                         {solicitacao.statusSolicitacao?.nmStatus ||
                           getStatusText(solicitacao.statusCodigo?.toString() || '') ||
                           '-'}
@@ -526,18 +540,18 @@ export default function SolicitacoesPage() {
                           solicitacao.statusSolicitacao?.idStatusSolicitacao === 1 ||
                           getStatusText(solicitacao.statusCodigo?.toString() || '') === 'Pré-análise'
                         ) && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={async (e) => {
-                                e.stopPropagation();
-                                await openDetalhes(solicitacao);
-                              }}
-                              title="Detalhes"
-                            >
-                              <PaperPlaneRightIcon className="h-4 w-4" />
-                            </Button>
-                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              await openDetalhes(solicitacao);
+                            }}
+                            title="Detalhes"
+                          >
+                            <PaperPlaneRightIcon className="h-4 w-4" />
+                          </Button>
+                        )}
 
                         <Button
                           variant="ghost"
@@ -588,7 +602,10 @@ export default function SolicitacoesPage() {
       </div>
 
       {showFilterModal && (
-        <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
+        <Dialog
+          open={showFilterModal}
+          onOpenChange={setShowFilterModal}
+        >
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Filtrar Solicitações</DialogTitle>
@@ -600,7 +617,7 @@ export default function SolicitacoesPage() {
                   <Input
                     id="identificacao"
                     value={filters.identificacao}
-                    onChange={(e) => setFilters({ ...filters, identificacao: e.target.value })}
+                    onChange={(e) => setFilters({...filters, identificacao: e.target.value})}
                     placeholder="Código de identificação"
                   />
                 </div>
@@ -608,7 +625,7 @@ export default function SolicitacoesPage() {
                   <Label htmlFor="status">Status</Label>
                   <Select
                     value={filters.status}
-                    onValueChange={(value) => setFilters({ ...filters, status: value })}
+                    onValueChange={(value) => setFilters({...filters, status: value})}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o status" />
@@ -633,7 +650,7 @@ export default function SolicitacoesPage() {
                   <Label htmlFor="responsavel">Responsável</Label>
                   <Select
                     value={filters.responsavel}
-                    onValueChange={(value) => setFilters({ ...filters, responsavel: value })}
+                    onValueChange={(value) => setFilters({...filters, responsavel: value})}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o responsável" />
@@ -641,7 +658,10 @@ export default function SolicitacoesPage() {
                     <SelectContent>
                       <SelectItem value="all">Todos</SelectItem>
                       {responsaveis.map((resp: ResponsavelResponse) => (
-                        <SelectItem key={resp.idResponsavel} value={resp.idResponsavel.toString()}>
+                        <SelectItem
+                          key={resp.idResponsavel}
+                          value={resp.idResponsavel.toString()}
+                        >
                           {resp.nmResponsavel}
                         </SelectItem>
                       ))}
@@ -652,7 +672,7 @@ export default function SolicitacoesPage() {
                   <Label htmlFor="tema">Tema</Label>
                   <Select
                     value={filters.tema}
-                    onValueChange={(value) => setFilters({ ...filters, tema: value })}
+                    onValueChange={(value) => setFilters({...filters, tema: value})}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o tema" />
@@ -660,7 +680,10 @@ export default function SolicitacoesPage() {
                     <SelectContent>
                       <SelectItem value="all">Todos</SelectItem>
                       {temas.map((tema: TemaResponse) => (
-                        <SelectItem key={tema.idTema} value={tema.idTema.toString()}>
+                        <SelectItem
+                          key={tema.idTema}
+                          value={tema.idTema.toString()}
+                        >
                           {tema.nmTema}
                         </SelectItem>
                       ))}
@@ -673,7 +696,7 @@ export default function SolicitacoesPage() {
                   <Label htmlFor="area">Área</Label>
                   <Select
                     value={filters.area}
-                    onValueChange={(value) => setFilters({ ...filters, area: value })}
+                    onValueChange={(value) => setFilters({...filters, area: value})}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione a área" />
@@ -681,7 +704,10 @@ export default function SolicitacoesPage() {
                     <SelectContent>
                       <SelectItem value="all">Todas</SelectItem>
                       {areas.map((area: AreaResponse) => (
-                        <SelectItem key={area.idArea} value={area.idArea.toString()}>
+                        <SelectItem
+                          key={area.idArea}
+                          value={area.idArea.toString()}
+                        >
                           {area.nmArea}
                         </SelectItem>
                       ))}
@@ -696,7 +722,7 @@ export default function SolicitacoesPage() {
                     id="dateFrom"
                     type="date"
                     value={filters.dateFrom}
-                    onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
+                    onChange={(e) => setFilters({...filters, dateFrom: e.target.value})}
                   />
                 </div>
                 <div>
@@ -705,13 +731,16 @@ export default function SolicitacoesPage() {
                     id="dateTo"
                     type="date"
                     value={filters.dateTo}
-                    onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
+                    onChange={(e) => setFilters({...filters, dateTo: e.target.value})}
                   />
                 </div>
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={clearFilters}>
+              <Button
+                variant="outline"
+                onClick={clearFilters}
+              >
                 Limpar Filtros
               </Button>
               <Button onClick={applyFilters}>
@@ -770,3 +799,4 @@ export default function SolicitacoesPage() {
     </div>
   );
 }
+
