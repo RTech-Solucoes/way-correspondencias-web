@@ -8,12 +8,11 @@ import {cn} from '@/utils/utils';
 import {LockIcon, UserIcon} from '@phosphor-icons/react';
 import Image from "next/image";
 import {useRouter} from "next/navigation";
-import {FormEvent, useState} from 'react';
+import {FormEvent, useEffect, useState} from 'react';
 import {toast} from 'sonner';
 
 import {jwtDecode} from "jwt-decode";
 import {useSetPermissoes} from "@/stores/permissoes-store";
-
 
 interface TokenPayload {
   sub: string;
@@ -79,6 +78,13 @@ export default function LoginPage() {
       }
     }
   };
+
+  useEffect(() => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('tokenType');
+    localStorage.removeItem('userName');
+    sessionStorage.removeItem('permissoes-storage');
+  }, []);
 
   return (
     <div className="flex flex-row justify-center min-h-screen overflow-hidden gap-16 max-[1024px]:gap-0 px-12">
