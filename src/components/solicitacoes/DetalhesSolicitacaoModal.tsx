@@ -12,14 +12,17 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { ClockIcon, DownloadIcon, PaperclipIcon, XIcon } from '@phosphor-icons/react';
+import { ClockIcon, DownloadIcon, PaperclipIcon, X as XIcon } from '@phosphor-icons/react';
 import { SolicitacaoDetalheResponse } from '@/api/solicitacoes/types';
+import type { AnexoResponse } from '@/api/anexos/type';
 import { ArquivoDTO, TipoObjetoAnexo, TipoResponsavelAnexo } from '@/api/anexos/type';
 import { anexosClient } from '@/api/anexos/client';
-import { base64ToUint8Array, fileToArquivoDTO, saveBlob } from '@/utils/utils';
-import tramitacoesClient from '@/api/tramitacoes/client';
+import { base64ToUint8Array, fileToArquivoDTO, hasPermissao, saveBlob } from '@/utils/utils';
+import { Checkbox } from '@/components/ui/checkbox';
+import { usePermissoes } from '@/context/permissoes/PermissoesContext';
 import { HistoricoRespostasModalButton } from './HistoricoRespostasModal';
-import { usePermissoes } from "@/context/permissoes/PermissoesContext";
+import tramitacoesClient from '@/api/tramitacoes/client';
+
 
 type AnexoItemShape = {
   idAnexo: number;
@@ -34,7 +37,7 @@ type DetalhesSolicitacaoModalProps = {
   anexos?: AnexoItemShape[];
   onHistoricoRespostas?(): void;
   onAbrirEmailOriginal?(): void;
-  onEnviarDevolutiva?(mensagem: string, arquivos: File[]): Promise<void> | void;
+  onEnviarDevolutiva?(mensagem: string, arquivos: File[], flAprovado?: 'S' | 'N'): Promise<void> | void;
   statusLabel?: string;
 };
 
@@ -48,6 +51,7 @@ const formatDateTime = (iso?: string | null) => {
 
 const MAX_DESC_LINES = 6;
 
+/** Apenas para DESCRIÇÃO: remove \r e transforma \n em <br/> */
 function renderDescricaoWithBreaks(text?: string | null) {
   if (!text) return '—';
   const cleaned = text.replace(/\r/g, '');
@@ -72,6 +76,8 @@ export default function DetalhesSolicitacaoModal({
   const [arquivos, setArquivos] = useState<File[]>([]);
   const [expandDescricao, setExpandDescricao] = useState(false);
   const [sending, setSending] = useState(false);
+  const [flAprovado, setFlAprovado] = useState<'S' | 'N' | ''>('');
+
 
   const descRef = useRef<HTMLParagraphElement | null>(null);
   const [canToggleDescricao, setCanToggleDescricao] = useState(false);
@@ -79,30 +85,28 @@ export default function DetalhesSolicitacaoModal({
 
   const { canListarAnexo, canInserirAnexo, canDeletarAnexo } = usePermissoes();
 
-  const sol = solicitacao?.solicitacao ?? null;
-
-  console.log(sol);
+  const sol = solicitacao ?? null;
 
   const identificador = useMemo(
-    () => (sol?.cdIdentificacao ? `#${sol.cdIdentificacao}` : ''),
-    [sol?.cdIdentificacao]
+    () => (sol?.solicitacao?.cdIdentificacao ? `#${sol.solicitacao.cdIdentificacao}` : ''),
+    [sol?.solicitacao?.cdIdentificacao]
   );
 
   const statusText = sol?.statusSolicitacao?.nmStatus ?? statusLabel;
 
   const criadorLine = useMemo(() => formatDateTime(sol?.dtCriacao), [sol?.dtCriacao]);
-  const prazoLine = useMemo(() => formatDateTime(sol?.dtPrazo), [sol?.dtPrazo]);
+  const prazoLine = useMemo(() => formatDateTime(sol?.solicitacao?.dtPrazo), [sol?.solicitacao?.dtPrazo]);
 
-  const assunto = sol?.dsAssunto ?? '';
-  const descricao = sol?.dsSolicitacao ?? '';
-  const observacao = sol?.dsObservacao && sol?.dsObservacao.trim().length > 0 ? sol?.dsObservacao : null;
-  const areas = Array.isArray(sol?.area)
-    ? (sol!.area! as Array<{ nmArea: string; idArea?: number; cdArea?: string }>)
+  const assunto = sol?.solicitacao?.dsAssunto ?? '';
+  const descricao = sol?.solicitacao?.dsSolicitacao ?? '';
+  const observacao = sol?.solicitacao?.dsObservacao && sol?.solicitacao?.dsObservacao.trim().length > 0 ? sol?.solicitacao?.dsObservacao : null;
+  const areas = Array.isArray(sol?.solicitacao?.area)
+    ? (sol!.solicitacao!.area! as Array<{ nmArea: string; idArea?: number; cdArea?: string }>)
     : [];
 
-  const temaLabel = sol?.tema?.nmTema ?? sol?.nmTema ?? '—';
+  const temaLabel = sol?.solicitacao?.tema?.nmTema ?? sol?.solicitacao?.nmTema ?? '—';
 
-  const anexosSolic = solicitacao?.anexosSolicitacao ?? [];
+  const anexosSolic: AnexoResponse[] = solicitacao?.anexosSolicitacao ?? [];
   const mapToItem = (a: { idAnexo: number; nmArquivo: string; tpObjeto: string }): AnexoItemShape => ({
     idAnexo: a.idAnexo,
     nmArquivo: a.nmArquivo,
@@ -110,17 +114,32 @@ export default function DetalhesSolicitacaoModal({
   });
 
   const anexosAnalista: AnexoItemShape[] = anexosSolic
-    .filter((a) => a.tpObjeto === 'A')
+    .filter((a: AnexoResponse) => a.tpObjeto === 'A')
     .map(mapToItem);
 
   const anexosGerente: AnexoItemShape[] = anexosSolic
-    .filter((a) => a.tpObjeto === 'G')
+    .filter((a: AnexoResponse) => a.tpObjeto === 'G')
     .map(mapToItem);
 
   const anexosRegulatorio: AnexoItemShape[] =
     anexos.length > 0
       ? anexos.map(mapToItem)
-      : anexosSolic.filter((a) => a.tpObjeto === 'S').map(mapToItem);
+      : anexosSolic.filter((a: AnexoResponse) => a.tpObjeto === 'S').map(mapToItem);
+
+
+    const isEmAprovacaoGerente =
+    (
+    (sol?.statusSolicitacao?.idStatusSolicitacao === 6) ||
+    (sol?.statusSolicitacao?.nmStatus?.toLowerCase?.() === 'em aprovação') ||
+      (statusText?.toLowerCase?.() === 'em aprovação')
+    ) ||
+    (
+      (sol?.statusSolicitacao?.idStatusSolicitacao === 8) ||
+      (sol?.statusSolicitacao?.nmStatus?.toLowerCase?.() === 'em assinatura diretores') ||
+      (statusText?.toLowerCase?.() === 'em assinatura diretores')
+    )
+    
+  const isPermissaoEnviandoDevolutiva = (isEmAprovacaoGerente && !hasPermissao('SOLICITACAO_APROVAR'));
 
   const measureDescricao = useCallback(() => {
     const el = descRef.current;
@@ -179,7 +198,12 @@ export default function DetalhesSolicitacaoModal({
         return;
       }
 
-      if (!sol?.idSolicitacao) {
+      if (isEmAprovacaoGerente && !flAprovado) {
+        toast.error('Selecione se a devolutiva está aprovada (Sim/Não).');
+        return;
+      }
+
+      if (!sol?.solicitacao?.idSolicitacao) {
         toast.error('ID da solicitação não encontrado.');
         return;
       }
@@ -188,11 +212,15 @@ export default function DetalhesSolicitacaoModal({
         setSending(true);
 
         if (arquivos.length > 0) {
-          const arquivosDTO: ArquivoDTO[] = await Promise.all(arquivos.map(file => fileToArquivoDTO(file, TipoResponsavelAnexo.A)));
-          await tramitacoesClient.uploadAnexos(sol.idSolicitacao, arquivosDTO);
+          const arquivosDTO: ArquivoDTO[] = await Promise.all(arquivos.map(fileToArquivoDTO));
+          arquivosDTO.forEach((a) => {
+            a.tpResponsavel = TipoResponsavelAnexo.A; // TODO: tornar dinâmico
+          });
+          // TODO: ver com Daniel como mandar esse arquivo da tramitação
+        //  await tramitacoesClient.uploadAnexos(sol?.solicitacao?.idSolicitacao, arquivosDTO);
         }
 
-        await onEnviarDevolutiva(resposta.trim(), []);
+        await onEnviarDevolutiva(resposta.trim(), arquivos, flAprovado || undefined);
 
         toast.success('Resposta enviada com sucesso!');
         setResposta('');
@@ -205,18 +233,18 @@ export default function DetalhesSolicitacaoModal({
         setSending(false);
       }
     },
-    [onEnviarDevolutiva, resposta, arquivos, sol?.idSolicitacao, onClose]
+    [onEnviarDevolutiva, resposta, arquivos, sol?.solicitacao?.idSolicitacao, onClose, flAprovado, isEmAprovacaoGerente]
   );
 
   const handleBaixarAnexo = useCallback(
     async (anexo: AnexoItemShape) => {
       try {
-        if (!sol?.idSolicitacao) {
+        if (!sol?.solicitacao?.idSolicitacao) {
           toast.error('ID da solicitação não encontrado.');
           return;
         }
         const arquivos = await anexosClient.download(
-          sol.idSolicitacao,
+          sol.solicitacao.idSolicitacao,
           TipoObjetoAnexo.S,
           anexo.nmArquivo
         );
@@ -236,7 +264,7 @@ export default function DetalhesSolicitacaoModal({
         toast.error('Não foi possível baixar o anexo.');
       }
     },
-    [sol?.idSolicitacao]
+    [sol?.solicitacao?.idSolicitacao]
   );
 
   const descricaoCollapsedStyle: React.CSSProperties =
@@ -317,12 +345,12 @@ export default function DetalhesSolicitacaoModal({
               <div className="h-px bg-border" />
               <div className="grid grid-cols-12">
                 <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Nº do ofício:</div>
-                <div className="col-span-9 px-4 py-3 text-sm">{sol?.nrOficio || '—'}</div>
+                <div className="col-span-9 px-4 py-3 text-sm">{sol?.solicitacao?.nrOficio || '—'}</div>
               </div>
               <div className="h-px bg-border" />
               <div className="grid grid-cols-12">
                 <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Nº do processo:</div>
-                <div className="col-span-9 px-4 py-3 text-sm">{sol?.nrProcesso || '—'}</div>
+                <div className="col-span-9 px-4 py-3 text-sm">{sol?.solicitacao?.nrProcesso || '—'}</div>
               </div>
             </div>
           </section>
@@ -334,7 +362,7 @@ export default function DetalhesSolicitacaoModal({
 
             <div className="rounded-md border bg-muted/30 p-4">
               <p className="text-sm text-muted-foreground">
-                {observacao ?? '—'}
+                { observacao ?? '—'}
               </p>
             </div>
           </section>
@@ -406,12 +434,40 @@ export default function DetalhesSolicitacaoModal({
             </section>
           )}
 
+          {isEmAprovacaoGerente && (
+            <section className="space-y-3">
+              <div className="space-y-2">
+                <Label htmlFor="aprovarDevolutiva" className="text-sm font-medium">
+                  Aprovar devolutiva? *
+                </Label>
+                <div className="flex items-center gap-4 mt-2">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={flAprovado === 'S'}
+                      onCheckedChange={() => setFlAprovado('S')}
+                      id="aprovarDevolutiva-s"
+                    />
+                    <Label htmlFor="aprovarDevolutiva-s" className="text-sm font-light">Sim</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={flAprovado === 'N'}
+                      onCheckedChange={() => setFlAprovado('N')}
+                      id="aprovarDevolutiva-n"
+                    />
+                    <Label htmlFor="aprovarDevolutiva-n" className="text-sm font-light ">Não</Label>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+
           <section className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">Enviar devolutiva ao Regulatório</h3>
 
               <HistoricoRespostasModalButton
-                idSolicitacao={sol?.idSolicitacao ?? null}
+                idSolicitacao={sol?.solicitacao?.idSolicitacao ?? null}
                 showButton={!!quantidadeDevolutivas}
                 quantidadeDevolutivas={quantidadeDevolutivas}
               />
@@ -427,8 +483,10 @@ export default function DetalhesSolicitacaoModal({
                 value={resposta}
                 onChange={(e) => setResposta(e.target.value)}
                 rows={5}
-                disabled={sending}
+                disabled={sending }
               />
+
+    
 
               <div className="mt-3 flex items-center gap-3">
                 {canInserirAnexo && (
@@ -479,7 +537,12 @@ export default function DetalhesSolicitacaoModal({
           <Button type="button" variant="outline" onClick={onClose} disabled={sending}>
             Cancelar
           </Button>
-          <Button type="submit" form="detalhes-form" disabled={sending}>
+          <Button
+            type="submit"
+            form="detalhes-form"
+            disabled={sending || isPermissaoEnviandoDevolutiva }
+            tooltip={isPermissaoEnviandoDevolutiva ? 'Apenas gerent/diretores da área pode enviar resposta da devolutiva' : ''}
+          >
             {sending ? 'Enviando...' : 'Enviar resposta'}
           </Button>
         </DialogFooter>

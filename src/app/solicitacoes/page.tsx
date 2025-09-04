@@ -296,7 +296,7 @@ export default function SolicitacoesPage() {
     toast.message('Abrir histórico de respostas (implemente a navegação).');
   }, []);
 
-  const enviarDevolutiva = useCallback(async (mensagem: string, arquivos: File[]) => {
+  const enviarDevolutiva = useCallback(async (mensagem: string, arquivos: File[], flAprovado?: 'S' | 'N') => {
     const alvo = detalhesSolicitacao;
     console.log('Enviando devolutiva para a solicitação:', alvo);
     console.log('Mensagem:', mensagem);
@@ -306,10 +306,11 @@ export default function SolicitacoesPage() {
         const data = {
           dsObservacao: mensagem,
           idSolicitacao: alvo.solicitacao.idSolicitacao,
-        }
-        console.log(alvo)
-        await tramitacoesClient.tramitar?.(data);
+          flAprovado: flAprovado,
+        };
+        const created = await tramitacoesClient.tramitar(data);
       }
+
       if (arquivos.length > 0) {
         const arquivosDTO = await Promise.all(
           arquivos.map(async (file) => {
@@ -735,7 +736,7 @@ export default function SolicitacoesPage() {
         />
       )}
 
-      {showDetalhesModal && (
+      {showDetalhesModal && detalhesSolicitacao && (
         <DetalhesSolicitacaoModal
           open={showDetalhesModal}
           onClose={() => {
