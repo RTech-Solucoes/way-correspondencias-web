@@ -4,7 +4,7 @@ import {useEffect, useState} from 'react';
 import {TramitacaoResponse} from '@/api/tramitacoes/types';
 import {tramitacoesClient} from '@/api/tramitacoes/client';
 import {AreaResponse} from '@/api/areas/types';
-import {ArrowRight, SpinnerIcon} from '@phosphor-icons/react';
+import {ArrowRight, ArrowRightIcon, SpinnerIcon} from '@phosphor-icons/react';
 import {toast} from 'sonner';
 import {Dialog, DialogContent, DialogHeader, DialogTitle,} from '@/components/ui/dialog';
 import {Badge} from '@/components/ui/badge';
@@ -86,7 +86,7 @@ export default function TramitacaoModal({
             </div>
           ) : (
             <div className="space-y-4">
-              {tramitacoes.map((tramitacao) => (
+              {tramitacoes.reverse().map((tramitacao) => (
                 <div 
                   key={tramitacao.idTramitacao}
                   className="bg-[#f1f1f1] rounded-lg p-4 border border-gray-300"
@@ -121,21 +121,21 @@ export default function TramitacaoModal({
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-2">
-                      <Badge 
-                        variant="secondary" 
-                        className="bg-white/70 text-gray-800 border border-gray-400 text-xs font-medium px-2 py-1"
-                      >
-                        {tramitacao.areaOrigem.nmArea}
-                      </Badge>
-                      <ArrowRight className="h-4 w-4 text-gray-600" />
-                      <Badge 
-                        variant="secondary" 
-                        className="bg-white/70 text-gray-800 border border-gray-400 text-xs font-medium px-2 py-1"
-                      >
-                        {tramitacao.areaDestino.nmArea}
-                      </Badge>
-                    </div>
+                    {/*<div className="flex items-center space-x-2">*/}
+                    {/*  <Badge */}
+                    {/*    variant="secondary" */}
+                    {/*    className="bg-white/70 text-gray-800 border border-gray-400 text-xs font-medium px-2 py-1"*/}
+                    {/*  >*/}
+                    {/*    {tramitacao.areaOrigem.nmArea}*/}
+                    {/*  </Badge>*/}
+                    {/*  <ArrowRightIcon className="h-4 w-4 text-gray-600" />*/}
+                    {/*  <Badge */}
+                    {/*    variant="secondary" */}
+                    {/*    className="bg-white/70 text-gray-800 border border-gray-400 text-xs font-medium px-2 py-1"*/}
+                    {/*  >*/}
+                    {/*    {tramitacao.areaDestino.nmArea}*/}
+                    {/*  </Badge>*/}
+                    {/*</div>*/}
                   </div>
                 </div>
               ))}
