@@ -21,23 +21,27 @@ import { base64ToUint8Array, fileToArquivoDTO, hasPermissao, saveBlob } from '@/
 import { Checkbox } from '@/components/ui/checkbox';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
 import { HistoricoRespostasModalButton } from './HistoricoRespostasModal';
-import tramitacoesClient from '@/api/tramitacoes/client';
+// import tramitacoesClient from '@/api/tramitacoes/client';
+import authClient from '@/api/auth/client';
+import { responsaveisClient } from '@/api/responsaveis/client';
 
 
 type AnexoItemShape = {
   idAnexo: number;
+  idObjeto: number;
   nmArquivo: string;
-  tpObjeto: string;
+  tpObjeto: TipoObjetoAnexo;
+  tpResponsavel?: TipoResponsavelAnexo;
 };
 
 type DetalhesSolicitacaoModalProps = {
   open: boolean;
   onClose(): void;
   solicitacao: SolicitacaoDetalheResponse | null;
-  anexos?: AnexoItemShape[];
+  anexos?: AnexoResponse[];
   onHistoricoRespostas?(): void;
   onAbrirEmailOriginal?(): void;
-  onEnviarDevolutiva?(mensagem: string, arquivos: File[], flAprovado?: 'S' | 'N'): Promise<void> | void;
+  onEnviarDevolutiva?(mensagem: string, arquivos: ArquivoDTO[], flAprovado?: 'S' | 'N'): Promise<void> | void;
   statusLabel?: string;
 };
 
@@ -77,6 +81,7 @@ export default function DetalhesSolicitacaoModal({
   const [expandDescricao, setExpandDescricao] = useState(false);
   const [sending, setSending] = useState(false);
   const [flAprovado, setFlAprovado] = useState<'S' | 'N' | ''>('');
+  const [tpResponsavelUpload, setTpResponsavelUpload] = useState<TipoResponsavelAnexo>(TipoResponsavelAnexo.A);
 
 
   const descRef = useRef<HTMLParagraphElement | null>(null);
@@ -106,25 +111,34 @@ export default function DetalhesSolicitacaoModal({
 
   const temaLabel = sol?.solicitacao?.tema?.nmTema ?? sol?.solicitacao?.nmTema ?? '—';
 
-  const anexosSolic: AnexoResponse[] = solicitacao?.anexosSolicitacao ?? [];
-  const mapToItem = (a: { idAnexo: number; nmArquivo: string; tpObjeto: string }): AnexoItemShape => ({
+  const anexosTramitacoes: AnexoResponse[] = (solicitacao?.tramitacoes ?? []).flatMap((t) => t?.anexos ?? []);
+
+  const mapToItem = (
+    a: Partial<AnexoResponse> & { idAnexo: number; idObjeto: number; nmArquivo: string; tpObjeto?: string }
+  ): AnexoItemShape => ({
     idAnexo: a.idAnexo,
+    idObjeto: (a as AnexoResponse).idObjeto,
     nmArquivo: a.nmArquivo,
-    tpObjeto: a.tpObjeto,
+    tpObjeto: (((a as AnexoResponse).tpObjeto as unknown) as TipoObjetoAnexo) ?? TipoObjetoAnexo.S,
+    tpResponsavel: (a as { tpResponsavel?: TipoResponsavelAnexo })?.tpResponsavel,
   });
 
-  const anexosAnalista: AnexoItemShape[] = anexosSolic
-    .filter((a: AnexoResponse) => a.tpObjeto === 'A')
+  const anexosAnalista: AnexoItemShape[] = anexosTramitacoes
+    .filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexo.A)
     .map(mapToItem);
 
-  const anexosGerente: AnexoItemShape[] = anexosSolic
-    .filter((a: AnexoResponse) => a.tpObjeto === 'G')
+  const anexosGerente: AnexoItemShape[] = anexosTramitacoes
+    .filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexo.G)
+    .map(mapToItem);
+
+  const anexosDiretor: AnexoItemShape[] = anexosTramitacoes
+    .filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexo.D)
     .map(mapToItem);
 
   const anexosRegulatorio: AnexoItemShape[] =
     anexos.length > 0
       ? anexos.map(mapToItem)
-      : anexosSolic.filter((a: AnexoResponse) => a.tpObjeto === 'S').map(mapToItem);
+      : anexosTramitacoes.filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexo.R).map(mapToItem);
 
 
     const isEmAprovacaoGerente =
@@ -140,6 +154,60 @@ export default function DetalhesSolicitacaoModal({
     )
     
   const isPermissaoEnviandoDevolutiva = (isEmAprovacaoGerente && !hasPermissao('SOLICITACAO_APROVAR'));
+
+  useEffect(() => {
+    const checkResponsavelInicial = async () => {
+      try {
+        const userName = authClient.getUserName();
+        if (!userName) {
+          setTpResponsavelUpload(TipoResponsavelAnexo.A);
+          return;
+        }
+        const resp = await responsaveisClient.buscarPorNmUsuarioLogin(userName);
+        const perfilName = (resp?.nmPerfil || '').toLowerCase();
+
+        const areasSolic = Array.isArray(sol?.solicitacao?.area)
+          ? (sol!.solicitacao!.area as Array<{ idArea?: number }>)
+          : [];
+        const initialAreaId = areasSolic?.[0]?.idArea ?? null;
+        const isInitialArea = !!initialAreaId && !!resp?.areas?.some(a => a?.area?.idArea === initialAreaId);
+
+        const tp = computeTpResponsavel(perfilName, isInitialArea);
+        setTpResponsavelUpload(tp);
+      } catch {
+        setTpResponsavelUpload(TipoResponsavelAnexo.A);
+      }
+    };
+
+    if (open && sol?.solicitacao?.idSolicitacao) {
+      checkResponsavelInicial();
+    }
+  }, [open, sol?.solicitacao?.idSolicitacao, sol?.solicitacao?.area, sol]);
+
+  function computeTpResponsavel(perfilNameLower: string, isInitialArea: boolean): TipoResponsavelAnexo {
+    const p = perfilNameLower.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+
+    if (
+      p.includes('administrador') ||
+      p.includes('gestor do sistema') ||
+      p.includes('validador / assinante') || p.includes('validador')
+    ) {
+      return TipoResponsavelAnexo.D;
+    }
+
+    if (p.includes('executor avancado')) {
+      return TipoResponsavelAnexo.G;
+    }
+
+    if (
+      p === 'executor' || p.includes('executor restrito') ||
+      p.includes('tecnico / suporte') || p.includes('tecnico') || p.includes('suporte')
+    ) {
+      return isInitialArea ? TipoResponsavelAnexo.R : TipoResponsavelAnexo.A;
+    }
+
+    return isInitialArea ? TipoResponsavelAnexo.R : TipoResponsavelAnexo.A;
+  }
 
   const measureDescricao = useCallback(() => {
     const el = descRef.current;
@@ -211,16 +279,13 @@ export default function DetalhesSolicitacaoModal({
       try {
         setSending(true);
 
-        if (arquivos.length > 0) {
-          const arquivosDTO: ArquivoDTO[] = await Promise.all(arquivos.map(fileToArquivoDTO));
-          arquivosDTO.forEach((a) => {
-            a.tpResponsavel = TipoResponsavelAnexo.A; // TODO: tornar dinâmico
-          });
-          // TODO: ver com Daniel como mandar esse arquivo da tramitação
-        //  await tramitacoesClient.uploadAnexos(sol?.solicitacao?.idSolicitacao, arquivosDTO);
-        }
+        const arquivosDTO: ArquivoDTO[] = arquivos.length > 0
+          ? await Promise.all(
+              arquivos.map((file) => fileToArquivoDTO(file, tpResponsavelUpload))
+            )
+          : [];
 
-        await onEnviarDevolutiva(resposta.trim(), arquivos, flAprovado || undefined);
+        await onEnviarDevolutiva(resposta.trim(), arquivosDTO, flAprovado || undefined);
 
         toast.success('Resposta enviada com sucesso!');
         setResposta('');
@@ -228,26 +293,23 @@ export default function DetalhesSolicitacaoModal({
         onClose();
       } catch (err) {
         console.error(err);
-        toast.error('Não foi possível enviar a resposta.');
+        const msg = err instanceof Error && err.message ? err.message : 'Não foi possível enviar a resposta.';
+        toast.error(msg);
       } finally {
         setSending(false);
       }
     },
-    [onEnviarDevolutiva, resposta, arquivos, sol?.solicitacao?.idSolicitacao, onClose, flAprovado, isEmAprovacaoGerente]
+    [onEnviarDevolutiva, resposta, arquivos, sol?.solicitacao?.idSolicitacao, onClose, flAprovado, isEmAprovacaoGerente, tpResponsavelUpload]
   );
 
   const handleBaixarAnexo = useCallback(
     async (anexo: AnexoItemShape) => {
       try {
-        if (!sol?.solicitacao?.idSolicitacao) {
-          toast.error('ID da solicitação não encontrado.');
+        if (!anexo?.idObjeto || !anexo?.tpObjeto) {
+          toast.error('Dados do anexo inválidos.');
           return;
         }
-        const arquivos = await anexosClient.download(
-          sol.solicitacao.idSolicitacao,
-          TipoObjetoAnexo.S,
-          anexo.nmArquivo
-        );
+        const arquivos = await anexosClient.download(anexo.idObjeto, anexo.tpObjeto, anexo.nmArquivo);
         if (!arquivos || arquivos.length === 0) {
           toast.error('Nenhum arquivo retornado.');
           return;
@@ -264,7 +326,7 @@ export default function DetalhesSolicitacaoModal({
         toast.error('Não foi possível baixar o anexo.');
       }
     },
-    [sol?.solicitacao?.idSolicitacao]
+    []
   );
 
   const descricaoCollapsedStyle: React.CSSProperties =
@@ -272,7 +334,7 @@ export default function DetalhesSolicitacaoModal({
       ? { maxHeight: `${lineHeightPx * MAX_DESC_LINES}px`, overflow: 'hidden' }
       : {};
 
-  const quantidadeDevolutivas = solicitacao?.tramitacoes?.filter(t => !!t?.tramitacao?.solicitacao?.dsObservacao)?.length ?? 0;
+  const quantidadeDevolutivas = solicitacao?.tramitacoes?.filter(t => !!t?.tramitacao?.dsObservacao)?.length ?? 0;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -423,6 +485,17 @@ export default function DetalhesSolicitacaoModal({
                 <div className="rounded-md border">
                   <div className="grid grid-cols-12 items-center">
                     <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
+                      Anexado pelos Diretores
+                    </div>
+                    <div className="col-span-9 px-4 py-3">
+                      <AnexoItem anexos={anexosDiretor} onBaixar={handleBaixarAnexo} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-md border">
+                  <div className="grid grid-cols-12 items-center">
+                    <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
                       Enviado pelo Regulatório
                     </div>
                     <div className="col-span-9 px-4 py-3">
@@ -540,8 +613,12 @@ export default function DetalhesSolicitacaoModal({
           <Button
             type="submit"
             form="detalhes-form"
-            disabled={sending || isPermissaoEnviandoDevolutiva }
-            tooltip={isPermissaoEnviandoDevolutiva ? 'Apenas gerent/diretores da área pode enviar resposta da devolutiva' : ''}
+            disabled={sending ||isPermissaoEnviandoDevolutiva }
+            tooltip={
+              isPermissaoEnviandoDevolutiva
+                ? 'Apenas gerent/diretores da área pode enviar resposta da devolutiva'
+                : ''
+            }
           >
             {sending ? 'Enviando...' : 'Enviar resposta'}
           </Button>
