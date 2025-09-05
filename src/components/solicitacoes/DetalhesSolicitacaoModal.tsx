@@ -142,11 +142,10 @@ export default function DetalhesSolicitacaoModal({
     .filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexo.D)
     .map(mapToItem);
 
-  const anexosRegulatorio: AnexoItemShape[] =
-    anexos.length > 0
-      ? anexos.map(mapToItem)
-      : anexosTramitacoes.filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexo.R).map(mapToItem);
-
+  const anexosRegulatorio: AnexoItemShape[] = anexosTramitacoes 
+    .filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexo.R)
+    .map(mapToItem);
+  
   const itensSolicitacao: AnexoItemShape[] = anexosSolic.map(mapToItem);
   const itensEmail: AnexoItemShape[] = anexosEmail.map(mapToItem);
 
