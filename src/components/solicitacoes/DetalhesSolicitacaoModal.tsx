@@ -174,7 +174,6 @@ export default function DetalhesSolicitacaoModal({
           return;
         }
         const resp = await responsaveisClient.buscarPorNmUsuarioLogin(userName);
-        console.log('resp', resp);
         const perfilName = (resp?.nmPerfil || '').toLowerCase();
 
         const idAreaInicial = sol?.solicitacao?.idAreaInicial;

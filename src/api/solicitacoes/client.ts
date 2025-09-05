@@ -136,10 +136,6 @@ class SolicitacoesClient {
     return solicitacaoAnexosClient.download(idSolicitacao, nmArquivo);
   }
 
-  enviarDevolutiva(idSolicitacao: number, arg1: { mensagem: string; }) {
-    console.log('Método enviarDevolutiva chamado com:', idSolicitacao, arg1);
-  }
-
   async buscarDetalhesPorId(id: number): Promise<SolicitacaoDetalheResponse> {
     return this.client.request<SolicitacaoDetalheResponse>(`/detalhe/${id}`, {
       method: 'GET',

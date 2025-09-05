@@ -94,6 +94,7 @@ export default function SolicitacoesPage() {
     applyFilters,
     clearFilters,
     getStatusBadgeVariant,
+    getStatusBadgeBg,
     getStatusText,
     handleSort,
   } = useSolicitacoes();
@@ -305,7 +306,6 @@ export default function SolicitacoesPage() {
     setDetalhesSolicitacao(null);
 
     try {
-      console.log('123')
       const detalhes = await solicitacoesClient.buscarDetalhesPorId(s.idSolicitacao);
       setDetalhesSolicitacao(detalhes);
       const anexos = await anexosClient.buscarPorIdObjetoETipoObjeto(s.idSolicitacao, TipoObjetoAnexo.S);
@@ -326,8 +326,6 @@ export default function SolicitacoesPage() {
 
   const enviarDevolutiva = useCallback(async (mensagem: string, arquivos: ArquivoDTO[], flAprovado?: 'S' | 'N') => {
     const alvo = detalhesSolicitacao;
-    console.log('Enviando devolutiva para a solicitação:', alvo);
-    console.log('Mensagem:', mensagem);
     if (!alvo) return;
     try {
       const data = {
@@ -339,7 +337,6 @@ export default function SolicitacoesPage() {
       await tramitacoesClient.tramitar(data);
       await loadSolicitacoes();
     } catch (err) {
-      // Propagar erro para o modal tratar e exibir a mensagem do backend
       throw err;
     }
   }, [detalhesSolicitacao, loadSolicitacoes]);
@@ -527,11 +524,17 @@ export default function SolicitacoesPage() {
                     <StickyTableCell>{solicitacao.nmTema || solicitacao?.tema?.nmTema || '-'}</StickyTableCell>
                     <StickyTableCell>
                       <Badge
-                        className="whitespace-nowrap truncate"
+                        className="whitespace-nowrap truncate text-white"
                         variant={getStatusBadgeVariant(
                           solicitacao.statusSolicitacao?.idStatusSolicitacao?.toString() ||
                           solicitacao.statusCodigo?.toString() || ''
                         )}
+                        style={{
+                          backgroundColor: getStatusBadgeBg(
+                            solicitacao.statusSolicitacao?.idStatusSolicitacao?.toString() ||
+                            solicitacao.statusCodigo?.toString() || ''
+                          )
+                        }}
                       >
                         {solicitacao.statusSolicitacao?.nmStatus ||
                           getStatusText(solicitacao.statusCodigo?.toString() || '') ||

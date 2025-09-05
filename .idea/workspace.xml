@@ -6,7 +6,12 @@
   <component name="ChangeListManager">
     <list default="true" id="98226f2c-f64e-43be-946e-e89028627d5c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/layout/ProfileModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/layout/ProfileModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/api/solicitacoes/client.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/api/solicitacoes/client.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/solicitacoes/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/solicitacoes/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/solicitacoes/DetalhesSolicitacaoModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/solicitacoes/DetalhesSolicitacaoModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/solicitacoes/SolicitacaoModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/solicitacoes/SolicitacaoModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/context/solicitacoes/SolicitacoesContext.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/context/solicitacoes/SolicitacoesContext.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -189,6 +194,7 @@
       <workItem from="1756998058453" duration="1357000" />
       <workItem from="1757009066199" duration="300000" />
       <workItem from="1757068184921" duration="2080000" />
+      <workItem from="1757074311765" duration="1121000" />
     </task>
     <task id="LOCAL-00001" summary="Alteração biblioteca de Ícones&#10;lucide-react -&gt; @phosphor-icons/react">
       <option name="closed" value="true" />
