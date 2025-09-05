@@ -10,6 +10,36 @@ export interface DashboardListSummary {
     idArea: number;
     nmArea: string;
     nmTema: string;
+    dtCriacaoFormatada: string;
+}
+
+export interface PaginatedResponse<T> {
+    content: T[];
+    pageable: {
+        pageNumber: number;
+        pageSize: number;
+        sort: {
+            empty: boolean;
+            sorted: boolean;
+            unsorted: boolean;
+        };
+        offset: number;
+        paged: boolean;
+        unpaged: boolean;
+    };
+    last: boolean;
+    totalElements: number;
+    totalPages: number;
+    size: number;
+    number: number;
+    sort: {
+        empty: boolean;
+        sorted: boolean;
+        unsorted: boolean;
+    };
+    numberOfElements: number;
+    first: boolean;
+    empty: boolean;
 }
 
 export interface SolicitacaoPrazo {
@@ -28,6 +58,27 @@ export interface SolicitacaoPrazo {
 
 export interface IRecentActivity {
     id: number;
-    assunto: string;
+    dsAssunto: string;
     dtCriacao: string;
+    tempoDecorrido: string;
+    nmTema: string;
+    nrProcesso: string;
+    nmResponsavel: string;
+    cdIdentificacao: string;
+}
+
+export interface ICalendar {
+    idSolicitacaoPrazo: number;
+    idSolicitacao: number;
+    idStatusSolicitacao: number;
+    nmStatus: string;
+    idTema: number;
+    nmTema: string;
+    nrPrazoInterno: number;
+    tpPrazo: string;
+    dtInicio: string;
+    dtFim: string;
+    minutosRestantes: number;
+    estourou: number;
+    estourado: boolean;
 }

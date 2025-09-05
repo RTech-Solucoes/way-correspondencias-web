@@ -24,6 +24,7 @@ export interface EmailContextProps {
   emailFilters: EmailFiltersState;
   setEmailFilters: Dispatch<SetStateAction<EmailFiltersState>>;
   activeEmailFilters: EmailFiltersState;
+  setActiveEmailFilters: Dispatch<SetStateAction<EmailFiltersState>>;
   hasActiveFilters: boolean;
   applyFilters: () => void;
   clearFilters: () => void;
@@ -98,6 +99,7 @@ export const EmailProvider = ({ children }: { children: ReactNode }) => {
         emailFilters,
         setEmailFilters,
         activeEmailFilters,
+        setActiveEmailFilters,
         hasActiveFilters,
         applyFilters,
         clearFilters
