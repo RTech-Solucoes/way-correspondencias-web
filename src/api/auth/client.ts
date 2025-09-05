@@ -27,6 +27,7 @@ class AuthClient {
     localStorage.removeItem('authToken');
     localStorage.removeItem('tokenType');
     localStorage.removeItem('userName');
+    localStorage.removeItem('permissoes-storage');
     sessionStorage.removeItem('permissoes-storage');
     window.location.href = '/';
   }

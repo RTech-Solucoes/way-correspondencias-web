@@ -63,7 +63,6 @@ export default function LoginPage() {
 
         if (token) {
           const decoded = jwtDecode<TokenPayload>(token);
-          console.log(decoded.sub, decoded.exp, decoded.permissoes);
           setPermissoes(decoded.permissoes)
         }
 
@@ -83,6 +82,7 @@ export default function LoginPage() {
     localStorage.removeItem('authToken');
     localStorage.removeItem('tokenType');
     localStorage.removeItem('userName');
+    localStorage.removeItem('permissoes-storage');
     sessionStorage.removeItem('permissoes-storage');
   }, []);
 

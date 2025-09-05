@@ -407,7 +407,6 @@ export default function SolicitacaoModal({
   }, []);
 
   const handleRemoveAnexoBackend = useCallback(async (idAnexo: number) => {
-    console.log(idAnexo);
     if (!solicitacao?.idSolicitacao) return;
 
     try {
@@ -1047,7 +1046,7 @@ export default function SolicitacaoModal({
               onRemove={(index) => {
                 const anexo = anexosTypeE[index];
                 if (anexo?.idAnexo) {
-                  console.log('Remove anexo type E:', anexo.idAnexo);
+
                 }
               }}
               onDownload={async (anexoListItem) => {

@@ -62,6 +62,7 @@ export interface SolicitacoesContextProps {
   applyFilters: () => void;
   clearFilters: () => void;
   getStatusBadgeVariant: (status: string) => "default" | "secondary" | "destructive" | "outline";
+  getStatusBadgeBg: (status: string) => string;
   getStatusText: (status: string) => string;
   handleSort: (field: keyof SolicitacaoResponse) => void;
 }
@@ -85,27 +86,6 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
   const [totalElements, setTotalElements] = useState(0);
   const [sortField, setSortField] = useState<keyof SolicitacaoResponse | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-
-  const [statusCache, setStatusCache] = useState<Map<number, StatusSolicPrazoTemaForUI[]>>(new Map());
-
-  const fetchStatusForTema = useCallback(async (idTema: number): Promise<StatusSolicPrazoTemaForUI[]> => {
-    if (statusCache.has(idTema)) {
-      return statusCache.get(idTema) || [];
-    }
-
-    try {
-      const status = await statusSolicPrazoTemaClient.listar(idTema);
-      setStatusCache(prev => new Map(prev).set(idTema, status));
-      return status;
-    } catch (error) {
-      console.error('Erro ao buscar status do tema:', error);
-      return [];
-    }
-  }, [statusCache]);
-
-  const findSolicitacaoByStatus = useCallback((statusCodigo: string | number) => {
-    return solicitacoes.find(s => s.statusCodigo?.toString() === statusCodigo.toString());
-  }, [solicitacoes]);
 
   const [filters, setFilters] = useState<FiltersState>({
     identificacao: '',
@@ -175,66 +155,25 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
     return 'default';
   };
 
-  const getStatusText = useCallback(async (status: string | number, idTema?: number) => {
-    const statusCodigo = Number(status);
-
-    if (idTema) {
-      try {
-        const statusList = await fetchStatusForTema(idTema);
-        const statusInfo = statusList.find(s => s.idStatusSolicitacao === statusCodigo);
-        if (statusInfo) {
-          return `Status ${statusCodigo}`;
-        }
-      } catch (error) {
-        console.error('Erro ao buscar texto do status:', error);
-      }
-    }
-
+  const getStatusBadgeBg = (status: string | number): string => {
     const statusStr = status?.toString()?.toUpperCase();
-    switch (statusStr) {
-      case 'P':
-      case '1':
-        return 'Pré-análise';
-      case 'V':
-      case '2':
-        return 'Vencido Regulatório';
-      case 'A':
-      case '3':
-        return 'Em análise Área Técnica';
-      case 'T':
-      case '4':
-        return 'Vencido Área Técnica';
-      case 'R':
-      case '5':
-        return 'Análise Regulatória';
-      case 'O':
-      case '6':
-        return 'Em Aprovação';
-      case 'S':
-      case '7':
-        return 'Em Assinatura';
-      case 'C':
-      case '8':
-        return 'Concluído';
-      case 'X':
-      case '9':
-        return 'Arquivado';
-      default:
-        return status?.toString() || 'N/A';
-    }
-  }, [fetchStatusForTema]);
 
-  const getStatusTextSync = (status: string | number) => {
-    const solicitacao = findSolicitacaoByStatus(status);
-    if (solicitacao?.idTema) {
-      const cached = statusCache.get(solicitacao.idTema);
-      if (cached) {
-        const statusInfo = cached.find(s => s.idStatusSolicitacao === Number(status));
-        if (statusInfo) {
-          return `Status ${statusInfo.idStatusSolicitacao}`;
-        }
-      }
+    if (statusStr?.includes('VENCIDO') || statusStr === 'T' || statusStr === '2' || statusStr === '4') {
+      return '#a80000';
     }
+
+    if (statusStr?.includes('CONCLUÍDO') || statusStr?.includes('ARQUIVADO') || statusStr === 'C' || statusStr === 'X' || statusStr === '8' || statusStr === '9') {
+      return '#008000';
+    }
+
+    if (statusStr?.includes('PRÉ') || statusStr === 'P' || statusStr === '1') {
+      return '#b68500';
+    }
+
+    return '#1447e6';
+  };
+
+  const getStatusText = (status: string | number) => {
 
     const statusStr = status?.toString()?.toUpperCase();
     switch (statusStr) {
@@ -326,7 +265,8 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
         applyFilters,
         clearFilters,
         getStatusBadgeVariant,
-        getStatusText: getStatusTextSync,
+        getStatusBadgeBg,
+        getStatusText,
         handleSort,
       }}
     >
