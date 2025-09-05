@@ -1,6 +1,5 @@
-import { weeks } from "@/components/dashboard/MockDados";
 import { ICalendar } from "@/api/dashboard/type";
-import { getCurrentWeek, getStatusColor } from "../../functions";
+import { getCurrentWeek, getStatusColorCalendar } from "../../functions";
 
 interface ICalendarWeekProps {
   calendarByWeek: ICalendar[];
@@ -53,7 +52,7 @@ export default function CalendarWeek(props: ICalendarWeekProps) {
                   return (
                     <div
                       key={obligation.idSolicitacaoPrazo}
-                      className={`mb-2 p-2 rounded text-xs ${getStatusColor(obligation.nmStatus)}`}
+                      className={`mb-2 p-2 rounded text-xs ${getStatusColorCalendar(obligation.nmStatus)}`}
                     >
                       <div className="font-medium">{time}</div>
                       <div>{obligation.nmTema}</div>

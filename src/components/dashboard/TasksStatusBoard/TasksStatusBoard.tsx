@@ -5,14 +5,34 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import CardHeader from "../card-header";
-import { getStatusColor, renderIcon } from "../functions";
+import { capitalizeWords, getStatusColorVision, renderIcon } from "../functions";
+import PaginationTasksStatus from "./PaginationTasksStatus";
 
-export default function TasksStatusBoard() {
+interface TasksStatusBoardProps {
+  refreshTrigger?: number;
+}
+
+export default function TasksStatusBoard({ refreshTrigger }: TasksStatusBoardProps) {
   const [visionGeral, setVisionGeral] = useState<DashboardOverview[]>([]);
   const [listSummary, setListSummary] = useState<DashboardListSummary[]>([]);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   const sortVisionGeral = (data: DashboardOverview[]) => {
-    const statusOrder = ['Concluído', 'Em andamento', 'Pendentes', 'Cancelado'];
+    const statusOrder = [
+      "Concluído",
+      "Em análise da área técnica",
+      "Em aprovação",
+      "Pré-análise",
+      "Em assinatura Diretores",
+      "Arquivado",
+      "Em assinatura Regulatório",
+      "Vencido regulatório",
+      "Análise regulatória",
+      "Vencido área técnica",
+    ];
 
     return data.sort((a, b) => {
       const indexA = statusOrder.indexOf(a.nmStatus);
@@ -40,63 +60,100 @@ export default function TasksStatusBoard() {
 
     const getRecentOverview = async () => {
       try {
-        const data = await dashboardClient.getRecentOverview(3);
-        setListSummary(data);
+        setLoading(true);
+        const response = await dashboardClient.getRecentOverview(currentPage, 5);
+        setListSummary(response.content);
+        setTotalPages(response.totalPages);
+        setTotalElements(response.totalElements);
       } catch (error) {
         console.error("Erro ao buscar overview:", error);
         toast.error("Não foi possível carregar os dados do dashboard.");
+      } finally {
+        setLoading(false);
       }
     };
 
     getRecentOverview();
     getOverview();
-  }, []);
+  }, [refreshTrigger, currentPage]);
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   return (
-    <Card className="flex flex-col lg:col-span-2">
+    <Card className="flex flex-col h-full">
       <CardHeader
-        title="Visão Geral de Obrigações"
-        description="Status de todas as obrigações contratuais"
+        title="Visão Geral de Solicitações"
+        description="Status de todas as solicitações contratuais"
       />
       <CardContent>
-        <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-6">
           {visionGeral.map((item) => (
             <div key={item.nmStatus} className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center">
                   {renderIcon(item.nmStatus)}
-                  <span>{item.nmStatus}</span>
+                  <span>{capitalizeWords(item.nmStatus)}</span>
                 </div>
-                <span className="font-medium">{item.qtStatus} ({item.qtPercentual}%)</span>
+                <span className="font-medium">
+                  {item.qtStatus} ({item.qtPercentual}%)
+                </span>
               </div>
               <div className="h-2 bg-gray-100 w-full rounded-full overflow-hidden">
-                <div className={`h-full ${getStatusColor(item.nmStatus)}`} style={{ width: `${item.qtPercentual}%` }}></div>
+                <div
+                  className={`h-full ${getStatusColorVision(item.nmStatus)}`}
+                  style={{ width: `${item.qtPercentual}%` }}
+                ></div>
               </div>
             </div>
           ))}
-          {visionGeral.length === 0 && (<div className="text-sm text-gray-500">Nenhum dado disponível</div>)}
+
+          {visionGeral.length === 0 && (
+            <div className="col-span-2 text-sm text-gray-500 text-center">
+              Nenhum dado disponível
+            </div>
+          )}
         </div>
 
         <div className="mt-6">
-          <h4 className="text-sm font-medium mb-3">Obrigações Recentes</h4>
+          <h4 className="text-sm font-medium mb-3">Solicitações Recentes</h4>
           <div className="space-y-3">
-            {listSummary.map((task) => (
-              <div key={task.idSolicitacao} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <div>
-                    <div className="font-medium text-sm">{task.nmArea}</div>
-                    <div className="text-xs text-gray-500">{task.nmTema}</div>
+            {loading ? (
+              <div className="flex items-center justify-center py-4">
+                <div className="text-sm text-gray-500">Carregando obrigações...</div>
+              </div>
+            ) : listSummary.length === 0 ? (
+              <div className="text-sm text-gray-500">Nenhuma tarefa foi realizada recentemente.</div>
+            ) : (
+              listSummary.map((task, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-gray-100 rounded-lg">
+                  <div className="flex items-center justify-between space-x-3 w-full">
+                    <div>
+                      <div className="font-medium text-sm">{task.nmArea}</div>
+                      <div className="text-xs text-gray-500">{task.nmTema}</div>
+                    </div>
+                    <div className="text-xs text-gray-500">{task.dtCriacaoFormatada}</div>
                   </div>
                 </div>
-              </div>
-            ))}
-            {listSummary.length === 0 && (<div className="text-sm text-gray-500">Nenhuma tarefa foi realizada recentemente.</div>)}
+              ))
+            )}
           </div>
         </div>
       </CardContent>
+
       <CardFooter className="border-t pt-4 mt-auto">
-        <Button variant="outline" className="w-full">Ver Todas as Obrigações</Button>
+        {totalPages > 1 ? (
+          <PaginationTasksStatus
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalElements={totalElements}
+            onPageChange={handlePageChange}
+            loading={loading}
+          />
+        ) : (
+          <></>
+        )}
       </CardFooter>
     </Card>
   )

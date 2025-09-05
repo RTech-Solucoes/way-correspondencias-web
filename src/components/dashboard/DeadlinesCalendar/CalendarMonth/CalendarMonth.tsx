@@ -1,9 +1,9 @@
 import { weeks } from "@/components/dashboard/MockDados";
 import { useEffect, useState, useLayoutEffect } from "react";
-import { getStatusColor } from "../../functions";
 import FilterCalendarMonth from "./FilterCalendarMonth";
 import { ICalendar } from "@/api/dashboard/type";
 import dashboardClient from "@/api/dashboard/client";
+import { getStatusColorCalendar } from "../../functions";
 
 export default function CalendarMonth() {
   const [tooltip, setTooltip] = useState<{
@@ -153,7 +153,7 @@ export default function CalendarMonth() {
                     return (
                       <div
                         key={obligation.idSolicitacaoPrazo}
-                        className={`p-1 rounded text-xs truncate ${getStatusColor(obligation.nmStatus)}`}
+                        className={`p-1 rounded text-xs truncate ${getStatusColorCalendar(obligation.nmStatus)}`}
                         title={`${obligation.nmTema} - ${time}`}
                       >
                         <div className="font-medium text-xs">{time}</div>
@@ -185,14 +185,14 @@ export default function CalendarMonth() {
 
       {tooltip.visible && (
         <div
-          className="fixed z-50 bg-white border border-gray-300 shadow-lg rounded-lg p-2 w-64 max-h-80 overflow-y-auto pointer-events-none"
+          className="fixed z-50 bg-white border border-gray-300 shadow-lg rounded-lg p-2 w-64 overflow-y-auto pointer-events-none"
           style={{
             top: tooltip.y,
             left: tooltip.x
           }}
         >
           <div className="font-semibold text-sm mb-2 text-gray-700">
-            Outras obrigações:
+            Outras Solicitações:
           </div>
           {tooltip.items.map((obligation) => {
             const obligationDate = new Date(obligation.dtFim);
@@ -204,7 +204,7 @@ export default function CalendarMonth() {
             return (
               <div
                 key={obligation.idSolicitacaoPrazo}
-                className={`p-1 mb-1 rounded text-xs ${getStatusColor(
+                className={`p-1 mb-1 rounded text-xs ${getStatusColorCalendar(
                   obligation.nmStatus
                 )}`}
               >
