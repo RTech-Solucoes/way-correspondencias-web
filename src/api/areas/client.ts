@@ -24,6 +24,9 @@ class AreasClient {
     const queryParams = new URLSearchParams();
 
     if (params.filtro) queryParams.append('filtro', params.filtro);
+    if (params.cdArea) queryParams.append('cdArea', params.cdArea);
+    if (params.nmArea) queryParams.append('nmArea', params.nmArea);
+    if (params.dsArea) queryParams.append('dsArea', params.dsArea);
     if (params.page !== undefined) queryParams.append('page', params.page.toString());
     if (params.size !== undefined) queryParams.append('size', params.size.toString());
     if (params.sort) queryParams.append('sort', params.sort);

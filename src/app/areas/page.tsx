@@ -10,6 +10,7 @@ import {AreaFilterParams} from '@/api/areas/types';
 import {toast} from 'sonner';
 import {useDebounce} from '@/hooks/use-debounce';
 import SearchArea from "@/components/areas/SearchArea";
+import {FiltrosAplicados} from '@/components/ui/applied-filters';
 import TableArea from "@/components/areas/TableArea";
 import FilterModalArea from "@/components/areas/FilterModalArea";
 import PageTitle from '@/components/ui/page-title';
@@ -39,6 +40,7 @@ export default function AreasPage() {
     filters,
     setFilters,
     activeFilters,
+    setActiveFilters,
     showDeleteDialog,
     setShowDeleteDialog,
     areaToDelete,
@@ -58,13 +60,11 @@ export default function AreasPage() {
     try {
       setLoading(true);
 
-      const filterParts = [];
-      if (debouncedSearchQuery) filterParts.push(debouncedSearchQuery);
-      if (activeFilters.codigo) filterParts.push(activeFilters.codigo);
-      if (activeFilters.nome) filterParts.push(activeFilters.nome);
-
       const params: AreaFilterParams = {
-        filtro: filterParts.join(' ') || undefined,
+        filtro: debouncedSearchQuery || undefined,
+        cdArea: activeFilters.codigo || undefined,
+        nmArea: activeFilters.nome || undefined,
+        dsArea: activeFilters.descricao || undefined,
         page: currentPage,
         size: 10,
       };
@@ -104,6 +104,49 @@ export default function AreasPage() {
     loadAreas();
   };
 
+  const filtrosAplicados = [
+    ...(searchQuery ? [{
+      key: 'search',
+      label: 'Busca',
+      value: searchQuery,
+      color: 'blue' as const,
+      onRemove: () => setSearchQuery('')
+    }] : []),
+    ...(activeFilters.codigo ? [{
+      key: 'codigo',
+      label: 'Código',
+      value: activeFilters.codigo,
+      color: 'orange' as const,
+      onRemove: () => {
+        const newFilters = { ...activeFilters, codigo: '' };
+        setActiveFilters(newFilters);
+        setFilters(newFilters);
+      }
+    }] : []),
+    ...(activeFilters.nome ? [{
+      key: 'nome',
+      label: 'Nome',
+      value: activeFilters.nome,
+      color: 'green' as const,
+      onRemove: () => {
+        const newFilters = { ...activeFilters, nome: '' };
+        setActiveFilters(newFilters);
+        setFilters(newFilters);
+      }
+    }] : []),
+    ...(activeFilters.descricao ? [{
+      key: 'descricao',
+      label: 'Descrição',
+      value: activeFilters.descricao,
+      color: 'purple' as const,
+      onRemove: () => {
+        const newFilters = { ...activeFilters, descricao: '' };
+        setActiveFilters(newFilters);
+        setFilters(newFilters);
+      }
+    }] : [])
+  ]
+  
   return (
     <div className="flex flex-col min-h-0 flex-1">
       <div className="flex items-center justify-between">
@@ -122,7 +165,7 @@ export default function AreasPage() {
 
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-500">
-              {areas?.length} {areas?.length > 1 ? "áreas" : "área"}
+              {totalElements} {totalElements > 1 ? "áreas" : "área"}
             </span>
           </div>
 
@@ -147,6 +190,12 @@ export default function AreasPage() {
           setShowFilterModal={setShowFilterModal}
         />
       </div>
+
+      <FiltrosAplicados
+        filters={filtrosAplicados}
+        showClearAll={false}
+        className="mb-4"
+      />
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex-1 overflow-auto mb-6">
         <TableArea

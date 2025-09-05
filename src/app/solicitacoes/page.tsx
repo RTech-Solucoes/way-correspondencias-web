@@ -359,7 +359,7 @@ export default function SolicitacoesPage() {
           </Button>
 
           <span className="text-sm text-gray-500">
-            {solicitacoes?.length} {solicitacoes?.length > 1 ? "solicitações" : "solicitação"}
+            {totalElements} {totalElements > 1 ? "solicitações" : "solicitação"}
           </span>
 
           <Pagination
