@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
 import { Button } from '@/components/ui/button';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { TemaResponse } from '@/api/temas/types';
@@ -26,6 +27,7 @@ interface FilterModalProps {
   responsaveis: ResponsavelResponse[];
   temas: TemaResponse[];
   areas: AreaResponse[];
+  statuses: StatusSolicitacaoResponse[];
   onApplyFilters: () => void;
   onClearFilters: () => void;
 }
@@ -38,6 +40,7 @@ export default function FilterModal({
   responsaveis,
   temas,
   areas,
+  statuses,
   onApplyFilters,
   onClearFilters
 }: FilterModalProps) {
@@ -69,15 +72,11 @@ export default function FilterModal({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="P">Pré-análise</SelectItem>
-                  <SelectItem value="V">Vencido Regulatório</SelectItem>
-                  <SelectItem value="A">Em análise Área Técnica</SelectItem>
-                  <SelectItem value="T">Vencido Área Técnica</SelectItem>
-                  <SelectItem value="R">Análise Regulatória</SelectItem>
-                  <SelectItem value="O">Em Aprovação</SelectItem>
-                  <SelectItem value="S">Em Assinatura</SelectItem>
-                  <SelectItem value="C">Concluído</SelectItem>
-                  <SelectItem value="X">Arquivado</SelectItem>
+                  {statuses.map((status) => (
+                    <SelectItem key={status.idStatusSolicitacao} value={status.idStatusSolicitacao.toString()}>
+                      {status.nmStatus}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
