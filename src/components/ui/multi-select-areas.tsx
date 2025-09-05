@@ -76,7 +76,9 @@ export function MultiSelectAreas({
 
   return (
     <div className={cn("space-y-4", className)}>
-      <Label>{label}</Label>
+      <Label
+        className={cn(disabled && 'opacity-50')}
+      >{label}</Label>
       {loading ? (
         <div className="flex items-center justify-center p-8">
           <div className="text-sm text-gray-500">Buscando áreas...</div>
