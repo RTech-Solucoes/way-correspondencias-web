@@ -1,8 +1,14 @@
-import {PageDef} from "@/types/pages/pages";
-import {BuildingIcon, ClipboardTextIcon, EnvelopeSimpleIcon, TagIcon, UsersIcon} from "@phosphor-icons/react";
-import {Permissoes} from "@/constants/permissoes";
+import { PageDef } from "@/types/pages/pages";
+import { BuildingIcon, ClipboardTextIcon, EnvelopeSimpleIcon, PresentationChartIcon, TagIcon, UsersIcon } from "@phosphor-icons/react";
+import { Permissoes } from "@/constants/permissoes";
 
 export const PAGES_DEF: PageDef[] = [
+  {
+    path: "/dashboard",
+    label: "Dashboard",
+    icon: PresentationChartIcon,
+    permission: Permissoes.SOLICITACAO_LISTAR
+  },
   {
     path: "/solicitacoes",
     label: "Solicitações",

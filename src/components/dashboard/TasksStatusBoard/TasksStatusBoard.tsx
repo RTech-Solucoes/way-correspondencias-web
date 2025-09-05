@@ -1,21 +1,37 @@
 import dashboardClient from "@/api/dashboard/client";
-import {DashboardListSummary, DashboardOverview} from "@/api/dashboard/type";
-import {Button} from "@/components/ui/button";
-import {Card, CardContent, CardFooter} from "@/components/ui/card";
-import {useEffect, useState} from "react";
-import {toast} from "sonner";
+import { DashboardListSummary, DashboardOverview } from "@/api/dashboard/type";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import CardHeader from "../card-header";
-import {getStatusColor, renderIcon} from "../functions";
+import { getStatusColor, renderIcon } from "../functions";
 
 export default function TasksStatusBoard() {
   const [visionGeral, setVisionGeral] = useState<DashboardOverview[]>([]);
   const [listSummary, setListSummary] = useState<DashboardListSummary[]>([]);
 
+  const sortVisionGeral = (data: DashboardOverview[]) => {
+    const statusOrder = ['Concluído', 'Em andamento', 'Pendentes', 'Cancelado'];
+
+    return data.sort((a, b) => {
+      const indexA = statusOrder.indexOf(a.nmStatus);
+      const indexB = statusOrder.indexOf(b.nmStatus);
+
+      if (indexA === -1 && indexB === -1) return 0;
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
+
+      return indexA - indexB;
+    });
+  };
+
   useEffect(() => {
     const getOverview = async () => {
       try {
         const data = await dashboardClient.getOverview();
-        setVisionGeral(data);
+        const sortedData = sortVisionGeral(data);
+        setVisionGeral(sortedData);
       } catch (error) {
         console.error("Erro ao buscar overview:", error);
         toast.error("Não foi possível carregar os dados do dashboard.");

@@ -34,16 +34,14 @@ export default function RecentActivity() {
       />
       <CardContent>
         <div className="space-y-6">
-          {listActivity.map((activity) => (
-            <div key={activity.id} className="flex items-start space-x-3">
-              <Avatar className="h-8 w-8">
-                <AvatarFallback>{activity.id}</AvatarFallback>
-              </Avatar>
+          {listActivity.map((activity, index) => (
+            <div key={activity.id || `activity-${index}`} className="flex items-start space-x-3">
               <div>
                 <div className="text-sm">
-                  <span className="text-gray-600">{activity.assunto}</span>
+                  <span className="text-base font-bold">{activity.nmTema}: </span>
+                  <span className="text-gray-600">{activity.dsAssunto}</span>
                 </div>
-                <div className="text-xs text-gray-400 mt-1">{activity.dtCriacao}</div>
+                <div className="text-xs text-gray-400 mt-1">{activity.tempoDecorrido}</div>
               </div>
             </div>
           ))}

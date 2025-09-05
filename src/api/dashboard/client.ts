@@ -1,5 +1,5 @@
 import ApiClient from "../client";
-import { DashboardListSummary, DashboardOverview, IRecentActivity, SolicitacaoPrazo } from "./type";
+import { DashboardListSummary, DashboardOverview, ICalendar, IRecentActivity, SolicitacaoPrazo } from "./type";
 
 class DashboardClient {
     private client: ApiClient;
@@ -28,6 +28,18 @@ class DashboardClient {
 
     async getRecentActivity(dia: number): Promise<IRecentActivity[]> {
         return this.client.request<IRecentActivity[]>(`/recent-activity?dia=${dia}`, {
+            method: "GET",
+        });
+    }
+
+    async getCalendarByWeek(): Promise<ICalendar[]> {
+        return this.client.request<ICalendar[]>(`/list-by-week`, {
+            method: "GET",
+        });
+    }
+
+    async getCalendarByMonth(mes: number, ano: number): Promise<ICalendar[]> {
+        return this.client.request<ICalendar[]>(`/list-by-mouth?mes=${mes}&ano=${ano}`, {
             method: "GET",
         });
     }
