@@ -403,7 +403,7 @@ export default function DetalhesSolicitacaoModal({
         <form
           id="detalhes-form"
           onSubmit={handleEnviar}
-          className="px-6 pb-6 space-y-8 overflow-y-auto flex-1"
+          className="pl-6 pr-2 pb-6 space-y-8 overflow-y-auto flex-1"
         >
           <section className="space-y-2">
             <h3 className="text-sm font-semibold">Assunto</h3>

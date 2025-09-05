@@ -74,7 +74,7 @@ export default function HistoricoRespostasModal({
           <DialogTitle>Histórico de Respostas</DialogTitle>
         </DialogHeader>
         
-        <div className="flex flex-col max-h-[70vh] flex-1 overflow-y-auto">
+        <div className="flex flex-col flex-1 overflow-y-auto">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <SpinnerIcon className="h-5 w-5 animate-spin text-gray-400" />
