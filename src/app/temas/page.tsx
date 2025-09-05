@@ -35,6 +35,7 @@ import {TemaFilterParams} from '@/api/temas/types';
 import {toast} from 'sonner';
 import {useDebounce} from '@/hooks/use-debounce';
 import {usePermissoes} from "@/context/permissoes/PermissoesContext";
+import {FiltrosAplicados} from '@/components/ui/applied-filters';
 
 export default function TemasPage() {
   const {
@@ -63,6 +64,7 @@ export default function TemasPage() {
     filters,
     setFilters,
     activeFilters,
+    setActiveFilters,
     hasActiveFilters,
     sortField,
     sortDirection,
@@ -80,13 +82,11 @@ export default function TemasPage() {
   const loadTemas = useCallback(async () => {
     try {
       setLoading(true);
-
-      const filterParts = [];
-      if (debouncedSearchQuery) filterParts.push(debouncedSearchQuery);
-      if (activeFilters.nome) filterParts.push(activeFilters.nome);
-
+      
       const params: TemaFilterParams = {
-        filtro: filterParts.join(' ') || undefined,
+        filtro: debouncedSearchQuery || undefined,
+        nmTema: activeFilters.nome || undefined,
+        dsTema: activeFilters.descricao || undefined,
         page: currentPage,
         size: 10,
       };
@@ -146,6 +146,38 @@ export default function TemasPage() {
     return sorted;
   };
 
+  const filtrosAplicados = [
+      ...(searchQuery ? [{
+        key: 'search',
+        label: 'Busca',
+        value: searchQuery,
+        color: 'blue' as const,
+        onRemove: () => setSearchQuery('')
+      }] : []),
+      ...(activeFilters.nome ? [{
+        key: 'nome',
+        label: 'Nome',
+        value: activeFilters.nome,
+        color: 'green' as const,
+        onRemove: () => {
+          const newFilters = { ...activeFilters, nome: '' };
+          setActiveFilters(newFilters);
+          setFilters(newFilters);
+        }
+      }] : []),
+      ...(activeFilters.descricao ? [{
+        key: 'descricao',
+        label: 'Descrição',
+        value: activeFilters.descricao,
+        color: 'purple' as const,
+        onRemove: () => {
+          const newFilters = { ...activeFilters, descricao: '' };
+          setActiveFilters(newFilters);
+          setFilters(newFilters);
+        }
+      }] : [])
+  ];
+  
   return (
     <div className="flex flex-col min-h-0 flex-1">
       <div className="flex items-center justify-between">
@@ -164,7 +196,7 @@ export default function TemasPage() {
 
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-500">
-              {temas?.length} {temas?.length > 1 ? "temas" : "tema"}
+              {totalElements} {totalElements > 1 ? "temas" : "tema"}
             </span>
 
             <Pagination
@@ -219,6 +251,12 @@ export default function TemasPage() {
           }
         </div>
       </div>
+
+      <FiltrosAplicados
+        filters={filtrosAplicados}
+        showClearAll={false}
+        className="mb-4"
+      />
 
       <div className="flex flex-1 overflow-hidden bg-white rounded-lg shadow-sm border border-gray-200">
         <StickyTable>

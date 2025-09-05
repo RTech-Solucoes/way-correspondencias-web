@@ -47,9 +47,6 @@ import {
   SolicitacaoDetalheResponse,
   SolicitacaoResponse
 } from '@/api/solicitacoes/types';
-import {ResponsavelResponse} from '@/api/responsaveis/types';
-import {TemaResponse} from '@/api/temas/types';
-import {AreaResponse} from '@/api/areas/types';
 import {useTramitacoesMutation} from '@/hooks/use-tramitacoes';
 import tramitacoesClient from '@/api/tramitacoes/client';
 import {usePermissoes} from "@/context/permissoes/PermissoesContext";

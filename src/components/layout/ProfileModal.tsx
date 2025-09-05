@@ -218,7 +218,7 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
 
         <form className="flex flex-col flex-1 overflow-y-auto gap-4">
           <TextField
-            label="Nome (editável)"
+            label="Nome"
             name="nmResponsavel"
             value={formData.nmResponsavel}
             onChange={handleChange}
@@ -233,6 +233,7 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
             name="nmUsuarioLogin"
             value={formData.nmUsuarioLogin}
             readOnly
+            disabled
           />
 
           <TextField
@@ -241,6 +242,7 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
             type="email"
             value={formData.dsEmail}
             readOnly
+            disabled
           />
 
           <TextField
@@ -248,6 +250,7 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
             name="nrCpf"
             value={mask.cpf(formData.nrCpf)}
             readOnly
+            disabled
           />
 
           <TextField
@@ -256,6 +259,7 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
             type="date"
             value={formData.dtNascimento}
             readOnly
+            disabled
           />
 
           <TextField
@@ -263,12 +267,14 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
             name="idPerfil"
             value={getPerfil()}
             readOnly
+            disabled
           />
 
           <MultiSelectAreas
             selectedAreaIds={selectedAreaIds}
             onSelectionChange={() => {}}
             label="Áreas"
+            disabled
           />
 
         </form>
