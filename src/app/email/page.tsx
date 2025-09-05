@@ -152,7 +152,7 @@ export default function EmailPage() {
           </Button>
 
           <span className="text-sm text-gray-500">
-            {filteredEmails?.length} {filteredEmails?.length > 1 ? "emails" : "email"}
+            {totalElements} {totalElements > 1 ? "emails" : "email"}
           </span>
 
           <Pagination

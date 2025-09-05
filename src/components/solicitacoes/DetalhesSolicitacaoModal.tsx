@@ -403,7 +403,7 @@ export default function DetalhesSolicitacaoModal({
         <form
           id="detalhes-form"
           onSubmit={handleEnviar}
-          className="px-6 pb-6 space-y-8 overflow-y-auto flex-1"
+          className="pl-6 pr-2 pb-6 space-y-8 overflow-y-auto flex-1"
         >
           <section className="space-y-2">
             <h3 className="text-sm font-semibold">Assunto</h3>
@@ -415,6 +415,7 @@ export default function DetalhesSolicitacaoModal({
           </section>
 
           <section className="space-y-2">
+          <h3 className="text-sm font-semibold">Resumo da Solicitação</h3>
             <div className="rounded-md border bg-muted/30">
               <div className="grid grid-cols-12 gap-0">
                 <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Áreas:</div>
@@ -598,7 +599,7 @@ export default function DetalhesSolicitacaoModal({
 
               <HistoricoRespostasModalButton
                 idSolicitacao={sol?.solicitacao?.idSolicitacao ?? null}
-                showButton={quantidadeDevolutivas > 1}
+                showButton={quantidadeDevolutivas >= 1}
                 quantidadeDevolutivas={quantidadeDevolutivas}
               />
             </div>

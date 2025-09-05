@@ -1324,6 +1324,14 @@ export default function SolicitacaoModal({
     </div>
   ), [formData.cdIdentificacao, formData.nrOficio, formData.nrProcesso, formData.dsAssunto, formData.dsObservacao, formData.dsSolicitacao, formData.idsAreas, formData.nrPrazo, formData.idResponsavel, formData.tpPrazo, getSelectedTema, solicitacao?.tema?.nmTema, solicitacao?.nmTema, responsaveis, prazoExcepcional, statusPrazos, anexos, anexosBackend, anexosTypeE, canListarAnexo, allAreas, getResponsavelByArea, statusList, handleDownloadAnexoBackend, handleDownloadAnexoEmail]);
 
+
+
+  useEffect(() => {
+    if (currentStep === 3 && formData.idTema) {
+      loadStatusPrazos();
+    }
+  }, [currentStep, formData.idTema, loadStatusPrazos]);
+
   useEffect(() => {
     const loadStatusList = async () => {
       try {

@@ -27,6 +27,9 @@ export interface PagedResponse<T> {
 
 export interface AreaFilterParams {
   filtro?: string;
+  cdArea?: string;
+  nmArea?: string;
+  dsArea?: string;
   page?: number;
   size?: number;
   sort?: string;
