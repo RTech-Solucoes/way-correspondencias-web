@@ -416,6 +416,7 @@ export default function DetalhesSolicitacaoModal({
           </section>
 
           <section className="space-y-2">
+          <h3 className="text-sm font-semibold">Resumo da Solicitação</h3>
             <div className="rounded-md border bg-muted/30">
               <div className="grid grid-cols-12 gap-0">
                 <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Áreas:</div>
