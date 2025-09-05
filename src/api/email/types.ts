@@ -30,6 +30,10 @@ export interface PagedResponse<T> {
 
 export interface EmailFilterParams {
   filtro?: string;
+  dsRemetente?: string;
+  dsDestinatario?: string;
+  dtInicioCriacao?: string;
+  dtFimCriacao?: string;
   page?: number;
   size?: number;
   sort?: string;

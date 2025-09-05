@@ -37,13 +37,28 @@ class EmailClient {
   }
 
   async buscarPorFiltro(params: EmailFilterParams = {}): Promise<PagedResponse<EmailResponse>> {
-    const queryParams = new URLSearchParams();
 
-    if (params.filtro) queryParams.append('filtro', params.filtro);
-    if (params.page !== undefined) queryParams.append('page', params.page.toString());
-    if (params.size !== undefined) queryParams.append('size', params.size.toString());
-    if (params.sort) queryParams.append('sort', params.sort);
-
+    const allowedKeys = [
+      "filtro",
+      "dsRemetente",
+      "dsDestinatario",
+      "dtInicioCriacao",
+      "dtFimCriacao",
+      "page",
+      "size",
+      "sort"
+      ];
+      
+      const queryParams = new URLSearchParams();
+      
+      allowedKeys.forEach((key) => {
+      const value = params[key as keyof typeof params];
+        
+      if (value !== undefined && value !== null && value !== "") {
+        queryParams.append(key, String(value));
+      }
+    });
+    
     const queryString = queryParams.toString();
     const endpoint = queryString ? `?${queryString}` : '';
 
