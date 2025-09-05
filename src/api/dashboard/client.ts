@@ -1,5 +1,5 @@
 import ApiClient from "../client";
-import { DashboardListSummary, DashboardOverview, IRecentActivity, SolicitacaoPrazo } from "./type";
+import { DashboardListSummary, DashboardOverview, ICalendar, IRecentActivity, PaginatedResponse, SolicitacaoPrazo } from "./type";
 
 class DashboardClient {
     private client: ApiClient;
@@ -14,20 +14,38 @@ class DashboardClient {
         });
     }
 
-    async getRecentOverview(qtd: number): Promise<DashboardListSummary[]> {
-        return this.client.request<DashboardListSummary[]>(`/list-summary?qtd=${qtd}`, {
+    async getRecentOverview(page: number, size: number): Promise<PaginatedResponse<DashboardListSummary>> {
+        return this.client.request<PaginatedResponse<DashboardListSummary>>(`/list-summary?page=${page}&size=${size}`, {
             method: "GET",
         });
     }
 
-    async getRecentDeadline(): Promise<SolicitacaoPrazo[]> {
-        return this.client.request<SolicitacaoPrazo[]>(`/recent-deadline`, {
+    async getRecentDeadline(page: number, size: number): Promise<PaginatedResponse<SolicitacaoPrazo>> {
+        return this.client.request<PaginatedResponse<SolicitacaoPrazo>>(`/recent-deadline?page=${page}&size=${size}`, {
             method: "GET",
         });
     }
 
-    async getRecentActivity(dia: number): Promise<IRecentActivity[]> {
-        return this.client.request<IRecentActivity[]>(`/recent-activity?dia=${dia}`, {
+    async getRecentActivity(page: number, size: number): Promise<PaginatedResponse<IRecentActivity>> {
+        return this.client.request<PaginatedResponse<IRecentActivity>>(`/recent-activity?page=${page}&size=${size}`, {
+            method: "GET",
+        });
+    }
+
+    async getCalendarByWeek(): Promise<ICalendar[]> {
+        return this.client.request<ICalendar[]>(`/list-by-week`, {
+            method: "GET",
+        });
+    }
+
+    async getCalendarByMonth(mes: number, ano: number): Promise<ICalendar[]> {
+        return this.client.request<ICalendar[]>(`/list-by-mouth?mes=${mes}&ano=${ano}`, {
+            method: "GET",
+        });
+    }
+
+    async getCalendarByYear(ano: number): Promise<ICalendar[]> {
+        return this.client.request<ICalendar[]>(`/list-by-month-in-year?ano=${ano}`, {
             method: "GET",
         });
     }
