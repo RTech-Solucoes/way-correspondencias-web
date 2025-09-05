@@ -24,6 +24,8 @@ class TemasClient {
     const queryParams = new URLSearchParams();
 
     if (params.filtro) queryParams.append('filtro', params.filtro);
+    if (params.nmTema) queryParams.append('nmTema', params.nmTema);
+    if (params.dsTema) queryParams.append('dsTema', params.dsTema);
     if (params.page !== undefined) queryParams.append('page', params.page.toString());
     if (params.size !== undefined) queryParams.append('size', params.size.toString());
     if (params.sort) queryParams.append('sort', params.sort);
@@ -40,6 +42,8 @@ class TemasClient {
     const queryParams = new URLSearchParams();
 
     if (params.filtro) queryParams.append('filtro', params.filtro);
+    if (params.nmTema) queryParams.append('nmTema', params.nmTema);
+    if (params.dsTema) queryParams.append('dsTema', params.dsTema);
     if (params.page !== undefined) queryParams.append('page', params.page.toString());
     if (params.size !== undefined) queryParams.append('size', params.size.toString());
     if (params.sort) queryParams.append('sort', params.sort);
