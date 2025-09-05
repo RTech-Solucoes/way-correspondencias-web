@@ -35,6 +35,7 @@ import {areasClient} from '@/api/areas/client';
 import {anexosClient} from '@/api/anexos/client';
 import {AreaResponse} from '@/api/areas/types';
 import {usePermissoes} from "@/context/permissoes/PermissoesContext";
+import dayjs from 'dayjs';
 
 interface AnexoListItem {
   idAnexo?: number;
@@ -229,7 +230,7 @@ export default function SolicitacaoModal({
     return temas.find(tema => tema.idTema === formData.idTema);
   }, [temas, formData.idTema]);
 
-  const handleNextStep = useCallback(async () => {
+  const handleNextStep = useCallback(async (onFinish?: () => void) => {
     try {
       if (currentStep === 1) {
         if (!formData.cdIdentificacao?.trim()) {
@@ -361,6 +362,10 @@ export default function SolicitacaoModal({
     } catch (e) {
       console.error(e);
       toast.error('Erro ao avançar etapa');
+    } finally {
+      if (!onFinish || typeof onFinish !== 'function') return;
+
+      onFinish();
     }
   }, [currentStep, formData, solicitacao, prazoExcepcional, statusPrazos, anexos]);
 
@@ -1162,7 +1167,7 @@ export default function SolicitacaoModal({
           <div>
             <Label className="text-sm font-semibold text-gray-700">Prazo Principal</Label>
             <div className="p-3 border border-yellow-200 rounded-lg text-sm">
-              {currentPrazoTotal} Horas
+              {dayjs(currentPrazoTotal).format('D [dias] H [horas]')}
               {prazoExcepcional && (
                 <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
                   Excepcional
@@ -1416,8 +1421,10 @@ export default function SolicitacaoModal({
             type="button"
             variant="outline"
             onClick={() => {
-              handleNextStep()
-              handleClose()
+              handleNextStep(() => {
+                onSave()
+                onClose()
+              })
             }}
             disabled={loading}
           >

@@ -85,7 +85,7 @@ export default function HistoricoRespostasModal({
               <p className="text-gray-500 text-sm">Nenhuma resposta encontrada para esta solicitação.</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 overflow-y-auto">
               {respostas.map((resposta) => {
                 const observacao = resposta.tramitacao.dsObservacao;
                 

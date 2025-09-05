@@ -249,7 +249,7 @@ const birthDateSchema = z
       const age = now.diff(date, "year");
       return age >= MIN_AGE && age <= MAX_AGE;
     }, {
-      message: `Data de nascimento deve representar uma idade entre 1 e 120 anos`,
+      message: `Data inválida.`,
     })
 
 const nameSchema = z
@@ -280,4 +280,14 @@ export const formValidator = {
 
 export const repeat = (times: number): undefined[] => {
   return Array.from({length: times}, () => undefined);
+}
+
+export function normalizeText(value?: string | null): string {
+  if (!value) return '';
+  return value
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/[,.]/g, '')
+    .toLowerCase()
+    .trim();
 }
