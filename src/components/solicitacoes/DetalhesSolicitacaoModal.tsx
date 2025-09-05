@@ -174,7 +174,7 @@ export default function DetalhesSolicitacaoModal({
           return;
         }
         const resp = await responsaveisClient.buscarPorNmUsuarioLogin(userName);
-        const perfilName = (resp?.nmPerfil || '').toLowerCase();
+        const idPerfil = resp?.idPerfil;
 
         const idAreaInicial = sol?.solicitacao?.idAreaInicial;
         const userAreaIds = (resp?.areas || [])
@@ -195,7 +195,9 @@ export default function DetalhesSolicitacaoModal({
             .filter((id) => !Number.isNaN(id));
           isInSolicAreas = userAreaIds.some(id => solicitacaoAreaIds.includes(id));
         }
-        const tp = computeTpResponsavel(perfilName, isInSolicAreas);
+        
+        const tp = computeTpResponsavel(idPerfil);
+
         setTpResponsavelUpload(tp);
         setHasAreaInicial(isInSolicAreas);
       } catch {
@@ -220,29 +222,24 @@ export default function DetalhesSolicitacaoModal({
     return statusPermitido.includes(current);
   }, [sol?.statusSolicitacao?.nmStatus, statusLabel]);
 
-  function computeTpResponsavel(perfilNameLower: string, isInitialArea: boolean): TipoResponsavelAnexo {
-    const p = perfilNameLower.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
-
-    if (
-      p.includes('administrador') ||
-      p.includes('gestor do sistema') ||
-      p.includes('validador / assinante') || p.includes('validador')
-    ) {
+  function computeTpResponsavel(perfil: number): TipoResponsavelAnexo {
+    // 1: Administrador, 2: Gestor do Sistema - (R)
+    if (perfil === 1 || perfil === 2) {
+      return TipoResponsavelAnexo.R;
+    }
+    // 3: Validador / Assinante - (D)
+    if (perfil === 3) {
       return TipoResponsavelAnexo.D;
     }
-
-    if (p.includes('executor avancado')) {
+    // 4: Executor Avançado - (G)
+    if (perfil === 4) {
       return TipoResponsavelAnexo.G;
     }
-
-    if (
-      p === 'executor' || p.includes('executor restrito') ||
-      p.includes('tecnico / suporte') || p.includes('tecnico') || p.includes('suporte')
-    ) {
-      return isInitialArea ? TipoResponsavelAnexo.R : TipoResponsavelAnexo.A;
+    // 5: Executor, 6: Executor Restrito, 7: Técnico / Suporte - (A)
+    if (perfil === 5 || perfil === 6 || perfil === 7) {
+      return TipoResponsavelAnexo.A;
     }
-
-    return isInitialArea ? TipoResponsavelAnexo.R : TipoResponsavelAnexo.A;
+    return TipoResponsavelAnexo.A;
   }
 
   const measureDescricao = useCallback(() => {
