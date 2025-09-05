@@ -33,6 +33,8 @@ export interface PagedResponse<T> {
 
 export interface TemaFilterParams {
   filtro?: string;
+  nmTema?: string;
+  dsTema?: string;
   page?: number;
   size?: number;
   sort?: string;
