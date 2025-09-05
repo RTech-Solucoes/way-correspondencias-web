@@ -40,6 +40,10 @@ class EmailClient {
     const queryParams = new URLSearchParams();
 
     if (params.filtro) queryParams.append('filtro', params.filtro);
+    if (params.dsRemetente) queryParams.append('dsRemetente', params.dsRemetente);
+    if (params.dsDestinatario) queryParams.append('dsDestinatario', params.dsDestinatario);
+    if (params.dtInicioCriacao) queryParams.append('dtInicioCriacao', params.dtInicioCriacao);
+    if (params.dtFimCriacao) queryParams.append('dtFimCriacao', params.dtFimCriacao);
     if (params.page !== undefined) queryParams.append('page', params.page.toString());
     if (params.size !== undefined) queryParams.append('size', params.size.toString());
     if (params.sort) queryParams.append('sort', params.sort);

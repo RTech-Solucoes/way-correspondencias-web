@@ -9,31 +9,14 @@ import {Button} from "@/components/ui/button";
 import {Pagination} from '@/components/ui/pagination';
 
 import {ArrowClockwiseIcon} from "@phosphor-icons/react";
-import {useCallback, useEffect, useMemo, useState} from "react";
+import {useCallback, useEffect, useState} from "react";
 import {toast} from "sonner";
 import {emailClient} from "@/api/email/client";
 import {useDebounce} from "@/hooks/use-debounce";
-import {EmailResponse} from "@/api/email/types";
+import {FiltrosAplicados} from '@/components/ui/applied-filters';
+import { formatDateBr } from "@/utils/utils";
 
-const formatDate = (dateString?: string): string => {
-  if (!dateString) return '';
 
-  try {
-    const date = new Date(dateString);
-
-    if (isNaN(date.getTime())) return '';
-
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-
-    return `${day}/${month}/${year} ${hours}:${minutes}`;
-  } catch {
-    return '';
-  }
-}
 
 export default function EmailPage() {
   const {
@@ -46,13 +29,14 @@ export default function EmailPage() {
     emailFilters,
     setEmailFilters,
     activeEmailFilters,
+    setActiveEmailFilters,
     hasActiveFilters,
     applyFilters,
     clearFilters,
   } = useEmail();
 
   const [loading, setLoading] = useState(false);
-  const [emails, setEmails] = useState<EmailResponse[]>([]);
+  // local emails state removed; list renders from EmailList fetch
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
@@ -64,6 +48,10 @@ export default function EmailPage() {
       setLoading(true);
       const response = await emailClient.buscarPorFiltro({
         filtro: debouncedSearchQuery || undefined,
+        dsRemetente: activeEmailFilters.remetente || undefined,
+        dsDestinatario: activeEmailFilters.destinatario || undefined,
+        dtInicioCriacao: activeEmailFilters.dateFrom ? `${activeEmailFilters.dateFrom}T00:00:00` : undefined,
+        dtFimCriacao: activeEmailFilters.dateTo ? `${activeEmailFilters.dateTo}T23:59:59` : undefined,
         page: currentPage,
         size: 15
       });
@@ -71,7 +59,6 @@ export default function EmailPage() {
       if (!response || !response.content) {
         console.error('Resposta da API inválida:', response);
         toast.error("Resposta da API inválida");
-        setEmails([]);
         setTotalPages(0);
         setTotalElements(0);
         return;
@@ -80,62 +67,84 @@ export default function EmailPage() {
       if (!Array.isArray(response.content)) {
         console.error('response.content não é um array:', response.content);
         toast.error("Formato de dados inválido");
-        setEmails([]);
         setTotalPages(0);
         setTotalElements(0);
         return;
       }
 
-      setEmails(response.content);
       setTotalPages(response.totalPages || 0);
       setTotalElements(response.totalElements || 0);
     } catch (error) {
       console.error("Erro ao carregar emails:", error);
       toast.error("Erro ao carregar emails");
-      setEmails([]);
       setTotalPages(0);
       setTotalElements(0);
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearchQuery, currentPage]);
+  }, [debouncedSearchQuery, currentPage, activeEmailFilters.remetente, activeEmailFilters.destinatario, activeEmailFilters.dateFrom, activeEmailFilters.dateTo]);
 
   useEffect(() => {
     loadEmails();
   }, [loadEmails])
 
-  const filteredEmails = useMemo(() => {
-    return emails.filter(email => {
-      const isRead = email.flAtivo === 'S';
-      const hasAttachments = false;
-
-      const matchesReadStatus = !emailFilters.isRead ||
-        emailFilters.isRead === 'all' ||
-        (emailFilters.isRead === 'read' && isRead) ||
-        (emailFilters.isRead === 'unread' && !isRead);
-
-      const matchesAttachment = !emailFilters.hasAttachments ||
-        emailFilters.hasAttachments === 'all' ||
-        (emailFilters.hasAttachments === 'true' && hasAttachments) ||
-        (emailFilters.hasAttachments === 'false' && !hasAttachments);
-
-      const matchesSender = !emailFilters.remetente ||
-        email.dsRemetente.toLowerCase().includes(emailFilters.remetente.toLowerCase());
-
-      const emailDate = new Date(formatDate(email.dtRecebimento).split(' ')[0].split('/').reverse().join('-'));
-      const matchesDateFrom = !emailFilters.dateFrom ||
-        emailDate >= new Date(emailFilters.dateFrom);
-      const matchesDateTo = !emailFilters.dateTo ||
-        emailDate <= new Date(emailFilters.dateTo);
-
-      return matchesReadStatus && matchesAttachment &&
-             matchesSender && matchesDateFrom && matchesDateTo;
-    });
-  }, [emails, emailFilters])
-
   const handleRefresh = () => {
     console.log("Atualizando...");
   };
+
+  const filtrosAplicados = [
+    ...(searchQuery ? [{
+      key: 'search',
+      label: 'Busca',
+      value: searchQuery,
+      color: 'blue' as const,
+      onRemove: () => setSearchQuery('')
+    }] : []),
+    ...(activeEmailFilters.remetente ? [{
+      key: 'remetente',
+      label: 'Remetente',
+      value: activeEmailFilters.remetente,
+      color: 'green' as const,
+      onRemove: () => {
+        const newFilters = { ...activeEmailFilters, remetente: '' };
+        setActiveEmailFilters(newFilters);
+        setEmailFilters(newFilters);
+      }
+    }] : []),
+    ...(activeEmailFilters.destinatario ? [{
+      key: 'destinatario',
+      label: 'Destinatário',
+      value: activeEmailFilters.destinatario,
+      color: 'purple' as const,
+      onRemove: () => {
+        const newFilters = { ...activeEmailFilters, destinatario: '' };
+        setActiveEmailFilters(newFilters);
+        setEmailFilters(newFilters);
+      }
+    }] : []),
+    ...(activeEmailFilters.dateFrom ? [{
+      key: 'dateFrom',
+      label: 'Data Início',
+      value: formatDateBr(activeEmailFilters.dateFrom),
+      color: 'indigo' as const,
+      onRemove: () => {
+        const newFilters = { ...activeEmailFilters, dateFrom: '' };
+        setActiveEmailFilters(newFilters);
+        setEmailFilters(newFilters);
+      }
+    }] : []),
+    ...(activeEmailFilters.dateTo ? [{
+      key: 'dateTo',
+      label: 'Data Fim',
+      value: formatDateBr(activeEmailFilters.dateTo),
+      color: 'indigo' as const,
+      onRemove: () => {
+        const newFilters = { ...activeEmailFilters, dateTo: '' };
+        setActiveEmailFilters(newFilters);
+        setEmailFilters(newFilters);
+      }
+    }] : [])
+  ];
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
@@ -176,6 +185,12 @@ export default function EmailPage() {
         />
       </div>
 
+      <FiltrosAplicados
+        filters={filtrosAplicados}
+        showClearAll={false}
+        className="mb-4"
+      />
+
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-1 overflow-hidden min-h-[600px]">
         <EmailList
           searchQuery={searchQuery}
@@ -184,7 +199,7 @@ export default function EmailPage() {
           currentPage={currentPage}
           emailFilters={{
             remetente: activeEmailFilters.remetente,
-            destinatario: '',
+            destinatario: activeEmailFilters.destinatario,
             status: '',
             dateFrom: activeEmailFilters.dateFrom,
             dateTo: activeEmailFilters.dateTo,

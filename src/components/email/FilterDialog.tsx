@@ -3,7 +3,6 @@ import {Dispatch, SetStateAction} from "react";
 import {Button} from "../ui/button";
 import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from "../ui/dialog";
 import {Input} from "../ui/input";
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "../ui/select";
 import {EmailFiltersState} from "@/context/email/EmailContext";
 
 
@@ -43,26 +42,9 @@ export default function FilterDialog(props: IFilterProps) {
               placeholder="Filtrar por destinatário"
             />
           </div>
-          <div>
-            <Label htmlFor="status">Status</Label>
-            <Select
-              value={props.emailFilters.status}
-              onValueChange={(value) => props.setEmailFilters({...props.emailFilters, status: value})}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o status"/>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="PENDENTE">Pendente</SelectItem>
-                <SelectItem value="ENVIADO">Enviado</SelectItem>
-                <SelectItem value="RESPONDIDO">Respondido</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="dateFrom">Data Início</Label>
+              <Label htmlFor="dateFrom">Data Criação Início</Label>
               <Input
                 id="dateFrom"
                 type="date"
@@ -71,7 +53,7 @@ export default function FilterDialog(props: IFilterProps) {
               />
             </div>
             <div>
-              <Label htmlFor="dateTo">Data Fim</Label>
+              <Label htmlFor="dateTo">Data Criação Fim</Label>
               <Input
                 id="dateTo"
                 type="date"
