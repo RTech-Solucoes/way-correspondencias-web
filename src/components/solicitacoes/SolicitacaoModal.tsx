@@ -35,6 +35,7 @@ import {areasClient} from '@/api/areas/client';
 import {anexosClient} from '@/api/anexos/client';
 import {AreaResponse} from '@/api/areas/types';
 import {usePermissoes} from "@/context/permissoes/PermissoesContext";
+import dayjs from 'dayjs';
 
 interface AnexoListItem {
   idAnexo?: number;
@@ -362,7 +363,9 @@ export default function SolicitacaoModal({
       console.error(e);
       toast.error('Erro ao avançar etapa');
     } finally {
-      onFinish?.();
+      if (!onFinish || typeof onFinish !== 'function') return;
+
+      onFinish();
     }
   }, [currentStep, formData, solicitacao, prazoExcepcional, statusPrazos, anexos]);
 
@@ -1164,7 +1167,7 @@ export default function SolicitacaoModal({
           <div>
             <Label className="text-sm font-semibold text-gray-700">Prazo Principal</Label>
             <div className="p-3 border border-yellow-200 rounded-lg text-sm">
-              {currentPrazoTotal} Horas
+              {dayjs(currentPrazoTotal).format('D [dias] H [horas]')}
               {prazoExcepcional && (
                 <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
                   Excepcional
