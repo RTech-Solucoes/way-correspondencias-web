@@ -291,3 +291,17 @@ export function normalizeText(value?: string | null): string {
     .toLowerCase()
     .trim();
 }
+
+export const hoursToDaysAndHours = (hours: number): string => {
+  const days = Math.floor(hours / 24);
+  const remainingHours = hours % 24;
+
+  let resultString = `${days} dia${days > 1 ? 's' : ''}`;
+
+  if (remainingHours) {
+    resultString += ` e ${remainingHours} hora${remainingHours > 1 ? 's' : ''}`;
+  }
+
+  return resultString
+};
+

@@ -14,7 +14,7 @@ import {ResponsavelResponse} from '@/api/responsaveis/types';
 import {TemaResponse} from '@/api/temas/types';
 import {solicitacoesClient} from '@/api/solicitacoes/client';
 import {toast} from 'sonner';
-import {base64ToUint8Array, capitalize, getRows, saveBlob} from '@/utils/utils';
+import {base64ToUint8Array, capitalize, getRows, hoursToDaysAndHours, saveBlob} from '@/utils/utils';
 import {MultiSelectAreas} from '@/components/ui/multi-select-areas';
 import {
   ArrowArcRightIcon,
@@ -1104,7 +1104,7 @@ export default function SolicitacaoModal({
 
         <div>
           <Label className="text-sm font-semibold text-gray-700">Descrição da Solicitação</Label>
-          <div className="p-3 bg-gray-50 border rounded-lg text-sm max-h-24 overflow-y-auto">
+          <div className="p-3 bg-gray-50 border rounded-lg text-sm h-fit max-h-72 overflow-y-auto">
             {formData.dsSolicitacao || 'Não informado'}
           </div>
         </div>
@@ -1166,7 +1166,7 @@ export default function SolicitacaoModal({
           <div>
             <Label className="text-sm font-semibold text-gray-700">Prazo Principal</Label>
             <div className="p-3 border border-yellow-200 rounded-lg text-sm">
-              {dayjs(currentPrazoTotal).format('D [dias] H [horas]')}
+              {hoursToDaysAndHours(currentPrazoTotal)}
               {prazoExcepcional && (
                 <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
                   Excepcional
