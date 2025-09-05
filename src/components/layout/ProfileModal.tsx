@@ -221,11 +221,8 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
             label="Nome"
             name="nmResponsavel"
             value={formData.nmResponsavel}
-            onChange={handleChange}
-            onBlur={() => validateField('nmResponsavel', formData.nmResponsavel)}
-            error={errors.nmResponsavel}
-            required
-            autoFocus
+            readOnly
+            disabled
           />
 
           <TextField
@@ -278,18 +275,6 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
           />
 
         </form>
-        <DialogFooter className="flex gap-2">
-          <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={loading || !formData.nmResponsavel.trim()}
-            className="disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Salvando...' : 'Salvar Nome'}
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
