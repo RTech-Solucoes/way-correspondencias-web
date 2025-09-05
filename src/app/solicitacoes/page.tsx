@@ -556,7 +556,7 @@ export default function SolicitacoesPage() {
                               e.stopPropagation();
                               await openDetalhes(solicitacao);
                             }}
-                            title="Detalhes"
+                            title="Enviar resposta"
                           >
                             <PaperPlaneRightIcon className="h-4 w-4" />
                           </Button>

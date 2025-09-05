@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState, ChangeEvent, FormEvent, useEffect, useRef } from 'react';
+import {useCallback, useMemo, useState, ChangeEvent, FormEvent, useEffect, useRef, CSSProperties} from 'react';
 import {
   Dialog,
   DialogContent,
@@ -88,7 +88,7 @@ export default function DetalhesSolicitacaoModal({
   const [canToggleDescricao, setCanToggleDescricao] = useState(false);
   const [lineHeightPx, setLineHeightPx] = useState<number | null>(null);
 
-  const { canListarAnexo, canInserirAnexo, canDeletarAnexo } = usePermissoes();
+  const { canListarAnexo, canInserirAnexo, canDeletarAnexo, canAprovarSolicitacao } = usePermissoes();
 
   const sol = solicitacao ?? null;
 
@@ -365,7 +365,7 @@ export default function DetalhesSolicitacaoModal({
     []
   );
 
-  const descricaoCollapsedStyle: React.CSSProperties =
+  const descricaoCollapsedStyle: CSSProperties =
     !expandDescricao && lineHeightPx
       ? { maxHeight: `${lineHeightPx * MAX_DESC_LINES}px`, overflow: 'hidden' }
       : {};
@@ -564,7 +564,7 @@ export default function DetalhesSolicitacaoModal({
             </section>
           )}
 
-          {isEmAprovacao && (
+          {(isEmAprovacao && canAprovarSolicitacao) && (
             <section className="space-y-3">
               <div className="space-y-2">
                 <Label htmlFor="aprovarDevolutiva" className="text-sm font-medium">
