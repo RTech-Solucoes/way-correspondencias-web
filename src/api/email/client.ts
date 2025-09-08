@@ -42,8 +42,8 @@ class EmailClient {
       "filtro",
       "dsRemetente",
       "dsDestinatario",
-      "dtInicioCriacao",
-      "dtFimCriacao",
+      "dtRecebimentoInicio",
+      "dtRecebimentoFim",
       "page",
       "size",
       "sort"
