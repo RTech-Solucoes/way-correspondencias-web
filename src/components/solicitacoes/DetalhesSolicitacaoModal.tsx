@@ -380,13 +380,13 @@ export default function DetalhesSolicitacaoModal({
 
     if (sol?.statusSolicitacao?.nmStatus === 'Análise regulatória') {
       if (tpResponsavelUpload === TipoResponsavelAnexo.G) return true;
+      if (hasAreaInicial) return true;
 
       return false;
     }
 
     if (sol?.statusSolicitacao?.nmStatus === 'Em assinatura Diretores') {
       if ([TipoResponsavelAnexo.D, TipoResponsavelAnexo.R].includes(tpResponsavelUpload)) return true;
-
       return false;
     }
 
@@ -398,7 +398,13 @@ export default function DetalhesSolicitacaoModal({
 
     if (isPermissaoEnviandoDevolutiva) return false;
 
-    if (isStatusPermitidoEnviar && !hasAreaInicial) return false;
+    if (sol?.statusSolicitacao?.nmStatus === 'Em análise da área técnica') {
+      if (!hasAreaInicial) return true;
+    }
+
+    if (sol?.statusSolicitacao?.nmStatus === 'Em aprovação') {
+      if (!hasAreaInicial) return true;
+    }
 
     return false;
   })();
@@ -706,7 +712,7 @@ export default function DetalhesSolicitacaoModal({
             tooltip={
               isPermissaoEnviandoDevolutiva
                 ? 'Apenas gerente/diretores da área pode enviar resposta da devolutiva'
-                : (isStatusPermitidoEnviar && !hasAreaInicial)
+                : (isStatusPermitidoEnviar )
                   ? 'Disponível apenas para responsáveis das áreas da solicitação'
                   : ''
             }
