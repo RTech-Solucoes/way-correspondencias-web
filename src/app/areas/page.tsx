@@ -6,7 +6,7 @@ import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
 import {Pagination} from '@/components/ui/pagination';
 import {useAreas} from '@/context/areas/AreasContext';
 import {areasClient} from '@/api/areas/client';
-import {AreaFilterParams} from '@/api/areas/types';
+import {AreaFilterParams, AreaRequest} from '@/api/areas/types';
 import {toast} from 'sonner';
 import {useDebounce} from '@/hooks/use-debounce';
 import SearchArea from "@/components/areas/SearchArea";
@@ -99,9 +99,17 @@ export default function AreasPage() {
     }
   };
 
-  const onAreaSave = () => {
-    handleAreaSaved();
-    loadAreas();
+  const onAreaSave = async (data: AreaRequest) => {
+    try {
+      if (selectedArea && selectedArea.idArea) {
+        await areasClient.atualizar(selectedArea.idArea, data);
+        toast.success('Área atualizada com sucesso');
+      }
+      handleAreaSaved();
+      loadAreas();
+    } catch {
+      toast.error('Erro ao salvar área');
+    }
   };
 
   const filtrosAplicados = [
