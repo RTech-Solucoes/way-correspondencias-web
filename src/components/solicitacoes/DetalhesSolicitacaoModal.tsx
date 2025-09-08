@@ -378,7 +378,7 @@ export default function DetalhesSolicitacaoModal({
   const enableEnviarDevolutiva = (() => {
     if (sending) return false;
 
-    if (sol?.statusSolicitacao?.nmStatus === 'Em análise área técnica'){
+    if (sol?.statusSolicitacao?.nmStatus === 'Em análise da área técnica'){
       if ([TipoResponsavelAnexo.A, TipoResponsavelAnexo.G].includes(tpResponsavelUpload)) return true;
 
       return false;
