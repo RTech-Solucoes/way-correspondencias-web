@@ -368,6 +368,43 @@ export default function DetalhesSolicitacaoModal({
 
   const quantidadeDevolutivas = solicitacao?.tramitacoes?.filter(t => !!t?.tramitacao?.dsObservacao)?.length ?? 0;
 
+  const labelDevolutiva = {
+    'Análise regulatória': 'Enviar Minuta de Resposta para Aprovação',
+    default: 'Enviar devolutiva ao Regulatório'
+  }
+
+  const labelStatusAnaliseRegulataria = labelDevolutiva[sol?.statusSolicitacao?.nmStatus as keyof typeof labelDevolutiva] ?? labelDevolutiva.default;
+
+  const enableEnviarDevolutiva = (() => {
+    if (sending) return false;
+
+    if (sol?.statusSolicitacao?.nmStatus === 'Análise regulatória') {
+      if (tpResponsavelUpload === TipoResponsavelAnexo.G) return true;
+
+      return false;
+    }
+
+    if (sol?.statusSolicitacao?.nmStatus === 'Em assinatura Diretores') {
+      if ([TipoResponsavelAnexo.D, TipoResponsavelAnexo.R].includes(tpResponsavelUpload)) return true;
+
+      return false;
+    }
+
+    if (sol?.statusSolicitacao?.nmStatus === 'Em assinatura Regulatória') {
+      if (tpResponsavelUpload === TipoResponsavelAnexo.R) return true;
+
+      return false;
+    }
+
+    if (isPermissaoEnviandoDevolutiva) return false;
+
+    if (isStatusPermitidoEnviar && !hasAreaInicial) return false;
+
+    return false;
+  })();
+
+  console.log(enableEnviarDevolutiva, tpResponsavelUpload, sol?.statusSolicitacao?.nmStatus, [TipoResponsavelAnexo.D, TipoResponsavelAnexo.R].includes(tpResponsavelUpload))
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl md:max-w-4xl lg:max-w-5xl p-0 flex flex-col max-h-[85vh]">
@@ -591,7 +628,7 @@ export default function DetalhesSolicitacaoModal({
 
           <section className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Enviar devolutiva ao Regulatório</h3>
+              <h3 className="text-sm font-semibold">{labelStatusAnaliseRegulataria}</h3>
 
               <HistoricoRespostasModalButton
                 idSolicitacao={sol?.solicitacao?.idSolicitacao ?? null}
@@ -610,17 +647,15 @@ export default function DetalhesSolicitacaoModal({
                 value={resposta}
                 onChange={(e) => setResposta(e.target.value)}
                 rows={5}
-                disabled={sending }
+                disabled={!enableEnviarDevolutiva}
               />
-
-    
 
               <div className="mt-3 flex items-center gap-3">
                 {canInserirAnexo && (
-                  <label className="inline-flex items-center gap-2 text-sm text-primary hover:underline cursor-pointer">
+                  <label className="inline-flex items-center gap-2 text-sm text-primary hover:underline cursor-pointer aria-disabled:opacity-50 aria-disabled:cursor-not-allowed" aria-disabled={!enableEnviarDevolutiva}>
                     <PaperclipIcon className="h-4 w-4" />
                     Fazer upload de arquivo
-                    <input type="file" className="hidden" multiple onChange={handleUploadChange} disabled={sending} />
+                    <input type="file" className="hidden" multiple onChange={handleUploadChange} disabled={!enableEnviarDevolutiva} />
                   </label>
                 )}
 
@@ -667,10 +702,7 @@ export default function DetalhesSolicitacaoModal({
           <Button
             type="submit"
             form="detalhes-form"
-            disabled={
-              sending || isPermissaoEnviandoDevolutiva
-              || (isStatusPermitidoEnviar && !hasAreaInicial)
-            }
+            disabled={!enableEnviarDevolutiva}
             tooltip={
               isPermissaoEnviandoDevolutiva
                 ? 'Apenas gerente/diretores da área pode enviar resposta da devolutiva'
