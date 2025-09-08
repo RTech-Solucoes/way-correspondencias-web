@@ -1293,21 +1293,6 @@ export default function SolicitacaoModal({
                 {anexosTypeE.map((anexo, index) => (
                   <div key={index} className="flex items-center justify-between p-2 bg-gray-50 border border-gray-200 rounded text-sm">
                   <span className="font-medium text-gray-800">{anexo.nmArquivo}</span>
-
-                    <div className="flex items-center gap-2">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDownloadAnexoEmail(anexo);
-                        }}
-                        className="h-6 w-6 p-0 hover:bg-blue-100"
-                      >
-                        <DownloadSimpleIcon size={14} className="text-gray-600" />
-                      </Button>
-                    </div>
                   </div>
                 ))}
               </div>
