@@ -24,6 +24,8 @@ import { HistoricoRespostasModalButton } from './HistoricoRespostasModal';
 // import tramitacoesClient from '@/api/tramitacoes/client';
 import authClient from '@/api/auth/client';
 import { responsaveisClient } from '@/api/responsaveis/client';
+import { TramitacaoResponse } from '@/api/tramitacoes/types';
+import { ResponsavelResponse } from '@/api/responsaveis/types';
 
 
 type AnexoItemShape = {
@@ -83,6 +85,7 @@ export default function DetalhesSolicitacaoModal({
   const [flAprovado, setFlAprovado] = useState<'S' | 'N' | ''>('');
   const [tpResponsavelUpload, setTpResponsavelUpload] = useState<TipoResponsavelAnexo>(TipoResponsavelAnexo.A);
   const [hasAreaInicial, setHasAreaInicial] = useState(false);
+  const [userResponsavel, setUserResponsavel] = useState<ResponsavelResponse | null>(null);
 
   const descRef = useRef<HTMLParagraphElement | null>(null);
   const [canToggleDescricao, setCanToggleDescricao] = useState(false);
@@ -151,14 +154,10 @@ export default function DetalhesSolicitacaoModal({
 
   const isEmAprovacao =
     (
-      (sol?.statusSolicitacao?.idStatusSolicitacao === 6) ||
-      (sol?.statusSolicitacao?.nmStatus?.toLowerCase?.() === 'em aprovação') ||
-      (statusText?.toLowerCase?.() === 'em aprovação')
+      (sol?.statusSolicitacao?.idStatusSolicitacao === 6)
     ) ||
     (
-      (sol?.statusSolicitacao?.idStatusSolicitacao === 8) ||
-      (sol?.statusSolicitacao?.nmStatus?.toLowerCase?.() === 'em assinatura diretores') ||
-      (statusText?.toLowerCase?.() === 'em assinatura diretores')
+      (sol?.statusSolicitacao?.idStatusSolicitacao === 8)
     )
     
   const isPermissaoEnviandoDevolutiva = (isEmAprovacao && !hasPermissao('SOLICITACAO_APROVAR'));
@@ -173,6 +172,7 @@ export default function DetalhesSolicitacaoModal({
           return;
         }
         const resp = await responsaveisClient.buscarPorNmUsuarioLogin(userName);
+        setUserResponsavel(resp);
         const idPerfil = resp?.idPerfil;
 
         const idAreaInicial = sol?.solicitacao?.idAreaInicial;
@@ -210,16 +210,6 @@ export default function DetalhesSolicitacaoModal({
     }
   }, [open, sol?.solicitacao?.idSolicitacao, sol?.solicitacao?.area, sol]);
 
-  const isStatusPermitidoEnviar = useMemo(() => {
-    const current = normalizeText(sol?.statusSolicitacao?.nmStatus ?? statusLabel);
-    const allStatusPermitido = [
-      'Análise regulatória',
-      'Em assinatura Regulatório',
-      'Em assinatura Diretores',
-    ];
-    const statusPermitido = allStatusPermitido.map((t) => normalizeText(t));
-    return statusPermitido.includes(current);
-  }, [sol?.statusSolicitacao?.nmStatus, statusLabel]);
 
   function computeTpResponsavel(perfil: number): TipoResponsavelAnexo {
     // 1: Administrador, 2: Gestor do Sistema - (R)
@@ -376,35 +366,41 @@ export default function DetalhesSolicitacaoModal({
   const labelStatusAnaliseRegulataria = labelDevolutiva[sol?.statusSolicitacao?.nmStatus as keyof typeof labelDevolutiva] ?? labelDevolutiva.default;
 
   const enableEnviarDevolutiva = (() => {
+  
+    const nrNivel = sol?.tramitacoes[0]?.tramitacao?.nrNivel;
+    const tramitacaoExecutada = sol?.tramitacoes?.filter(t =>
+      t.tramitacao.nrNivel === nrNivel &&
+      t.tramitacao.idStatusSolicitacao === sol?.statusSolicitacao?.idStatusSolicitacao &&
+      t.tramitacao.tramitacaoAcao.some(ta =>
+        ta.responsavelArea.responsavel.idResponsavel === userResponsavel?.idResponsavel &&
+        ta.flAcao === 'T' ));
+
+    if (tramitacaoExecutada != null && tramitacaoExecutada?.length > 0) return false;
+   
     if (sending) return false;
 
-    if (sol?.statusSolicitacao?.nmStatus === 'Em análise da área técnica'){
-      if ([TipoResponsavelAnexo.A, TipoResponsavelAnexo.G].includes(tpResponsavelUpload)) return true;
+    if (sol?.statusSolicitacao?.nmStatus === 'Em análise da área técnica') {
+      if (!hasAreaInicial) return true;
 
       return false;
     }
 
     if (sol?.statusSolicitacao?.nmStatus === 'Análise regulatória') {
-      if (tpResponsavelUpload === TipoResponsavelAnexo.G) return true;
+       if (hasAreaInicial) return true;
 
       return false;
     }
+    
+    if (!hasAreaInicial && !isPermissaoEnviandoDevolutiva) return true;
 
-    if (sol?.statusSolicitacao?.nmStatus === 'Em assinatura Diretores') {
-      if ([TipoResponsavelAnexo.D, TipoResponsavelAnexo.R].includes(tpResponsavelUpload)) return true;
+    if (sol?.statusSolicitacao?.nmStatus === 'Em assinatura Regulatório') {
+     if (hasAreaInicial) return true;
 
-      return false;
     }
 
-    if (sol?.statusSolicitacao?.nmStatus === 'Em assinatura Regulatória') {
-      if (tpResponsavelUpload === TipoResponsavelAnexo.R) return true;
-
-      return false;
+    if (sol?.statusSolicitacao?.nmStatus === 'Em assinatura Diretores' ) {
+      return true;
     }
-
-    if (isPermissaoEnviandoDevolutiva) return false;
-
-    if (isStatusPermitidoEnviar && !hasAreaInicial) return false;
 
     return false;
   })();
@@ -712,9 +708,7 @@ export default function DetalhesSolicitacaoModal({
             tooltip={
               isPermissaoEnviandoDevolutiva
                 ? 'Apenas gerente/diretores da área pode enviar resposta da devolutiva'
-                : (isStatusPermitidoEnviar && !hasAreaInicial)
-                  ? 'Disponível apenas para responsáveis das áreas da solicitação'
-                  : ''
+                : ''
             }
           >
             {sending ? 'Enviando...' : 'Enviar resposta'}
