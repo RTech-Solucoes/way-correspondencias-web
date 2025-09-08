@@ -402,8 +402,8 @@ export default function DetalhesSolicitacaoModal({
     if (!hasAreaInicial && !isPermissaoEnviandoDevolutiva) return true;
 
     if (sol?.statusSolicitacao?.nmStatus === 'Em assinatura Regulatório') {
-     if (hasAreaInicial) return true;
-
+      if (userResponsavel?.idPerfil === 1) return true;
+      return false;
     }
 
     if (sol?.statusSolicitacao?.nmStatus === 'Em assinatura Diretores') {
