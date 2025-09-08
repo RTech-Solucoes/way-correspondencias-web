@@ -177,6 +177,7 @@ export interface TramitacaoResponse extends BaseResponse {
   dsTramitacao?: string;
   dtTramitacao?: string;
   dsObservacao?: string;
+  nrNivel?: number;
   solicitacao: SolicitacaoResponse;
   tramitacaoAcao: TramitacaoAcao[];
 }
