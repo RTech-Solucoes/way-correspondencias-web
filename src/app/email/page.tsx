@@ -50,8 +50,8 @@ export default function EmailPage() {
         filtro: debouncedSearchQuery || undefined,
         dsRemetente: activeEmailFilters.remetente || undefined,
         dsDestinatario: activeEmailFilters.destinatario || undefined,
-        dtInicioCriacao: activeEmailFilters.dateFrom ? `${activeEmailFilters.dateFrom}T00:00:00` : undefined,
-        dtFimCriacao: activeEmailFilters.dateTo ? `${activeEmailFilters.dateTo}T23:59:59` : undefined,
+        dtRecebimentoInicio: activeEmailFilters.dateFrom ? `${activeEmailFilters.dateFrom}T00:00:00` : undefined,
+        dtRecebimentoFim: activeEmailFilters.dateTo ? `${activeEmailFilters.dateTo}T23:59:59` : undefined,
         page: currentPage,
         size: 15
       });
@@ -124,7 +124,7 @@ export default function EmailPage() {
     }] : []),
     ...(activeEmailFilters.dateFrom ? [{
       key: 'dateFrom',
-      label: 'Data Início',
+      label: 'Data Recebimento Início',
       value: formatDateBr(activeEmailFilters.dateFrom),
       color: 'indigo' as const,
       onRemove: () => {
@@ -135,7 +135,7 @@ export default function EmailPage() {
     }] : []),
     ...(activeEmailFilters.dateTo ? [{
       key: 'dateTo',
-      label: 'Data Fim',
+      label: 'Data Recebimento Fim',
       value: formatDateBr(activeEmailFilters.dateTo),
       color: 'indigo' as const,
       onRemove: () => {
