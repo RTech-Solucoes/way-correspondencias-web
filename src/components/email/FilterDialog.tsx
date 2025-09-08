@@ -44,7 +44,7 @@ export default function FilterDialog(props: IFilterProps) {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="dateFrom">Data Criação Início</Label>
+              <Label htmlFor="dateFrom">Data Recebimento Início</Label>
               <Input
                 id="dateFrom"
                 type="date"
@@ -53,7 +53,7 @@ export default function FilterDialog(props: IFilterProps) {
               />
             </div>
             <div>
-              <Label htmlFor="dateTo">Data Criação Fim</Label>
+              <Label htmlFor="dateTo">Data Recebimento Fim</Label>
               <Input
                 id="dateTo"
                 type="date"

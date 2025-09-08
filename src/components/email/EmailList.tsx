@@ -119,8 +119,8 @@ function EmailList({
         filtro: debouncedSearchQuery || undefined,
         dsRemetente: emailFilters.remetente || undefined,
         dsDestinatario: emailFilters.destinatario || undefined,
-        dtInicioCriacao: emailFilters.dateFrom ? `${emailFilters.dateFrom}T00:00:00` : undefined,
-        dtFimCriacao: emailFilters.dateTo ? `${emailFilters.dateTo}T23:59:59` : undefined,
+        dtRecebimentoInicio: emailFilters.dateFrom ? `${emailFilters.dateFrom}T00:00:00` : undefined,
+        dtRecebimentoFim: emailFilters.dateTo ? `${emailFilters.dateTo}T23:59:59` : undefined,
         page: typeof externalPage === 'number' ? externalPage : 0,
         size: 15
       });

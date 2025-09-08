@@ -32,8 +32,8 @@ export interface EmailFilterParams {
   filtro?: string;
   dsRemetente?: string;
   dsDestinatario?: string;
-  dtInicioCriacao?: string;
-  dtFimCriacao?: string;
+  dtRecebimentoInicio?: string;
+  dtRecebimentoFim?: string;
   page?: number;
   size?: number;
   sort?: string;
