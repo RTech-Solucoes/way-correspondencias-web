@@ -406,8 +406,9 @@ export default function DetalhesSolicitacaoModal({
 
     }
 
-    if (sol?.statusSolicitacao?.nmStatus === 'Em assinatura Diretores' ) {
-      return true;
+    if (sol?.statusSolicitacao?.nmStatus === 'Em assinatura Diretores') {
+      if([TipoResponsavelAnexo.D].includes(tpResponsavelUpload)) return true;
+      return false;
     }
 
     return false;
