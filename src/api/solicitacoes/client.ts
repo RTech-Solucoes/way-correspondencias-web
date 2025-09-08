@@ -8,7 +8,6 @@ import {
   SolicitacaoPrazoResponse,
   PagedResponse,
   SolicitacaoDetalheResponse,
-  TramitacaoResponse
 } from './types';
 import { solicitacaoAnexosClient } from './anexos-client';
 import { AnexoResponse, ArquivoDTO } from '../anexos/type';
@@ -21,19 +20,35 @@ class SolicitacoesClient {
     this.client = new ApiClient('/solicitacoes');
   }
 
-  async listar(
+  async listar(params: {
     filtro?: string,
     page?: number,
     size?: number,
     idStatusSolicitacao?: number,
     idArea?: number,
-  ): Promise<PagedResponse<SolicitacaoResponse> | SolicitacaoResponse[]> {
+    cdIdentificacao?: string,
+    idTema?: number,
+    sort?: string,
+  }): Promise<PagedResponse<SolicitacaoResponse> | SolicitacaoResponse[]> {
     const queryParams = new URLSearchParams();
-    if (filtro) queryParams.append('filtro', filtro);
-    if (page !== undefined) queryParams.append('page', page.toString());
-    if (size !== undefined) queryParams.append('size', size.toString());
-    if (idStatusSolicitacao !== undefined) queryParams.append('idStatusSolicitacao', idStatusSolicitacao.toString());
-    if (idArea !== undefined) queryParams.append('idArea', idArea.toString());
+    const allowedKeys = [
+      'filtro',
+      'page',
+      'size',
+      'idStatusSolicitacao',
+      'idArea',
+      'cdIdentificacao',
+      'idTema',
+      'sort',
+    ] as const;
+
+    allowedKeys.forEach((key) => {
+      const value = params[key];
+      if (value !== undefined && value !== null && value !== '') {
+        queryParams.append(key, String(value));
+      }
+    });
+
     const qs = queryParams.toString();
     return this.client.request<PagedResponse<SolicitacaoResponse> | SolicitacaoResponse[]>(qs ? `?${qs}` : '', { method: 'GET' });
   }
@@ -74,20 +89,20 @@ class SolicitacoesClient {
     });
   }
 
-  async definirPrazo(id: number, nrPrazoDias: number, idStatusSolicitacao?: number, tpPrazo?: string) {
+  async definirPrazo(id: number, nrPrazoDias: number, idStatusSolicitacao?: number, tpPrazo?: string): Promise<void> {
     const params = new URLSearchParams();
     params.append('nrPrazoDias', nrPrazoDias.toString());
     if (idStatusSolicitacao !== undefined) params.append('idStatusSolicitacao', idStatusSolicitacao.toString());
     if (tpPrazo) params.append('tpPrazo', tpPrazo);
-    return this.client.request<any>(`/${id}/prazos/definir?${params.toString()}`, { method: 'POST' });
+    return this.client.request<void>(`/${id}/prazos/definir?${params.toString()}`, { method: 'POST' });
   }
 
-  async definirPrazoExcepcional(id: number, nrPrazoDias: number, idStatusSolicitacao?: number, tpPrazo?: string) {
+  async definirPrazoExcepcional(id: number, nrPrazoDias: number, idStatusSolicitacao?: number, tpPrazo?: string): Promise<void> {
     const params = new URLSearchParams();
     params.append('nrPrazoDias', nrPrazoDias.toString());
     if (idStatusSolicitacao !== undefined) params.append('idStatusSolicitacao', idStatusSolicitacao.toString());
     if (tpPrazo) params.append('tpPrazo', tpPrazo);
-    return this.client.request<any>(`/${id}/prazos/excepcional?${params.toString()}`, { method: 'POST' });
+    return this.client.request<void>(`/${id}/prazos/excepcional?${params.toString()}`, { method: 'POST' });
   }
 
   async aplicarStatus(id: number, idStatusSolicitacao: number) {

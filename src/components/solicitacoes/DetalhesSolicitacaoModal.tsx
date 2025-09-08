@@ -142,11 +142,10 @@ export default function DetalhesSolicitacaoModal({
     .filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexo.D)
     .map(mapToItem);
 
-  const anexosRegulatorio: AnexoItemShape[] =
-    anexos.length > 0
-      ? anexos.map(mapToItem)
-      : anexosTramitacoes.filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexo.R).map(mapToItem);
-
+  const anexosRegulatorio: AnexoItemShape[] = anexosTramitacoes 
+    .filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexo.R)
+    .map(mapToItem);
+  
   const itensSolicitacao: AnexoItemShape[] = anexosSolic.map(mapToItem);
   const itensEmail: AnexoItemShape[] = anexosEmail.map(mapToItem);
 
@@ -174,7 +173,7 @@ export default function DetalhesSolicitacaoModal({
           return;
         }
         const resp = await responsaveisClient.buscarPorNmUsuarioLogin(userName);
-        const perfilName = (resp?.nmPerfil || '').toLowerCase();
+        const idPerfil = resp?.idPerfil;
 
         const idAreaInicial = sol?.solicitacao?.idAreaInicial;
         const userAreaIds = (resp?.areas || [])
@@ -195,7 +194,9 @@ export default function DetalhesSolicitacaoModal({
             .filter((id) => !Number.isNaN(id));
           isInSolicAreas = userAreaIds.some(id => solicitacaoAreaIds.includes(id));
         }
-        const tp = computeTpResponsavel(perfilName, isInSolicAreas);
+        
+        const tp = computeTpResponsavel(idPerfil);
+
         setTpResponsavelUpload(tp);
         setHasAreaInicial(isInSolicAreas);
       } catch {
@@ -220,29 +221,24 @@ export default function DetalhesSolicitacaoModal({
     return statusPermitido.includes(current);
   }, [sol?.statusSolicitacao?.nmStatus, statusLabel]);
 
-  function computeTpResponsavel(perfilNameLower: string, isInitialArea: boolean): TipoResponsavelAnexo {
-    const p = perfilNameLower.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
-
-    if (
-      p.includes('administrador') ||
-      p.includes('gestor do sistema') ||
-      p.includes('validador / assinante') || p.includes('validador')
-    ) {
+  function computeTpResponsavel(perfil: number): TipoResponsavelAnexo {
+    // 1: Administrador, 2: Gestor do Sistema - (R)
+    if (perfil === 1 || perfil === 2) {
+      return TipoResponsavelAnexo.R;
+    }
+    // 3: Validador / Assinante - (D)
+    if (perfil === 3) {
       return TipoResponsavelAnexo.D;
     }
-
-    if (p.includes('executor avancado')) {
+    // 4: Executor Avançado - (G)
+    if (perfil === 4) {
       return TipoResponsavelAnexo.G;
     }
-
-    if (
-      p === 'executor' || p.includes('executor restrito') ||
-      p.includes('tecnico / suporte') || p.includes('tecnico') || p.includes('suporte')
-    ) {
-      return isInitialArea ? TipoResponsavelAnexo.R : TipoResponsavelAnexo.A;
+    // 5: Executor, 6: Executor Restrito, 7: Técnico / Suporte - (A)
+    if (perfil === 5 || perfil === 6 || perfil === 7) {
+      return TipoResponsavelAnexo.A;
     }
-
-    return isInitialArea ? TipoResponsavelAnexo.R : TipoResponsavelAnexo.A;
+    return TipoResponsavelAnexo.A;
   }
 
   const measureDescricao = useCallback(() => {
@@ -371,6 +367,43 @@ export default function DetalhesSolicitacaoModal({
       : {};
 
   const quantidadeDevolutivas = solicitacao?.tramitacoes?.filter(t => !!t?.tramitacao?.dsObservacao)?.length ?? 0;
+
+  const labelDevolutiva = {
+    'Análise regulatória': 'Enviar Minuta de Resposta para Aprovação',
+    default: 'Enviar devolutiva ao Regulatório'
+  }
+
+  const labelStatusAnaliseRegulataria = labelDevolutiva[sol?.statusSolicitacao?.nmStatus as keyof typeof labelDevolutiva] ?? labelDevolutiva.default;
+
+  const enableEnviarDevolutiva = (() => {
+    if (sending) return false;
+
+    if (sol?.statusSolicitacao?.nmStatus === 'Análise regulatória') {
+      if (tpResponsavelUpload === TipoResponsavelAnexo.G) return true;
+
+      return false;
+    }
+
+    if (sol?.statusSolicitacao?.nmStatus === 'Em assinatura Diretores') {
+      if ([TipoResponsavelAnexo.D, TipoResponsavelAnexo.R].includes(tpResponsavelUpload)) return true;
+
+      return false;
+    }
+
+    if (sol?.statusSolicitacao?.nmStatus === 'Em assinatura Regulatória') {
+      if (tpResponsavelUpload === TipoResponsavelAnexo.R) return true;
+
+      return false;
+    }
+
+    if (isPermissaoEnviandoDevolutiva) return false;
+
+    if (isStatusPermitidoEnviar && !hasAreaInicial) return false;
+
+    return false;
+  })();
+
+  console.log(enableEnviarDevolutiva, tpResponsavelUpload, sol?.statusSolicitacao?.nmStatus, [TipoResponsavelAnexo.D, TipoResponsavelAnexo.R].includes(tpResponsavelUpload))
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -595,7 +628,7 @@ export default function DetalhesSolicitacaoModal({
 
           <section className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Enviar devolutiva ao Regulatório</h3>
+              <h3 className="text-sm font-semibold">{labelStatusAnaliseRegulataria}</h3>
 
               <HistoricoRespostasModalButton
                 idSolicitacao={sol?.solicitacao?.idSolicitacao ?? null}
@@ -614,17 +647,15 @@ export default function DetalhesSolicitacaoModal({
                 value={resposta}
                 onChange={(e) => setResposta(e.target.value)}
                 rows={5}
-                disabled={sending }
+                disabled={!enableEnviarDevolutiva}
               />
-
-    
 
               <div className="mt-3 flex items-center gap-3">
                 {canInserirAnexo && (
-                  <label className="inline-flex items-center gap-2 text-sm text-primary hover:underline cursor-pointer">
+                  <label className="inline-flex items-center gap-2 text-sm text-primary hover:underline cursor-pointer aria-disabled:opacity-50 aria-disabled:cursor-not-allowed" aria-disabled={!enableEnviarDevolutiva}>
                     <PaperclipIcon className="h-4 w-4" />
                     Fazer upload de arquivo
-                    <input type="file" className="hidden" multiple onChange={handleUploadChange} disabled={sending} />
+                    <input type="file" className="hidden" multiple onChange={handleUploadChange} disabled={!enableEnviarDevolutiva} />
                   </label>
                 )}
 
@@ -671,10 +702,7 @@ export default function DetalhesSolicitacaoModal({
           <Button
             type="submit"
             form="detalhes-form"
-            disabled={
-              sending || isPermissaoEnviandoDevolutiva
-              || (isStatusPermitidoEnviar && !hasAreaInicial)
-            }
+            disabled={!enableEnviarDevolutiva}
             tooltip={
               isPermissaoEnviandoDevolutiva
                 ? 'Apenas gerente/diretores da área pode enviar resposta da devolutiva'

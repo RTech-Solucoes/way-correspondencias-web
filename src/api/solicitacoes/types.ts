@@ -132,6 +132,10 @@ export interface PagedResponse<T> {
 
 export interface SolicitacaoFilterParams {
   filtro?: string;
+  idStatusSolicitacao?: number;
+  idArea?: number;
+  cdIdentificacao?: string;
+  idTema?: number;
   page?: number;
   size?: number;
   sort?: string;

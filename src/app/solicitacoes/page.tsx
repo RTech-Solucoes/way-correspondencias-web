@@ -39,6 +39,8 @@ import {Pagination} from '@/components/ui/pagination';
 import {useSolicitacoes} from '@/context/solicitacoes/SolicitacoesContext';
 import TramitacaoModal from '@/components/solicitacoes/TramitacaoModal';
 import FilterModal from '@/components/solicitacoes/FilterModal';
+import { statusSolicitacaoClient } from '@/api/status-solicitacao/client';
+import { FiltrosAplicados } from '@/components/ui/applied-filters';
 import anexosClient from '@/api/anexos/client';
 import {AnexoResponse, TipoObjetoAnexo, ArquivoDTO} from '@/api/anexos/type';
 import {
@@ -85,6 +87,7 @@ export default function SolicitacoesPage() {
     filters,
     setFilters,
     activeFilters,
+    setActiveFilters,
     sortField,
     sortDirection,
     hasActiveFilters,
@@ -109,6 +112,7 @@ export default function SolicitacoesPage() {
   const [detalhesAnexos, setDetalhesAnexos] = useState<AnexoResponse[]>([]);
   const [showTramitacaoModal, setShowTramitacaoModal] = useState(false);
   const [tramitacaoSolicitacaoId, setTramitacaoSolicitacaoId] = useState<number | null>(null);
+  const [statuses, setStatuses] = useState<{ idStatusSolicitacao: number; nmStatus: string; flAtivo?: string }[]>([]);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const userHasOpenedDetailsModal = useCallback((solicitacao: SolicitacaoResponse) => {
@@ -146,24 +150,28 @@ export default function SolicitacoesPage() {
     try {
       setLoading(true);
 
-      const filterParts: Array<string> = [];
-      if (debouncedSearchQuery) filterParts.push(debouncedSearchQuery);
-      if (activeFilters.identificacao) filterParts.push(`ident:${activeFilters.identificacao}`);
-      if (activeFilters.responsavel && activeFilters.responsavel !== 'all') filterParts.push(`resp:${activeFilters.responsavel}`);
-      if (activeFilters.tema && activeFilters.tema !== 'all') filterParts.push(`tema:${activeFilters.tema}`);
-      if (activeFilters.dateFrom) filterParts.push(`from:${activeFilters.dateFrom}`);
-      if (activeFilters.dateTo) filterParts.push(`to:${activeFilters.dateTo}`);
-
-      const filtro = filterParts.join(' ') || undefined;
+      const filtro = debouncedSearchQuery || undefined;
 
       const idStatusSolicitacao = activeFilters.status && activeFilters.status !== 'all'
-        ? getStatusIdFromFilter(activeFilters.status)
+        ? Number(activeFilters.status)
         : undefined;
       const idArea = activeFilters.area && activeFilters.area !== 'all'
-        ? parseInt(activeFilters.area)
+        ? Number(activeFilters.area)
         : undefined;
+      const idTema = activeFilters.tema && activeFilters.tema !== 'all'
+        ? Number(activeFilters.tema)
+        : undefined;
+      const cdIdentificacao = activeFilters.identificacao || undefined;
 
-      const response = await solicitacoesClient.listar(filtro, currentPage, 10, idStatusSolicitacao, idArea);
+      const response = await solicitacoesClient.listar({
+        filtro,
+        page: currentPage,
+        size: 10,
+        idStatusSolicitacao,
+        idArea,
+        cdIdentificacao,
+        idTema
+      });
 
       if (response && typeof response === 'object' && 'content' in response) {
         const paginatedResponse = response as unknown as PagedResponse<SolicitacaoResponse>;
@@ -190,20 +198,6 @@ export default function SolicitacoesPage() {
     setLoading
   ]);
 
-  const getStatusIdFromFilter = (statusCode: string): number | undefined => {
-    const statusMap: Record<string, number> = {
-      'P': 1, // Pré-análise
-      'V': 2, // Vencido Regulatório
-      'A': 3, // Em análise Área Técnica
-      'T': 4, // Vencido Área Técnica
-      'R': 5, // Análise Regulatória
-      'O': 6, // Em Aprovação
-      'S': 7, // Em Assinatura
-      'C': 8, // Concluído
-      'X': 9, // Arquivado
-    };
-    return statusMap[statusCode];
-  };
 
   const loadResponsaveis = useCallback(async () => {
     try {
@@ -231,10 +225,64 @@ export default function SolicitacoesPage() {
 
   useEffect(() => {
     loadSolicitacoes();
+    statusSolicitacaoClient.listarTodos().then(setStatuses).catch(() => {});
     loadResponsaveis();
     loadTemas();
     loadAreas();
   }, [loadSolicitacoes, loadResponsaveis, loadTemas, loadAreas]);
+  const appliedFilters = [
+    ...(searchQuery ? [{
+      key: 'search',
+      label: 'Busca',
+      value: searchQuery,
+      color: 'blue' as const,
+      onRemove: () => setSearchQuery('')
+    }] : []),
+    ...(activeFilters.identificacao ? [{
+      key: 'identificacao',
+      label: 'Identificação',
+      value: activeFilters.identificacao,
+      color: 'orange' as const,
+      onRemove: () => {
+        const newFilters = { ...activeFilters, identificacao: '' };
+        setActiveFilters(newFilters);
+        setFilters(newFilters);
+      }
+    }] : []),
+    ...(activeFilters.status && activeFilters.status !== 'all' ? [{
+      key: 'status',
+      label: 'Status',
+      value: statuses.find(s => s.idStatusSolicitacao.toString() === activeFilters.status)?.nmStatus || activeFilters.status,
+      color: 'purple' as const,
+      onRemove: () => {
+        const newFilters = { ...activeFilters, status: '' };
+        setActiveFilters(newFilters);
+        setFilters(newFilters);
+      }
+    }] : []),
+    ...(activeFilters.area && activeFilters.area !== 'all' ? [{
+      key: 'area',
+      label: 'Área',
+      value: areas.find(a => a.idArea.toString() === activeFilters.area)?.nmArea || activeFilters.area,
+      color: 'green' as const,
+      onRemove: () => {
+        const newFilters = { ...activeFilters, area: '' };
+        setActiveFilters(newFilters);
+        setFilters(newFilters);
+      }
+    }] : []),
+    ...(activeFilters.tema && activeFilters.tema !== 'all' ? [{
+      key: 'tema',
+      label: 'Tema',
+      value: temas.find(t => t.idTema.toString() === activeFilters.tema)?.nmTema || activeFilters.tema,
+      color: 'indigo' as const,
+      onRemove: () => {
+        const newFilters = { ...activeFilters, tema: '' };
+        setActiveFilters(newFilters);
+        setFilters(newFilters);
+      }
+    }] : [])
+  ];
 
   const confirmDelete = async () => {
     if (solicitacaoToDelete) {
@@ -415,6 +463,12 @@ export default function SolicitacoesPage() {
           }
         </div>
       </div>
+
+      <FiltrosAplicados
+        filters={appliedFilters}
+        showClearAll={false}
+        className="mb-4"
+      />
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-1 overflow-auto">
         <StickyTable>
@@ -618,6 +672,7 @@ export default function SolicitacoesPage() {
         responsaveis={responsaveis}
         temas={temas}
         areas={areas}
+        statuses={statuses}
         onApplyFilters={applyFilters}
         onClearFilters={clearFilters}
       />
