@@ -379,7 +379,10 @@ export default function DetalhesSolicitacaoModal({
    
     if (sending) return false;
 
+    if (sol?.statusSolicitacao?.nmStatus === 'Concluído' )  return false;
+
     if (sol?.statusSolicitacao?.nmStatus === 'Em análise da área técnica') {
+      if([TipoResponsavelAnexo.A, TipoResponsavelAnexo.G].includes(tpResponsavelUpload)) return true;
       if (!hasAreaInicial) return true;
 
       return false;
@@ -387,10 +390,15 @@ export default function DetalhesSolicitacaoModal({
 
     if (sol?.statusSolicitacao?.nmStatus === 'Análise regulatória') {
        if (hasAreaInicial) return true;
+       if (tpResponsavelUpload === TipoResponsavelAnexo.G) return true;
 
       return false;
     }
     
+    if (sol?.statusSolicitacao?.nmStatus === 'Em aprovação') {
+      if([TipoResponsavelAnexo.G].includes(tpResponsavelUpload)) return true;
+    }
+
     if (!hasAreaInicial && !isPermissaoEnviandoDevolutiva) return true;
 
     if (sol?.statusSolicitacao?.nmStatus === 'Em assinatura Regulatório') {
