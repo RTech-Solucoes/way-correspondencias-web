@@ -403,7 +403,7 @@ export default function DetalhesSolicitacaoModal({
       return false;
     }
 
-    if (sol?.statusSolicitacao?.nmStatus === 'Em assinatura Diretores') {
+    if (sol?.statusSolicitacao?.nmStatus === 'Em assinatura Diretoria') {
       if (userResponsavel?.idPerfil === 1 || userResponsavel?.idPerfil === 2 || userResponsavel?.idPerfil === 3) return true;
       return false;
     }
@@ -628,30 +628,6 @@ export default function DetalhesSolicitacaoModal({
                     <Label htmlFor="aprovarDevolutiva-n" className="text-sm font-light ">Não</Label>
                   </div>
                 </div>
-              </div>
-            </section>
-          )}
-
-          {(statusText === 'Em assinatura Diretoria' && flAprovado === 'N') && ( 
-            <section className="space-y-3">
-              <div className="space-y-2">
-                <Label htmlFor="aprovarDevolutiva" className="text-sm font-medium">
-                  Áreas responsáveis pela devolutiva
-                </Label>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {(sol?.solicitacao?.area?.length ?? 0) > 0 ? (
-                      sol?.solicitacao?.area?.map((area) => (
-                        <span
-                          className="inline-flex min-w-0 items-center rounded-full bg-[#276eeb] text-white px-4 py-2 text-sm font-medium cursor-pointer"
-                          key={area.idArea}
-                        >
-                          {area.nmArea}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="text-sm text-muted-foreground">—</span>
-                    )}
-                  </div>
               </div>
             </section>
           )}
