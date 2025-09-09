@@ -51,12 +51,12 @@ const statusConfig: Record<
         visionColor: "bg-blue-400",
         calendarColor: "bg-blue-100",
     },
-    "Em assinatura Regulatório": {
+    "Em chancela": {
         icon: <UserPen className="h-4 w-4 text-cyan-700 mr-2" />,
         visionColor: "bg-cyan-500",
         calendarColor: "bg-cyan-200",
     },
-    "Em assinatura Diretores": {
+    "Em assinatura Diretoria": {
         icon: <Stamp className="h-4 w-4 text-cyan-600 mr-2" />,
         visionColor: "bg-cyan-400",
         calendarColor: "bg-cyan-100",
