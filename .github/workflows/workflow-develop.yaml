@@ -42,18 +42,10 @@ jobs:
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
       - name: Cache APT packages
-        uses: actions/cache@v3
+        uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          path: /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-openfortivpn-${{ hashFiles('**/workflow-develop.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-apt-openfortivpn-
-            ${{ runner.os }}-apt-
-
-      - name: Instalar openfortivpn (cached)
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y openfortivpn
+          packages: openfortivpn
+          version: 1.0
 
       - name: Conectar VPN
         env:
