@@ -389,8 +389,8 @@ export default function SolicitacoesPage() {
     }
   }, [detalhesSolicitacao, loadSolicitacoes]);
 
-  const getJoinedNmAreas = (areas: AreaSolicitacao[]) => {
-    if (areas.length > 0) {
+  const getJoinedNmAreas = (areas: AreaSolicitacao[] | undefined) => {
+    if (areas && areas.length > 0) {
       return areas.map(a => a.nmArea).join(', ');
     }
     return '-';
