@@ -17,14 +17,13 @@ import { SolicitacaoDetalheResponse } from '@/api/solicitacoes/types';
 import type { AnexoResponse } from '@/api/anexos/type';
 import { ArquivoDTO, TipoObjetoAnexo, TipoResponsavelAnexo } from '@/api/anexos/type';
 import { anexosClient } from '@/api/anexos/client';
-import { base64ToUint8Array, fileToArquivoDTO, hasPermissao, normalizeText, saveBlob } from '@/utils/utils';
+import { base64ToUint8Array, fileToArquivoDTO, hasPermissao, saveBlob } from '@/utils/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
 import { HistoricoRespostasModalButton } from './HistoricoRespostasModal';
 // import tramitacoesClient from '@/api/tramitacoes/client';
 import authClient from '@/api/auth/client';
 import { responsaveisClient } from '@/api/responsaveis/client';
-import { TramitacaoResponse } from '@/api/tramitacoes/types';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
 
 
@@ -74,7 +73,6 @@ export default function DetalhesSolicitacaoModal({
   open,
   onClose,
   solicitacao,
-  anexos = [],
   onEnviarDevolutiva,
   statusLabel = 'Status',
 }: DetalhesSolicitacaoModalProps) {
@@ -366,7 +364,6 @@ export default function DetalhesSolicitacaoModal({
   const labelStatusAnaliseRegulataria = labelDevolutiva[sol?.statusSolicitacao?.nmStatus as keyof typeof labelDevolutiva] ?? labelDevolutiva.default;
 
   const enableEnviarDevolutiva = (() => {
-  
     const nrNivel = sol?.tramitacoes[0]?.tramitacao?.nrNivel;
     const tramitacaoExecutada = sol?.tramitacoes?.filter(t =>
       t.tramitacao.nrNivel === nrNivel &&
@@ -389,14 +386,14 @@ export default function DetalhesSolicitacaoModal({
     }
 
     if (sol?.statusSolicitacao?.nmStatus === 'Análise regulatória') {
+      console.log('hasAreaInicial', hasAreaInicial);
        if (hasAreaInicial) return true;
-       if (tpResponsavelUpload === TipoResponsavelAnexo.G) return true;
 
       return false;
     }
     
     if (sol?.statusSolicitacao?.nmStatus === 'Em aprovação') {
-      if([TipoResponsavelAnexo.G].includes(tpResponsavelUpload)) return true;
+      if(userResponsavel?.idPerfil === 4) return true;
     }
 
     if (!hasAreaInicial && !isPermissaoEnviandoDevolutiva) return true;
@@ -407,14 +404,12 @@ export default function DetalhesSolicitacaoModal({
     }
 
     if (sol?.statusSolicitacao?.nmStatus === 'Em assinatura Diretores') {
-      if([TipoResponsavelAnexo.D].includes(tpResponsavelUpload)) return true;
+      if (userResponsavel?.idPerfil === 1 || userResponsavel?.idPerfil === 2 || userResponsavel?.idPerfil === 3) return true;
       return false;
     }
 
     return false;
   })();
-
-  console.log(enableEnviarDevolutiva, tpResponsavelUpload, sol?.statusSolicitacao?.nmStatus, [TipoResponsavelAnexo.D, TipoResponsavelAnexo.R].includes(tpResponsavelUpload))
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -633,6 +628,30 @@ export default function DetalhesSolicitacaoModal({
                     <Label htmlFor="aprovarDevolutiva-n" className="text-sm font-light ">Não</Label>
                   </div>
                 </div>
+              </div>
+            </section>
+          )}
+
+          {(statusText === 'Em assinatura Diretores' && flAprovado === 'N') && ( 
+            <section className="space-y-3">
+              <div className="space-y-2">
+                <Label htmlFor="aprovarDevolutiva" className="text-sm font-medium">
+                  Áreas responsáveis pela devolutiva
+                </Label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {(sol?.solicitacao?.area?.length ?? 0) > 0 ? (
+                      sol?.solicitacao?.area?.map((area) => (
+                        <span
+                          className="inline-flex min-w-0 items-center rounded-full bg-[#276eeb] text-white px-4 py-2 text-sm font-medium cursor-pointer"
+                          key={area.idArea}
+                        >
+                          {area.nmArea}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-sm text-muted-foreground">—</span>
+                    )}
+                  </div>
               </div>
             </section>
           )}
