@@ -398,7 +398,7 @@ export default function DetalhesSolicitacaoModal({
 
     if (!hasAreaInicial && !isPermissaoEnviandoDevolutiva) return true;
 
-    if (sol?.statusSolicitacao?.nmStatus === 'Em assinatura Regulatório') {
+    if (sol?.statusSolicitacao?.nmStatus === 'Em chancela') {
       if (userResponsavel?.idPerfil === 1) return true;
       return false;
     }
@@ -632,7 +632,7 @@ export default function DetalhesSolicitacaoModal({
             </section>
           )}
 
-          {(statusText === 'Em assinatura Diretores' && flAprovado === 'N') && ( 
+          {(statusText === 'Em assinatura Diretoria' && flAprovado === 'N') && ( 
             <section className="space-y-3">
               <div className="space-y-2">
                 <Label htmlFor="aprovarDevolutiva" className="text-sm font-medium">
