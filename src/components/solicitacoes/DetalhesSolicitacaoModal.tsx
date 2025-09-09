@@ -386,7 +386,6 @@ export default function DetalhesSolicitacaoModal({
     }
 
     if (sol?.statusSolicitacao?.nmStatus === 'Análise regulatória') {
-      console.log('hasAreaInicial', hasAreaInicial);
        if (hasAreaInicial) return true;
 
       return false;
