@@ -910,7 +910,7 @@ export default function SolicitacaoModal({
                   </Label>
                 </div>
                 <h3 className="text-blue-500 font-bold ml-auto text-2xl">
-                  {currentPrazoTotal}h
+                  {prazoExcepcional ? `${currentPrazoTotal}h` : hoursToDaysAndHours(currentPrazoTotal)}
                 </h3>
               </div>
             </div>

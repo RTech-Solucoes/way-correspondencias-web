@@ -643,14 +643,14 @@ export default function DetalhesSolicitacaoModal({
 
               <HistoricoRespostasModalButton
                 idSolicitacao={sol?.solicitacao?.idSolicitacao ?? null}
-                showButton={quantidadeDevolutivas >= 1}
+                showButton={quantidadeDevolutivas > 0}
                 quantidadeDevolutivas={quantidadeDevolutivas}
               />
             </div>
 
             <div className="rounded-md border bg-muted/30 p-4">
               <Label htmlFor="resposta" className="sr-only">
-                Escreva aqui…
+                Escreva aqui …
               </Label>
               <Textarea
                 id="resposta"

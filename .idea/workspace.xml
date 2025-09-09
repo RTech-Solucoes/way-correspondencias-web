@@ -6,8 +6,9 @@
   <component name="ChangeListManager">
     <list default="true" id="98226f2c-f64e-43be-946e-e89028627d5c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/solicitacoes/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/solicitacoes/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/solicitacoes/DetalhesSolicitacaoModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/solicitacoes/DetalhesSolicitacaoModal.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/components/solicitacoes/SolicitacaoModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/solicitacoes/SolicitacaoModal.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/utils/utils.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils/utils.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -33,8 +34,8 @@
 }</component>
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/rtech-solucoes/way-correspondencias-web&quot;,
-    &quot;accountId&quot;: &quot;d17f99be-3620-4f2a-8662-d3dcf9022936&quot;
+    &quot;url&quot;: &quot;https://github.com/rtech-solucoes/way-correspondencias-web.git&quot;,
+    &quot;accountId&quot;: &quot;a3a8b9d8-d7b7-4814-8317-a8b349361ea4&quot;
   }
 }</component>
   <component name="PackageJsonUpdateNotifier">
@@ -51,28 +52,28 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;luizrxg-rtech&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/Work/projetos/rtech/way/way-correspondencias-web&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;bun&quot;,
-    &quot;npm.Next.js: server-side.executor&quot;: &quot;Run&quot;,
-    &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;D:\\Work\\projetos\\rtech\\way\\way-correspondencias-web\\node_modules\\typescript\\lib&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "develop",
+    "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "C:/Users/Sofia/Desktop/work/way-correspondencias-web",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "bun",
+    "npm.Next.js: server-side.executor": "Run",
+    "run.code.analysis.last.selected.profile": "pProject Default",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "to.speed.mode.migration.done": "true",
+    "ts.external.directory.path": "C:\\Users\\Sofia\\Desktop\\work\\way-correspondencias-web\\node_modules\\typescript\\lib",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="ReactDesignerToolWindowState">
     <option name="myId2Visible">
       <map>
@@ -116,7 +117,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-d6986cc7102b-b598e85cdad2-JavaScript-WS-252.25557.126" />
+        <option value="bundled-js-predefined-d6986cc7102b-6a121458b545-JavaScript-WS-251.25410.117" />
       </set>
     </attachedChunks>
   </component>
@@ -193,6 +194,8 @@
       <workItem from="1757074311765" duration="2298000" />
       <workItem from="1757083403682" duration="466000" />
       <workItem from="1757086670849" duration="1272000" />
+      <workItem from="1757415817622" duration="156000" />
+      <workItem from="1757416022916" duration="1656000" />
     </task>
     <task id="LOCAL-00001" summary="Alteração biblioteca de Ícones&#10;lucide-react -&gt; @phosphor-icons/react">
       <option name="closed" value="true" />

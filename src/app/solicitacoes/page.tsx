@@ -389,6 +389,13 @@ export default function SolicitacoesPage() {
     }
   }, [detalhesSolicitacao, loadSolicitacoes]);
 
+  const getJoinedNmAreas = (areas: AreaSolicitacao[]) => {
+    if (areas.length > 0) {
+      return areas.map(a => a.nmArea).join(', ');
+    }
+    return '-';
+  }
+
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
@@ -540,7 +547,7 @@ export default function SolicitacoesPage() {
                     <StickyTableCell className="max-w-xs truncate">{solicitacao.dsAssunto}</StickyTableCell>
                     <StickyTableCell>
                       {(solicitacao.area && solicitacao.area.length > 0) ? (
-                        <div className="flex items-center flex-wrap gap-1">
+                        <div className="flex items-center flex-wrap gap-1" title={getJoinedNmAreas(solicitacao.area)}>
                           {solicitacao.area.slice(0, 2).map((area: AreaSolicitacao) => (
                             <span
                               key={area.idArea}
@@ -556,7 +563,7 @@ export default function SolicitacoesPage() {
                           )}
                         </div>
                       ) : (solicitacao.tema?.areas && solicitacao.tema.areas.length > 0) ? (
-                        <div className="flex flex-wrap gap-1">
+                        <div className="flex items-center flex-wrap gap-1" title={getJoinedNmAreas(solicitacao.area)}>
                           {solicitacao.tema.areas.slice(0, 2).map((area: AreaSolicitacao) => (
                             <span
                               key={area.idArea}
