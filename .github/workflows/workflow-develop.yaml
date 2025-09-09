@@ -55,15 +55,26 @@ jobs:
           VPN_PASS: Twaybrasil@262
           VPN_CERT: cb80f98b2d89f9beb935c8c42b8854ab3b456050a82aaa2a7cafee156b133f7e
         run: |
+          # Iniciar conexão VPN em background
           sudo openfortivpn $VPN_SERVER \
             --username="$VPN_USER" \
             --password="$VPN_PASS" \
             --trusted-cert="$VPN_CERT" > vpn.log 2>&1 &
-          sleep 30
-
-      - name: Testar VPN
-        run: |
-          ping -c 3 10.132.4.128 || exit 1
+          
+          # Aguardar conexão VPN com timeout inteligente
+          echo "Aguardando conexão VPN..."
+          for i in {1..30}; do
+            if ping -c 1 -W 2 10.132.4.128 >/dev/null 2>&1; then
+              echo "VPN conectada em ${i} segundos"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "Timeout: VPN não conectou em 30 segundos"
+              cat vpn.log
+              exit 1
+            fi
+            sleep 1
+          done
 
       - name: Deploy aplicação
         run: |
