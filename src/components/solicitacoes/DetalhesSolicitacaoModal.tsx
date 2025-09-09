@@ -358,12 +358,20 @@ export default function DetalhesSolicitacaoModal({
 
   const quantidadeDevolutivas = solicitacao?.tramitacoes?.filter(t => !!t?.tramitacao?.dsObservacao)?.length ?? 0;
 
-  const labelDevolutiva = {
-    'Análise regulatória': 'Enviar Minuta de Resposta para Aprovação',
+  const labelTextareaDevolutiva = {
+    'Análise regulatória': 'Escrever resposta ao Gerente do Regulatório',
+    'Em chancela': 'Escrever resposta à Diretoria',
     default: 'Enviar devolutiva ao Regulatório'
   }
 
-  const labelStatusAnaliseRegulataria = labelDevolutiva[sol?.statusSolicitacao?.nmStatus as keyof typeof labelDevolutiva] ?? labelDevolutiva.default;
+  const btnEnviarDevolutiva = {
+    'Análise regulatória': 'Enviar para assinatura do Gerente do Regulatório',
+    'Em chancela': 'Enviar para assinatura da Diretoria',
+    default: 'Enviar Resposta'
+  }
+
+  const labelStatusTextarea = labelTextareaDevolutiva[sol?.statusSolicitacao?.nmStatus as keyof typeof labelTextareaDevolutiva] ?? labelTextareaDevolutiva.default;
+  const btnEnviarDevolutivaLabel = btnEnviarDevolutiva[sol?.statusSolicitacao?.nmStatus as keyof typeof btnEnviarDevolutiva] ?? btnEnviarDevolutiva.default;
 
   const enableEnviarDevolutiva = (() => {
   
@@ -639,7 +647,7 @@ export default function DetalhesSolicitacaoModal({
 
           <section className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">{labelStatusAnaliseRegulataria}</h3>
+              <h3 className="text-sm font-semibold">{labelStatusTextarea}</h3>
 
               <HistoricoRespostasModalButton
                 idSolicitacao={sol?.solicitacao?.idSolicitacao ?? null}
@@ -720,7 +728,7 @@ export default function DetalhesSolicitacaoModal({
                 : ''
             }
           >
-            {sending ? 'Enviando...' : 'Enviar resposta'}
+            {sending ? 'Enviando...' : btnEnviarDevolutivaLabel}
           </Button>
         </DialogFooter>
       </DialogContent>
