@@ -21,7 +21,6 @@ import {
   CaretLeftIcon,
   CaretRightIcon,
   DownloadSimpleIcon,
-  FloppyDiskIcon
 } from '@phosphor-icons/react';
 import {Stepper} from '@/components/ui/stepper';
 import {Input} from '@nextui-org/react';
@@ -35,7 +34,7 @@ import {areasClient} from '@/api/areas/client';
 import {anexosClient} from '@/api/anexos/client';
 import {AreaResponse} from '@/api/areas/types';
 import {usePermissoes} from "@/context/permissoes/PermissoesContext";
-import dayjs from 'dayjs';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 
 interface AnexoListItem {
   idAnexo?: number;
@@ -98,8 +97,31 @@ export default function SolicitacaoModal({
   const [statusList, setStatusList] = useState<StatusSolicitacaoResponse[]>([]);
   const [createdSolicitacao, setCreatedSolicitacao] = useState<SolicitacaoResponse | null>(null);
   const [allAreas, setAllAreas] = useState<AreaResponse[]>([]);
-  const { canListarAnexo, canInserirAnexo, canAtualizarAnexo, canDeletarAnexo } = usePermissoes();
+  const {canListarAnexo, canInserirAnexo} = usePermissoes();
   const [hasLoadedStatusPrazos, setHasLoadedStatusPrazos] = useState(false);
+  const [showConfirmSend, setShowConfirmSend] = useState(false);
+  const [confirmSendId, setConfirmSendId] = useState<number | null>(null);
+  const [confirmSendToast, setConfirmSendToast] = useState<string>('');
+
+  const handleConfirmSend = useCallback(async () => {
+    if (!confirmSendId) return;
+    try {
+      setLoading(true);
+      await solicitacoesClient.etapaStatus(confirmSendId);
+      toast.success(confirmSendToast || 'Solicitação enviada com sucesso!');
+      onSave();
+      onClose();
+      router.refresh();
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao encaminhar solicitação');
+    } finally {
+      setLoading(false);
+      setShowConfirmSend(false);
+      setConfirmSendId(null);
+      setConfirmSendToast('');
+    }
+  }, [confirmSendId, confirmSendToast, onClose, onSave, router]);
 
   useEffect(() => {
     if (solicitacao) {
@@ -473,11 +495,17 @@ export default function SolicitacaoModal({
       let id = solicitacao?.idSolicitacao || createdSolicitacao?.idSolicitacao;
 
       if (createdSolicitacao?.idSolicitacao) {
-        await solicitacoesClient.etapaStatus(createdSolicitacao.idSolicitacao);
-        toast.success('Solicitação criada com sucesso!');
+        setConfirmSendId(createdSolicitacao.idSolicitacao);
+        setConfirmSendToast('Solicitação criada com sucesso!');
+        setShowConfirmSend(true);
+        setLoading(false);
+        return;
       } else if (solicitacao?.idSolicitacao) {
-        await solicitacoesClient.etapaStatus(solicitacao.idSolicitacao);
-        toast.success('Solicitação encaminhada com sucesso!');
+        setConfirmSendId(solicitacao.idSolicitacao);
+        setConfirmSendToast('Solicitação encaminhada com sucesso!');
+        setShowConfirmSend(true);
+        setLoading(false);
+        return;
       } else {
         if (!formData.cdIdentificacao?.trim()) { toast.error('Código de identificação é obrigatório'); setLoading(false); return; }
         if (!formData.idTema || formData.idTema === 0) { toast.error('Tema é obrigatório'); setLoading(false); return; }
@@ -553,26 +581,20 @@ export default function SolicitacaoModal({
           await solicitacoesClient.uploadAnexos(id, arquivosDTO);
         }
 
-        await solicitacoesClient.etapaStatus(id);
-        toast.success('Solicitação criada com sucesso!');
+        setConfirmSendId(id!);
+        setConfirmSendToast('Solicitação criada com sucesso!');
+        setShowConfirmSend(true);
+        setLoading(false);
+        return;
       }
-
-      onSave();
-      onClose();
-      router.refresh();
+      
     } catch (err) {
       console.error(err);
       toast.error(solicitacao || createdSolicitacao ? 'Erro ao encaminhar solicitação' : 'Erro ao criar solicitação');
     } finally {
-      setLoading(false);
+      // loading handled by confirmation flow
     }
   };
-
-  const handleClose = useCallback(() => {
-    setCurrentStep(1);
-    setCreatedSolicitacao(null);
-    onClose();
-  }, [onClose]);
 
   const renderStep1 = () => (
     <div className="space-y-6">
@@ -1032,7 +1054,7 @@ export default function SolicitacaoModal({
 
         {canListarAnexo && anexosTypeE.length > 0 && (
           <div>
-            <Label className="text-sm font-medium mb-2 block">Anexos do email</Label>
+            <Label className="text-sm font-medium mb-2 block">Anexos do emailll</Label>
             <AnexoList
               anexos={anexosTypeE.map(a => ({
                 idAnexo: a.idAnexo,
@@ -1043,12 +1065,6 @@ export default function SolicitacaoModal({
                 tpObjeto: a.tpObjeto,
                 size: 0
               }))}
-              onRemove={(index) => {
-                const anexo = anexosTypeE[index];
-                if (anexo?.idAnexo) {
-
-                }
-              }}
               onDownload={async (anexoListItem) => {
                 const anexoOriginal = anexosTypeE.find(a => a.idAnexo === anexoListItem.idAnexo);
                 if (anexoOriginal) {
@@ -1411,7 +1427,7 @@ export default function SolicitacaoModal({
           {currentStep === 1 && (
             <Button
               type="button"
-              onClick={handleNextStep}
+              onClick={() => handleNextStep()}
               disabled={!isStep1Valid()}
               className="flex items-center gap-2"
             >
@@ -1434,7 +1450,7 @@ export default function SolicitacaoModal({
               </Button>
               <Button
                 type="button"
-                onClick={handleNextStep}
+                onClick={() => handleNextStep()}
                 disabled={loading || !isStep2Valid()}
                 className="flex items-center gap-2"
               >
@@ -1458,7 +1474,7 @@ export default function SolicitacaoModal({
               </Button>
               <Button
                 type="button"
-                onClick={handleNextStep}
+                onClick={() => handleNextStep()}
                 disabled={loading}
                 className="flex items-center gap-2"
               >
@@ -1482,7 +1498,7 @@ export default function SolicitacaoModal({
               </Button>
               <Button
                 type="button"
-                onClick={handleNextStep}
+                onClick={() => handleNextStep()}
                 disabled={loading}
                 className="flex items-center gap-2"
               >
@@ -1517,6 +1533,17 @@ export default function SolicitacaoModal({
           )}
         </DialogFooter>
       </DialogContent>
+      <ConfirmationDialog
+        open={showConfirmSend}
+        onOpenChange={setShowConfirmSend}
+        title="Confirmar envio"
+        description={
+          "Após o envio da Solicitação não será possível alterá-la. Deseja prosseguir com o envio?"
+        }
+        confirmText="Sim"
+        cancelText="Voltar a solicitação"
+        onConfirm={handleConfirmSend}
+      />
     </Dialog>
   );
 }
