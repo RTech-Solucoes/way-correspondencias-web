@@ -21,10 +21,10 @@ import { base64ToUint8Array, fileToArquivoDTO, hasPermissao, saveBlob } from '@/
 import { Checkbox } from '@/components/ui/checkbox';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
 import { HistoricoRespostasModalButton } from './HistoricoRespostasModal';
-// import tramitacoesClient from '@/api/tramitacoes/client';
 import authClient from '@/api/auth/client';
 import { responsaveisClient } from '@/api/responsaveis/client';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
+import PopupAprovacaoAlert from '@/components/solicitacoes/PopupAprovacaoAlert';
 
 
 type AnexoItemShape = {
@@ -356,12 +356,20 @@ export default function DetalhesSolicitacaoModal({
 
   const quantidadeDevolutivas = solicitacao?.tramitacoes?.filter(t => !!t?.tramitacao?.dsObservacao)?.length ?? 0;
 
-  const labelDevolutiva = {
-    'Análise regulatória': 'Enviar Minuta de Resposta para Aprovação',
+  const labelTextareaDevolutiva = {
+    'Análise regulatória': 'Escrever resposta ao Gerente do Regulatório',
+    'Em chancela': 'Escrever resposta à Diretoria',
     default: 'Enviar devolutiva ao Regulatório'
   }
 
-  const labelStatusAnaliseRegulataria = labelDevolutiva[sol?.statusSolicitacao?.nmStatus as keyof typeof labelDevolutiva] ?? labelDevolutiva.default;
+  const btnEnviarDevolutiva = {
+    'Análise regulatória': 'Enviar para assinatura do Gerente do Regulatório',
+    'Em chancela': 'Enviar para assinatura da Diretoria',
+    default: 'Enviar Resposta'
+  }
+
+  const labelStatusTextarea = labelTextareaDevolutiva[sol?.statusSolicitacao?.nmStatus as keyof typeof labelTextareaDevolutiva] ?? labelTextareaDevolutiva.default;
+  const btnEnviarDevolutivaLabel = btnEnviarDevolutiva[sol?.statusSolicitacao?.nmStatus as keyof typeof btnEnviarDevolutiva] ?? btnEnviarDevolutiva.default;
 
   const enableEnviarDevolutiva = (() => {
     const nrNivel = sol?.tramitacoes[0]?.tramitacao?.nrNivel;
@@ -379,7 +387,11 @@ export default function DetalhesSolicitacaoModal({
     if (sol?.statusSolicitacao?.nmStatus === 'Concluído' )  return false;
 
     if (sol?.statusSolicitacao?.nmStatus === 'Em análise da área técnica') {
-      if([TipoResponsavelAnexo.A, TipoResponsavelAnexo.G].includes(tpResponsavelUpload)) return true;
+      if (userResponsavel?.idPerfil === 1 ||
+          userResponsavel?.idPerfil === 3 ||
+          userResponsavel?.idPerfil === 4 ||
+          userResponsavel?.idPerfil === 5)
+        return true;
       if (!hasAreaInicial) return true;
 
       return false;
@@ -411,8 +423,9 @@ export default function DetalhesSolicitacaoModal({
   })();
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl md:max-w-4xl lg:max-w-5xl p-0 flex flex-col max-h-[85vh]">
+      <DialogContent className="max-w-3xl md:max-w-4xl lg:max-w-5xl p-0 flex flex-col max-h-[85vh] overflow-hidden">
         <div className="px-6 pt-6">
           <DialogHeader className="p-0">
             <div className="flex items-start justify-between gap-4">
@@ -441,7 +454,7 @@ export default function DetalhesSolicitacaoModal({
         <form
           id="detalhes-form"
           onSubmit={handleEnviar}
-          className="pl-6 pr-2 pb-6 space-y-8 overflow-y-auto flex-1"
+          className="pl-6 pr-2 pb-6 space-y-8 overflow-y-auto overflow-x-hidden flex-1"
         >
           <section className="space-y-2">
             <h3 className="text-sm font-semibold">Assunto</h3>
@@ -633,7 +646,7 @@ export default function DetalhesSolicitacaoModal({
 
           <section className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">{labelStatusAnaliseRegulataria}</h3>
+              <h3 className="text-sm font-semibold">{labelStatusTextarea}</h3>
 
               <HistoricoRespostasModalButton
                 idSolicitacao={sol?.solicitacao?.idSolicitacao ?? null}
@@ -714,11 +727,18 @@ export default function DetalhesSolicitacaoModal({
                 : ''
             }
           >
-            {sending ? 'Enviando...' : 'Enviar resposta'}
+            {sending ? 'Enviando...' : btnEnviarDevolutivaLabel}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+      <PopupAprovacaoAlert
+        openModal={open}
+        solicitacao={sol}
+        currentUserPerfil={userResponsavel?.idPerfil ?? null}
+      />
+    </>
   );
 }
 
