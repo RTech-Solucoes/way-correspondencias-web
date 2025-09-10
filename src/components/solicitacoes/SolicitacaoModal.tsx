@@ -481,10 +481,10 @@ export default function SolicitacaoModal({
       } else {
         if (!formData.cdIdentificacao?.trim()) { toast.error('Código de identificação é obrigatório'); setLoading(false); return; }
         if (!formData.idTema || formData.idTema === 0) { toast.error('Tema é obrigatório'); setLoading(false); return; }
-        if (!formData.flAnaliseGerenteDiretor || (formData.flAnaliseGerenteDiretor !== 'S' && formData.flAnaliseGerenteDiretor !== 'N')) { 
-          toast.error('É obrigatório informar se exige análise do Gerente ou Diretor'); 
-          setLoading(false); 
-          return; 
+        if (!formData.flAnaliseGerenteDiretor || !['G','D','A','N'].includes(formData.flAnaliseGerenteDiretor)) {
+          toast.error('Selecione GERENTE, DIRETOR, AMBOS ou NÃO NECESSITA');
+          setLoading(false);
+          return;
         }
 
         const created = await solicitacoesClient.criar({
