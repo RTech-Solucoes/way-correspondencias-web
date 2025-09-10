@@ -31,6 +31,7 @@ import {StatusSolicPrazoTemaForUI} from '@/api/status-prazo-tema/types';
 import {statusSolicitacaoClient, StatusSolicitacaoResponse} from '@/api/status-solicitacao/client';
 import {AnexoResponse, TipoObjetoAnexo, TipoResponsavelAnexo} from '@/api/anexos/type';
 import {areasClient} from '@/api/areas/client';
+import tramitacoesClient from '@/api/tramitacoes/client';
 import {anexosClient} from '@/api/anexos/client';
 import {AreaResponse} from '@/api/areas/types';
 import {usePermissoes} from "@/context/permissoes/PermissoesContext";
@@ -102,6 +103,8 @@ export default function SolicitacaoModal({
   const [showConfirmSend, setShowConfirmSend] = useState(false);
   const [confirmSendId, setConfirmSendId] = useState<number | null>(null);
   const [confirmSendToast, setConfirmSendToast] = useState<string>('');
+  const [hasTramitacoes, setHasTramitacoes] = useState(false);
+  const [tramitacoesChecked, setTramitacoesChecked] = useState(false);
 
   const handleConfirmSend = useCallback(async () => {
     if (!confirmSendId) return;
@@ -122,6 +125,30 @@ export default function SolicitacaoModal({
       setConfirmSendToast('');
     }
   }, [confirmSendId, confirmSendToast, onClose, onSave, router]);
+
+  useEffect(() => {
+    const loadTramitacoes = async () => {
+      try {
+        const id = solicitacao?.idSolicitacao || createdSolicitacao?.idSolicitacao;
+        if (id) {
+          const list = await tramitacoesClient.listarPorSolicitacao(id);
+          setHasTramitacoes((list?.length ?? 0) > 0);
+        } else {
+          setHasTramitacoes(false);
+        }
+      } catch {
+        setHasTramitacoes(false);
+      } finally {
+        setTramitacoesChecked(true);
+      }
+    };
+    if (open) {
+      setTramitacoesChecked(false);
+      loadTramitacoes();
+    } else {
+      setTramitacoesChecked(false);
+    }
+  }, [open, solicitacao?.idSolicitacao, createdSolicitacao?.idSolicitacao]);
 
   useEffect(() => {
     if (solicitacao) {
@@ -259,20 +286,20 @@ export default function SolicitacaoModal({
           toast.error("Código de identificação é obrigatório");
           return;
         }
-
         if (!solicitacao) {
           setCurrentStep(2);
           return;
         }
-
-        await solicitacoesClient.etapaIdentificacao(solicitacao.idSolicitacao, {
-          cdIdentificacao: formData.cdIdentificacao?.trim(),
-          dsAssunto: formData.dsAssunto?.trim(),
-          dsObservacao: formData.dsObservacao?.trim(),
-          nrOficio: formData.nrOficio?.trim(),
-          nrProcesso: formData.nrProcesso?.trim(),
-          flAnaliseGerenteDiretor: formData.flAnaliseGerenteDiretor
-        });
+        if (!hasTramitacoes) {
+          await solicitacoesClient.etapaIdentificacao(solicitacao.idSolicitacao, {
+            cdIdentificacao: formData.cdIdentificacao?.trim(),
+            dsAssunto: formData.dsAssunto?.trim(),
+            dsObservacao: formData.dsObservacao?.trim(),
+            nrOficio: formData.nrOficio?.trim(),
+            nrProcesso: formData.nrProcesso?.trim(),
+            flAnaliseGerenteDiretor: formData.flAnaliseGerenteDiretor
+          });
+        }
 
         setCurrentStep(2);
       } else if (currentStep === 2) {
@@ -299,14 +326,15 @@ export default function SolicitacaoModal({
           setCurrentStep(3);
           return;
         }
-
-        await solicitacoesClient.etapaTema(solicitacao.idSolicitacao, {
-          idTema: formData.idTema,
-          tpPrazo: formData.tpPrazo || undefined,
-          nrPrazoInterno: formData.nrPrazo,
-          flExcepcional: prazoExcepcional ? 'S' : 'N',
-          idsAreas: formData.idsAreas
-        });
+        if (!hasTramitacoes) {
+          await solicitacoesClient.etapaTema(solicitacao.idSolicitacao, {
+            idTema: formData.idTema,
+            tpPrazo: formData.tpPrazo || undefined,
+            nrPrazoInterno: formData.nrPrazo,
+            flExcepcional: prazoExcepcional ? 'S' : 'N',
+            idsAreas: formData.idsAreas
+          });
+        }
 
         setCurrentStep(3);
       } else if (currentStep === 3) {
@@ -314,21 +342,22 @@ export default function SolicitacaoModal({
           setCurrentStep(4);
           return;
         }
+        if (!hasTramitacoes) {
+          const solicitacoesPrazos = statusPrazos
+            .filter(p => p.nrPrazoInterno && p.nrPrazoInterno > 0 && p.idStatusSolicitacao)
+            .map(p => ({
+              idStatusSolicitacao: p.idStatusSolicitacao!,
+              nrPrazoInterno: p.nrPrazoInterno,
+              tpPrazo: formData.tpPrazo || undefined,
+              flExcepcional: prazoExcepcional ? 'S' : 'N'
+            }));
 
-        const solicitacoesPrazos = statusPrazos
-          .filter(p => p.nrPrazoInterno && p.nrPrazoInterno > 0 && p.idStatusSolicitacao)
-          .map(p => ({
-            idStatusSolicitacao: p.idStatusSolicitacao!,
-            nrPrazoInterno: p.nrPrazoInterno,
-            tpPrazo: formData.tpPrazo || undefined,
-            flExcepcional: prazoExcepcional ? 'S' : 'N'
-          }));
-
-        await solicitacoesClient.etapaPrazo(solicitacao.idSolicitacao, {
-          idTema: formData.idTema,
-          nrPrazoInterno: formData.nrPrazo,
-          solicitacoesPrazos
-        });
+          await solicitacoesClient.etapaPrazo(solicitacao.idSolicitacao, {
+            idTema: formData.idTema,
+            nrPrazoInterno: formData.nrPrazo,
+            solicitacoesPrazos
+          });
+        }
 
         setCurrentStep(4);
       } else if (currentStep === 4) {
@@ -336,46 +365,47 @@ export default function SolicitacaoModal({
           setCurrentStep(5);
           return;
         }
+        if (!hasTramitacoes) {
+          if (anexos.length > 0) {
+            const arquivosDTO = await Promise.all(
+              anexos.map(async (file) => {
+                if (!file.name || file.name.trim() === '') {
+                  throw new Error(`Arquivo sem nome válido: ${file.name || 'undefined'}`);
+                }
 
-        if (anexos.length > 0) {
-          const arquivosDTO = await Promise.all(
-            anexos.map(async (file) => {
-              if (!file.name || file.name.trim() === '') {
-                throw new Error(`Arquivo sem nome válido: ${file.name || 'undefined'}`);
-              }
+                const base64 = await new Promise<string>((resolve, reject) => {
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    const result = reader.result as string;
+                    if (!result) {
+                      reject(new Error('Erro ao ler arquivo'));
+                      return;
+                    }
+                    resolve(result);
+                  };
+                  reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
+                  reader.readAsDataURL(file);
+                });
 
-              const base64 = await new Promise<string>((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => {
-                  const result = reader.result as string;
-                  if (!result) {
-                    reject(new Error('Erro ao ler arquivo'));
-                    return;
-                  }
-                  resolve(result);
+                const base64Content = base64.split(',')[1];
+                if (!base64Content) {
+                  throw new Error('Erro ao converter arquivo para base64');
+                }
+
+                return {
+                  nomeArquivo: file.name.trim(),
+                  conteudoArquivo: base64Content,
+                  tipoArquivo: file.type || 'application/octet-stream',
+                  tpResponsavel: TipoResponsavelAnexo.A // TODO: Colocado apenas para remover erro, necessário ajustar depois
                 };
-                reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
-                reader.readAsDataURL(file);
-              });
+              })
+            );
 
-              const base64Content = base64.split(',')[1];
-              if (!base64Content) {
-                throw new Error('Erro ao converter arquivo para base64');
-              }
-
-              return {
-                nomeArquivo: file.name.trim(),
-                conteudoArquivo: base64Content,
-                tipoArquivo: file.type || 'application/octet-stream',
-                tpResponsavel: TipoResponsavelAnexo.A // TODO: Colocado apenas para remover erro, necessário ajustar depois
-              };
-            })
-          );
-
-          try {
-            await solicitacoesClient.uploadAnexos(solicitacao.idSolicitacao, arquivosDTO);
-          } catch {
-            toast.error('Erro ao anexar arquivos');
+            try {
+              await solicitacoesClient.uploadAnexos(solicitacao.idSolicitacao, arquivosDTO);
+            } catch {
+              toast.error('Erro ao anexar arquivos');
+            }
           }
         }
 
@@ -495,12 +525,14 @@ export default function SolicitacaoModal({
       let id = solicitacao?.idSolicitacao || createdSolicitacao?.idSolicitacao;
 
       if (createdSolicitacao?.idSolicitacao) {
+        if (hasTramitacoes) { toast.message('Esta solicitação já possui tramitações iniciadas. Edição bloqueada.'); setLoading(false); return; }
         setConfirmSendId(createdSolicitacao.idSolicitacao);
         setConfirmSendToast('Solicitação criada com sucesso!');
         setShowConfirmSend(true);
         setLoading(false);
         return;
       } else if (solicitacao?.idSolicitacao) {
+        if (hasTramitacoes) { toast.message('Esta solicitação já possui tramitações iniciadas. Edição bloqueada.'); setLoading(false); return; }
         setConfirmSendId(solicitacao.idSolicitacao);
         setConfirmSendToast('Solicitação encaminhada com sucesso!');
         setShowConfirmSend(true);
@@ -607,6 +639,7 @@ export default function SolicitacaoModal({
           required
           autoFocus
           maxLength={50}
+          disabled={hasTramitacoes}
         />
         <TextField
           label="Nº Ofício"
@@ -614,6 +647,7 @@ export default function SolicitacaoModal({
           value={formData.nrOficio}
           onChange={handleInputChange}
           maxLength={50}
+          disabled={hasTramitacoes}
         />
         <TextField
           label="Nº Processo"
@@ -621,6 +655,7 @@ export default function SolicitacaoModal({
           value={formData.nrProcesso}
           onChange={handleInputChange}
           maxLength={50}
+          disabled={hasTramitacoes}
         />
       </div>
 
@@ -637,6 +672,7 @@ export default function SolicitacaoModal({
                   ...prev,
                   flAnaliseGerenteDiretor: 'G'
                 }))}
+                disabled={hasTramitacoes}
               />
               <Label className="text-sm font-light">Gerente</Label>
             </div>
@@ -647,6 +683,7 @@ export default function SolicitacaoModal({
                   ...prev,
                   flAnaliseGerenteDiretor: 'D'
                 }))}
+                disabled={hasTramitacoes}
               />
               <Label className="text-sm font-light ">Diretor</Label>
             </div>
@@ -657,6 +694,7 @@ export default function SolicitacaoModal({
                   ...prev,
                   flAnaliseGerenteDiretor: 'A'
                 }))}
+                disabled={hasTramitacoes}
               />
               <Label className="text-sm font-light">Ambos</Label>
             </div>
@@ -667,6 +705,7 @@ export default function SolicitacaoModal({
                   ...prev,
                   flAnaliseGerenteDiretor: 'N'
                 }))}
+                disabled={hasTramitacoes}
               />
               <Label className="text-sm font-light">Não necessita</Label>
             </div>
@@ -682,6 +721,7 @@ export default function SolicitacaoModal({
           value={formData.dsAssunto}
           onChange={handleInputChange}
           rows={getRows(formData.dsAssunto)}
+          disabled={hasTramitacoes}
         />
       </div>
 
@@ -693,6 +733,7 @@ export default function SolicitacaoModal({
           value={formData.dsObservacao}
           onChange={handleInputChange}
           rows={getRows(formData.dsObservacao)}
+          disabled={hasTramitacoes}
         />
       </div>
 
@@ -726,6 +767,7 @@ export default function SolicitacaoModal({
               tpPrazo: 'H'
             }));
           }}
+          disabled={hasTramitacoes}
         >
           <SelectTrigger>
             <SelectValue placeholder="Selecione o tema" />
@@ -745,14 +787,18 @@ export default function SolicitacaoModal({
         </Select>
       </div>
 
-      <MultiSelectAreas
-        selectedAreaIds={formData.idsAreas || []}
-        onSelectionChange={handleAreasSelectionChange}
-        disabled={false}
-        label="Áreas *"
-      />
+      {!tramitacoesChecked ? (
+        <div className="text-sm text-gray-500">Verificando tramitações...</div>
+      ) : (
+        <MultiSelectAreas
+          selectedAreaIds={formData.idsAreas || []}
+          onSelectionChange={handleAreasSelectionChange}
+          disabled={hasTramitacoes}
+          label="Áreas *"
+        />
+      )}
     </div>
-  ), [formData.idTema, formData.idsAreas, temas, getResponsavelFromTema, handleAreasSelectionChange, solicitacao]);
+  ), [formData.idTema, formData.idsAreas, temas, getResponsavelFromTema, handleAreasSelectionChange, solicitacao, hasTramitacoes, tramitacoesChecked]);
 
   const loadStatusPrazos = useCallback(async (isRefresh: boolean = false) => {
     if (!formData.idTema || (hasLoadedStatusPrazos && !isRefresh)) return;
@@ -896,7 +942,7 @@ export default function SolicitacaoModal({
       { codigo: 8, nome: 'Concluído' },
       { codigo: 9, nome: 'Arquivado' }
     ];
-
+    console.log('anexosBackend', anexosBackend);
     return (
       <div className="space-y-6">
         {formData.idTema ? (
@@ -908,6 +954,7 @@ export default function SolicitacaoModal({
                   <Checkbox
                     id="prazoExcepcional"
                     checked={prazoExcepcional}
+                    disabled={hasTramitacoes}
                     onCheckedChange={async (checked) => {
                       const ativo = !!checked;
                       setPrazoExcepcional(ativo);
@@ -1019,7 +1066,12 @@ export default function SolicitacaoModal({
     <div className="space-y-6">
 
       <div className="flex flex-col space-y-4">
-        {canInserirAnexo && <AnexoComponent onAddAnexos={handleAddAnexos} />}
+        {canInserirAnexo &&
+          <AnexoComponent
+            onAddAnexos={handleAddAnexos}
+            disabled={hasTramitacoes}
+          />
+        }
 
         {canListarAnexo && anexos.length > 0 && (
           <div>
@@ -1054,7 +1106,7 @@ export default function SolicitacaoModal({
 
         {canListarAnexo && anexosTypeE.length > 0 && (
           <div>
-            <Label className="text-sm font-medium mb-2 block">Anexos do emailll</Label>
+            <Label className="text-sm font-medium mb-2 block">Anexos do email</Label>
             <AnexoList
               anexos={anexosTypeE.map(a => ({
                 idAnexo: a.idAnexo,
@@ -1430,6 +1482,7 @@ export default function SolicitacaoModal({
               onClick={() => handleNextStep()}
               disabled={!isStep1Valid()}
               className="flex items-center gap-2"
+              tooltip={hasTramitacoes ? 'Esta solicitação já possui tramitações iniciadas. Edição bloqueada.' : ''}
             >
               Próximo
               <CaretRightIcon size={16} />
@@ -1453,6 +1506,7 @@ export default function SolicitacaoModal({
                 onClick={() => handleNextStep()}
                 disabled={loading || !isStep2Valid()}
                 className="flex items-center gap-2"
+                tooltip={hasTramitacoes ? 'Esta solicitação já possui tramitações iniciadas. Edição bloqueada.' : ''}
               >
                 Próximo
                 <CaretRightIcon size={16} />
@@ -1477,6 +1531,7 @@ export default function SolicitacaoModal({
                 onClick={() => handleNextStep()}
                 disabled={loading}
                 className="flex items-center gap-2"
+                tooltip={hasTramitacoes ? 'Esta solicitação já possui tramitações iniciadas. Edição bloqueada.' : ''}
               >
                 Próximo
                 <CaretRightIcon size={16} />
@@ -1501,6 +1556,7 @@ export default function SolicitacaoModal({
                 onClick={() => handleNextStep()}
                 disabled={loading}
                 className="flex items-center gap-2"
+                tooltip={hasTramitacoes ? 'Esta solicitação já possui tramitações iniciadas. Edição bloqueada.' : ''}
               >
                 Próximo
                 <CaretRightIcon size={16} />
@@ -1523,8 +1579,9 @@ export default function SolicitacaoModal({
               <Button
                 type="submit"
                 form="solicitacao-form"
-                disabled={loading}
+                disabled={loading || hasTramitacoes}
                 className="flex items-center gap-2"
+                tooltip={hasTramitacoes ? 'Esta solicitação já possui tramitações iniciadas. Edição bloqueada.' : ''}
               >
                 {solicitacao && <ArrowArcRightIcon className={"w-4 h-4 mr-1"} />}
                 {loading ? 'Salvando...' : solicitacao ? 'Encaminhar solicitação' : 'Criar Solicitação'}

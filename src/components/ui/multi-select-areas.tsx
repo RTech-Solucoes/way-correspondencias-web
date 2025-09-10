@@ -75,7 +75,10 @@ export function MultiSelectAreas({
   };
 
   return (
-    <div className={cn("space-y-4", className)}>
+    <div
+      className={cn("space-y-4", className, disabled && "pointer-events-none")}
+      aria-disabled={disabled || undefined}
+    >
       <Label
         className={cn(disabled && 'opacity-50')}
       >{label}</Label>
@@ -84,33 +87,44 @@ export function MultiSelectAreas({
           <div className="text-sm text-gray-500">Buscando áreas...</div>
         </div>
       ) : (
-        <div className={cn("mt-2 grid grid-cols-1 md:grid-cols-3 gap-3 overflow-y-auto", disabled && "opacity-50 pointer-events-none")}>
+        <div
+          className={cn("mt-2 grid grid-cols-1 md:grid-cols-3 gap-3 overflow-y-auto", disabled && "pointer-events-none")}
+          aria-disabled={disabled || undefined}
+        >
           {areas.map((area, index) => {
             const isChecked = selectedAreaIds.includes(area.idArea);
             return (
               <div
                 key={area.idArea}
                 className={cn(
-                  "flex flex-row items-start gap-2 justify-between p-3 bg-gray-100 box-border rounded-3xl transition-colors min-w-0",
-                  disabled ? "cursor-not-allowed bg-gray-100" : "cursor-pointer hover:bg-gray-100"
+                  "flex flex-row items-start gap-2 justify-between p-3 box-border rounded-3xl transition-colors min-w-0",
+                  disabled
+                    ? isChecked
+                      ? "bg-gray-50 opacity-80 cursor-not-allowed"
+                      : "bg-gray-100 opacity-50 cursor-not-allowed"
+                    : "bg-gray-100 cursor-pointer hover:bg-gray-100"
                 )}
                 onClick={() => handleAreaToggle(area.idArea)}
+                onKeyDown={(e) => { if (disabled) e.preventDefault(); }}
+                tabIndex={disabled ? -1 : 0}
+                aria-disabled={disabled || undefined}
               >
                 <div className="flex items-center space-x-3 min-w-0 flex-1">
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors flex-shrink-0 ${
-                    isChecked 
-                      ? 'bg-blue-500 border-blue-500' 
-                      : disabled 
-                        ? 'border-gray-200' 
-                        : 'border-gray-300'
-                  }`}>
+                  <div
+                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors flex-shrink-0 ${
+                      disabled
+                        ? (isChecked ? 'bg-blue-400 border-blue-400' : 'border-gray-200 bg-gray-100')
+                        : (isChecked ? 'bg-blue-500 border-blue-500' : 'border-gray-300')
+                    }`}
+                    aria-disabled={disabled || undefined}
+                  >
                     {isChecked && (
                       <CheckIcon className="w-3 h-3 text-white" />
                     )}
                   </div>
                   <span className={cn(
                     "text-sm font-medium truncate",
-                    disabled ? "text-gray-400" : "text-gray-700"
+                    disabled ? (isChecked ? "text-gray-600" : "text-gray-400") : "text-gray-700"
                   )}>
                     {area.nmArea}
                   </span>
@@ -118,8 +132,8 @@ export function MultiSelectAreas({
                 <Badge
                   variant="secondary"
                   className={cn(
-                    "ml-2 flex-shrink-0 text-xs border-none text-foreground bg-gray-200",
-                    disabled && "opacity-60"
+                    "ml-2 flex-shrink-0 text-xs border-none text-foreground",
+                    disabled ? (isChecked ? "bg-gray-200 opacity-80" : "bg-gray-200 opacity-60") : "bg-gray-200"
                   )}
                 >
                   {getResponsavelForArea(index)}
