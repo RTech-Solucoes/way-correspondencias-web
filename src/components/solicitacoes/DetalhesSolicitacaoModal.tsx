@@ -357,13 +357,12 @@ export default function DetalhesSolicitacaoModal({
   const quantidadeDevolutivas = solicitacao?.tramitacoes?.filter(t => !!t?.tramitacao?.dsObservacao)?.length ?? 0;
 
   const labelTextareaDevolutiva = {
-    'Análise regulatória': 'Escrever resposta ao Gerente do Regulatório',
+    'Análise regulatória': 'Escrever resposta',
     'Em chancela': 'Escrever resposta à Diretoria',
     default: 'Enviar devolutiva ao Regulatório'
   }
 
   const btnEnviarDevolutiva = {
-    'Análise regulatória': 'Enviar para assinatura do Gerente do Regulatório',
     'Em chancela': 'Enviar para assinatura da Diretoria',
     default: 'Enviar Resposta'
   }
