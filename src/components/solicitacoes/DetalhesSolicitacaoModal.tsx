@@ -24,8 +24,8 @@ import { HistoricoRespostasModalButton } from './HistoricoRespostasModal';
 import authClient from '@/api/auth/client';
 import { responsaveisClient } from '@/api/responsaveis/client';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
-import PopupAprovacaoAlert from '@/components/solicitacoes/PopupAprovacaoAlert';
 import tramitacoesClient from '@/api/tramitacoes/client';
+import { AnaliseGerenteDiretor } from '@/types/solicitacoes/types';
 
 
 type AnexoItemShape = {
@@ -424,6 +424,7 @@ export default function DetalhesSolicitacaoModal({
   const labelFlAprovacao = textlabelFlag[sol?.statusSolicitacao?.nmStatus as keyof typeof textlabelFlag] ?? textlabelFlag.default;
 
   const enableEnviarDevolutiva = (() => {
+    const flAnaliseGerenteDiretor = (sol?.solicitacao?.flAnaliseGerenteDiretor || '').toUpperCase() as AnaliseGerenteDiretor;
     const nrNivel = sol?.tramitacoes[0]?.tramitacao?.nrNivel;
     const tramitacaoExecutada = sol?.tramitacoes?.filter(t =>
       t.tramitacao.nrNivel === nrNivel &&
@@ -447,14 +448,36 @@ export default function DetalhesSolicitacaoModal({
     if (tramitacaoExecutada != null && tramitacaoExecutada?.length > 0) return false;
 
     if (sol?.statusSolicitacao?.nmStatus === 'Em análise da área técnica') {
-      if ((!hasAreaInicial) && (
-          userResponsavel?.idPerfil === 1 ||
+
+      if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.G || flAnaliseGerenteDiretor === AnaliseGerenteDiretor.A) {
+        // Apenas EXECUTOR AVANÇADO pode responder
+        // Em AMBOS também permitir VALIDADOR/ASSINANTE responder
+        if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.A && userResponsavel?.idPerfil === 3) return true;
+        return userResponsavel?.idPerfil === 4;
+      }
+
+      if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.D) {
+        // EXECUTOR ou EXECUTOR AVANÇADO podem responder e VALIDADOR/ASSINANTE também pode
+        return (
           userResponsavel?.idPerfil === 3 ||
           userResponsavel?.idPerfil === 4 ||
-          userResponsavel?.idPerfil === 5
-      ))
-        return true;
-     
+          userResponsavel?.idPerfil === 5 ||
+          userResponsavel?.idPerfil === 6
+        );
+      }
+
+      // NÃO_NECESSITA (ou vazio): EXECUTOR ou EXECUTOR AVANÇADO podem responder
+      if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.N || !flAnaliseGerenteDiretor) {
+        return (
+          userResponsavel?.idPerfil === 4 ||
+          userResponsavel?.idPerfil === 5 ||
+          userResponsavel?.idPerfil === 6
+        );
+      }
+
+      // se nenhuma das regras acima se aplicar, aplica regra de área inicial
+     if (!hasAreaInicial) return true;
+
       return false;
     }
 
@@ -476,6 +499,20 @@ export default function DetalhesSolicitacaoModal({
     }
 
     return false;
+  })();
+
+  const btnTooltip = (() => {
+    const isAreaTecnica = sol?.statusSolicitacao?.nmStatus === 'Em análise da área técnica';
+    const fl = (sol?.solicitacao?.flAnaliseGerenteDiretor || '').toUpperCase() as AnaliseGerenteDiretor;
+    if (isAreaTecnica) {
+      if (fl === AnaliseGerenteDiretor.G) return 'Apenas Executor Avançado de cada área pode responder.';
+      if (fl === AnaliseGerenteDiretor.D) return 'Podem responder: Executor ou Executor Avançado. É necessária uma resposta de Validador/Assinante para avançar.';
+      if (fl === AnaliseGerenteDiretor.A) return 'Podem responder: Executor Avançado e Validador/Assinante. Executor não pode responder.';
+      return 'Podem responder: Executor ou Executor Avançado de cada área.'; // N ou vazio
+    }
+    return isPermissaoEnviandoDevolutiva
+      ? 'Apenas gerente/diretores da área pode enviar resposta da devolutiva'
+      : '';
   })();
 
   return (
@@ -777,23 +814,13 @@ export default function DetalhesSolicitacaoModal({
             type="submit"
             form="detalhes-form"
             disabled={!enableEnviarDevolutiva}
-            tooltip={
-              isPermissaoEnviandoDevolutiva
-                ? 'Apenas gerente/diretores da área pode enviar resposta da devolutiva'
-                : ''
-            }
+            tooltip={!enableEnviarDevolutiva ? btnTooltip : ''}
           >
             {sending ? 'Enviando...' : btnEnviarDevolutivaLabel}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-
-      <PopupAprovacaoAlert
-        openModal={open}
-        solicitacao={sol}
-        currentUserPerfil={userResponsavel?.idPerfil ?? null}
-      />
     </>
   );
 }
