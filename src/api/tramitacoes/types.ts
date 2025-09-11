@@ -113,3 +113,8 @@ export interface TramitacaoRequest {
   arquivos?: ArquivoDTO[];
   flAprovado?: 'S' | 'N';
 }
+
+export interface ProximoStatusRequest {
+  idSolicitacao: number;
+  idStatusSolicitacao: number;
+}

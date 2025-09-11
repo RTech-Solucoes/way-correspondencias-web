@@ -25,6 +25,7 @@ import authClient from '@/api/auth/client';
 import { responsaveisClient } from '@/api/responsaveis/client';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
 import PopupAprovacaoAlert from '@/components/solicitacoes/PopupAprovacaoAlert';
+import tramitacoesClient from '@/api/tramitacoes/client';
 
 
 type AnexoItemShape = {
@@ -84,6 +85,7 @@ export default function DetalhesSolicitacaoModal({
   const [tpResponsavelUpload, setTpResponsavelUpload] = useState<TipoResponsavelAnexo>(TipoResponsavelAnexo.A);
   const [hasAreaInicial, setHasAreaInicial] = useState(false);
   const [userResponsavel, setUserResponsavel] = useState<ResponsavelResponse | null>(null);
+  const [idProximoStatusAnaliseRegulatoria, setIdProximoStatusAnaliseRegulatoria] = useState<number | null>(null);
 
   const descRef = useRef<HTMLParagraphElement | null>(null);
   const [canToggleDescricao, setCanToggleDescricao] = useState(false);
@@ -356,14 +358,42 @@ export default function DetalhesSolicitacaoModal({
 
   const quantidadeDevolutivas = solicitacao?.tramitacoes?.filter(t => !!t?.tramitacao?.dsObservacao)?.length ?? 0;
 
+  useEffect(() => {
+    const loadIdProximoStatusAnaliseRegulatoria = async () => {
+      if (!sol?.solicitacao?.idSolicitacao || !sol?.statusSolicitacao?.idStatusSolicitacao) {
+        setIdProximoStatusAnaliseRegulatoria(null);
+        return;
+      }
+      const response = await tramitacoesClient.buscarProximoStatusPorIdSolicitacaoEIdStatusSolicitacao({
+        idSolicitacao: sol.solicitacao.idSolicitacao,
+        idStatusSolicitacao: sol.statusSolicitacao.idStatusSolicitacao,
+      });
+      setIdProximoStatusAnaliseRegulatoria(response ?? null);
+    };
+    loadIdProximoStatusAnaliseRegulatoria();
+  }, [sol?.solicitacao?.idSolicitacao, sol?.statusSolicitacao?.idStatusSolicitacao]);
+
+  const labelStatusAnaliseRegulatoria = idProximoStatusAnaliseRegulatoria === 6
+                                        ? 'Enviar Minuta de Resposta para aprovação'
+                                        : idProximoStatusAnaliseRegulatoria === 7
+                                          ? 'Escrever resposta ao Gerente do Regulatório'
+                                          : 'Enviar devolutiva';
+                                                                                
+  const btnLabelStatusAnaliseRegulatoria = idProximoStatusAnaliseRegulatoria === 6
+                                          ? 'Encaminhar para os Gerentes das Áreas'
+                                          : idProximoStatusAnaliseRegulatoria === 7
+                                            ? 'Encaminhar para o Gerente do Regulatório'
+                                            : 'Enviar Resposta';
+
   const labelTextareaDevolutiva = {
-    'Análise regulatória': 'Escrever resposta',
+    'Análise regulatória': labelStatusAnaliseRegulatoria,
     'Em chancela': 'Escrever resposta à Diretoria',
     default: 'Enviar devolutiva ao Regulatório'
   }
 
   const btnEnviarDevolutiva = {
     'Em chancela': 'Enviar para assinatura da Diretoria',
+    'Análise regulatória': btnLabelStatusAnaliseRegulatoria,
     default: 'Enviar Resposta'
   }
 
@@ -379,11 +409,19 @@ export default function DetalhesSolicitacaoModal({
         ta.responsavelArea.responsavel.idResponsavel === userResponsavel?.idResponsavel &&
         ta.flAcao === 'T' ));
 
-    if (tramitacaoExecutada != null && tramitacaoExecutada?.length > 0) return false;
-   
     if (sending) return false;
 
     if (sol?.statusSolicitacao?.nmStatus === 'Concluído' )  return false;
+
+    if (sol?.statusSolicitacao?.nmStatus === 'Em assinatura Diretoria') {
+      if (userResponsavel?.idPerfil === 1 ||
+          userResponsavel?.idPerfil === 3 || 
+          userResponsavel?.areas?.some(a => a.area.idArea === 13)
+      ) return true;
+      return false;
+    }
+    
+    if (tramitacaoExecutada != null && tramitacaoExecutada?.length > 0) return false;
 
     if (sol?.statusSolicitacao?.nmStatus === 'Em análise da área técnica') {
       if ((!hasAreaInicial) && (
@@ -411,11 +449,6 @@ export default function DetalhesSolicitacaoModal({
 
     if (sol?.statusSolicitacao?.nmStatus === 'Em chancela') {
       if (userResponsavel?.idPerfil === 1) return true;
-      return false;
-    }
-
-    if (sol?.statusSolicitacao?.nmStatus === 'Em assinatura Diretoria') {
-      if (userResponsavel?.idPerfil === 1 || userResponsavel?.idPerfil === 3) return true;
       return false;
     }
 
