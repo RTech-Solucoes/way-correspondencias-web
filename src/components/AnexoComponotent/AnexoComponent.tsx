@@ -6,9 +6,10 @@ import {usePermissoes} from "@/context/permissoes/PermissoesContext";
 
 interface AnexoProps {
   onAddAnexos: (files: FileList | null) => void;
+  disabled?: boolean;
 }
 
-export default function AnexoComponent({onAddAnexos}: AnexoProps) {
+export default function AnexoComponent({onAddAnexos, disabled = false}: AnexoProps) {
   const { canInserirAnexo } = usePermissoes();
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -48,16 +49,17 @@ export default function AnexoComponent({onAddAnexos}: AnexoProps) {
       'application/vnd.ms-excel': ['.xls'],
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
       'image/*': ['.png', '.jpg', '.jpeg', '.gif']
-    }
+    },
+    disabled: disabled || !canInserirAnexo
   });
 
-  if (!canInserirAnexo) {
+  if (!canInserirAnexo || disabled) {
     return (
       <div className="w-full border-2 border-dashed rounded-lg p-8 text-center border-gray-200 bg-gray-50">
         <div className="flex flex-col items-center space-y-2">
           <CloudArrowUpIcon size={48} className="text-gray-300" />
           <p className="text-gray-500">
-            Sem permissão para anexar arquivos
+            {disabled ? 'Anexos desabilitados' : 'Sem permissão para anexar arquivos'}
           </p>
         </div>
       </div>
