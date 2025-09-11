@@ -386,13 +386,14 @@ export default function DetalhesSolicitacaoModal({
     if (sol?.statusSolicitacao?.nmStatus === 'Concluído' )  return false;
 
     if (sol?.statusSolicitacao?.nmStatus === 'Em análise da área técnica') {
-      if (userResponsavel?.idPerfil === 1 ||
+      if ((!hasAreaInicial) && (
+          userResponsavel?.idPerfil === 1 ||
           userResponsavel?.idPerfil === 3 ||
           userResponsavel?.idPerfil === 4 ||
-          userResponsavel?.idPerfil === 5)
+          userResponsavel?.idPerfil === 5
+      ))
         return true;
-      if (!hasAreaInicial) return true;
-
+     
       return false;
     }
 
@@ -414,7 +415,7 @@ export default function DetalhesSolicitacaoModal({
     }
 
     if (sol?.statusSolicitacao?.nmStatus === 'Em assinatura Diretoria') {
-      if (userResponsavel?.idPerfil === 1 || userResponsavel?.idPerfil === 2 || userResponsavel?.idPerfil === 3) return true;
+      if (userResponsavel?.idPerfil === 1 || userResponsavel?.idPerfil === 3) return true;
       return false;
     }
 
