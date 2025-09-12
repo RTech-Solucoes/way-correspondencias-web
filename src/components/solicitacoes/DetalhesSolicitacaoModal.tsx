@@ -24,7 +24,10 @@ import { HistoricoRespostasModalButton } from './HistoricoRespostasModal';
 import authClient from '@/api/auth/client';
 import { responsaveisClient } from '@/api/responsaveis/client';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
-import PopupAprovacaoAlert from '@/components/solicitacoes/PopupAprovacaoAlert';
+import tramitacoesClient from '@/api/tramitacoes/client';
+import { AnaliseGerenteDiretor } from '@/types/solicitacoes/types';
+import { solicitacaoParecerClient } from '@/api/solicitacao-parecer/client';
+import { SolicitacaoParecerResponse } from '@/api/solicitacao-parecer/types';
 
 
 type AnexoItemShape = {
@@ -77,6 +80,7 @@ export default function DetalhesSolicitacaoModal({
   statusLabel = 'Status',
 }: DetalhesSolicitacaoModalProps) {
   const [resposta, setResposta] = useState('');
+  const [dsDarecer, setDsDarecer] = useState('');
   const [arquivos, setArquivos] = useState<File[]>([]);
   const [expandDescricao, setExpandDescricao] = useState(false);
   const [sending, setSending] = useState(false);
@@ -84,6 +88,8 @@ export default function DetalhesSolicitacaoModal({
   const [tpResponsavelUpload, setTpResponsavelUpload] = useState<TipoResponsavelAnexo>(TipoResponsavelAnexo.A);
   const [hasAreaInicial, setHasAreaInicial] = useState(false);
   const [userResponsavel, setUserResponsavel] = useState<ResponsavelResponse | null>(null);
+  const [idProximoStatusAnaliseRegulatoria, setIdProximoStatusAnaliseRegulatoria] = useState<number | null>(null);
+  const [, setParecerAtual] = useState<SolicitacaoParecerResponse | null>(null);
 
   const descRef = useRef<HTMLParagraphElement | null>(null);
   const [canToggleDescricao, setCanToggleDescricao] = useState(false);
@@ -150,15 +156,11 @@ export default function DetalhesSolicitacaoModal({
   const itensSolicitacao: AnexoItemShape[] = anexosSolic.map(mapToItem);
   const itensEmail: AnexoItemShape[] = anexosEmail.map(mapToItem);
 
-  const isEmAprovacao =
-    (
-      (sol?.statusSolicitacao?.idStatusSolicitacao === 6)
-    ) ||
-    (
-      (sol?.statusSolicitacao?.idStatusSolicitacao === 8)
-    )
-    
-  const isPermissaoEnviandoDevolutiva = (isEmAprovacao && !hasPermissao('SOLICITACAO_APROVAR'));
+  const isAprovacao = sol?.statusSolicitacao?.idStatusSolicitacao === 6; // Em aprovação;
+  const isDiretoria = sol?.statusSolicitacao?.idStatusSolicitacao === 8; // Em assinatura Diretoria;
+  const isFlagVisivel = isAprovacao || isDiretoria;
+
+  const isPermissaoEnviandoDevolutiva = (isFlagVisivel && !hasPermissao('SOLICITACAO_APROVAR'));
 
   useEffect(() => {
     const checkResponsavelInicial = async () => {
@@ -286,7 +288,7 @@ export default function DetalhesSolicitacaoModal({
         return;
       }
 
-      if (isEmAprovacao && !flAprovado) {
+      if (isFlagVisivel && !flAprovado) {
         toast.error('Selecione se a devolutiva está aprovada (Sim/Não).');
         return;
       }
@@ -319,8 +321,59 @@ export default function DetalhesSolicitacaoModal({
         setSending(false);
       }
     },
-    [onEnviarDevolutiva, resposta, arquivos, sol?.solicitacao?.idSolicitacao, onClose, flAprovado, isEmAprovacao, tpResponsavelUpload]
+    [onEnviarDevolutiva, resposta, arquivos, sol?.solicitacao?.idSolicitacao, onClose, flAprovado, isFlagVisivel, tpResponsavelUpload]
   );
+
+  const handleSalvarParecer = useCallback(async () => {
+    try {
+      if (!sol?.solicitacao?.idSolicitacao || !sol?.statusSolicitacao?.idStatusSolicitacao) {
+        toast.error('Dados da solicitação incompletos.');
+        return;
+      }
+      if (!dsDarecer.trim()) {
+        toast.error('Escreva o parecer.');
+        return;
+      }
+      
+      setSending(true);
+
+      const req = {
+        idSolicitacao: sol.solicitacao.idSolicitacao,
+        idStatusSolicitacao: sol.statusSolicitacao.idStatusSolicitacao,
+        dsDarecer: dsDarecer.trim(),
+      };
+
+      const niveisParecer = (sol?.solicitacaoPareceres || [])
+        .map((p) => Number(p?.nrNivel))
+        .filter((n) => Number.isFinite(n));
+      const currentNivel = niveisParecer.length > 0 ? Math.max(...niveisParecer) : null;
+            
+      const existingParecer = sol?.solicitacaoPareceres?.find(
+        (p) =>
+          +p?.nrNivel === currentNivel &&
+          +p?.responsavel?.idResponsavel === (userResponsavel?.idResponsavel ?? 0)
+      );
+
+      const canUpdate = Boolean(existingParecer?.idSolicitacaoParecer);
+
+      if (canUpdate) {
+        const atualizado = await solicitacaoParecerClient.atualizar(existingParecer?.idSolicitacaoParecer ?? 0, req);
+        setParecerAtual(atualizado);
+        toast.success('Parecer atualizado com sucesso.');
+        onClose();
+      } else {
+        const criado = await solicitacaoParecerClient.criar(req);
+        setParecerAtual(criado);
+        toast.success('Parecer salvo com sucesso.');
+        onClose();
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Não foi possível salvar o parecer.');
+    } finally {
+      setSending(false);
+    }
+  }, [dsDarecer, onClose, sol?.solicitacao?.idSolicitacao, sol?.statusSolicitacao?.idStatusSolicitacao, sol?.solicitacaoPareceres, userResponsavel?.idResponsavel]);
 
   const handleBaixarAnexo = useCallback(
     async (anexo: AnexoItemShape) => {
@@ -354,46 +407,136 @@ export default function DetalhesSolicitacaoModal({
       ? { maxHeight: `${lineHeightPx * MAX_DESC_LINES}px`, overflow: 'hidden' }
       : {};
 
-  const quantidadeDevolutivas = solicitacao?.tramitacoes?.filter(t => !!t?.tramitacao?.dsObservacao)?.length ?? 0;
+  const quantidadeDevolutivas = (() => {
+    const qtdTramitacoes = solicitacao?.tramitacoes?.filter(t => !!t?.tramitacao?.dsObservacao)?.length ?? 0;
+    const qtdPareceres = sol?.solicitacaoPareceres?.length ?? 0;
+    return qtdTramitacoes + qtdPareceres;
+  })();
 
+  useEffect(() => {
+    const loadIdProximoStatusAnaliseRegulatoria = async () => {
+      if (!sol?.solicitacao?.idSolicitacao || !sol?.statusSolicitacao?.idStatusSolicitacao) {
+        setIdProximoStatusAnaliseRegulatoria(null);
+        return;
+      }
+      const response = await tramitacoesClient.buscarProximoStatusPorIdSolicitacaoEIdStatusSolicitacao({
+        idSolicitacao: sol.solicitacao.idSolicitacao,
+        idStatusSolicitacao: sol.statusSolicitacao.idStatusSolicitacao,
+      });
+      setIdProximoStatusAnaliseRegulatoria(response ?? null);
+    };
+    loadIdProximoStatusAnaliseRegulatoria();
+  }, [sol?.solicitacao?.idSolicitacao, sol?.statusSolicitacao?.idStatusSolicitacao]);
+
+  const devolutivaReprovadaDiretoria = sol?.tramitacoes?.find(
+    t => t.tramitacao.idStatusSolicitacao === 8 && t.tramitacao.flAprovado === 'N'
+  );
+
+  const labelStatusAnaliseRegulatoria = idProximoStatusAnaliseRegulatoria === 6
+    ? 'Enviar Minuta de Resposta para aprovação'
+    : idProximoStatusAnaliseRegulatoria === 7
+      ? 'Escrever resposta ao Gerente do Regulatório'
+      : 'Enviar devolutiva';
+                                                                                
+  const btnLabelStatusAnaliseRegulatoria = idProximoStatusAnaliseRegulatoria === 6
+    ? 'Encaminhar para os Gerentes das Áreas'
+    : idProximoStatusAnaliseRegulatoria === 7
+      ? 'Encaminhar para o Gerente do Regulatório'
+      : 'Enviar Resposta';
+                                            
+  const btnStatusEmAssinaturaDiretoria = (isDiretoria && flAprovado === 'S')
+    ? 'Aprovar Solicitação' 
+    : 'Encaminhar Parecer para Gerente da Área';
+  
+  const btnTextareaEmAprovacao = (devolutivaReprovadaDiretoria && flAprovado === 'N')
+    ? 'Encaminhar parecer para Diretoria'
+    : 'Encaminhar parecer para o Regulatório';
+  
   const labelTextareaDevolutiva = {
-    'Análise regulatória': 'Escrever resposta',
+    'Análise regulatória': labelStatusAnaliseRegulatoria,
+    'Em aprovação': 'Escrever parecer',
     'Em chancela': 'Escrever resposta à Diretoria',
+    'Em assinatura Diretoria': 'Escrever Parecer',
     default: 'Enviar devolutiva ao Regulatório'
   }
 
   const btnEnviarDevolutiva = {
     'Em chancela': 'Enviar para assinatura da Diretoria',
+    'Em aprovação': btnTextareaEmAprovacao,
+    'Análise regulatória': btnLabelStatusAnaliseRegulatoria,
+    'Em assinatura Diretoria': btnStatusEmAssinaturaDiretoria,
     default: 'Enviar Resposta'
+  }
+  
+  const labelFragEmAprovacao = devolutivaReprovadaDiretoria
+    ? 'Em acordo com o Parecer da Diretoria?'
+    : 'Aprovar devolutiva?';
+  
+  const textlabelFlag = {
+    'Em assinatura Diretoria': 'Aprovar Minuta de Resposta?',
+    'Em aprovação': labelFragEmAprovacao,
+    default: 'Aprovar devolutiva?'
   }
 
   const labelStatusTextarea = labelTextareaDevolutiva[sol?.statusSolicitacao?.nmStatus as keyof typeof labelTextareaDevolutiva] ?? labelTextareaDevolutiva.default;
   const btnEnviarDevolutivaLabel = btnEnviarDevolutiva[sol?.statusSolicitacao?.nmStatus as keyof typeof btnEnviarDevolutiva] ?? btnEnviarDevolutiva.default;
+  const labelFlAprovacao = textlabelFlag[sol?.statusSolicitacao?.nmStatus as keyof typeof textlabelFlag] ?? textlabelFlag.default;
 
   const enableEnviarDevolutiva = (() => {
+    const flAnaliseGerenteDiretor = (sol?.solicitacao?.flAnaliseGerenteDiretor || '').toUpperCase() as AnaliseGerenteDiretor;
     const nrNivel = sol?.tramitacoes[0]?.tramitacao?.nrNivel;
     const tramitacaoExecutada = sol?.tramitacoes?.filter(t =>
-      t.tramitacao.nrNivel === nrNivel &&
-      t.tramitacao.idStatusSolicitacao === sol?.statusSolicitacao?.idStatusSolicitacao &&
-      t.tramitacao.tramitacaoAcao.some(ta =>
-        ta.responsavelArea.responsavel.idResponsavel === userResponsavel?.idResponsavel &&
+      t?.tramitacao?.nrNivel === nrNivel &&
+      t?.tramitacao?.idStatusSolicitacao === sol?.statusSolicitacao?.idStatusSolicitacao &&
+      t?.tramitacao?.tramitacaoAcao?.some(ta =>
+        ta?.responsavelArea?.responsavel?.idResponsavel === userResponsavel?.idResponsavel &&
         ta.flAcao === 'T' ));
 
-    if (tramitacaoExecutada != null && tramitacaoExecutada?.length > 0) return false;
-   
     if (sending) return false;
 
     if (sol?.statusSolicitacao?.nmStatus === 'Concluído' )  return false;
 
+    if (sol?.statusSolicitacao?.nmStatus === 'Em assinatura Diretoria') {
+      if (userResponsavel?.idPerfil === 1 ||
+          userResponsavel?.idPerfil === 3 || 
+          userResponsavel?.areas?.some(a => a.area.idArea === 13)
+      ) return true;
+      return false;
+    }
+    
+    if (tramitacaoExecutada != null && tramitacaoExecutada?.length > 0) return false;
+
     if (sol?.statusSolicitacao?.nmStatus === 'Em análise da área técnica') {
-      if ((!hasAreaInicial) && (
-          userResponsavel?.idPerfil === 1 ||
+
+      if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.G || flAnaliseGerenteDiretor === AnaliseGerenteDiretor.A) {
+        // Apenas EXECUTOR AVANÇADO pode responder
+        // Em AMBOS também permitir VALIDADOR/ASSINANTE responder
+        if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.A && userResponsavel?.idPerfil === 3) return true;
+        return userResponsavel?.idPerfil === 4;
+      }
+
+      if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.D) {
+        // EXECUTOR ou EXECUTOR AVANÇADO podem responder e VALIDADOR/ASSINANTE também pode
+        return (
           userResponsavel?.idPerfil === 3 ||
           userResponsavel?.idPerfil === 4 ||
-          userResponsavel?.idPerfil === 5
-      ))
-        return true;
-     
+          userResponsavel?.idPerfil === 5 ||
+          userResponsavel?.idPerfil === 6
+        );
+      }
+
+      // NÃO_NECESSITA (ou vazio): EXECUTOR ou EXECUTOR AVANÇADO podem responder
+      if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.N || !flAnaliseGerenteDiretor) {
+        return (
+          userResponsavel?.idPerfil === 4 ||
+          userResponsavel?.idPerfil === 5 ||
+          userResponsavel?.idPerfil === 6
+        );
+      }
+
+      // se nenhuma das regras acima se aplicar, aplica regra de área inicial
+     if (!hasAreaInicial) return true;
+
       return false;
     }
 
@@ -414,12 +557,31 @@ export default function DetalhesSolicitacaoModal({
       return false;
     }
 
-    if (sol?.statusSolicitacao?.nmStatus === 'Em assinatura Diretoria') {
-      if (userResponsavel?.idPerfil === 1 || userResponsavel?.idPerfil === 3) return true;
-      return false;
-    }
-
     return false;
+  })();
+
+  const btnTooltip = (() => {
+    const isAreaTecnica = sol?.statusSolicitacao?.nmStatus === 'Em análise da área técnica';
+    const fl = (sol?.solicitacao?.flAnaliseGerenteDiretor || '').toUpperCase() as AnaliseGerenteDiretor;
+    if (isAreaTecnica) {
+      if (fl === AnaliseGerenteDiretor.G) return 'Apenas Executor Avançado de cada área pode responder.';
+      if (fl === AnaliseGerenteDiretor.D) return 'Podem responder: Executor ou Executor Avançado. É necessária uma resposta de Validador/Assinante para avançar.';
+      if (fl === AnaliseGerenteDiretor.A) return 'Podem responder: Executor Avançado e Validador/Assinante. Executor não pode responder.';
+      return 'Podem responder: Executor ou Executor Avançado de cada área.'; // N ou vazio
+    }
+    return isPermissaoEnviandoDevolutiva
+      ? 'Apenas gerente/diretores da área pode enviar resposta da devolutiva'
+      : '';
+  })();
+
+  const diretorPermitidoDsParecer = (() => {
+    const fl = sol?.solicitacao?.flAnaliseGerenteDiretor as AnaliseGerenteDiretor;
+    const isDiretoriaPerfil = userResponsavel?.idPerfil === 3;
+    if (!isDiretoriaPerfil) return false;
+    if (statusText === 'Em assinatura Diretoria') return false;
+    if ((statusText === 'Em análise da área técnica' &&
+       (fl === AnaliseGerenteDiretor.D || fl === AnaliseGerenteDiretor.A))) return false;
+    return true;
   })();
 
   return (
@@ -616,11 +778,11 @@ export default function DetalhesSolicitacaoModal({
             </section>
           )}
 
-          {(isEmAprovacao && canAprovarSolicitacao) && (
+          {(isFlagVisivel && canAprovarSolicitacao && !diretorPermitidoDsParecer) && (
             <section className="space-y-3">
               <div className="space-y-2">
                 <Label htmlFor="aprovarDevolutiva" className="text-sm font-medium">
-                  Aprovar devolutiva? *
+                  { labelFlAprovacao } *
                 </Label>
                 <div className="flex items-center gap-4 mt-2">
                   <div className="flex items-center gap-2">
@@ -646,7 +808,9 @@ export default function DetalhesSolicitacaoModal({
 
           <section className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">{labelStatusTextarea}</h3>
+                <h3 className="text-sm font-semibold">
+                  {diretorPermitidoDsParecer ? 'Escrever Parecer' : labelStatusTextarea}
+                </h3>
 
               <HistoricoRespostasModalButton
                 idSolicitacao={sol?.solicitacao?.idSolicitacao ?? null}
@@ -658,24 +822,40 @@ export default function DetalhesSolicitacaoModal({
             <div className="rounded-md border bg-muted/30 p-4">
               <Label htmlFor="resposta" className="sr-only">
                 Escreva aqui …
-              </Label>
-              <Textarea
-                id="resposta"
-                placeholder="Escreva aqui..."
-                value={resposta}
-                onChange={(e) => setResposta(e.target.value)}
-                rows={5}
-                disabled={!enableEnviarDevolutiva}
-              />
+                </Label>
+
+                {!diretorPermitidoDsParecer && (
+                  <Textarea
+                    id="resposta"
+                    placeholder="Escreva aqui..."
+                    value={resposta}
+                    onChange={(e) => setResposta(e.target.value)}
+                    rows={5}
+                    disabled={!enableEnviarDevolutiva}
+                  />
+                )}
+
+                {diretorPermitidoDsParecer && ( 
+                  <Textarea
+                    id="resposta"
+                    placeholder="Escreva aqui..."
+                    value={dsDarecer}
+                    onChange={(e) => setDsDarecer(e.target.value)}
+                    rows={5}                
+                  />
+                )}
 
               <div className="mt-3 flex items-center gap-3">
-                {canInserirAnexo && (
-                  <label className="inline-flex items-center gap-2 text-sm text-primary hover:underline cursor-pointer aria-disabled:opacity-50 aria-disabled:cursor-not-allowed" aria-disabled={!enableEnviarDevolutiva}>
+                  <label className="inline-flex items-center gap-2 text-sm text-primary hover:underline cursor-pointer aria-disabled:opacity-50 aria-disabled:cursor-not-allowed">
                     <PaperclipIcon className="h-4 w-4" />
                     Fazer upload de arquivo
-                    <input type="file" className="hidden" multiple onChange={handleUploadChange} disabled={!enableEnviarDevolutiva} />
+                      <input
+                        type="file"
+                        className="hidden"
+                        multiple
+                        onChange={handleUploadChange}
+                        disabled={!enableEnviarDevolutiva} />
                   </label>
-                )}
 
                 {arquivos.length > 0 && (
                   <span className="text-xs text-muted-foreground">
@@ -717,27 +897,29 @@ export default function DetalhesSolicitacaoModal({
           <Button type="button" variant="outline" onClick={onClose} disabled={sending}>
             Cancelar
           </Button>
-          <Button
-            type="submit"
-            form="detalhes-form"
-            disabled={!enableEnviarDevolutiva}
-            tooltip={
-              isPermissaoEnviandoDevolutiva
-                ? 'Apenas gerente/diretores da área pode enviar resposta da devolutiva'
-                : ''
-            }
-          >
+          {diretorPermitidoDsParecer && (
+            <Button
+              type="button"
+              onClick={handleSalvarParecer}
+              disabled={sending}
+            >
+              {sending ? 'Salvando...' : 'Salvar Parecer'}
+            </Button>
+          )}
+            
+          {!diretorPermitidoDsParecer && (
+            <Button
+              type="submit"
+              form="detalhes-form"
+              disabled={!enableEnviarDevolutiva}
+              tooltip={!enableEnviarDevolutiva ? btnTooltip : ''}
+            >
             {sending ? 'Enviando...' : btnEnviarDevolutivaLabel}
           </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
-
-      <PopupAprovacaoAlert
-        openModal={open}
-        solicitacao={sol}
-        currentUserPerfil={userResponsavel?.idPerfil ?? null}
-      />
     </>
   );
 }

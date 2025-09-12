@@ -36,6 +36,7 @@ import {anexosClient} from '@/api/anexos/client';
 import {AreaResponse} from '@/api/areas/types';
 import {usePermissoes} from "@/context/permissoes/PermissoesContext";
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { AnaliseGerenteDiretor } from '@/types/solicitacoes/types';
 
 interface AnexoListItem {
   idAnexo?: number;
@@ -261,13 +262,14 @@ export default function SolicitacaoModal({
     }));
   }, []);
 
-
   const isStep1Valid = useCallback(() => {
     return formData.cdIdentificacao?.trim() !== '' && 
-      (formData.flAnaliseGerenteDiretor === 'D' ||
-      formData.flAnaliseGerenteDiretor === 'G' ||
-      formData.flAnaliseGerenteDiretor === 'N' ||
-      formData.flAnaliseGerenteDiretor === 'A');
+      ([
+        AnaliseGerenteDiretor.D,
+        AnaliseGerenteDiretor.G,
+        AnaliseGerenteDiretor.N,
+        AnaliseGerenteDiretor.A,
+      ] as string[]).includes((formData.flAnaliseGerenteDiretor || '').toUpperCase());
   }, [formData.cdIdentificacao, formData.flAnaliseGerenteDiretor]);
 
   const isStep2Valid = useCallback(() => {
@@ -367,8 +369,35 @@ export default function SolicitacaoModal({
         }
         if (!hasTramitacoes) {
           if (anexos.length > 0) {
+            const existingNames = new Set([
+              ...anexosBackend.map(a => (a.nmArquivo || '').trim().toLowerCase()),
+              ...anexosTypeE.map(a => (a.nmArquivo || '').trim().toLowerCase()),
+            ]);
+
+            const newNames = anexos
+              .map(file => (file.name || '').trim().toLowerCase())
+              .filter(name => name !== '');
+
+            const duplicateWithExisting = newNames.filter(name => existingNames.has(name));
+            const duplicateWithinNew = newNames.filter((name, idx, arr) => arr.indexOf(name) !== idx);
+            const duplicateNames = Array.from(new Set([...duplicateWithExisting, ...duplicateWithinNew]));
+
+            if (duplicateNames.length > 0) {
+              toast.error(`Já existe anexo com o mesmo nome: ${duplicateNames.join(', ')}`);
+              return;
+            }
+
+            const seenNames = new Set<string>();
+            const filesToUpload = anexos.filter(file => {
+              const key = (file.name || '').trim().toLowerCase();
+              if (!key) return false;
+              if (seenNames.has(key)) return false;
+              seenNames.add(key);
+              return true;
+            });
+
             const arquivosDTO = await Promise.all(
-              anexos.map(async (file) => {
+              filesToUpload.map(async (file) => {
                 if (!file.name || file.name.trim() === '') {
                   throw new Error(`Arquivo sem nome válido: ${file.name || 'undefined'}`);
                 }
@@ -402,9 +431,17 @@ export default function SolicitacaoModal({
             );
 
             try {
+              setLoading(true);
               await solicitacoesClient.uploadAnexos(solicitacao.idSolicitacao, arquivosDTO);
+              try {
+                const atualizados = await solicitacoesClient.buscarAnexos(solicitacao.idSolicitacao);
+                setAnexosBackend(atualizados);
+              } catch {}
+              setAnexos([]);
             } catch {
               toast.error('Erro ao anexar arquivos');
+            } finally {
+              setLoading(false);
             }
           }
         }
@@ -419,7 +456,7 @@ export default function SolicitacaoModal({
 
       onFinish();
     }
-  }, [currentStep, formData, solicitacao, prazoExcepcional, statusPrazos, anexos]);
+  }, [currentStep, formData, solicitacao, prazoExcepcional, statusPrazos, anexos, anexosBackend, anexosTypeE, hasTramitacoes]);
 
   const handlePreviousStep = useCallback(() => {
     if (currentStep === 2) {
@@ -541,7 +578,12 @@ export default function SolicitacaoModal({
       } else {
         if (!formData.cdIdentificacao?.trim()) { toast.error('Código de identificação é obrigatório'); setLoading(false); return; }
         if (!formData.idTema || formData.idTema === 0) { toast.error('Tema é obrigatório'); setLoading(false); return; }
-        if (!formData.flAnaliseGerenteDiretor || !['G','D','A','N'].includes(formData.flAnaliseGerenteDiretor)) {
+        if (!formData.flAnaliseGerenteDiretor || ![
+          AnaliseGerenteDiretor.G,
+          AnaliseGerenteDiretor.D,
+          AnaliseGerenteDiretor.A,
+          AnaliseGerenteDiretor.N,
+        ].includes((formData.flAnaliseGerenteDiretor || '').toUpperCase() as AnaliseGerenteDiretor)) {
           toast.error('Selecione GERENTE, DIRETOR, AMBOS ou NÃO NECESSITA');
           setLoading(false);
           return;
@@ -593,6 +635,16 @@ export default function SolicitacaoModal({
         }
 
         if (anexos.length > 0) {
+          const newNames = anexos
+            .map(file => (file.name || '').trim().toLowerCase())
+            .filter(name => name !== '');
+          const duplicateWithinNew = newNames.filter((name, idx, arr) => arr.indexOf(name) !== idx);
+          const duplicateNames = Array.from(new Set(duplicateWithinNew));
+          if (duplicateNames.length > 0) {
+            toast.error(`Já existe anexo com o mesmo nome: ${duplicateNames.join(', ')}`);
+            setLoading(false);
+            return;
+          }
           const arquivosDTO = await Promise.all(
             anexos.map(async (file) => {
               const base64 = await new Promise<string>((resolve, reject) => {
@@ -667,10 +719,10 @@ export default function SolicitacaoModal({
           <div className="flex items-center gap-4 mt-2">
             <div className="flex items-center gap-2">
               <Checkbox
-                checked={formData.flAnaliseGerenteDiretor === 'G'}
+                checked={(formData.flAnaliseGerenteDiretor || '').toUpperCase() === AnaliseGerenteDiretor.G}
                 onCheckedChange={() => setFormData(prev => ({
                   ...prev,
-                  flAnaliseGerenteDiretor: 'G'
+                  flAnaliseGerenteDiretor: AnaliseGerenteDiretor.G
                 }))}
                 disabled={hasTramitacoes}
               />
@@ -678,10 +730,10 @@ export default function SolicitacaoModal({
             </div>
             <div className="flex items-center gap-2">
               <Checkbox
-                checked={formData.flAnaliseGerenteDiretor === 'D'}
+                checked={(formData.flAnaliseGerenteDiretor || '').toUpperCase() === AnaliseGerenteDiretor.D}
                 onCheckedChange={() => setFormData(prev => ({
                   ...prev,
-                  flAnaliseGerenteDiretor: 'D'
+                  flAnaliseGerenteDiretor: AnaliseGerenteDiretor.D
                 }))}
                 disabled={hasTramitacoes}
               />
@@ -689,10 +741,10 @@ export default function SolicitacaoModal({
             </div>
             <div className="flex items-center gap-2">
               <Checkbox
-                checked={formData.flAnaliseGerenteDiretor === 'A'}
+                checked={(formData.flAnaliseGerenteDiretor || '').toUpperCase() === AnaliseGerenteDiretor.A}
                 onCheckedChange={() => setFormData(prev => ({
                   ...prev,
-                  flAnaliseGerenteDiretor: 'A'
+                  flAnaliseGerenteDiretor: AnaliseGerenteDiretor.A
                 }))}
                 disabled={hasTramitacoes}
               />
@@ -700,10 +752,10 @@ export default function SolicitacaoModal({
             </div>
             <div className="flex items-center gap-2">
               <Checkbox
-                checked={formData.flAnaliseGerenteDiretor === 'N'}
+                checked={(formData.flAnaliseGerenteDiretor || '').toUpperCase() === AnaliseGerenteDiretor.N}
                 onCheckedChange={() => setFormData(prev => ({
                   ...prev,
-                  flAnaliseGerenteDiretor: 'N'
+                  flAnaliseGerenteDiretor: AnaliseGerenteDiretor.N
                 }))}
                 disabled={hasTramitacoes}
               />
@@ -1060,7 +1112,7 @@ export default function SolicitacaoModal({
         ) : null}
       </div>
     )
-  }, [prazoExcepcional, formData.idTema, loadingStatusPrazos, statusPrazos, updateLocalPrazo, setFormData, statusList, getSelectedTema, loadStatusPrazos]);
+  }, [prazoExcepcional, formData.idTema, loadingStatusPrazos, statusPrazos, updateLocalPrazo, setFormData, statusList, getSelectedTema, loadStatusPrazos, anexosBackend, currentPrazoTotal, hasTramitacoes]);
 
   const renderStep4 = useCallback(() => (
     <div className="space-y-6">
