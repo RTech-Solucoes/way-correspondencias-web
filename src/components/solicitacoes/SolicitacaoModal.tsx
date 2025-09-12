@@ -369,8 +369,35 @@ export default function SolicitacaoModal({
         }
         if (!hasTramitacoes) {
           if (anexos.length > 0) {
+            const existingNames = new Set([
+              ...anexosBackend.map(a => (a.nmArquivo || '').trim().toLowerCase()),
+              ...anexosTypeE.map(a => (a.nmArquivo || '').trim().toLowerCase()),
+            ]);
+
+            const newNames = anexos
+              .map(file => (file.name || '').trim().toLowerCase())
+              .filter(name => name !== '');
+
+            const duplicateWithExisting = newNames.filter(name => existingNames.has(name));
+            const duplicateWithinNew = newNames.filter((name, idx, arr) => arr.indexOf(name) !== idx);
+            const duplicateNames = Array.from(new Set([...duplicateWithExisting, ...duplicateWithinNew]));
+
+            if (duplicateNames.length > 0) {
+              toast.error(`Já existe anexo com o mesmo nome: ${duplicateNames.join(', ')}`);
+              return;
+            }
+
+            const seenNames = new Set<string>();
+            const filesToUpload = anexos.filter(file => {
+              const key = (file.name || '').trim().toLowerCase();
+              if (!key) return false;
+              if (seenNames.has(key)) return false;
+              seenNames.add(key);
+              return true;
+            });
+
             const arquivosDTO = await Promise.all(
-              anexos.map(async (file) => {
+              filesToUpload.map(async (file) => {
                 if (!file.name || file.name.trim() === '') {
                   throw new Error(`Arquivo sem nome válido: ${file.name || 'undefined'}`);
                 }
@@ -404,9 +431,17 @@ export default function SolicitacaoModal({
             );
 
             try {
+              setLoading(true);
               await solicitacoesClient.uploadAnexos(solicitacao.idSolicitacao, arquivosDTO);
+              try {
+                const atualizados = await solicitacoesClient.buscarAnexos(solicitacao.idSolicitacao);
+                setAnexosBackend(atualizados);
+              } catch {}
+              setAnexos([]);
             } catch {
               toast.error('Erro ao anexar arquivos');
+            } finally {
+              setLoading(false);
             }
           }
         }
@@ -421,7 +456,7 @@ export default function SolicitacaoModal({
 
       onFinish();
     }
-  }, [currentStep, formData, solicitacao, prazoExcepcional, statusPrazos, anexos]);
+  }, [currentStep, formData, solicitacao, prazoExcepcional, statusPrazos, anexos, anexosBackend, anexosTypeE, hasTramitacoes]);
 
   const handlePreviousStep = useCallback(() => {
     if (currentStep === 2) {
@@ -600,6 +635,16 @@ export default function SolicitacaoModal({
         }
 
         if (anexos.length > 0) {
+          const newNames = anexos
+            .map(file => (file.name || '').trim().toLowerCase())
+            .filter(name => name !== '');
+          const duplicateWithinNew = newNames.filter((name, idx, arr) => arr.indexOf(name) !== idx);
+          const duplicateNames = Array.from(new Set(duplicateWithinNew));
+          if (duplicateNames.length > 0) {
+            toast.error(`Já existe anexo com o mesmo nome: ${duplicateNames.join(', ')}`);
+            setLoading(false);
+            return;
+          }
           const arquivosDTO = await Promise.all(
             anexos.map(async (file) => {
               const base64 = await new Promise<string>((resolve, reject) => {
@@ -1067,7 +1112,7 @@ export default function SolicitacaoModal({
         ) : null}
       </div>
     )
-  }, [prazoExcepcional, formData.idTema, loadingStatusPrazos, statusPrazos, updateLocalPrazo, setFormData, statusList, getSelectedTema, loadStatusPrazos]);
+  }, [prazoExcepcional, formData.idTema, loadingStatusPrazos, statusPrazos, updateLocalPrazo, setFormData, statusList, getSelectedTema, loadStatusPrazos, anexosBackend, currentPrazoTotal, hasTramitacoes]);
 
   const renderStep4 = useCallback(() => (
     <div className="space-y-6">
