@@ -497,11 +497,21 @@ export default function DetalhesSolicitacaoModal({
     if (sol?.statusSolicitacao?.nmStatus === 'Concluído' )  return false;
 
     if (sol?.statusSolicitacao?.nmStatus === 'Em assinatura Diretoria') {
-      if (userResponsavel?.idPerfil === 1 ||
-          userResponsavel?.idPerfil === 3 || 
-          userResponsavel?.areas?.some(a => a.area.idArea === 13)
-      ) return true;
-      return false;
+      const isResponsavelAprovouNesteStatus = sol?.tramitacoes?.some(t =>
+        t?.tramitacao?.idStatusSolicitacao === sol?.statusSolicitacao?.idStatusSolicitacao &&
+        t?.tramitacao?.flAprovado === 'S' &&
+        (t?.tramitacao?.tramitacaoAcao?.some(ta =>
+          ta?.responsavelArea?.responsavel?.idResponsavel === userResponsavel?.idResponsavel
+        ) ?? false)
+      );
+
+      const isRolePermitido = (
+        userResponsavel?.idPerfil === 1 ||
+        userResponsavel?.idPerfil === 3 ||
+        userResponsavel?.areas?.some(a => a?.area?.idArea === 13)
+      );
+
+      return isRolePermitido && !isResponsavelAprovouNesteStatus;
     }
     
     if (tramitacaoExecutada != null && tramitacaoExecutada?.length > 0) return false;
