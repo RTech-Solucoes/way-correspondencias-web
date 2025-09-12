@@ -1,4 +1,5 @@
 import { AnexoResponse } from "../anexos/type";
+import { SolicitacaoParecerResponse } from "../solicitacao-parecer/types";
 import { TramitacaoAcao } from "../tramitacoes/types";
 
 export interface AreaSolicitacao {
@@ -180,6 +181,8 @@ export interface TramitacaoResponse extends BaseResponse {
   nrNivel?: number;
   solicitacao: SolicitacaoResponse;
   tramitacaoAcao: TramitacaoAcao[];
+  areaOrigem: AreaSolicitacao;
+  areaDestino: AreaSolicitacao;
 }
 
 export interface TramitacaoComAnexosResponse {
@@ -191,6 +194,7 @@ export interface SolicitacaoDetalheResponse extends BaseResponse {
   solicitacao: SolicitacaoResponse;
   statusSolicitacao: StatusSolicitacao;
   solcitacaoPrazos: SolicitacaoPrazoResponse[];
+  solicitacaoPareceres: SolicitacaoParecerResponse[];
   anexosSolicitacao: AnexoResponse[];
   email: EmailComAnexosResponse;
   tramitacoes: TramitacaoComAnexosResponse[];

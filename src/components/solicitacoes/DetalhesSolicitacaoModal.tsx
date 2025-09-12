@@ -26,6 +26,8 @@ import { responsaveisClient } from '@/api/responsaveis/client';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
 import tramitacoesClient from '@/api/tramitacoes/client';
 import { AnaliseGerenteDiretor } from '@/types/solicitacoes/types';
+import { solicitacaoParecerClient } from '@/api/solicitacao-parecer/client';
+import { SolicitacaoParecerResponse } from '@/api/solicitacao-parecer/types';
 
 
 type AnexoItemShape = {
@@ -78,6 +80,7 @@ export default function DetalhesSolicitacaoModal({
   statusLabel = 'Status',
 }: DetalhesSolicitacaoModalProps) {
   const [resposta, setResposta] = useState('');
+  const [dsDarecer, setDsDarecer] = useState('');
   const [arquivos, setArquivos] = useState<File[]>([]);
   const [expandDescricao, setExpandDescricao] = useState(false);
   const [sending, setSending] = useState(false);
@@ -86,6 +89,7 @@ export default function DetalhesSolicitacaoModal({
   const [hasAreaInicial, setHasAreaInicial] = useState(false);
   const [userResponsavel, setUserResponsavel] = useState<ResponsavelResponse | null>(null);
   const [idProximoStatusAnaliseRegulatoria, setIdProximoStatusAnaliseRegulatoria] = useState<number | null>(null);
+  const [, setParecerAtual] = useState<SolicitacaoParecerResponse | null>(null);
 
   const descRef = useRef<HTMLParagraphElement | null>(null);
   const [canToggleDescricao, setCanToggleDescricao] = useState(false);
@@ -320,6 +324,57 @@ export default function DetalhesSolicitacaoModal({
     [onEnviarDevolutiva, resposta, arquivos, sol?.solicitacao?.idSolicitacao, onClose, flAprovado, isFlagVisivel, tpResponsavelUpload]
   );
 
+  const handleSalvarParecer = useCallback(async () => {
+    try {
+      if (!sol?.solicitacao?.idSolicitacao || !sol?.statusSolicitacao?.idStatusSolicitacao) {
+        toast.error('Dados da solicitação incompletos.');
+        return;
+      }
+      if (!dsDarecer.trim()) {
+        toast.error('Escreva o parecer.');
+        return;
+      }
+      
+      setSending(true);
+
+      const req = {
+        idSolicitacao: sol.solicitacao.idSolicitacao,
+        idStatusSolicitacao: sol.statusSolicitacao.idStatusSolicitacao,
+        dsDarecer: dsDarecer.trim(),
+      };
+
+      const niveisParecer = (sol?.solicitacaoPareceres || [])
+        .map((p) => Number(p?.nrNivel))
+        .filter((n) => Number.isFinite(n));
+      const currentNivel = niveisParecer.length > 0 ? Math.max(...niveisParecer) : null;
+            
+      const existingParecer = sol?.solicitacaoPareceres?.find(
+        (p) =>
+          +p?.nrNivel === currentNivel &&
+          +p?.responsavel?.idResponsavel === (userResponsavel?.idResponsavel ?? 0)
+      );
+
+      const canUpdate = Boolean(existingParecer?.idSolicitacaoParecer);
+
+      if (canUpdate) {
+        const atualizado = await solicitacaoParecerClient.atualizar(existingParecer?.idSolicitacaoParecer ?? 0, req);
+        setParecerAtual(atualizado);
+        toast.success('Parecer atualizado com sucesso.');
+        onClose();
+      } else {
+        const criado = await solicitacaoParecerClient.criar(req);
+        setParecerAtual(criado);
+        toast.success('Parecer salvo com sucesso.');
+        onClose();
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Não foi possível salvar o parecer.');
+    } finally {
+      setSending(false);
+    }
+  }, [dsDarecer, onClose, sol?.solicitacao?.idSolicitacao, sol?.statusSolicitacao?.idStatusSolicitacao, sol?.solicitacaoPareceres, userResponsavel?.idResponsavel]);
+
   const handleBaixarAnexo = useCallback(
     async (anexo: AnexoItemShape) => {
       try {
@@ -352,7 +407,11 @@ export default function DetalhesSolicitacaoModal({
       ? { maxHeight: `${lineHeightPx * MAX_DESC_LINES}px`, overflow: 'hidden' }
       : {};
 
-  const quantidadeDevolutivas = solicitacao?.tramitacoes?.filter(t => !!t?.tramitacao?.dsObservacao)?.length ?? 0;
+  const quantidadeDevolutivas = (() => {
+    const qtdTramitacoes = solicitacao?.tramitacoes?.filter(t => !!t?.tramitacao?.dsObservacao)?.length ?? 0;
+    const qtdPareceres = sol?.solicitacaoPareceres?.length ?? 0;
+    return qtdTramitacoes + qtdPareceres;
+  })();
 
   useEffect(() => {
     const loadIdProximoStatusAnaliseRegulatoria = async () => {
@@ -427,10 +486,10 @@ export default function DetalhesSolicitacaoModal({
     const flAnaliseGerenteDiretor = (sol?.solicitacao?.flAnaliseGerenteDiretor || '').toUpperCase() as AnaliseGerenteDiretor;
     const nrNivel = sol?.tramitacoes[0]?.tramitacao?.nrNivel;
     const tramitacaoExecutada = sol?.tramitacoes?.filter(t =>
-      t.tramitacao.nrNivel === nrNivel &&
-      t.tramitacao.idStatusSolicitacao === sol?.statusSolicitacao?.idStatusSolicitacao &&
-      t.tramitacao.tramitacaoAcao.some(ta =>
-        ta.responsavelArea.responsavel.idResponsavel === userResponsavel?.idResponsavel &&
+      t?.tramitacao?.nrNivel === nrNivel &&
+      t?.tramitacao?.idStatusSolicitacao === sol?.statusSolicitacao?.idStatusSolicitacao &&
+      t?.tramitacao?.tramitacaoAcao?.some(ta =>
+        ta?.responsavelArea?.responsavel?.idResponsavel === userResponsavel?.idResponsavel &&
         ta.flAcao === 'T' ));
 
     if (sending) return false;
@@ -513,6 +572,16 @@ export default function DetalhesSolicitacaoModal({
     return isPermissaoEnviandoDevolutiva
       ? 'Apenas gerente/diretores da área pode enviar resposta da devolutiva'
       : '';
+  })();
+
+  const diretorPermitidoDsParecer = (() => {
+    const fl = sol?.solicitacao?.flAnaliseGerenteDiretor as AnaliseGerenteDiretor;
+    const isDiretoriaPerfil = userResponsavel?.idPerfil === 3;
+    if (!isDiretoriaPerfil) return false;
+    if (statusText === 'Em assinatura Diretoria') return false;
+    if ((statusText === 'Em análise da área técnica' &&
+       (fl === AnaliseGerenteDiretor.D || fl === AnaliseGerenteDiretor.A))) return false;
+    return true;
   })();
 
   return (
@@ -709,7 +778,7 @@ export default function DetalhesSolicitacaoModal({
             </section>
           )}
 
-          {(isFlagVisivel && canAprovarSolicitacao) && (
+          {(isFlagVisivel && canAprovarSolicitacao && !diretorPermitidoDsParecer) && (
             <section className="space-y-3">
               <div className="space-y-2">
                 <Label htmlFor="aprovarDevolutiva" className="text-sm font-medium">
@@ -739,7 +808,9 @@ export default function DetalhesSolicitacaoModal({
 
           <section className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">{labelStatusTextarea}</h3>
+                <h3 className="text-sm font-semibold">
+                  {diretorPermitidoDsParecer ? 'Escrever Parecer' : labelStatusTextarea}
+                </h3>
 
               <HistoricoRespostasModalButton
                 idSolicitacao={sol?.solicitacao?.idSolicitacao ?? null}
@@ -751,24 +822,40 @@ export default function DetalhesSolicitacaoModal({
             <div className="rounded-md border bg-muted/30 p-4">
               <Label htmlFor="resposta" className="sr-only">
                 Escreva aqui …
-              </Label>
-              <Textarea
-                id="resposta"
-                placeholder="Escreva aqui..."
-                value={resposta}
-                onChange={(e) => setResposta(e.target.value)}
-                rows={5}
-                disabled={!enableEnviarDevolutiva}
-              />
+                </Label>
+
+                {!diretorPermitidoDsParecer && (
+                  <Textarea
+                    id="resposta"
+                    placeholder="Escreva aqui..."
+                    value={resposta}
+                    onChange={(e) => setResposta(e.target.value)}
+                    rows={5}
+                    disabled={!enableEnviarDevolutiva}
+                  />
+                )}
+
+                {diretorPermitidoDsParecer && ( 
+                  <Textarea
+                    id="resposta"
+                    placeholder="Escreva aqui..."
+                    value={dsDarecer}
+                    onChange={(e) => setDsDarecer(e.target.value)}
+                    rows={5}                
+                  />
+                )}
 
               <div className="mt-3 flex items-center gap-3">
-                {canInserirAnexo && (
-                  <label className="inline-flex items-center gap-2 text-sm text-primary hover:underline cursor-pointer aria-disabled:opacity-50 aria-disabled:cursor-not-allowed" aria-disabled={!enableEnviarDevolutiva}>
+                  <label className="inline-flex items-center gap-2 text-sm text-primary hover:underline cursor-pointer aria-disabled:opacity-50 aria-disabled:cursor-not-allowed">
                     <PaperclipIcon className="h-4 w-4" />
                     Fazer upload de arquivo
-                    <input type="file" className="hidden" multiple onChange={handleUploadChange} disabled={!enableEnviarDevolutiva} />
+                      <input
+                        type="file"
+                        className="hidden"
+                        multiple
+                        onChange={handleUploadChange}
+                        disabled={!enableEnviarDevolutiva} />
                   </label>
-                )}
 
                 {arquivos.length > 0 && (
                   <span className="text-xs text-muted-foreground">
@@ -810,14 +897,26 @@ export default function DetalhesSolicitacaoModal({
           <Button type="button" variant="outline" onClick={onClose} disabled={sending}>
             Cancelar
           </Button>
-          <Button
-            type="submit"
-            form="detalhes-form"
-            disabled={!enableEnviarDevolutiva}
-            tooltip={!enableEnviarDevolutiva ? btnTooltip : ''}
-          >
+          {diretorPermitidoDsParecer && (
+            <Button
+              type="button"
+              onClick={handleSalvarParecer}
+              disabled={sending}
+            >
+              {sending ? 'Salvando...' : 'Salvar Parecer'}
+            </Button>
+          )}
+            
+          {!diretorPermitidoDsParecer && (
+            <Button
+              type="submit"
+              form="detalhes-form"
+              disabled={!enableEnviarDevolutiva}
+              tooltip={!enableEnviarDevolutiva ? btnTooltip : ''}
+            >
             {sending ? 'Enviando...' : btnEnviarDevolutivaLabel}
           </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

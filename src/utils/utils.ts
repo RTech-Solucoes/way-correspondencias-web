@@ -66,6 +66,20 @@ export function formatDate(dateString: string | null): string {
   }
 }
 
+export function formatDateTime(dateString?: string): string { 
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '';
+
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
+}
+
 export function base64ToUint8Array(b64: string): Uint8Array {
   let clean = b64.includes('base64,') ? b64.split('base64,')[1] : b64;
   clean = clean.replace(/\s/g, '');
