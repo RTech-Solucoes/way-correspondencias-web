@@ -8,4 +8,12 @@ export interface Solicitacao {
   status: 'pendente' | 'em_andamento' | 'concluido' | 'atrasado';
   dtCriacao: string;
   idResponsavel?: string;
+  flAnaliseGerenteDiretor?: string;
+}
+
+export enum AnaliseGerenteDiretor {
+  D = 'D', // Diretor
+  G = 'G', // Gerente
+  A = 'A', // Ambos
+  N = 'N'  // Não Necessita
 }

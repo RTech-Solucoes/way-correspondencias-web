@@ -36,6 +36,7 @@ import {anexosClient} from '@/api/anexos/client';
 import {AreaResponse} from '@/api/areas/types';
 import {usePermissoes} from "@/context/permissoes/PermissoesContext";
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { AnaliseGerenteDiretor } from '@/types/solicitacoes/types';
 
 interface AnexoListItem {
   idAnexo?: number;
@@ -261,13 +262,14 @@ export default function SolicitacaoModal({
     }));
   }, []);
 
-
   const isStep1Valid = useCallback(() => {
     return formData.cdIdentificacao?.trim() !== '' && 
-      (formData.flAnaliseGerenteDiretor === 'D' ||
-      formData.flAnaliseGerenteDiretor === 'G' ||
-      formData.flAnaliseGerenteDiretor === 'N' ||
-      formData.flAnaliseGerenteDiretor === 'A');
+      ([
+        AnaliseGerenteDiretor.D,
+        AnaliseGerenteDiretor.G,
+        AnaliseGerenteDiretor.N,
+        AnaliseGerenteDiretor.A,
+      ] as string[]).includes((formData.flAnaliseGerenteDiretor || '').toUpperCase());
   }, [formData.cdIdentificacao, formData.flAnaliseGerenteDiretor]);
 
   const isStep2Valid = useCallback(() => {
@@ -541,7 +543,12 @@ export default function SolicitacaoModal({
       } else {
         if (!formData.cdIdentificacao?.trim()) { toast.error('Código de identificação é obrigatório'); setLoading(false); return; }
         if (!formData.idTema || formData.idTema === 0) { toast.error('Tema é obrigatório'); setLoading(false); return; }
-        if (!formData.flAnaliseGerenteDiretor || !['G','D','A','N'].includes(formData.flAnaliseGerenteDiretor)) {
+        if (!formData.flAnaliseGerenteDiretor || ![
+          AnaliseGerenteDiretor.G,
+          AnaliseGerenteDiretor.D,
+          AnaliseGerenteDiretor.A,
+          AnaliseGerenteDiretor.N,
+        ].includes((formData.flAnaliseGerenteDiretor || '').toUpperCase() as AnaliseGerenteDiretor)) {
           toast.error('Selecione GERENTE, DIRETOR, AMBOS ou NÃO NECESSITA');
           setLoading(false);
           return;
@@ -667,10 +674,10 @@ export default function SolicitacaoModal({
           <div className="flex items-center gap-4 mt-2">
             <div className="flex items-center gap-2">
               <Checkbox
-                checked={formData.flAnaliseGerenteDiretor === 'G'}
+                checked={(formData.flAnaliseGerenteDiretor || '').toUpperCase() === AnaliseGerenteDiretor.G}
                 onCheckedChange={() => setFormData(prev => ({
                   ...prev,
-                  flAnaliseGerenteDiretor: 'G'
+                  flAnaliseGerenteDiretor: AnaliseGerenteDiretor.G
                 }))}
                 disabled={hasTramitacoes}
               />
@@ -678,10 +685,10 @@ export default function SolicitacaoModal({
             </div>
             <div className="flex items-center gap-2">
               <Checkbox
-                checked={formData.flAnaliseGerenteDiretor === 'D'}
+                checked={(formData.flAnaliseGerenteDiretor || '').toUpperCase() === AnaliseGerenteDiretor.D}
                 onCheckedChange={() => setFormData(prev => ({
                   ...prev,
-                  flAnaliseGerenteDiretor: 'D'
+                  flAnaliseGerenteDiretor: AnaliseGerenteDiretor.D
                 }))}
                 disabled={hasTramitacoes}
               />
@@ -689,10 +696,10 @@ export default function SolicitacaoModal({
             </div>
             <div className="flex items-center gap-2">
               <Checkbox
-                checked={formData.flAnaliseGerenteDiretor === 'A'}
+                checked={(formData.flAnaliseGerenteDiretor || '').toUpperCase() === AnaliseGerenteDiretor.A}
                 onCheckedChange={() => setFormData(prev => ({
                   ...prev,
-                  flAnaliseGerenteDiretor: 'A'
+                  flAnaliseGerenteDiretor: AnaliseGerenteDiretor.A
                 }))}
                 disabled={hasTramitacoes}
               />
@@ -700,10 +707,10 @@ export default function SolicitacaoModal({
             </div>
             <div className="flex items-center gap-2">
               <Checkbox
-                checked={formData.flAnaliseGerenteDiretor === 'N'}
+                checked={(formData.flAnaliseGerenteDiretor || '').toUpperCase() === AnaliseGerenteDiretor.N}
                 onCheckedChange={() => setFormData(prev => ({
                   ...prev,
-                  flAnaliseGerenteDiretor: 'N'
+                  flAnaliseGerenteDiretor: AnaliseGerenteDiretor.N
                 }))}
                 disabled={hasTramitacoes}
               />

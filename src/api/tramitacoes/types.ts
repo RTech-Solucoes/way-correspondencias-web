@@ -100,7 +100,7 @@ export interface TramitacaoResponse {
   tramitacaoAcao: TramitacaoAcao[] | null;
   flAtivo: string;
   dsObservacao?: string;
-  flAprovado?: 'S' | 'N';
+  flAprovado?: string;
 }
 
 export interface TramitacaoRequest {
