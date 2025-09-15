@@ -573,6 +573,21 @@ export default function DetalhesSolicitacaoModal({
   const btnTooltip = (() => {
     const isAreaTecnica = sol?.statusSolicitacao?.nmStatus === 'Em análise da área técnica';
     const fl = (sol?.solicitacao?.flAnaliseGerenteDiretor || '').toUpperCase() as AnaliseGerenteDiretor;
+    
+    if (sol?.statusSolicitacao?.nmStatus === 'Em assinatura Diretoria') {
+      const isResponsavelAprovouNesteStatus = sol?.tramitacoes?.some(t =>
+        t?.tramitacao?.idStatusSolicitacao === sol?.statusSolicitacao?.idStatusSolicitacao &&
+        t?.tramitacao?.flAprovado === 'S' &&
+        (t?.tramitacao?.tramitacaoAcao?.some(ta =>
+          ta?.responsavelArea?.responsavel?.idResponsavel === userResponsavel?.idResponsavel
+        ) ?? false)
+      );
+      
+      if (isResponsavelAprovouNesteStatus) {
+        return 'Já aprovado por um diretor. É necessário outro diretor aprovar.';
+      }
+    }
+    
     if (isAreaTecnica) {
       if (fl === AnaliseGerenteDiretor.G) return 'Apenas Executor Avançado de cada área pode responder.';
       if (fl === AnaliseGerenteDiretor.D) return 'Podem responder: Executor ou Executor Avançado. É necessária uma resposta de Validador/Assinante para avançar.';
@@ -588,6 +603,7 @@ export default function DetalhesSolicitacaoModal({
     const fl = sol?.solicitacao?.flAnaliseGerenteDiretor as AnaliseGerenteDiretor;
     const isDiretoriaPerfil = userResponsavel?.idPerfil === 3;
     if (!isDiretoriaPerfil) return false;
+    if (statusText === 'Concluído') return false;
     if (statusText === 'Em assinatura Diretoria') return false;
     if ((statusText === 'Em análise da área técnica' &&
        (fl === AnaliseGerenteDiretor.D || fl === AnaliseGerenteDiretor.A))) return false;
