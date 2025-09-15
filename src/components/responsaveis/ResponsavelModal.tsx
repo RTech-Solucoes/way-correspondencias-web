@@ -30,6 +30,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
     dsEmail: '',
     nrCpf: '',
     dtNascimento: '',
+    nmCargo: '',
     idsAreas: []
   });
   const [selectedAreaIds, setSelectedAreaIds] = useState<number[]>([]);
@@ -62,6 +63,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
         dsEmail: responsavel.dsEmail,
         nrCpf: responsavel.nrCpf || '',
         dtNascimento: responsavel.dtNascimento || '',
+        nmCargo: responsavel.nmCargo || '',
         idsAreas: responsavel.areas ? responsavel.areas.map(responsavelArea => responsavelArea.area.idArea) : []
       };
 
@@ -94,6 +96,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
           dsEmail: '',
           nrCpf: '',
           dtNascimento: '',
+          nmCargo: '',
           idsAreas: []
         });
         setSelectedAreaIds([]);
@@ -205,6 +208,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
         dsEmail: formData.dsEmail.trim(),
         nrCpf: formData.nrCpf.trim(),
         dtNascimento: formData.dtNascimento,
+        nmCargo: formData.nmCargo.trim(),
         idsAreas: selectedAreaIds.length > 0 ? selectedAreaIds : []
       };
 
@@ -286,6 +290,13 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
             required
             onBlur={() => validateField('nrCpf', formData.nrCpf)}
             error={errors.nrCpf}
+          />
+
+          <TextField
+            label="Nome do Cargo"
+            name="nmCargo"
+            value={formData.nmCargo}
+            onChange={handleChange}
           />
 
           <TextField

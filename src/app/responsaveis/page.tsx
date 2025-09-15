@@ -282,6 +282,12 @@ export default function ResponsaveisPage() {
               </StickyTableHead>
               <StickyTableHead>Perfil</StickyTableHead>
               <StickyTableHead>Áreas</StickyTableHead>
+              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('nmCargo')}>
+                <div className="flex items-center">
+                  Nome do Cargo
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
+                </div>
+              </StickyTableHead>
               <StickyTableHead className="cursor-pointer" onClick={() => handleSort('flAtivo')}>
                 <div className="flex items-center">
                   Status
@@ -341,6 +347,7 @@ export default function ResponsaveisPage() {
                       <span className="text-gray-400 text-sm">Nenhuma área</span>
                     )}
                   </StickyTableCell>
+                  <StickyTableCell>{responsavel.nmCargo}</StickyTableCell>
                   <StickyTableCell>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                       responsavel.flAtivo === 'S'

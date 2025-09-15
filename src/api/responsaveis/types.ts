@@ -14,6 +14,7 @@ export interface ResponsavelResponse {
   dsEmail: string;
   nrCpf: string;
   dtNascimento: string;
+  nmCargo: string;
   flAtivo: 'S' | 'N';
   areas?: ResponsavelAreaResponse[];
 }
@@ -25,6 +26,7 @@ export interface ResponsavelRequest {
   dsEmail: string;
   nrCpf: string;
   dtNascimento: string;
+  nmCargo: string;
   idsAreas?: number[];
 }
 
