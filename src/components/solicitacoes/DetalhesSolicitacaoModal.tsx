@@ -482,6 +482,19 @@ export default function DetalhesSolicitacaoModal({
   const btnEnviarDevolutivaLabel = btnEnviarDevolutiva[sol?.statusSolicitacao?.nmStatus as keyof typeof btnEnviarDevolutiva] ?? btnEnviarDevolutiva.default;
   const labelFlAprovacao = textlabelFlag[sol?.statusSolicitacao?.nmStatus as keyof typeof textlabelFlag] ?? textlabelFlag.default;
 
+  const isDiretorJaAprovou = sol?.tramitacoes?.some(t =>
+    t?.tramitacao?.idStatusSolicitacao === sol?.statusSolicitacao?.idStatusSolicitacao &&
+    t?.tramitacao?.flAprovado === 'S' &&
+    (t?.tramitacao?.tramitacaoAcao?.some(ta =>
+      ta?.responsavelArea?.responsavel?.idResponsavel === userResponsavel?.idResponsavel
+    ) ?? false)
+  );
+  
+  const isParecerDiretorAnaliseTecnica = sol?.solicitacaoPareceres?.some(p =>
+    p?.idStatusSolicitacao === 3 &&
+    p?.idSolicitacao === sol?.solicitacao?.idSolicitacao
+ );
+
   const enableEnviarDevolutiva = (() => {
     const flAnaliseGerenteDiretor = (sol?.solicitacao?.flAnaliseGerenteDiretor || '').toUpperCase() as AnaliseGerenteDiretor;
     const nrNivel = sol?.tramitacoes[0]?.tramitacao?.nrNivel;
@@ -497,13 +510,6 @@ export default function DetalhesSolicitacaoModal({
     if (sol?.statusSolicitacao?.nmStatus === 'Concluído' )  return false;
 
     if (sol?.statusSolicitacao?.nmStatus === 'Em assinatura Diretoria') {
-      const isResponsavelAprovouNesteStatus = sol?.tramitacoes?.some(t =>
-        t?.tramitacao?.idStatusSolicitacao === sol?.statusSolicitacao?.idStatusSolicitacao &&
-        t?.tramitacao?.flAprovado === 'S' &&
-        (t?.tramitacao?.tramitacaoAcao?.some(ta =>
-          ta?.responsavelArea?.responsavel?.idResponsavel === userResponsavel?.idResponsavel
-        ) ?? false)
-      );
 
       const isRolePermitido = (
         userResponsavel?.idPerfil === 1 ||
@@ -511,31 +517,25 @@ export default function DetalhesSolicitacaoModal({
         userResponsavel?.areas?.some(a => a?.area?.idArea === 13)
       );
 
-      return isRolePermitido && !isResponsavelAprovouNesteStatus;
+      return isRolePermitido && !isDiretorJaAprovou;
     }
     
     if (tramitacaoExecutada != null && tramitacaoExecutada?.length > 0) return false;
 
     if (sol?.statusSolicitacao?.nmStatus === 'Em análise da área técnica') {
 
-      if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.G || flAnaliseGerenteDiretor === AnaliseGerenteDiretor.A) {
-        // Apenas EXECUTOR AVANÇADO pode responder
-        // Em AMBOS também permitir VALIDADOR/ASSINANTE responder
-        if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.A && userResponsavel?.idPerfil === 3) return true;
+      if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.G) {
         return userResponsavel?.idPerfil === 4;
       }
 
       if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.D) {
-        // EXECUTOR ou EXECUTOR AVANÇADO podem responder e VALIDADOR/ASSINANTE também pode
-        return (
-          userResponsavel?.idPerfil === 3 ||
-          userResponsavel?.idPerfil === 4 ||
-          userResponsavel?.idPerfil === 5 ||
-          userResponsavel?.idPerfil === 6
-        );
+        return userResponsavel?.idPerfil === 3;
       }
 
-      // NÃO_NECESSITA (ou vazio): EXECUTOR ou EXECUTOR AVANÇADO podem responder
+       if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.A) {
+         return userResponsavel?.idPerfil === 4 && isParecerDiretorAnaliseTecnica;
+       }
+
       if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.N || !flAnaliseGerenteDiretor) {
         return (
           userResponsavel?.idPerfil === 4 ||
@@ -544,20 +544,19 @@ export default function DetalhesSolicitacaoModal({
         );
       }
 
-      // se nenhuma das regras acima se aplicar, aplica regra de área inicial
-     if (!hasAreaInicial) return true;
+      if (!hasAreaInicial) return true;
 
       return false;
     }
 
     if (sol?.statusSolicitacao?.nmStatus === 'Análise regulatória') {
        if (hasAreaInicial) return true;
-
       return false;
     }
     
     if (sol?.statusSolicitacao?.nmStatus === 'Em aprovação') {
-      if(userResponsavel?.idPerfil === 4) return true;
+      if (userResponsavel?.idPerfil === 4) return true;
+      return false;
     }
 
     if (!hasAreaInicial && !isPermissaoEnviandoDevolutiva) return true;
@@ -574,25 +573,20 @@ export default function DetalhesSolicitacaoModal({
     const isAreaTecnica = sol?.statusSolicitacao?.nmStatus === 'Em análise da área técnica';
     const fl = (sol?.solicitacao?.flAnaliseGerenteDiretor || '').toUpperCase() as AnaliseGerenteDiretor;
     
-    if (sol?.statusSolicitacao?.nmStatus === 'Em assinatura Diretoria') {
-      const isResponsavelAprovouNesteStatus = sol?.tramitacoes?.some(t =>
-        t?.tramitacao?.idStatusSolicitacao === sol?.statusSolicitacao?.idStatusSolicitacao &&
-        t?.tramitacao?.flAprovado === 'S' &&
-        (t?.tramitacao?.tramitacaoAcao?.some(ta =>
-          ta?.responsavelArea?.responsavel?.idResponsavel === userResponsavel?.idResponsavel
-        ) ?? false)
-      );
-      
-      if (isResponsavelAprovouNesteStatus) {
-        return 'Já aprovado por um diretor. É necessário outro diretor aprovar.';
-      }
+    if(statusText === 'Em Chancela' && !(userResponsavel?.idPerfil === 1)) return 'Apenas o Administrador pode responder.';
+
+    if (statusText === 'Em assinatura Diretoria') {
+      if (isDiretorJaAprovou) return 'Já aprovado por um diretor. É necessário outro diretor aprovar.';
     }
     
     if (isAreaTecnica) {
-      if (fl === AnaliseGerenteDiretor.G) return 'Apenas Executor Avançado de cada área pode responder.';
-      if (fl === AnaliseGerenteDiretor.D) return 'Podem responder: Executor ou Executor Avançado. É necessária uma resposta de Validador/Assinante para avançar.';
-      if (fl === AnaliseGerenteDiretor.A) return 'Podem responder: Executor Avançado e Validador/Assinante. Executor não pode responder.';
-      return 'Podem responder: Executor ou Executor Avançado de cada área.'; // N ou vazio
+      if (fl === AnaliseGerenteDiretor.G) return 'Apenas Executor Avançado (Gerente) de cada área pode responder.';
+      if (fl === AnaliseGerenteDiretor.D) return 'Podem responder: Validador/Assinante (Diretor). É necessária uma resposta de Diretor para avançar.';
+      if (fl === AnaliseGerenteDiretor.A){
+        if (!isParecerDiretorAnaliseTecnica && userResponsavel?.idPerfil === 4) return 'Precisa do parecer do Validador/Assinante (Diretor).';
+        return 'Precisa do parecer do Executor Avançado (Gerente) e Validador/Assinante (Diretor). Você já respondeu ou não tem o perfil necessário.';
+      }
+      return 'Podem responder: Executor ou Executor Avançado (Gerente) de cada área.'; // N ou vazio
     }
     return isPermissaoEnviandoDevolutiva
       ? 'Apenas gerente/diretores da área pode enviar resposta da devolutiva'
@@ -605,8 +599,7 @@ export default function DetalhesSolicitacaoModal({
     if (!isDiretoriaPerfil) return false;
     if (statusText === 'Concluído') return false;
     if (statusText === 'Em assinatura Diretoria') return false;
-    if ((statusText === 'Em análise da área técnica' &&
-       (fl === AnaliseGerenteDiretor.D || fl === AnaliseGerenteDiretor.A))) return false;
+    if (statusText === 'Em análise da área técnica' && fl === AnaliseGerenteDiretor.D) return false;
     return true;
   })();
 
