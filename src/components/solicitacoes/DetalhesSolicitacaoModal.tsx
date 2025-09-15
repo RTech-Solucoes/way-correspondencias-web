@@ -494,6 +494,8 @@ export default function DetalhesSolicitacaoModal({
     p?.idStatusSolicitacao === 3 &&
     p?.idSolicitacao === sol?.solicitacao?.idSolicitacao
  );
+ 
+  const isRolePermitidoAnaliseAreaTecnicaFlD = (userResponsavel?.idPerfil === 4 || userResponsavel?.idPerfil === 5);
 
   const enableEnviarDevolutiva = (() => {
     const flAnaliseGerenteDiretor = (sol?.solicitacao?.flAnaliseGerenteDiretor || '').toUpperCase() as AnaliseGerenteDiretor;
@@ -529,12 +531,12 @@ export default function DetalhesSolicitacaoModal({
       }
 
       if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.D) {
-        return userResponsavel?.idPerfil === 3;
+        return isParecerDiretorAnaliseTecnica && isRolePermitidoAnaliseAreaTecnicaFlD;
       }
 
-       if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.A) {
-         return userResponsavel?.idPerfil === 4 && isParecerDiretorAnaliseTecnica;
-       }
+      if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.A) {
+        return userResponsavel?.idPerfil === 4 && isParecerDiretorAnaliseTecnica;
+      }
 
       if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.N || !flAnaliseGerenteDiretor) {
         return (
@@ -581,7 +583,10 @@ export default function DetalhesSolicitacaoModal({
     
     if (isAreaTecnica) {
       if (fl === AnaliseGerenteDiretor.G) return 'Apenas Executor Avançado (Gerente) de cada área pode responder.';
-      if (fl === AnaliseGerenteDiretor.D) return 'Podem responder: Validador/Assinante (Diretor). É necessária uma resposta de Diretor para avançar.';
+      if (fl === AnaliseGerenteDiretor.D) {
+        if (!isRolePermitidoAnaliseAreaTecnicaFlD) return 'Apenas Executor Avançado e Executor podem responder.';
+        if (!isParecerDiretorAnaliseTecnica) return 'Aguardando parecer da Diretoria. É necessário um parecer da Diretoria para avançar.';
+      }
       if (fl === AnaliseGerenteDiretor.A){
         if (!isParecerDiretorAnaliseTecnica && userResponsavel?.idPerfil === 4) return 'Precisa do parecer do Validador/Assinante (Diretor).';
         return 'Precisa do parecer do Executor Avançado (Gerente) e Validador/Assinante (Diretor). Você já respondeu ou não tem o perfil necessário.';
@@ -594,12 +599,10 @@ export default function DetalhesSolicitacaoModal({
   })();
 
   const diretorPermitidoDsParecer = (() => {
-    const fl = sol?.solicitacao?.flAnaliseGerenteDiretor as AnaliseGerenteDiretor;
     const isDiretoriaPerfil = userResponsavel?.idPerfil === 3;
     if (!isDiretoriaPerfil) return false;
     if (statusText === 'Concluído') return false;
     if (statusText === 'Em assinatura Diretoria') return false;
-    if (statusText === 'Em análise da área técnica' && fl === AnaliseGerenteDiretor.D) return false;
     return true;
   })();
 
