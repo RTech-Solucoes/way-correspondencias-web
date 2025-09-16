@@ -490,12 +490,17 @@ export default function DetalhesSolicitacaoModal({
     ) ?? false)
   );
   
-  const isParecerDiretorAnaliseTecnica = sol?.solicitacaoPareceres?.some(p =>
-    p?.idStatusSolicitacao === 3 &&
-    p?.idSolicitacao === sol?.solicitacao?.idSolicitacao
- );
- 
-  const isRolePermitidoAnaliseAreaTecnicaFlD = (userResponsavel?.idPerfil === 4 || userResponsavel?.idPerfil === 5);
+  const isRolePermitidoAnaliseAreaTecnicaFlA = (
+    userResponsavel?.idPerfil === 3 ||
+    userResponsavel?.idPerfil === 4 
+  );
+
+  const isRolePermitidoAnaliseAreaTecnicaFlD = (
+    userResponsavel?.idPerfil === 3 ||
+    userResponsavel?.idPerfil === 4 ||
+    userResponsavel?.idPerfil === 5 
+  );
+
 
   const enableEnviarDevolutiva = (() => {
     const flAnaliseGerenteDiretor = (sol?.solicitacao?.flAnaliseGerenteDiretor || '').toUpperCase() as AnaliseGerenteDiretor;
@@ -506,6 +511,12 @@ export default function DetalhesSolicitacaoModal({
       t?.tramitacao?.tramitacaoAcao?.some(ta =>
         ta?.responsavelArea?.responsavel?.idResponsavel === userResponsavel?.idResponsavel &&
         ta.flAcao === 'T' ));
+
+    const isAreaRespondeu = sol?.tramitacoes?.filter(t =>
+      t?.tramitacao?.nrNivel === nrNivel &&
+      t?.tramitacao?.idStatusSolicitacao === sol?.statusSolicitacao?.idStatusSolicitacao &&
+      userResponsavel?.areas?.some(a => a?.area?.idArea === t?.tramitacao?.areaOrigem?.idArea)
+    );
 
     if (sending) return false;
 
@@ -524,6 +535,8 @@ export default function DetalhesSolicitacaoModal({
     
     if (tramitacaoExecutada != null && tramitacaoExecutada?.length > 0) return false;
 
+    if (isAreaRespondeu != null && isAreaRespondeu?.length > 0) return false;
+
     if (sol?.statusSolicitacao?.nmStatus === 'Em análise da área técnica') {
 
       if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.G) {
@@ -531,11 +544,11 @@ export default function DetalhesSolicitacaoModal({
       }
 
       if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.D) {
-        return isParecerDiretorAnaliseTecnica && isRolePermitidoAnaliseAreaTecnicaFlD;
+        return isRolePermitidoAnaliseAreaTecnicaFlD;
       }
 
       if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.A) {
-        return userResponsavel?.idPerfil === 4 && isParecerDiretorAnaliseTecnica;
+        return isRolePermitidoAnaliseAreaTecnicaFlA;
       }
 
       if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.N || !flAnaliseGerenteDiretor) {
@@ -583,14 +596,9 @@ export default function DetalhesSolicitacaoModal({
     
     if (isAreaTecnica) {
       if (fl === AnaliseGerenteDiretor.G) return 'Apenas Executor Avançado (Gerente) de cada área pode responder.';
-      if (fl === AnaliseGerenteDiretor.D) {
-        if (!isRolePermitidoAnaliseAreaTecnicaFlD) return 'Apenas Executor Avançado e Executor podem responder.';
-        if (!isParecerDiretorAnaliseTecnica) return 'Aguardando parecer da Diretoria. É necessário um parecer da Diretoria para avançar.';
-      }
-      if (fl === AnaliseGerenteDiretor.A){
-        if (!isParecerDiretorAnaliseTecnica && userResponsavel?.idPerfil === 4) return 'Precisa do parecer do Validador/Assinante (Diretor).';
-        return 'Precisa do parecer do Executor Avançado (Gerente) e Validador/Assinante (Diretor). Você já respondeu ou não tem o perfil necessário.';
-      }
+      if (fl === AnaliseGerenteDiretor.D) return 'Diretor, Executor Avançado ou Executor podem responder; é necessária a resposta do Diretor.';
+      if (fl === AnaliseGerenteDiretor.A) return 'Precisa do parecer do Executor Avançado (Gerente) e Validador/Assinante (Diretor). Você já respondeu ou não tem o perfil necessário.';
+
       return 'Podem responder: Executor ou Executor Avançado (Gerente) de cada área.'; // N ou vazio
     }
     return isPermissaoEnviandoDevolutiva
@@ -601,6 +609,7 @@ export default function DetalhesSolicitacaoModal({
   const diretorPermitidoDsParecer = (() => {
     const isDiretoriaPerfil = userResponsavel?.idPerfil === 3;
     if (!isDiretoriaPerfil) return false;
+    if (statusText === 'Em análise da área técnica') return false;
     if (statusText === 'Concluído') return false;
     if (statusText === 'Em assinatura Diretoria') return false;
     return true;
