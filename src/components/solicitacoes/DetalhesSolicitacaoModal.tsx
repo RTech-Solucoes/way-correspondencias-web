@@ -800,7 +800,7 @@ export default function DetalhesSolicitacaoModal({
             </section>
           )}
 
-          {(isFlagVisivel && canAprovarSolicitacao && !diretorPermitidoDsParecer) && (
+          {(isFlagVisivel  && !diretorPermitidoDsParecer) && (
             <section className="space-y-3">
               <div className="space-y-2">
                 <Label htmlFor="aprovarDevolutiva" className="text-sm font-medium">
