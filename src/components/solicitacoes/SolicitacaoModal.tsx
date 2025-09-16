@@ -590,6 +590,7 @@ export default function SolicitacaoModal({
         }
 
         const created = await solicitacoesClient.criar({
+          idTema: formData.idTema,
           cdIdentificacao: formData.cdIdentificacao?.trim(),
           dsAssunto: formData.dsAssunto?.trim(),
           dsSolicitacao: formData.dsSolicitacao?.trim(),
@@ -797,7 +798,7 @@ export default function SolicitacaoModal({
           value={formData.dsSolicitacao}
           onChange={handleInputChange}
           rows={getRows(formData.dsSolicitacao)}
-          disabled
+          disabled={solicitacao?.idSolicitacao !== undefined}
         />
       </div>
     </div>
