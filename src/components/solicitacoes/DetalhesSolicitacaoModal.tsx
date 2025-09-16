@@ -95,7 +95,7 @@ export default function DetalhesSolicitacaoModal({
   const [canToggleDescricao, setCanToggleDescricao] = useState(false);
   const [lineHeightPx, setLineHeightPx] = useState<number | null>(null);
 
-  const { canListarAnexo, canInserirAnexo, canDeletarAnexo, canAprovarSolicitacao } = usePermissoes();
+  const { canListarAnexo, canDeletarAnexo } = usePermissoes();
 
   const sol = solicitacao ?? null;
 
@@ -105,6 +105,7 @@ export default function DetalhesSolicitacaoModal({
   );
 
   const statusText = sol?.statusSolicitacao?.nmStatus ?? statusLabel;
+  const flAnaliseGerenteDiretor = sol?.solicitacao?.flAnaliseGerenteDiretor as AnaliseGerenteDiretor;
 
   const criadorLine = useMemo(() => formatDateTime(sol?.dtCriacao), [sol?.dtCriacao]);
   const prazoLine = useMemo(() => {
@@ -428,7 +429,7 @@ export default function DetalhesSolicitacaoModal({
     loadIdProximoStatusAnaliseRegulatoria();
   }, [sol?.solicitacao?.idSolicitacao, sol?.statusSolicitacao?.idStatusSolicitacao]);
 
-  const devolutivaReprovadaDiretoria = sol?.tramitacoes?.find(
+  const devolutivaReprovadaDiretoria = sol?.tramitacoes?.some(
     t => t.tramitacao.idStatusSolicitacao === 8 && t.tramitacao.flAprovado === 'N'
   );
 
@@ -446,7 +447,15 @@ export default function DetalhesSolicitacaoModal({
                                             
   const btnStatusEmAssinaturaDiretoria = (isDiretoria && flAprovado === 'S')
     ? 'Aprovar Solicitação' 
-    : 'Encaminhar Parecer para Gerente da Área';
+    : (devolutivaReprovadaDiretoria && flAprovado === 'N')
+      ? 'Encaminhar para o Regulatório'
+      : 'Encaminhar Parecer para Gerente da Área'
+
+  const labelFragEmDiretoria = (isDiretoria && !devolutivaReprovadaDiretoria)
+    ? 'Aprovar Minuta de Resposta?'
+    : (devolutivaReprovadaDiretoria ) ?
+    'Em acordo com o Parecer do Gerente da Área?' :
+      ''
   
   const btnTextareaEmAprovacao = (devolutivaReprovadaDiretoria && flAprovado === 'N')
     ? 'Encaminhar parecer para Diretoria'
@@ -464,7 +473,7 @@ export default function DetalhesSolicitacaoModal({
     'Em chancela': 'Enviar para assinatura da Diretoria',
     'Em aprovação': btnTextareaEmAprovacao,
     'Análise regulatória': btnLabelStatusAnaliseRegulatoria,
-    'Em assinatura Diretoria': btnStatusEmAssinaturaDiretoria,
+    'Em assinatura Diretoria': flAprovado !== '' ? btnStatusEmAssinaturaDiretoria : 'Aprovar Solicitação',
     default: 'Enviar Resposta'
   }
   
@@ -473,7 +482,7 @@ export default function DetalhesSolicitacaoModal({
     : 'Aprovar devolutiva?';
   
   const textlabelFlag = {
-    'Em assinatura Diretoria': 'Aprovar Minuta de Resposta?',
+    'Em assinatura Diretoria': labelFragEmDiretoria,
     'Em aprovação': labelFragEmAprovacao,
     default: 'Aprovar devolutiva?'
   }
@@ -501,9 +510,7 @@ export default function DetalhesSolicitacaoModal({
     userResponsavel?.idPerfil === 5 
   );
 
-
   const enableEnviarDevolutiva = (() => {
-    const flAnaliseGerenteDiretor = (sol?.solicitacao?.flAnaliseGerenteDiretor || '').toUpperCase() as AnaliseGerenteDiretor;
     const nrNivel = sol?.tramitacoes[0]?.tramitacao?.nrNivel;
     const tramitacaoExecutada = sol?.tramitacoes?.filter(t =>
       t?.tramitacao?.nrNivel === nrNivel &&
@@ -514,6 +521,7 @@ export default function DetalhesSolicitacaoModal({
 
     const isAreaRespondeu = sol?.tramitacoes?.filter(t =>
       t?.tramitacao?.nrNivel === nrNivel &&
+      sol?.statusSolicitacao?.idStatusSolicitacao !== 8 &&
       t?.tramitacao?.idStatusSolicitacao === sol?.statusSolicitacao?.idStatusSolicitacao &&
       userResponsavel?.areas?.some(a => a?.area?.idArea === t?.tramitacao?.areaOrigem?.idArea)
     );
@@ -586,7 +594,6 @@ export default function DetalhesSolicitacaoModal({
 
   const btnTooltip = (() => {
     const isAreaTecnica = sol?.statusSolicitacao?.nmStatus === 'Em análise da área técnica';
-    const fl = (sol?.solicitacao?.flAnaliseGerenteDiretor || '').toUpperCase() as AnaliseGerenteDiretor;
     
     if(statusText === 'Em Chancela' && !(userResponsavel?.idPerfil === 1)) return 'Apenas o Administrador pode responder.';
 
@@ -595,9 +602,9 @@ export default function DetalhesSolicitacaoModal({
     }
     
     if (isAreaTecnica) {
-      if (fl === AnaliseGerenteDiretor.G) return 'Apenas Executor Avançado (Gerente) de cada área pode responder.';
-      if (fl === AnaliseGerenteDiretor.D) return 'Diretor, Executor Avançado ou Executor podem responder; é necessária a resposta do Diretor.';
-      if (fl === AnaliseGerenteDiretor.A) return 'Precisa do parecer do Executor Avançado (Gerente) e Validador/Assinante (Diretor). Você já respondeu ou não tem o perfil necessário.';
+      if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.G) return 'Apenas Executor Avançado (Gerente) de cada área pode responder.';
+      if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.D) return 'Diretor, Executor Avançado ou Executor podem responder; é necessária a resposta do Diretor.';
+      if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.A) return 'Precisa do parecer do Executor Avançado (Gerente) e Validador/Assinante (Diretor). Você já respondeu ou não tem o perfil necessário.';
 
       return 'Podem responder: Executor ou Executor Avançado (Gerente) de cada área.'; // N ou vazio
     }
@@ -609,7 +616,12 @@ export default function DetalhesSolicitacaoModal({
   const diretorPermitidoDsParecer = (() => {
     const isDiretoriaPerfil = userResponsavel?.idPerfil === 3;
     if (!isDiretoriaPerfil) return false;
-    if (statusText === 'Em análise da área técnica') return false;
+    if (statusText === 'Em análise da área técnica' &&
+      (
+        flAnaliseGerenteDiretor !== AnaliseGerenteDiretor.N &&
+        flAnaliseGerenteDiretor !== AnaliseGerenteDiretor.G
+      )
+    ) return false;
     if (statusText === 'Concluído') return false;
     if (statusText === 'Em assinatura Diretoria') return false;
     return true;
