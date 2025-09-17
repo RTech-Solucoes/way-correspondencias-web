@@ -17,7 +17,7 @@ import { SolicitacaoDetalheResponse } from '@/api/solicitacoes/types';
 import type { AnexoResponse } from '@/api/anexos/type';
 import { ArquivoDTO, TipoObjetoAnexo, TipoResponsavelAnexo } from '@/api/anexos/type';
 import { anexosClient } from '@/api/anexos/client';
-import { base64ToUint8Array, fileToArquivoDTO, hasPermissao, saveBlob } from '@/utils/utils';
+import { base64ToUint8Array, fileToArquivoDTO, saveBlob } from '@/utils/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
 import { HistoricoRespostasModalButton } from './HistoricoRespostasModal';
@@ -95,7 +95,7 @@ export default function DetalhesSolicitacaoModal({
   const [canToggleDescricao, setCanToggleDescricao] = useState(false);
   const [lineHeightPx, setLineHeightPx] = useState<number | null>(null);
 
-  const { canListarAnexo, canDeletarAnexo } = usePermissoes();
+  const { canListarAnexo, canDeletarAnexo, canAprovarSolicitacao } = usePermissoes();
 
   const sol = solicitacao ?? null;
 
@@ -161,7 +161,7 @@ export default function DetalhesSolicitacaoModal({
   const isDiretoria = sol?.statusSolicitacao?.idStatusSolicitacao === 8; // Em assinatura Diretoria;
   const isFlagVisivel = isAprovacao || isDiretoria;
 
-  const isPermissaoEnviandoDevolutiva = (isFlagVisivel && !hasPermissao('SOLICITACAO_APROVAR'));
+  const isPermissaoEnviandoDevolutiva = (isFlagVisivel && !canAprovarSolicitacao);
 
   useEffect(() => {
     const checkResponsavelInicial = async () => {
@@ -429,9 +429,16 @@ export default function DetalhesSolicitacaoModal({
     loadIdProximoStatusAnaliseRegulatoria();
   }, [sol?.solicitacao?.idSolicitacao, sol?.statusSolicitacao?.idStatusSolicitacao]);
 
-  const devolutivaReprovadaDiretoria = sol?.tramitacoes?.some(
+  const devolutivaReprovadaUmavezDiretoria = sol?.tramitacoes?.some(
     t => t.tramitacao.idStatusSolicitacao === 8 && t.tramitacao.flAprovado === 'N'
   );
+
+  const devolutivaReprovadaPelaDiretoriaSegundaVez = (() => {
+    const reprovacoesCount = sol?.tramitacoes?.filter(
+      t => t.tramitacao.idStatusSolicitacao === 8 && t.tramitacao.flAprovado === 'N'
+    )?.length || 0;
+    return reprovacoesCount >= 2;
+  })();
 
   const labelStatusAnaliseRegulatoria = idProximoStatusAnaliseRegulatoria === 6
     ? 'Enviar Minuta de Resposta para aprovação'
@@ -447,17 +454,17 @@ export default function DetalhesSolicitacaoModal({
                                             
   const btnStatusEmAssinaturaDiretoria = (isDiretoria && flAprovado === 'S')
     ? 'Aprovar Solicitação' 
-    : (devolutivaReprovadaDiretoria && flAprovado === 'N')
+    : (devolutivaReprovadaUmavezDiretoria && flAprovado === 'N')
       ? 'Encaminhar para o Regulatório'
       : 'Encaminhar Parecer para Gerente da Área'
 
-  const labelFragEmDiretoria = (isDiretoria && !devolutivaReprovadaDiretoria)
+  const labelFragEmDiretoria = (isDiretoria && !devolutivaReprovadaUmavezDiretoria)
     ? 'Aprovar Minuta de Resposta?'
-    : (devolutivaReprovadaDiretoria ) ?
-    'Em acordo com o Parecer do Gerente da Área?' :
-      ''
+    : (devolutivaReprovadaUmavezDiretoria && !devolutivaReprovadaPelaDiretoriaSegundaVez)
+      ? 'Em acordo com o Parecer do Gerente da Área?'
+      : 'Aprovar Minuta de Resposta?'
   
-  const btnTextareaEmAprovacao = (devolutivaReprovadaDiretoria && flAprovado === 'N')
+  const btnTextareaEmAprovacao = (devolutivaReprovadaUmavezDiretoria && flAprovado === 'N')
     ? 'Encaminhar parecer para Diretoria'
     : 'Encaminhar parecer para o Regulatório';
   
@@ -477,7 +484,7 @@ export default function DetalhesSolicitacaoModal({
     default: 'Enviar Resposta'
   }
   
-  const labelFragEmAprovacao = devolutivaReprovadaDiretoria
+  const labelFragEmAprovacao = devolutivaReprovadaUmavezDiretoria
     ? 'Em acordo com o Parecer da Diretoria?'
     : 'Aprovar devolutiva?';
   
