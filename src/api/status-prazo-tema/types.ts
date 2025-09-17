@@ -8,6 +8,7 @@ export interface StatusSolicPrazoTemaResponse {
   statusCodigo: number;
   idTema: number;
   nrPrazoInterno: number;
+  nrPrazoExterno: number;
   dtCriacao: string;
   dtAtualizacao?: string;
   nrCpfCriacao: string;
