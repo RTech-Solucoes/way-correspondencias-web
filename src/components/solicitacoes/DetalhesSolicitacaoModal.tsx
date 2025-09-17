@@ -343,18 +343,16 @@ export default function DetalhesSolicitacaoModal({
         idStatusSolicitacao: sol.statusSolicitacao.idStatusSolicitacao,
         dsDarecer: dsDarecer.trim(),
       };
+      const ultimoNivel = Number(sol?.tramitacoes?.[0]?.tramitacao?.nrNivel ?? 0);
+      const nextNivel = ultimoNivel + 1;
 
-      const niveisParecer = (sol?.solicitacaoPareceres || [])
-        .map((p) => Number(p?.nrNivel))
-        .filter((n) => Number.isFinite(n));
-      const currentNivel = niveisParecer.length > 0 ? Math.max(...niveisParecer) : null;
-            
       const existingParecer = sol?.solicitacaoPareceres?.find(
         (p) =>
-          +p?.nrNivel === currentNivel &&
-          +p?.responsavel?.idResponsavel === (userResponsavel?.idResponsavel ?? 0)
+          p?.idStatusSolicitacao === sol.statusSolicitacao.idStatusSolicitacao &&
+          Number(p?.nrNivel) === Number(nextNivel) &&
+          p?.responsavel?.idResponsavel === (userResponsavel?.idResponsavel ?? 0) 
       );
-
+      console.log( 'existingParecer', existingParecer)
       const canUpdate = Boolean(existingParecer?.idSolicitacaoParecer);
 
       if (canUpdate) {
@@ -518,16 +516,16 @@ export default function DetalhesSolicitacaoModal({
   );
 
   const enableEnviarDevolutiva = (() => {
-    const nrNivel = sol?.tramitacoes[0]?.tramitacao?.nrNivel;
+    const nrNivelUltimaTramitacao = sol?.tramitacoes[0]?.tramitacao?.nrNivel;
     const tramitacaoExecutada = sol?.tramitacoes?.filter(t =>
-      t?.tramitacao?.nrNivel === nrNivel &&
+      t?.tramitacao?.nrNivel === nrNivelUltimaTramitacao &&
       t?.tramitacao?.idStatusSolicitacao === sol?.statusSolicitacao?.idStatusSolicitacao &&
       t?.tramitacao?.tramitacaoAcao?.some(ta =>
         ta?.responsavelArea?.responsavel?.idResponsavel === userResponsavel?.idResponsavel &&
         ta.flAcao === 'T' ));
 
     const isAreaRespondeu = sol?.tramitacoes?.filter(t =>
-      t?.tramitacao?.nrNivel === nrNivel &&
+      t?.tramitacao?.nrNivel === nrNivelUltimaTramitacao &&
       sol?.statusSolicitacao?.idStatusSolicitacao !== 8 &&
       t?.tramitacao?.idStatusSolicitacao === sol?.statusSolicitacao?.idStatusSolicitacao &&
       userResponsavel?.areas?.some(a => a?.area?.idArea === t?.tramitacao?.areaOrigem?.idArea)
