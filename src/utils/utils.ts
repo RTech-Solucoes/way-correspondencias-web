@@ -137,9 +137,10 @@ export function saveBlob(
 export const getRows = (string: string | undefined) => {
   if (!string) return 1;
 
-  const lineBreaks = (string.match(/\n/g) || []).length;
+  const normalized = string.replace(/\r\n/g, '\n').replace(/[ \t]+$/gm, '').replace(/\n+$/g, '');
+  const lines = normalized.split('\n').length + 4;
 
-  return (string.split('\n').length) + lineBreaks;
+  return Math.max(1, lines);
 }
 
 export function fileToBase64String(file: File): Promise<string> {
