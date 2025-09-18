@@ -53,6 +53,7 @@ import {useTramitacoesMutation} from '@/hooks/use-tramitacoes';
 import tramitacoesClient from '@/api/tramitacoes/client';
 import {usePermissoes} from "@/context/permissoes/PermissoesContext";
 import LoadingRows from "@/components/solicitacoes/LoadingRows";
+import { statusList } from '@/api/status-solicitacao/types';
 
 export default function SolicitacoesPage() {
   const {
@@ -605,10 +606,9 @@ export default function SolicitacoesPage() {
                     <StickyTableCell className="text-right">
                       <div className="flex items-center justify-end space-x-2">
                         {!(
-                          solicitacao.statusSolicitacao?.nmStatus === 'Pré-análise' ||
-                          solicitacao.statusSolicitacao?.nmStatus === 'Pre-analise' ||
+                          solicitacao.statusSolicitacao?.nmStatus === statusList.PRE_ANALISE.label ||
                           solicitacao.statusSolicitacao?.idStatusSolicitacao === 1 ||
-                          getStatusText(solicitacao.statusCodigo?.toString() || '') === 'Pré-análise'
+                          getStatusText(solicitacao.statusCodigo?.toString() || '') === statusList.PRE_ANALISE.label
                         ) && (
                           <Button
                             variant="ghost"

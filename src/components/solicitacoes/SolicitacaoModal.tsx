@@ -37,7 +37,7 @@ import {AreaResponse} from '@/api/areas/types';
 import {usePermissoes} from "@/context/permissoes/PermissoesContext";
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { AnaliseGerenteDiretor } from '@/types/solicitacoes/types';
-import { STATUS_LIST } from '@/api/status-solicitacao/types';
+import { STATUS_LIST, statusList as statusListType } from '@/api/status-solicitacao/types';
 
 interface AnexoListItem {
   idAnexo?: number;
@@ -923,7 +923,7 @@ export default function SolicitacaoModal({
             const defaultPrazos: StatusSolicPrazoTemaForUI[] = [
               {
                 idStatusSolicPrazoTema: 0,
-                idStatusSolicitacao: 1, // Pré-análise
+                idStatusSolicitacao: statusListType.PRE_ANALISE.id, // Pré-análise
                 idTema: formData.idTema,
                 nrPrazoInterno: 72,
                 nrPrazoExterno: 0,
@@ -935,7 +935,7 @@ export default function SolicitacaoModal({
               },
               {
                 idStatusSolicPrazoTema: 0,
-                idStatusSolicitacao: 5, // Análise Regulatória
+                idStatusSolicitacao: statusListType.ANALISE_REGULATORIA.id, // Análise Regulatória
                 idTema: formData.idTema,
                 nrPrazoInterno: 72,
                 nrPrazoExterno: 0,
@@ -947,7 +947,7 @@ export default function SolicitacaoModal({
               },
               {
                 idStatusSolicPrazoTema: 0,
-                idStatusSolicitacao: 6, // Em Aprovação
+                idStatusSolicitacao: statusListType.EM_APROVACAO.id, // Em Aprovação
                 idTema: formData.idTema,
                 nrPrazoInterno: 48,
                 nrPrazoExterno: 0,
@@ -959,7 +959,7 @@ export default function SolicitacaoModal({
               },
               {
                 idStatusSolicPrazoTema: 0,
-                idStatusSolicitacao: 7, // Em Assinatura
+                idStatusSolicitacao: statusListType.EM_ASSINATURA_DIRETORIA.id, // Em Assinatura Diretoria
                 idTema: formData.idTema,
                 nrPrazoInterno: 48,
                 nrPrazoExterno: 0,
@@ -1358,7 +1358,7 @@ export default function SolicitacaoModal({
                   return statusAtual?.nmStatus || solicitacao.statusCodigo;
                 }
                 const statusAtual = statusList.find(s => s.idStatusSolicitacao === 1);
-                return statusAtual?.nmStatus || 'Pré-análise';
+                return statusAtual?.nmStatus || statusListType.PRE_ANALISE.label;
               })()}
             </div>
           </div>

@@ -7,6 +7,7 @@ import {TemaResponse} from '@/api/temas/types';
 import {AreaResponse} from '@/api/areas/types';
 import {StatusSolicPrazoTemaForUI} from '@/api/status-prazo-tema/types';
 import {statusSolicPrazoTemaClient} from '@/api/status-prazo-tema/client';
+import { statusList } from "@/api/status-solicitacao/types";
 
 interface FiltersState {
   identificacao: string;
@@ -179,31 +180,31 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
     switch (statusStr) {
       case 'P':
       case '1':
-        return 'Pré-análise';
+        return statusList.PRE_ANALISE.label;
       case 'V':
       case '2':
-        return 'Vencido Regulatório';
+        return statusList.VENCIDO_REGULATORIO.label;
       case 'A':
       case '3':
-        return 'Em análise Área Técnica';
+        return statusList.EM_ANALISE_AREA_TECNICA.label;
       case 'T':
       case '4':
-        return 'Vencido Área Técnica';
+        return statusList.VENCIDO_AREA_TECNICA.label;
       case 'R':
       case '5':
-        return 'Análise Regulatória';
+        return statusList.ANALISE_REGULATORIA.label;
       case 'O':
       case '6':
-        return 'Em Aprovação';
+        return statusList.EM_APROVACAO.label;
       case 'S':
       case '7':
-        return 'Em Assinatura';
+        return statusList.EM_ASSINATURA_DIRETORIA.label;
       case 'C':
       case '8':
-        return 'Concluído';
+        return statusList.CONCLUIDO.label;
       case 'X':
       case '9':
-        return 'Arquivado';
+        return statusList.ARQUIVADO.label;
       default:
         return status?.toString() || 'N/A';
     }
