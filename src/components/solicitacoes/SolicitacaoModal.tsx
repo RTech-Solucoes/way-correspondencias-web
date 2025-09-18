@@ -9,7 +9,7 @@ import {Textarea} from '@/components/ui/textarea';
 import {Label} from '@/components/ui/label';
 import {Checkbox} from '@/components/ui/checkbox';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
-import {SolicitacaoRequest, SolicitacaoResponse} from '@/api/solicitacoes/types';
+import {SolicitacaoRequest, SolicitacaoResponse, SolicitacaoPrazoResponse} from '@/api/solicitacoes/types';
 import {ResponsavelResponse} from '@/api/responsaveis/types';
 import {TemaResponse} from '@/api/temas/types';
 import {solicitacoesClient} from '@/api/solicitacoes/client';
@@ -37,6 +37,7 @@ import {AreaResponse} from '@/api/areas/types';
 import {usePermissoes} from "@/context/permissoes/PermissoesContext";
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { AnaliseGerenteDiretor } from '@/types/solicitacoes/types';
+import { STATUS_LIST } from '@/api/status-solicitacao/types';
 
 interface AnexoListItem {
   idAnexo?: number;
@@ -97,7 +98,7 @@ export default function SolicitacaoModal({
   const [loadingStatusPrazos, setLoadingStatusPrazos] = useState(false);
   const [prazoExcepcional, setPrazoExcepcional] = useState(false);
   const [statusList, setStatusList] = useState<StatusSolicitacaoResponse[]>([]);
-  const [createdSolicitacao, setCreatedSolicitacao] = useState<SolicitacaoResponse | null>(null);
+  const [createdSolicitacao] = useState<SolicitacaoResponse | null>(null);
   const [allAreas, setAllAreas] = useState<AreaResponse[]>([]);
   const {canListarAnexo, canInserirAnexo} = usePermissoes();
   const [hasLoadedStatusPrazos, setHasLoadedStatusPrazos] = useState(false);
@@ -106,6 +107,7 @@ export default function SolicitacaoModal({
   const [confirmSendToast, setConfirmSendToast] = useState<string>('');
   const [hasTramitacoes, setHasTramitacoes] = useState(false);
   const [tramitacoesChecked, setTramitacoesChecked] = useState(false);
+  const [prazosSolicitacaoPorStatus, setPrazosSolicitacaoPorStatus] = useState<SolicitacaoPrazoResponse[]>([]);
 
   const handleConfirmSend = useCallback(async () => {
     if (!confirmSendId) return;
@@ -126,6 +128,40 @@ export default function SolicitacaoModal({
       setConfirmSendToast('');
     }
   }, [confirmSendId, confirmSendToast, onClose, onSave, router]);
+
+  
+  useEffect(() => {
+    const loadPrazos = async () => {
+      const prazosSolicitacaoPorStatus = await solicitacoesClient.listarPrazos(solicitacao?.idSolicitacao || 0);
+      console.log(prazosSolicitacaoPorStatus);
+      setPrazosSolicitacaoPorStatus(prazosSolicitacaoPorStatus || []);
+      setFormData(prev => ({
+        ...prev,
+        flExcepcional: solicitacao?.flExcepcional === 'S' ? 'S' : 'N'
+      }));
+      setPrazoExcepcional((solicitacao?.flExcepcional || 'N') === 'S');
+
+      try {
+        const temaId = formData.idTema || solicitacao?.idTema || solicitacao?.tema?.idTema || 0;
+        const temaNome = getSelectedTema()?.nmTema || solicitacao?.tema?.nmTema || '';
+        if ((prazosSolicitacaoPorStatus || []).length > 0) {
+          const mapped = (prazosSolicitacaoPorStatus || []).map(p => ({
+            idStatusSolicPrazoTema: 0,
+            idStatusSolicitacao: p.idStatusSolicitacao,
+            idTema: temaId,
+            nrPrazoInterno: p.nrPrazoInterno || 0,
+            tema: { idTema: temaId, nmTema: temaNome },
+            flAtivo: 'S'
+          })) as StatusSolicPrazoTemaForUI[];
+          setStatusPrazos(mapped);
+        }
+      } catch {}
+    };
+    if (solicitacao?.idSolicitacao) {
+      loadPrazos();
+    }
+  }, [solicitacao?.idSolicitacao]);
+
 
   useEffect(() => {
     const loadTramitacoes = async () => {
@@ -172,7 +208,7 @@ export default function SolicitacaoModal({
         nrProcesso: solicitacao.nrProcesso || '',
         flAnaliseGerenteDiretor: solicitacao.flAnaliseGerenteDiretor || ''
       });
-      setPrazoExcepcional(false);
+
     } else {
       setFormData({
         cdIdentificacao: '',
@@ -189,7 +225,7 @@ export default function SolicitacaoModal({
         nrProcesso: '',
         flAnaliseGerenteDiretor: ''
       });
-      setPrazoExcepcional(false);
+
     }
     setCurrentStep(1);
     setAnexos([]);
@@ -333,7 +369,7 @@ export default function SolicitacaoModal({
             idTema: formData.idTema,
             tpPrazo: formData.tpPrazo || undefined,
             nrPrazoInterno: formData.nrPrazo,
-            flExcepcional: prazoExcepcional ? 'S' : 'N',
+            flExcepcional: formData.flExcepcional === 'S' ? 'S' : 'N',
             idsAreas: formData.idsAreas
           });
         }
@@ -345,20 +381,30 @@ export default function SolicitacaoModal({
           return;
         }
         if (!hasTramitacoes) {
-          const solicitacoesPrazos = statusPrazos
-            .filter(p => p.nrPrazoInterno && p.nrPrazoInterno > 0 && p.idStatusSolicitacao)
-            .map(p => ({
-              idStatusSolicitacao: p.idStatusSolicitacao!,
-              nrPrazoInterno: p.nrPrazoInterno,
-              tpPrazo: formData.tpPrazo || undefined,
-              flExcepcional: prazoExcepcional ? 'S' : 'N'
-            }));
+          if (prazoExcepcional) {
+            const solicitacoesPrazos = statusPrazos
+              .filter(p => p.nrPrazoInterno && p.nrPrazoInterno > 0 && p.idStatusSolicitacao)
+              .map(p => ({
+                idStatusSolicitacao: p.idStatusSolicitacao!,
+                nrPrazoInterno: p.nrPrazoInterno,
+                tpPrazo: formData.tpPrazo || undefined,
+                flExcepcional: 'S'
+              }));
 
-          await solicitacoesClient.etapaPrazo(solicitacao.idSolicitacao, {
-            idTema: formData.idTema,
-            nrPrazoInterno: formData.nrPrazo,
-            solicitacoesPrazos
-          });
+            await solicitacoesClient.etapaPrazo(solicitacao.idSolicitacao, {
+              idTema: formData.idTema,
+              nrPrazoInterno: formData.nrPrazo,
+              flExcepcional: 'S',
+              solicitacoesPrazos
+            });
+          } else {
+            await solicitacoesClient.etapaPrazo(solicitacao.idSolicitacao, {
+              idTema: formData.idTema,
+              nrPrazoInterno: formData.nrPrazo,
+              flExcepcional: 'N',
+              solicitacoesPrazos: []
+            });
+          }
         }
 
         setCurrentStep(4);
@@ -456,7 +502,7 @@ export default function SolicitacaoModal({
 
       onFinish();
     }
-  }, [currentStep, formData, solicitacao, prazoExcepcional, statusPrazos, anexos, anexosBackend, anexosTypeE, hasTramitacoes]);
+  }, [currentStep, formData, solicitacao, statusPrazos, anexos, anexosBackend, anexosTypeE, hasTramitacoes]);
 
   const handlePreviousStep = useCallback(() => {
     if (currentStep === 2) {
@@ -597,7 +643,7 @@ export default function SolicitacaoModal({
           dsObservacao: formData.dsObservacao?.trim(),
           nrOficio: formData.nrOficio?.trim(),
           nrProcesso: formData.nrProcesso?.trim(),
-          flExcepcional: prazoExcepcional ? 'S' : 'N',
+          flExcepcional: formData.flExcepcional === 'S' ? 'S' : 'N',
           flAnaliseGerenteDiretor: formData.flAnaliseGerenteDiretor,
         });
         id = created.idSolicitacao;
@@ -615,11 +661,11 @@ export default function SolicitacaoModal({
           idTema: formData.idTema,
           tpPrazo: formData.tpPrazo || undefined,
           nrPrazoInterno: formData.nrPrazo,
-          flExcepcional: prazoExcepcional ? 'S' : 'N',
+          flExcepcional: formData.flExcepcional === 'S' ? 'S' : 'N',
           idsAreas: formData.idsAreas
         });
 
-        if (statusPrazos.length > 0) {
+        if (formData.flExcepcional === 'S') {
           const solicitacoesPrazos = statusPrazos
             .filter(p => p.nrPrazoInterno && p.nrPrazoInterno > 0 && p.idStatusSolicitacao)
             .map(p => ({
@@ -628,11 +674,11 @@ export default function SolicitacaoModal({
               nrPrazoInterno: p.nrPrazoInterno,
               nrPrazoExterno: p.nrPrazoExterno,
               tpPrazo: formData.tpPrazo || undefined,
-              flExcepcional: prazoExcepcional ? 'S' : 'N'
+              flExcepcional: 'S'
             }));
-          if (solicitacoesPrazos.length > 0) {
-            await solicitacoesClient.etapaPrazo(id, { nrPrazoInterno: formData.nrPrazo, solicitacoesPrazos });
-          }
+          await solicitacoesClient.etapaPrazo(id, { nrPrazoInterno: formData.nrPrazo, solicitacoesPrazos });
+        } else {
+          await solicitacoesClient.etapaPrazo(id, { nrPrazoInterno: formData.nrPrazo, solicitacoesPrazos: [] });
         }
 
         if (anexos.length > 0) {
@@ -858,15 +904,21 @@ export default function SolicitacaoModal({
 
     try {
       setLoadingStatusPrazos(true);
-      const prazos = await statusSolicPrazoTemaClient.listar(formData.idTema);
-
       const selectedTema = temas.find(t => t.idTema === formData.idTema);
 
-      if (prazos.length === 0) {
         try {
-          const prazosPadrao = await statusSolicPrazoTemaClient.buscarPrazosPadraoParaUI(formData.idTema);
-          if (prazosPadrao.length > 0) {
-            setStatusPrazos(prazosPadrao);
+          if (prazosSolicitacaoPorStatus.length > 0) {
+            const temaId = formData.idTema || solicitacao?.idTema || solicitacao?.tema?.idTema || 0;
+            const temaNome = getSelectedTema()?.nmTema || solicitacao?.tema?.nmTema || '';
+            const mapped = (prazosSolicitacaoPorStatus || []).map(p => ({
+              idStatusSolicPrazoTema: 0,
+              idStatusSolicitacao: p.idStatusSolicitacao,
+              idTema: temaId,
+              nrPrazoInterno: p.nrPrazoInterno || 0,
+              tema: { idTema: temaId, nmTema: temaNome },
+              flAtivo: 'S'
+            })) as StatusSolicPrazoTemaForUI[];
+            setStatusPrazos(mapped);
           } else {
             const defaultPrazos: StatusSolicPrazoTemaForUI[] = [
               {
@@ -938,9 +990,6 @@ export default function SolicitacaoModal({
           ];
           setStatusPrazos(defaultPrazos);
         }
-      } else {
-        setStatusPrazos(prazos);
-      }
     } catch (error) {
       console.error('Erro ao carregar prazos por status:', error);
       toast.error('Erro ao carregar configurações de prazos');
@@ -978,24 +1027,20 @@ export default function SolicitacaoModal({
   const selectedTema = getSelectedTema();
   
   const currentPrazoTotal =
-    statusPrazos.reduce((acc, curr) => acc + curr.nrPrazoInterno, 0)
+    (prazosSolicitacaoPorStatus.length > 0
+      ? prazosSolicitacaoPorStatus.reduce((acc, curr) => acc + (curr.nrPrazoInterno || 0), 0)
+      : statusPrazos.reduce((acc, curr) => acc + curr.nrPrazoInterno, 0)
+    )
 
   const renderStep3 = useCallback((): JSX.Element => {
     const statusOptions = statusList.length > 0 ? statusList.map(status => ({
       codigo: status.idStatusSolicitacao,
       nome: status.nmStatus
-    })) : [
-      { codigo: 1, nome: 'Pré-análise' },
-      { codigo: 2, nome: 'Vencido Regulatório' },
-      { codigo: 3, nome: 'Em análise Área Técnica' },
-      { codigo: 4, nome: 'Vencido Área Técnica' },
-      { codigo: 5, nome: 'Análise Regulatória' },
-      { codigo: 6, nome: 'Em Aprovação' },
-      { codigo: 7, nome: 'Em Assinatura' },
-      { codigo: 8, nome: 'Concluído' },
-      { codigo: 9, nome: 'Arquivado' }
-    ];
-    console.log('anexosBackend', anexosBackend);
+    })) : STATUS_LIST.map(status => ({
+      codigo: status.id,
+      nome: status.label
+    }));
+    console.log('formData.flExcepcional', formData.flExcepcional);
     return (
       <div className="space-y-6">
         {formData.idTema ? (
@@ -1009,8 +1054,13 @@ export default function SolicitacaoModal({
                     checked={prazoExcepcional}
                     disabled={hasTramitacoes}
                     onCheckedChange={async (checked) => {
+                      if (hasTramitacoes) return;
                       const ativo = !!checked;
                       setPrazoExcepcional(ativo);
+                      setFormData(prev => ({
+                        ...prev,
+                        flExcepcional: ativo ? 'S' : 'N'
+                      }));
 
                       if (!ativo && formData.idTema) {
                         try {
@@ -1050,8 +1100,9 @@ export default function SolicitacaoModal({
               ) : (
                 <div className="grid grid-cols-3 gap-4">
                   {statusOptions.map((status, index) => {
-                    const prazoConfig = statusPrazos.find(p => p.idStatusSolicitacao === status.codigo);
-                    const prazoAtual = prazoConfig?.nrPrazoInterno || 0;
+                    const prazoFromSolicitacao = prazosSolicitacaoPorStatus.find(p => p.idStatusSolicitacao === status.codigo)?.nrPrazoInterno;
+                    const prazoFromConfig = statusPrazos.find(p => p.idStatusSolicitacao === status.codigo)?.nrPrazoInterno;
+                    const prazoAtual = prazoExcepcional ? (prazoFromConfig ?? 0) : (prazoFromSolicitacao ?? prazoFromConfig ?? 0);
                     return (
                       <div key={index} className={`rounded-lg p-4 ${prazoExcepcional ? 'bg-gray-50' : 'bg-gray-100'}`}>
                         <div className="space-y-3">
@@ -1067,7 +1118,7 @@ export default function SolicitacaoModal({
                                 variant="outline"
                                 size="sm"
                                 onClick={() => updateLocalPrazo(status.codigo, Math.max(0, prazoAtual - 1))}
-                                disabled={!prazoExcepcional}
+                                disabled={!prazoExcepcional || hasTramitacoes}
                                 className="w-8 h-8 p-0 flex items-center justify-center"
                               >-</Button>
                               <Input
@@ -1081,7 +1132,7 @@ export default function SolicitacaoModal({
                                   }
                                 }}
                                 placeholder="0"
-                                isDisabled={!prazoExcepcional}
+                                isDisabled={!prazoExcepcional || hasTramitacoes}
                                 className="flex-1"
                                 classNames={{
                                   input: "text-center"
@@ -1097,7 +1148,7 @@ export default function SolicitacaoModal({
                                 variant="outline"
                                 size="sm"
                                 onClick={() => updateLocalPrazo(status.codigo, prazoAtual + 1)}
-                                disabled={!prazoExcepcional}
+                                disabled={!prazoExcepcional || hasTramitacoes}
                                 className="w-8 h-8 p-0 flex items-center justify-center"
                               >+</Button>
                             </div>
@@ -1288,7 +1339,7 @@ export default function SolicitacaoModal({
             <Label className="text-sm font-semibold text-gray-700">Prazo Principal</Label>
             <div className="p-3 border border-yellow-200 rounded-lg text-sm">
               {hoursToDaysAndHours(currentPrazoTotal)}
-              {prazoExcepcional && (
+              {currentPrazoTotal > 240 && (
                 <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
                   Excepcional
                 </span>
@@ -1314,24 +1365,37 @@ export default function SolicitacaoModal({
         </div>
       </div>
 
-      {statusPrazos.length > 0 && (
-        <div className="border-t pt-4">
-          <Label className="text-sm font-semibold text-gray-700">Prazos Configurados por Status</Label>
-          <div className="mt-2 space-y-2">
-            {statusPrazos
-              .filter(p => p.nrPrazoInterno && p.nrPrazoInterno > 0)
-              .map(prazo => {
-                const status = statusList.find(s => s.idStatusSolicitacao === prazo.idStatusSolicitacao);
-                return (
-                  <div key={prazo.idStatusSolicitacao} className="flex justify-between items-center p-2 bg-gray-50 rounded text-sm">
-                    <span className="font-medium">{status?.nmStatus || `Status ${prazo.idStatusSolicitacao}`}</span>
-                    <span className="text-gray-600">{prazo.nrPrazoInterno} horas</span>
-                  </div>
-                );
-              })}
-          </div>
+      <div className="border-t pt-4">
+        <Label className="text-sm font-semibold text-gray-700">Prazos Configurados por Status</Label>
+        <div className="mt-2 space-y-2">
+          {(() => {
+            const statusOptionsForSummary = statusList.length > 0 ? statusList.map(status => ({
+              codigo: status.idStatusSolicitacao,
+              nome: status.nmStatus
+            })) : STATUS_LIST.map(status => ({
+              codigo: status.id,
+              nome: status.label
+            }));
+
+            const items = statusOptionsForSummary
+              .map((status) => {
+                const prazoFromSolicitacao = prazosSolicitacaoPorStatus.find(p => p.idStatusSolicitacao === status.codigo)?.nrPrazoInterno;
+                const prazoFromConfig = statusPrazos.find(p => p.idStatusSolicitacao === status.codigo)?.nrPrazoInterno;
+                const horas = (prazoFromSolicitacao ?? prazoFromConfig ?? 0);
+                return { status, horas };
+              })
+              .filter(item => (item.horas || 0) > 0)
+              .map(({ status, horas }) => (
+                <div key={status.codigo} className="flex justify-between items-center p-2 bg-gray-50 rounded text-sm">
+                  <span className="font-medium">{status.nome}</span>
+                  <span className="text-gray-600">{horas} horas</span>
+                </div>
+              ));
+
+            return items;
+          })()}
         </div>
-      )}
+      </div>
 
       <div className="border-t pt-4">
         <Label className="text-sm font-semibold text-gray-700">Anexos ({anexos.length + anexosBackend.length + anexosTypeE.length})</Label>
@@ -1428,7 +1492,7 @@ export default function SolicitacaoModal({
         </div>
       </div>
     </div>
-  ), [formData.cdIdentificacao, formData.nrOficio, formData.nrProcesso, formData.dsAssunto, formData.dsObservacao, formData.dsSolicitacao, formData.idsAreas, formData.nrPrazo, formData.idResponsavel, formData.tpPrazo, getSelectedTema, solicitacao?.tema?.nmTema, solicitacao?.nmTema, responsaveis, prazoExcepcional, statusPrazos, anexos, anexosBackend, anexosTypeE, canListarAnexo, allAreas, getResponsavelByArea, statusList, handleDownloadAnexoBackend, handleDownloadAnexoEmail]);
+  ), [formData.cdIdentificacao, formData.nrOficio, formData.nrProcesso, formData.dsAssunto, formData.dsObservacao, formData.dsSolicitacao, formData.idsAreas, formData.nrPrazo, formData.idResponsavel, formData.tpPrazo, getSelectedTema, solicitacao?.tema?.nmTema, solicitacao?.nmTema, responsaveis, statusPrazos, anexos, anexosBackend, anexosTypeE, canListarAnexo, allAreas, getResponsavelByArea, statusList, handleDownloadAnexoBackend, handleDownloadAnexoEmail]);
 
   useEffect(() => {
     const loadStatusList = async () => {
