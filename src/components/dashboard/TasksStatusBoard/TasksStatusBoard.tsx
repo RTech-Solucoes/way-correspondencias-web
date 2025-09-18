@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import CardHeader from "../card-header";
 import { capitalizeWords, getStatusColorVision, renderIcon } from "../functions";
 import PaginationTasksStatus from "./PaginationTasksStatus";
+import { statusList } from "@/api/status-solicitacao/types";
 
 interface TasksStatusBoardProps {
   refreshTrigger?: number;
@@ -22,16 +23,16 @@ export default function TasksStatusBoard({ refreshTrigger }: TasksStatusBoardPro
 
   const sortVisionGeral = (data: DashboardOverview[]) => {
     const statusOrder = [
-      "Concluído",
-      "Em análise da área técnica",
-      "Em aprovação",
-      "Pré-análise",
-      "Em assinatura Diretoria",
-      "Arquivado",
-      "Em chancela",
-      "Vencido regulatório",
-      "Análise regulatória",
-      "Vencido área técnica",
+      statusList.CONCLUIDO.label,
+      statusList.EM_ANALISE_AREA_TECNICA.label,
+      statusList.EM_APROVACAO.label,
+      statusList.PRE_ANALISE.label,
+      statusList.EM_ASSINATURA_DIRETORIA.label,
+      statusList.ARQUIVADO.label,
+      statusList.EM_CHANCELA.label,
+      statusList.VENCIDO_REGULATORIO.label,
+      statusList.ANALISE_REGULATORIA.label,
+      statusList.VENCIDO_AREA_TECNICA.label,
     ];
 
     return data.sort((a, b) => {
