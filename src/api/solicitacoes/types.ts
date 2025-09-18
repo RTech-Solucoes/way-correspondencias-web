@@ -61,6 +61,7 @@ export interface SolicitacaoResponse extends BaseResponse {
   dsObservacao?: string;
   nrPrazo?: number;
   nrOficio?: string;
+  flExcepcional?: string;
   nrProcesso?: string;
   tpPrazo?: string;
   dtPrazo?: string;
@@ -116,6 +117,7 @@ export interface SolicitacaoPrazoResponse {
   nrPrazoDias: number;
   statusCodigo?: number;
   tpPrazo?: string;
+  flExcepcional?: string;
   dtPrazoLimite?: string;
 }
 
@@ -153,6 +155,7 @@ export interface SolicitacaoEtapaPrazoRequest {
   idTema?: number;
   nrPrazoInterno?: number;
   nrPrazoExterno?: number;
+  flExcepcional?: string;
   solicitacoesPrazos: SolicitacaoPrazoItemRequest[];
 }
 
