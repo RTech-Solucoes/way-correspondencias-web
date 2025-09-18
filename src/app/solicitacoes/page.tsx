@@ -37,7 +37,7 @@ import {toast} from 'sonner';
 import {useDebounce} from '@/hooks/use-debounce';
 import {Pagination} from '@/components/ui/pagination';
 import {useSolicitacoes} from '@/context/solicitacoes/SolicitacoesContext';
-import TramitacaoModal from '@/components/solicitacoes/TramitacaoModal';
+import HistoricoRespostasModal from '@/components/solicitacoes/HistoricoRespostasModal';
 import FilterModal from '@/components/solicitacoes/FilterModal';
 import { statusSolicitacaoClient } from '@/api/status-solicitacao/client';
 import { FiltrosAplicados } from '@/components/ui/applied-filters';
@@ -53,6 +53,7 @@ import {useTramitacoesMutation} from '@/hooks/use-tramitacoes';
 import tramitacoesClient from '@/api/tramitacoes/client';
 import {usePermissoes} from "@/context/permissoes/PermissoesContext";
 import LoadingRows from "@/components/solicitacoes/LoadingRows";
+import { statusList } from '@/api/status-solicitacao/types';
 
 export default function SolicitacoesPage() {
   const {
@@ -605,10 +606,9 @@ export default function SolicitacoesPage() {
                     <StickyTableCell className="text-right">
                       <div className="flex items-center justify-end space-x-2">
                         {!(
-                          solicitacao.statusSolicitacao?.nmStatus === 'Pré-análise' ||
-                          solicitacao.statusSolicitacao?.nmStatus === 'Pre-analise' ||
+                          solicitacao.statusSolicitacao?.nmStatus === statusList.PRE_ANALISE.label ||
                           solicitacao.statusSolicitacao?.idStatusSolicitacao === 1 ||
-                          getStatusText(solicitacao.statusCodigo?.toString() || '') === 'Pré-análise'
+                          getStatusText(solicitacao.statusCodigo?.toString() || '') === statusList.PRE_ANALISE.label
                         ) && (
                           <Button
                             variant="ghost"
@@ -715,11 +715,13 @@ export default function SolicitacoesPage() {
         />
       )}
 
-      <TramitacaoModal
+      <HistoricoRespostasModal
         idSolicitacao={tramitacaoSolicitacaoId}
         open={showTramitacaoModal}
         onClose={handleCloseTramitacaoModal}
-        areas={areas}
+        title="Histórico de Tramitações"
+        loadingText="Carregando tramitações..."
+        emptyText="Nenhuma tramitação encontrada para esta solicitação."
       />
 
       <ConfirmationDialog

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { JSX } from "react";
 import { weeks } from "./MockDados";
+import { statusList } from "@/api/status-solicitacao/types";
 
 const statusConfig: Record<
     string,
@@ -21,52 +22,52 @@ const statusConfig: Record<
         calendarColor: string;
     }
 > = {
-    "Pré-análise": {
+    [statusList.PRE_ANALISE.label]: {
         icon: <FileTextIcon className="h-4 w-4 text-orange-600 mr-2" />,
         visionColor: "bg-orange-400",
         calendarColor: "bg-orange-100",
     },
-    "Vencido regulatório": {
+    [statusList.VENCIDO_REGULATORIO.label]: {
         icon: <XCircleIcon className="h-4 w-4 text-rose-700 mr-2" />,
         visionColor: "bg-rose-500",
         calendarColor: "bg-rose-200",
     },
-    "Em análise da área técnica": {
+    [statusList.EM_ANALISE_AREA_TECNICA.label]: {
         icon: <PencilIcon className="h-4 w-4 text-amber-700 mr-2" />,
         visionColor: "bg-amber-500",
         calendarColor: "bg-amber-200",
     },
-    "Vencido área técnica": {
+    [statusList.VENCIDO_AREA_TECNICA.label]: {
         icon: <XCircleIcon className="h-4 w-4 text-rose-600 mr-2" />,
         visionColor: "bg-text-rose-600",
         calendarColor: "bg-rose-100",
     },
-    "Análise regulatória": {
+    [statusList.ANALISE_REGULATORIA.label]: {
         icon: <FileSearch className="h-4 w-4 text-amber-600 mr-2" />,
         visionColor: "bg-amber-400",
         calendarColor: "bg-amber-100",
     },
-    "Em aprovação": {
+    [statusList.EM_APROVACAO.label]: {
         icon: <FileSignatureIcon className="h-4 w-4 text-blue-600 mr-2" />,
         visionColor: "bg-blue-400",
         calendarColor: "bg-blue-100",
     },
-    "Em chancela": {
+    [statusList.EM_CHANCELA.label]: {
         icon: <UserPen className="h-4 w-4 text-cyan-700 mr-2" />,
         visionColor: "bg-cyan-500",
         calendarColor: "bg-cyan-200",
     },
-    "Em assinatura Diretoria": {
+    [statusList.EM_ASSINATURA_DIRETORIA.label]: {
         icon: <Stamp className="h-4 w-4 text-cyan-600 mr-2" />,
         visionColor: "bg-cyan-400",
         calendarColor: "bg-cyan-100",
     },
-    Concluído: {
+    [statusList.CONCLUIDO.label]: {
         icon: <CheckCircleIcon className="h-4 w-4 text-green-600 mr-2" />,
         visionColor: "bg-green-400",
         calendarColor: "bg-green-100",
     },
-    Arquivado: {
+    [statusList.ARQUIVADO.label]: {
         icon: <ArchiveIcon className="h-4 w-4 text-gray-600 mr-2" />,
         visionColor: "bg-gray-400",
         calendarColor: "bg-gray-100",
