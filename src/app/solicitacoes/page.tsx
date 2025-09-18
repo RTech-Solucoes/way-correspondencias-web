@@ -37,7 +37,7 @@ import {toast} from 'sonner';
 import {useDebounce} from '@/hooks/use-debounce';
 import {Pagination} from '@/components/ui/pagination';
 import {useSolicitacoes} from '@/context/solicitacoes/SolicitacoesContext';
-import TramitacaoModal from '@/components/solicitacoes/TramitacaoModal';
+import HistoricoRespostasModal from '@/components/solicitacoes/HistoricoRespostasModal';
 import FilterModal from '@/components/solicitacoes/FilterModal';
 import { statusSolicitacaoClient } from '@/api/status-solicitacao/client';
 import { FiltrosAplicados } from '@/components/ui/applied-filters';
@@ -715,11 +715,13 @@ export default function SolicitacoesPage() {
         />
       )}
 
-      <TramitacaoModal
+      <HistoricoRespostasModal
         idSolicitacao={tramitacaoSolicitacaoId}
         open={showTramitacaoModal}
         onClose={handleCloseTramitacaoModal}
-        areas={areas}
+        title="Histórico de Tramitações"
+        loadingText="Carregando tramitações..."
+        emptyText="Nenhuma tramitação encontrada para esta solicitação."
       />
 
       <ConfirmationDialog

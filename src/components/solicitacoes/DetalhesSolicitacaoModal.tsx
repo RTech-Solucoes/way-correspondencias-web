@@ -372,7 +372,7 @@ export default function DetalhesSolicitacaoModal({
     } finally {
       setSending(false);
     }
-  }, [dsDarecer, onClose, sol?.solicitacao?.idSolicitacao, sol?.statusSolicitacao?.idStatusSolicitacao, sol?.solicitacaoPareceres, userResponsavel?.idResponsavel]);
+  }, [dsDarecer, onClose, sol?.solicitacao?.idSolicitacao,sol?.tramitacoes, sol?.statusSolicitacao?.idStatusSolicitacao, sol?.solicitacaoPareceres, userResponsavel?.idResponsavel]);
 
   const handleBaixarAnexo = useCallback(
     async (anexo: AnexoItemShape) => {
