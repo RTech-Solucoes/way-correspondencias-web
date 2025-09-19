@@ -676,9 +676,19 @@ export default function SolicitacaoModal({
               tpPrazo: formData.tpPrazo || undefined,
               flExcepcional: 'S'
             }));
-          await solicitacoesClient.etapaPrazo(id, { nrPrazoInterno: formData.nrPrazo, solicitacoesPrazos });
+          await solicitacoesClient.etapaPrazo(id, {
+            idTema: formData.idTema,
+            nrPrazoInterno: formData.nrPrazo,
+            flExcepcional: 'S',
+            solicitacoesPrazos
+          });
         } else {
-          await solicitacoesClient.etapaPrazo(id, { nrPrazoInterno: formData.nrPrazo, solicitacoesPrazos: [] });
+          await solicitacoesClient.etapaPrazo(id, {
+            idTema: formData.idTema,
+            nrPrazoInterno: formData.nrPrazo,
+            flExcepcional: 'N',
+            solicitacoesPrazos: []
+          });
         }
 
         if (anexos.length > 0) {
@@ -819,7 +829,7 @@ export default function SolicitacaoModal({
           name="dsAssunto"
           value={formData.dsAssunto}
           onChange={handleInputChange}
-          rows={getRows(formData.dsAssunto)}
+          rows={4}
           disabled={hasTramitacoes}
         />
       </div>
@@ -831,7 +841,7 @@ export default function SolicitacaoModal({
           name="dsObservacao"
           value={formData.dsObservacao}
           onChange={handleInputChange}
-          rows={getRows(formData.dsObservacao)}
+          rows={4}
           disabled={hasTramitacoes}
         />
       </div>
@@ -1339,7 +1349,7 @@ export default function SolicitacaoModal({
             <Label className="text-sm font-semibold text-gray-700">Prazo Principal</Label>
             <div className="p-3 border border-yellow-200 rounded-lg text-sm">
               {hoursToDaysAndHours(currentPrazoTotal)}
-              {currentPrazoTotal > 240 && (
+              {currentPrazoTotal !== 240 && (
                 <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
                   Excepcional
                 </span>

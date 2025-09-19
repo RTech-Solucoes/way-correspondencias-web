@@ -328,3 +328,21 @@ export const formatDateBr = (dateString?: string): string => {
   const [year, month, day] = parts;
   return `${day}/${month}/${year}`;
 }
+
+
+export function buildQueryParams<
+  TParams extends Record<string, any>,
+  TKeys extends readonly (keyof TParams & string)[]
+>(
+  params: any,
+  allowedKeys: TKeys
+): URLSearchParams {
+  const queryParams = new URLSearchParams();
+  allowedKeys.forEach((key) => {
+    const value = params[key];
+    if (value !== undefined && value !== null && value !== '') {
+      queryParams.append(key, String(value));
+    }
+  });
+  return queryParams;
+}
