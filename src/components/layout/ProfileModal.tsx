@@ -32,7 +32,8 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
     dsEmail: '',
     nrCpf: '',
     dtNascimento: '',
-    idsAreas: []
+    idsAreas: [],
+    nmCargo: ''
   });
   const [selectedAreaIds, setSelectedAreaIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
@@ -76,6 +77,7 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
         dsEmail: responsavelData.dsEmail,
         nrCpf: responsavelData.nrCpf || '',
         dtNascimento: responsavelData.dtNascimento || '',
+        nmCargo: responsavelData.nmCargo || '',
         idsAreas: responsavelData.areas ? responsavelData.areas.map(responsavelArea => responsavelArea.area.idArea) : []
       };
 
@@ -165,6 +167,7 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
         dsEmail: formData.dsEmail.trim(),
         nrCpf: formData.nrCpf.trim(),
         dtNascimento: formData.dtNascimento,
+        nmCargo: formData.nmCargo.trim(),
         idsAreas: selectedAreaIds.length > 0 ? selectedAreaIds : []
       };
 

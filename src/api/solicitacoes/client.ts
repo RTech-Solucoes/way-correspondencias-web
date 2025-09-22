@@ -1,4 +1,5 @@
 import ApiClient from '../client';
+import { buildQueryParams } from '@/utils/utils';
 import {
   SolicitacaoResponse,
   SolicitacaoRequest,
@@ -8,6 +9,7 @@ import {
   SolicitacaoPrazoResponse,
   PagedResponse,
   SolicitacaoDetalheResponse,
+  SolicitacaoFilterParams,
 } from './types';
 import { solicitacaoAnexosClient } from './anexos-client';
 import { AnexoResponse, ArquivoDTO } from '../anexos/type';
@@ -20,17 +22,8 @@ class SolicitacoesClient {
     this.client = new ApiClient('/solicitacoes');
   }
 
-  async listar(params: {
-    filtro?: string,
-    page?: number,
-    size?: number,
-    idStatusSolicitacao?: number,
-    idArea?: number,
-    cdIdentificacao?: string,
-    idTema?: number,
-    sort?: string,
-  }): Promise<PagedResponse<SolicitacaoResponse> | SolicitacaoResponse[]> {
-    const queryParams = new URLSearchParams();
+  async buscarPorFiltro(params: SolicitacaoFilterParams = {}): Promise<PagedResponse<SolicitacaoResponse> | SolicitacaoResponse[]> {
+
     const allowedKeys = [
       'filtro',
       'page',
@@ -42,14 +35,7 @@ class SolicitacoesClient {
       'sort',
     ] as const;
 
-    allowedKeys.forEach((key) => {
-      const value = params[key];
-      if (value !== undefined && value !== null && value !== '') {
-        queryParams.append(key, String(value));
-      }
-    });
-
-    const qs = queryParams.toString();
+    const qs = buildQueryParams(params, allowedKeys).toString();
     return this.client.request<PagedResponse<SolicitacaoResponse> | SolicitacaoResponse[]>(qs ? `?${qs}` : '', { method: 'GET' });
   }
 
@@ -66,13 +52,6 @@ class SolicitacoesClient {
     });
   }
 
-  async atualizar(id: number, solicitacao: SolicitacaoRequest): Promise<SolicitacaoResponse> {
-    return this.client.request<SolicitacaoResponse>(`/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(solicitacao),
-    });
-  }
-
   async deletar(id: number): Promise<void> {
     return this.client.request<void>(`/${id}`, {
       method: 'DELETE',
@@ -81,32 +60,6 @@ class SolicitacoesClient {
 
   async listarPrazos(idSolicitacao: number): Promise<SolicitacaoPrazoResponse[]> {
     return this.client.request<SolicitacaoPrazoResponse[]>(`/${idSolicitacao}/prazos`, { method: 'GET' });
-  }
-
-  async previewSla(idSolicitacao: number, idStatusSolicitacao: number): Promise<number> {
-    return this.client.request<number>(`/${idSolicitacao}/sla?idStatusSolicitacao=${idStatusSolicitacao}`, {
-      method: 'GET',
-    });
-  }
-
-  async definirPrazo(id: number, nrPrazoDias: number, idStatusSolicitacao?: number, tpPrazo?: string): Promise<void> {
-    const params = new URLSearchParams();
-    params.append('nrPrazoDias', nrPrazoDias.toString());
-    if (idStatusSolicitacao !== undefined) params.append('idStatusSolicitacao', idStatusSolicitacao.toString());
-    if (tpPrazo) params.append('tpPrazo', tpPrazo);
-    return this.client.request<void>(`/${id}/prazos/definir?${params.toString()}`, { method: 'POST' });
-  }
-
-  async definirPrazoExcepcional(id: number, nrPrazoDias: number, idStatusSolicitacao?: number, tpPrazo?: string): Promise<void> {
-    const params = new URLSearchParams();
-    params.append('nrPrazoDias', nrPrazoDias.toString());
-    if (idStatusSolicitacao !== undefined) params.append('idStatusSolicitacao', idStatusSolicitacao.toString());
-    if (tpPrazo) params.append('tpPrazo', tpPrazo);
-    return this.client.request<void>(`/${id}/prazos/excepcional?${params.toString()}`, { method: 'POST' });
-  }
-
-  async aplicarStatus(id: number, idStatusSolicitacao: number) {
-    return this.client.request<void>(`/${id}/aplicar-status/${idStatusSolicitacao}`, { method: 'POST' });
   }
 
   async etapaIdentificacao(id: number, req: SolicitacaoIdentificacaoRequest) {

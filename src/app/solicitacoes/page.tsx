@@ -164,7 +164,7 @@ export default function SolicitacoesPage() {
         : undefined;
       const cdIdentificacao = activeFilters.identificacao || undefined;
 
-      const response = await solicitacoesClient.listar({
+      const response = await solicitacoesClient.buscarPorFiltro({
         filtro,
         page: currentPage,
         size: 10,
