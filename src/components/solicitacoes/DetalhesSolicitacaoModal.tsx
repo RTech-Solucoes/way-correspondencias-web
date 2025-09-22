@@ -158,11 +158,11 @@ export default function DetalhesSolicitacaoModal({
   const itensSolicitacao: AnexoItemShape[] = anexosSolic.map(mapToItem);
   const itensEmail: AnexoItemShape[] = anexosEmail.map(mapToItem);
 
-  const isAprovacao = sol?.statusSolicitacao?.idStatusSolicitacao === 6; // Em aprovação;
-  const isDiretoria = sol?.statusSolicitacao?.idStatusSolicitacao === 8; // Em assinatura Diretoria;
+  const isAprovacao = sol?.statusSolicitacao?.idStatusSolicitacao ===  statusList.EM_APROVACAO.id; 
+  const isDiretoria = sol?.statusSolicitacao?.idStatusSolicitacao ===  statusList.EM_ASSINATURA_DIRETORIA.id; 
   const isAnaliseRegulatoriaAprovarDevolutiva =
-    sol?.statusSolicitacao?.idStatusSolicitacao === 5 &&
-    idProximoStatusAnaliseRegulatoria === 6; // Em análise regulatória e próximo status é aprovação;
+    sol?.statusSolicitacao?.idStatusSolicitacao ===  statusList.ANALISE_REGULATORIA.id &&
+    idProximoStatusAnaliseRegulatoria === 6; 
   const isFlagVisivel = isAprovacao || isDiretoria || isAnaliseRegulatoriaAprovarDevolutiva;
 
   const isPermissaoEnviandoDevolutiva = (isFlagVisivel && !canAprovarSolicitacao);
