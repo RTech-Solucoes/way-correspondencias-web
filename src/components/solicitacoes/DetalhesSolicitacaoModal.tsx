@@ -30,6 +30,7 @@ import { solicitacaoParecerClient } from '@/api/solicitacao-parecer/client';
 import { SolicitacaoParecerResponse } from '@/api/solicitacao-parecer/types';
 import { statusList } from '@/api/status-solicitacao/types';
 import solicitacaoAssinanteClient from '@/api/solicitacao-assinante/client';
+import { perfilUtil } from '@/api/perfis/types';
 
 
 type AnexoItemShape = {
@@ -213,20 +214,20 @@ export default function DetalhesSolicitacaoModal({
   }, [open, sol?.solicitacao?.idSolicitacao, sol?.solicitacao?.area, sol]);
 
   function computeTpResponsavel(perfil: number): TipoResponsavelAnexo {
-    // 1: Administrador, 2: Gestor do Sistema - (R)
-    if (perfil === 1 || perfil === 2) {
+
+    if (perfil === perfilUtil.ADMINISTRADOR || perfil === perfilUtil.GESTOR_DO_SISTEMA) {
       return TipoResponsavelAnexo.R;
     }
-    // 3: Validador / Assinante - (D)
-    if (perfil === 3) {
+
+    if (perfil === perfilUtil.VALIDADOR_ASSINANTE) {
       return TipoResponsavelAnexo.D;
     }
-    // 4: Executor Avançado - (G)
-    if (perfil === 4) {
+
+    if (perfil === perfilUtil.EXECUTOR_AVANCADO) {
       return TipoResponsavelAnexo.G;
     }
-    // 5: Executor, 6: Executor Restrito, 7: Técnico / Suporte - (A)
-    if (perfil === 5 || perfil === 6 || perfil === 7) {
+
+    if (perfil === perfilUtil.EXECUTOR || perfil === perfilUtil.EXECUTOR_RESTRITO || perfil === perfilUtil.TECNICO_SUPORTE) {
       return TipoResponsavelAnexo.A;
     }
     return TipoResponsavelAnexo.A;
