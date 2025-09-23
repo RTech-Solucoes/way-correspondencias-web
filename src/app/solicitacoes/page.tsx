@@ -54,6 +54,7 @@ import tramitacoesClient from '@/api/tramitacoes/client';
 import {usePermissoes} from "@/context/permissoes/PermissoesContext";
 import LoadingRows from "@/components/solicitacoes/LoadingRows";
 import { statusList } from '@/api/status-solicitacao/types';
+import { formatDateBr } from '@/utils/utils';
 
 export default function SolicitacoesPage() {
   const {
@@ -163,6 +164,9 @@ export default function SolicitacoesPage() {
         ? Number(activeFilters.tema)
         : undefined;
       const cdIdentificacao = activeFilters.identificacao || undefined;
+      const nomeResponsavel = activeFilters.nomeResponsavel || undefined;
+      const dtCriacaoInicio = activeFilters.dtCriacaoInicio ? `${activeFilters.dtCriacaoInicio}T00:00:00` : undefined;
+      const dtCriacaoFim = activeFilters.dtCriacaoFim ? `${activeFilters.dtCriacaoFim}T23:59:59` : undefined;
 
       const response = await solicitacoesClient.buscarPorFiltro({
         filtro,
@@ -171,7 +175,10 @@ export default function SolicitacoesPage() {
         idStatusSolicitacao,
         idArea,
         cdIdentificacao,
-        idTema
+        idTema,
+        nomeResponsavel,
+        dtCriacaoInicio,
+        dtCriacaoFim
       });
 
       if (response && typeof response === 'object' && 'content' in response) {
@@ -231,6 +238,11 @@ export default function SolicitacoesPage() {
     loadTemas();
     loadAreas();
   }, [loadSolicitacoes, loadResponsaveis, loadTemas, loadAreas]);
+
+  // Monitora mudanças nos filtros ativos para recarregar as solicitações
+  useEffect(() => {
+    loadSolicitacoes();
+  }, [activeFilters, loadSolicitacoes]);
   const appliedFilters = [
     ...(searchQuery ? [{
       key: 'search',
@@ -279,6 +291,39 @@ export default function SolicitacoesPage() {
       color: 'indigo' as const,
       onRemove: () => {
         const newFilters = { ...activeFilters, tema: '' };
+        setActiveFilters(newFilters);
+        setFilters(newFilters);
+      }
+    }] : []),
+    ...(activeFilters.nomeResponsavel ? [{
+      key: 'nomeResponsavel',
+      label: 'Nome do Responsável',
+      value: activeFilters.nomeResponsavel,
+      color: 'yellow' as const,
+      onRemove: () => {
+        const newFilters = { ...activeFilters, nomeResponsavel: '' };
+        setActiveFilters(newFilters);
+        setFilters(newFilters);
+      }
+    }] : []),
+    ...(activeFilters.dtCriacaoInicio ? [{
+      key: 'dtCriacaoInicio',
+      label: 'Data Criação Início',
+      value: formatDateBr(activeFilters.dtCriacaoInicio),
+      color: 'pink' as const,
+      onRemove: () => {
+        const newFilters = { ...activeFilters, dtCriacaoInicio: '' };
+        setActiveFilters(newFilters);
+        setFilters(newFilters);
+      }
+    }] : []),
+    ...(activeFilters.dtCriacaoFim ? [{
+      key: 'dtCriacaoFim',
+      label: 'Data Criação Fim',
+      value: formatDateBr(activeFilters.dtCriacaoFim),
+      color: 'pink' as const,
+      onRemove: () => {
+        const newFilters = { ...activeFilters, dtCriacaoFim: '' };
         setActiveFilters(newFilters);
         setFilters(newFilters);
       }
