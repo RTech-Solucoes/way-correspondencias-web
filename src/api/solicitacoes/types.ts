@@ -202,6 +202,7 @@ export interface SolicitacaoDetalheResponse extends BaseResponse {
   anexosSolicitacao: AnexoResponse[];
   email: EmailComAnexosResponse;
   tramitacoes: TramitacaoComAnexosResponse[];
+  solicitacoesAssinantes: SolicitacaoAssinanteResponse[];
 }
 
 export interface SolicitacaoFilterParams {
