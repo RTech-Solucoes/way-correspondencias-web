@@ -63,6 +63,16 @@ class ResponsaveisClient {
       method: 'DELETE',
     });
   }
+
+  async buscarPorIdPerfil(idsPerfis: number[]): Promise<ResponsavelResponse[]> {
+    const params = new URLSearchParams();
+    idsPerfis.forEach(id => params.append('idsPerfis', id.toString()));
+    
+    return this.client.request<ResponsavelResponse[]>(`/perfil?${params.toString()}`, {
+      method: 'GET'
+    });
+  }
+
 }
 
 export const responsaveisClient = new ResponsaveisClient();

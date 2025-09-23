@@ -30,3 +30,13 @@ export interface PerfilFilterParams {
   size?: number;
   sort?: string;
 }
+
+export const perfilUtil = {
+  ADMINISTRADOR: 1,
+  GESTOR_DO_SISTEMA: 2,
+  VALIDADOR_ASSINANTE: 3,
+  EXECUTOR_AVANCADO: 4,
+  EXECUTOR: 5,
+  EXECUTOR_RESTRITO: 6,
+  TECNICO_SUPORTE: 7
+};

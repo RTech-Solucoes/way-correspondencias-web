@@ -94,6 +94,7 @@ export interface SolicitacaoRequest {
   idsAreas?: number[];
   flExcepcional?: string;
   flAnaliseGerenteDiretor?: string;
+  idsResponsaveisAssinates?: number[];
 }
 
 export interface SolicitacaoTemaRequest {
@@ -212,5 +213,17 @@ export interface SolicitacaoFilterParams {
   page?: number;
   size?: number;
   sort?: string;
+}
 
+export interface SolicitacaoAssinanteRequest {
+  idSolicitacao: number;
+  idStatusSolicitacao: number;
+  idResponsavel: number;
+}
+
+export interface SolicitacaoAssinanteResponse extends BaseResponse {
+  idSolicitacaoAssinantem: number;
+  idSolicitacao: number;
+  idStatusSolicitacao: number;
+  idResponsavel: number;
 }
