@@ -239,7 +239,6 @@ export default function SolicitacoesPage() {
     loadAreas();
   }, [loadSolicitacoes, loadResponsaveis, loadTemas, loadAreas]);
 
-  // Monitora mudanças nos filtros ativos para recarregar as solicitações
   useEffect(() => {
     loadSolicitacoes();
   }, [activeFilters, loadSolicitacoes]);
