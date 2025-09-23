@@ -113,8 +113,28 @@ export default function DetalhesSolicitacaoModal({
     const prazoAtual = sol?.solcitacaoPrazos?.find(
       (p) => +(p?.idStatusSolicitacao) === (sol?.statusSolicitacao?.idStatusSolicitacao)
     );
+
+    if (sol?.statusSolicitacao?.nmStatus === statusList.VENCIDO_AREA_TECNICA.label ) {
+      const prazoAtualVencido = sol?.solcitacaoPrazos?.find(
+        (p) => +(p?.idStatusSolicitacao) === (statusList.EM_ANALISE_AREA_TECNICA.id)
+      );
+      return formatDateTime(prazoAtualVencido?.dtPrazoLimite);
+    }
+
+    if (sol?.statusSolicitacao?.nmStatus === statusList.VENCIDO_REGULATORIO.label ) {
+      const prazoAtualVencido = sol?.solcitacaoPrazos?.find(
+        (p) => +(p?.idStatusSolicitacao) === (statusList.ANALISE_REGULATORIA.id)
+      );
+      return formatDateTime(prazoAtualVencido?.dtPrazoLimite);
+    }
+
     return formatDateTime(prazoAtual?.dtPrazoLimite);
-  }, [sol?.statusSolicitacao?.idStatusSolicitacao, sol?.solcitacaoPrazos]);
+  }, [sol?.statusSolicitacao?.idStatusSolicitacao, sol?.solcitacaoPrazos, sol?.statusSolicitacao?.nmStatus]);
+
+  const isPrazoVencido = useMemo(() => {
+    return sol?.statusSolicitacao?.nmStatus === statusList.VENCIDO_AREA_TECNICA.label ||
+           sol?.statusSolicitacao?.nmStatus === statusList.VENCIDO_REGULATORIO.label;
+  }, [sol?.statusSolicitacao?.nmStatus]);
 
   const assunto = sol?.solicitacao?.dsAssunto ?? '';
   const descricao = sol?.solicitacao?.dsSolicitacao ?? '';
@@ -566,7 +586,9 @@ export default function DetalhesSolicitacaoModal({
 
     if (isAreaRespondeu != null && isAreaRespondeu?.length > 0) return false;
 
-    if (sol?.statusSolicitacao?.nmStatus === statusList.EM_ANALISE_AREA_TECNICA.label) {
+    if (sol?.statusSolicitacao?.nmStatus === statusList.EM_ANALISE_AREA_TECNICA.label 
+      || sol?.statusSolicitacao?.nmStatus === statusList.VENCIDO_AREA_TECNICA.label
+    ) {
 
       if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.G) {
         return userResponsavel?.idPerfil === perfilUtil.EXECUTOR_AVANCADO;
@@ -593,7 +615,8 @@ export default function DetalhesSolicitacaoModal({
       return false;
     }
 
-    if (sol?.statusSolicitacao?.nmStatus === statusList.ANALISE_REGULATORIA.label) {
+    if (sol?.statusSolicitacao?.nmStatus === statusList.ANALISE_REGULATORIA.label ||
+      sol?.statusSolicitacao?.nmStatus === statusList.VENCIDO_REGULATORIO.label) {
        if (hasAreaInicial) return true;
       return false;
     }
@@ -671,7 +694,7 @@ export default function DetalhesSolicitacaoModal({
                 <div className="mt-3 flex items-center gap-2 text-sm">
                   <ClockIcon className="h-4 w-4" />
                   <span className="text-muted-foreground">Prazo para resposta:</span>
-                  <span className="font-medium">{prazoLine}</span>
+                  <span className={`font-medium ${isPrazoVencido ? 'text-red-600' : ''}`}>{prazoLine}</span>
                 </div>
               </div>
             </div>
