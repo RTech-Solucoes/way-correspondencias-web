@@ -158,9 +158,12 @@ export default function DetalhesSolicitacaoModal({
   const itensSolicitacao: AnexoItemShape[] = anexosSolic.map(mapToItem);
   const itensEmail: AnexoItemShape[] = anexosEmail.map(mapToItem);
 
-  const isAprovacao = sol?.statusSolicitacao?.idStatusSolicitacao === 6; // Em aprovação;
-  const isDiretoria = sol?.statusSolicitacao?.idStatusSolicitacao === 8; // Em assinatura Diretoria;
-  const isFlagVisivel = isAprovacao || isDiretoria;
+  const isAprovacao = sol?.statusSolicitacao?.idStatusSolicitacao ===  statusList.EM_APROVACAO.id; 
+  const isDiretoria = sol?.statusSolicitacao?.idStatusSolicitacao ===  statusList.EM_ASSINATURA_DIRETORIA.id; 
+  const isAnaliseRegulatoriaAprovarDevolutiva =
+    sol?.statusSolicitacao?.idStatusSolicitacao ===  statusList.ANALISE_REGULATORIA.id &&
+    idProximoStatusAnaliseRegulatoria === 6; 
+  const isFlagVisivel = isAprovacao || isDiretoria || isAnaliseRegulatoriaAprovarDevolutiva;
 
   const isPermissaoEnviandoDevolutiva = (isFlagVisivel && !canAprovarSolicitacao);
 
@@ -444,11 +447,13 @@ export default function DetalhesSolicitacaoModal({
       ? 'Escrever resposta ao Gerente do Regulatório'
       : 'Enviar devolutiva';
                                                                                 
-  const btnLabelStatusAnaliseRegulatoria = idProximoStatusAnaliseRegulatoria === 6
+  const btnLabelStatusAnaliseRegulatoria = isAnaliseRegulatoriaAprovarDevolutiva && flAprovado === 'S'
     ? 'Encaminhar para os Gerentes das Áreas'
-    : idProximoStatusAnaliseRegulatoria === 7
-      ? 'Encaminhar para o Gerente do Regulatório'
-      : 'Enviar Resposta';
+    : isAnaliseRegulatoriaAprovarDevolutiva && flAprovado === 'N'
+      ? 'Encaminhar para Área Técnica'
+        : idProximoStatusAnaliseRegulatoria === 7
+          ? 'Encaminhar para o Gerente do Regulatório'
+          : 'Enviar Resposta';
                                             
   const btnStatusEmAssinaturaDiretoria = (isDiretoria && flAprovado === 'S')
     ? 'Aprovar Solicitação' 
@@ -486,7 +491,10 @@ export default function DetalhesSolicitacaoModal({
     ? 'Em acordo com o Parecer da Diretoria?'
     : 'Aprovar devolutiva?';
   
+  const labelFragAnaliseRegulatoria = isAnaliseRegulatoriaAprovarDevolutiva ? 'Aprovar devolutiva da(s) Área(s)' : '';
+
   const textlabelFlag = {
+    [statusList.ANALISE_REGULATORIA.label]: labelFragAnaliseRegulatoria,
     [statusList.EM_ASSINATURA_DIRETORIA.label]: labelFragEmDiretoria,
     [statusList.EM_APROVACAO.label]: labelFragEmAprovacao,
     default: 'Aprovar devolutiva?'
