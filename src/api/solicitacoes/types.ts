@@ -94,6 +94,7 @@ export interface SolicitacaoRequest {
   idsAreas?: number[];
   flExcepcional?: string;
   flAnaliseGerenteDiretor?: string;
+  idsResponsaveisAssinates?: number[];
 }
 
 export interface SolicitacaoTemaRequest {
@@ -201,4 +202,28 @@ export interface SolicitacaoDetalheResponse extends BaseResponse {
   anexosSolicitacao: AnexoResponse[];
   email: EmailComAnexosResponse;
   tramitacoes: TramitacaoComAnexosResponse[];
+}
+
+export interface SolicitacaoFilterParams {
+  filtro?: string;
+  idStatusSolicitacao?: number;
+  idArea?: number;
+  cdIdentificacao?: string;
+  idTema?: number;
+  page?: number;
+  size?: number;
+  sort?: string;
+}
+
+export interface SolicitacaoAssinanteRequest {
+  idSolicitacao: number;
+  idStatusSolicitacao: number;
+  idResponsavel: number;
+}
+
+export interface SolicitacaoAssinanteResponse extends BaseResponse {
+  idSolicitacaoAssinantem: number;
+  idSolicitacao: number;
+  idStatusSolicitacao: number;
+  idResponsavel: number;
 }

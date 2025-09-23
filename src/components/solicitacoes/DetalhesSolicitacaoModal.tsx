@@ -29,6 +29,8 @@ import { AnaliseGerenteDiretor } from '@/types/solicitacoes/types';
 import { solicitacaoParecerClient } from '@/api/solicitacao-parecer/client';
 import { SolicitacaoParecerResponse } from '@/api/solicitacao-parecer/types';
 import { statusList } from '@/api/status-solicitacao/types';
+import solicitacaoAssinanteClient from '@/api/solicitacao-assinante/client';
+import { perfilUtil } from '@/api/perfis/types';
 
 
 type AnexoItemShape = {
@@ -91,11 +93,10 @@ export default function DetalhesSolicitacaoModal({
   const [userResponsavel, setUserResponsavel] = useState<ResponsavelResponse | null>(null);
   const [idProximoStatusAnaliseRegulatoria, setIdProximoStatusAnaliseRegulatoria] = useState<number | null>(null);
   const [, setParecerAtual] = useState<SolicitacaoParecerResponse | null>(null);
-
   const descRef = useRef<HTMLParagraphElement | null>(null);
   const [canToggleDescricao, setCanToggleDescricao] = useState(false);
   const [lineHeightPx, setLineHeightPx] = useState<number | null>(null);
-
+  const [idsResponsaveisAssinates, setIdsResponsaveisAssinates] = useState<number[]>([]);
   const { canListarAnexo, canDeletarAnexo, canAprovarSolicitacao } = usePermissoes();
 
   const sol = solicitacao ?? null;
@@ -158,9 +159,12 @@ export default function DetalhesSolicitacaoModal({
   const itensSolicitacao: AnexoItemShape[] = anexosSolic.map(mapToItem);
   const itensEmail: AnexoItemShape[] = anexosEmail.map(mapToItem);
 
-  const isAprovacao = sol?.statusSolicitacao?.idStatusSolicitacao === 6; // Em aprovação;
-  const isDiretoria = sol?.statusSolicitacao?.idStatusSolicitacao === 8; // Em assinatura Diretoria;
-  const isFlagVisivel = isAprovacao || isDiretoria;
+  const isAprovacao = sol?.statusSolicitacao?.idStatusSolicitacao ===  statusList.EM_APROVACAO.id; 
+  const isDiretoria = sol?.statusSolicitacao?.idStatusSolicitacao ===  statusList.EM_ASSINATURA_DIRETORIA.id; 
+  const isAnaliseRegulatoriaAprovarDevolutiva =
+    sol?.statusSolicitacao?.idStatusSolicitacao ===  statusList.ANALISE_REGULATORIA.id &&
+    idProximoStatusAnaliseRegulatoria === 6; 
+  const isFlagVisivel = isAprovacao || isDiretoria || isAnaliseRegulatoriaAprovarDevolutiva;
 
   const isPermissaoEnviandoDevolutiva = (isFlagVisivel && !canAprovarSolicitacao);
 
@@ -213,20 +217,20 @@ export default function DetalhesSolicitacaoModal({
   }, [open, sol?.solicitacao?.idSolicitacao, sol?.solicitacao?.area, sol]);
 
   function computeTpResponsavel(perfil: number): TipoResponsavelAnexo {
-    // 1: Administrador, 2: Gestor do Sistema - (R)
-    if (perfil === 1 || perfil === 2) {
+
+    if (perfil === perfilUtil.ADMINISTRADOR || perfil === perfilUtil.GESTOR_DO_SISTEMA) {
       return TipoResponsavelAnexo.R;
     }
-    // 3: Validador / Assinante - (D)
-    if (perfil === 3) {
+
+    if (perfil === perfilUtil.VALIDADOR_ASSINANTE) {
       return TipoResponsavelAnexo.D;
     }
-    // 4: Executor Avançado - (G)
-    if (perfil === 4) {
+
+    if (perfil === perfilUtil.EXECUTOR_AVANCADO) {
       return TipoResponsavelAnexo.G;
     }
-    // 5: Executor, 6: Executor Restrito, 7: Técnico / Suporte - (A)
-    if (perfil === 5 || perfil === 6 || perfil === 7) {
+
+    if (perfil === perfilUtil.EXECUTOR || perfil === perfilUtil.EXECUTOR_RESTRITO || perfil === perfilUtil.TECNICO_SUPORTE) {
       return TipoResponsavelAnexo.A;
     }
     return TipoResponsavelAnexo.A;
@@ -427,6 +431,25 @@ export default function DetalhesSolicitacaoModal({
     loadIdProximoStatusAnaliseRegulatoria();
   }, [sol?.solicitacao?.idSolicitacao, sol?.statusSolicitacao?.idStatusSolicitacao]);
 
+  
+  useEffect(() => {
+    const loadAssinantes = async () => {
+      if (sol?.solicitacao?.idSolicitacao && open) {
+        try {
+          const assinantes = await solicitacaoAssinanteClient.buscarPorIdSolicitacaoEIdStatusSolicitacao(
+            sol.solicitacao.idSolicitacao,
+            [statusList.EM_ASSINATURA_DIRETORIA.id]
+          );
+          setIdsResponsaveisAssinates(assinantes.map(a => a.idResponsavel));
+        } catch (error) {
+          console.error('Erro ao carregar assinantes:', error);
+        }
+      }
+    };
+
+    loadAssinantes();
+  }, [sol?.solicitacao?.idSolicitacao, open]);
+
   const devolutivaReprovadaUmavezDiretoria = sol?.tramitacoes?.some(
     t => t.tramitacao.idStatusSolicitacao === 8 && t.tramitacao.flAprovado === 'N'
   );
@@ -444,11 +467,13 @@ export default function DetalhesSolicitacaoModal({
       ? 'Escrever resposta ao Gerente do Regulatório'
       : 'Enviar devolutiva';
                                                                                 
-  const btnLabelStatusAnaliseRegulatoria = idProximoStatusAnaliseRegulatoria === 6
+  const btnLabelStatusAnaliseRegulatoria = isAnaliseRegulatoriaAprovarDevolutiva && flAprovado === 'S'
     ? 'Encaminhar para os Gerentes das Áreas'
-    : idProximoStatusAnaliseRegulatoria === 7
-      ? 'Encaminhar para o Gerente do Regulatório'
-      : 'Enviar Resposta';
+    : isAnaliseRegulatoriaAprovarDevolutiva && flAprovado === 'N'
+      ? 'Encaminhar para Área Técnica'
+        : idProximoStatusAnaliseRegulatoria === 7
+          ? 'Encaminhar para o Gerente do Regulatório'
+          : 'Enviar Resposta';
                                             
   const btnStatusEmAssinaturaDiretoria = (isDiretoria && flAprovado === 'S')
     ? 'Aprovar Solicitação' 
@@ -486,7 +511,10 @@ export default function DetalhesSolicitacaoModal({
     ? 'Em acordo com o Parecer da Diretoria?'
     : 'Aprovar devolutiva?';
   
+  const labelFragAnaliseRegulatoria = isAnaliseRegulatoriaAprovarDevolutiva ? 'Aprovar devolutiva da(s) Área(s)' : '';
+
   const textlabelFlag = {
+    [statusList.ANALISE_REGULATORIA.label]: labelFragAnaliseRegulatoria,
     [statusList.EM_ASSINATURA_DIRETORIA.label]: labelFragEmDiretoria,
     [statusList.EM_APROVACAO.label]: labelFragEmAprovacao,
     default: 'Aprovar devolutiva?'
@@ -514,6 +542,9 @@ export default function DetalhesSolicitacaoModal({
     userResponsavel?.idPerfil === 4 ||
     userResponsavel?.idPerfil === 5 
   );
+
+  const isAssinanteAutorizado = userResponsavel?.idResponsavel && 
+  idsResponsaveisAssinates.includes(userResponsavel.idResponsavel);
 
   const enableEnviarDevolutiva = (() => {
     const nrNivelUltimaTramitacao = sol?.tramitacoes[0]?.tramitacao?.nrNivel;
@@ -543,7 +574,7 @@ export default function DetalhesSolicitacaoModal({
         userResponsavel?.areas?.some(a => a?.area?.idArea === 13)
       );
 
-      return isRolePermitido && !isDiretorJaAprovou;
+      return isRolePermitido && isAssinanteAutorizado && !isDiretorJaAprovou;
     }
     
     if (tramitacaoExecutada != null && tramitacaoExecutada?.length > 0) return false;
@@ -603,6 +634,7 @@ export default function DetalhesSolicitacaoModal({
     if(statusText === statusList.EM_CHANCELA.label && !(userResponsavel?.idPerfil === 1)) return 'Apenas o Administrador pode responder.';
 
     if (statusText === statusList.EM_ASSINATURA_DIRETORIA.label) {
+      if (!isAssinanteAutorizado) return 'Apenas os validadores/assinantes selecionados podem aprovar esta solicitação.';
       if (isDiretorJaAprovou) return 'Já aprovado por um diretor. É necessário outro diretor aprovar.';
     }
     

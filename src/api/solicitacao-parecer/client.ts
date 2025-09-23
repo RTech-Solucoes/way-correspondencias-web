@@ -8,12 +8,6 @@ class SolicitacaoParecerClient {
     this.client = new ApiClient('/solicitacao-parecer');
   }
 
-  async buscarPorId(id: number): Promise<SolicitacaoParecerResponse> {
-    return this.client.request<SolicitacaoParecerResponse>(`/${id}`, {
-      method: 'GET',
-    });
-  }
-
   async buscarPorIdSolicitacao(idSolicitacao: number): Promise<SolicitacaoParecerResponse[]> {
     return this.client.request<SolicitacaoParecerResponse[]>(`/solicitacao/${idSolicitacao}`, {
       method: 'GET',

@@ -38,6 +38,8 @@ import {usePermissoes} from "@/context/permissoes/PermissoesContext";
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { AnaliseGerenteDiretor } from '@/types/solicitacoes/types';
 import { STATUS_LIST, statusList as statusListType } from '@/api/status-solicitacao/types';
+import { MultiSelectAssinantes } from '../ui/multi-select-assinates';
+import solicitacaoAssinanteClient from '@/api/solicitacao-assinante/client';
 
 interface AnexoListItem {
   idAnexo?: number;
@@ -88,7 +90,8 @@ export default function SolicitacaoModal({
     tpPrazo: '',
     nrOficio: '',
     nrProcesso: '',
-    flAnaliseGerenteDiretor: ''
+    flAnaliseGerenteDiretor: '',
+    idsResponsaveisAssinates: []
   });
   const [loading, setLoading] = useState(false);
   const [anexos, setAnexos] = useState<File[]>([]);
@@ -245,6 +248,28 @@ export default function SolicitacaoModal({
   }, [solicitacao, open, initialSubject, initialDescription]);
 
   useEffect(() => {
+    const loadAssinantes = async () => {
+      if (solicitacao?.idSolicitacao && open) {
+        try {
+          const assinantes = await solicitacaoAssinanteClient.buscarPorIdSolicitacaoEIdStatusSolicitacao(
+            solicitacao.idSolicitacao,
+            [statusListType.EM_ASSINATURA_DIRETORIA.id]
+          );
+          const idsAssinantes = assinantes.map(a => a.idResponsavel);
+          setFormData(prev => ({
+            ...prev,
+            idsResponsaveisAssinates: idsAssinantes
+          }));
+        } catch (error) {
+          console.error('Erro ao carregar assinantes:', error);
+        }
+      }
+    };
+
+    loadAssinantes();
+  }, [solicitacao?.idSolicitacao, open]);
+
+  useEffect(() => {
     const loadAllAreas = async () => {
       try {
         const areaResponse = await areasClient.buscarPorFiltro({ size: 1000 });
@@ -298,6 +323,13 @@ export default function SolicitacaoModal({
     }));
   }, []);
 
+  const handleResponsaveisSelectionChange = useCallback((selectedIds: number[]) => {
+    setFormData(prev => ({
+      ...prev,
+      idsResponsaveisAssinates: selectedIds
+    }));
+  }, []);
+
   const isStep1Valid = useCallback(() => {
     return formData.cdIdentificacao?.trim() !== '' && 
       ([
@@ -312,6 +344,10 @@ export default function SolicitacaoModal({
     return (formData.idTema !== undefined && formData.idTema > 0 &&
       formData.idsAreas && formData.idsAreas.length > 0) || false;
   }, [formData.idTema, formData.idsAreas]);
+
+  const isStep4Valid = useCallback(() => {
+    return !!(formData.idsResponsaveisAssinates && formData.idsResponsaveisAssinates.length === 2);
+  }, [formData.idsResponsaveisAssinates]);
 
   const getSelectedTema = useCallback(() => {
     return temas.find(tema => tema.idTema === formData.idTema);
@@ -409,8 +445,29 @@ export default function SolicitacaoModal({
 
         setCurrentStep(4);
       } else if (currentStep === 4) {
+        if (!formData.idsResponsaveisAssinates || formData.idsResponsaveisAssinates.length !== 2) {
+          toast.error("Selecione exatamente 2 validadores/assinantes para continuar");
+          return;
+        }
+
         if (!solicitacao) {
           setCurrentStep(5);
+          return;
+        }
+
+        if (!hasTramitacoes && formData.idsResponsaveisAssinates && formData.idsResponsaveisAssinates.length > 0) {
+          await solicitacaoAssinanteClient.criar(formData.idsResponsaveisAssinates.map(id => ({
+            idSolicitacao: solicitacao.idSolicitacao,
+            idStatusSolicitacao: statusListType.EM_ASSINATURA_DIRETORIA.id,
+            idResponsavel: id
+          })));
+        }
+
+        setCurrentStep(5);
+      }
+      else if (currentStep === 5) {
+        if (!solicitacao) {
+          setCurrentStep(6);
           return;
         }
         if (!hasTramitacoes) {
@@ -492,7 +549,7 @@ export default function SolicitacaoModal({
           }
         }
 
-        setCurrentStep(5);
+        setCurrentStep(6);
       }
     } catch (e) {
       console.error(e);
@@ -513,6 +570,8 @@ export default function SolicitacaoModal({
       setCurrentStep(3);
     } else if (currentStep === 5) {
       setCurrentStep(4);
+    } else if (currentStep === 6) {
+      setCurrentStep(5);
     }
   }, [currentStep]);
 
@@ -525,10 +584,12 @@ export default function SolicitacaoModal({
       setCurrentStep(step);
     } else if (step === 4 && isStep1Valid() && isStep2Valid()) {
       setCurrentStep(step);
-    } else if (step === 5 && isStep1Valid() && isStep2Valid()) {
+    } else if (step === 5 && isStep1Valid() && isStep2Valid() && isStep4Valid()) {
+      setCurrentStep(step);
+    } else if (step === 6 && isStep1Valid() && isStep2Valid() && isStep4Valid()) {
       setCurrentStep(step);
     }
-  }, [isStep1Valid, isStep2Valid]);
+  }, [isStep1Valid, isStep2Valid, isStep4Valid]);
 
   const handleAddAnexos = useCallback((files: FileList | null) => {
     if (files && files.length > 0) {
@@ -676,9 +737,19 @@ export default function SolicitacaoModal({
               tpPrazo: formData.tpPrazo || undefined,
               flExcepcional: 'S'
             }));
-          await solicitacoesClient.etapaPrazo(id, { nrPrazoInterno: formData.nrPrazo, solicitacoesPrazos });
+          await solicitacoesClient.etapaPrazo(id, {
+            idTema: formData.idTema,
+            nrPrazoInterno: formData.nrPrazo,
+            flExcepcional: 'S',
+            solicitacoesPrazos
+          });
         } else {
-          await solicitacoesClient.etapaPrazo(id, { nrPrazoInterno: formData.nrPrazo, solicitacoesPrazos: [] });
+          await solicitacoesClient.etapaPrazo(id, {
+            idTema: formData.idTema,
+            nrPrazoInterno: formData.nrPrazo,
+            flExcepcional: 'N',
+            solicitacoesPrazos: []
+          });
         }
 
         if (anexos.length > 0) {
@@ -727,7 +798,7 @@ export default function SolicitacaoModal({
     }
   };
 
-  const renderStep1 = () => (
+  const renderStep1 = () =>   (
     <div className="space-y-6">
       <div className="grid grid-cols-3 gap-4">
         <TextField
@@ -819,7 +890,7 @@ export default function SolicitacaoModal({
           name="dsAssunto"
           value={formData.dsAssunto}
           onChange={handleInputChange}
-          rows={getRows(formData.dsAssunto)}
+          rows={4}
           disabled={hasTramitacoes}
         />
       </div>
@@ -831,7 +902,7 @@ export default function SolicitacaoModal({
           name="dsObservacao"
           value={formData.dsObservacao}
           onChange={handleInputChange}
-          rows={getRows(formData.dsObservacao)}
+          rows={4}
           disabled={hasTramitacoes}
         />
       </div>
@@ -1168,6 +1239,17 @@ export default function SolicitacaoModal({
 
   const renderStep4 = useCallback(() => (
     <div className="space-y-6">
+      <MultiSelectAssinantes
+          selectedResponsavelIds={formData.idsResponsaveisAssinates || []}
+          onSelectionChange={handleResponsaveisSelectionChange}
+          disabled={hasTramitacoes}
+          label="Selecione os validadores em 'Em Assinatura Diretoria' *"
+        />
+    </div>
+  ), [formData.idsResponsaveisAssinates, handleResponsaveisSelectionChange, hasTramitacoes]);
+
+  const renderStep5 = useCallback(() => (
+    <div className="space-y-6">
 
       <div className="flex flex-col space-y-4">
         {canInserirAnexo &&
@@ -1234,7 +1316,7 @@ export default function SolicitacaoModal({
     </div>
   ), [anexos, anexosBackend, anexosTypeE, handleAddAnexos, handleRemoveAnexo, handleRemoveAnexoBackend, handleDownloadAnexoBackend, handleDownloadAnexoEmail, canListarAnexo, canInserirAnexo]);
 
-  const renderStep5 = useCallback(() => (
+  const renderStep6 = useCallback(() => (
     <div className="space-y-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">Resumo da Solicitação</h3>
 
@@ -1334,12 +1416,45 @@ export default function SolicitacaoModal({
       </div>
 
       <div className="border-t pt-4">
+        <Label className="text-sm font-semibold text-gray-700">Validadores/Assinantes</Label>
+        <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
+          {formData.idsResponsaveisAssinates && formData.idsResponsaveisAssinates.length > 0 ? (
+            <div className="space-y-3">
+              {formData.idsResponsaveisAssinates.map(responsavelId => {
+                const responsavel = responsaveis.find(r => r.idResponsavel === responsavelId);
+                return responsavel ? (
+                  <div key={responsavelId} className="flex items-center justify-between p-3 bg-white border rounded-lg shadow-sm">
+                    <div className="flex flex-col">
+                      <span className="font-medium text-gray-900">{responsavel?.nmResponsavel}</span>
+                      <span className="text-xs text-gray-500">{responsavel?.nmPerfil}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-sm font-medium text-blue-600">
+                        {responsavel?.nmCargo || 'Sem cargo'}
+                      </span>
+                      {responsavel && (
+                        <div className="text-xs text-gray-500">
+                          {responsavel.dsEmail}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : null;
+              })}
+            </div>
+          ) : (
+            'Nenhum validador/assinante selecionado'
+          )}
+        </div>
+      </div>
+
+      <div className="border-t pt-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label className="text-sm font-semibold text-gray-700">Prazo Principal</Label>
             <div className="p-3 border border-yellow-200 rounded-lg text-sm">
               {hoursToDaysAndHours(currentPrazoTotal)}
-              {currentPrazoTotal > 240 && (
+              {currentPrazoTotal !== 240 && (
                 <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
                   Excepcional
                 </span>
@@ -1517,7 +1632,7 @@ export default function SolicitacaoModal({
 
   useEffect(() => {
     const loadAnexosTypeE = async () => {
-      if ((currentStep === 4 || currentStep === 5) && solicitacao?.idSolicitacao) {
+      if (( currentStep === 5 || currentStep === 6) && solicitacao?.idSolicitacao) {
         try {
           const anexosE = await anexosClient.buscarPorIdObjetoETipoObjeto(
             solicitacao.idSolicitacao,
@@ -1554,6 +1669,7 @@ export default function SolicitacaoModal({
               { title: 'Dados da Solicitação', description: 'Informações básicas' },
               { title: 'Tema e Áreas', description: 'Configuração' },
               { title: 'Status e Prazos', description: 'Definições de tempo' },
+              { title: 'Assinates', description: 'Validador / Assinante' },
               { title: 'Anexos', description: 'Documentos' },
               { title: 'Resumo', description: 'Finalização' }
             ]}
@@ -1561,7 +1677,9 @@ export default function SolicitacaoModal({
             canNavigateToStep={(step: number): boolean => {
               if (step === 1) return true;
               if (step === 2) return isStep1Valid();
-              if (step >= 3) return isStep1Valid() && isStep2Valid();
+              if (step === 3) return isStep1Valid() && isStep2Valid();
+              if (step === 4) return isStep1Valid() && isStep2Valid();
+              if (step >= 5) return isStep1Valid() && isStep2Valid() && isStep4Valid();
               return false;
             }}
           />
@@ -1574,6 +1692,7 @@ export default function SolicitacaoModal({
             {currentStep === 3 && renderStep3()}
             {currentStep === 4 && renderStep4()}
             {currentStep === 5 && renderStep5()}
+            {currentStep === 6 && renderStep6()}
           </form>
         </div>
 
@@ -1671,6 +1790,36 @@ export default function SolicitacaoModal({
               <Button
                 type="button"
                 onClick={() => handleNextStep()}
+                disabled={loading || !isStep4Valid()}
+                className="flex items-center gap-2"
+                tooltip={
+                  hasTramitacoes 
+                    ? 'Esta solicitação já possui tramitações iniciadas. Edição bloqueada.'
+                    : !isStep4Valid() 
+                      ? 'Selecione exatamente 2 validadores/assinantes para continuar'
+                      : undefined
+                }
+              >
+                Próximo
+                <CaretRightIcon size={16} />
+              </Button>
+            </>
+          )}
+          {currentStep === 5 && (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handlePreviousStep}
+                disabled={loading}
+                className="flex items-center gap-2"
+              >
+                <CaretLeftIcon size={16} />
+                Anterior
+              </Button>
+              <Button
+                type="button"
+                onClick={() => handleNextStep()}
                 disabled={loading}
                 className="flex items-center gap-2"
                 tooltip={hasTramitacoes ? 'Esta solicitação já possui tramitações iniciadas. Edição bloqueada.' : ''}
@@ -1681,7 +1830,7 @@ export default function SolicitacaoModal({
             </>
           )}
 
-          {currentStep === 5 && (
+          {currentStep === 6 && (
             <>
               <Button
                 type="button"
