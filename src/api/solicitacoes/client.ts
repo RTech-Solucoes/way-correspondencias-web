@@ -32,6 +32,9 @@ class SolicitacoesClient {
       'idArea',
       'cdIdentificacao',
       'idTema',
+      'nomeResponsavel',
+      'dtCriacaoInicio',
+      'dtCriacaoFim',
       'sort',
     ] as const;
 
