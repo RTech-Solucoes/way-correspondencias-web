@@ -74,6 +74,9 @@ export interface SolicitacaoResponse extends BaseResponse {
   statusSolicitacao?: StatusSolicitacao;
   area?: AreaSolicitacao[];
   tema?: AreaTema;
+  dtPrazoLimite?: string;
+  dtPrimeiraTramitacao?: string;
+  dtConclusaoTramitacao?: string;
 }
 
 export interface SolicitacaoRequest {

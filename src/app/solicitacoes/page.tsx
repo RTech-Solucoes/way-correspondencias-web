@@ -55,6 +55,7 @@ import {usePermissoes} from "@/context/permissoes/PermissoesContext";
 import LoadingRows from "@/components/solicitacoes/LoadingRows";
 import { statusList } from '@/api/status-solicitacao/types';
 import { formatDateBr } from '@/utils/utils';
+import TimeProgress from '@/components/ui/time-progress';
 
 export default function SolicitacoesPage() {
   const {
@@ -554,6 +555,7 @@ export default function SolicitacoesPage() {
                   <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </StickyTableHead>
+              <StickyTableHead className="min-w-[220px]">Progresso</StickyTableHead>
               <StickyTableHead
                 className="cursor-pointer"
                 onClick={() => handleSort('flStatus')}
@@ -628,6 +630,15 @@ export default function SolicitacoesPage() {
                       )}
                     </StickyTableCell>
                     <StickyTableCell>{solicitacao.nmTema || solicitacao?.tema?.nmTema || '-'}</StickyTableCell>
+                    <StickyTableCell className="min-w-[220px]">
+                      <TimeProgress
+                        dtPrimeiraTramitacao={solicitacao.dtPrimeiraTramitacao}
+                        dtPrazoLimite={solicitacao.dtPrazoLimite}
+                        dataConclusaoTramitacao={solicitacao.dtConclusaoTramitacao}
+                        now={new Date().toISOString()}
+                        statusLabel={solicitacao.statusSolicitacao?.nmStatus}
+                      />
+                    </StickyTableCell>
                     <StickyTableCell>
                       <Badge
                         className="whitespace-nowrap truncate text-white"
