@@ -417,30 +417,21 @@ export default function SolicitacaoModal({
           return;
         }
         if (!hasTramitacoes) {
-          if (prazoExcepcional) {
-            const solicitacoesPrazos = statusPrazos
-              .filter(p => p.nrPrazoInterno && p.nrPrazoInterno > 0 && p.idStatusSolicitacao)
-              .map(p => ({
-                idStatusSolicitacao: p.idStatusSolicitacao!,
-                nrPrazoInterno: p.nrPrazoInterno,
-                tpPrazo: formData.tpPrazo || undefined,
-                flExcepcional: 'S'
-              }));
+          const solicitacoesPrazos = statusPrazos
+            .filter(p => p.nrPrazoInterno && p.nrPrazoInterno > 0 && p.idStatusSolicitacao)
+            .map(p => ({
+              idStatusSolicitacao: p.idStatusSolicitacao!,
+              nrPrazoInterno: p.nrPrazoInterno,
+              tpPrazo: formData.tpPrazo || undefined,
+              flExcepcional: 'S'
+            }));
 
-            await solicitacoesClient.etapaPrazo(solicitacao.idSolicitacao, {
-              idTema: formData.idTema,
-              nrPrazoInterno: formData.nrPrazo,
-              flExcepcional: 'S',
-              solicitacoesPrazos
-            });
-          } else {
-            await solicitacoesClient.etapaPrazo(solicitacao.idSolicitacao, {
-              idTema: formData.idTema,
-              nrPrazoInterno: formData.nrPrazo,
-              flExcepcional: 'N',
-              solicitacoesPrazos: []
-            });
-          }
+          await solicitacoesClient.etapaPrazo(solicitacao.idSolicitacao, {
+            idTema: formData.idTema,
+            nrPrazoInterno: formData.nrPrazo,
+            flExcepcional: formData.flExcepcional,
+            solicitacoesPrazos
+          });
         }
 
         setCurrentStep(4);
