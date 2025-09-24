@@ -42,7 +42,7 @@ export default class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const baseUrl = "http://api.way.correspondencias.rtechsolution.com.br/api"
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL;
     const url = `${baseUrl}${this.module}${endpoint}`;
 
     const headers: Record<string, string> = {
