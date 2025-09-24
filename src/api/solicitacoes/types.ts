@@ -140,6 +140,9 @@ export interface SolicitacaoFilterParams {
   idArea?: number;
   cdIdentificacao?: string;
   idTema?: number;
+  nomeResponsavel?: string;
+  dtCriacaoInicio?: string;
+  dtCriacaoFim?: string;
   page?: number;
   size?: number;
   sort?: string;
@@ -202,17 +205,7 @@ export interface SolicitacaoDetalheResponse extends BaseResponse {
   anexosSolicitacao: AnexoResponse[];
   email: EmailComAnexosResponse;
   tramitacoes: TramitacaoComAnexosResponse[];
-}
-
-export interface SolicitacaoFilterParams {
-  filtro?: string;
-  idStatusSolicitacao?: number;
-  idArea?: number;
-  cdIdentificacao?: string;
-  idTema?: number;
-  page?: number;
-  size?: number;
-  sort?: string;
+  solicitacoesAssinantes: SolicitacaoAssinanteResponse[];
 }
 
 export interface SolicitacaoAssinanteRequest {

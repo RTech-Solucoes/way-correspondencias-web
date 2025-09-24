@@ -34,3 +34,20 @@ export interface AreaFilterParams {
   size?: number;
   sort?: string;
 }
+
+export const areaUtil = {
+  OPERACAO: 1,
+  CONSERVA: 2,
+  SINALIZACAO: 3,
+  REGULATORIO: 4,
+  JURIDICO: 5,
+  MEIO_AMBIENTE: 6,
+  SEGURANCA_DO_TRABALHO: 7,
+  ADMINISTRATIVO: 8,
+  OUVIDORIA: 9,
+  COMUNICACAO: 10,
+  ENGENHARIA: 11,
+  TECNOLOGIA_DA_INFORMACAO: 12,
+  DIRETORIA: 13,
+  RECURSOS_HUMANOS: 14
+};

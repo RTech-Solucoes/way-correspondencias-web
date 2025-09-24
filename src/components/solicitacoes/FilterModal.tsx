@@ -22,6 +22,9 @@ interface FilterModalProps {
     area: string;
     dateFrom: string;
     dateTo: string;
+    nomeResponsavel: string;
+    dtCriacaoInicio: string;
+    dtCriacaoFim: string;
   };
   setFilters: (filters: any) => void;
   responsaveis: ResponsavelResponse[];
@@ -127,26 +130,39 @@ export default function FilterModal({
               </Select>
             </div>
           </div>
-          {/*<div className="grid grid-cols-2 gap-4">*/}
-          {/*  <div>*/}
-          {/*    <Label htmlFor="dateFrom">Data Início</Label>*/}
-          {/*    <Input*/}
-          {/*      id="dateFrom"*/}
-          {/*      type="date"*/}
-          {/*      value={filters.dateFrom}*/}
-          {/*      onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}*/}
-          {/*    />*/}
-          {/*  </div>*/}
-          {/*  <div>*/}
-          {/*    <Label htmlFor="dateTo">Data Fim</Label>*/}
-          {/*    <Input*/}
-          {/*      id="dateTo"*/}
-          {/*      type="date"*/}
-          {/*      value={filters.dateTo}*/}
-          {/*      onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}*/}
-          {/*    />*/}
-          {/*  </div>*/}
-          {/*</div>*/}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="dtCriacaoInicio">Data Criação Início</Label>
+              <Input
+                id="dtCriacaoInicio"
+                type="date"
+                value={filters.dtCriacaoInicio}
+                onChange={(e) => setFilters({ ...filters, dtCriacaoInicio: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="dtCriacaoFim">Data Criação Fim</Label>
+              <Input
+                id="dtCriacaoFim"
+                type="date"
+                value={filters.dtCriacaoFim}
+                onChange={(e) => setFilters({ ...filters, dtCriacaoFim: e.target.value })}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="nomeResponsavel">Nome do Responsável</Label>
+                <Input
+                  id="nomeResponsavel"
+                  value={filters.nomeResponsavel}
+                  onChange={(e) => setFilters({ ...filters, nomeResponsavel: e.target.value })}
+                  placeholder="Nome do responsável"
+                />
+                <div>  
+              </div>
+            </div>
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClearFilters}>

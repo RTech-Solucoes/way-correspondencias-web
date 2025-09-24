@@ -5,8 +5,7 @@ import {SolicitacaoResponse} from '@/api/solicitacoes/types';
 import {ResponsavelResponse} from '@/api/responsaveis/types';
 import {TemaResponse} from '@/api/temas/types';
 import {AreaResponse} from '@/api/areas/types';
-import {StatusSolicPrazoTemaForUI} from '@/api/status-prazo-tema/types';
-import {statusSolicPrazoTemaClient} from '@/api/status-prazo-tema/client';
+
 import { statusList } from "@/api/status-solicitacao/types";
 
 interface FiltersState {
@@ -17,6 +16,9 @@ interface FiltersState {
   status: string;
   dateFrom: string;
   dateTo: string;
+  nomeResponsavel: string;
+  dtCriacaoInicio: string;
+  dtCriacaoFim: string;
 }
 
 export interface SolicitacoesContextProps {
@@ -96,6 +98,9 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
     status: '',
     dateFrom: '',
     dateTo: '',
+    nomeResponsavel: '',
+    dtCriacaoInicio: '',
+    dtCriacaoFim: '',
   });
   const [activeFilters, setActiveFilters] = useState(filters);
 
@@ -131,6 +136,9 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
       status: '',
       dateFrom: '',
       dateTo: '',
+      nomeResponsavel: '',
+      dtCriacaoInicio: '',
+      dtCriacaoFim: '',
     };
     setFilters(clearedFilters);
     setActiveFilters(clearedFilters);
