@@ -71,17 +71,21 @@ const TimeProgress: React.FC<TimeProgressProps> = ({ dtPrimeiraTramitacao: start
 
   const barColor = (() => {
     if (porcentagem == null) return 'bg-gray-300';
-    if (isConcluido) return 'bg-green-600';
+    if (isConcluido) {
+      if (ConcluidoComAtraso) return 'bg-red-600';
+      return 'bg-blue-600';
+    }
     if (AtrasadoAtual) return 'bg-red-600';
+    if (porcentagem >= 40) return 'bg-yellow-500';
     return 'bg-green-600';
   })();
   const wrapperTitle = start && end ? `Início: ${new Date(start).toLocaleString('pt-BR')}\nFim: ${new Date(end).toLocaleString('pt-BR')}` : 'Sem prazo';
 
   const bottom = (() => {
-    if (isConcluido && ConcluidoComAtraso) return { text: TimeProgressStatus.CONCLUIDO_COM_ATRASO, color: 'text-red-600' } as const;
-    if (isConcluido) return { text: TimeProgressStatus.PRAZO_CONCLUIDO, color: 'text-green-600' } as const;
-    if (AtrasadoAtual) return { text: 'Progresso em atraso', color: 'text-red-600' } as const;
-    return { text: TimeProgressStatus.EM_ANDAMENTO, color: 'text-green-600' } as const;
+    if (isConcluido && ConcluidoComAtraso) return { text: 'Concluído com atraso', color: 'text-red-600' } as const;
+    if (isConcluido) return { text: 'Concluído', color: 'text-blue-600' } as const;
+    if (AtrasadoAtual) return { text: 'Em atraso', color: 'text-red-600' } as const;
+    return { text: 'Em andamento', color: 'text-green-600' } as const;
   })();
 
   const displayPercent = (() => {
