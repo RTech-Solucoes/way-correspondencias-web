@@ -104,6 +104,15 @@ body {
   overflow-x: hidden;
 }
 
+textarea {
+  @apply border border-input shadow-sm rounded-3xl;
+}
+
+textarea:focus, textarea:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 article {
   @apply flex flex-col w-full overflow-auto min-h-screen;
 }

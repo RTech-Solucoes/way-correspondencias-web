@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useCallback } from 'react';
+import React, {useCallback, useEffect} from 'react';
 import {
   StickyTable,
   StickyTableBody,
@@ -10,30 +10,32 @@ import {
   StickyTableRow
 } from '@/components/ui/sticky-table';
 import {Button} from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import {Input} from '@/components/ui/input';
 import {
+  ArrowClockwiseIcon,
+  ArrowsDownUpIcon,
   FunnelSimpleIcon,
   MagnifyingGlassIcon,
   PencilSimpleIcon,
   PlusIcon,
+  SpinnerIcon,
+  TagIcon,
   TrashIcon,
   XIcon,
-  TagIcon,
-  SpinnerIcon,
-  ArrowsDownUpIcon,
-  ArrowClockwiseIcon,
 } from '@phosphor-icons/react';
 import {Dialog, DialogContent, DialogHeader, DialogTitle} from '@/components/ui/dialog';
 import {Label} from '@/components/ui/label';
 import {TemaModal} from '@/components/temas/TemaModal';
 import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
 import PageTitle from '@/components/ui/page-title';
-import { Pagination } from '@/components/ui/pagination';
-import { useTemas } from '@/context/temas/TemasContext';
-import { temasClient } from '@/api/temas/client';
-import { TemaFilterParams } from '@/api/temas/types';
-import { toast } from 'sonner';
-import { useDebounce } from '@/hooks/use-debounce';
+import {Pagination} from '@/components/ui/pagination';
+import {useTemas} from '@/context/temas/TemasContext';
+import {temasClient} from '@/api/temas/client';
+import {TemaFilterParams} from '@/api/temas/types';
+import {toast} from 'sonner';
+import {useDebounce} from '@/hooks/use-debounce';
+import {usePermissoes} from "@/context/permissoes/PermissoesContext";
+import {FiltrosAplicados} from '@/components/ui/applied-filters';
 
 export default function TemasPage() {
   const {
@@ -62,6 +64,7 @@ export default function TemasPage() {
     filters,
     setFilters,
     activeFilters,
+    setActiveFilters,
     hasActiveFilters,
     sortField,
     sortDirection,
@@ -74,17 +77,16 @@ export default function TemasPage() {
   } = useTemas();
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
+  const { canInserirTema, canAtualizarTema, canDeletarTema } = usePermissoes()
 
   const loadTemas = useCallback(async () => {
     try {
       setLoading(true);
-
-      const filterParts = [];
-      if (debouncedSearchQuery) filterParts.push(debouncedSearchQuery);
-      if (activeFilters.nome) filterParts.push(activeFilters.nome);
-
+      
       const params: TemaFilterParams = {
-        filtro: filterParts.join(' ') || undefined,
+        filtro: debouncedSearchQuery || undefined,
+        nmTema: activeFilters.nome || undefined,
+        dsTema: activeFilters.descricao || undefined,
         page: currentPage,
         size: 10,
       };
@@ -144,6 +146,38 @@ export default function TemasPage() {
     return sorted;
   };
 
+  const filtrosAplicados = [
+      ...(searchQuery ? [{
+        key: 'search',
+        label: 'Busca',
+        value: searchQuery,
+        color: 'blue' as const,
+        onRemove: () => setSearchQuery('')
+      }] : []),
+      ...(activeFilters.nome ? [{
+        key: 'nome',
+        label: 'Nome',
+        value: activeFilters.nome,
+        color: 'green' as const,
+        onRemove: () => {
+          const newFilters = { ...activeFilters, nome: '' };
+          setActiveFilters(newFilters);
+          setFilters(newFilters);
+        }
+      }] : []),
+      ...(activeFilters.descricao ? [{
+        key: 'descricao',
+        label: 'Descrição',
+        value: activeFilters.descricao,
+        color: 'purple' as const,
+        onRemove: () => {
+          const newFilters = { ...activeFilters, descricao: '' };
+          setActiveFilters(newFilters);
+          setFilters(newFilters);
+        }
+      }] : [])
+  ];
+  
   return (
     <div className="flex flex-col min-h-0 flex-1">
       <div className="flex items-center justify-between">
@@ -162,20 +196,16 @@ export default function TemasPage() {
 
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-500">
-              {temas?.length} tema(s)
+              {totalElements} {totalElements > 1 ? "temas" : "tema"}
             </span>
 
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
               totalElements={totalElements}
-              pageSize={15}
               onPageChange={setCurrentPage}
               loading={loading}
-              showOnlyPagginationButtons={true}
-              numberOfElements={totalElements}
-              first={true}
-              last={true}
+              showOnlyPaginationButtons={true}
             />
           </div>
         </div>
@@ -210,15 +240,23 @@ export default function TemasPage() {
             <FunnelSimpleIcon className="h-4 w-4 mr-2"/>
             Filtrar
           </Button>
-          <Button onClick={() => {
-            setSelectedTema(null);
-            setShowTemaModal(true);
-          }}>
-            <PlusIcon className="h-4 w-4 mr-2"/>
-            Novo Tema
-          </Button>
+          {canInserirTema &&
+            <Button onClick={() => {
+              setSelectedTema(null);
+              setShowTemaModal(true);
+            }}>
+              <PlusIcon className="h-4 w-4 mr-2"/>
+              Criar Tema
+            </Button>
+          }
         </div>
       </div>
+
+      <FiltrosAplicados
+        filters={filtrosAplicados}
+        showClearAll={false}
+        className="mb-4"
+      />
 
       <div className="flex flex-1 overflow-hidden bg-white rounded-lg shadow-sm border border-gray-200">
         <StickyTable>
@@ -271,21 +309,25 @@ export default function TemasPage() {
                   </StickyTableCell>
                   <StickyTableCell className="text-right">
                     <div className="flex items-center justify-end space-x-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(tema)}
-                      >
-                        <PencilSimpleIcon className="h-4 w-4"/>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(tema)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <TrashIcon className="h-4 w-4"/>
-                      </Button>
+                      {canAtualizarTema &&
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(tema)}
+                        >
+                          <PencilSimpleIcon className="h-4 w-4"/>
+                        </Button>
+                      }
+                      {canDeletarTema &&
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(tema)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <TrashIcon className="h-4 w-4"/>
+                        </Button>
+                      }
                     </div>
                   </StickyTableCell>
                 </StickyTableRow>

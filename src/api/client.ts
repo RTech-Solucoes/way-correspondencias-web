@@ -78,7 +78,7 @@ export default class ApiClient {
         let message: string;
         if (typeof errorPayload === 'object' && errorPayload !== null) {
           const ep = errorPayload as { error?: string; message?: string };
-          message = ep.error || ep.message || `HTTP ${response.status}: ${response.statusText}`;
+          message = ep.message || ep.error || `HTTP ${response.status}: ${response.statusText}`;
         } else {
           message = `HTTP ${response.status}: ${response.statusText}`;
         }

@@ -1,46 +1,45 @@
 'use client';
 
-import { useState, useEffect, FormEvent, useCallback, ChangeEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import {ChangeEvent, FormEvent, useCallback, useEffect, useState} from 'react';
+import {useRouter} from 'next/navigation';
+import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog';
+import {Button} from '@/components/ui/button';
+import {TextField} from '@/components/ui/text-field';
+import {Textarea} from '@/components/ui/textarea';
+import {Label} from '@/components/ui/label';
+import {Checkbox} from '@/components/ui/checkbox';
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
+import {SolicitacaoRequest, SolicitacaoResponse, SolicitacaoPrazoResponse} from '@/api/solicitacoes/types';
+import {ResponsavelResponse} from '@/api/responsaveis/types';
+import {TemaResponse} from '@/api/temas/types';
+import {solicitacoesClient} from '@/api/solicitacoes/client';
+import {toast} from 'sonner';
+import {base64ToUint8Array, capitalize, getRows, hoursToDaysAndHours, saveBlob} from '@/utils/utils';
+import {MultiSelectAreas} from '@/components/ui/multi-select-areas';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { TextField } from '@/components/ui/text-field';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
-import { SolicitacaoResponse, SolicitacaoRequest } from '@/api/solicitacoes/types';
-import { ResponsavelResponse } from '@/api/responsaveis/types';
-import { TemaResponse } from '@/api/temas/types';
-import { solicitacoesClient } from '@/api/solicitacoes/client';
-import { toast } from 'sonner';
-import { capitalize, getRows } from '@/utils/utils';
-import { MultiSelectAreas } from '@/components/ui/multi-select-areas';
-import { ArrowArcRightIcon, CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react';
-import { Stepper } from '@/components/ui/stepper';
-import { Input } from '@nextui-org/react';
+  ArrowArcRightIcon,
+  CaretLeftIcon,
+  CaretRightIcon,
+  DownloadSimpleIcon,
+} from '@phosphor-icons/react';
+import {Stepper} from '@/components/ui/stepper';
+import {Input} from '@nextui-org/react';
 import AnexoComponent from '../AnexoComponotent/AnexoComponent';
 import AnexoList from '../AnexoComponotent/AnexoList/AnexoList';
-import { statusSolicPrazoTemaClient } from '@/api/status-prazo-tema/client';
-import { StatusSolicPrazoTemaForUI } from '@/api/status-prazo-tema/types';
-import { statusSolicitacaoClient, StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
-import { AnexoResponse } from '@/api/solicitacoes/anexos-client';
-import { areasClient } from '@/api/areas/client';
-import { anexosClient } from '@/api/anexos/client';
-import { AreaResponse } from '@/api/areas/types';
-import { TipoObjetoAnexo } from '@/api/anexos/type';
+import {statusSolicPrazoTemaClient} from '@/api/status-prazo-tema/client';
+import {StatusSolicPrazoTemaForUI} from '@/api/status-prazo-tema/types';
+import {statusSolicitacaoClient, StatusSolicitacaoResponse} from '@/api/status-solicitacao/client';
+import {AnexoResponse, TipoObjetoAnexo, TipoResponsavelAnexo} from '@/api/anexos/type';
+import {areasClient} from '@/api/areas/client';
+import tramitacoesClient from '@/api/tramitacoes/client';
+import {anexosClient} from '@/api/anexos/client';
+import {AreaResponse} from '@/api/areas/types';
+import {usePermissoes} from "@/context/permissoes/PermissoesContext";
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { AnaliseGerenteDiretor } from '@/types/solicitacoes/types';
+import { STATUS_LIST, statusList as statusListType } from '@/api/status-solicitacao/types';
+import { MultiSelectAssinantes } from '../ui/multi-select-assinates';
+import solicitacaoAssinanteClient from '@/api/solicitacao-assinante/client';
 
 interface AnexoListItem {
   idAnexo?: number;
@@ -90,7 +89,9 @@ export default function SolicitacaoModal({
     nrPrazo: undefined,
     tpPrazo: '',
     nrOficio: '',
-    nrProcesso: ''
+    nrProcesso: '',
+    flAnaliseGerenteDiretor: '',
+    idsResponsaveisAssinates: []
   });
   const [loading, setLoading] = useState(false);
   const [anexos, setAnexos] = useState<File[]>([]);
@@ -100,8 +101,93 @@ export default function SolicitacaoModal({
   const [loadingStatusPrazos, setLoadingStatusPrazos] = useState(false);
   const [prazoExcepcional, setPrazoExcepcional] = useState(false);
   const [statusList, setStatusList] = useState<StatusSolicitacaoResponse[]>([]);
-  const [createdSolicitacao, setCreatedSolicitacao] = useState<SolicitacaoResponse | null>(null);
+  const [createdSolicitacao] = useState<SolicitacaoResponse | null>(null);
   const [allAreas, setAllAreas] = useState<AreaResponse[]>([]);
+  const {canListarAnexo, canInserirAnexo} = usePermissoes();
+  const [hasLoadedStatusPrazos, setHasLoadedStatusPrazos] = useState(false);
+  const [showConfirmSend, setShowConfirmSend] = useState(false);
+  const [confirmSendId, setConfirmSendId] = useState<number | null>(null);
+  const [confirmSendToast, setConfirmSendToast] = useState<string>('');
+  const [hasTramitacoes, setHasTramitacoes] = useState(false);
+  const [tramitacoesChecked, setTramitacoesChecked] = useState(false);
+  const [prazosSolicitacaoPorStatus, setPrazosSolicitacaoPorStatus] = useState<SolicitacaoPrazoResponse[]>([]);
+
+  const handleConfirmSend = useCallback(async () => {
+    if (!confirmSendId) return;
+    try {
+      setLoading(true);
+      await solicitacoesClient.etapaStatus(confirmSendId);
+      toast.success(confirmSendToast || 'Solicitação enviada com sucesso!');
+      onSave();
+      onClose();
+      router.refresh();
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao encaminhar solicitação');
+    } finally {
+      setLoading(false);
+      setShowConfirmSend(false);
+      setConfirmSendId(null);
+      setConfirmSendToast('');
+    }
+  }, [confirmSendId, confirmSendToast, onClose, onSave, router]);
+
+  
+  useEffect(() => {
+    const loadPrazos = async () => {
+      const prazosSolicitacaoPorStatus = await solicitacoesClient.listarPrazos(solicitacao?.idSolicitacao || 0);
+      setPrazosSolicitacaoPorStatus(prazosSolicitacaoPorStatus || []);
+      setFormData(prev => ({
+        ...prev,
+        flExcepcional: solicitacao?.flExcepcional === 'S' ? 'S' : 'N'
+      }));
+      setPrazoExcepcional((solicitacao?.flExcepcional || 'N') === 'S');
+
+      try {
+        const temaId = formData.idTema || solicitacao?.idTema || solicitacao?.tema?.idTema || 0;
+        const temaNome = getSelectedTema()?.nmTema || solicitacao?.tema?.nmTema || '';
+        if ((prazosSolicitacaoPorStatus || []).length > 0) {
+          const mapped = (prazosSolicitacaoPorStatus || []).map(p => ({
+            idStatusSolicPrazoTema: 0,
+            idStatusSolicitacao: p.idStatusSolicitacao,
+            idTema: temaId,
+            nrPrazoInterno: p.nrPrazoInterno || 0,
+            tema: { idTema: temaId, nmTema: temaNome },
+            flAtivo: 'S'
+          })) as StatusSolicPrazoTemaForUI[];
+          setStatusPrazos(mapped);
+        }
+      } catch {}
+    };
+    if (solicitacao?.idSolicitacao) {
+      loadPrazos();
+    }
+  }, [solicitacao?.idSolicitacao]);
+
+
+  useEffect(() => {
+    const loadTramitacoes = async () => {
+      try {
+        const id = solicitacao?.idSolicitacao || createdSolicitacao?.idSolicitacao;
+        if (id) {
+          const list = await tramitacoesClient.listarPorSolicitacao(id);
+          setHasTramitacoes((list?.length ?? 0) > 0);
+        } else {
+          setHasTramitacoes(false);
+        }
+      } catch {
+        setHasTramitacoes(false);
+      } finally {
+        setTramitacoesChecked(true);
+      }
+    };
+    if (open) {
+      setTramitacoesChecked(false);
+      loadTramitacoes();
+    } else {
+      setTramitacoesChecked(false);
+    }
+  }, [open, solicitacao?.idSolicitacao, createdSolicitacao?.idSolicitacao]);
 
   useEffect(() => {
     if (solicitacao) {
@@ -121,10 +207,10 @@ export default function SolicitacaoModal({
         nrPrazo: solicitacao.nrPrazo || undefined,
         tpPrazo: solicitacao.tpPrazo === 'C' ? 'H' : (solicitacao.tpPrazo || ''),
         nrOficio: solicitacao.nrOficio || '',
-        nrProcesso: solicitacao.nrProcesso || ''
+        nrProcesso: solicitacao.nrProcesso || '',
+        flAnaliseGerenteDiretor: solicitacao.flAnaliseGerenteDiretor || ''
       });
-      // Corrigido: prazoExcepcional sempre inicia como false para evitar ser marcado por padrão
-      setPrazoExcepcional(false);
+
     } else {
       setFormData({
         cdIdentificacao: '',
@@ -138,9 +224,10 @@ export default function SolicitacaoModal({
         nrPrazo: undefined,
         tpPrazo: '',
         nrOficio: '',
-        nrProcesso: ''
+        nrProcesso: '',
+        flAnaliseGerenteDiretor: ''
       });
-      setPrazoExcepcional(false);
+
     }
     setCurrentStep(1);
     setAnexos([]);
@@ -158,6 +245,28 @@ export default function SolicitacaoModal({
       setAnexos([]);
     }
   }, [solicitacao, open, initialSubject, initialDescription]);
+
+  useEffect(() => {
+    const loadAssinantes = async () => {
+      if (solicitacao?.idSolicitacao && open) {
+        try {
+          const assinantes = await solicitacaoAssinanteClient.buscarPorIdSolicitacaoEIdStatusSolicitacao(
+            solicitacao.idSolicitacao,
+            [statusListType.EM_ASSINATURA_DIRETORIA.id]
+          );
+          const idsAssinantes = assinantes.map(a => a.idResponsavel);
+          setFormData(prev => ({
+            ...prev,
+            idsResponsaveisAssinates: idsAssinantes
+          }));
+        } catch (error) {
+          console.error('Erro ao carregar assinantes:', error);
+        }
+      }
+    };
+
+    loadAssinantes();
+  }, [solicitacao?.idSolicitacao, open]);
 
   useEffect(() => {
     const loadAllAreas = async () => {
@@ -213,10 +322,21 @@ export default function SolicitacaoModal({
     }));
   }, []);
 
+  const handleResponsaveisSelectionChange = useCallback((selectedIds: number[]) => {
+    setFormData(prev => ({
+      ...prev,
+      idsResponsaveisAssinates: selectedIds
+    }));
+  }, []);
 
   const isStep1Valid = useCallback(() => {
     return formData.cdIdentificacao?.trim() !== '' && 
-           (formData.flAnaliseGerenteDiretor === 'S' || formData.flAnaliseGerenteDiretor === 'N');
+      ([
+        AnaliseGerenteDiretor.D,
+        AnaliseGerenteDiretor.G,
+        AnaliseGerenteDiretor.N,
+        AnaliseGerenteDiretor.A,
+      ] as string[]).includes((formData.flAnaliseGerenteDiretor || '').toUpperCase());
   }, [formData.cdIdentificacao, formData.flAnaliseGerenteDiretor]);
 
   const isStep2Valid = useCallback(() => {
@@ -224,30 +344,35 @@ export default function SolicitacaoModal({
       formData.idsAreas && formData.idsAreas.length > 0) || false;
   }, [formData.idTema, formData.idsAreas]);
 
+  const isStep4Valid = useCallback(() => {
+    return !!(formData.idsResponsaveisAssinates && formData.idsResponsaveisAssinates.length === 2);
+  }, [formData.idsResponsaveisAssinates]);
+
   const getSelectedTema = useCallback(() => {
     return temas.find(tema => tema.idTema === formData.idTema);
   }, [temas, formData.idTema]);
 
-  const handleNextStep = useCallback(async () => {
+  const handleNextStep = useCallback(async (onFinish?: () => void) => {
     try {
       if (currentStep === 1) {
         if (!formData.cdIdentificacao?.trim()) {
           toast.error("Código de identificação é obrigatório");
           return;
         }
-
         if (!solicitacao) {
           setCurrentStep(2);
           return;
         }
-
-        await solicitacoesClient.etapaIdentificacao(solicitacao.idSolicitacao, {
-          cdIdentificacao: formData.cdIdentificacao?.trim(),
-          dsAssunto: formData.dsAssunto?.trim(),
-          dsObservacao: formData.dsObservacao?.trim(),
-          nrOficio: formData.nrOficio?.trim(),
-          nrProcesso: formData.nrProcesso?.trim(),
-        });
+        if (!hasTramitacoes) {
+          await solicitacoesClient.etapaIdentificacao(solicitacao.idSolicitacao, {
+            cdIdentificacao: formData.cdIdentificacao?.trim(),
+            dsAssunto: formData.dsAssunto?.trim(),
+            dsObservacao: formData.dsObservacao?.trim(),
+            nrOficio: formData.nrOficio?.trim(),
+            nrProcesso: formData.nrProcesso?.trim(),
+            flAnaliseGerenteDiretor: formData.flAnaliseGerenteDiretor
+          });
+        }
 
         setCurrentStep(2);
       } else if (currentStep === 2) {
@@ -274,14 +399,15 @@ export default function SolicitacaoModal({
           setCurrentStep(3);
           return;
         }
-
-        await solicitacoesClient.etapaTema(solicitacao.idSolicitacao, {
-          idTema: formData.idTema,
-          tpPrazo: formData.tpPrazo || undefined,
-          nrPrazoInterno: formData.nrPrazo,
-          flExcepcional: prazoExcepcional ? 'S' : 'N',
-          idsAreas: formData.idsAreas
-        });
+        if (!hasTramitacoes) {
+          await solicitacoesClient.etapaTema(solicitacao.idSolicitacao, {
+            idTema: formData.idTema,
+            tpPrazo: formData.tpPrazo || undefined,
+            nrPrazoInterno: formData.nrPrazo,
+            flExcepcional: formData.flExcepcional === 'S' ? 'S' : 'N',
+            idsAreas: formData.idsAreas
+          });
+        }
 
         setCurrentStep(3);
       } else if (currentStep === 3) {
@@ -289,77 +415,141 @@ export default function SolicitacaoModal({
           setCurrentStep(4);
           return;
         }
+        if (!hasTramitacoes) {
+          const solicitacoesPrazos = statusPrazos
+            .filter(p => p.nrPrazoInterno && p.nrPrazoInterno > 0 && p.idStatusSolicitacao)
+            .map(p => ({
+              idStatusSolicitacao: p.idStatusSolicitacao!,
+              nrPrazoInterno: p.nrPrazoInterno,
+              tpPrazo: formData.tpPrazo || undefined,
+              flExcepcional: 'S'
+            }));
 
-        const solicitacoesPrazos = statusPrazos
-          .filter(p => p.nrPrazoInterno && p.nrPrazoInterno > 0 && p.idStatusSolicitacao)
-          .map(p => ({
-            idStatusSolicitacao: p.idStatusSolicitacao!,
-            nrPrazoInterno: p.nrPrazoInterno,
-            tpPrazo: formData.tpPrazo || undefined,
-            flExcepcional: prazoExcepcional ? 'S' : 'N'
-          }));
-
-        await solicitacoesClient.etapaPrazo(solicitacao.idSolicitacao, {
-          idTema: formData.idTema,
-          nrPrazoInterno: formData.nrPrazo,
-          solicitacoesPrazos
-        });
+          await solicitacoesClient.etapaPrazo(solicitacao.idSolicitacao, {
+            idTema: formData.idTema,
+            nrPrazoInterno: formData.nrPrazo,
+            flExcepcional: formData.flExcepcional,
+            solicitacoesPrazos
+          });
+        }
 
         setCurrentStep(4);
       } else if (currentStep === 4) {
+        if (!formData.idsResponsaveisAssinates || formData.idsResponsaveisAssinates.length !== 2) {
+          toast.error("Selecione exatamente 2 validadores/assinantes para continuar");
+          return;
+        }
+
         if (!solicitacao) {
           setCurrentStep(5);
           return;
         }
 
-        if (anexos.length > 0) {
-          const arquivosDTO = await Promise.all(
-            anexos.map(async (file) => {
-              if (!file.name || file.name.trim() === '') {
-                throw new Error(`Arquivo sem nome válido: ${file.name || 'undefined'}`);
-              }
-
-              const base64 = await new Promise<string>((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => {
-                  const result = reader.result as string;
-                  if (!result) {
-                    reject(new Error('Erro ao ler arquivo'));
-                    return;
-                  }
-                  resolve(result);
-                };
-                reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
-                reader.readAsDataURL(file);
-              });
-
-              const base64Content = base64.split(',')[1];
-              if (!base64Content) {
-                throw new Error('Erro ao converter arquivo para base64');
-              }
-
-              return {
-                nomeArquivo: file.name.trim(),
-                conteudoArquivo: base64Content,
-                tipoArquivo: file.type || 'application/octet-stream'
-              };
-            })
-          );
-
-          try {
-            await solicitacoesClient.uploadAnexos(solicitacao.idSolicitacao, arquivosDTO);
-          } catch {
-            toast.error('Erro ao anexar arquivos');
-          }
+        if (!hasTramitacoes && formData.idsResponsaveisAssinates && formData.idsResponsaveisAssinates.length > 0) {
+          await solicitacaoAssinanteClient.criar(formData.idsResponsaveisAssinates.map(id => ({
+            idSolicitacao: solicitacao.idSolicitacao,
+            idStatusSolicitacao: statusListType.EM_ASSINATURA_DIRETORIA.id,
+            idResponsavel: id
+          })));
         }
 
         setCurrentStep(5);
       }
+      else if (currentStep === 5) {
+        if (!solicitacao) {
+          setCurrentStep(6);
+          return;
+        }
+        if (!hasTramitacoes) {
+          if (anexos.length > 0) {
+            const existingNames = new Set([
+              ...anexosBackend.map(a => (a.nmArquivo || '').trim().toLowerCase()),
+              ...anexosTypeE.map(a => (a.nmArquivo || '').trim().toLowerCase()),
+            ]);
+
+            const newNames = anexos
+              .map(file => (file.name || '').trim().toLowerCase())
+              .filter(name => name !== '');
+
+            const duplicateWithExisting = newNames.filter(name => existingNames.has(name));
+            const duplicateWithinNew = newNames.filter((name, idx, arr) => arr.indexOf(name) !== idx);
+            const duplicateNames = Array.from(new Set([...duplicateWithExisting, ...duplicateWithinNew]));
+
+            if (duplicateNames.length > 0) {
+              toast.error(`Já existe anexo com o mesmo nome: ${duplicateNames.join(', ')}`);
+              return;
+            }
+
+            const seenNames = new Set<string>();
+            const filesToUpload = anexos.filter(file => {
+              const key = (file.name || '').trim().toLowerCase();
+              if (!key) return false;
+              if (seenNames.has(key)) return false;
+              seenNames.add(key);
+              return true;
+            });
+
+            const arquivosDTO = await Promise.all(
+              filesToUpload.map(async (file) => {
+                if (!file.name || file.name.trim() === '') {
+                  throw new Error(`Arquivo sem nome válido: ${file.name || 'undefined'}`);
+                }
+
+                const base64 = await new Promise<string>((resolve, reject) => {
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    const result = reader.result as string;
+                    if (!result) {
+                      reject(new Error('Erro ao ler arquivo'));
+                      return;
+                    }
+                    resolve(result);
+                  };
+                  reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
+                  reader.readAsDataURL(file);
+                });
+
+                const base64Content = base64.split(',')[1];
+                if (!base64Content) {
+                  throw new Error('Erro ao converter arquivo para base64');
+                }
+
+                return {
+                  nomeArquivo: file.name.trim(),
+                  conteudoArquivo: base64Content,
+                  tipoArquivo: file.type || 'application/octet-stream',
+                  tpResponsavel: TipoResponsavelAnexo.A // TODO: Colocado apenas para remover erro, necessário ajustar depois
+                };
+              })
+            );
+
+            try {
+              setLoading(true);
+              await solicitacoesClient.uploadAnexos(solicitacao.idSolicitacao, arquivosDTO);
+              try {
+                const atualizados = await solicitacoesClient.buscarAnexos(solicitacao.idSolicitacao);
+                setAnexosBackend(atualizados);
+              } catch {}
+              setAnexos([]);
+            } catch {
+              toast.error('Erro ao anexar arquivos');
+            } finally {
+              setLoading(false);
+            }
+          }
+        }
+
+        setCurrentStep(6);
+      }
     } catch (e) {
       console.error(e);
       toast.error('Erro ao avançar etapa');
+    } finally {
+      if (!onFinish || typeof onFinish !== 'function') return;
+
+      onFinish();
     }
-  }, [currentStep, formData, solicitacao, prazoExcepcional, statusPrazos, anexos]);
+  }, [currentStep, formData, solicitacao, statusPrazos, anexos, anexosBackend, anexosTypeE, hasTramitacoes]);
 
   const handlePreviousStep = useCallback(() => {
     if (currentStep === 2) {
@@ -370,6 +560,8 @@ export default function SolicitacaoModal({
       setCurrentStep(3);
     } else if (currentStep === 5) {
       setCurrentStep(4);
+    } else if (currentStep === 6) {
+      setCurrentStep(5);
     }
   }, [currentStep]);
 
@@ -382,10 +574,12 @@ export default function SolicitacaoModal({
       setCurrentStep(step);
     } else if (step === 4 && isStep1Valid() && isStep2Valid()) {
       setCurrentStep(step);
-    } else if (step === 5 && isStep1Valid() && isStep2Valid()) {
+    } else if (step === 5 && isStep1Valid() && isStep2Valid() && isStep4Valid()) {
+      setCurrentStep(step);
+    } else if (step === 6 && isStep1Valid() && isStep2Valid() && isStep4Valid()) {
       setCurrentStep(step);
     }
-  }, [isStep1Valid, isStep2Valid]);
+  }, [isStep1Valid, isStep2Valid, isStep4Valid]);
 
   const handleAddAnexos = useCallback((files: FileList | null) => {
     if (files && files.length > 0) {
@@ -399,7 +593,6 @@ export default function SolicitacaoModal({
   }, []);
 
   const handleRemoveAnexoBackend = useCallback(async (idAnexo: number) => {
-    console.log(idAnexo);
     if (!solicitacao?.idSolicitacao) return;
 
     try {
@@ -421,23 +614,36 @@ export default function SolicitacaoModal({
       const arquivos = await solicitacoesClient.downloadAnexo(anexo.idObjeto, anexo.nmArquivo);
 
       if (arquivos.length > 0) {
-        const arquivo = arquivos[0];
-        const byteCharacters = atob(arquivo.conteudoArquivo);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: arquivo.tipoArquivo });
+        arquivos.forEach((arquivo) => {
+          const bytes = base64ToUint8Array(arquivo.conteudoArquivo);
+          const filename = arquivo.nomeArquivo || anexo.name || 'documento';
+          const mime = arquivo.tipoConteudo || 'application/octet-stream';
+          saveBlob(bytes, mime, filename);
+        });
+      } else {
+        toast.error('Arquivo não encontrado');
+      }
+    } catch {
+      toast.error('Erro ao baixar documento');
+    }
+  }, []);
 
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = arquivo.nomeArquivo || anexo.name || 'documento';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
+  const handleDownloadAnexoEmail = useCallback(async (anexo: AnexoResponse) => {
+    try {
+      if (!anexo.idObjeto || !anexo.nmArquivo) {
+        toast.error('Dados do documento incompletos');
+        return;
+      }
+
+      const arquivos = await anexosClient.download(anexo.idObjeto, TipoObjetoAnexo.E, anexo.nmArquivo);
+
+      if (arquivos.length > 0) {
+        arquivos.forEach((arquivo) => {
+          const bytes = base64ToUint8Array(arquivo.conteudoArquivo);
+          const filename = arquivo.nomeArquivo || anexo.nmArquivo || 'documento';
+          const mime = arquivo.tipoConteudo || 'application/octet-stream';
+          saveBlob(bytes, mime, filename);
+        });
       } else {
         toast.error('Arquivo não encontrado');
       }
@@ -453,28 +659,42 @@ export default function SolicitacaoModal({
       let id = solicitacao?.idSolicitacao || createdSolicitacao?.idSolicitacao;
 
       if (createdSolicitacao?.idSolicitacao) {
-        await solicitacoesClient.etapaStatus(createdSolicitacao.idSolicitacao);
-        toast.success('Solicitação criada com sucesso!');
+        if (hasTramitacoes) { toast.message('Esta solicitação já possui tramitações iniciadas. Edição bloqueada.'); setLoading(false); return; }
+        setConfirmSendId(createdSolicitacao.idSolicitacao);
+        setConfirmSendToast('Solicitação criada com sucesso!');
+        setShowConfirmSend(true);
+        setLoading(false);
+        return;
       } else if (solicitacao?.idSolicitacao) {
-        await solicitacoesClient.etapaStatus(solicitacao.idSolicitacao);
-        toast.success('Solicitação encaminhada com sucesso!');
+        if (hasTramitacoes) { toast.message('Esta solicitação já possui tramitações iniciadas. Edição bloqueada.'); setLoading(false); return; }
+        setConfirmSendId(solicitacao.idSolicitacao);
+        setConfirmSendToast('Solicitação encaminhada com sucesso!');
+        setShowConfirmSend(true);
+        setLoading(false);
+        return;
       } else {
         if (!formData.cdIdentificacao?.trim()) { toast.error('Código de identificação é obrigatório'); setLoading(false); return; }
         if (!formData.idTema || formData.idTema === 0) { toast.error('Tema é obrigatório'); setLoading(false); return; }
-        if (!formData.flAnaliseGerenteDiretor || (formData.flAnaliseGerenteDiretor !== 'S' && formData.flAnaliseGerenteDiretor !== 'N')) { 
-          toast.error('É obrigatório informar se exige análise do Gerente ou Diretor'); 
-          setLoading(false); 
-          return; 
+        if (!formData.flAnaliseGerenteDiretor || ![
+          AnaliseGerenteDiretor.G,
+          AnaliseGerenteDiretor.D,
+          AnaliseGerenteDiretor.A,
+          AnaliseGerenteDiretor.N,
+        ].includes((formData.flAnaliseGerenteDiretor || '').toUpperCase() as AnaliseGerenteDiretor)) {
+          toast.error('Selecione GERENTE, DIRETOR, AMBOS ou NÃO NECESSITA');
+          setLoading(false);
+          return;
         }
 
         const created = await solicitacoesClient.criar({
+          idTema: formData.idTema,
           cdIdentificacao: formData.cdIdentificacao?.trim(),
           dsAssunto: formData.dsAssunto?.trim(),
           dsSolicitacao: formData.dsSolicitacao?.trim(),
           dsObservacao: formData.dsObservacao?.trim(),
           nrOficio: formData.nrOficio?.trim(),
           nrProcesso: formData.nrProcesso?.trim(),
-          flExcepcional: prazoExcepcional ? 'S' : 'N',
+          flExcepcional: formData.flExcepcional === 'S' ? 'S' : 'N',
           flAnaliseGerenteDiretor: formData.flAnaliseGerenteDiretor,
         });
         id = created.idSolicitacao;
@@ -485,17 +705,18 @@ export default function SolicitacaoModal({
           dsObservacao: formData.dsObservacao?.trim(),
           nrOficio: formData.nrOficio?.trim(),
           nrProcesso: formData.nrProcesso?.trim(),
+          flAnaliseGerenteDiretor: formData.flAnaliseGerenteDiretor
         });
 
         await solicitacoesClient.etapaTema(id, {
           idTema: formData.idTema,
           tpPrazo: formData.tpPrazo || undefined,
           nrPrazoInterno: formData.nrPrazo,
-          flExcepcional: prazoExcepcional ? 'S' : 'N',
+          flExcepcional: formData.flExcepcional === 'S' ? 'S' : 'N',
           idsAreas: formData.idsAreas
         });
 
-        if (statusPrazos.length > 0) {
+        if (formData.flExcepcional === 'S') {
           const solicitacoesPrazos = statusPrazos
             .filter(p => p.nrPrazoInterno && p.nrPrazoInterno > 0 && p.idStatusSolicitacao)
             .map(p => ({
@@ -504,14 +725,34 @@ export default function SolicitacaoModal({
               nrPrazoInterno: p.nrPrazoInterno,
               nrPrazoExterno: p.nrPrazoExterno,
               tpPrazo: formData.tpPrazo || undefined,
-              flExcepcional: prazoExcepcional ? 'S' : 'N'
+              flExcepcional: 'S'
             }));
-          if (solicitacoesPrazos.length > 0) {
-            await solicitacoesClient.etapaPrazo(id, { nrPrazoInterno: formData.nrPrazo, solicitacoesPrazos });
-          }
+          await solicitacoesClient.etapaPrazo(id, {
+            idTema: formData.idTema,
+            nrPrazoInterno: formData.nrPrazo,
+            flExcepcional: 'S',
+            solicitacoesPrazos
+          });
+        } else {
+          await solicitacoesClient.etapaPrazo(id, {
+            idTema: formData.idTema,
+            nrPrazoInterno: formData.nrPrazo,
+            flExcepcional: 'N',
+            solicitacoesPrazos: []
+          });
         }
 
         if (anexos.length > 0) {
+          const newNames = anexos
+            .map(file => (file.name || '').trim().toLowerCase())
+            .filter(name => name !== '');
+          const duplicateWithinNew = newNames.filter((name, idx, arr) => arr.indexOf(name) !== idx);
+          const duplicateNames = Array.from(new Set(duplicateWithinNew));
+          if (duplicateNames.length > 0) {
+            toast.error(`Já existe anexo com o mesmo nome: ${duplicateNames.join(', ')}`);
+            setLoading(false);
+            return;
+          }
           const arquivosDTO = await Promise.all(
             anexos.map(async (file) => {
               const base64 = await new Promise<string>((resolve, reject) => {
@@ -524,33 +765,151 @@ export default function SolicitacaoModal({
               return {
                 nomeArquivo: file.name.trim(),
                 conteudoArquivo: base64.split(',')[1],
-                tipoArquivo: file.type || 'application/octet-stream'
+                tipoArquivo: file.type || 'application/octet-stream',
+                tpResponsavel: TipoResponsavelAnexo.A // TODO: Colocado apenas para remover erro, necessário ajustar depois
               };
             })
           );
           await solicitacoesClient.uploadAnexos(id, arquivosDTO);
         }
 
-        await solicitacoesClient.etapaStatus(id);
-        toast.success('Solicitação criada com sucesso!');
+        setConfirmSendId(id!);
+        setConfirmSendToast('Solicitação criada com sucesso!');
+        setShowConfirmSend(true);
+        setLoading(false);
+        return;
       }
-
-      onSave();
-      onClose();
-      router.refresh();
+      
     } catch (err) {
       console.error(err);
       toast.error(solicitacao || createdSolicitacao ? 'Erro ao encaminhar solicitação' : 'Erro ao criar solicitação');
     } finally {
-      setLoading(false);
+
     }
   };
+  
+  const renderStep1 = () =>   (
+    <div className="space-y-6">
+      <div className="grid grid-cols-3 gap-4">
+        <TextField
+          label="Código de Identificação *"
+          name="cdIdentificacao"
+          value={formData.cdIdentificacao}
+          onChange={handleInputChange}
+          required
+          autoFocus
+          maxLength={50}
+          disabled={hasTramitacoes}
+        />
+        <TextField
+          label="Nº Ofício"
+          name="nrOficio"
+          value={formData.nrOficio}
+          onChange={handleInputChange}
+          maxLength={50}
+          disabled={hasTramitacoes}
+        />
+        <TextField
+          label="Nº Processo"
+          name="nrProcesso"
+          value={formData.nrProcesso}
+          onChange={handleInputChange}
+          maxLength={50}
+          disabled={hasTramitacoes}
+        />
+      </div>
 
-  const handleClose = useCallback(() => {
-    setCurrentStep(1);
-    setCreatedSolicitacao(null);
-    onClose();
-  }, [onClose]);
+      <div className="grid grid-cols-3 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="flAnaliseGerenteDiretor" className="text-sm font-medium">
+            Exige aprovação especial? *
+          </Label>
+          <div className="flex items-center gap-4 mt-2">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={(formData.flAnaliseGerenteDiretor || '').toUpperCase() === AnaliseGerenteDiretor.G}
+                onCheckedChange={() => setFormData(prev => ({
+                  ...prev,
+                  flAnaliseGerenteDiretor: AnaliseGerenteDiretor.G
+                }))}
+                disabled={hasTramitacoes}
+              />
+              <Label className="text-sm font-light">Gerente</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={(formData.flAnaliseGerenteDiretor || '').toUpperCase() === AnaliseGerenteDiretor.D}
+                onCheckedChange={() => setFormData(prev => ({
+                  ...prev,
+                  flAnaliseGerenteDiretor: AnaliseGerenteDiretor.D
+                }))}
+                disabled={hasTramitacoes}
+              />
+              <Label className="text-sm font-light ">Diretor</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={(formData.flAnaliseGerenteDiretor || '').toUpperCase() === AnaliseGerenteDiretor.A}
+                onCheckedChange={() => setFormData(prev => ({
+                  ...prev,
+                  flAnaliseGerenteDiretor: AnaliseGerenteDiretor.A
+                }))}
+                disabled={hasTramitacoes}
+              />
+              <Label className="text-sm font-light">Ambos</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={(formData.flAnaliseGerenteDiretor || '').toUpperCase() === AnaliseGerenteDiretor.N}
+                onCheckedChange={() => setFormData(prev => ({
+                  ...prev,
+                  flAnaliseGerenteDiretor: AnaliseGerenteDiretor.N
+                }))}
+                disabled={hasTramitacoes}
+              />
+              <Label className="text-sm font-light">Não necessita</Label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="dsAssunto">Assunto</Label>
+        <Textarea
+          id="dsAssunto"
+          name="dsAssunto"
+          value={formData.dsAssunto}
+          onChange={handleInputChange}
+          rows={4}
+          disabled={hasTramitacoes}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="dsObservacao">Observações</Label>
+        <Textarea
+          id="dsObservacao"
+          name="dsObservacao"
+          value={formData.dsObservacao}
+          onChange={handleInputChange}
+          rows={4}
+          disabled={hasTramitacoes}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="dsSolicitacao">Descrição da Solicitação</Label>
+        <Textarea
+          id="dsSolicitacao"
+          name="dsSolicitacao"
+          value={formData.dsSolicitacao}
+          onChange={handleInputChange}
+          rows={getRows(formData.dsSolicitacao)}
+          disabled={solicitacao?.idSolicitacao !== undefined}
+        />
+      </div>
+    </div>
+  );
 
   const renderStep2 = useCallback(() => (
     <div className="space-y-6">
@@ -568,12 +927,12 @@ export default function SolicitacaoModal({
               tpPrazo: 'H'
             }));
           }}
+          disabled={hasTramitacoes}
         >
           <SelectTrigger>
             <SelectValue placeholder="Selecione o tema" />
           </SelectTrigger>
           <SelectContent>
-            {/* Show the current tema from solicitacao if it's not in the temas list */}
             {solicitacao?.tema && !temas.find(t => t.idTema === solicitacao.tema!.idTema) && (
               <SelectItem key={solicitacao.tema.idTema} value={solicitacao.tema.idTema.toString()}>
                 {solicitacao.tema.nmTema}
@@ -588,108 +947,55 @@ export default function SolicitacaoModal({
         </Select>
       </div>
 
-      <MultiSelectAreas
-        selectedAreaIds={formData.idsAreas || []}
-        onSelectionChange={handleAreasSelectionChange}
-        disabled={false}
-        label="Áreas *"
-      />
+      {!tramitacoesChecked ? (
+        <div className="text-sm text-gray-500">Verificando tramitações...</div>
+      ) : (
+        <MultiSelectAreas
+          selectedAreaIds={formData.idsAreas || []}
+          onSelectionChange={handleAreasSelectionChange}
+          disabled={hasTramitacoes}
+          label="Áreas *"
+        />
+      )}
     </div>
-  ), [formData.idTema, formData.idsAreas, temas, getResponsavelFromTema, handleAreasSelectionChange, solicitacao]);
+  ), [formData.idTema, formData.idsAreas, temas, getResponsavelFromTema, handleAreasSelectionChange, solicitacao, hasTramitacoes, tramitacoesChecked]);
 
-  const loadStatusPrazos = useCallback(async () => {
-    if (!formData.idTema) return;
+  function horasParaDias(horas: number): number {
+    return Math.floor(horas / 24);
+  }
+  const loadStatusPrazos = useCallback(async (isRefresh: boolean = false) => {
+    if (!formData.idTema || (hasLoadedStatusPrazos && !isRefresh)) return;
 
     try {
       setLoadingStatusPrazos(true);
-      const prazos = await statusSolicPrazoTemaClient.listar(formData.idTema);
-
       const selectedTema = temas.find(t => t.idTema === formData.idTema);
 
-      if (prazos.length === 0) {
         try {
-          const prazosPadrao = await statusSolicPrazoTemaClient.buscarPrazosPadraoParaUI(formData.idTema);
-          if (prazosPadrao.length > 0) {
-            setStatusPrazos(prazosPadrao);
+          if (prazosSolicitacaoPorStatus.length > 0) {
+            const temaId = formData.idTema || solicitacao?.idTema || solicitacao?.tema?.idTema || 0;
+            const temaNome = getSelectedTema()?.nmTema || solicitacao?.tema?.nmTema || '';
+            const mapped = (prazosSolicitacaoPorStatus || []).map(p => ({
+              idStatusSolicPrazoTema: 0,
+              idStatusSolicitacao: p.idStatusSolicitacao,
+              idTema: temaId,
+              nrPrazoInterno: p.nrPrazoInterno || 0,
+              tema: { idTema: temaId, nmTema: temaNome },
+              flAtivo: 'S'
+            })) as StatusSolicPrazoTemaForUI[];
+            setStatusPrazos(mapped);
           } else {
-            const defaultPrazos: StatusSolicPrazoTemaForUI[] = [
-              {
-                idStatusSolicPrazoTema: 0,
-                idStatusSolicitacao: 1, // Pré-análise
-                idTema: formData.idTema,
-                nrPrazoInterno: 72,
-                nrPrazoExterno: 0,
-                tema: {
-                  idTema: formData.idTema,
-                  nmTema: selectedTema?.nmTema || ''
-                },
-                flAtivo: 'S'
-              },
-              {
-                idStatusSolicPrazoTema: 0,
-                idStatusSolicitacao: 5, // Análise Regulatória
-                idTema: formData.idTema,
-                nrPrazoInterno: 72,
-                nrPrazoExterno: 0,
-                tema: {
-                  idTema: formData.idTema,
-                  nmTema: selectedTema?.nmTema || ''
-                },
-                flAtivo: 'S'
-              },
-              {
-                idStatusSolicPrazoTema: 0,
-                idStatusSolicitacao: 6, // Em Aprovação
-                idTema: formData.idTema,
-                nrPrazoInterno: 48,
-                nrPrazoExterno: 0,
-                tema: {
-                  idTema: formData.idTema,
-                  nmTema: selectedTema?.nmTema || ''
-                },
-                flAtivo: 'S'
-              },
-              {
-                idStatusSolicPrazoTema: 0,
-                idStatusSolicitacao: 7, // Em Assinatura
-                idTema: formData.idTema,
-                nrPrazoInterno: 48,
-                nrPrazoExterno: 0,
-                tema: {
-                  idTema: formData.idTema,
-                  nmTema: selectedTema?.nmTema || ''
-                },
-                flAtivo: 'S'
-              }
-            ];
-            setStatusPrazos(defaultPrazos);
+            setStatusPrazos(getDefaultPrazos());
           }
         } catch (errorPadrao) {
           console.error('Erro ao carregar prazos padrão:', errorPadrao);
-          const defaultPrazos: StatusSolicPrazoTemaForUI[] = [
-            {
-              idStatusSolicPrazoTema: 0,
-              idStatusSolicitacao: 1,
-              idTema: formData.idTema,
-              nrPrazoInterno: 72,
-              nrPrazoExterno: 0,
-              tema: {
-                idTema: formData.idTema,
-                nmTema: selectedTema?.nmTema || ''
-              },
-              flAtivo: 'S'
-            }
-          ];
-          setStatusPrazos(defaultPrazos);
+          setStatusPrazos(getDefaultPrazos());
         }
-      } else {
-        setStatusPrazos(prazos);
-      }
     } catch (error) {
       console.error('Erro ao carregar prazos por status:', error);
       toast.error('Erro ao carregar configurações de prazos');
     } finally {
       setLoadingStatusPrazos(false);
+      setHasLoadedStatusPrazos(true);
     }
   }, [formData.idTema, temas]);
 
@@ -697,47 +1003,68 @@ export default function SolicitacaoModal({
     setStatusPrazos(prev => {
       const existing = prev.find(p => p.idStatusSolicitacao === idStatus);
       if (existing) {
-        return prev.map(p =>
+        const updated = prev.map(p =>
           p.idStatusSolicitacao === idStatus
             ? { ...p, nrPrazoInterno: valor }
             : p
         );
+        return updated;
       } else {
         const newPrazo = {
           idStatusSolicPrazoTema: 0,
           idStatusSolicitacao: idStatus,
           nrPrazoInterno: valor,
-          tema: {
-            idTema: formData.idTema || 0,
-            nmTema: getSelectedTema()?.nmTema || ''
-          },
+          nrPrazoExterno: 0,
+          idTema: formData.idTema || 0,
           flAtivo: 'S'
         } as StatusSolicPrazoTemaForUI;
-        return [...prev, newPrazo];
+        const newArray = [...prev, newPrazo];
+        return newArray;
       }
     });
-  }, [formData.idTema, getSelectedTema]);
+  }, [formData.idTema]);
 
   const selectedTema = getSelectedTema();
-  
+  const getDefaultPrazos = useCallback((): StatusSolicPrazoTemaForUI[] => {
+    const defaultPrazosPorStatus: { [key: number]: number } = {
+      [statusListType.PRE_ANALISE.id]: 72,
+      [statusListType.ANALISE_REGULATORIA.id]: 72,
+      [statusListType.EM_APROVACAO.id]: 48,
+      [statusListType.EM_ASSINATURA_DIRETORIA.id]: 48,
+    };
+    const allStatus = statusList.length > 0 ? statusList : STATUS_LIST.map(status => ({
+      idStatusSolicitacao: status.id,
+      nmStatus: status.label
+    }));
+
+    return allStatus.map(status => ({
+      idStatusSolicPrazoTema: 0,
+      idStatusSolicitacao: status.idStatusSolicitacao,
+      idTema: formData?.idTema || 0,
+      nrPrazoInterno: defaultPrazosPorStatus[status.idStatusSolicitacao] || 0,
+      nrPrazoExterno: 0,
+      tema: {
+        idTema: formData?.idTema || 0,
+        nmTema: getSelectedTema()?.nmTema || ''
+      },
+      flAtivo: 'S'
+    }));
+  }, [formData?.idTema, statusList, getSelectedTema]);
+
   const currentPrazoTotal =
-    statusPrazos.reduce((acc, curr) => acc + curr.nrPrazoInterno, 0)
+    (prazosSolicitacaoPorStatus.length > 0
+      ? prazosSolicitacaoPorStatus.reduce((acc, curr) => acc + (curr.nrPrazoInterno || 0), 0)
+      : statusPrazos.reduce((acc, curr) => acc + curr.nrPrazoInterno, 0)
+    )
 
   const renderStep3 = useCallback((): JSX.Element => {
     const statusOptions = statusList.length > 0 ? statusList.map(status => ({
       codigo: status.idStatusSolicitacao,
       nome: status.nmStatus
-    })) : [
-      { codigo: 1, nome: 'Pré-análise' },
-      { codigo: 2, nome: 'Vencido Regulatório' },
-      { codigo: 3, nome: 'Em análise Área Técnica' },
-      { codigo: 4, nome: 'Vencido Área Técnica' },
-      { codigo: 5, nome: 'Análise Regulatória' },
-      { codigo: 6, nome: 'Em Aprovação' },
-      { codigo: 7, nome: 'Em Assinatura' },
-      { codigo: 8, nome: 'Concluído' },
-      { codigo: 9, nome: 'Arquivado' }
-    ];
+    })) : STATUS_LIST.map(status => ({
+      codigo: status.id,
+      nome: status.label
+    }));
 
     return (
       <div className="space-y-6">
@@ -750,21 +1077,24 @@ export default function SolicitacaoModal({
                   <Checkbox
                     id="prazoExcepcional"
                     checked={prazoExcepcional}
+                    disabled={hasTramitacoes}
                     onCheckedChange={async (checked) => {
+                      if (hasTramitacoes) return;
                       const ativo = !!checked;
                       setPrazoExcepcional(ativo);
+                      setFormData(prev => ({
+                        ...prev,
+                        flExcepcional: ativo ? 'S' : 'N'
+                      }));
 
-                      if (!ativo && formData.idTema) {
-                        try {
-                          await loadStatusPrazos();
+                      if (!ativo) {
+                        setStatusPrazos(getDefaultPrazos());
+                        if (formData.idTema) {
                           setFormData(prev => ({
                             ...prev,
-                            nrPrazo: selectedTema?.nrPrazo || undefined,
+                            nrPrazo: getSelectedTema()?.nrPrazo || undefined,
                             tpPrazo: 'H'
                           }));
-                        } catch (error) {
-                          console.error('Erro ao restaurar prazos padrão:', error);
-                          toast.error('Erro ao restaurar configurações padrão');
                         }
                       }
                     }}
@@ -774,7 +1104,7 @@ export default function SolicitacaoModal({
                   </Label>
                 </div>
                 <h3 className="text-blue-500 font-bold ml-auto text-2xl">
-                  {currentPrazoTotal}h
+                  {prazoExcepcional ? `${currentPrazoTotal}h` : `${horasParaDias(currentPrazoTotal)}d`}
                 </h3>
               </div>
             </div>
@@ -791,14 +1121,51 @@ export default function SolicitacaoModal({
                 </div>
               ) : (
                 <div className="grid grid-cols-3 gap-4">
-                  {statusOptions.map((status, index) => {
-                    const prazoConfig = statusPrazos.find(p => p.idStatusSolicitacao === status.codigo);
-                    const prazoAtual = prazoConfig?.nrPrazoInterno || 0;
+                    {statusOptions.map((status, index) => {
+                      const prazoFromSolicitacao = prazosSolicitacaoPorStatus.find(p => p.idStatusSolicitacao === status.codigo)?.nrPrazoInterno;
+                      let prazoFromConfig = statusPrazos.find(p => p.idStatusSolicitacao === status.codigo)?.nrPrazoInterno;
+                      
+                      if (prazoFromConfig === undefined) {
+                        const defaultPrazosPorStatus: { [key: number]: number } = {
+                          [statusListType.PRE_ANALISE.id]: 72,
+                          [statusListType.ANALISE_REGULATORIA.id]: 72,
+                          [statusListType.EM_APROVACAO.id]: 48,
+                          [statusListType.EM_ASSINATURA_DIRETORIA.id]: 48,
+                        };
+                        
+                        const valorPadrao = defaultPrazosPorStatus[status.codigo] || 0;
+                        const newPrazo = {
+                          idStatusSolicPrazoTema: 0,
+                          idStatusSolicitacao: status.codigo,
+                          nrPrazoInterno: valorPadrao,
+                          nrPrazoExterno: 0,
+                          idTema: formData.idTema || 0,
+                          tema: {
+                            idTema: formData.idTema || 0,
+                            nmTema: selectedTema?.nmTema || ''
+                          },
+                          flAtivo: 'S'
+                        } as StatusSolicPrazoTemaForUI;
+                        
+                        setTimeout(() => {
+                          setStatusPrazos(prev => {
+                            const exists = prev.find(p => p.idStatusSolicitacao === status.codigo);
+                            if (!exists) {
+                              return [...prev, newPrazo];
+                            }
+                            return prev;
+                          });
+                        }, 0);
+                        
+                        prazoFromConfig = valorPadrao;
+                      }
+                      
+                      const prazoAtual = prazoExcepcional ? (prazoFromConfig ?? 0) : (prazoFromSolicitacao ?? prazoFromConfig ?? 0);
                     return (
-                      <div key={index} className={`rounded-lg p-4 ${prazoExcepcional ? 'bg-gray-50' : 'bg-gray-100'}`}>
+                      <div key={index} className={`rounded-lg p-4 bg-gray-50`}>
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
-                            <h4 className={`font-medium ${prazoExcepcional ? 'text-gray-900' : 'text-gray-500'}`}>
+                            <h4 className={`font-medium text-gray-500'}`}>
                               {status.nome}
                             </h4>
                           </div>
@@ -808,22 +1175,25 @@ export default function SolicitacaoModal({
                                 type="button"
                                 variant="outline"
                                 size="sm"
-                                onClick={() => updateLocalPrazo(status.codigo, Math.max(0, prazoAtual - 1))}
-                                disabled={!prazoExcepcional}
+                                onClick={() => {
+                                  updateLocalPrazo(status.codigo, Math.max(0, prazoAtual - 1));
+                                }}
+                                disabled={hasTramitacoes}
                                 className="w-8 h-8 p-0 flex items-center justify-center"
                               >-</Button>
                               <Input
                                 key={`prazo-${status.codigo}`}
                                 type="number"
-                                value={prazoAtual.toString()}
+                                value={(prazoExcepcional ? prazoAtual : horasParaDias(prazoAtual)).toString()}
                                 onValueChange={(value) => {
                                   const numValue = parseInt(value || '0');
                                   if (numValue >= 0 && numValue <= 300) {
-                                    updateLocalPrazo(status.codigo, numValue);
+                                    const valorParaSalvar = prazoExcepcional ? numValue : numValue * 24;
+                                    updateLocalPrazo(status.codigo, valorParaSalvar);
                                   }
                                 }}
                                 placeholder="0"
-                                isDisabled={!prazoExcepcional}
+                                isDisabled={hasTramitacoes}
                                 className="flex-1"
                                 classNames={{
                                   input: "text-center"
@@ -838,8 +1208,13 @@ export default function SolicitacaoModal({
                                 type="button"
                                 variant="outline"
                                 size="sm"
-                                onClick={() => updateLocalPrazo(status.codigo, prazoAtual + 1)}
-                                disabled={!prazoExcepcional}
+                                onClick={() => {
+                                  const valorAtualExibido = prazoExcepcional ? prazoAtual : horasParaDias(prazoAtual);
+                                  const novoValor = valorAtualExibido + 1;
+                                  const valorParaSalvar = prazoExcepcional ? novoValor : novoValor * 24;
+                                  updateLocalPrazo(status.codigo, valorParaSalvar);
+                                }}
+                                disabled={hasTramitacoes}
                                 className="w-8 h-8 p-0 flex items-center justify-center"
                               >+</Button>
                             </div>
@@ -855,22 +1230,38 @@ export default function SolicitacaoModal({
         ) : null}
       </div>
     )
-  }, [prazoExcepcional, formData.idTema, loadingStatusPrazos, statusPrazos, updateLocalPrazo, setFormData, statusList, getSelectedTema, loadStatusPrazos]);
+  }, [prazoExcepcional, formData.idTema, loadingStatusPrazos, statusPrazos, updateLocalPrazo, setFormData, statusList, getSelectedTema, loadStatusPrazos, anexosBackend, currentPrazoTotal, hasTramitacoes]);
 
   const renderStep4 = useCallback(() => (
     <div className="space-y-6">
+      <MultiSelectAssinantes
+          selectedResponsavelIds={formData.idsResponsaveisAssinates || []}
+          onSelectionChange={handleResponsaveisSelectionChange}
+          disabled={hasTramitacoes}
+          label="Selecione os validadores em 'Em Assinatura Diretoria' *"
+        />
+    </div>
+  ), [formData.idsResponsaveisAssinates, handleResponsaveisSelectionChange, hasTramitacoes]);
+
+  const renderStep5 = useCallback(() => (
+    <div className="space-y-6">
 
       <div className="flex flex-col space-y-4">
-        <AnexoComponent onAddAnexos={handleAddAnexos} />
+        {canInserirAnexo &&
+          <AnexoComponent
+            onAddAnexos={handleAddAnexos}
+            disabled={hasTramitacoes}
+          />
+        }
 
-        {anexos.length > 0 && (
+        {canListarAnexo && anexos.length > 0 && (
           <div>
             <Label className="text-sm font-medium mb-2 block">Anexos:</Label>
             <AnexoList anexos={anexos} onRemove={handleRemoveAnexo} />
           </div>
         )}
 
-        {anexosBackend.length > 0 && (
+        {canListarAnexo && anexosBackend.length > 0 && (
           <div>
             <Label className="text-sm font-medium mb-2 block">Documentos já anexados:</Label>
             <AnexoList
@@ -894,7 +1285,7 @@ export default function SolicitacaoModal({
           </div>
         )}
 
-        {anexosTypeE.length > 0 && (
+        {canListarAnexo && anexosTypeE.length > 0 && (
           <div>
             <Label className="text-sm font-medium mb-2 block">Anexos do email</Label>
             <AnexoList
@@ -907,44 +1298,10 @@ export default function SolicitacaoModal({
                 tpObjeto: a.tpObjeto,
                 size: 0
               }))}
-              onRemove={(index) => {
-                const anexo = anexosTypeE[index];
-                if (anexo?.idAnexo) {
-                  console.log('Remove anexo type E:', anexo.idAnexo);
-                }
-              }}
-              onDownload={async (anexo) => {
-                try {
-                  if (!anexo.idObjeto || !anexo.nmArquivo) {
-                    toast.error('Dados do documento incompletos');
-                    return;
-                  }
-
-                  const arquivos = await anexosClient.download(anexo.idObjeto, TipoObjetoAnexo.E, anexo.nmArquivo);
-
-                  if (arquivos.length > 0) {
-                    const arquivo = arquivos[0];
-                    const byteCharacters = atob(arquivo.conteudoArquivo);
-                    const byteNumbers = new Array(byteCharacters.length);
-                    for (let i = 0; i < byteCharacters.length; i++) {
-                      byteNumbers[i] = byteCharacters.charCodeAt(i);
-                    }
-                    const byteArray = new Uint8Array(byteNumbers);
-                    const blob = new Blob([byteArray]);
-
-                    const url = window.URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = arquivo.nomeArquivo || anexo.name || 'documento';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    window.URL.revokeObjectURL(url);
-                  } else {
-                    toast.error('Arquivo não encontrado');
-                  }
-                } catch {
-                  toast.error('Erro ao baixar documento');
+              onDownload={async (anexoListItem) => {
+                const anexoOriginal = anexosTypeE.find(a => a.idAnexo === anexoListItem.idAnexo);
+                if (anexoOriginal) {
+                  await handleDownloadAnexoEmail(anexoOriginal);
                 }
               }}
             />
@@ -952,13 +1309,12 @@ export default function SolicitacaoModal({
         )}
       </div>
     </div>
-  ), [anexos, anexosBackend, anexosTypeE, handleAddAnexos, handleRemoveAnexo, handleRemoveAnexoBackend, handleDownloadAnexoBackend]);
+  ), [anexos, anexosBackend, anexosTypeE, handleAddAnexos, handleRemoveAnexo, handleRemoveAnexoBackend, handleDownloadAnexoBackend, handleDownloadAnexoEmail, canListarAnexo, canInserirAnexo]);
 
-  const renderStep5 = useCallback(() => (
+  const renderStep6 = useCallback(() => (
     <div className="space-y-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">Resumo da Solicitação</h3>
 
-      {/* Informações Básicas */}
       <div className="space-y-4">
         <div className="grid grid-cols-3 gap-4">
           <div>
@@ -989,21 +1345,20 @@ export default function SolicitacaoModal({
         </div>
 
         <div>
-          <Label className="text-sm font-semibold text-gray-700">Descrição da Solicitação</Label>
-          <div className="p-3 bg-gray-50 border rounded-lg text-sm max-h-24 overflow-y-auto">
-            {formData.dsSolicitacao || 'Não informado'}
-          </div>
-        </div>
-
-        <div>
           <Label className="text-sm font-semibold text-gray-700">Observações</Label>
           <div className="p-3 bg-gray-50 border rounded-lg text-sm max-h-24 overflow-y-auto">
             {formData.dsObservacao || 'Não informado'}
           </div>
         </div>
+
+        <div>
+          <Label className="text-sm font-semibold text-gray-700">Descrição da Solicitação</Label>
+          <div className="p-3 bg-gray-50 border rounded-lg text-sm h-fit max-h-72 overflow-y-auto">
+            {formData.dsSolicitacao || 'Não informado'}
+          </div>
+        </div>
       </div>
 
-      {/* Tema e Responsável */}
       <div className="border-t pt-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -1021,7 +1376,6 @@ export default function SolicitacaoModal({
         </div>
       </div>
 
-      {/* Áreas Envolvidas */}
       <div className="border-t pt-4">
         <Label className="text-sm font-semibold text-gray-700">Áreas Envolvidas</Label>
         <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
@@ -1056,16 +1410,45 @@ export default function SolicitacaoModal({
         </div>
       </div>
 
-      {/* Prazos */}
+      <div className="border-t pt-4">
+        <Label className="text-sm font-semibold text-gray-700">Validadores/Assinantes</Label>
+        <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
+          {formData.idsResponsaveisAssinates && formData.idsResponsaveisAssinates.length > 0 ? (
+            <div className="space-y-3">
+              {formData.idsResponsaveisAssinates.map(responsavelId => {
+                const responsavel = responsaveis.find(r => r.idResponsavel === responsavelId);
+                return responsavel ? (
+                  <div key={responsavelId} className="flex items-center justify-between p-3 bg-white border rounded-lg shadow-sm">
+                    <div className="flex flex-col">
+                      <span className="font-medium text-gray-900">{responsavel?.nmResponsavel}</span>
+                      <span className="text-xs text-gray-500">{responsavel?.nmPerfil}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-sm font-medium text-blue-600">
+                        {responsavel?.nmCargo || 'Sem cargo'}
+                      </span>
+                      {responsavel && (
+                        <div className="text-xs text-gray-500">
+                          {responsavel.dsEmail}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : null;
+              })}
+            </div>
+          ) : (
+            'Nenhum validador/assinante selecionado'
+          )}
+        </div>
+      </div>
+
       <div className="border-t pt-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label className="text-sm font-semibold text-gray-700">Prazo Principal</Label>
             <div className="p-3 border border-yellow-200 rounded-lg text-sm">
-              {formData.nrPrazo && formData.nrPrazo > 0
-                ? `${formData.nrPrazo} ${(() => { switch (formData.tpPrazo) { case 'H': return 'horas'; case 'D': return 'dias'; case 'U': return 'dias úteis'; case 'M': return 'meses'; default: return 'unid.'; } })()}`
-                : 'Prazo padrão do tema'
-              }
+              {hoursToDaysAndHours(currentPrazoTotal)}
               {prazoExcepcional && (
                 <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
                   Excepcional
@@ -1085,174 +1468,141 @@ export default function SolicitacaoModal({
                   return statusAtual?.nmStatus || solicitacao.statusCodigo;
                 }
                 const statusAtual = statusList.find(s => s.idStatusSolicitacao === 1);
-                return statusAtual?.nmStatus || 'Pré-análise';
+                return statusAtual?.nmStatus || statusListType.PRE_ANALISE.label;
               })()}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Prazos por Status */}
-      {statusPrazos.length > 0 && (
-        <div className="border-t pt-4">
-          <Label className="text-sm font-semibold text-gray-700">Prazos Configurados por Status</Label>
-          <div className="mt-2 space-y-2">
-            {statusPrazos
-              .filter(p => p.nrPrazoInterno && p.nrPrazoInterno > 0)
-              .map(prazo => {
-                const status = statusList.find(s => s.idStatusSolicitacao === prazo.idStatusSolicitacao);
-                return (
-                  <div key={prazo.idStatusSolicitacao} className="flex justify-between items-center p-2 bg-gray-50 rounded text-sm">
-                    <span className="font-medium">{status?.nmStatus || `Status ${prazo.idStatusSolicitacao}`}</span>
-                    <span className="text-gray-600">{prazo.nrPrazoInterno} horas</span>
-                  </div>
-                );
-              })}
-          </div>
-        </div>
-      )}
-
-      {/* Anexos */}
       <div className="border-t pt-4">
-        <Label className="text-sm font-semibold text-gray-700">Anexos ({anexos.length + anexosBackend.length})</Label>
+        <Label className="text-sm font-semibold text-gray-700">Prazos Configurados por Status</Label>
         <div className="mt-2 space-y-2">
-          {/* Anexos novos */}
-          {anexos.length > 0 && (
+          {(() => {
+            const statusOptionsForSummary = statusList.length > 0 ? statusList.map(status => ({
+              codigo: status.idStatusSolicitacao,
+              nome: status.nmStatus
+            })) : STATUS_LIST.map(status => ({
+              codigo: status.id,
+              nome: status.label
+            }));
+
+            const items = statusOptionsForSummary
+              .map((status) => {
+                const prazoFromSolicitacao = prazosSolicitacaoPorStatus.find(p => p.idStatusSolicitacao === status.codigo)?.nrPrazoInterno;
+                const prazoFromConfig = statusPrazos.find(p => p.idStatusSolicitacao === status.codigo)?.nrPrazoInterno;
+                const horas = (prazoFromSolicitacao ?? prazoFromConfig ?? 0);
+                return { status, horas };
+              })
+              .filter(item => (item.horas || 0) > 0)
+              .map(({ status, horas }) => (
+                <div key={status.codigo} className="flex justify-between items-center p-2 bg-gray-50 rounded text-sm">
+                  <span className="font-medium">{status.nome}</span>
+                  <span className="text-gray-600">{horas} horas</span>
+                </div>
+              ));
+
+            return items;
+          })()}
+        </div>
+      </div>
+
+      <div className="border-t pt-4">
+        <Label className="text-sm font-semibold text-gray-700">Anexos ({anexos.length + anexosBackend.length + anexosTypeE.length})</Label>
+        <div className="mt-2 space-y-2">
+          {canListarAnexo && anexos.length > 0 && (
             <div>
               <div className="text-xs text-gray-500 mb-2">Novos anexos a serem enviados:</div>
               {anexos.map((file, index) => (
                 <div key={index} className="flex items-center justify-between p-2 bg-gray-50 border rounded text-sm">
                   <span className="font-medium">{file.name}</span>
-                  <span className="text-xs">{Math.round(file.size / 1024)} KB</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs">{Math.round(file.size / 1024)} KB</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const fileURL = URL.createObjectURL(file);
+                        const link = document.createElement('a');
+                        link.href = fileURL;
+                        link.download = file.name;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(fileURL);
+                      }}
+                      className="h-6 w-6 p-0 hover:bg-gray-200"
+                    >
+                      <DownloadSimpleIcon size={14} className="text-gray-600" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
           )}
 
-          {/* Anexos já salvos */}
-          {anexosBackend.length > 0 && (
+          {canListarAnexo && anexosBackend.length > 0 && (
             <div>
               <div className="text-xs text-gray-500 mb-2">Anexos já salvos:</div>
               <div className="flex flex-col gap-2">
                 {anexosBackend.map((anexo, index) => (
                   <div key={index} className="flex items-center justify-between p-2 bg-gray-50 border border-gray-200 rounded text-sm">
                     <span className="font-medium text-gray-800">{anexo.nmArquivo}</span>
-                    <span className="text-xs text-gray-600">Salvo</span>
+                    <div className="flex items-center gap-2">
+                    {/*<span className="text-xs">{Math.round(anexo.size / 1024)} KB</span>*/}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownloadAnexoBackend({
+                            idAnexo: anexo.idAnexo,
+                            idObjeto: anexo.idObjeto,
+                            name: anexo.nmArquivo,
+                            nmArquivo: anexo.nmArquivo,
+                            dsCaminho: anexo.dsCaminho,
+                            tpObjeto: anexo.tpObjeto,
+                            size: 0
+                          });
+                        }}
+                        className="h-6 w-6 p-0 hover:bg-gray-200"
+                      >
+                        {/*<span className="text-xs">{Math.round(anexo.size / 1024)} KB</span>*/}
+
+                        <DownloadSimpleIcon size={14} className="text-gray-600" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {anexos.length === 0 && anexosBackend.length === 0 && (
+          {canListarAnexo && anexosTypeE.length > 0 && (
+            <div>
+              <div className="text-xs text-gray-500 mb-2">Anexos do email:</div>
+              <div className="flex flex-col gap-2">
+                {anexosTypeE.map((anexo, index) => (
+                  <div key={index} className="flex items-center justify-between p-2 bg-gray-50 border border-gray-200 rounded text-sm">
+                  <span className="font-medium text-gray-800">{anexo.nmArquivo}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {(!canListarAnexo || (anexos.length === 0 && anexosBackend.length === 0 && anexosTypeE.length === 0)) && (
             <div className="p-3 bg-gray-50 border rounded-lg text-sm text-gray-500 text-center">
-              Nenhum anexo adicionado
+              {!canListarAnexo ? 'Sem permissão para visualizar anexos' : 'Nenhum anexo adicionado'}
             </div>
           )}
         </div>
       </div>
     </div>
-  ), [formData, getSelectedTema, responsaveis, anexos, anexosBackend, statusPrazos, statusList, prazoExcepcional, solicitacao?.statusCodigo, solicitacao?.nmTema, solicitacao?.tema?.nmTema, solicitacao?.statusSolicitacao?.idStatusSolicitacao, solicitacao?.statusSolicitacao?.nmStatus, allAreas, getResponsavelByArea]);
-
-  const renderStep1 = () => (
-    <div className="space-y-6">
-      <div className="grid grid-cols-3 gap-4">
-        <TextField
-          label="Código de Identificação *"
-          name="cdIdentificacao"
-          value={formData.cdIdentificacao}
-          onChange={handleInputChange}
-          required
-          autoFocus
-          maxLength={50}
-        />
-        <TextField
-          label="Nº Ofício"
-          name="nrOficio"
-          value={formData.nrOficio}
-          onChange={handleInputChange}
-          maxLength={50}
-        />
-        <TextField
-          label="Nº Processo"
-          name="nrProcesso"
-          value={formData.nrProcesso}
-          onChange={handleInputChange}
-          maxLength={50}
-        />
-      </div>
-
-      <div className="grid grid-cols-3 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="flAnaliseGerenteDiretor" className="text-sm font-medium text-gray-700">
-            Exige análise do Gerente ou Diretor? <span className="text-red-500">*</span>
-          </Label>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                checked={formData.flAnaliseGerenteDiretor === 'S'}
-                onCheckedChange={() => setFormData(prev => ({
-                  ...prev,
-                  flAnaliseGerenteDiretor: 'S'
-                }))}
-              />
-              <Label>Sim</Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Checkbox
-                checked={formData.flAnaliseGerenteDiretor === 'N'}
-                onCheckedChange={() => setFormData(prev => ({
-                  ...prev,
-                  flAnaliseGerenteDiretor: 'N'
-                }))}
-              />
-              <Label>Não</Label>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="dsAssunto">Assunto</Label>
-        <Textarea
-          id="dsAssunto"
-          name="dsAssunto"
-          value={formData.dsAssunto}
-          onChange={handleInputChange}
-          rows={getRows(formData.dsAssunto)}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="dsSolicitacao">Descrição da Solicitação</Label>
-        <Textarea
-          id="dsSolicitacao"
-          name="dsSolicitacao"
-          value={formData.dsSolicitacao}
-          onChange={handleInputChange}
-          rows={getRows(formData.dsSolicitacao)}
-          disabled
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="dsObservacao">Observações</Label>
-        <Textarea
-          id="dsObservacao"
-          name="dsObservacao"
-          value={formData.dsObservacao}
-          onChange={handleInputChange}
-          rows={getRows(formData.dsObservacao)}
-        />
-      </div>
-    </div>
-  );
-
-  useEffect(() => {
-    if (currentStep === 3 && formData.idTema) {
-      loadStatusPrazos();
-    }
-  }, [currentStep, formData.idTema, loadStatusPrazos]);
+  ), [formData.cdIdentificacao, formData.nrOficio, formData.nrProcesso, formData.dsAssunto, formData.dsObservacao, formData.dsSolicitacao, formData.idsAreas, formData.nrPrazo, formData.idResponsavel, formData.tpPrazo, getSelectedTema, solicitacao?.tema?.nmTema, solicitacao?.nmTema, responsaveis, statusPrazos, anexos, anexosBackend, anexosTypeE, canListarAnexo, allAreas, getResponsavelByArea, statusList, handleDownloadAnexoBackend, handleDownloadAnexoEmail]);
 
   useEffect(() => {
     const loadStatusList = async () => {
@@ -1275,10 +1625,9 @@ export default function SolicitacaoModal({
     }
   }, [formData.idTema, open, loadStatusPrazos]);
 
-  // Load anexos of type E when entering step 4
   useEffect(() => {
     const loadAnexosTypeE = async () => {
-      if (currentStep === 4 && solicitacao?.idSolicitacao) {
+      if (( currentStep === 5 || currentStep === 6) && solicitacao?.idSolicitacao) {
         try {
           const anexosE = await anexosClient.buscarPorIdObjetoETipoObjeto(
             solicitacao.idSolicitacao,
@@ -1315,6 +1664,7 @@ export default function SolicitacaoModal({
               { title: 'Dados da Solicitação', description: 'Informações básicas' },
               { title: 'Tema e Áreas', description: 'Configuração' },
               { title: 'Status e Prazos', description: 'Definições de tempo' },
+              { title: 'Assinates', description: 'Validador / Assinante' },
               { title: 'Anexos', description: 'Documentos' },
               { title: 'Resumo', description: 'Finalização' }
             ]}
@@ -1322,13 +1672,14 @@ export default function SolicitacaoModal({
             canNavigateToStep={(step: number): boolean => {
               if (step === 1) return true;
               if (step === 2) return isStep1Valid();
-              if (step >= 3) return isStep1Valid() && isStep2Valid();
-              return false; // Fallback para garantir que sempre retorna boolean
+              if (step === 3) return isStep1Valid() && isStep2Valid();
+              if (step === 4) return isStep1Valid() && isStep2Valid();
+              if (step >= 5) return isStep1Valid() && isStep2Valid() && isStep4Valid();
+              return false;
             }}
           />
         </div>
 
-        {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto py-6">
           <form id="solicitacao-form" onSubmit={handleSubmit}>
             {currentStep === 1 && renderStep1()}
@@ -1336,20 +1687,33 @@ export default function SolicitacaoModal({
             {currentStep === 3 && renderStep3()}
             {currentStep === 4 && renderStep4()}
             {currentStep === 5 && renderStep5()}
+            {currentStep === 6 && renderStep6()}
           </form>
         </div>
 
         <DialogFooter className="flex gap-3 pt-6 border-t flex-shrink-0">
-          <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
-            Sair
-          </Button>
+          {/* <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              handleNextStep(() => {
+                onSave()
+                onClose()
+              })
+            }}
+            disabled={loading}
+          >
+            <FloppyDiskIcon size={16} className="mr-2"/>
+            Salvar e sair
+          </Button> */}
 
           {currentStep === 1 && (
             <Button
               type="button"
-              onClick={handleNextStep}
+              onClick={() => handleNextStep()}
               disabled={!isStep1Valid()}
               className="flex items-center gap-2"
+              tooltip={hasTramitacoes ? 'Esta solicitação já possui tramitações iniciadas. Edição bloqueada.' : ''}
             >
               Próximo
               <CaretRightIcon size={16} />
@@ -1370,9 +1734,10 @@ export default function SolicitacaoModal({
               </Button>
               <Button
                 type="button"
-                onClick={handleNextStep}
+                onClick={() => handleNextStep()}
                 disabled={loading || !isStep2Valid()}
                 className="flex items-center gap-2"
+                tooltip={hasTramitacoes ? 'Esta solicitação já possui tramitações iniciadas. Edição bloqueada.' : ''}
               >
                 Próximo
                 <CaretRightIcon size={16} />
@@ -1394,9 +1759,10 @@ export default function SolicitacaoModal({
               </Button>
               <Button
                 type="button"
-                onClick={handleNextStep}
+                onClick={() => handleNextStep()}
                 disabled={loading}
                 className="flex items-center gap-2"
+                tooltip={hasTramitacoes ? 'Esta solicitação já possui tramitações iniciadas. Edição bloqueada.' : ''}
               >
                 Próximo
                 <CaretRightIcon size={16} />
@@ -1418,9 +1784,40 @@ export default function SolicitacaoModal({
               </Button>
               <Button
                 type="button"
-                onClick={handleNextStep}
+                onClick={() => handleNextStep()}
+                disabled={loading || !isStep4Valid()}
+                className="flex items-center gap-2"
+                tooltip={
+                  hasTramitacoes 
+                    ? 'Esta solicitação já possui tramitações iniciadas. Edição bloqueada.'
+                    : !isStep4Valid() 
+                      ? 'Selecione exatamente 2 validadores/assinantes para continuar'
+                      : undefined
+                }
+              >
+                Próximo
+                <CaretRightIcon size={16} />
+              </Button>
+            </>
+          )}
+          {currentStep === 5 && (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handlePreviousStep}
                 disabled={loading}
                 className="flex items-center gap-2"
+              >
+                <CaretLeftIcon size={16} />
+                Anterior
+              </Button>
+              <Button
+                type="button"
+                onClick={() => handleNextStep()}
+                disabled={loading}
+                className="flex items-center gap-2"
+                tooltip={hasTramitacoes ? 'Esta solicitação já possui tramitações iniciadas. Edição bloqueada.' : ''}
               >
                 Próximo
                 <CaretRightIcon size={16} />
@@ -1428,7 +1825,7 @@ export default function SolicitacaoModal({
             </>
           )}
 
-          {currentStep === 5 && (
+          {currentStep === 6 && (
             <>
               <Button
                 type="button"
@@ -1443,8 +1840,9 @@ export default function SolicitacaoModal({
               <Button
                 type="submit"
                 form="solicitacao-form"
-                disabled={loading}
+                disabled={loading || hasTramitacoes}
                 className="flex items-center gap-2"
+                tooltip={hasTramitacoes ? 'Esta solicitação já possui tramitações iniciadas. Edição bloqueada.' : ''}
               >
                 {solicitacao && <ArrowArcRightIcon className={"w-4 h-4 mr-1"} />}
                 {loading ? 'Salvando...' : solicitacao ? 'Encaminhar solicitação' : 'Criar Solicitação'}
@@ -1453,6 +1851,17 @@ export default function SolicitacaoModal({
           )}
         </DialogFooter>
       </DialogContent>
+      <ConfirmationDialog
+        open={showConfirmSend}
+        onOpenChange={setShowConfirmSend}
+        title="Confirmar envio"
+        description={
+          "Após o envio da Solicitação não será possível alterá-la. Deseja prosseguir com o envio?"
+        }
+        confirmText="Sim"
+        cancelText="Voltar a solicitação"
+        onConfirm={handleConfirmSend}
+      />
     </Dialog>
   );
 }

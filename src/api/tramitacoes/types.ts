@@ -1,3 +1,5 @@
+import { ArquivoDTO } from "../anexos/type";
+
 interface Email {
   idEmail: number;
   dsRemetente: string;
@@ -78,7 +80,7 @@ interface Solicitacao {
   area?: Area;
 }
 
-interface TramitacaoAcao {
+export interface TramitacaoAcao {
   idTramitacaoAcao: number;
   tramitacao: TramitacaoResponse;
   responsavelArea: ResponsavelArea;
@@ -98,6 +100,7 @@ export interface TramitacaoResponse {
   tramitacaoAcao: TramitacaoAcao[] | null;
   flAtivo: string;
   dsObservacao?: string;
+  flAprovado?: string;
 }
 
 export interface TramitacaoRequest {
@@ -107,4 +110,11 @@ export interface TramitacaoRequest {
   dsObservacao?: string;
   idResponsavel?: number;
   flAcao?: string;
+  arquivos?: ArquivoDTO[];
+  flAprovado?: 'S' | 'N';
+}
+
+export interface ProximoStatusRequest {
+  idSolicitacao: number;
+  idStatusSolicitacao: number;
 }

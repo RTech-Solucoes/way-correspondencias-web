@@ -1,6 +1,6 @@
-import { Button } from "@/components/ui/button";
+import {Button} from "@/components/ui/button";
 import PageTitle from "@/components/ui/page-title";
-import { ArrowClockwiseIcon } from "@phosphor-icons/react";
+import {ArrowClockwiseIcon} from "@phosphor-icons/react";
 
 interface IDashboardHeader {
   lastUpdated: Date | null;

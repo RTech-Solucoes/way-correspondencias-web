@@ -1,94 +1,160 @@
-import { obligationsRecent } from "@/components/dashboard/MockDados";
-import CardHeader from "../card-header";
+import dashboardClient from "@/api/dashboard/client";
+import { DashboardListSummary, DashboardOverview } from "@/api/dashboard/type";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { CheckCircleIcon, ClockIcon, WarningCircleIcon, XCircleIcon } from "@phosphor-icons/react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import CardHeader from "../card-header";
+import { capitalizeWords, getStatusColorVision, renderIcon } from "../functions";
+import PaginationTasksStatus from "./PaginationTasksStatus";
+import { statusList } from "@/api/status-solicitacao/types";
 
-export default function TasksStatusBoard() {
+interface TasksStatusBoardProps {
+  refreshTrigger?: number;
+}
+
+export default function TasksStatusBoard({ refreshTrigger }: TasksStatusBoardProps) {
+  const [visionGeral, setVisionGeral] = useState<DashboardOverview[]>([]);
+  const [listSummary, setListSummary] = useState<DashboardListSummary[]>([]);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  const sortVisionGeral = (data: DashboardOverview[]) => {
+    const statusOrder = [
+      statusList.CONCLUIDO.label,
+      statusList.EM_ANALISE_AREA_TECNICA.label,
+      statusList.EM_APROVACAO.label,
+      statusList.PRE_ANALISE.label,
+      statusList.EM_ASSINATURA_DIRETORIA.label,
+      statusList.ARQUIVADO.label,
+      statusList.EM_CHANCELA.label,
+      statusList.VENCIDO_REGULATORIO.label,
+      statusList.ANALISE_REGULATORIA.label,
+      statusList.VENCIDO_AREA_TECNICA.label,
+    ];
+
+    return data.sort((a, b) => {
+      const indexA = statusOrder.indexOf(a.nmStatus);
+      const indexB = statusOrder.indexOf(b.nmStatus);
+
+      if (indexA === -1 && indexB === -1) return 0;
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
+
+      return indexA - indexB;
+    });
+  };
+
+  useEffect(() => {
+    const getOverview = async () => {
+      try {
+        const data = await dashboardClient.getOverview();
+        const sortedData = sortVisionGeral(data);
+        setVisionGeral(sortedData);
+      } catch (error) {
+        console.error("Erro ao buscar overview:", error);
+        toast.error("Não foi possível carregar os dados do dashboard.");
+      }
+    };
+
+    const getRecentOverview = async () => {
+      try {
+        setLoading(true);
+        const response = await dashboardClient.getRecentOverview(currentPage, 5);
+        setListSummary(response.content);
+        setTotalPages(response.totalPages);
+        setTotalElements(response.totalElements);
+      } catch (error) {
+        console.error("Erro ao buscar overview:", error);
+        toast.error("Não foi possível carregar os dados do dashboard.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getRecentOverview();
+    getOverview();
+  }, [refreshTrigger, currentPage]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   return (
-    <Card className="flex flex-col lg:col-span-2">
+    <Card className="flex flex-col h-full">
       <CardHeader
-        title="Visão Geral de Obrigações"
-        description="Status de todas as obrigações contratuais"
+        title="Visão Geral de Solicitações"
+        description="Status de todas as solicitações contratuais"
       />
       <CardContent>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center">
-                <CheckCircleIcon className="h-4 w-4 text-green-500 mr-2" />
-                <span>Concluídas</span>
+        <div className="grid grid-cols-2 gap-6">
+          {visionGeral.map((item) => (
+            <div key={item.nmStatus} className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center">
+                  {renderIcon(item.nmStatus)}
+                  <span>{capitalizeWords(item.nmStatus)}</span>
+                </div>
+                <span className="font-medium">
+                  {item.qtStatus} ({item.qtPercentual}%)
+                </span>
               </div>
-              <span className="font-medium">8 (44%)</span>
+              <div className="h-2 bg-gray-100 w-full rounded-full overflow-hidden">
+                <div
+                  className={`h-full ${getStatusColorVision(item.nmStatus)}`}
+                  style={{ width: `${item.qtPercentual}%` }}
+                ></div>
+              </div>
             </div>
-            <div className="h-2 bg-gray-100 w-full rounded-full overflow-hidden">
-              <div className="h-full bg-green-500" style={{ width: "44%" }}></div>
-            </div>
-          </div>
+          ))}
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center">
-                <ClockIcon className="h-4 w-4 text-blue-500 mr-2" />
-                <span>Em Andamento</span>
-              </div>
-              <span className="font-medium">5 (28%)</span>
+          {visionGeral.length === 0 && (
+            <div className="col-span-2 text-sm text-gray-500 text-center">
+              Nenhum dado disponível
             </div>
-            <div className="h-2 bg-gray-100 w-full rounded-full overflow-hidden">
-              <div className="h-full bg-blue-500" style={{ width: "28%" }}></div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center">
-                <WarningCircleIcon className="h-4 w-4 text-yellow-500 mr-2" />
-                <span>Pendentes</span>
-              </div>
-              <span className="font-medium">3 (17%)</span>
-            </div>
-            <div className="h-2 bg-gray-100 w-full rounded-full overflow-hidden">
-              <div className="h-full bg-yellow-500" style={{ width: "17%" }}></div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center">
-                <XCircleIcon className="h-4 w-4 text-red-500 mr-2" />
-                <span>Atrasadas</span>
-              </div>
-              <span className="font-medium">2 (11%)</span>
-            </div>
-            <div className="h-2 bg-gray-100 w-full rounded-full overflow-hidden">
-              <div className="h-full bg-red-500" style={{ width: "11%" }}></div>
-            </div>
-          </div>
+          )}
         </div>
 
         <div className="mt-6">
-          <h4 className="text-sm font-medium mb-3">Obrigações Recentes</h4>
+          <h4 className="text-sm font-medium mb-3">Solicitações Recentes</h4>
           <div className="space-y-3">
-            {obligationsRecent.map((task) => (
-              <div key={task.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <div className={`w-2 h-2 rounded-full ${task.status === 'concluido' ? 'bg-green-500' :
-                    task.status === 'em_andamento' ? 'bg-blue-500' :
-                      task.status === 'pendente' ? 'bg-yellow-500' : 'bg-red-500'
-                    }`} />
-                  <div>
-                    <div className="font-medium text-sm">{task.title}</div>
-                    <div className="text-xs text-gray-500">{task.assignee} • {task.date}</div>
+            {loading ? (
+              <div className="flex items-center justify-center py-4">
+                <div className="text-sm text-gray-500">Carregando obrigações...</div>
+              </div>
+            ) : listSummary.length === 0 ? (
+              <div className="text-sm text-gray-500">Nenhuma tarefa foi realizada recentemente.</div>
+            ) : (
+              listSummary.map((task, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-gray-100 rounded-lg">
+                  <div className="flex items-center justify-between space-x-3 w-full">
+                    <div>
+                      <div className="font-medium text-sm">{task.nmArea}</div>
+                      <div className="text-xs text-gray-500">{task.nmTema}</div>
+                    </div>
+                    <div className="text-xs text-gray-500">{task.dtCriacaoFormatada}</div>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm" className="text-xs">Ver</Button>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </CardContent>
+
       <CardFooter className="border-t pt-4 mt-auto">
-        <Button variant="outline" className="w-full">Ver Todas as Obrigações</Button>
+        {totalPages > 1 ? (
+          <PaginationTasksStatus
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalElements={totalElements}
+            onPageChange={handlePageChange}
+            loading={loading}
+          />
+        ) : (
+          <></>
+        )}
       </CardFooter>
     </Card>
   )

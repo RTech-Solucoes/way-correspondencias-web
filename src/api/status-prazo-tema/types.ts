@@ -8,6 +8,7 @@ export interface StatusSolicPrazoTemaResponse {
   statusCodigo: number;
   idTema: number;
   nrPrazoInterno: number;
+  nrPrazoExterno: number;
   dtCriacao: string;
   dtAtualizacao?: string;
   nrCpfCriacao: string;
@@ -36,7 +37,6 @@ export interface StatusSolicPrazoTemaForUI {
   tema?: { idTema: number; nmTema: string };
 }
 
-// Interface para o retorno dos prazos padrão do endpoint /temas/{idTema}/status
 export interface StatusPrazoPadraoResponse {
   idStatusSolicPrazoTema: number;
   statusCodigo: {

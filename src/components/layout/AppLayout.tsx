@@ -1,9 +1,9 @@
 'use client';
 
 import React from 'react';
-import { AppHeader } from './AppHeader';
-import { AppSidebar } from './AppSidebar';
-import { useSidebar } from '@/context/sidebar/SidebarContext';
+import {AppHeader} from './AppHeader';
+import {AppSidebar} from './AppSidebar';
+import {useSidebar} from '@/context/sidebar/SidebarContext';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -22,17 +22,14 @@ export function AppLayout({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header fixo no topo */}
       <AppHeader 
         userName={userName}
         userLogin={userLogin}
         userAvatar={userAvatar}
       />
 
-      {/* Sidebar fixa à esquerda */}
       <AppSidebar />
 
-      {/* Área de conteúdo principal */}
       <main 
         className="pt-[82px] transition-all duration-300"
         style={{ paddingLeft: `${sidebarWidth}px` }}

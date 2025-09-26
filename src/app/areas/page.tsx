@@ -1,21 +1,21 @@
 'use client';
 
-import React, { useEffect, useCallback } from 'react';
+import React, {useCallback, useEffect} from 'react';
 import AreaModal from '../../components/areas/AreaModal';
 import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
 import {Pagination} from '@/components/ui/pagination';
-import { useAreas } from '@/context/areas/AreasContext';
-import { areasClient } from '@/api/areas/client';
-import { AreaFilterParams } from '@/api/areas/types';
-import { toast } from 'sonner';
-import { useDebounce } from '@/hooks/use-debounce';
-import HeaderArea from '@/components/areas/HeaderArea';
+import {useAreas} from '@/context/areas/AreasContext';
+import {areasClient} from '@/api/areas/client';
+import {AreaFilterParams, AreaRequest} from '@/api/areas/types';
+import {toast} from 'sonner';
+import {useDebounce} from '@/hooks/use-debounce';
 import SearchArea from "@/components/areas/SearchArea";
+import {FiltrosAplicados} from '@/components/ui/applied-filters';
 import TableArea from "@/components/areas/TableArea";
 import FilterModalArea from "@/components/areas/FilterModalArea";
 import PageTitle from '@/components/ui/page-title';
-import { ArrowClockwiseIcon } from '@phosphor-icons/react';
-import { Button } from '@nextui-org/react';
+import {ArrowClockwiseIcon} from '@phosphor-icons/react';
+import {Button} from '@nextui-org/react';
 
 export default function AreasPage() {
   const {
@@ -40,6 +40,7 @@ export default function AreasPage() {
     filters,
     setFilters,
     activeFilters,
+    setActiveFilters,
     showDeleteDialog,
     setShowDeleteDialog,
     areaToDelete,
@@ -59,13 +60,11 @@ export default function AreasPage() {
     try {
       setLoading(true);
 
-      const filterParts = [];
-      if (debouncedSearchQuery) filterParts.push(debouncedSearchQuery);
-      if (activeFilters.codigo) filterParts.push(activeFilters.codigo);
-      if (activeFilters.nome) filterParts.push(activeFilters.nome);
-
       const params: AreaFilterParams = {
-        filtro: filterParts.join(' ') || undefined,
+        filtro: debouncedSearchQuery || undefined,
+        cdArea: activeFilters.codigo || undefined,
+        nmArea: activeFilters.nome || undefined,
+        dsArea: activeFilters.descricao || undefined,
         page: currentPage,
         size: 10,
       };
@@ -100,14 +99,64 @@ export default function AreasPage() {
     }
   };
 
-  const onAreaSave = () => {
-    handleAreaSaved();
-    loadAreas();
+  const onAreaSave = async (data: AreaRequest) => {
+    try {
+      if (selectedArea && selectedArea.idArea) {
+        await areasClient.atualizar(selectedArea.idArea, data);
+        toast.success('Área atualizada com sucesso');
+      }
+      handleAreaSaved();
+      loadAreas();
+    } catch {
+      toast.error('Erro ao salvar área');
+    }
   };
 
+  const filtrosAplicados = [
+    ...(searchQuery ? [{
+      key: 'search',
+      label: 'Busca',
+      value: searchQuery,
+      color: 'blue' as const,
+      onRemove: () => setSearchQuery('')
+    }] : []),
+    ...(activeFilters.codigo ? [{
+      key: 'codigo',
+      label: 'Código',
+      value: activeFilters.codigo,
+      color: 'orange' as const,
+      onRemove: () => {
+        const newFilters = { ...activeFilters, codigo: '' };
+        setActiveFilters(newFilters);
+        setFilters(newFilters);
+      }
+    }] : []),
+    ...(activeFilters.nome ? [{
+      key: 'nome',
+      label: 'Nome',
+      value: activeFilters.nome,
+      color: 'green' as const,
+      onRemove: () => {
+        const newFilters = { ...activeFilters, nome: '' };
+        setActiveFilters(newFilters);
+        setFilters(newFilters);
+      }
+    }] : []),
+    ...(activeFilters.descricao ? [{
+      key: 'descricao',
+      label: 'Descrição',
+      value: activeFilters.descricao,
+      color: 'purple' as const,
+      onRemove: () => {
+        const newFilters = { ...activeFilters, descricao: '' };
+        setActiveFilters(newFilters);
+        setFilters(newFilters);
+      }
+    }] : [])
+  ]
+  
   return (
     <div className="flex flex-col min-h-0 flex-1">
-      {/* Header da página */}
       <div className="flex items-center justify-between">
         <PageTitle />
 
@@ -124,7 +173,7 @@ export default function AreasPage() {
 
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-500">
-              {areas?.length} área(s)
+              {totalElements} {totalElements > 1 ? "áreas" : "área"}
             </span>
           </div>
 
@@ -132,10 +181,9 @@ export default function AreasPage() {
             currentPage={currentPage}
             totalPages={totalPages}
             totalElements={totalElements}
-            pageSize={15}
             onPageChange={setCurrentPage}
             loading={loading}
-            showOnlyPagginationButtons={true}
+            showOnlyPaginationButtons={true}
           />
         </div>
       </div>
@@ -151,7 +199,12 @@ export default function AreasPage() {
         />
       </div>
 
-      {/* Área principal da tabela */}
+      <FiltrosAplicados
+        filters={filtrosAplicados}
+        showClearAll={false}
+        className="mb-4"
+      />
+
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex-1 overflow-auto mb-6">
         <TableArea
           areas={areas}

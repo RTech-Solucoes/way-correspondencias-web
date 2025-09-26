@@ -38,6 +38,7 @@ class StatusSolicPrazoTemaClient {
       idStatusSolicitacao: item.statusCodigo,
       idTema: item.idTema,
       nrPrazoInterno: item.nrPrazoInterno,
+      nrPrazoExterno: item.nrPrazoExterno,
       flAtivo: item.flAtivo,
       tema: {
         idTema: item.idTema,

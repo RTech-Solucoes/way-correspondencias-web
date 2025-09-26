@@ -1,3 +1,4 @@
+import { buildQueryParams } from "@/utils/utils";
 import ApiClient from "../client";
 import { PerfilResponse, PerfilRequest, PagedResponse, PerfilFilterParams } from "./types";
 
@@ -15,15 +16,16 @@ class PerfisClient {
   }
 
   async buscarPorFiltro(params: PerfilFilterParams = {}): Promise<PagedResponse<PerfilResponse>> {
-    const queryParams = new URLSearchParams();
 
-    if (params.filtro) queryParams.append('filtro', params.filtro);
-    if (params.page !== undefined) queryParams.append('page', params.page.toString());
-    if (params.size !== undefined) queryParams.append('size', params.size.toString());
-    if (params.sort) queryParams.append('sort', params.sort);
+    const allowedKeys = [
+      'filtro',
+      'page',
+      'size',
+      'sort',
+    ] as const;
 
-    const queryString = queryParams.toString();
-    const endpoint = queryString ? `?${queryString}` : '';
+    const qs = buildQueryParams(params, allowedKeys).toString();
+    const endpoint = qs ? `?${qs}` : '';
 
     return this.client.request<PagedResponse<PerfilResponse>>(endpoint, {
       method: 'GET',

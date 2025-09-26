@@ -7,6 +7,7 @@ import TasksStatusBoard from './TasksStatusBoard/TasksStatusBoard';
 
 export default function DashboardViewComponent() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     refreshData();
@@ -14,6 +15,7 @@ export default function DashboardViewComponent() {
 
   const refreshData = () => {
     setLastUpdated(new Date());
+    setRefreshTrigger(prev => prev + 1);
   };
 
   return (
@@ -23,14 +25,18 @@ export default function DashboardViewComponent() {
         refreshData={refreshData}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <TasksStatusBoard />
-        <RecentActivity />
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="lg:col-span-3 h-full">
+          <TasksStatusBoard refreshTrigger={refreshTrigger} />
+        </div>
+        <div className="lg:col-span-2 h-full">
+          <RecentActivity refreshTrigger={refreshTrigger} />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <NextDeadlines />
-        <DeadlinesCalendar />
+        <NextDeadlines refreshTrigger={refreshTrigger} />
+        <DeadlinesCalendar refreshTrigger={refreshTrigger} />
       </div>
     </div>
   )

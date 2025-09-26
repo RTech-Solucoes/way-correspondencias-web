@@ -1,3 +1,4 @@
+import { buildQueryParams } from "@/utils/utils";
 import ApiClient from "../client";
 import { EmailResponse, PagedResponse, EmailFilterParams } from "./types";
 
@@ -14,40 +15,22 @@ class EmailClient {
     });
   }
 
-  async buscarPorDsRemetente(dsRemetente: string): Promise<EmailResponse[]> {
-    return this.client.request<EmailResponse[]>(`/remetente/${encodeURIComponent(dsRemetente)}`, {
-      method: 'GET',
-    });
-  }
-
-  async buscarPorDsDestinatario(dsDestinatario: string): Promise<EmailResponse[]> {
-    return this.client.request<EmailResponse[]>(`/destinatario/${encodeURIComponent(dsDestinatario)}`, {
-      method: 'GET',
-    });
-  }
-
-  async buscarPorPeriodo(inicio: string, fim: string): Promise<EmailResponse[]> {
-    const queryParams = new URLSearchParams();
-    queryParams.append('inicio', inicio);
-    queryParams.append('fim', fim);
-
-    return this.client.request<EmailResponse[]>(`/periodo?${queryParams.toString()}`, {
-      method: 'GET',
-    });
-  }
-
   async buscarPorFiltro(params: EmailFilterParams = {}): Promise<PagedResponse<EmailResponse>> {
-    const queryParams = new URLSearchParams();
 
-    if (params.filtro) queryParams.append('filtro', params.filtro);
-    if (params.page !== undefined) queryParams.append('page', params.page.toString());
-    if (params.size !== undefined) queryParams.append('size', params.size.toString());
-    if (params.sort) queryParams.append('sort', params.sort);
+    const allowedKeys = [
+      "filtro",
+      "dsRemetente",
+      "dsDestinatario",
+      "dtRecebimentoInicio",
+      "dtRecebimentoFim",
+      "page",
+      "size",
+      "sort"
+    ] as const;
 
-    const queryString = queryParams.toString();
-    const endpoint = queryString ? `?${queryString}` : '';
+    const qs = buildQueryParams(params, allowedKeys).toString();
 
-    return this.client.request<PagedResponse<EmailResponse>>(endpoint, {
+    return this.client.request<PagedResponse<EmailResponse>>(qs ? `?${qs}` : '', {
       method: 'GET',
     });
   }

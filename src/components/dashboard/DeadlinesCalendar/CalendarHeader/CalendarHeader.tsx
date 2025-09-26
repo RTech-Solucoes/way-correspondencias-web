@@ -10,10 +10,12 @@ interface ICalendarHeader {
 
 export default function CalendarHeader(props: ICalendarHeader) {
   return (
-    <CustomCardHeader
-      title="Calendário de Obrigações"
-      description="Visualize suas obrigações no calendário"
-    >
+    <div className="w-full flex flex-row justify-between pr-8">
+      <CustomCardHeader
+        title="Calendário de Solicitações"
+        description="Visualize suas solicitações no calendário"
+      >
+      </CustomCardHeader>
       <div className="flex items-center space-x-2">
         <Button
           variant="outline"
@@ -40,6 +42,6 @@ export default function CalendarHeader(props: ICalendarHeader) {
           Ano
         </Button>
       </div>
-    </CustomCardHeader>
+    </div>
   )
 }

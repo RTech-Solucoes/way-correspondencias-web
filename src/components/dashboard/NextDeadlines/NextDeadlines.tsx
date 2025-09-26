@@ -1,38 +1,83 @@
-import { deadlines } from "@/components/dashboard/MockDados";
-import CardHeader from "../card-header";
+import dashboardClient from "@/api/dashboard/client";
+import { SolicitacaoPrazo } from "@/api/dashboard/type";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { formatarDataHora } from "@/utils/FormattDate";
 import { ClockIcon } from "@phosphor-icons/react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import CardHeader from "../card-header";
+import { getStatusColorVision } from "../functions";
+import PaginationNextDeadlines from "./PaginationNextDeadlines";
+import PaginationRecentActivity from "../RecentActivity/PaginationRecentActivity";
 
-export default function NextDeadlines() {
+
+interface NextDeadlinesProps {
+  refreshTrigger?: number;
+}
+
+export default function NextDeadlines({ refreshTrigger }: NextDeadlinesProps) {
+
+  const [listDeadline, setListDeadline] = useState<SolicitacaoPrazo[]>([]);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const getRecentDeadline = async () => {
+      try {
+        const response = await dashboardClient.getRecentDeadline(currentPage, 10);
+        setListDeadline(response.content);
+        setTotalPages(response.totalPages);
+        setTotalElements(response.totalElements);
+      } catch (error) {
+        console.error("Erro ao buscar prazos:", error);
+        toast.error("Não foi possível carregar os próximos prazos.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getRecentDeadline();
+  }, [refreshTrigger, currentPage]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   return (
     <Card className="flex flex-col">
-      <CardHeader
-        title="Próximos Prazos"
-        description="Obrigações com vencimento próximo"
-      />
+      <div className="flex justify-between items-center pr-4">
+        <CardHeader
+          title="Próximos Prazos"
+        />
+        {totalPages > 1 && (
+          <PaginationRecentActivity
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalElements={totalElements}
+            onPageChange={handlePageChange}
+            loading={loading}
+          />
+        )}
+      </div>
       <CardContent>
         <div className="space-y-4">
-          {deadlines.map((deadline) => (
-            <div key={deadline.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-              <div className={`w-2 h-2 rounded-full ${deadline.status === 'concluido' ? 'bg-green-500' :
-                deadline.status === 'em_andamento' ? 'bg-blue-500' :
-                  deadline.status === 'pendente' ? 'bg-yellow-500' : 'bg-red-500'
-                }`} />
+          {listDeadline.map((deadline, index) => (
+            <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+              <div className={`w-2 h-2 rounded-full ${getStatusColorVision(deadline.nmStatus)}`} />
               <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm truncate">{deadline.title}</div>
+                <div className="font-medium text-sm truncate">{deadline.nmTema}</div>
                 <div className="flex items-center text-xs text-gray-500">
                   <ClockIcon className="h-3 w-3 mr-1" />
-                  {deadline.dueDate}
+                  {formatarDataHora(deadline.dtFim)}
                 </div>
               </div>
             </div>
           ))}
         </div>
       </CardContent>
-      <CardFooter className="border-t pt-4 mt-auto">
-        <Button variant="outline" className="w-full">Ver Todos os Prazos</Button>
-      </CardFooter>
     </Card>
   )
 }

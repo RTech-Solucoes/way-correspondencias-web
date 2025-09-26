@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useCallback, useState } from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   StickyTable,
   StickyTableBody,
@@ -9,48 +9,53 @@ import {
   StickyTableHeader,
   StickyTableRow
 } from '@/components/ui/sticky-table';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import {Button} from '@/components/ui/button';
+import {Input} from '@/components/ui/input';
+import {Badge} from '@/components/ui/badge';
 import SolicitacaoModal from '../../components/solicitacoes/SolicitacaoModal';
 import DetalhesSolicitacaoModal from '@/components/solicitacoes/DetalhesSolicitacaoModal';
-import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
 import {
+  ArrowClockwiseIcon,
+  ArrowsDownUpIcon,
+  ClipboardTextIcon,
+  ClockCounterClockwiseIcon,
   FunnelSimpleIcon,
   MagnifyingGlassIcon,
   PaperPlaneRightIcon,
+  PencilSimpleIcon,
   PlusIcon,
   TrashIcon,
-  ClipboardTextIcon,
-  XIcon,
-  SpinnerIcon,
-  CaretDownIcon,
-  CaretRightIcon,
-  ArrowsDownUpIcon,
-  PencilSimpleIcon,
-  ArrowClockwiseIcon
+  XIcon
 } from '@phosphor-icons/react';
 import PageTitle from '@/components/ui/page-title';
-import { solicitacoesClient } from '@/api/solicitacoes/client';
-import { responsaveisClient } from '@/api/responsaveis/client';
-import { temasClient } from '@/api/temas/client';
-import { areasClient } from '@/api/areas/client';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from 'sonner';
-import { useDebounce } from '@/hooks/use-debounce';
-import { Pagination } from '@/components/ui/pagination';
-import { useSolicitacoes } from '@/context/solicitacoes/SolicitacoesContext';
-import TramitacaoList from '@/components/solicitacoes/TramitacaoList';
+import {solicitacoesClient} from '@/api/solicitacoes/client';
+import {responsaveisClient} from '@/api/responsaveis/client';
+import {temasClient} from '@/api/temas/client';
+import {areasClient} from '@/api/areas/client';
+import {toast} from 'sonner';
+import {useDebounce} from '@/hooks/use-debounce';
+import {Pagination} from '@/components/ui/pagination';
+import {useSolicitacoes} from '@/context/solicitacoes/SolicitacoesContext';
+import HistoricoRespostasModal from '@/components/solicitacoes/HistoricoRespostasModal';
+import FilterModal from '@/components/solicitacoes/FilterModal';
+import { statusSolicitacaoClient } from '@/api/status-solicitacao/client';
+import { FiltrosAplicados } from '@/components/ui/applied-filters';
 import anexosClient from '@/api/anexos/client';
-import { AnexoResponse, TipoObjetoAnexo } from '@/api/anexos/type';
-import { AreaSolicitacao, SolicitacaoResponse, PagedResponse } from '@/api/solicitacoes/types';
-import { ResponsavelResponse } from '@/api/responsaveis/types';
-import { TemaResponse } from '@/api/temas/types';
-import { AreaResponse } from '@/api/areas/types';
-import { useTramitacoesMutation } from '@/hooks/use-tramitacoes';
+import {AnexoResponse, TipoObjetoAnexo, ArquivoDTO} from '@/api/anexos/type';
+import {
+  AreaSolicitacao,
+  PagedResponse,
+  SolicitacaoDetalheResponse,
+  SolicitacaoResponse
+} from '@/api/solicitacoes/types';
+import {useTramitacoesMutation} from '@/hooks/use-tramitacoes';
 import tramitacoesClient from '@/api/tramitacoes/client';
+import {usePermissoes} from "@/context/permissoes/PermissoesContext";
+import LoadingRows from "@/components/solicitacoes/LoadingRows";
+import { statusList } from '@/api/status-solicitacao/types';
+import { formatDateBr } from '@/utils/utils';
+import TimeProgress from '@/components/ui/time-progress';
 
 export default function SolicitacoesPage() {
   const {
@@ -85,7 +90,7 @@ export default function SolicitacoesPage() {
     filters,
     setFilters,
     activeFilters,
-    expandedRows,
+    setActiveFilters,
     sortField,
     sortDirection,
     hasActiveFilters,
@@ -95,16 +100,22 @@ export default function SolicitacoesPage() {
     applyFilters,
     clearFilters,
     getStatusBadgeVariant,
+    getStatusBadgeBg,
     getStatusText,
-    toggleRowExpansion,
     handleSort,
   } = useSolicitacoes();
 
   const tramitacoesMutation = useTramitacoesMutation();
+  const {canInserirSolicitacao, canAtualizarSolicitacao, canDeletarSolicitacao} = usePermissoes()
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
-  const [numberOfElements, setNumberOfElements] = useState(0);
-  const [first, setFirst] = useState(true);
-  const [last, setLast] = useState(true);
+
+  const [showDetalhesModal, setShowDetalhesModal] = useState(false);
+  const [detalhesSolicitacao, setDetalhesSolicitacao] = useState<SolicitacaoDetalheResponse | null>(null);
+  const [detalhesAnexos, setDetalhesAnexos] = useState<AnexoResponse[]>([]);
+  const [showTramitacaoModal, setShowTramitacaoModal] = useState(false);
+  const [tramitacaoSolicitacaoId, setTramitacaoSolicitacaoId] = useState<number | null>(null);
+  const [statuses, setStatuses] = useState<{ idStatusSolicitacao: number; nmStatus: string; flAtivo?: string }[]>([]);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const userHasOpenedDetailsModal = useCallback((solicitacao: SolicitacaoResponse) => {
@@ -128,60 +139,58 @@ export default function SolicitacoesPage() {
     });
   }, [tramitacoesMutation]);
 
-  const debouncedSearchQuery = useDebounce(searchQuery, 500);
-  const [showDetalhesModal, setShowDetalhesModal] = useState(false);
-  const [detalhesSolicitacao, setDetalhesSolicitacao] = useState<SolicitacaoResponse | null>(null);
-  const [detalhesAnexos, setDetalhesAnexos] = useState<AnexoResponse[]>([]);
+  const handleTramitacoes = (solicitacao: SolicitacaoResponse) => {
+    setTramitacaoSolicitacaoId(solicitacao.idSolicitacao);
+    setShowTramitacaoModal(true);
+  };
+
+  const handleCloseTramitacaoModal = () => {
+    setShowTramitacaoModal(false);
+    setTramitacaoSolicitacaoId(null);
+  };
 
   const loadSolicitacoes = useCallback(async () => {
     try {
       setLoading(true);
 
-      const filterParts: Array<string> = [];
-      if (debouncedSearchQuery) filterParts.push(debouncedSearchQuery);
-      if (activeFilters.identificacao) filterParts.push(`ident:${activeFilters.identificacao}`);
-      if (activeFilters.responsavel && activeFilters.responsavel !== 'all') filterParts.push(`resp:${activeFilters.responsavel}`);
-      if (activeFilters.tema && activeFilters.tema !== 'all') filterParts.push(`tema:${activeFilters.tema}`);
-      if (activeFilters.area && activeFilters.area !== 'all') filterParts.push(`area:${activeFilters.area}`);
-      if (activeFilters.status && activeFilters.status !== 'all') filterParts.push(`status:${activeFilters.status}`);
-      if (activeFilters.dateFrom) filterParts.push(`from:${activeFilters.dateFrom}`);
-      if (activeFilters.dateTo) filterParts.push(`to:${activeFilters.dateTo}`);
+      const filtro = debouncedSearchQuery || undefined;
 
-      const filtro = filterParts.join(' ') || undefined;
+      const idStatusSolicitacao = activeFilters.status && activeFilters.status !== 'all'
+        ? Number(activeFilters.status)
+        : undefined;
+      const idArea = activeFilters.area && activeFilters.area !== 'all'
+        ? Number(activeFilters.area)
+        : undefined;
+      const idTema = activeFilters.tema && activeFilters.tema !== 'all'
+        ? Number(activeFilters.tema)
+        : undefined;
+      const cdIdentificacao = activeFilters.identificacao || undefined;
+      const nomeResponsavel = activeFilters.nomeResponsavel || undefined;
+      const dtCriacaoInicio = activeFilters.dtCriacaoInicio ? `${activeFilters.dtCriacaoInicio}T00:00:00` : undefined;
+      const dtCriacaoFim = activeFilters.dtCriacaoFim ? `${activeFilters.dtCriacaoFim}T23:59:59` : undefined;
 
-      const mapSortFieldForApi = (field: keyof SolicitacaoResponse): string => {
-        switch (field) {
-          case 'nmTema':
-            return 'tema.nmTema';
-          case 'flStatus':
-            return 'statusSolicitacao.nmStatus';
-          default:
-            return String(field);
-        }
-      };
-
-      let sortParam = undefined;
-      if (sortField && sortDirection) {
-        sortParam = `${mapSortFieldForApi(sortField)},${sortDirection}`;
-      }
-
-      const response = await solicitacoesClient.listar(filtro, currentPage, 10, sortParam);
+      const response = await solicitacoesClient.buscarPorFiltro({
+        filtro,
+        page: currentPage,
+        size: 10,
+        idStatusSolicitacao,
+        idArea,
+        cdIdentificacao,
+        idTema,
+        nomeResponsavel,
+        dtCriacaoInicio,
+        dtCriacaoFim
+      });
 
       if (response && typeof response === 'object' && 'content' in response) {
         const paginatedResponse = response as unknown as PagedResponse<SolicitacaoResponse>;
         setSolicitacoes(paginatedResponse.content ?? []);
         setTotalPages(paginatedResponse.totalPages ?? 1);
         setTotalElements(paginatedResponse.totalElements ?? 0);
-        setNumberOfElements(paginatedResponse.numberOfElements ?? 0);
-        setFirst(paginatedResponse.first ?? true);
-        setLast(paginatedResponse.last ?? true);
       } else {
         setSolicitacoes(response ?? []);
         setTotalPages(1);
         setTotalElements((response ?? []).length);
-        setNumberOfElements((response ?? []).length);
-        setFirst(true);
-        setLast(true);
       }
     } catch {
       toast.error('Erro ao carregar solicitações');
@@ -192,41 +201,134 @@ export default function SolicitacoesPage() {
     currentPage,
     activeFilters,
     debouncedSearchQuery,
-    sortField,
-    sortDirection,
     setSolicitacoes,
     setTotalPages,
     setTotalElements,
     setLoading
   ]);
 
+
   const loadResponsaveis = useCallback(async () => {
     try {
-      const response = await responsaveisClient.buscarPorFiltro({ size: 100 });
+      const response = await responsaveisClient.buscarPorFiltro({size: 100});
       setResponsaveis(response.content ?? []);
-    } catch { }
+    } catch {
+    }
   }, [setResponsaveis]);
 
   const loadTemas = useCallback(async () => {
     try {
-      const response = await temasClient.buscarPorFiltro({ size: 100 });
+      const response = await temasClient.buscarPorFiltro({size: 100});
       setTemas(response.content ?? []);
-    } catch { }
+    } catch {
+    }
   }, [setTemas]);
 
   const loadAreas = useCallback(async () => {
     try {
-      const response = await areasClient.buscarPorFiltro({ size: 100 });
+      const response = await areasClient.buscarPorFiltro({size: 100});
       setAreas(response.content ?? []);
-    } catch { }
+    } catch {
+    }
   }, [setAreas]);
 
   useEffect(() => {
     loadSolicitacoes();
+    statusSolicitacaoClient.listarTodos().then(setStatuses).catch(() => {});
     loadResponsaveis();
     loadTemas();
     loadAreas();
   }, [loadSolicitacoes, loadResponsaveis, loadTemas, loadAreas]);
+
+  useEffect(() => {
+    loadSolicitacoes();
+  }, [activeFilters, loadSolicitacoes]);
+  const appliedFilters = [
+    ...(searchQuery ? [{
+      key: 'search',
+      label: 'Busca',
+      value: searchQuery,
+      color: 'blue' as const,
+      onRemove: () => setSearchQuery('')
+    }] : []),
+    ...(activeFilters.identificacao ? [{
+      key: 'identificacao',
+      label: 'Identificação',
+      value: activeFilters.identificacao,
+      color: 'orange' as const,
+      onRemove: () => {
+        const newFilters = { ...activeFilters, identificacao: '' };
+        setActiveFilters(newFilters);
+        setFilters(newFilters);
+      }
+    }] : []),
+    ...(activeFilters.status && activeFilters.status !== 'all' ? [{
+      key: 'status',
+      label: 'Status',
+      value: statuses.find(s => s.idStatusSolicitacao.toString() === activeFilters.status)?.nmStatus || activeFilters.status,
+      color: 'purple' as const,
+      onRemove: () => {
+        const newFilters = { ...activeFilters, status: '' };
+        setActiveFilters(newFilters);
+        setFilters(newFilters);
+      }
+    }] : []),
+    ...(activeFilters.area && activeFilters.area !== 'all' ? [{
+      key: 'area',
+      label: 'Área',
+      value: areas.find(a => a.idArea.toString() === activeFilters.area)?.nmArea || activeFilters.area,
+      color: 'green' as const,
+      onRemove: () => {
+        const newFilters = { ...activeFilters, area: '' };
+        setActiveFilters(newFilters);
+        setFilters(newFilters);
+      }
+    }] : []),
+    ...(activeFilters.tema && activeFilters.tema !== 'all' ? [{
+      key: 'tema',
+      label: 'Tema',
+      value: temas.find(t => t.idTema.toString() === activeFilters.tema)?.nmTema || activeFilters.tema,
+      color: 'indigo' as const,
+      onRemove: () => {
+        const newFilters = { ...activeFilters, tema: '' };
+        setActiveFilters(newFilters);
+        setFilters(newFilters);
+      }
+    }] : []),
+    ...(activeFilters.nomeResponsavel ? [{
+      key: 'nomeResponsavel',
+      label: 'Nome do Responsável',
+      value: activeFilters.nomeResponsavel,
+      color: 'yellow' as const,
+      onRemove: () => {
+        const newFilters = { ...activeFilters, nomeResponsavel: '' };
+        setActiveFilters(newFilters);
+        setFilters(newFilters);
+      }
+    }] : []),
+    ...(activeFilters.dtCriacaoInicio ? [{
+      key: 'dtCriacaoInicio',
+      label: 'Data Criação Início',
+      value: formatDateBr(activeFilters.dtCriacaoInicio),
+      color: 'pink' as const,
+      onRemove: () => {
+        const newFilters = { ...activeFilters, dtCriacaoInicio: '' };
+        setActiveFilters(newFilters);
+        setFilters(newFilters);
+      }
+    }] : []),
+    ...(activeFilters.dtCriacaoFim ? [{
+      key: 'dtCriacaoFim',
+      label: 'Data Criação Fim',
+      value: formatDateBr(activeFilters.dtCriacaoFim),
+      color: 'pink' as const,
+      onRemove: () => {
+        const newFilters = { ...activeFilters, dtCriacaoFim: '' };
+        setActiveFilters(newFilters);
+        setFilters(newFilters);
+      }
+    }] : [])
+  ];
 
   const confirmDelete = async () => {
     if (solicitacaoToDelete) {
@@ -253,19 +355,26 @@ export default function SolicitacoesPage() {
     const sorted = [...solicitacoes];
 
     if (sortField) {
-      const getComparableValue = (s: SolicitacaoResponse) => {
-        if (sortField === 'nmTema') {
-          return s.tema?.nmTema || '';
-        }
-        if (sortField === 'flStatus') {
-          return s.statusSolicitacao?.nmStatus || getStatusText(s.statusCodigo?.toString() || '');
-        }
-        return (s as unknown as Record<string, unknown>)?.[sortField as string] as unknown;
-      };
-
       sorted.sort((a: SolicitacaoResponse, b: SolicitacaoResponse) => {
-        const aValue = getComparableValue(a);
-        const bValue = getComparableValue(b);
+        let aValue: string | number | null;
+        let bValue: string | number | null;
+
+        switch (sortField) {
+          case 'nmTema':
+            aValue = a.nmTema || a?.tema?.nmTema || '';
+            bValue = b.nmTema || b?.tema?.nmTema || '';
+            break;
+
+          case 'flStatus':
+            aValue = a.statusSolicitacao?.nmStatus || getStatusText(a.statusCodigo?.toString() || '') || '';
+            bValue = b.statusSolicitacao?.nmStatus || getStatusText(b.statusCodigo?.toString() || '') || '';
+            break;
+
+          default:
+            aValue = a?.[sortField] as string | number | null;
+            bValue = b?.[sortField] as string | number | null;
+            break;
+        }
 
         if (aValue === bValue) return 0;
         if (aValue == null && bValue == null) return 0;
@@ -273,7 +382,7 @@ export default function SolicitacoesPage() {
         if (bValue == null) return -1;
 
         if (typeof aValue === 'string' && typeof bValue === 'string') {
-          const cmp = aValue.localeCompare(bValue, 'pt-BR', { numeric: true, sensitivity: 'base' });
+          const cmp = aValue.localeCompare(bValue, 'pt-BR', {numeric: true, sensitivity: 'base'});
           return sortDirection === 'asc' ? cmp : -cmp;
         }
 
@@ -292,12 +401,12 @@ export default function SolicitacoesPage() {
 
     try {
       const detalhes = await solicitacoesClient.buscarDetalhesPorId(s.idSolicitacao);
-      setDetalhesSolicitacao(detalhes?.solicitacao || s);
+      setDetalhesSolicitacao(detalhes);
       const anexos = await anexosClient.buscarPorIdObjetoETipoObjeto(s.idSolicitacao, TipoObjetoAnexo.S);
       setDetalhesAnexos(anexos || []);
     } catch {
       toast.error('Erro ao carregar os detalhes da solicitação');
-      setDetalhesSolicitacao(s);
+      setDetalhesSolicitacao(null);
     }
   }, [setSelectedSolicitacao]);
 
@@ -309,55 +418,30 @@ export default function SolicitacoesPage() {
     toast.message('Abrir histórico de respostas (implemente a navegação).');
   }, []);
 
-  const enviarDevolutiva = useCallback(async (mensagem: string, arquivos: File[]) => {
-    const alvo = detalhesSolicitacao ?? selectedSolicitacao;
-    const id = alvo?.idSolicitacao;
-    if (!id) {
-      toast.error('ID da solicitação não encontrado.');
-      return;
-    }
+  const enviarDevolutiva = useCallback(async (mensagem: string, arquivos: ArquivoDTO[], flAprovado?: 'S' | 'N') => {
+    const alvo = detalhesSolicitacao;
+    if (!alvo) return;
     try {
-      if (mensagem?.trim()) {
-        const data = {
-          dsObservacao: mensagem,
-          idSolicitacao: id,
-        };
-        await tramitacoesClient.tramitar(data);
-        toast.success('Resposta enviada com sucesso!');
-      }
-      if (arquivos.length > 0) {
-        const arquivosDTO = await Promise.all(
-          arquivos.map(async (file) => {
-            const arrayBuffer = await file.arrayBuffer();
-            const base64String = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-            return {
-              nomeArquivo: file.name,
-              conteudoArquivo: base64String,
-              tipoArquivo: file.type || 'application/octet-stream'
-            };
-          })
-        );
-        await solicitacoesClient.uploadAnexos(id, arquivosDTO);
-      }
+      const data = {
+        dsObservacao: mensagem || '',
+        idSolicitacao: alvo.solicitacao.idSolicitacao,
+        flAprovado: flAprovado,
+        arquivos: arquivos,
+      };
+      await tramitacoesClient.tramitar(data);
       await loadSolicitacoes();
-    } catch (err: unknown) {
-      const e = err as { status?: number };
-      if (e?.status === 409) {
-        toast.warning('Tramitação já registrada para esta etapa. Aguarde a resposta da área responsável');
-        return;
-      }
-      toast.error('Falha ao enviar a devolutiva.');
-      throw new Error('erro-devolutiva');
+    } catch (err) {
+      throw err;
     }
-  }, [detalhesSolicitacao, selectedSolicitacao, loadSolicitacoes]);
+  }, [detalhesSolicitacao, loadSolicitacoes]);
 
-  const onShowDetalhesModalChange = useCallback((open: boolean) => {
-    if (!open) {
-      setShowDetalhesModal(false);
-      setSelectedSolicitacao(null);
-      setDetalhesSolicitacao(null);
+  const getJoinedNmAreas = (areas: AreaSolicitacao[] | undefined) => {
+    if (areas && areas.length > 0) {
+      return areas.map(a => a.nmArea).join(', ');
     }
-  }, [setSelectedSolicitacao]);
+    return '-';
+  }
+
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
@@ -376,20 +460,16 @@ export default function SolicitacoesPage() {
           </Button>
 
           <span className="text-sm text-gray-500">
-            {solicitacoes?.length} solicitação(s)
+            {totalElements} {totalElements > 1 ? "solicitações" : "solicitação"}
           </span>
 
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
             totalElements={totalElements}
-            pageSize={10}
-            numberOfElements={numberOfElements}
-            first={first}
-            last={last}
             onPageChange={setCurrentPage}
             loading={loading}
-            showOnlyPagginationButtons={true}
+            showOnlyPaginationButtons={true}
           />
         </div>
       </div>
@@ -423,41 +503,63 @@ export default function SolicitacoesPage() {
             <FunnelSimpleIcon className="h-4 w-4 mr-2" />
             Filtrar
           </Button>
-          <Button onClick={() => {
-            setSelectedSolicitacao(null);
-            setShowSolicitacaoModal(true);
-          }}>
-            <PlusIcon className="h-4 w-4 mr-2" />
-            Nova Solicitação
-          </Button>
+          {canInserirSolicitacao &&
+            <Button
+              onClick={() => {
+                setSelectedSolicitacao(null);
+                setShowSolicitacaoModal(true);
+              }}
+            >
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Criar Solicitação
+            </Button>
+          }
         </div>
       </div>
+
+      <FiltrosAplicados
+        filters={appliedFilters}
+        showClearAll={false}
+        className="mb-4"
+      />
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-1 overflow-auto">
         <StickyTable>
           <StickyTableHeader>
             <StickyTableRow>
-              <StickyTableHead className="w-8"></StickyTableHead>
-              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('cdIdentificacao')}>
+              <StickyTableHead
+                className="cursor-pointer"
+                onClick={() => handleSort('cdIdentificacao')}
+              >
                 <div className="flex items-center">
                   Identificação
                   <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </StickyTableHead>
-              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('dsAssunto')}>
+              <StickyTableHead
+                className="cursor-pointer"
+                onClick={() => handleSort('dsAssunto')}
+              >
                 <div className="flex items-center">
                   Assunto
                   <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </StickyTableHead>
               <StickyTableHead>Áreas</StickyTableHead>
-              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('nmTema')}>
+              <StickyTableHead
+                className="cursor-pointer"
+                onClick={() => handleSort('nmTema')}
+              >
                 <div className="flex items-center">
                   Tema
                   <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </StickyTableHead>
-              <StickyTableHead className="cursor-pointer" onClick={() => handleSort('flStatus')}>
+              <StickyTableHead className="min-w-[220px]">Progresso</StickyTableHead>
+              <StickyTableHead
+                className="cursor-pointer"
+                onClick={() => handleSort('flStatus')}
+              >
                 <div className="flex items-center">
                   Status
                   <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
@@ -468,17 +570,16 @@ export default function SolicitacoesPage() {
           </StickyTableHeader>
           <StickyTableBody>
             {loading ? (
-              <StickyTableRow>
-                <StickyTableCell colSpan={7} className="text-center py-8">
-                  <div className="flex flex-1 items-center justify-center py-8">
-                    <SpinnerIcon className="h-6 w-6 animate-spin text-gray-400" />
-                    <span className="ml-2 text-gray-500">Buscando solicitações...</span>
-                  </div>
-                </StickyTableCell>
-              </StickyTableRow>
+              <LoadingRows
+                canAtualizarSolicitacao={canAtualizarSolicitacao}
+                canDeletarSolicitacao={canDeletarSolicitacao}
+              />
             ) : solicitacoes?.length === 0 ? (
               <StickyTableRow>
-                <StickyTableCell colSpan={7} className="text-center py-8">
+                <StickyTableCell
+                  colSpan={7}
+                  className="text-center py-8"
+                >
                   <div className="flex flex-col items-center space-y-2">
                     <ClipboardTextIcon className="h-8 w-8 text-gray-400" />
                     <p className="text-sm text-gray-500">Nenhuma solicitação encontrada</p>
@@ -488,22 +589,12 @@ export default function SolicitacoesPage() {
             ) : (
               sortedSolicitacoes()?.map((solicitacao: SolicitacaoResponse) => (
                 <React.Fragment key={solicitacao.idSolicitacao}>
-                  <StickyTableRow
-                    onClick={() => toggleRowExpansion(solicitacao.idSolicitacao)}
-                    className="cursor-pointer"
-                  >
-                    <StickyTableCell className="w-8">
-                      {expandedRows.has(solicitacao.idSolicitacao) ? (
-                        <CaretDownIcon className="h-4 w-4" />
-                      ) : (
-                        <CaretRightIcon className="h-4 w-4" />
-                      )}
-                    </StickyTableCell>
+                  <StickyTableRow>
                     <StickyTableCell className="font-medium">{solicitacao.cdIdentificacao}</StickyTableCell>
                     <StickyTableCell className="max-w-xs truncate">{solicitacao.dsAssunto}</StickyTableCell>
                     <StickyTableCell>
                       {(solicitacao.area && solicitacao.area.length > 0) ? (
-                        <div className="flex items-center flex-wrap gap-1">
+                        <div className="flex items-center flex-wrap gap-1" title={getJoinedNmAreas(solicitacao.area)}>
                           {solicitacao.area.slice(0, 2).map((area: AreaSolicitacao) => (
                             <span
                               key={area.idArea}
@@ -519,7 +610,7 @@ export default function SolicitacoesPage() {
                           )}
                         </div>
                       ) : (solicitacao.tema?.areas && solicitacao.tema.areas.length > 0) ? (
-                        <div className="flex flex-wrap gap-1">
+                        <div className="flex items-center flex-wrap gap-1" title={getJoinedNmAreas(solicitacao.area)}>
                           {solicitacao.tema.areas.slice(0, 2).map((area: AreaSolicitacao) => (
                             <span
                               key={area.idArea}
@@ -539,11 +630,29 @@ export default function SolicitacoesPage() {
                       )}
                     </StickyTableCell>
                     <StickyTableCell>{solicitacao.nmTema || solicitacao?.tema?.nmTema || '-'}</StickyTableCell>
+                    <StickyTableCell className="min-w-[220px]">
+                      <TimeProgress
+                        dtPrimeiraTramitacao={solicitacao.dtPrimeiraTramitacao}
+                        dtPrazoLimite={solicitacao.dtPrazoLimite}
+                        dataConclusaoTramitacao={solicitacao.dtConclusaoTramitacao}
+                        now={new Date().toISOString()}
+                        statusLabel={solicitacao.statusSolicitacao?.nmStatus}
+                      />
+                    </StickyTableCell>
                     <StickyTableCell>
-                      <Badge variant={getStatusBadgeVariant(
-                        solicitacao.statusSolicitacao?.idStatusSolicitacao?.toString() ||
-                        solicitacao.statusCodigo?.toString() || ''
-                      )}>
+                      <Badge
+                        className="whitespace-nowrap truncate text-white"
+                        variant={getStatusBadgeVariant(
+                          solicitacao.statusSolicitacao?.idStatusSolicitacao?.toString() ||
+                          solicitacao.statusCodigo?.toString() || ''
+                        )}
+                        style={{
+                          backgroundColor: getStatusBadgeBg(
+                            solicitacao.statusSolicitacao?.idStatusSolicitacao?.toString() ||
+                            solicitacao.statusCodigo?.toString() || ''
+                          )
+                        }}
+                      >
                         {solicitacao.statusSolicitacao?.nmStatus ||
                           getStatusText(solicitacao.statusCodigo?.toString() || '') ||
                           '-'}
@@ -552,59 +661,64 @@ export default function SolicitacoesPage() {
                     <StickyTableCell className="text-right">
                       <div className="flex items-center justify-end space-x-2">
                         {!(
-                          solicitacao.statusSolicitacao?.nmStatus === 'Pré-análise' ||
-                          solicitacao.statusSolicitacao?.nmStatus === 'Pre-analise' ||
+                          solicitacao.statusSolicitacao?.nmStatus === statusList.PRE_ANALISE.label ||
                           solicitacao.statusSolicitacao?.idStatusSolicitacao === 1 ||
-                          getStatusText(solicitacao.statusCodigo?.toString() || '') === 'Pré-análise'
+                          getStatusText(solicitacao.statusCodigo?.toString() || '') === statusList.PRE_ANALISE.label
                         ) && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={async (e) => {
-                                e.stopPropagation();
-                                await openDetalhes(solicitacao);
-                              }}
-                              title="Detalhes"
-                            >
-                              <PaperPlaneRightIcon className="h-4 w-4" />
-                            </Button>
-                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              await openDetalhes(solicitacao);
+                            }}
+                            title="Enviar resposta"
+                          >
+                            <PaperPlaneRightIcon className="h-4 w-4" />
+                          </Button>
+                        )}
 
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleEdit(solicitacao);
+                            handleTramitacoes(solicitacao);
                           }}
-                          title="Editar"
+                          title="Ver Tramitações"
                         >
-                          <PencilSimpleIcon className="h-4 w-4" />
+                          <ClockCounterClockwiseIcon className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(solicitacao);
-                          }}
-                          className="text-red-600 hover:text-red-700"
-                          title="Excluir"
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                        </Button>
+                        {canAtualizarSolicitacao &&
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEdit(solicitacao);
+                            }}
+                            title="Editar"
+                          >
+                            <PencilSimpleIcon className="h-4 w-4" />
+                          </Button>
+                        }
+                        {canDeletarSolicitacao &&
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(solicitacao);
+                            }}
+                            className="text-red-600 hover:text-red-700"
+                            title="Excluir"
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </Button>
+                        }
                       </div>
                     </StickyTableCell>
                   </StickyTableRow>
-                  {expandedRows.has(solicitacao.idSolicitacao) && (
-                    <StickyTableRow>
-                      <StickyTableCell colSpan={7} className="bg-gray-50 p-6">
-                        <div className="relative" style={{ contain: 'layout' }}>
-                          <TramitacaoList idSolicitacao={solicitacao.idSolicitacao} areas={areas} />
-                        </div>
-                      </StickyTableCell>
-                    </StickyTableRow>
-                  )}
                 </React.Fragment>
               ))
             )}
@@ -612,140 +726,18 @@ export default function SolicitacoesPage() {
         </StickyTable>
       </div>
 
-      {showFilterModal && (
-        <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Filtrar Solicitações</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="identificacao">Código de Identificação</Label>
-                  <Input
-                    id="identificacao"
-                    value={filters.identificacao}
-                    onChange={(e) => setFilters({ ...filters, identificacao: e.target.value })}
-                    placeholder="Código de identificação"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="status">Status</Label>
-                  <Select
-                    value={filters.status}
-                    onValueChange={(value) => setFilters({ ...filters, status: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos</SelectItem>
-                      <SelectItem value="P">Pré-análise</SelectItem>
-                      <SelectItem value="V">Vencido Regulatório</SelectItem>
-                      <SelectItem value="A">Em análise Área Técnica</SelectItem>
-                      <SelectItem value="T">Vencido Área Técnica</SelectItem>
-                      <SelectItem value="R">Análise Regulatória</SelectItem>
-                      <SelectItem value="O">Em Aprovação</SelectItem>
-                      <SelectItem value="S">Em Assinatura</SelectItem>
-                      <SelectItem value="C">Concluído</SelectItem>
-                      <SelectItem value="X">Arquivado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="responsavel">Responsável</Label>
-                  <Select
-                    value={filters.responsavel}
-                    onValueChange={(value) => setFilters({ ...filters, responsavel: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o responsável" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos</SelectItem>
-                      {responsaveis.map((resp: ResponsavelResponse) => (
-                        <SelectItem key={resp.idResponsavel} value={resp.idResponsavel.toString()}>
-                          {resp.nmResponsavel}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="tema">Tema</Label>
-                  <Select
-                    value={filters.tema}
-                    onValueChange={(value) => setFilters({ ...filters, tema: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o tema" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos</SelectItem>
-                      {temas.map((tema: TemaResponse) => (
-                        <SelectItem key={tema.idTema} value={tema.idTema.toString()}>
-                          {tema.nmTema}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="area">Área</Label>
-                  <Select
-                    value={filters.area}
-                    onValueChange={(value) => setFilters({ ...filters, area: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a área" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas</SelectItem>
-                      {areas.map((area: AreaResponse) => (
-                        <SelectItem key={area.idArea} value={area.idArea.toString()}>
-                          {area.nmArea}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="dateFrom">Data Início</Label>
-                  <Input
-                    id="dateFrom"
-                    type="date"
-                    value={filters.dateFrom}
-                    onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="dateTo">Data Fim</Label>
-                  <Input
-                    id="dateTo"
-                    type="date"
-                    value={filters.dateTo}
-                    onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
-                  />
-                </div>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={clearFilters}>
-                Limpar Filtros
-              </Button>
-              <Button onClick={applyFilters}>
-                Aplicar Filtros
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+      <FilterModal
+        open={showFilterModal}
+        onOpenChange={setShowFilterModal}
+        filters={filters}
+        setFilters={setFilters}
+        responsaveis={responsaveis}
+        temas={temas}
+        areas={areas}
+        statuses={statuses}
+        onApplyFilters={applyFilters}
+        onClearFilters={clearFilters}
+      />
 
       {showSolicitacaoModal && (
         <SolicitacaoModal
@@ -761,23 +753,31 @@ export default function SolicitacoesPage() {
         />
       )}
 
-      {showDetalhesModal && (
+      {showDetalhesModal && detalhesSolicitacao && (
         <DetalhesSolicitacaoModal
           open={showDetalhesModal}
           onClose={() => {
             setShowDetalhesModal(false);
             setSelectedSolicitacao(null);
             setDetalhesSolicitacao(null);
-            onShowDetalhesModalChange(false);
           }}
-          solicitacao={detalhesSolicitacao ?? selectedSolicitacao}
+          solicitacao={detalhesSolicitacao}
           anexos={(detalhesAnexos ?? [])}
-          statusLabel={getStatusText((detalhesSolicitacao ?? selectedSolicitacao)?.statusCodigo?.toString() || '')}
+          statusLabel={getStatusText((detalhesSolicitacao)?.statusSolicitacao?.nmStatus?.toString() || '')}
           onAbrirEmailOriginal={abrirEmailOriginal}
           onHistoricoRespostas={abrirHistorico}
           onEnviarDevolutiva={enviarDevolutiva}
         />
       )}
+
+      <HistoricoRespostasModal
+        idSolicitacao={tramitacaoSolicitacaoId}
+        open={showTramitacaoModal}
+        onClose={handleCloseTramitacaoModal}
+        title="Histórico de Tramitações"
+        loadingText="Carregando tramitações..."
+        emptyText="Nenhuma tramitação encontrada para esta solicitação."
+      />
 
       <ConfirmationDialog
         open={showDeleteDialog}

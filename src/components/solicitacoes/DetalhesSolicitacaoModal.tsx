@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState, ChangeEvent, FormEvent, useEffect, useRef } from 'react';
+import {useCallback, useMemo, useState, ChangeEvent, FormEvent, useEffect, useRef, CSSProperties} from 'react';
 import {
   Dialog,
   DialogContent,
@@ -13,26 +13,42 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { ClockIcon, DownloadIcon, PaperclipIcon, X as XIcon } from '@phosphor-icons/react';
-import { SolicitacaoDetalheResponse, SolicitacaoResponse } from '@/api/solicitacoes/types';
-import { ArquivoDTO, TipoObjetoAnexo } from '@/api/anexos/type';
+import { SolicitacaoDetalheResponse } from '@/api/solicitacoes/types';
+import type { AnexoResponse } from '@/api/anexos/type';
+import { ArquivoDTO, TipoObjetoAnexo, TipoResponsavelAnexo } from '@/api/anexos/type';
 import { anexosClient } from '@/api/anexos/client';
-import { base64ToUint8Array, saveBlob } from '@/utils/utils';
+import { base64ToUint8Array, fileToArquivoDTO, saveBlob } from '@/utils/utils';
+import { Checkbox } from '@/components/ui/checkbox';
+import { usePermissoes } from '@/context/permissoes/PermissoesContext';
+import { HistoricoRespostasModalButton } from './HistoricoRespostasModal';
+import authClient from '@/api/auth/client';
+import { responsaveisClient } from '@/api/responsaveis/client';
+import { ResponsavelResponse } from '@/api/responsaveis/types';
 import tramitacoesClient from '@/api/tramitacoes/client';
+import { AnaliseGerenteDiretor } from '@/types/solicitacoes/types';
+import { solicitacaoParecerClient } from '@/api/solicitacao-parecer/client';
+import { SolicitacaoParecerResponse } from '@/api/solicitacao-parecer/types';
+import { statusList } from '@/api/status-solicitacao/types';
+import { perfilUtil } from '@/api/perfis/types';
+import { areaUtil } from '@/api/areas/types';
+
 
 type AnexoItemShape = {
   idAnexo: number;
+  idObjeto: number;
   nmArquivo: string;
-  tpObjeto: string;
+  tpObjeto: TipoObjetoAnexo;
+  tpResponsavel?: TipoResponsavelAnexo;
 };
 
 type DetalhesSolicitacaoModalProps = {
   open: boolean;
   onClose(): void;
-  solicitacao: SolicitacaoDetalheResponse | SolicitacaoResponse | null;
-  anexos?: AnexoItemShape[];
+  solicitacao: SolicitacaoDetalheResponse | null;
+  anexos?: AnexoResponse[];
   onHistoricoRespostas?(): void;
   onAbrirEmailOriginal?(): void;
-  onEnviarDevolutiva?(mensagem: string, arquivos: File[]): Promise<void> | void;
+  onEnviarDevolutiva?(mensagem: string, arquivos: ArquivoDTO[], flAprovado?: 'S' | 'N'): Promise<void> | void;
   statusLabel?: string;
 };
 
@@ -46,89 +62,198 @@ const formatDateTime = (iso?: string | null) => {
 
 const MAX_DESC_LINES = 6;
 
+/** Apenas para DESCRIÇÃO: remove \r e transforma \n em <br/> */
+function renderDescricaoWithBreaks(text?: string | null) {
+  if (!text) return '—';
+  const cleaned = text.replace(/\r/g, '');
+  const parts = cleaned.split('\n');
+  return parts.map((line, i) => (
+    <span key={i}>
+      {line}
+      {i < parts.length - 1 && <br />}
+    </span>
+  ));
+}
+
 export default function DetalhesSolicitacaoModal({
   open,
   onClose,
   solicitacao,
-  anexos = [],
   onEnviarDevolutiva,
   statusLabel = 'Status',
 }: DetalhesSolicitacaoModalProps) {
   const [resposta, setResposta] = useState('');
+  const [dsDarecer, setDsDarecer] = useState('');
   const [arquivos, setArquivos] = useState<File[]>([]);
   const [expandDescricao, setExpandDescricao] = useState(false);
   const [sending, setSending] = useState(false);
-  const [dsObservacao, setDsObservacao] = useState('');
+  const [flAprovado, setFlAprovado] = useState<'S' | 'N' | ''>('');
+  const [tpResponsavelUpload, setTpResponsavelUpload] = useState<TipoResponsavelAnexo>(TipoResponsavelAnexo.A);
+  const [hasAreaInicial, setHasAreaInicial] = useState(false);
+  const [userResponsavel, setUserResponsavel] = useState<ResponsavelResponse | null>(null);
+  const [idProximoStatusAnaliseRegulatoria, setIdProximoStatusAnaliseRegulatoria] = useState<number | null>(null);
+  const [, setParecerAtual] = useState<SolicitacaoParecerResponse | null>(null);
   const descRef = useRef<HTMLParagraphElement | null>(null);
   const [canToggleDescricao, setCanToggleDescricao] = useState(false);
   const [lineHeightPx, setLineHeightPx] = useState<number | null>(null);
+  const { canListarAnexo, canDeletarAnexo, canAprovarSolicitacao } = usePermissoes();
 
-  const isSolicitacaoDetalheResponse = (
-    value: unknown
-  ): value is SolicitacaoDetalheResponse => {
-    return (
-      !!value &&
-      typeof value === 'object' &&
-      'solicitacao' in (value as Record<string, unknown>) &&
-      !!(value as { solicitacao?: unknown }).solicitacao &&
-      typeof (value as { solicitacao?: unknown }).solicitacao === 'object' &&
-      'idSolicitacao' in ((value as { solicitacao: Record<string, unknown> }).solicitacao as Record<string, unknown>)
-    );
-  };
-
-  const sol = useMemo(() => {
-    if (!solicitacao) return null;
-    return isSolicitacaoDetalheResponse(solicitacao)
-      ? solicitacao.solicitacao
-      : (solicitacao as SolicitacaoResponse);
-  }, [solicitacao]);
-
-  useEffect(() => {
-    if (open && sol?.dsObservacao) {
-      setDsObservacao(sol.dsObservacao);
-    } else if (open) {
-      setDsObservacao('');
-    }
-  }, [open, sol?.dsObservacao]);
+  const sol = solicitacao ?? null;
 
   const identificador = useMemo(
-    () => (sol?.cdIdentificacao ? `#${sol.cdIdentificacao}` : ''),
-    [sol?.cdIdentificacao]
+    () => (sol?.solicitacao?.cdIdentificacao ? `#${sol.solicitacao.cdIdentificacao}` : ''),
+    [sol?.solicitacao?.cdIdentificacao]
   );
 
   const statusText = sol?.statusSolicitacao?.nmStatus ?? statusLabel;
+  const flAnaliseGerenteDiretor = sol?.solicitacao?.flAnaliseGerenteDiretor as AnaliseGerenteDiretor;
 
   const criadorLine = useMemo(() => formatDateTime(sol?.dtCriacao), [sol?.dtCriacao]);
-  const prazoLine = useMemo(() => formatDateTime(sol?.dtPrazo), [sol?.dtPrazo]);
+  const prazoLine = useMemo(() => {
+    const prazoAtual = sol?.solcitacaoPrazos?.find(
+      (p) => +(p?.idStatusSolicitacao) === (sol?.statusSolicitacao?.idStatusSolicitacao)
+    );
 
-  const assunto = sol?.dsAssunto ?? '';
-  const descricao = sol?.dsSolicitacao ?? '';
-  const areas = Array.isArray(sol?.tema?.areas)
-    ? (sol!.tema!.areas! as Array<{ nmArea: string; idArea?: number; cdArea?: string }>)
+    if (sol?.statusSolicitacao?.nmStatus === statusList.VENCIDO_AREA_TECNICA.label ) {
+      const prazoAtualVencido = sol?.solcitacaoPrazos?.find(
+        (p) => +(p?.idStatusSolicitacao) === (statusList.EM_ANALISE_AREA_TECNICA.id)
+      );
+      return formatDateTime(prazoAtualVencido?.dtPrazoLimite);
+    }
+
+    if (sol?.statusSolicitacao?.nmStatus === statusList.VENCIDO_REGULATORIO.label ) {
+      const prazoAtualVencido = sol?.solcitacaoPrazos?.find(
+        (p) => +(p?.idStatusSolicitacao) === (statusList.ANALISE_REGULATORIA.id)
+      );
+      return formatDateTime(prazoAtualVencido?.dtPrazoLimite);
+    }
+
+    return formatDateTime(prazoAtual?.dtPrazoLimite);
+  }, [sol?.statusSolicitacao?.idStatusSolicitacao, sol?.solcitacaoPrazos, sol?.statusSolicitacao?.nmStatus]);
+
+  const isPrazoVencido = useMemo(() => {
+    return sol?.statusSolicitacao?.nmStatus === statusList.VENCIDO_AREA_TECNICA.label ||
+           sol?.statusSolicitacao?.nmStatus === statusList.VENCIDO_REGULATORIO.label;
+  }, [sol?.statusSolicitacao?.nmStatus]);
+
+  const assunto = sol?.solicitacao?.dsAssunto ?? '';
+  const descricao = sol?.solicitacao?.dsSolicitacao ?? '';
+  const observacao = sol?.solicitacao?.dsObservacao && sol?.solicitacao?.dsObservacao.trim().length > 0 ? sol?.solicitacao?.dsObservacao : null;
+  const areas = Array.isArray(sol?.solicitacao?.area)
+    ? (sol!.solicitacao!.area! as Array<{ nmArea: string; idArea?: number; cdArea?: string }>)
     : [];
 
-  const temaLabel = sol?.tema?.nmTema ?? sol?.nmTema ?? '—';
+  const temaLabel = sol?.solicitacao?.tema?.nmTema ?? sol?.solicitacao?.nmTema ?? '—';
 
-  const anexosSolic: { idAnexo: number; nmArquivo: string; tpObjeto: string }[] =
-    isSolicitacaoDetalheResponse(solicitacao) ? solicitacao.anexosSolicitacao : [];
-  const mapToItem = (a: { idAnexo: number; nmArquivo: string; tpObjeto: string }): AnexoItemShape => ({
+  const anexosTramitacoes: AnexoResponse[] = (solicitacao?.tramitacoes ?? []).flatMap((t) => t?.anexos ?? []);
+  const anexosSolic: AnexoResponse[] = solicitacao?.anexosSolicitacao ?? [];
+  const anexosEmail: AnexoResponse[] = solicitacao?.email?.anexos ?? [];
+
+  const mapToItem = (
+    a: Partial<AnexoResponse> & { idAnexo: number; idObjeto: number; nmArquivo: string; tpObjeto?: string }
+  ): AnexoItemShape => ({
     idAnexo: a.idAnexo,
+    idObjeto: (a as AnexoResponse).idObjeto,
     nmArquivo: a.nmArquivo,
-    tpObjeto: a.tpObjeto,
+    tpObjeto: (((a as AnexoResponse).tpObjeto as unknown) as TipoObjetoAnexo) ?? TipoObjetoAnexo.S,
+    tpResponsavel: (a as { tpResponsavel?: TipoResponsavelAnexo })?.tpResponsavel,
   });
 
-  const anexosAnalista: AnexoItemShape[] = anexosSolic
-    .filter((a) => a.tpObjeto === 'A')
+  const anexosAnalista: AnexoItemShape[] = anexosTramitacoes
+    .filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexo.A)
     .map(mapToItem);
 
-  const anexosGerente: AnexoItemShape[] = anexosSolic
-    .filter((a) => a.tpObjeto === 'G')
+  const anexosGerente: AnexoItemShape[] = anexosTramitacoes
+    .filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexo.G)
     .map(mapToItem);
 
-  const anexosRegulatorio: AnexoItemShape[] =
-    anexos.length > 0
-      ? anexos.map(mapToItem)
-      : anexosSolic.filter((a) => a.tpObjeto === 'S').map(mapToItem);
+  const anexosDiretor: AnexoItemShape[] = anexosTramitacoes
+    .filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexo.D)
+    .map(mapToItem);
+
+  const anexosRegulatorio: AnexoItemShape[] = anexosTramitacoes 
+    .filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexo.R)
+    .map(mapToItem);
+  
+  const itensSolicitacao: AnexoItemShape[] = anexosSolic.map(mapToItem);
+  const itensEmail: AnexoItemShape[] = anexosEmail.map(mapToItem);
+
+  const isAprovacao = sol?.statusSolicitacao?.idStatusSolicitacao ===  statusList.EM_APROVACAO.id; 
+  const isDiretoria = sol?.statusSolicitacao?.idStatusSolicitacao ===  statusList.EM_ASSINATURA_DIRETORIA.id; 
+  const isAnaliseRegulatoriaAprovarDevolutiva =
+    sol?.statusSolicitacao?.idStatusSolicitacao ===  statusList.ANALISE_REGULATORIA.id &&
+    idProximoStatusAnaliseRegulatoria === statusList.EM_APROVACAO.id; 
+  const isFlagVisivel = isAprovacao || isDiretoria || isAnaliseRegulatoriaAprovarDevolutiva;
+
+  const isPermissaoEnviandoDevolutiva = (isFlagVisivel && !canAprovarSolicitacao);
+
+  useEffect(() => {
+    const checkResponsavelInicial = async () => {
+      try {
+        const userName = authClient.getUserName();
+        if (!userName) {
+          setTpResponsavelUpload(TipoResponsavelAnexo.A);
+          setHasAreaInicial(false);
+          return;
+        }
+        const resp = await responsaveisClient.buscarPorNmUsuarioLogin(userName);
+        setUserResponsavel(resp);
+        const idPerfil = resp?.idPerfil;
+
+        const idAreaInicial = sol?.solicitacao?.idAreaInicial;
+        const userAreaIds = (resp?.areas || [])
+          .map((a: { area?: { idArea?: number | string; nmArea?: string } } | null | undefined) => a?.area?.idArea)
+          .map((id) => +((id as unknown) as number))
+          .filter((id) => !Number.isNaN(id));
+
+        let isInSolicAreas = false;
+        if (idAreaInicial) {
+          const areaInicialNum = +idAreaInicial;
+          isInSolicAreas = !Number.isNaN(areaInicialNum) && userAreaIds.includes(areaInicialNum);
+        } else {
+          const areasSolic = Array.isArray(sol?.solicitacao?.area)
+            ? (sol!.solicitacao!.area as Array<{ idArea?: number; nmArea?: string }>)
+            : [];
+          const solicitacaoAreaIds = areasSolic
+            .map(a => +((a?.idArea as unknown) as number))
+            .filter((id) => !Number.isNaN(id));
+          isInSolicAreas = userAreaIds.some(id => solicitacaoAreaIds.includes(id));
+        }
+        
+        const tp = computeTpResponsavel(idPerfil);
+
+        setTpResponsavelUpload(tp);
+        setHasAreaInicial(isInSolicAreas);
+      } catch {
+        setTpResponsavelUpload(TipoResponsavelAnexo.A);
+        setHasAreaInicial(false);
+      }
+    };
+
+    if (open && sol?.solicitacao?.idSolicitacao) {
+      checkResponsavelInicial();
+    }
+  }, [open, sol?.solicitacao?.idSolicitacao, sol?.solicitacao?.area, sol]);
+
+  function computeTpResponsavel(perfil: number): TipoResponsavelAnexo {
+
+    if (perfil === perfilUtil.ADMINISTRADOR || perfil === perfilUtil.GESTOR_DO_SISTEMA) {
+      return TipoResponsavelAnexo.R;
+    }
+
+    if (perfil === perfilUtil.VALIDADOR_ASSINANTE) {
+      return TipoResponsavelAnexo.D;
+    }
+
+    if (perfil === perfilUtil.EXECUTOR_AVANCADO) {
+      return TipoResponsavelAnexo.G;
+    }
+
+    if (perfil === perfilUtil.EXECUTOR || perfil === perfilUtil.EXECUTOR_RESTRITO || perfil === perfilUtil.TECNICO_SUPORTE) {
+      return TipoResponsavelAnexo.A;
+    }
+    return TipoResponsavelAnexo.A;
+  }
 
   const measureDescricao = useCallback(() => {
     const el = descRef.current;
@@ -187,7 +312,12 @@ export default function DetalhesSolicitacaoModal({
         return;
       }
 
-      if (!sol?.idSolicitacao) {
+      if (isFlagVisivel && !flAprovado) {
+        toast.error('Selecione se a devolutiva está aprovada (Sim/Não).');
+        return;
+      }
+
+      if (!sol?.solicitacao?.idSolicitacao) {
         toast.error('ID da solicitação não encontrado.');
         return;
       }
@@ -195,36 +325,86 @@ export default function DetalhesSolicitacaoModal({
       try {
         setSending(true);
 
-        if (arquivos.length > 0) {
-          await tramitacoesClient.uploadAnexos(sol.idSolicitacao, arquivos);
-        }
+        const arquivosDTO: ArquivoDTO[] = arquivos.length > 0
+          ? await Promise.all(
+              arquivos.map((file) => fileToArquivoDTO(file, tpResponsavelUpload))
+            )
+          : [];
 
-        await onEnviarDevolutiva(resposta.trim(), []);
+        await onEnviarDevolutiva(resposta.trim(), arquivosDTO, flAprovado || undefined);
+
+        toast.success('Resposta enviada com sucesso!');
         setResposta('');
         setArquivos([]);
         onClose();
       } catch (err) {
         console.error(err);
-        toast.error('Não foi possível enviar a resposta.');
+        const msg = err instanceof Error && err.message ? err.message : 'Não foi possível enviar a resposta.';
+        toast.error(msg);
       } finally {
         setSending(false);
       }
     },
-    [onEnviarDevolutiva, resposta, arquivos, sol?.idSolicitacao, onClose]
+    [onEnviarDevolutiva, resposta, arquivos, sol?.solicitacao?.idSolicitacao, onClose, flAprovado, isFlagVisivel, tpResponsavelUpload]
   );
+
+  const handleSalvarParecer = useCallback(async () => {
+    try {
+      if (!sol?.solicitacao?.idSolicitacao || !sol?.statusSolicitacao?.idStatusSolicitacao) {
+        toast.error('Dados da solicitação incompletos.');
+        return;
+      }
+      if (!dsDarecer.trim()) {
+        toast.error('Escreva o parecer.');
+        return;
+      }
+      
+      setSending(true);
+
+      const req = {
+        idSolicitacao: sol.solicitacao.idSolicitacao,
+        idStatusSolicitacao: sol.statusSolicitacao.idStatusSolicitacao,
+        dsDarecer: dsDarecer.trim(),
+      };
+      const ultimoNivel = Number(sol?.tramitacoes?.[0]?.tramitacao?.nrNivel ?? 0);
+      const nextNivel = ultimoNivel + 1;
+
+      const existingParecer = sol?.solicitacaoPareceres?.find(
+        (p) =>
+          p?.idStatusSolicitacao === sol.statusSolicitacao.idStatusSolicitacao &&
+          Number(p?.nrNivel) === Number(nextNivel) &&
+          p?.responsavel?.idResponsavel === (userResponsavel?.idResponsavel ?? 0) 
+      );
+      console.log( 'existingParecer', existingParecer)
+      const canUpdate = Boolean(existingParecer?.idSolicitacaoParecer);
+
+      if (canUpdate) {
+        const atualizado = await solicitacaoParecerClient.atualizar(existingParecer?.idSolicitacaoParecer ?? 0, req);
+        setParecerAtual(atualizado);
+        toast.success('Parecer atualizado com sucesso.');
+        onClose();
+      } else {
+        const criado = await solicitacaoParecerClient.criar(req);
+        setParecerAtual(criado);
+        toast.success('Parecer salvo com sucesso.');
+        onClose();
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Não foi possível salvar o parecer.');
+    } finally {
+      setSending(false);
+    }
+  }, [dsDarecer, onClose, sol?.solicitacao?.idSolicitacao,sol?.tramitacoes, sol?.statusSolicitacao?.idStatusSolicitacao, sol?.solicitacaoPareceres, userResponsavel?.idResponsavel]);
 
   const handleBaixarAnexo = useCallback(
     async (anexo: AnexoItemShape) => {
       try {
-        if (!sol?.idSolicitacao) {
-          toast.error('ID da solicitação não encontrado.');
+        if (!anexo?.idObjeto || !anexo?.tpObjeto) {
+          toast.error('Dados do anexo inválidos.');
           return;
         }
-        const arquivos = await anexosClient.download(
-          sol.idSolicitacao,
-          TipoObjetoAnexo.S,
-          anexo.nmArquivo
-        );
+        const arquivos = await anexosClient.download(anexo.idObjeto, anexo.tpObjeto, anexo.nmArquivo);
         if (!arquivos || arquivos.length === 0) {
           toast.error('Nenhum arquivo retornado.');
           return;
@@ -241,17 +421,261 @@ export default function DetalhesSolicitacaoModal({
         toast.error('Não foi possível baixar o anexo.');
       }
     },
-    [sol?.idSolicitacao]
+    []
   );
 
-  const descricaoCollapsedStyle: React.CSSProperties =
+  const descricaoCollapsedStyle: CSSProperties =
     !expandDescricao && lineHeightPx
       ? { maxHeight: `${lineHeightPx * MAX_DESC_LINES}px`, overflow: 'hidden' }
       : {};
 
+  const quantidadeDevolutivas = (() => {
+    const qtdTramitacoes = solicitacao?.tramitacoes?.filter(t => !!t?.tramitacao?.dsObservacao)?.length ?? 0;
+    const qtdPareceres = sol?.solicitacaoPareceres?.length ?? 0;
+    return qtdTramitacoes + qtdPareceres;
+  })();
+
+  useEffect(() => {
+    const loadIdProximoStatusAnaliseRegulatoria = async () => {
+      if (!sol?.solicitacao?.idSolicitacao || !sol?.statusSolicitacao?.idStatusSolicitacao) {
+        setIdProximoStatusAnaliseRegulatoria(null);
+        return;
+      }
+      const response = await tramitacoesClient.buscarProximoStatusPorIdSolicitacaoEIdStatusSolicitacao({
+        idSolicitacao: sol.solicitacao.idSolicitacao,
+        idStatusSolicitacao: sol.statusSolicitacao.idStatusSolicitacao,
+      });
+      setIdProximoStatusAnaliseRegulatoria(response ?? null);
+    };
+    loadIdProximoStatusAnaliseRegulatoria();
+  }, [sol?.solicitacao?.idSolicitacao, sol?.statusSolicitacao?.idStatusSolicitacao]);
+
+  const devolutivaReprovadaUmavezDiretoria = sol?.tramitacoes?.some(
+    t => t.tramitacao.idStatusSolicitacao === statusList.EM_ASSINATURA_DIRETORIA.id && t.tramitacao.flAprovado === 'N'
+  );
+
+  const devolutivaReprovadaPelaDiretoriaSegundaVez = (() => {
+    const reprovacoesCount = sol?.tramitacoes?.filter(
+      t => t.tramitacao.idStatusSolicitacao === statusList.EM_ASSINATURA_DIRETORIA.id && t.tramitacao.flAprovado === 'N'
+    )?.length || 0;
+    return reprovacoesCount >= 2;
+  })();
+
+  const labelStatusAnaliseRegulatoria = idProximoStatusAnaliseRegulatoria === statusList.EM_APROVACAO.id
+    ? 'Enviar Minuta de Resposta para aprovação'
+    : idProximoStatusAnaliseRegulatoria === statusList.EM_CHANCELA.id
+      ? 'Escrever resposta ao Gerente do Regulatório'
+      : 'Enviar devolutiva';
+                                                                                
+  const btnLabelStatusAnaliseRegulatoria = isAnaliseRegulatoriaAprovarDevolutiva && flAprovado === 'S'
+    ? 'Encaminhar para os Gerentes das Áreas'
+    : isAnaliseRegulatoriaAprovarDevolutiva && flAprovado === 'N'
+      ? 'Encaminhar para Área Técnica'
+        : idProximoStatusAnaliseRegulatoria === statusList.EM_CHANCELA.id
+          ? 'Encaminhar para o Gerente do Regulatório'
+          : 'Enviar Resposta';
+                                            
+  const btnStatusEmAssinaturaDiretoria = (isDiretoria && flAprovado === 'S')
+    ? 'Aprovar Solicitação' 
+    : (devolutivaReprovadaUmavezDiretoria && flAprovado === 'N')
+      ? 'Encaminhar para o Regulatório'
+      : 'Encaminhar Parecer para Gerente da Área'
+
+  const labelFragEmDiretoria = (isDiretoria && !devolutivaReprovadaUmavezDiretoria)
+    ? 'Aprovar Minuta de Resposta?'
+    : (devolutivaReprovadaUmavezDiretoria && !devolutivaReprovadaPelaDiretoriaSegundaVez)
+      ? 'Em acordo com o Parecer do Gerente da Área?'
+      : 'Aprovar Minuta de Resposta?'
+  
+  const btnTextareaEmAprovacao = (devolutivaReprovadaUmavezDiretoria && flAprovado === 'N')
+    ? 'Encaminhar parecer para Diretoria'
+    : 'Encaminhar parecer para o Regulatório';
+
+  const labelTextareaDevolutiva = {
+    [statusList.ANALISE_REGULATORIA.label]: labelStatusAnaliseRegulatoria,
+    [statusList.EM_APROVACAO.label]: 'Escrever parecer',
+    [statusList.EM_CHANCELA.label]: 'Escrever resposta à Diretoria',
+    [statusList.EM_ASSINATURA_DIRETORIA.label]: 'Escrever Parecer',
+    default: 'Enviar devolutiva ao Regulatório'
+  }
+
+  const btnEnviarDevolutiva = {
+    [statusList.EM_CHANCELA.label]: 'Enviar para assinatura da Diretoria',
+    [statusList.EM_APROVACAO.label]: btnTextareaEmAprovacao,
+    [statusList.ANALISE_REGULATORIA.label]: btnLabelStatusAnaliseRegulatoria,
+    [statusList.EM_ASSINATURA_DIRETORIA.label]: flAprovado !== '' ? btnStatusEmAssinaturaDiretoria : 'Aprovar Solicitação',
+    default: 'Enviar Resposta'
+  }
+  
+  const labelFragEmAprovacao = devolutivaReprovadaUmavezDiretoria
+    ? 'Em acordo com o Parecer da Diretoria?'
+    : 'Aprovar devolutiva?';
+  
+  const labelFragAnaliseRegulatoria = isAnaliseRegulatoriaAprovarDevolutiva ? 'Aprovar devolutiva da(s) Área(s)' : '';
+
+  const textlabelFlag = {
+    [statusList.ANALISE_REGULATORIA.label]: labelFragAnaliseRegulatoria,
+    [statusList.EM_ASSINATURA_DIRETORIA.label]: labelFragEmDiretoria,
+    [statusList.EM_APROVACAO.label]: labelFragEmAprovacao,
+    default: 'Aprovar devolutiva?'
+  }
+
+  const labelStatusTextarea = labelTextareaDevolutiva[sol?.statusSolicitacao?.nmStatus as keyof typeof labelTextareaDevolutiva] ?? labelTextareaDevolutiva.default;
+  const btnEnviarDevolutivaLabel = btnEnviarDevolutiva[sol?.statusSolicitacao?.nmStatus as keyof typeof btnEnviarDevolutiva] ?? btnEnviarDevolutiva.default;
+  const labelFlAprovacao = textlabelFlag[sol?.statusSolicitacao?.nmStatus as keyof typeof textlabelFlag] ?? textlabelFlag.default;
+
+  const isDiretorJaAprovou = sol?.tramitacoes?.some(t =>
+    t?.tramitacao?.idStatusSolicitacao === sol?.statusSolicitacao?.idStatusSolicitacao &&
+    t?.tramitacao?.flAprovado === 'S' &&
+    (t?.tramitacao?.tramitacaoAcao?.some(ta =>
+      ta?.responsavelArea?.responsavel?.idResponsavel === userResponsavel?.idResponsavel
+    ) ?? false)
+  );
+  
+  const isRolePermitidoAnaliseAreaTecnicaFlA = (
+    userResponsavel?.idPerfil === perfilUtil.VALIDADOR_ASSINANTE ||
+    userResponsavel?.idPerfil === perfilUtil.EXECUTOR_AVANCADO 
+  );
+
+  const isRolePermitidoAnaliseAreaTecnicaFlD = (
+    userResponsavel?.idPerfil === perfilUtil.VALIDADOR_ASSINANTE ||
+    userResponsavel?.idPerfil === perfilUtil.EXECUTOR_AVANCADO ||
+    userResponsavel?.idPerfil === perfilUtil.EXECUTOR 
+  );
+
+  const idsResponsaveisAssinates: number[] = sol?.solicitacoesAssinantes?.filter(
+    a => a.idSolicitacao === sol?.solicitacao?.idSolicitacao &&
+    a.idStatusSolicitacao === statusList.EM_ASSINATURA_DIRETORIA.id
+  ).map(a => a.idResponsavel) ?? [];
+
+  const isAssinanteAutorizado = userResponsavel?.idResponsavel && 
+  idsResponsaveisAssinates.includes(userResponsavel.idResponsavel);
+
+  const enableEnviarDevolutiva = (() => {
+    const nrNivelUltimaTramitacao = sol?.tramitacoes[0]?.tramitacao?.nrNivel;
+    const tramitacaoExecutada = sol?.tramitacoes?.filter(t =>
+      t?.tramitacao?.nrNivel === nrNivelUltimaTramitacao &&
+      t?.tramitacao?.idStatusSolicitacao === sol?.statusSolicitacao?.idStatusSolicitacao &&
+      t?.tramitacao?.tramitacaoAcao?.some(ta =>
+        ta?.responsavelArea?.responsavel?.idResponsavel === userResponsavel?.idResponsavel &&
+        ta.flAcao === 'T' ));
+
+    const isAreaRespondeu = sol?.tramitacoes?.filter(t =>
+      t?.tramitacao?.nrNivel === nrNivelUltimaTramitacao &&
+      sol?.statusSolicitacao?.idStatusSolicitacao !== statusList.EM_ASSINATURA_DIRETORIA.id &&
+      t?.tramitacao?.idStatusSolicitacao === sol?.statusSolicitacao?.idStatusSolicitacao &&
+      userResponsavel?.areas?.some(a => a?.area?.idArea === t?.tramitacao?.areaOrigem?.idArea)
+    );
+
+    if (sending) return false;
+
+    if (sol?.statusSolicitacao?.nmStatus === statusList.CONCLUIDO.label )  return false;
+
+    if (sol?.statusSolicitacao?.nmStatus === statusList.EM_ASSINATURA_DIRETORIA.label) {
+
+      const isRolePermitido = (
+        userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR ||
+        userResponsavel?.idPerfil === perfilUtil.VALIDADOR_ASSINANTE ||
+        userResponsavel?.areas?.some(a => a?.area?.idArea === areaUtil.DIRETORIA) 
+      );
+
+      return isRolePermitido && isAssinanteAutorizado && !isDiretorJaAprovou;
+    }
+    
+    if (tramitacaoExecutada != null && tramitacaoExecutada?.length > 0) return false;
+
+    if (isAreaRespondeu != null && isAreaRespondeu?.length > 0) return false;
+
+    if (sol?.statusSolicitacao?.nmStatus === statusList.EM_ANALISE_AREA_TECNICA.label 
+      || sol?.statusSolicitacao?.nmStatus === statusList.VENCIDO_AREA_TECNICA.label
+    ) {
+
+      if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.G) {
+        return userResponsavel?.idPerfil === perfilUtil.EXECUTOR_AVANCADO;
+      }
+
+      if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.D) {
+        return isRolePermitidoAnaliseAreaTecnicaFlD;
+      }
+
+      if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.A) {
+        return isRolePermitidoAnaliseAreaTecnicaFlA;
+      }
+
+      if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.N || !flAnaliseGerenteDiretor) {
+        return (
+          userResponsavel?.idPerfil === perfilUtil.EXECUTOR_AVANCADO ||
+          userResponsavel?.idPerfil === perfilUtil.EXECUTOR ||
+          userResponsavel?.idPerfil === perfilUtil.EXECUTOR_RESTRITO
+        );
+      }
+
+      if (!hasAreaInicial) return true;
+
+      return false;
+    }
+
+    if (sol?.statusSolicitacao?.nmStatus === statusList.ANALISE_REGULATORIA.label ||
+      sol?.statusSolicitacao?.nmStatus === statusList.VENCIDO_REGULATORIO.label) {
+       if (hasAreaInicial) return true;
+      return false;
+    }
+    
+    if (sol?.statusSolicitacao?.nmStatus === statusList.EM_APROVACAO.label) {
+      if (userResponsavel?.idPerfil === perfilUtil.EXECUTOR_AVANCADO) return true;
+      return false;
+    }
+
+    if (!hasAreaInicial && !isPermissaoEnviandoDevolutiva) return true;
+
+    if (sol?.statusSolicitacao?.nmStatus === statusList.EM_CHANCELA.label) {
+      if (userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR) return true;
+      return false;
+    }
+
+    return false;
+  })();
+
+  const btnTooltip = (() => {
+    const isAreaTecnica = statusText === statusList.EM_ANALISE_AREA_TECNICA.label;
+    
+    if(statusText === statusList.EM_CHANCELA.label && !(userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR)) return 'Apenas o Administrador pode responder.';
+
+    if (statusText === statusList.EM_ASSINATURA_DIRETORIA.label) {
+      if (!isAssinanteAutorizado) return 'Apenas os validadores/assinantes selecionados podem aprovar esta solicitação.';
+      if (isDiretorJaAprovou) return 'Já aprovado por um diretor. É necessário outro diretor aprovar.';
+    }
+    
+    if (isAreaTecnica) {
+      if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.G) return 'Apenas Executor Avançado (Gerente) de cada área pode responder.';
+      if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.D) return 'Diretor, Executor Avançado ou Executor podem responder; é necessária a resposta do Diretor.';
+      if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.A) return 'Precisa do parecer do Executor Avançado (Gerente) e Validador/Assinante (Diretor). Você já respondeu ou não tem o perfil necessário.';
+
+      return 'Podem responder: Executor ou Executor Avançado (Gerente) de cada área.'; // N ou vazio
+    }
+    return isPermissaoEnviandoDevolutiva
+      ? 'Apenas gerente/diretores da área pode enviar resposta da devolutiva'
+      : '';
+  })();
+
+  const diretorPermitidoDsParecer = (() => {
+    const isDiretoriaPerfil = userResponsavel?.idPerfil === perfilUtil.VALIDADOR_ASSINANTE;
+    if (!isDiretoriaPerfil) return false;
+    if (statusText === statusList.EM_ANALISE_AREA_TECNICA.label &&
+      (
+        flAnaliseGerenteDiretor !== AnaliseGerenteDiretor.N &&
+        flAnaliseGerenteDiretor !== AnaliseGerenteDiretor.G
+      )
+    ) return false;
+    if (statusText === statusList.CONCLUIDO.label) return false;
+    if (statusText === statusList.EM_ASSINATURA_DIRETORIA.label) return false;
+    return true;
+  })();
+
   return (
+    <>
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl md:max-w-4xl lg:max-w-5xl p-0 flex flex-col max-h-[85vh]">
+      <DialogContent className="max-w-3xl md:max-w-4xl lg:max-w-5xl p-0 flex flex-col max-h-[85vh] overflow-hidden">
         <div className="px-6 pt-6">
           <DialogHeader className="p-0">
             <div className="flex items-start justify-between gap-4">
@@ -270,7 +694,7 @@ export default function DetalhesSolicitacaoModal({
                 <div className="mt-3 flex items-center gap-2 text-sm">
                   <ClockIcon className="h-4 w-4" />
                   <span className="text-muted-foreground">Prazo para resposta:</span>
-                  <span className="font-medium">{prazoLine}</span>
+                  <span className={`font-medium ${isPrazoVencido ? 'text-red-600' : ''}`}>{prazoLine}</span>
                 </div>
               </div>
             </div>
@@ -280,7 +704,7 @@ export default function DetalhesSolicitacaoModal({
         <form
           id="detalhes-form"
           onSubmit={handleEnviar}
-          className="px-6 pb-6 space-y-8 overflow-y-auto flex-1"
+          className="pl-6 pr-2 pb-6 space-y-8 overflow-y-auto overflow-x-hidden flex-1"
         >
           <section className="space-y-2">
             <h3 className="text-sm font-semibold">Assunto</h3>
@@ -292,6 +716,7 @@ export default function DetalhesSolicitacaoModal({
           </section>
 
           <section className="space-y-2">
+          <h3 className="text-sm font-semibold">Resumo da Solicitação</h3>
             <div className="rounded-md border bg-muted/30">
               <div className="grid grid-cols-12 gap-0">
                 <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Áreas:</div>
@@ -320,13 +745,25 @@ export default function DetalhesSolicitacaoModal({
               <div className="h-px bg-border" />
               <div className="grid grid-cols-12">
                 <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Nº do ofício:</div>
-                <div className="col-span-9 px-4 py-3 text-sm">{sol?.nrOficio || '—'}</div>
+                <div className="col-span-9 px-4 py-3 text-sm">{sol?.solicitacao?.nrOficio || '—'}</div>
               </div>
               <div className="h-px bg-border" />
               <div className="grid grid-cols-12">
                 <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Nº do processo:</div>
-                <div className="col-span-9 px-4 py-3 text-sm">{sol?.nrProcesso || '—'}</div>
+                <div className="col-span-9 px-4 py-3 text-sm">{sol?.solicitacao?.nrProcesso || '—'}</div>
               </div>
+            </div>
+          </section>
+
+          <section className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Observação</h3>
+            </div>
+
+            <div className="rounded-md border bg-muted/30 p-4">
+              <p className="text-sm text-muted-foreground">
+                { observacao ?? '—'}
+              </p>
             </div>
           </section>
 
@@ -341,7 +778,7 @@ export default function DetalhesSolicitacaoModal({
                 className="text-sm text-muted-foreground"
                 style={descricaoCollapsedStyle}
               >
-                {descricao || '—'}
+                {descricao ? renderDescricaoWithBreaks(descricao) : '—'}
               </p>
 
               {descricao && descricao.length > 0 && canToggleDescricao && (
@@ -356,17 +793,16 @@ export default function DetalhesSolicitacaoModal({
             </div>
           </section>
 
-          <section className="space-y-3">
-            <h3 className="text-sm font-semibold">Anexos</h3>
-
-            <div className="space-y-2">
+          {canListarAnexo && (
+            <section className="space-y-3">
+              <h3 className="text-sm font-semibold">Anexos </h3>
               <div className="rounded-md border">
                 <div className="grid grid-cols-12 items-center">
                   <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
-                    Anexado pelo Analista
+                    Anexos do E-mail
                   </div>
                   <div className="col-span-9 px-4 py-3">
-                    <AnexoItem anexos={anexosAnalista} onBaixar={handleBaixarAnexo} />
+                    <AnexoItem anexos={itensEmail} onBaixar={handleBaixarAnexo} />
                   </div>
                 </div>
               </div>
@@ -374,69 +810,140 @@ export default function DetalhesSolicitacaoModal({
               <div className="rounded-md border">
                 <div className="grid grid-cols-12 items-center">
                   <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
-                    Anexado pelo Gerente
+                    Anexos da Solicitação
                   </div>
                   <div className="col-span-9 px-4 py-3">
-                    <AnexoItem anexos={anexosGerente} onBaixar={handleBaixarAnexo} />
+                    <AnexoItem anexos={itensSolicitacao} onBaixar={handleBaixarAnexo} />
                   </div>
                 </div>
-              </div>
-
-              <div className="rounded-md border">
-                <div className="grid grid-cols-12 items-center">
-                  <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
-                    Enviado pelo Regulatório
-                  </div>
-                  <div className="col-span-9 px-4 py-3">
-                    <AnexoItem anexos={anexosRegulatorio} onBaixar={handleBaixarAnexo} />
-                  </div>
-                </div>
-              </div>
             </div>
-          </section>
+
+              <div className="space-y-2">
+                <div className="rounded-md border">
+                  <div className="grid grid-cols-12 items-center">
+                    <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
+                      Anexado pelo Analista
+                    </div>
+                    <div className="col-span-9 px-4 py-3">
+                      <AnexoItem anexos={anexosAnalista} onBaixar={handleBaixarAnexo} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-md border">
+                  <div className="grid grid-cols-12 items-center">
+                    <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
+                      Anexado pelo Gerente
+                    </div>
+                    <div className="col-span-9 px-4 py-3">
+                      <AnexoItem anexos={anexosGerente} onBaixar={handleBaixarAnexo} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-md border">
+                  <div className="grid grid-cols-12 items-center">
+                    <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
+                      Anexado pelos Diretores
+                    </div>
+                    <div className="col-span-9 px-4 py-3">
+                      <AnexoItem anexos={anexosDiretor} onBaixar={handleBaixarAnexo} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-md border">
+                  <div className="grid grid-cols-12 items-center">
+                    <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
+                      Enviado pelo Regulatório
+                    </div>
+                    <div className="col-span-9 px-4 py-3">
+                      <AnexoItem anexos={anexosRegulatorio} onBaixar={handleBaixarAnexo} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {(isFlagVisivel  && !diretorPermitidoDsParecer) && (
+            <section className="space-y-3">
+              <div className="space-y-2">
+                <Label htmlFor="aprovarDevolutiva" className="text-sm font-medium">
+                  { labelFlAprovacao } *
+                </Label>
+                <div className="flex items-center gap-4 mt-2">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={flAprovado === 'S'}
+                      onCheckedChange={() => setFlAprovado('S')}
+                      id="aprovarDevolutiva-s"
+                    />
+                    <Label htmlFor="aprovarDevolutiva-s" className="text-sm font-light">Sim</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={flAprovado === 'N'}
+                      onCheckedChange={() => setFlAprovado('N')}
+                      id="aprovarDevolutiva-n"
+                    />
+                    <Label htmlFor="aprovarDevolutiva-n" className="text-sm font-light ">Não</Label>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
 
           <section className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Observação da Solicitação</h3>
-            </div>
-          <div className="space-y-2">
-              <div className="rounded-md border bg-muted/30 p-4">
-                <Textarea
-                  id="dsObservacao"
-                  placeholder="Observações sobre esta solicitação..."
-                  value={dsObservacao}
-                  onChange={(e) => setDsObservacao(e.target.value)}
-                  rows={4}
-                  className="bg-gray-50"
-                  disabled
-                />
-              </div>
-            </div>
-          </section>
+                <h3 className="text-sm font-semibold">
+                  {diretorPermitidoDsParecer ? 'Escrever Parecer' : labelStatusTextarea}
+                </h3>
 
-          <section className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Enviar devolutiva ao Regulatório</h3>
-            </div>
-              <div className="rounded-md border bg-muted/30 p-4">
-                <Label htmlFor="resposta" className="sr-only">
-                  Escreva aqui…
-              </Label>
-              <Textarea
-                id="resposta"
-                placeholder="Escreva aqui..."
-                value={resposta}
-                onChange={(e) => setResposta(e.target.value)}
-                rows={5}
-                disabled={sending}
+              <HistoricoRespostasModalButton
+                idSolicitacao={sol?.solicitacao?.idSolicitacao ?? null}
+                showButton={quantidadeDevolutivas > 0}
+                quantidadeDevolutivas={quantidadeDevolutivas}
               />
+            </div>
+
+            <div className="rounded-md border bg-muted/30 p-4">
+              <Label htmlFor="resposta" className="sr-only">
+                Escreva aqui …
+                </Label>
+
+                {!diretorPermitidoDsParecer && (
+                  <Textarea
+                    id="resposta"
+                    placeholder="Escreva aqui..."
+                    value={resposta}
+                    onChange={(e) => setResposta(e.target.value)}
+                    rows={5}
+                    disabled={!enableEnviarDevolutiva}
+                  />
+                )}
+
+                {diretorPermitidoDsParecer && ( 
+                  <Textarea
+                    id="resposta"
+                    placeholder="Escreva aqui..."
+                    value={dsDarecer}
+                    onChange={(e) => setDsDarecer(e.target.value)}
+                    rows={5}                
+                  />
+                )}
 
               <div className="mt-3 flex items-center gap-3">
-                <label className="inline-flex items-center gap-2 text-sm text-primary hover:underline cursor-pointer">
-                  <PaperclipIcon className="h-4 w-4" />
-                  Fazer upload de arquivo
-                  <input type="file" className="hidden" multiple onChange={handleUploadChange} disabled={sending} />
-                </label>
+                  <label className="inline-flex items-center gap-2 text-sm text-primary hover:underline cursor-pointer aria-disabled:opacity-50 aria-disabled:cursor-not-allowed">
+                    <PaperclipIcon className="h-4 w-4" />
+                    Fazer upload de arquivo
+                      <input
+                        type="file"
+                        className="hidden"
+                        multiple
+                        onChange={handleUploadChange}
+                        disabled={!enableEnviarDevolutiva} />
+                  </label>
 
                 {arquivos.length > 0 && (
                   <span className="text-xs text-muted-foreground">
@@ -453,17 +960,19 @@ export default function DetalhesSolicitacaoModal({
                       className="flex items-center justify-between rounded-md border bg-white px-3 py-2"
                     >
                       <span className="truncate text-sm">{f.name}</span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => handleRemoveArquivo(idx)}
-                        title="Remover"
-                        disabled={sending}
-                      >
-                        <XIcon className="h-4 w-4" />
-                      </Button>
+                      {canDeletarAnexo && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleRemoveArquivo(idx)}
+                          title="Remover"
+                          disabled={sending}
+                        >
+                          <XIcon className="h-4 w-4" />
+                        </Button>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -476,12 +985,30 @@ export default function DetalhesSolicitacaoModal({
           <Button type="button" variant="outline" onClick={onClose} disabled={sending}>
             Cancelar
           </Button>
-          <Button type="submit" form="detalhes-form" disabled={sending}>
-            {sending ? 'Enviando...' : 'Enviar resposta'}
+          {diretorPermitidoDsParecer && (
+            <Button
+              type="button"
+              onClick={handleSalvarParecer}
+              disabled={sending}
+            >
+              {sending ? 'Salvando...' : 'Salvar Parecer'}
+            </Button>
+          )}
+            
+          {!diretorPermitidoDsParecer && (
+            <Button
+              type="submit"
+              form="detalhes-form"
+              disabled={!enableEnviarDevolutiva}
+              tooltip={!enableEnviarDevolutiva ? btnTooltip : ''}
+            >
+            {sending ? 'Enviando...' : btnEnviarDevolutivaLabel}
           </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
 

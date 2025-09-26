@@ -1,6 +1,7 @@
 import {DownloadSimpleIcon, XIcon} from "@phosphor-icons/react";
 import {Button} from "@/components/ui/button";
 import React from "react";
+import {usePermissoes} from "@/context/permissoes/PermissoesContext";
 
 interface AnexoBackend {
   idAnexo?: number;
@@ -14,7 +15,7 @@ interface AnexoBackend {
 
 interface AnexoListProps {
   anexos: (File | AnexoBackend)[];
-  onRemove: (index: number) => void;
+  onRemove?: (index: number) => void;
   onDownload?: (anexo: AnexoBackend) => void | Promise<void>;
 }
 
@@ -23,6 +24,16 @@ export default function AnexoList({
   onRemove,
   onDownload,
 }: AnexoListProps) {
+  const { canListarAnexo, canDeletarAnexo } = usePermissoes();
+
+  if (!canListarAnexo) {
+    return (
+      <div className="flex flex-col gap-2 w-full">
+        <span className="w-full text-gray-500 text-sm">Sem permissão para visualizar anexos</span>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-2 w-full">
       {anexos.length === 0 ? (
@@ -64,17 +75,19 @@ export default function AnexoList({
                   <DownloadSimpleIcon size={18}/>
                 </Button>
               }
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onRemove(index)
-                }}
-              >
-                <XIcon className="h-4 w-4"/>
-              </Button>
+              {canDeletarAnexo && onRemove &&
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRemove(index)
+                  }}
+                >
+                  <XIcon className="h-4 w-4"/>
+                </Button>
+              }
             </div>
           );
         })

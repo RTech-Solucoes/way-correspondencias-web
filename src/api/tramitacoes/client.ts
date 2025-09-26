@@ -1,7 +1,6 @@
 import { ArquivoDTO } from "../anexos/type";
 import ApiClient from "../client";
-import { TramitacaoResponse, TramitacaoRequest } from './types';
-import { fileToArquivoDTO } from "@/utils/utils";
+import { TramitacaoResponse, TramitacaoRequest, ProximoStatusRequest } from './types';
 
 class TramitacoesClient {
   private client: ApiClient;
@@ -49,11 +48,16 @@ class TramitacoesClient {
     });
   }
 
-async uploadAnexos(id: number, files: File[]): Promise<TramitacaoResponse> {
-    const arquivos: ArquivoDTO[] = await Promise.all(files.map(fileToArquivoDTO));
+  async buscarProximoStatusPorIdSolicitacaoEIdStatusSolicitacao(data: ProximoStatusRequest): Promise<number> {
+    return this.client.request<number>(`/solicitacao/${data.idSolicitacao}/statusSolicitacao/${data.idStatusSolicitacao}/proximo-status`, {
+      method: 'GET',
+    });
+  }
+
+async uploadAnexos(id: number, files: ArquivoDTO[]): Promise<TramitacaoResponse> {
     return this.client.request<TramitacaoResponse>(`/${id}/anexos`, {
       method: "POST",
-      body: JSON.stringify(arquivos),
+      body: JSON.stringify(files),
     });
   }
 

@@ -1,3 +1,7 @@
+import { AnexoResponse } from "../anexos/type";
+import { SolicitacaoParecerResponse } from "../solicitacao-parecer/types";
+import { TramitacaoAcao } from "../tramitacoes/types";
+
 export interface AreaSolicitacao {
   idArea: number;
   nmArea: string;
@@ -48,6 +52,7 @@ export interface SolicitacaoResponse extends BaseResponse {
   idEmail?: number;
   idTema?: number;
   idResponsavel?: number;
+  idAreaInicial?: number;
   statusCodigo?: number;
   flStatus?: string;
   cdIdentificacao?: string;
@@ -56,9 +61,11 @@ export interface SolicitacaoResponse extends BaseResponse {
   dsObservacao?: string;
   nrPrazo?: number;
   nrOficio?: string;
+  flExcepcional?: string;
   nrProcesso?: string;
   tpPrazo?: string;
   dtPrazo?: string;
+  flAnaliseGerenteDiretor?: string;
   nmResponsavel?: string;
   nmTema?: string;
   areas?: AreaSolicitacao[];
@@ -67,6 +74,9 @@ export interface SolicitacaoResponse extends BaseResponse {
   statusSolicitacao?: StatusSolicitacao;
   area?: AreaSolicitacao[];
   tema?: AreaTema;
+  dtPrazoLimite?: string;
+  dtPrimeiraTramitacao?: string;
+  dtConclusaoTramitacao?: string;
 }
 
 export interface SolicitacaoRequest {
@@ -87,6 +97,7 @@ export interface SolicitacaoRequest {
   idsAreas?: number[];
   flExcepcional?: string;
   flAnaliseGerenteDiretor?: string;
+  idsResponsaveisAssinates?: number[];
 }
 
 export interface SolicitacaoTemaRequest {
@@ -99,13 +110,19 @@ export interface SolicitacaoIdentificacaoRequest {
   dsObservacao?: string;
   nrOficio?: string;
   nrProcesso?: string;
+  flAnaliseGerenteDiretor?: string;
 }
 
 export interface SolicitacaoPrazoResponse {
-  id: number;
+  idSolicitacaoPrazo: number;
+  idStatusSolicitacao: number;
+  idSolicitacao: number;
+  nrPrazoInterno: number;
   nrPrazoDias: number;
   statusCodigo?: number;
   tpPrazo?: string;
+  flExcepcional?: string;
+  dtPrazoLimite?: string;
 }
 
 export interface PagedResponse<T> {
@@ -122,6 +139,13 @@ export interface PagedResponse<T> {
 
 export interface SolicitacaoFilterParams {
   filtro?: string;
+  idStatusSolicitacao?: number;
+  idArea?: number;
+  cdIdentificacao?: string;
+  idTema?: number;
+  nomeResponsavel?: string;
+  dtCriacaoInicio?: string;
+  dtCriacaoFim?: string;
   page?: number;
   size?: number;
   sort?: string;
@@ -138,6 +162,7 @@ export interface SolicitacaoEtapaPrazoRequest {
   idTema?: number;
   nrPrazoInterno?: number;
   nrPrazoExterno?: number;
+  flExcepcional?: string;
   solicitacoesPrazos: SolicitacaoPrazoItemRequest[];
 }
 
@@ -150,15 +175,6 @@ export interface SolicitacaoTemaEtapaRequest {
   idsAreas?: number[];
 }
 
-export interface AnexoResponse {
-  idAnexo: number;
-  idObjeto: number;
-  tpObjeto: string;
-  nmArquivo: string;
-  dsCaminho: string;
-  flAtivo: string;
-}
-
 export interface EmailComAnexosResponse {
   email: Email;
   anexos: AnexoResponse[];
@@ -167,8 +183,16 @@ export interface EmailComAnexosResponse {
 export interface TramitacaoResponse extends BaseResponse {
   idTramitacao: number;
   idSolicitacao: number;
+  flAprovado?: string;
+  idStatusSolicitacao?: number;
   dsTramitacao?: string;
   dtTramitacao?: string;
+  dsObservacao?: string;
+  nrNivel?: number;
+  solicitacao: SolicitacaoResponse;
+  tramitacaoAcao: TramitacaoAcao[];
+  areaOrigem: AreaSolicitacao;
+  areaDestino: AreaSolicitacao;
 }
 
 export interface TramitacaoComAnexosResponse {
@@ -178,7 +202,24 @@ export interface TramitacaoComAnexosResponse {
 
 export interface SolicitacaoDetalheResponse extends BaseResponse {
   solicitacao: SolicitacaoResponse;
+  statusSolicitacao: StatusSolicitacao;
+  solcitacaoPrazos: SolicitacaoPrazoResponse[];
+  solicitacaoPareceres: SolicitacaoParecerResponse[];
   anexosSolicitacao: AnexoResponse[];
   email: EmailComAnexosResponse;
   tramitacoes: TramitacaoComAnexosResponse[];
+  solicitacoesAssinantes: SolicitacaoAssinanteResponse[];
+}
+
+export interface SolicitacaoAssinanteRequest {
+  idSolicitacao: number;
+  idStatusSolicitacao: number;
+  idResponsavel: number;
+}
+
+export interface SolicitacaoAssinanteResponse extends BaseResponse {
+  idSolicitacaoAssinantem: number;
+  idSolicitacao: number;
+  idStatusSolicitacao: number;
+  idResponsavel: number;
 }

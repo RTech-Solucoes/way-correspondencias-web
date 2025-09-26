@@ -1,39 +1,43 @@
 import { PageDef } from "@/types/pages/pages";
-import {
-  PresentationChartIcon, BuildingIcon, ClipboardTextIcon, EnvelopeSimpleIcon, TagIcon, UsersIcon,
-  ArrowsLeftRightIcon
-} from "@phosphor-icons/react";
+import { BuildingIcon, ClipboardTextIcon, EnvelopeSimpleIcon, PresentationChartIcon, TagIcon, UsersIcon } from "@phosphor-icons/react";
+import { Permissoes } from "@/constants/permissoes";
 
 export const PAGES_DEF: PageDef[] = [
-  // {
-  //   path: "/dashboard",
-  //   label: "Dashboard",
-  //   icon: PresentationChartIcon
-  // },
+  {
+    path: "/dashboard",
+    label: "Dashboard",
+    icon: PresentationChartIcon,
+    permission: Permissoes.SOLICITACAO_LISTAR
+  },
   {
     path: "/solicitacoes",
     label: "Solicitações",
-    icon: ClipboardTextIcon
+    icon: ClipboardTextIcon,
+    permission: Permissoes.SOLICITACAO_LISTAR
   },
   {
     path: "/email",
     label: "Caixa de entrada",
-    icon: EnvelopeSimpleIcon
+    icon: EnvelopeSimpleIcon,
+    permission: Permissoes.EMAIL_LISTAR
   },
   {
     path: "/areas",
     label: "Áreas",
-    icon: BuildingIcon
+    icon: BuildingIcon,
+    permission: Permissoes.AREA_LISTAR
   },
   {
     path: "/temas",
     label: "Temas",
-    icon: TagIcon
+    icon: TagIcon,
+    permission: Permissoes.TEMA_LISTAR
   },
   {
     path: "/responsaveis",
     label: "Responsáveis",
-    icon: UsersIcon
+    icon: UsersIcon,
+    permission: Permissoes.RESPONSAVEL_LISTAR
   },
 ];
 

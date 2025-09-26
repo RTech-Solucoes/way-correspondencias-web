@@ -1,19 +1,12 @@
 'use client';
 
 import * as React from 'react';
-import { cn } from '@/utils/utils';
-import {
-  forwardRef,
-  ComponentType,
-  useId,
-  useState,
-  ChangeEvent,
-  Ref
-} from 'react';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { SpinnerIcon, WarningCircleIcon, WarningIcon, EyeIcon, EyeClosedIcon } from '@phosphor-icons/react';
+import {ChangeEvent, ComponentType, forwardRef, Ref, useId, useState} from 'react';
+import {cn} from '@/utils/utils';
+import {Label} from '@/components/ui/label';
+import {Input} from '@/components/ui/input';
+import {Textarea} from '@/components/ui/textarea';
+import {EyeClosedIcon, EyeIcon, SpinnerIcon, WarningCircleIcon, WarningIcon} from '@phosphor-icons/react';
 
 export interface TextFieldProps {
   label?: string;
@@ -26,6 +19,8 @@ export interface TextFieldProps {
   type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'search' | 'date';
   as?: 'input' | 'textarea';
   rows?: number;
+  max?: string | number
+  min?: string | number
 
   disabled?: boolean;
   readOnly?: boolean;
@@ -66,6 +61,8 @@ const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, TextFieldPr
     type = 'text',
     as = 'input',
     rows = 3,
+    max,
+    min,
     disabled = false,
     readOnly = false,
     required = false,
@@ -145,7 +142,6 @@ const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, TextFieldPr
             )}
           >
             {label}
-            {/*{required && <span className="text-orange-500 ml-1">*</span>}*/}
           </Label>
         )}
 
@@ -182,6 +178,8 @@ const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, TextFieldPr
               onFocus={onFocus}
               disabled={disabled || loading}
               readOnly={readOnly}
+              required={required}
+              autoComplete={autoComplete}
               autoFocus={autoFocus}
               maxLength={maxLength}
               minLength={minLength}
@@ -203,10 +201,13 @@ const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, TextFieldPr
               onFocus={onFocus}
               disabled={disabled || loading}
               readOnly={readOnly}
+              required={required}
               autoComplete={autoComplete}
               autoFocus={autoFocus}
               maxLength={maxLength}
               minLength={minLength}
+              max={max}
+              min={min}
               variant={variant}
               inputSize={size}
               className={inputClassNames}

@@ -1,14 +1,7 @@
 'use client'
 
-import {
-  Dispatch,
-  SetStateAction,
-  createContext,
-  useContext,
-  useState,
-  ReactNode
-} from "react";
-import { ResponsavelResponse } from '@/api/responsaveis/types';
+import {createContext, Dispatch, ReactNode, SetStateAction, useContext, useState} from "react";
+import {ResponsavelResponse} from '@/api/responsaveis/types';
 
 interface FiltersState {
   usuario: string;
@@ -109,6 +102,7 @@ export const ResponsaveisProvider = ({ children }: { children: ReactNode }) => {
     };
     setFilters(clearedFilters);
     setActiveFilters(clearedFilters);
+    setSearchQuery('');
     setCurrentPage(0);
     setShowFilterModal(false);
   };

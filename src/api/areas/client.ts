@@ -1,3 +1,4 @@
+import { buildQueryParams } from "@/utils/utils";
 import ApiClient from "../client";
 import { AreaResponse, AreaRequest, PagedResponse, AreaFilterParams } from "./types";
 
@@ -21,17 +22,20 @@ class AreasClient {
   }
 
   async buscarPorFiltro(params: AreaFilterParams = {}): Promise<PagedResponse<AreaResponse>> {
-    const queryParams = new URLSearchParams();
 
-    if (params.filtro) queryParams.append('filtro', params.filtro);
-    if (params.page !== undefined) queryParams.append('page', params.page.toString());
-    if (params.size !== undefined) queryParams.append('size', params.size.toString());
-    if (params.sort) queryParams.append('sort', params.sort);
+    const allowedKeys = [
+      'filtro',
+      'cdArea',
+      'nmArea',
+      'dsArea',
+      'page',
+      'size',
+      'sort',
+    ] as const;
 
-    const queryString = queryParams.toString();
-    const endpoint = queryString ? `?${queryString}` : '';
+    const qs = buildQueryParams(params, allowedKeys).toString();
 
-    return this.client.request<PagedResponse<AreaResponse>>(endpoint, {
+    return this.client.request<PagedResponse<AreaResponse>>(qs ? `?${qs}` : '', {
       method: 'GET',
     });
   }

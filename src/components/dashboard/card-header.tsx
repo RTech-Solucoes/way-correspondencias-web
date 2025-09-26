@@ -5,7 +5,7 @@ import { ReactNode } from "react";
 
 interface ICardHeader {
   title: string;
-  description: string;
+  description?: string;
   children?: ReactNode
 }
 
@@ -14,11 +14,6 @@ export default function Component(props: ICardHeader) {
     <CardHeader>
       <div className="flex items-center justify-between">
         <CardTitle>{props.title}</CardTitle>
-        {props.children ? props.children :
-          <Button variant="ghost" size="sm">
-            <DotsThreeIcon className="h-4 w-4" />
-          </Button>
-        }
       </div>
       <CardDescription>{props.description}</CardDescription>
     </CardHeader>
