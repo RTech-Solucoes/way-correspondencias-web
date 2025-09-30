@@ -18,6 +18,7 @@ export default function ExportSoliExceloesExcel({ filterParams, getStatusText, o
 
   const exportarExcel = useCallback(async () => {
     try {
+      
       setExporting(true);
 
       const response = await solicitacoesClient.buscarPorFiltro({
