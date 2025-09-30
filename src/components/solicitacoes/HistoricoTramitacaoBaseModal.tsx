@@ -4,10 +4,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { ArrowRightIcon, SpinnerIcon } from '@phosphor-icons/react';
 import { Badge } from '@/components/ui/badge';
 import { formatDateTime } from '@/utils/utils';
+import { TipoHistoricoResposta } from '@/api/solicitacoes';
 
 export type HistoricoBaseItem = {
   id: number | string;
-  type: 'TRAMITACAO' | 'PARECER';
+  type: TipoHistoricoResposta;
   descricao?: string | null;
   responsavelNome?: string | null;
   dataISO?: string | null;
@@ -60,7 +61,7 @@ export default function HistoricoTramitacaoBaseModal({
                   className="bg-[#f1f1f1] rounded-lg p-4 border border-gray-300"
                 >
                   <div className="flex items-center justify-between mb-2">
-                    {item.type === 'PARECER' && (
+                    {item.type === TipoHistoricoResposta.PARECER && (
                       <Badge
                         variant="secondary"
                         className="bg-white/70 text-gray-800 border border-gray-400 text-xs font-medium px-2 py-1"
@@ -68,7 +69,7 @@ export default function HistoricoTramitacaoBaseModal({
                         DIRETORIA (PARECER)
                       </Badge>
                     )}
-                    {item.type === 'TRAMITACAO' && (
+                    {item.type === TipoHistoricoResposta.TRAMITACAO && (
                       <div className="flex items-center space-x-2">
                         <Badge
                           variant="secondary"

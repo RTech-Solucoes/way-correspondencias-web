@@ -1,4 +1,6 @@
 import { AnexoResponse } from "../anexos/type";
+import { AreaResponse } from "../areas/types";
+import { ResponsavelResponse } from "../responsaveis/types";
 import { SolicitacaoParecerResponse } from "../solicitacao-parecer/types";
 import { TramitacaoAcao } from "../tramitacoes/types";
 
@@ -222,4 +224,20 @@ export interface SolicitacaoAssinanteResponse extends BaseResponse {
   idSolicitacao: number;
   idStatusSolicitacao: number;
   idResponsavel: number;
+}
+
+export enum TipoHistoricoResposta {
+  TRAMITACAO = 'TRAMITACAO',
+  PARECER = 'PARECER'
+}
+
+export interface HistoricoRespostaItemDTO {
+  tipo: TipoHistoricoResposta;
+  id: number;
+  descricao: string;
+  statusLabel: string;
+  data: string;
+  responsavel: ResponsavelResponse;
+  areaOrigem: AreaResponse;
+  areaDestino: AreaResponse;
 }
