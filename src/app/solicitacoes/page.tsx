@@ -10,6 +10,7 @@ import {
   StickyTableRow
 } from '@/components/ui/sticky-table';
 import {Button} from '@/components/ui/button';
+import ExportSolicitacaoMenu from '@/components/solicitacoes/ExportSolicitacaoMenu';
 import {Input} from '@/components/ui/input';
 import {Badge} from '@/components/ui/badge';
 import SolicitacaoModal from '../../components/solicitacoes/SolicitacaoModal';
@@ -495,6 +496,21 @@ export default function SolicitacoesPage() {
               Limpar Filtros
             </Button>
           )}
+
+          <ExportSolicitacaoMenu
+            filterParams={{
+              filtro: searchQuery || undefined,
+              idStatusSolicitacao: activeFilters.status && activeFilters.status !== 'all' ? Number(activeFilters.status) : undefined,
+              idArea: activeFilters.area && activeFilters.area !== 'all' ? Number(activeFilters.area) : undefined,
+              idTema: activeFilters.tema && activeFilters.tema !== 'all' ? Number(activeFilters.tema) : undefined,
+              cdIdentificacao: activeFilters.identificacao || undefined,
+              nomeResponsavel: activeFilters.nomeResponsavel || undefined,
+              dtCriacaoInicio: activeFilters.dtCriacaoInicio ? `${activeFilters.dtCriacaoInicio}T00:00:00` : undefined,
+              dtCriacaoFim: activeFilters.dtCriacaoFim ? `${activeFilters.dtCriacaoFim}T23:59:59` : undefined,
+            }}
+            getStatusText={getStatusText}
+          />
+
           <Button
             variant="secondary"
             className="h-10 px-4"
@@ -664,7 +680,7 @@ export default function SolicitacoesPage() {
                           solicitacao.statusSolicitacao?.nmStatus === statusList.PRE_ANALISE.label ||
                           solicitacao.statusSolicitacao?.idStatusSolicitacao === 1 ||
                           getStatusText(solicitacao.statusCodigo?.toString() || '') === statusList.PRE_ANALISE.label
-                        ) && (
+                      ) && (
                           <Button
                             variant="ghost"
                             size="sm"
