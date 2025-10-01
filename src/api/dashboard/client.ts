@@ -1,4 +1,5 @@
 import ApiClient from "../client";
+import { HistoricoRespostaItemDTO } from "../solicitacoes";
 import { DashboardListSummary, DashboardOverview, ICalendar, IRecentActivity, PaginatedResponse, SolicitacaoPrazo } from "./type";
 
 class DashboardClient {
@@ -48,6 +49,19 @@ class DashboardClient {
         return this.client.request<ICalendar[]>(`/list-by-month-in-year?ano=${ano}`, {
             method: "GET",
         });
+    }
+
+    async getSolicitacoesPendentes(): Promise<HistoricoRespostaItemDTO[]> {
+        return this.client.request<HistoricoRespostaItemDTO[]>(`/solicitacoes-pendentes`, {
+            method: "GET",
+        });
+    }
+
+    async getSolicitacoesPendentesCount(): Promise<number> {
+        return this.client.request<number>(
+            `/solicitacoes-pendentes/count`,
+            { method: "GET" }
+        );
     }
 }
 
