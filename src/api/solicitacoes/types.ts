@@ -234,9 +234,9 @@ export enum TipoHistoricoResposta {
 export interface HistoricoRespostaItemResponse {
   tipo: TipoHistoricoResposta;
   id: number;
-  descricao: string;
-  statusLabel: string;
-  data: string;
+  dsDescricao: string;
+  nmStatus: string;
+  dtCriacao: string;
   responsavel: ResponsavelResponse;
   areaOrigem: AreaResponse;
   areaDestino: AreaResponse;

@@ -52,11 +52,11 @@ export default function HistoricoRespostasModal({
   const items: HistoricoBaseItem[] = useMemo(() => {
     return (historico || []).map((item) => ({
       id: item.id,
-      type: item.tipo as TipoHistoricoResposta,
-      descricao: item.descricao,
+      tipo: item.tipo as TipoHistoricoResposta,
+      dsDescricao: item.dsDescricao,
       responsavelNome: item.responsavel?.nmResponsavel || 'Responsável não informado',
-      dataISO: item.data || null,
-      statusLabel: item.statusLabel || null,
+      dtCriacao: item.dtCriacao || null,
+      nmStatus: item.nmStatus || null,
       areaOrigem: item.areaOrigem?.nmArea || null,
       areaDestino: item.areaDestino?.nmArea || null,
     }));
