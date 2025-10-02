@@ -1,7 +1,7 @@
 'use client';
 
 import {useEffect, useMemo, useState} from 'react';
-import {HistoricoRespostaItemDTO, TipoHistoricoResposta} from '@/api/solicitacoes/types';
+import {HistoricoRespostaItemResponse, TipoHistoricoResposta} from '@/api/solicitacoes/types';
 import {Button} from '../ui/button';
 import HistoricoTramitacaoBaseModal, { HistoricoBaseItem } from './HistoricoTramitacaoBaseModal';
 import tramitacoesClient from '@/api/tramitacoes/client';
@@ -23,7 +23,7 @@ export default function HistoricoRespostasModal({
   loadingText = 'Carregando respostas...',
   emptyText = 'Nenhuma resposta encontrada para esta solicitação.',
 }: HistoricoRespostasModalProps) {
-  const [historico, setHistorico] = useState<HistoricoRespostaItemDTO[]>([]);
+  const [historico, setHistorico] = useState<HistoricoRespostaItemResponse[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {

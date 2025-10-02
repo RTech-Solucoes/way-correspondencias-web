@@ -15,6 +15,7 @@ export type HistoricoBaseItem = {
   statusLabel?: string | null;
   areaOrigem?: string | null;
   areaDestino?: string | null;
+  nrTempoGasto?: number | null;
 };
 
 interface HistoricoBaseModalProps {

@@ -231,7 +231,7 @@ export enum TipoHistoricoResposta {
   PARECER = 'PARECER'
 }
 
-export interface HistoricoRespostaItemDTO {
+export interface HistoricoRespostaItemResponse {
   tipo: TipoHistoricoResposta;
   id: number;
   descricao: string;
@@ -240,4 +240,5 @@ export interface HistoricoRespostaItemDTO {
   responsavel: ResponsavelResponse;
   areaOrigem: AreaResponse;
   areaDestino: AreaResponse;
+  nrTempoGasto: number;
 }
