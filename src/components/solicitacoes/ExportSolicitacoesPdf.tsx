@@ -53,7 +53,7 @@ function SolicitacoesPdfDoc({ data, getStatusText }: { data: SolicitacaoResponse
 					{/* eslint-disable-next-line jsx-a11y/alt-text */}
 					<Image src="/images/way-logo.png" style={styles.logo} />
 					<View>
-						<Text style={styles.title}>Relatório de Solicitações - Projeto Way</Text>
+						<Text style={styles.title}>Relatório de Solicitações - way262</Text>
 						<Text style={styles.subtitle}>Data de exportação: {nowStr}</Text>
 						<Text style={styles.subtitle}>Total de registros: {data.length}</Text>
 					</View>
@@ -96,7 +96,7 @@ function SolicitacoesPdfDoc({ data, getStatusText }: { data: SolicitacaoResponse
 
 				{/* Footer with page numbers */}
 				<View style={styles.footer} fixed>
-					<Text>Projeto Way</Text>
+					<Text>way262</Text>
 					<Text render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}` } />
 				</View>
 			</Page>
