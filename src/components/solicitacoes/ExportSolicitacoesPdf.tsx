@@ -5,6 +5,7 @@ import { Document, Page, StyleSheet, Text, View, pdf, Image } from '@react-pdf/r
 import { toast } from 'sonner';
 import { solicitacoesClient } from '@/api/solicitacoes/client';
 import { PagedResponse, SolicitacaoFilterParams, SolicitacaoResponse } from '@/api/solicitacoes/types';
+import { formatDateBr } from '@/utils/utils';
 
 type ExportSolicitacoesPdfProps = {
 	filterParams: Omit<SolicitacaoFilterParams, 'page' | 'size' | 'sort'>;
@@ -34,15 +35,6 @@ const styles = StyleSheet.create({
 	c8: { width: '8%' }, // Data Prazo Limite Tramitação
 	c9: { width: '8%' }, // Data Conclusão Tramitação
 });
-
-function formatDateBr(dateIso?: string | null) {
-	if (!dateIso) return '';
-	try {
-		return new Date(dateIso).toLocaleString('pt-BR');
-	} catch {
-		return '';
-	}
-}
 
 function SolicitacoesPdfDoc({ data, getStatusText }: { data: SolicitacaoResponse[]; getStatusText: (code: string) => string | null }) {
 	const nowStr = useMemo(() => new Date().toLocaleString('pt-BR'), []);
