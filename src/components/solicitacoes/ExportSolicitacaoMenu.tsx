@@ -10,8 +10,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { CloudArrowDownIcon } from '@phosphor-icons/react';
 import ExportSolicitacoesExcel from '@/components/solicitacoes/ExportSolicitacoesExcel';
+import ExportSolicitacoesPdf from '@/components/solicitacoes/ExportSolicitacoesPdf';
 import { SolicitacaoFilterParams } from '@/api/solicitacoes/types';
-import { toast } from 'sonner';
 
 type ExportSolicitacaoMenuProps = {
   filterParams: Omit<SolicitacaoFilterParams, 'page' | 'size' | 'sort'>;
@@ -21,6 +21,7 @@ type ExportSolicitacaoMenuProps = {
 
 export default function ExportSolicitacaoMenu({ filterParams, getStatusText, className }: ExportSolicitacaoMenuProps) {
   const [runExcel, setRunExcel] = useState(false);
+  const [runPdf, setRunPdf] = useState(false);
 
   const excelRunner = useMemo(() => (
     runExcel ? (
@@ -31,6 +32,16 @@ export default function ExportSolicitacaoMenu({ filterParams, getStatusText, cla
       />
     ) : null
   ), [runExcel, filterParams, getStatusText]);
+
+  const pdfRunner = useMemo(() => (
+    runPdf ? (
+      <ExportSolicitacoesPdf
+        filterParams={filterParams}
+        getStatusText={getStatusText}
+        onDone={() => setRunPdf(false)}
+      />
+    ) : null
+  ), [runPdf, filterParams, getStatusText]);
 
   return (
     <>
@@ -45,17 +56,14 @@ export default function ExportSolicitacaoMenu({ filterParams, getStatusText, cla
           <DropdownMenuItem onClick={() => setRunExcel(true)}>
             Exportar em Excel
           </DropdownMenuItem>
-            <DropdownMenuItem
-                onClick={() => {
-                  toast.message('Exportar em PDF (falta implementar).');
-                }}
-            >
+          <DropdownMenuItem onClick={() => setRunPdf(true)}>
             Exportar em PDF
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
       {excelRunner}
+      {pdfRunner}
     </>
   );
 }
