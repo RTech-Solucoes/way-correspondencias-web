@@ -59,6 +59,7 @@ export default function HistoricoRespostasModal({
       nmStatus: item.nmStatus || null,
       areaOrigem: item.areaOrigem?.nmArea || null,
       areaDestino: item.areaDestino?.nmArea || null,
+      nrTempoGasto: item.nrTempoGasto || null,
     }));
   }, [historico]);
 

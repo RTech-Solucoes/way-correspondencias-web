@@ -1,9 +1,9 @@
 'use client';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ArrowRightIcon, SpinnerIcon } from '@phosphor-icons/react';
+import { ArrowRightIcon, SpinnerIcon, ClockIcon } from '@phosphor-icons/react';
 import { Badge } from '@/components/ui/badge';
-import { formatDateTime } from '@/utils/utils';
+import { formatDateTime, formatMinutesEmHorasEMinutos } from '@/utils/utils';
 import { TipoHistoricoResposta } from '@/api/solicitacoes';
 
 export type HistoricoBaseItem = {
@@ -107,6 +107,12 @@ export default function HistoricoTramitacaoBaseModal({
                       </div>
                       {item.nmStatus && (
                         <div className="text-xs text-gray-600">{`Status: ${item.nmStatus}`}</div>
+                      )}
+                      {item.nrTempoGasto && (
+                        <div className="text-xs text-gray-600 flex items-center">
+                          <ClockIcon className="h-3 w-3 text-blue-600 mr-1" />
+                          {`Tempo Gasto: ${formatMinutesEmHorasEMinutos(item.nrTempoGasto)}`}
+                        </div>
                       )}
                     </div>
                   </div>

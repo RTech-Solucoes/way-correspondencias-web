@@ -320,6 +320,23 @@ export const hoursToDaysAndHours = (hours: number): string => {
   return resultString
 };
 
+export function formatMinutesEmHorasEMinutos(totalMinutes?: number | null): string {
+  if (totalMinutes == null) return '';
+  const minutes = Math.max(0, Math.floor(totalMinutes));
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  const parts: string[] = [];
+  if (hours > 0) {
+    parts.push(`${hours} hora${hours > 1 ? 's' : ''}`);
+  }
+  if (remainingMinutes > 0 || hours === 0) {
+    parts.push(`${remainingMinutes} minuto${remainingMinutes !== 1 ? 's' : ''}`);
+  }
+
+  return parts.join(' e ');
+}
+
 
 export const formatDateBr = (dateString?: string): string => {
   if (!dateString) return '';
