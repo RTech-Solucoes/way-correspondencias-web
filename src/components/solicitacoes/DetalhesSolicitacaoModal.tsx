@@ -132,9 +132,42 @@ export default function DetalhesSolicitacaoModal({
   }, [sol?.statusSolicitacao?.idStatusSolicitacao, sol?.solcitacaoPrazos, sol?.statusSolicitacao?.nmStatus]);
 
   const isPrazoVencido = useMemo(() => {
-    return sol?.statusSolicitacao?.nmStatus === statusList.VENCIDO_AREA_TECNICA.label ||
-           sol?.statusSolicitacao?.nmStatus === statusList.VENCIDO_REGULATORIO.label;
-  }, [sol?.statusSolicitacao?.nmStatus]);
+    const dataAtual = new Date();
+    
+    if (sol?.statusSolicitacao?.nmStatus === statusList.VENCIDO_AREA_TECNICA.label) {
+      const prazoAtualVencido = sol?.solcitacaoPrazos?.find(
+        (p) => +(p?.idStatusSolicitacao) === (statusList.EM_ANALISE_AREA_TECNICA.id)
+      );
+      if (prazoAtualVencido?.dtPrazoLimite) {
+        const dataPrazo = new Date(prazoAtualVencido.dtPrazoLimite);
+        return dataAtual > dataPrazo;
+      }
+      return true; 
+    }
+    
+    if (sol?.statusSolicitacao?.nmStatus === statusList.VENCIDO_REGULATORIO.label) {
+      const prazoAtualVencido = sol?.solcitacaoPrazos?.find(
+        (p) => +(p?.idStatusSolicitacao) === (statusList.ANALISE_REGULATORIA.id)
+      );
+      if (prazoAtualVencido?.dtPrazoLimite) {
+        const dataPrazo = new Date(prazoAtualVencido.dtPrazoLimite);
+        return dataAtual > dataPrazo;
+      }
+      return true; 
+    }
+    
+    const prazoAtual = sol?.solcitacaoPrazos?.find(
+      (p) => +(p?.idStatusSolicitacao) === (sol?.statusSolicitacao?.idStatusSolicitacao)
+    );
+    
+    if (prazoAtual?.dtPrazoLimite) {
+      const dataPrazo = new Date(prazoAtual.dtPrazoLimite);
+      const isPrazoVencidoPorData = dataAtual > dataPrazo;      
+      return isPrazoVencidoPorData;
+    }
+    
+    return false;
+  }, [sol?.statusSolicitacao?.nmStatus, sol?.statusSolicitacao?.idStatusSolicitacao, sol?.solcitacaoPrazos]);
 
   const assunto = sol?.solicitacao?.dsAssunto ?? '';
   const descricao = sol?.solicitacao?.dsSolicitacao ?? '';

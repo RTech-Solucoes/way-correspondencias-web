@@ -4,16 +4,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { ArrowRightIcon, SpinnerIcon } from '@phosphor-icons/react';
 import { Badge } from '@/components/ui/badge';
 import { formatDateTime } from '@/utils/utils';
+import { TipoHistoricoResposta } from '@/api/solicitacoes';
 
 export type HistoricoBaseItem = {
   id: number | string;
-  type: 'TRAMITACAO' | 'PARECER';
-  descricao?: string | null;
+  tipo: TipoHistoricoResposta;
+  dsDescricao?: string | null;
   responsavelNome?: string | null;
-  dataISO?: string | null;
-  statusLabel?: string | null;
+  dtCriacao?: string | null;
+  nmStatus?: string | null;
   areaOrigem?: string | null;
   areaDestino?: string | null;
+  nrTempoGasto?: number | null;
 };
 
 interface HistoricoBaseModalProps {
@@ -56,11 +58,11 @@ export default function HistoricoTramitacaoBaseModal({
             <div className="space-y-4 overflow-y-auto">
               {items.map((item) => (
                 <div
-                  key={`${item.type}-${item.id}`}
+                  key={`${item.tipo}-${item.id}`}
                   className="bg-[#f1f1f1] rounded-lg p-4 border border-gray-300"
                 >
                   <div className="flex items-center justify-between mb-2">
-                    {item.type === 'PARECER' && (
+                    {item.tipo === TipoHistoricoResposta.PARECER && (
                       <Badge
                         variant="secondary"
                         className="bg-white/70 text-gray-800 border border-gray-400 text-xs font-medium px-2 py-1"
@@ -68,7 +70,7 @@ export default function HistoricoTramitacaoBaseModal({
                         DIRETORIA (PARECER)
                       </Badge>
                     )}
-                    {item.type === 'TRAMITACAO' && (
+                    {item.tipo === TipoHistoricoResposta.TRAMITACAO && (
                       <div className="flex items-center space-x-2">
                         <Badge
                           variant="secondary"
@@ -88,9 +90,9 @@ export default function HistoricoTramitacaoBaseModal({
                   </div>
                   <div className="mb-3 flex items-end justify-between gap-3">
                     <div className="flex-1 min-w-0 mr-4">
-                      {item.descricao ? (
+                      {item.dsDescricao ? (
                         <p className="text-sm text-gray-800 font-medium leading-relaxed break-words">
-                          {item.descricao}
+                          {item.dsDescricao}
                         </p>
                       ) : (
                         <p className="text-sm text-gray-600 italic">A solicitação foi direcionada para a(s) área(s) responsável(is)</p>
@@ -101,10 +103,10 @@ export default function HistoricoTramitacaoBaseModal({
                         {item.responsavelNome || 'Responsável não informado'}
                       </div>
                       <div className="text-xs text-gray-600">
-                        {formatDateTime(item.dataISO || '') || 'Data não informada'}
+                        {formatDateTime(item.dtCriacao || '') || 'Data não informada'}
                       </div>
-                      {item.statusLabel && (
-                        <div className="text-xs text-gray-600">{`Status: ${item.statusLabel}`}</div>
+                      {item.nmStatus && (
+                        <div className="text-xs text-gray-600">{`Status: ${item.nmStatus}`}</div>
                       )}
                     </div>
                   </div>
