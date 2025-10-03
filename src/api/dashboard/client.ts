@@ -1,4 +1,5 @@
 import ApiClient from "../client";
+import { SolicitacaoResponse } from "../solicitacoes/types";
 import { DashboardListSummary, DashboardOverview, ICalendar, IRecentActivity, PaginatedResponse, SolicitacaoPrazo } from "./type";
 
 class DashboardClient {
@@ -49,6 +50,19 @@ class DashboardClient {
             method: "GET",
         });
     }
+
+    async getSolicitacoesPendentes(): Promise<SolicitacaoResponse[]> {
+        return this.client.request<SolicitacaoResponse[]>(`/solicitacoes-pendentes`, {
+            method: "GET",
+        });
+    }
+
+    async getSolicitacoesPendentesCount(): Promise<number> {
+        return this.client.request<number>(`/solicitacoes-pendentes/count`, {
+            method: "GET",
+        });
+    }
+
 }
 
 export const dashboardClient = new DashboardClient();
