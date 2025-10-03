@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
   StickyTable,
   StickyTableBody,
@@ -10,6 +10,7 @@ import {
   StickyTableRow
 } from '@/components/ui/sticky-table';
 import {Button} from '@/components/ui/button';
+import ExportSolicitacaoMenu from '@/components/solicitacoes/ExportSolicitacaoMenu';
 import {Input} from '@/components/ui/input';
 import {Badge} from '@/components/ui/badge';
 import SolicitacaoModal from '../../components/solicitacoes/SolicitacaoModal';
@@ -55,9 +56,11 @@ import {usePermissoes} from "@/context/permissoes/PermissoesContext";
 import LoadingRows from "@/components/solicitacoes/LoadingRows";
 import { statusList } from '@/api/status-solicitacao/types';
 import { formatDateBr } from '@/utils/utils';
+import { useSearchParams } from 'next/navigation';
 import TimeProgress from '@/components/ui/time-progress';
 
 export default function SolicitacoesPage() {
+  const searchParams = useSearchParams();
   const {
     solicitacoes,
     setSolicitacoes,
@@ -149,6 +152,13 @@ export default function SolicitacoesPage() {
     setTramitacaoSolicitacaoId(null);
   };
 
+  const prefilledFilters = useMemo(() => {
+    const idSolicitacaoParam = searchParams.get('idSolicitacao');
+    return {
+      idSolicitacao: idSolicitacaoParam ? Number(idSolicitacaoParam) : undefined,
+    };
+  }, [searchParams]);
+
   const loadSolicitacoes = useCallback(async () => {
     try {
       setLoading(true);
@@ -179,7 +189,8 @@ export default function SolicitacoesPage() {
         idTema,
         nomeResponsavel,
         dtCriacaoInicio,
-        dtCriacaoFim
+        dtCriacaoFim,
+        idSolicitacao: prefilledFilters.idSolicitacao,
       });
 
       if (response && typeof response === 'object' && 'content' in response) {
@@ -201,6 +212,7 @@ export default function SolicitacoesPage() {
     currentPage,
     activeFilters,
     debouncedSearchQuery,
+    prefilledFilters,
     setSolicitacoes,
     setTotalPages,
     setTotalElements,
@@ -495,6 +507,21 @@ export default function SolicitacoesPage() {
               Limpar Filtros
             </Button>
           )}
+
+          <ExportSolicitacaoMenu
+            filterParams={{
+              filtro: searchQuery || undefined,
+              idStatusSolicitacao: activeFilters.status && activeFilters.status !== 'all' ? Number(activeFilters.status) : undefined,
+              idArea: activeFilters.area && activeFilters.area !== 'all' ? Number(activeFilters.area) : undefined,
+              idTema: activeFilters.tema && activeFilters.tema !== 'all' ? Number(activeFilters.tema) : undefined,
+              cdIdentificacao: activeFilters.identificacao || undefined,
+              nomeResponsavel: activeFilters.nomeResponsavel || undefined,
+              dtCriacaoInicio: activeFilters.dtCriacaoInicio ? `${activeFilters.dtCriacaoInicio}T00:00:00` : undefined,
+              dtCriacaoFim: activeFilters.dtCriacaoFim ? `${activeFilters.dtCriacaoFim}T23:59:59` : undefined,
+            }}
+            getStatusText={getStatusText}
+          />
+
           <Button
             variant="secondary"
             className="h-10 px-4"
@@ -664,7 +691,7 @@ export default function SolicitacoesPage() {
                           solicitacao.statusSolicitacao?.nmStatus === statusList.PRE_ANALISE.label ||
                           solicitacao.statusSolicitacao?.idStatusSolicitacao === 1 ||
                           getStatusText(solicitacao.statusCodigo?.toString() || '') === statusList.PRE_ANALISE.label
-                        ) && (
+                      ) && (
                           <Button
                             variant="ghost"
                             size="sm"

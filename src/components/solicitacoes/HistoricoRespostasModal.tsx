@@ -1,13 +1,13 @@
 'use client';
 
 import {useEffect, useMemo, useState} from 'react';
-import {toast} from 'sonner';
-import {solicitacoesClient} from '@/api/solicitacoes/client';
-import {TramitacaoComAnexosResponse} from '@/api/solicitacoes/types';
+import {HistoricoRespostaItemResponse, TipoHistoricoResposta} from '@/api/solicitacoes/types';
 import {Button} from '../ui/button';
-import { SolicitacaoParecerResponse } from '@/api/solicitacao-parecer/types';
-import { STATUS_LIST } from '@/api/status-solicitacao/types';
+import { FilePdfIcon } from '@phosphor-icons/react';
 import HistoricoTramitacaoBaseModal, { HistoricoBaseItem } from './HistoricoTramitacaoBaseModal';
+import tramitacoesClient from '@/api/tramitacoes/client';
+import ExportHistoricoPdf from './ExportHistoricoPdf';
+import { SolicitacaoResumoComHistoricoResponse } from '@/api/solicitacoes/types';
 
 interface HistoricoRespostasModalProps {
   idSolicitacao: number | null;
@@ -26,87 +26,80 @@ export default function HistoricoRespostasModal({
   loadingText = 'Carregando respostas...',
   emptyText = 'Nenhuma resposta encontrada para esta solicitação.',
 }: HistoricoRespostasModalProps) {
-  const [tramitacao, setTramitacao] = useState<TramitacaoComAnexosResponse[]>([]);
+  const [historico, setHistorico] = useState<HistoricoRespostaItemResponse[]>([]);
+  const [solicitacaoResumo, setSolicitacaoResumo] = useState<SolicitacaoResumoComHistoricoResponse['solicitacao'] | null>(null);
+  const [exporting, setExporting] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [pareceres, setPareceres] = useState<SolicitacaoParecerResponse[]>([]);
 
   useEffect(() => {
-    const loadTramitacoes = async () => {
+    const loadHistoricoRespostas = async () => {
       if (!idSolicitacao || !open) return;
       
       try {
         setLoading(true);
-        const response = await solicitacoesClient.buscarDetalhesPorId(idSolicitacao);
-        setTramitacao(response.tramitacoes);
-        setPareceres((response?.solicitacaoPareceres) || []);
+        const response = await tramitacoesClient.listarHistoricoRespostas(idSolicitacao);
+        setHistorico(response.historicoResposta);
+        setSolicitacaoResumo(response.solicitacao);
       } catch (error) {
-        console.error('Erro ao carregar respostas:', error);
-        toast.error('Erro ao carregar respostas');
+        console.error('Erro ao carregar histórico de respostas:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadTramitacoes();
+    loadHistoricoRespostas();
   }, [idSolicitacao, open]);
 
   const handleClose = () => {
-    setTramitacao([]);
-    setPareceres([]);
+    setHistorico([]);
     onClose();
   };
   
   const items: HistoricoBaseItem[] = useMemo(() => {
-    const getStatusLabelById = (id?: number | null) => {
-      if (!id) return null;
-      return STATUS_LIST.find(s => s.id === id)?.label || null;
-    };
-
-    const toMs = (s?: string | null) => {
-      const t = new Date(s || '').getTime();
-      return Number.isNaN(t) ? 0 : t;
-    };
-
-    const tramItems: HistoricoBaseItem[] = (tramitacao || []).map((r) => {
-      const acao = r?.tramitacao?.tramitacaoAcao && r.tramitacao.tramitacaoAcao.length > 0 ? r.tramitacao.tramitacaoAcao[0] : undefined;
-      return {
-        id: r.tramitacao.idTramitacao,
-        type: 'TRAMITACAO',
-        descricao: r.tramitacao.dsObservacao || '',
-        responsavelNome: acao?.responsavelArea?.responsavel?.nmResponsavel || 'Responsável não informado',
-        dataISO: acao?.dtCriacao || null,
-        statusLabel: getStatusLabelById(r?.tramitacao?.idStatusSolicitacao ?? null),
-        areaOrigem: r?.tramitacao?.areaOrigem?.nmArea || null,
-        areaDestino: r?.tramitacao?.areaDestino?.nmArea || null,
-      };
-    });
-
-    const parecerItems: HistoricoBaseItem[] = (pareceres || []).map((p) => ({
-      id: p.idSolicitacaoParecer,
-      type: 'PARECER',
-      descricao: p?.dsDarecer || '',
-      responsavelNome: p?.responsavel?.nmResponsavel || 'Responsável não informado',
-      dataISO: p?.dtCriacao || null,
-      statusLabel: getStatusLabelById(p?.idStatusSolicitacao ?? null),
-      areaOrigem: null,
-      areaDestino: null,
+    return (historico || []).map((item) => ({
+      id: item.id,
+      tipo: item.tipo as TipoHistoricoResposta,
+      dsDescricao: item.dsDescricao,
+      responsavelNome: item.responsavel?.nmResponsavel || 'Responsável não informado',
+      dtCriacao: item.dtCriacao || null,
+      nmStatus: item.nmStatus || null,
+      areaOrigem: item.areaOrigem?.nmArea || null,
+      areaDestino: item.areaDestino?.nmArea || null,
+      nrTempoGasto: item.nrTempoGasto || null,
     }));
-
-    return [...tramItems, ...parecerItems].sort((a, b) => toMs(b.dataISO) - toMs(a.dataISO));
-  }, [tramitacao, pareceres]);
+  }, [historico]);
 
   if (!open) return null;
 
   return (
-    <HistoricoTramitacaoBaseModal
-      open={open}
-      onClose={handleClose}
-      title={title}
-      loading={loading}
-      loadingText={loadingText}
-      emptyText={emptyText}
-      items={items}
-    />
+    <>
+      <HistoricoTramitacaoBaseModal
+        open={open}
+        onClose={handleClose}
+        title={title}
+        headerActions={
+          <Button
+            size="sm"
+            variant="outline"
+            className="mr-5 flex items-center gap-2"
+            onClick={() => setExporting(true)}>
+            <FilePdfIcon className="h-4 w-4" />
+            Exportar PDF
+          </Button>
+        }
+        loading={loading}
+        loadingText={loadingText}
+        emptyText={emptyText}
+        items={items}
+      />
+      {exporting && solicitacaoResumo && (
+        <ExportHistoricoPdf
+          solicitacao={solicitacaoResumo}
+          historico={historico}
+          onDone={() => setExporting(false)}
+        />
+      )}
+    </>
   );
 }
 

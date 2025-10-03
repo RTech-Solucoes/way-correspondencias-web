@@ -1,6 +1,6 @@
 'use client';
 
-import {ChangeEvent, FormEvent, useCallback, useEffect, useState} from 'react';
+import {ChangeEvent, FormEvent, useCallback, useEffect, useMemo, useState} from 'react';
 import {useRouter} from 'next/navigation';
 import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog';
 import {Button} from '@/components/ui/button';
@@ -91,6 +91,7 @@ export default function SolicitacaoModal({
     nrOficio: '',
     nrProcesso: '',
     flAnaliseGerenteDiretor: '',
+    flExcepcional: 'N',
     idsResponsaveisAssinates: []
   });
   const [loading, setLoading] = useState(false);
@@ -137,11 +138,11 @@ export default function SolicitacaoModal({
     const loadPrazos = async () => {
       const prazosSolicitacaoPorStatus = await solicitacoesClient.listarPrazos(solicitacao?.idSolicitacao || 0);
       setPrazosSolicitacaoPorStatus(prazosSolicitacaoPorStatus || []);
-      setFormData(prev => ({
-        ...prev,
-        flExcepcional: solicitacao?.flExcepcional === 'S' ? 'S' : 'N'
-      }));
-      setPrazoExcepcional((solicitacao?.flExcepcional || 'N') === 'S');
+      
+      if (solicitacao) {
+        const isExcepcional = (solicitacao.flExcepcional || 'N') === 'S';
+        setPrazoExcepcional(isExcepcional);
+      }
 
       try {
         const temaId = formData.idTema || solicitacao?.idTema || solicitacao?.tema?.idTema || 0;
@@ -164,6 +165,13 @@ export default function SolicitacaoModal({
     }
   }, [solicitacao?.idSolicitacao]);
 
+  useEffect(() => {
+    const flExcepcionalValue = prazoExcepcional ? 'S' : 'N';
+    setFormData(prev => ({
+      ...prev,
+      flExcepcional: flExcepcionalValue
+    }));
+  }, [prazoExcepcional]);
 
   useEffect(() => {
     const loadTramitacoes = async () => {
@@ -208,8 +216,12 @@ export default function SolicitacaoModal({
         tpPrazo: solicitacao.tpPrazo === 'C' ? 'H' : (solicitacao.tpPrazo || ''),
         nrOficio: solicitacao.nrOficio || '',
         nrProcesso: solicitacao.nrProcesso || '',
-        flAnaliseGerenteDiretor: solicitacao.flAnaliseGerenteDiretor || ''
+        flAnaliseGerenteDiretor: solicitacao.flAnaliseGerenteDiretor || '',
+        flExcepcional: solicitacao.flExcepcional || 'N'
       });
+      
+      const isExcepcional = (solicitacao.flExcepcional || 'N') === 'S';
+      setPrazoExcepcional(isExcepcional);
 
     } else {
       setFormData({
@@ -225,8 +237,11 @@ export default function SolicitacaoModal({
         tpPrazo: '',
         nrOficio: '',
         nrProcesso: '',
-        flAnaliseGerenteDiretor: ''
+        flAnaliseGerenteDiretor: '',
+        flExcepcional: 'N'
       });
+      
+      setPrazoExcepcional(false);
 
     }
     setCurrentStep(1);
@@ -422,8 +437,9 @@ export default function SolicitacaoModal({
               idStatusSolicitacao: p.idStatusSolicitacao!,
               nrPrazoInterno: p.nrPrazoInterno,
               tpPrazo: formData.tpPrazo || undefined,
-              flExcepcional: 'S'
+              flExcepcional: formData.flExcepcional || 'N'
             }));
+
 
           await solicitacoesClient.etapaPrazo(solicitacao.idSolicitacao, {
             idTema: formData.idTema,
@@ -973,7 +989,7 @@ export default function SolicitacaoModal({
         try {
           if (prazosSolicitacaoPorStatus.length > 0) {
             const temaId = formData.idTema || solicitacao?.idTema || solicitacao?.tema?.idTema || 0;
-            const temaNome = getSelectedTema()?.nmTema || solicitacao?.tema?.nmTema || '';
+            const temaNome = selectedTema?.nmTema || solicitacao?.tema?.nmTema || '';
             const mapped = (prazosSolicitacaoPorStatus || []).map(p => ({
               idStatusSolicPrazoTema: 0,
               idStatusSolicitacao: p.idStatusSolicitacao,
@@ -1051,11 +1067,11 @@ export default function SolicitacaoModal({
     }));
   }, [formData?.idTema, statusList, getSelectedTema]);
 
-  const currentPrazoTotal =
-    (prazosSolicitacaoPorStatus.length > 0
-      ? prazosSolicitacaoPorStatus.reduce((acc, curr) => acc + (curr.nrPrazoInterno || 0), 0)
-      : statusPrazos.reduce((acc, curr) => acc + curr.nrPrazoInterno, 0)
-    )
+  const currentPrazoTotal = useMemo(() => {
+    const total = statusPrazos.reduce((acc, curr) => acc + curr.nrPrazoInterno, 0);
+
+    return total;
+  }, [statusPrazos, prazoExcepcional]);
 
   const renderStep3 = useCallback((): JSX.Element => {
     const statusOptions = statusList.length > 0 ? statusList.map(status => ({
@@ -1082,10 +1098,6 @@ export default function SolicitacaoModal({
                       if (hasTramitacoes) return;
                       const ativo = !!checked;
                       setPrazoExcepcional(ativo);
-                      setFormData(prev => ({
-                        ...prev,
-                        flExcepcional: ativo ? 'S' : 'N'
-                      }));
 
                       if (!ativo) {
                         setStatusPrazos(getDefaultPrazos());
@@ -1104,7 +1116,7 @@ export default function SolicitacaoModal({
                   </Label>
                 </div>
                 <h3 className="text-blue-500 font-bold ml-auto text-2xl">
-                  {prazoExcepcional ? `${currentPrazoTotal}h` : `${horasParaDias(currentPrazoTotal)}d`}
+                  {prazoExcepcional ? `${currentPrazoTotal}h` : hoursToDaysAndHours(currentPrazoTotal)}
                 </h3>
               </div>
             </div>
@@ -1160,7 +1172,8 @@ export default function SolicitacaoModal({
                         prazoFromConfig = valorPadrao;
                       }
                       
-                      const prazoAtual = prazoExcepcional ? (prazoFromConfig ?? 0) : (prazoFromSolicitacao ?? prazoFromConfig ?? 0);
+                      const prazoAtual = prazoFromConfig ?? 0;
+
                     return (
                       <div key={index} className={`rounded-lg p-4 bg-gray-50`}>
                         <div className="space-y-3">
@@ -1176,13 +1189,15 @@ export default function SolicitacaoModal({
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                  updateLocalPrazo(status.codigo, Math.max(0, prazoAtual - 1));
+                                  const valorAtualExibido = prazoExcepcional ? prazoAtual : horasParaDias(prazoAtual);
+                                  const novoValor = Math.max(0, valorAtualExibido - 1);
+                                  const valorParaSalvar = prazoExcepcional ? novoValor : novoValor * 24;
+                                  updateLocalPrazo(status.codigo, valorParaSalvar);
                                 }}
                                 disabled={hasTramitacoes}
                                 className="w-8 h-8 p-0 flex items-center justify-center"
                               >-</Button>
                               <Input
-                                key={`prazo-${status.codigo}`}
                                 type="number"
                                 value={(prazoExcepcional ? prazoAtual : horasParaDias(prazoAtual)).toString()}
                                 onValueChange={(value) => {
@@ -1210,7 +1225,7 @@ export default function SolicitacaoModal({
                                 size="sm"
                                 onClick={() => {
                                   const valorAtualExibido = prazoExcepcional ? prazoAtual : horasParaDias(prazoAtual);
-                                  const novoValor = valorAtualExibido + 1;
+                                  const novoValor = Math.min(300, valorAtualExibido + 1);
                                   const valorParaSalvar = prazoExcepcional ? novoValor : novoValor * 24;
                                   updateLocalPrazo(status.codigo, valorParaSalvar);
                                 }}
