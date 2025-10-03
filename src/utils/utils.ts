@@ -5,6 +5,7 @@ import {ArquivoDTO, TipoResponsavelAnexo} from '@/api/anexos/type';
 import { z } from "zod";
 import { cpf } from "cpf-cnpj-validator";
 import dayjs from "dayjs";
+// import { SolicitacaoResumoResponse } from '@/types/solicitacoes/types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -61,7 +62,7 @@ export function formatDate(dateString: string | null): string {
     }
     
     return date.toLocaleDateString('pt-BR');
-  } catch (error) {
+  } catch {
     return 'Data inválida';
   }
 }
@@ -329,17 +330,24 @@ export function formatDateTimeBr(dateIso?: string | null) {
 	}
 }
 
-export function formatMinutesEmHorasEMinutos(totalMinutes?: number | null): string {
+export function formatMinutosEmDiasHorasMinutos(totalMinutes?: number | null): string {
   if (totalMinutes == null) return '';
-  const minutes = Math.max(0, Math.floor(totalMinutes));
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
+  const total = Math.max(0, Math.floor(totalMinutes));
+
+  const minutesPerDay = 24 * 60;
+  const days = Math.floor(total / minutesPerDay);
+  const remainingAfterDays = total % minutesPerDay;
+  const hours = Math.floor(remainingAfterDays / 60);
+  const remainingMinutes = remainingAfterDays % 60;
 
   const parts: string[] = [];
+  if (days > 0) {
+    parts.push(`${days} dia${days > 1 ? 's' : ''}`);
+  }
   if (hours > 0) {
     parts.push(`${hours} hora${hours > 1 ? 's' : ''}`);
   }
-  if (remainingMinutes > 0 || hours === 0) {
+  if (remainingMinutes > 0 || (days === 0 && hours === 0)) {
     parts.push(`${remainingMinutes} minuto${remainingMinutes !== 1 ? 's' : ''}`);
   }
 
@@ -357,10 +365,10 @@ export const formatDateBr = (dateString?: string): string => {
 
 
 export function buildQueryParams<
-  TParams extends Record<string, any>,
+  TParams extends Record<string, unknown>,
   TKeys extends readonly (keyof TParams & string)[]
 >(
-  params: any,
+  params: Partial<TParams>,
   allowedKeys: TKeys
 ): URLSearchParams {
   const queryParams = new URLSearchParams();
@@ -371,4 +379,15 @@ export function buildQueryParams<
     }
   });
   return queryParams;
+}
+
+export function formatDateTimeBrCompactExport(): string {
+  const d = new Date();
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yyyy = d.getFullYear();
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mi = String(d.getMinutes()).padStart(2, '0');
+  const ss = String(d.getSeconds()).padStart(2, '0');
+  return `${dd}-${mm}-${yyyy}_${hh}-${mi}-${ss}`;
 }

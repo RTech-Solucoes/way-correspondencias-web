@@ -4,6 +4,7 @@ import {useCallback, useEffect, useRef, useState} from 'react';
 import { toast } from 'sonner';
 import { PagedResponse, SolicitacaoFilterParams, SolicitacaoResponse } from '@/api/solicitacoes/types';
 import { solicitacoesClient } from '@/api/solicitacoes/client';
+import { formatDateTimeBrCompactExport } from '@/utils/utils';
 
 type ExportSoliExceloesExcelnProps = {
   filterParams: Omit<SolicitacaoFilterParams, 'page' | 'size' | 'sort'>;
@@ -88,7 +89,7 @@ export default function ExportSoliExceloesExcel({ filterParams, getStatusText, o
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `solicitacoes_export_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.xls`;
+      a.download = `solicitacoes_export_${formatDateTimeBrCompactExport()}.xls`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

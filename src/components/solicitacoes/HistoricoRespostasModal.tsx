@@ -3,8 +3,11 @@
 import {useEffect, useMemo, useState} from 'react';
 import {HistoricoRespostaItemResponse, TipoHistoricoResposta} from '@/api/solicitacoes/types';
 import {Button} from '../ui/button';
+import { FilePdfIcon } from '@phosphor-icons/react';
 import HistoricoTramitacaoBaseModal, { HistoricoBaseItem } from './HistoricoTramitacaoBaseModal';
 import tramitacoesClient from '@/api/tramitacoes/client';
+import ExportHistoricoPdf from './ExportHistoricoPdf';
+import { SolicitacaoResumoComHistoricoResponse } from '@/api/solicitacoes/types';
 
 interface HistoricoRespostasModalProps {
   idSolicitacao: number | null;
@@ -24,6 +27,8 @@ export default function HistoricoRespostasModal({
   emptyText = 'Nenhuma resposta encontrada para esta solicitação.',
 }: HistoricoRespostasModalProps) {
   const [historico, setHistorico] = useState<HistoricoRespostaItemResponse[]>([]);
+  const [solicitacaoResumo, setSolicitacaoResumo] = useState<SolicitacaoResumoComHistoricoResponse['solicitacao'] | null>(null);
+  const [exporting, setExporting] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -33,7 +38,8 @@ export default function HistoricoRespostasModal({
       try {
         setLoading(true);
         const response = await tramitacoesClient.listarHistoricoRespostas(idSolicitacao);
-        setHistorico(response);
+        setHistorico(response.historicoResposta);
+        setSolicitacaoResumo(response.solicitacao);
       } catch (error) {
         console.error('Erro ao carregar histórico de respostas:', error);
       } finally {
@@ -66,15 +72,34 @@ export default function HistoricoRespostasModal({
   if (!open) return null;
 
   return (
-    <HistoricoTramitacaoBaseModal
-      open={open}
-      onClose={handleClose}
-      title={title}
-      loading={loading}
-      loadingText={loadingText}
-      emptyText={emptyText}
-      items={items}
-    />
+    <>
+      <HistoricoTramitacaoBaseModal
+        open={open}
+        onClose={handleClose}
+        title={title}
+        headerActions={
+          <Button
+            size="sm"
+            variant="outline"
+            className="mr-5 flex items-center gap-2"
+            onClick={() => setExporting(true)}>
+            <FilePdfIcon className="h-4 w-4" />
+            Exportar PDF
+          </Button>
+        }
+        loading={loading}
+        loadingText={loadingText}
+        emptyText={emptyText}
+        items={items}
+      />
+      {exporting && solicitacaoResumo && (
+        <ExportHistoricoPdf
+          solicitacao={solicitacaoResumo}
+          historico={historico}
+          onDone={() => setExporting(false)}
+        />
+      )}
+    </>
   );
 }
 

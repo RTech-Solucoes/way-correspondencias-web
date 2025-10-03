@@ -25,4 +25,8 @@ export interface SolicitacaoResumoResponse {
   nmAreas: string;
   nmStatus: string;
   dsAssunto: string;
+  dtCriacao: string;
+  dtPrimeiraTramitacao: string;
+  dtPrazoLimite: string;
+  dtConclusaoTramitacao: string;
 }

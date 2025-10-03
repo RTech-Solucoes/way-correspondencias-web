@@ -5,7 +5,7 @@ import { Document, Page, StyleSheet, Text, View, pdf, Image } from '@react-pdf/r
 import { toast } from 'sonner';
 import { solicitacoesClient } from '@/api/solicitacoes/client';
 import { PagedResponse, SolicitacaoFilterParams, SolicitacaoResponse } from '@/api/solicitacoes/types';
-import { formatDateTimeBr } from '@/utils/utils';
+import { formatDateTimeBr, formatDateTimeBrCompactExport } from '@/utils/utils';
 
 type ExportSolicitacoesPdfProps = {
 	filterParams: Omit<SolicitacaoFilterParams, 'page' | 'size' | 'sort'>;
@@ -45,7 +45,7 @@ function SolicitacoesPdfDoc({ data, getStatusText }: { data: SolicitacaoResponse
 					{/* eslint-disable-next-line jsx-a11y/alt-text */}
 					<Image src="/images/way-logo.png" style={styles.logo} />
 					<View>
-						<Text style={styles.title}>Relatório de Solicitações - way262</Text>
+						<Text style={styles.title}>Relatório de Solicitações</Text>
 						<Text style={styles.subtitle}>Data de exportação: {nowStr}</Text>
 						<Text style={styles.subtitle}>Total de registros: {data.length}</Text>
 					</View>
@@ -88,7 +88,7 @@ function SolicitacoesPdfDoc({ data, getStatusText }: { data: SolicitacaoResponse
 
 				{/* Footer with page numbers */}
 				<View style={styles.footer} fixed>
-					<Text>way262</Text>
+					<Text>Way262</Text>
 					<Text render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}` } />
 				</View>
 			</Page>
@@ -113,7 +113,7 @@ export default function ExportSolicitacoesPdf({ filterParams, getStatusText, onD
 				? (response as unknown as PagedResponse<SolicitacaoResponse>).content ?? []
 				: (response as SolicitacaoResponse[]) ?? [];
 			setData(lista);
-			setFileName(`solicitacoes_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.pdf`);
+			setFileName(`solicitacoes_export_${formatDateTimeBrCompactExport()}.pdf`);
 		} catch {
 			toast.error('Erro ao preparar PDF');
 			onDone?.();
