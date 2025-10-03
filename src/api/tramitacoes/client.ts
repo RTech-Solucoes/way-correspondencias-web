@@ -1,6 +1,6 @@
 import { ArquivoDTO } from "../anexos/type";
 import ApiClient from "../client";
-import { HistoricoRespostaItemDTO } from "../solicitacoes";
+import { HistoricoRespostaItemResponse } from "../solicitacoes";
 import { TramitacaoResponse, TramitacaoRequest, ProximoStatusRequest } from './types';
 
 class TramitacoesClient {
@@ -62,8 +62,8 @@ async uploadAnexos(id: number, files: ArquivoDTO[]): Promise<TramitacaoResponse>
     });
   }
 
-  async listarHistoricoRespostas(idSolicitacao: number): Promise<HistoricoRespostaItemDTO[]> {
-    return this.client.request<HistoricoRespostaItemDTO[]>(`/${idSolicitacao}/historico-respostas`, {
+  async listarHistoricoRespostas(idSolicitacao: number): Promise<HistoricoRespostaItemResponse[]> {
+    return this.client.request<HistoricoRespostaItemResponse[]>(`/${idSolicitacao}/historico-respostas`, {
       method: 'GET',
     });
   }
