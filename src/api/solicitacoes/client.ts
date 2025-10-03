@@ -28,6 +28,7 @@ class SolicitacoesClient {
       'filtro',
       'page',
       'size',
+      'idSolicitacao',
       'idStatusSolicitacao',
       'idArea',
       'cdIdentificacao',

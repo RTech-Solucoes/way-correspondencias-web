@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
   StickyTable,
   StickyTableBody,
@@ -56,9 +56,11 @@ import {usePermissoes} from "@/context/permissoes/PermissoesContext";
 import LoadingRows from "@/components/solicitacoes/LoadingRows";
 import { statusList } from '@/api/status-solicitacao/types';
 import { formatDateBr } from '@/utils/utils';
+import { useSearchParams } from 'next/navigation';
 import TimeProgress from '@/components/ui/time-progress';
 
 export default function SolicitacoesPage() {
+  const searchParams = useSearchParams();
   const {
     solicitacoes,
     setSolicitacoes,
@@ -150,6 +152,13 @@ export default function SolicitacoesPage() {
     setTramitacaoSolicitacaoId(null);
   };
 
+  const prefilledFilters = useMemo(() => {
+    const idSolicitacaoParam = searchParams.get('idSolicitacao');
+    return {
+      idSolicitacao: idSolicitacaoParam ? Number(idSolicitacaoParam) : undefined,
+    };
+  }, [searchParams]);
+
   const loadSolicitacoes = useCallback(async () => {
     try {
       setLoading(true);
@@ -180,7 +189,8 @@ export default function SolicitacoesPage() {
         idTema,
         nomeResponsavel,
         dtCriacaoInicio,
-        dtCriacaoFim
+        dtCriacaoFim,
+        idSolicitacao: prefilledFilters.idSolicitacao,
       });
 
       if (response && typeof response === 'object' && 'content' in response) {
@@ -202,6 +212,7 @@ export default function SolicitacoesPage() {
     currentPage,
     activeFilters,
     debouncedSearchQuery,
+    prefilledFilters,
     setSolicitacoes,
     setTotalPages,
     setTotalElements,

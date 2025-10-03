@@ -17,3 +17,12 @@ export enum AnaliseGerenteDiretor {
   A = 'A', // Ambos
   N = 'N'  // Não Necessita
 }
+
+export interface SolicitacaoResumoResponse {
+  idSolicitacao: number;
+  cdIdentificacao: string;
+  nmTema: string;
+  nmAreas: string;
+  nmStatus: string;
+  dsAssunto: string;
+}

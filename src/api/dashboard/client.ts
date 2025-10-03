@@ -1,3 +1,4 @@
+import { SolicitacaoResumoResponse } from "@/types/solicitacoes/types";
 import ApiClient from "../client";
 import { SolicitacaoResponse } from "../solicitacoes/types";
 import { DashboardListSummary, DashboardOverview, ICalendar, IRecentActivity, PaginatedResponse, SolicitacaoPrazo } from "./type";
@@ -51,8 +52,8 @@ class DashboardClient {
         });
     }
 
-    async getSolicitacoesPendentes(): Promise<SolicitacaoResponse[]> {
-        return this.client.request<SolicitacaoResponse[]>(`/solicitacoes-pendentes`, {
+    async getSolicitacoesPendentes(): Promise<SolicitacaoResumoResponse[]> {
+        return this.client.request<SolicitacaoResumoResponse[]>(`/solicitacoes-pendentes`, {
             method: "GET",
         });
     }

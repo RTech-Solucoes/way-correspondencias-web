@@ -5,7 +5,7 @@ import { Document, Page, StyleSheet, Text, View, pdf, Image } from '@react-pdf/r
 import { toast } from 'sonner';
 import { solicitacoesClient } from '@/api/solicitacoes/client';
 import { PagedResponse, SolicitacaoFilterParams, SolicitacaoResponse } from '@/api/solicitacoes/types';
-import { formatDateBr } from '@/utils/utils';
+import { formatDateTimeBr } from '@/utils/utils';
 
 type ExportSolicitacoesPdfProps = {
 	filterParams: Omit<SolicitacaoFilterParams, 'page' | 'size' | 'sort'>;
@@ -77,10 +77,10 @@ function SolicitacoesPdfDoc({ data, getStatusText }: { data: SolicitacaoResponse
 								<Text style={[styles.cell, styles.c3]}>{areasNomes}</Text>
 								<Text style={[styles.cell, styles.c4]}>{tema}</Text>
 								<Text style={[styles.cell, styles.c5]}>{status}</Text>
-								<Text style={[styles.cell, styles.c6]}>{formatDateBr(s.dtCriacao)}</Text>
-								<Text style={[styles.cell, styles.c7]}>{formatDateBr(s.dtPrimeiraTramitacao)}</Text>
-								<Text style={[styles.cell, styles.c8]}>{formatDateBr(s.dtPrazoLimite)}</Text>
-								<Text style={[styles.cell, styles.c9]}>{formatDateBr(s.dtConclusaoTramitacao)}</Text>
+								<Text style={[styles.cell, styles.c6]}>{formatDateTimeBr(s.dtCriacao)}</Text>
+								<Text style={[styles.cell, styles.c7]}>{formatDateTimeBr(s.dtPrimeiraTramitacao)}</Text>
+								<Text style={[styles.cell, styles.c8]}>{formatDateTimeBr(s.dtPrazoLimite)}</Text>
+								<Text style={[styles.cell, styles.c9]}>{formatDateTimeBr(s.dtConclusaoTramitacao)}</Text>
 							</View>
 						);
 					})}

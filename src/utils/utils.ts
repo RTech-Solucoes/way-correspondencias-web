@@ -320,6 +320,15 @@ export const hoursToDaysAndHours = (hours: number): string => {
   return resultString
 };
 
+export function formatDateTimeBr(dateIso?: string | null) {
+	if (!dateIso) return '';
+	try {
+		return new Date(dateIso).toLocaleString('pt-BR');
+	} catch {
+		return '';
+	}
+}
+
 export function formatMinutesEmHorasEMinutos(totalMinutes?: number | null): string {
   if (totalMinutes == null) return '';
   const minutes = Math.max(0, Math.floor(totalMinutes));
