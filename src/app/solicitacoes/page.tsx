@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, {Suspense, useCallback, useEffect, useMemo, useState} from 'react';
 import {
   StickyTable,
   StickyTableBody,
@@ -60,6 +60,14 @@ import { useSearchParams } from 'next/navigation';
 import TimeProgress from '@/components/ui/time-progress';
 
 export default function SolicitacoesPage() {
+  return (
+    <Suspense fallback={<div />}> 
+      <SolicitacoesPageContent />
+    </Suspense>
+  );
+}
+
+function SolicitacoesPageContent() {
   const searchParams = useSearchParams();
   const {
     solicitacoes,
