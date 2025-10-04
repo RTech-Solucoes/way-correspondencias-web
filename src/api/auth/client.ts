@@ -1,5 +1,6 @@
 import ApiClient from "../client";
 import {LoginRequest, LoginResponse} from "./types";
+import { jwtDecode } from "jwt-decode";
 
 class AuthClient {
   private client: ApiClient;
@@ -42,6 +43,24 @@ class AuthClient {
 
   getUserName(): string | null {
     return localStorage.getItem('userName');
+  }
+
+  getUserIdResponsavelFromToken(): number | null {
+    try {
+      const token = this.getToken();
+      if (!token) return null;
+      const payload = jwtDecode<Record<string, unknown>>(token);
+
+      const raw = (payload['idResponsavel'] ?? payload['userId'] ?? payload['sub']) as unknown;
+      if (typeof raw === 'number') return raw;
+      if (typeof raw === 'string') {
+        const n = parseInt(raw, 10);
+        return isNaN(n) ? null : n;
+      }
+      return null;
+    } catch {
+      return null;
+    }
   }
 }
 

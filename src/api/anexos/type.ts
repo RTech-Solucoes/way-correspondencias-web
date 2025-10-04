@@ -28,5 +28,6 @@ export enum TipoResponsavelAnexo {
 export enum TipoObjetoAnexo {
   E = "E",
   T = "T",
-  S = "S"
+  S = "S",
+  R = "R"
 }

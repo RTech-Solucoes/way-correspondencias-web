@@ -1,6 +1,6 @@
 'use client';
 
-import {ChangeEvent, useCallback, useEffect, useState} from 'react';
+import {ChangeEvent, useCallback, useEffect, useRef, useState} from 'react';
 import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog';
 import {Button} from '@/components/ui/button';
 import {TextField} from '@/components/ui/text-field';
@@ -14,6 +14,9 @@ import {perfisClient} from '@/api/perfis/client';
 import {toast} from 'sonner';
 import {formValidator, mask} from "@/utils/utils";
 import {z} from 'zod';
+import { responsavelAnexosClient } from '@/api/responsaveis/anexos-client';
+import { ArquivoDTO, TipoObjetoAnexo } from '@/api/anexos/type';
+import anexosClient from '@/api/anexos/client';
 
 interface ResponsavelModalProps {
   responsavel: ResponsavelResponse | null;
@@ -38,6 +41,12 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
   const [perfis, setPerfis] = useState<PerfilResponse[]>([]);
   const [loadingPerfis, setLoadingPerfis] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [existingPhotoPreview, setExistingPhotoPreview] = useState<string | null>(null);
+  const [existingPhoto, setExistingPhoto] = useState<{ idAnexo: number; nmArquivo: string } | null>(null);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const buscarPerfis = useCallback(async () => {
     try {
@@ -77,6 +86,52 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
     }
   }, [responsavel]);
 
+  const loadExistingPhoto = useCallback(async () => {
+    if (!responsavel) return;
+    try {
+      setPhotoBusy(true);
+      const anexos = await anexosClient.buscarPorIdObjetoETipoObjeto(responsavel.idResponsavel, TipoObjetoAnexo.R);
+      console.log(anexos);
+      const byExt = anexos.find(a => /\.(jpg|jpeg|png)$/i.test(a.nmArquivo));
+      const chosen = byExt || anexos[0];
+      if (chosen) {
+        setExistingPhoto({ idAnexo: chosen.idAnexo, nmArquivo: chosen.nmArquivo });
+        const arquivos = await anexosClient.download(responsavel.idResponsavel, TipoObjetoAnexo.R, chosen.nmArquivo);
+        console.log(arquivos);
+        const first = arquivos?.find(a => (a.tipoConteudo?.startsWith('image/') ?? /\.(jpg|jpeg|png)$/i.test(a.nomeArquivo || '')));
+        if (first?.conteudoArquivo) {
+          const extMime = (chosen.nmArquivo || '').toLowerCase().endsWith('.png') ? 'image/png' : (/(\.jpe?g)$/i.test(chosen.nmArquivo || '') ? 'image/jpeg' : undefined);
+          const mime = first.tipoConteudo || extMime || 'image/*';
+          const dataUrl = `data:${mime};base64,${first.conteudoArquivo}`;
+          setPhotoPreview(dataUrl);
+          setExistingPhotoPreview(dataUrl);
+        } else {
+          setPhotoPreview(null);
+          setExistingPhotoPreview(null);
+        }
+        return;
+      }
+
+      const arquivos = await anexosClient.download(responsavel.idResponsavel, TipoObjetoAnexo.R);
+      const firstImage = arquivos?.find(a => (a.tipoConteudo?.startsWith('image/') ?? /\.(jpg|jpeg|png)$/i.test(a.nomeArquivo || '')));
+      if (firstImage?.conteudoArquivo) {
+        const mime = firstImage.tipoConteudo || 'image/*';
+        const dataUrl = `data:${mime};base64,${firstImage.conteudoArquivo}`;
+        setPhotoPreview(dataUrl);
+        setExistingPhotoPreview(dataUrl);
+      } else {
+        setPhotoPreview(null);
+        setExistingPhotoPreview(null);
+      }
+    } catch {
+      setExistingPhoto(null);
+      setPhotoPreview(null);
+      setExistingPhotoPreview(null);
+    } finally {
+      setPhotoBusy(false);
+    }
+  }, [responsavel]);
+
   useEffect(() => {
     if (open) {
       buscarPerfis();
@@ -88,6 +143,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
     if (open && perfis.length > 0) {
       if (responsavel) {
         carregarDadosResponsavel();
+        loadExistingPhoto();
       } else {
         setFormData({
           idPerfil: 0,
@@ -100,9 +156,19 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
           idsAreas: []
         });
         setSelectedAreaIds([]);
+        setSelectedPhotoFile(null);
+        setPhotoPreview(null);
+        setExistingPhotoPreview(null);
+        setExistingPhoto(null);
       }
     }
-  }, [open, responsavel, perfis.length, carregarDadosResponsavel]);
+  }, [open, responsavel, perfis.length, carregarDadosResponsavel, loadExistingPhoto]);
+
+  useEffect(() => {
+    if (open && responsavel) {
+      loadExistingPhoto();
+    }
+  }, [open, responsavel, loadExistingPhoto]);
 
   const validateField = (name: string, value: string) => {
     const newErrors = { ...errors };
@@ -213,10 +279,24 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
       };
 
       if (responsavel) {
-        await responsaveisClient.atualizar(responsavel.idResponsavel, responsavelRequest);
+        const updated = await responsaveisClient.atualizar(responsavel.idResponsavel, responsavelRequest);
+        if (selectedPhotoFile) {
+          // Replace existing photo if any, then upload new
+          try {
+            if (existingPhoto) {
+              await responsavelAnexosClient.deletar(responsavel.idResponsavel, existingPhoto.idAnexo);
+            }
+          } catch { /* ignore delete failure */ }
+          const dto = await fileToArquivoDTO(selectedPhotoFile);
+          await responsavelAnexosClient.upload(responsavel.idResponsavel, [dto]);
+        }
         toast.success("Responsável atualizado com sucesso");
       } else {
-        await responsaveisClient.criar(responsavelRequest);
+        const created = await responsaveisClient.criar(responsavelRequest);
+        if (selectedPhotoFile && created?.idResponsavel) {
+          const dto = await fileToArquivoDTO(selectedPhotoFile);
+          await responsavelAnexosClient.upload(created.idResponsavel, [dto]);
+        }
         toast.success("Responsável criado com sucesso");
       }
 
@@ -336,6 +416,76 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
             </Select>
           </div>
 
+          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+            <div className="flex items-center gap-4">
+              <div className="flex flex-col items-center gap-1">
+                <div className="w-20 h-20 rounded-full bg-white border border-gray-200 overflow-hidden flex items-center justify-center shadow-sm">
+                  {photoPreview ? (
+                    <img src={photoPreview} alt="Foto do responsável" className="w-full h-full object-cover" />
+                  ) : (
+                    <img src='/images/avatar.svg' alt="Foto do responsável" className="w-full h-full object-cover" />
+                  )}
+                </div>
+                {(selectedPhotoFile?.name || existingPhoto?.nmArquivo) && (
+                  <span className="text-xs text-gray-600 max-w-[12rem] truncate" title={selectedPhotoFile?.name || existingPhoto?.nmArquivo || ''}>
+                    {selectedPhotoFile?.name || existingPhoto?.nmArquivo}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0] || null;
+                    if (!file) return;
+                    const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+                    if (!validTypes.includes(file.type)) {
+                      toast.error('Formato inválido. Use JPG, JPEG ou PNG.');
+                      e.currentTarget.value = '';
+                      return;
+                    }
+                    setSelectedPhotoFile(file);
+                    const reader = new FileReader();
+                    reader.onload = () => setPhotoPreview(reader.result as string);
+                    reader.readAsDataURL(file);
+                  }}
+                />
+                <Button type="button" variant="secondary" onClick={() => fileInputRef.current?.click()} disabled={loading}>
+                  {photoPreview ? 'Trocar foto' : 'Adicionar foto'}
+                </Button>
+                {selectedPhotoFile ? (
+                  <Button type="button" variant="outline" onClick={() => { setSelectedPhotoFile(null); setPhotoPreview(existingPhotoPreview); }} disabled={loading}>Limpar seleção</Button>
+                ) : existingPhoto ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={async () => {
+                      if (!responsavel || !existingPhoto) return;
+                      try {
+                        setPhotoBusy(true);
+                        await responsavelAnexosClient.deletar(responsavel.idResponsavel, existingPhoto.idAnexo);
+                        setExistingPhoto(null);
+                        setPhotoPreview(null);
+                        setExistingPhotoPreview(null);
+                        toast.success('Foto removida');
+                      } catch {
+                        toast.error('Falha ao remover foto');
+                      } finally {
+                        setPhotoBusy(false);
+                      }
+                    }}
+                    disabled={loading || photoBusy}
+                  >
+                    Remover foto
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          </div>
+
           <MultiSelectAreas
             selectedAreaIds={selectedAreaIds}
             onSelectionChange={handleAreasSelectionChange}
@@ -359,4 +509,22 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
       </DialogContent>
     </Dialog>
   );
+}
+
+async function fileToArquivoDTO(file: File): Promise<ArquivoDTO> {
+  const base64 = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      const commaIndex = result.indexOf(',');
+      resolve(commaIndex >= 0 ? result.substring(commaIndex + 1) : result);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+  return {
+    nomeArquivo: file.name,
+    tipoConteudo: file.type,
+    conteudoArquivo: base64,
+  };
 }

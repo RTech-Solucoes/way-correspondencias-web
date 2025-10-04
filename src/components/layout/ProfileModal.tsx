@@ -1,11 +1,9 @@
 'use client';
 
-import { ChangeEvent, useCallback, useEffect, useState } from 'react';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { TextField } from '@/components/ui/text-field';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MultiSelectAreas } from '@/components/ui/multi-select-areas';
 import { ResponsavelRequest, ResponsavelResponse } from '@/api/responsaveis/types';
 import { responsaveisClient } from '@/api/responsaveis/client';
@@ -15,6 +13,10 @@ import { User } from '@/types/auth/types';
 import { toast } from 'sonner';
 import { formValidator, mask } from "@/utils/utils";
 import { z } from 'zod';
+import authClient from '@/api/auth/client';
+import anexosClient from '@/api/anexos/client';
+import { TipoObjetoAnexo, ArquivoDTO } from '@/api/anexos/type';
+import { responsavelAnexosClient } from '@/api/responsaveis/anexos-client';
 
 interface ProfileModalProps {
   user: User | null;
@@ -41,6 +43,12 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
   const [perfis, setPerfis] = useState<PerfilResponse[]>([]);
   const [loadingPerfis, setLoadingPerfis] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [existingPhotoPreview, setExistingPhotoPreview] = useState<string | null>(null);
+  const [existingPhoto, setExistingPhoto] = useState<{ idAnexo: number; nmArquivo: string } | null>(null);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const getPerfil = (): string => {
     return perfis?.filter(perfil => perfil.idPerfil === formData.idPerfil)?.[0]?.nmPerfil ||
@@ -63,11 +71,13 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
   }, []);
 
   const buscarDadosResponsavel = useCallback(async () => {
-    if (!user?.username) return;
+    const idFromToken = authClient.getUserIdResponsavelFromToken();
+    const idResponsavel = user?.idResponsavel ?? idFromToken;
+    if (!idResponsavel) return;
 
     try {
       setLoadingData(true);
-      const responsavelData = await responsaveisClient.buscarPorNmUsuarioLogin(user.username);
+      const responsavelData = await responsaveisClient.buscarPorId(idResponsavel);
       setResponsavel(responsavelData);
 
       const formDataResponsavel = {
@@ -94,15 +104,63 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
     } finally {
       setLoadingData(false);
     }
-  }, [user?.username]);
+  }, [user?.idResponsavel]);
+
+  const loadExistingPhoto = useCallback(async () => {
+    const idFromToken = authClient.getUserIdResponsavelFromToken();
+    const idResponsavel = user?.idResponsavel ?? idFromToken;
+    if (!idResponsavel) return;
+    try {
+      setPhotoBusy(true);
+      const anexos = await anexosClient.buscarPorIdObjetoETipoObjeto(idResponsavel, TipoObjetoAnexo.R);
+      const byExt = anexos.find(a => /(\.jpg|jpeg|png)$/i.test(a.nmArquivo));
+      const chosen = byExt || anexos[0];
+      if (chosen) {
+        setExistingPhoto({ idAnexo: chosen.idAnexo, nmArquivo: chosen.nmArquivo });
+        const arquivos = await anexosClient.download(idResponsavel, TipoObjetoAnexo.R, chosen.nmArquivo);
+        const first = arquivos?.find(a => (a.tipoConteudo?.startsWith('image/') ?? /(\.jpg|jpeg|png)$/i.test(a.nomeArquivo || '')));
+        if (first?.conteudoArquivo) {
+          const lower = (chosen.nmArquivo || '').toLowerCase();
+          const extMime = lower.endsWith('.png') ? 'image/png' : (/\.jpe?g$/.test(lower) ? 'image/jpeg' : undefined);
+          const mime = first.tipoConteudo || extMime || 'image/*';
+          const dataUrl = `data:${mime};base64,${first.conteudoArquivo}`;
+          setPhotoPreview(dataUrl);
+          setExistingPhotoPreview(dataUrl);
+        } else {
+          setPhotoPreview(null);
+          setExistingPhotoPreview(null);
+        }
+        return;
+      }
+      // Fallback: tentar download sem nome
+      const arquivos = await anexosClient.download(idResponsavel, TipoObjetoAnexo.R);
+      const firstImage = arquivos?.find(a => (a.tipoConteudo?.startsWith('image/') ?? /(\.jpg|jpeg|png)$/i.test(a.nomeArquivo || '')));
+      if (firstImage?.conteudoArquivo) {
+        const mime = firstImage.tipoConteudo || 'image/*';
+        const dataUrl = `data:${mime};base64,${firstImage.conteudoArquivo}`;
+        setPhotoPreview(dataUrl);
+        setExistingPhotoPreview(dataUrl);
+      } else {
+        setPhotoPreview(null);
+        setExistingPhotoPreview(null);
+      }
+    } catch {
+      setExistingPhoto(null);
+      setPhotoPreview(null);
+      setExistingPhotoPreview(null);
+    } finally {
+      setPhotoBusy(false);
+    }
+  }, [user?.idResponsavel]);
 
   useEffect(() => {
     if (open) {
       buscarPerfis();
       buscarDadosResponsavel();
+      loadExistingPhoto();
       setErrors({});
     }
-  }, [open, buscarPerfis, buscarDadosResponsavel]);
+  }, [open, buscarPerfis, buscarDadosResponsavel, loadExistingPhoto]);
 
   const validateField = (name: string, value: string) => {
     const newErrors = { ...errors };
@@ -142,52 +200,6 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
         setErrors(newErrors);
       }
     }
-  };
-
-
-  const handleSubmit = async () => {
-    if (!formData.nmResponsavel.trim()) {
-      setErrors({ nmResponsavel: 'Nome é obrigatório' });
-      toast.error('Nome é obrigatório');
-      return;
-    }
-
-    if (!responsavel) {
-      toast.error('Dados do usuário não carregados');
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const responsavelRequest: ResponsavelRequest = {
-        idPerfil: formData.idPerfil,
-        nmUsuarioLogin: formData.nmUsuarioLogin.trim(),
-        nmResponsavel: formData.nmResponsavel.trim(),
-        dsEmail: formData.dsEmail.trim(),
-        nrCpf: formData.nrCpf.trim(),
-        dtNascimento: formData.dtNascimento,
-        nmCargo: formData.nmCargo.trim(),
-        idsAreas: selectedAreaIds.length > 0 ? selectedAreaIds : []
-      };
-
-      await responsaveisClient.atualizar(responsavel.idResponsavel, responsavelRequest);
-      toast.success("Nome atualizado com sucesso");
-
-      if (onSave) {
-        onSave();
-      }
-
-      onClose();
-    } catch {
-      toast.error("Erro ao atualizar nome");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleClose = () => {
-    onClose();
   };
 
   if (loadingData) {
@@ -270,6 +282,122 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
             disabled
           />
 
+<div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+            <div className="flex items-center gap-4">
+              <div className="flex flex-col items-center gap-1">
+                <div className="w-20 h-20 rounded-full bg-white border border-gray-200 overflow-hidden flex items-center justify-center shadow-sm">
+                  {photoPreview ? (
+                    <img src={photoPreview} alt="Foto do responsável" className="w-full h-full object-cover" />
+                  ) : (
+                    <img src='/images/avatar.svg' alt="Foto do responsável" className="w-full h-full object-cover" />
+                  )}
+                </div>
+                {(selectedPhotoFile?.name || existingPhoto?.nmArquivo) && (
+                  <span className="text-xs text-gray-600 max-w-[12rem] truncate" title={selectedPhotoFile?.name || existingPhoto?.nmArquivo || ''}>
+                    {selectedPhotoFile?.name || existingPhoto?.nmArquivo}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0] || null;
+                    if (!file) return;
+                    const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+                    if (!validTypes.includes(file.type)) {
+                      toast.error('Formato inválido. Use JPG, JPEG ou PNG.');
+                      e.currentTarget.value = '';
+                      return;
+                    }
+                    setSelectedPhotoFile(file);
+                    const reader = new FileReader();
+                    reader.onload = () => setPhotoPreview(reader.result as string);
+                    reader.readAsDataURL(file);
+                  }}
+                />
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-gray-900 text-white hover:bg-gray-800 h-10 px-4"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={photoBusy}
+                >
+                  {photoPreview ? 'Trocar foto' : 'Adicionar foto'}
+                </button>
+                {selectedPhotoFile && (
+                  <button
+                    type="button"
+                    className="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-input bg-background h-10 px-4 text-sm"
+                    onClick={() => { setSelectedPhotoFile(null); setPhotoPreview(existingPhotoPreview); }}
+                    disabled={photoBusy}
+                  >
+                    Limpar seleção
+                  </button>
+                )}
+                {existingPhoto && (
+                  <button
+                    type="button"
+                    className="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-input bg-background h-10 px-4 text-sm"
+                    onClick={async () => {
+                      const idFromToken = authClient.getUserIdResponsavelFromToken();
+                      const idResponsavel = user?.idResponsavel ?? idFromToken;
+                      if (!idResponsavel || !existingPhoto) return;
+                      try {
+                        setPhotoBusy(true);
+                        await responsavelAnexosClient.deletar(idResponsavel, existingPhoto.idAnexo);
+                        setExistingPhoto(null);
+                        setPhotoPreview(null);
+                        setExistingPhotoPreview(null);
+                        toast.success('Foto removida');
+                      } catch {
+                        toast.error('Falha ao remover foto');
+                      } finally {
+                        setPhotoBusy(false);
+                      }
+                    }}
+                    disabled={photoBusy}
+                  >
+                    Remover foto
+                  </button>
+                )}
+                {selectedPhotoFile && (
+                  <button
+                    type="button"
+                    className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-green-600 text-white hover:bg-green-700 h-10 px-4"
+                    onClick={async () => {
+                      const idFromToken = authClient.getUserIdResponsavelFromToken();
+                      const idResponsavel = user?.idResponsavel ?? idFromToken;
+                      if (!idResponsavel || !selectedPhotoFile) return;
+                      try {
+                        setPhotoBusy(true);
+                        try {
+                          if (existingPhoto) {
+                            await responsavelAnexosClient.deletar(idResponsavel, existingPhoto.idAnexo);
+                          }
+                        } catch { /* ignore */ }
+                        const dto = await fileToArquivoDTO(selectedPhotoFile);
+                        await responsavelAnexosClient.upload(idResponsavel, [dto]);
+                        toast.success('Foto atualizada');
+                        setSelectedPhotoFile(null);
+                        await loadExistingPhoto();
+                      } catch {
+                        toast.error('Falha ao salvar foto');
+                      } finally {
+                        setPhotoBusy(false);
+                      }
+                    }}
+                    disabled={photoBusy}
+                  >
+                    Salvar foto
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
           <MultiSelectAreas
             selectedAreaIds={selectedAreaIds}
             onSelectionChange={() => {}}
@@ -281,4 +409,22 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
       </DialogContent>
     </Dialog>
   );
+}
+
+async function fileToArquivoDTO(file: File): Promise<ArquivoDTO> {
+  const base64 = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      const commaIndex = result.indexOf(',');
+      resolve(commaIndex >= 0 ? result.substring(commaIndex + 1) : result);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+  return {
+    nomeArquivo: file.name,
+    tipoConteudo: file.type,
+    conteudoArquivo: base64,
+  };
 }

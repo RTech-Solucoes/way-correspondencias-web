@@ -13,18 +13,21 @@ interface AppHeaderProps {
   userName?: string;
   userLogin?: string;
   userAvatar?: string;
+  perfil?: string;
 }
 
 export function AppHeader({ 
   userName = "Usuário", 
   userLogin = "user@email.com",
-  userAvatar 
+  userAvatar,
+  perfil
 }: AppHeaderProps) {
   const user: UserType = {
     name: userName,
     username: userLogin,
     email: userLogin,
-    avatar: userAvatar || '/images/avatar.svg'
+    avatar: userAvatar || '/images/avatar.svg',
+    perfil: perfil || ''
   };
 
   const handleLogout = () => {
