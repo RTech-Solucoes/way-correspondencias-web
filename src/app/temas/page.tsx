@@ -89,6 +89,7 @@ export default function TemasPage() {
         dsTema: activeFilters.descricao || undefined,
         page: currentPage,
         size: 10,
+        sort: sortField ? `${sortField},${sortDirection === 'desc' ? 'desc' : 'asc'}` : undefined,
       };
 
       const response = await temasClient.buscarPorFiltro(params);
@@ -100,7 +101,7 @@ export default function TemasPage() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, activeFilters, debouncedSearchQuery, setLoading, setTemas, setTotalPages, setTotalElements]);
+  }, [currentPage, activeFilters, debouncedSearchQuery, sortField, sortDirection, setLoading, setTemas, setTotalPages, setTotalElements]);
 
   useEffect(() => {
     loadTemas();

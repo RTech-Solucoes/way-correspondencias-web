@@ -91,6 +91,7 @@ export default function ResponsaveisPage() {
         dsEmail: activeFilters.email || undefined,
         page: currentPage,
         size: 10,
+        sort: sortField ? `${sortField},${sortDirection === 'desc' ? 'desc' : 'asc'}` : undefined,
       };
 
       const response = await responsaveisClient.buscarPorFiltro(params);
@@ -102,7 +103,7 @@ export default function ResponsaveisPage() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, activeFilters, debouncedSearchQuery, setLoading, setResponsaveis, setTotalPages, setTotalElements]);
+  }, [currentPage, activeFilters, debouncedSearchQuery, sortField, sortDirection, setLoading, setResponsaveis, setTotalPages, setTotalElements]);
 
   useEffect(() => {
     loadResponsaveis();

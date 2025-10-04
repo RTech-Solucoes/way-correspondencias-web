@@ -54,8 +54,8 @@ export interface SolicitacoesContextProps {
   setFilters: Dispatch<SetStateAction<FiltersState>>;
   activeFilters: FiltersState;
   setActiveFilters: Dispatch<SetStateAction<FiltersState>>;
-  sortField: keyof SolicitacaoResponse | null;
-  setSortField: Dispatch<SetStateAction<keyof SolicitacaoResponse | null>>;
+  sortField: string | null;
+  setSortField: Dispatch<SetStateAction<string | null>>;
   sortDirection: 'asc' | 'desc';
   setSortDirection: Dispatch<SetStateAction<'asc' | 'desc'>>;
   hasActiveFilters: boolean;
@@ -67,7 +67,7 @@ export interface SolicitacoesContextProps {
   getStatusBadgeVariant: (status: string) => "default" | "secondary" | "destructive" | "outline";
   getStatusBadgeBg: (status: string) => string;
   getStatusText: (status: string) => string;
-  handleSort: (field: keyof SolicitacaoResponse) => void;
+  handleSort: (field: string) => void;
 }
 
 const SolicitacoesContext = createContext<SolicitacoesContextProps>({} as SolicitacoesContextProps);
@@ -87,7 +87,7 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
-  const [sortField, setSortField] = useState<keyof SolicitacaoResponse | null>(null);
+  const [sortField, setSortField] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   const [filters, setFilters] = useState<FiltersState>({
@@ -218,7 +218,7 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const handleSort = (field: keyof SolicitacaoResponse) => {
+  const handleSort = (field: string) => {
     let newSortDirection: 'asc' | 'desc' = 'asc';
     if (sortField === field && sortDirection === 'asc') {
       newSortDirection = 'desc';

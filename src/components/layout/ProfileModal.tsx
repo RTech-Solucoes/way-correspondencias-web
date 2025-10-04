@@ -1,9 +1,8 @@
 'use client';
 
-import { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { TextField } from '@/components/ui/text-field';
-import { Label } from '@/components/ui/label';
 import { MultiSelectAreas } from '@/components/ui/multi-select-areas';
 import { ResponsavelRequest, ResponsavelResponse } from '@/api/responsaveis/types';
 import { responsaveisClient } from '@/api/responsaveis/client';
@@ -11,8 +10,7 @@ import { PerfilResponse } from '@/api/perfis/types';
 import { perfisClient } from '@/api/perfis/client';
 import { User } from '@/types/auth/types';
 import { toast } from 'sonner';
-import { formValidator, mask } from "@/utils/utils";
-import { z } from 'zod';
+import { mask } from "@/utils/utils";
 import authClient from '@/api/auth/client';
 import anexosClient from '@/api/anexos/client';
 import { TipoObjetoAnexo, ArquivoDTO } from '@/api/anexos/type';
@@ -131,15 +129,6 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
           setExistingPhotoPreview(null);
         }
         return;
-      }
-      // Fallback: tentar download sem nome
-      const arquivos = await anexosClient.download(idResponsavel, TipoObjetoAnexo.R);
-      const firstImage = arquivos?.find(a => (a.tipoConteudo?.startsWith('image/') ?? /(\.jpg|jpeg|png)$/i.test(a.nomeArquivo || '')));
-      if (firstImage?.conteudoArquivo) {
-        const mime = firstImage.tipoConteudo || 'image/*';
-        const dataUrl = `data:${mime};base64,${firstImage.conteudoArquivo}`;
-        setPhotoPreview(dataUrl);
-        setExistingPhotoPreview(dataUrl);
       } else {
         setPhotoPreview(null);
         setExistingPhotoPreview(null);
@@ -155,52 +144,16 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
 
   useEffect(() => {
     if (open) {
-      buscarPerfis();
-      buscarDadosResponsavel();
-      loadExistingPhoto();
       setErrors({});
+      (async () => {
+        await Promise.all([
+          buscarPerfis(),
+          buscarDadosResponsavel(),
+          loadExistingPhoto(),
+        ]);
+      })();
     }
   }, [open, buscarPerfis, buscarDadosResponsavel, loadExistingPhoto]);
-
-  const validateField = (name: string, value: string) => {
-    const newErrors = { ...errors };
-
-    try {
-      switch (name) {
-        case 'nmResponsavel':
-          formValidator.name.parse(value);
-          delete newErrors[name];
-          break;
-        default:
-          break;
-      }
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        newErrors[name] = error.issues[0]?.message || 'Campo inválido';
-      }
-    }
-
-    setErrors(newErrors);
-  };
-
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-
-    if (name === 'nmResponsavel') {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value,
-      }));
-
-      if (value) {
-        validateField(name, value);
-      } else {
-        const newErrors = { ...errors };
-        delete newErrors[name];
-        setErrors(newErrors);
-      }
-    }
-  };
 
   if (loadingData) {
     return (
@@ -282,7 +235,7 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
             disabled
           />
 
-<div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
             <div className="flex items-center gap-4">
               <div className="flex flex-col items-center gap-1">
                 <div className="w-20 h-20 rounded-full bg-white border border-gray-200 overflow-hidden flex items-center justify-center shadow-sm">
@@ -302,6 +255,7 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
                 <input
                   ref={fileInputRef}
                   type="file"
+                  disabled
                   accept="image/png,image/jpeg,image/jpg"
                   className="hidden"
                   onChange={async (e) => {
@@ -321,9 +275,10 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
                 />
                 <button
                   type="button"
+                  
                   className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-gray-900 text-white hover:bg-gray-800 h-10 px-4"
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={photoBusy}
+                  disabled
                 >
                   {photoPreview ? 'Trocar foto' : 'Adicionar foto'}
                 </button>
@@ -332,34 +287,17 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
                     type="button"
                     className="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-input bg-background h-10 px-4 text-sm"
                     onClick={() => { setSelectedPhotoFile(null); setPhotoPreview(existingPhotoPreview); }}
-                    disabled={photoBusy}
-                  >
+                    disabled
+                    >
                     Limpar seleção
                   </button>
                 )}
                 {existingPhoto && (
                   <button
                     type="button"
+                    disabled={true}
                     className="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-input bg-background h-10 px-4 text-sm"
-                    onClick={async () => {
-                      const idFromToken = authClient.getUserIdResponsavelFromToken();
-                      const idResponsavel = user?.idResponsavel ?? idFromToken;
-                      if (!idResponsavel || !existingPhoto) return;
-                      try {
-                        setPhotoBusy(true);
-                        await responsavelAnexosClient.deletar(idResponsavel, existingPhoto.idAnexo);
-                        setExistingPhoto(null);
-                        setPhotoPreview(null);
-                        setExistingPhotoPreview(null);
-                        toast.success('Foto removida');
-                      } catch {
-                        toast.error('Falha ao remover foto');
-                      } finally {
-                        setPhotoBusy(false);
-                      }
-                    }}
-                    disabled={photoBusy}
-                  >
+                    >
                     Remover foto
                   </button>
                 )}
@@ -389,8 +327,8 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
                         setPhotoBusy(false);
                       }
                     }}
-                    disabled={photoBusy}
-                  >
+                    disabled
+                    >
                     Salvar foto
                   </button>
                 )}

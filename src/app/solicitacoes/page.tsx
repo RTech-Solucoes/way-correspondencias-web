@@ -127,29 +127,7 @@ function SolicitacoesPageContent() {
   const [showTramitacaoModal, setShowTramitacaoModal] = useState(false);
   const [tramitacaoSolicitacaoId, setTramitacaoSolicitacaoId] = useState<number | null>(null);
   const [statuses, setStatuses] = useState<{ idStatusSolicitacao: number; nmStatus: string; flAtivo?: string }[]>([]);
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const userHasOpenedDetailsModal = useCallback((solicitacao: SolicitacaoResponse) => {
-    const payload = {
-      idSolicitacao: solicitacao.idSolicitacao,
-      idAreaOrigem: 0,
-      idAreaDestino: 0,
-      dsObservacao: '',
-      idResponsavel: 0,
-      flAcao: 'V',
-    };
-
-    tramitacoesMutation.mutate(payload, {
-      onSuccess: (data) => {
-        console.log('Tramitação criada com sucesso:', data);
-      },
-      onError: (error) => {
-        console.error('Erro ao criar tramitação:', error);
-        toast.error('Erro ao criar tramitação');
-      },
-    });
-  }, [tramitacoesMutation]);
-
+  
   const handleTramitacoes = (solicitacao: SolicitacaoResponse) => {
     setTramitacaoSolicitacaoId(solicitacao.idSolicitacao);
     setShowTramitacaoModal(true);
@@ -199,6 +177,7 @@ function SolicitacoesPageContent() {
         dtCriacaoInicio,
         dtCriacaoFim,
         idSolicitacao: prefilledFilters.idSolicitacao,
+        sort: sortField ? `${sortField},${sortDirection === 'desc' ? 'desc' : 'asc'}` : undefined,
       });
 
       if (response && typeof response === 'object' && 'content' in response) {
@@ -221,6 +200,8 @@ function SolicitacoesPageContent() {
     activeFilters,
     debouncedSearchQuery,
     prefilledFilters,
+    sortField,
+    sortDirection,
     setSolicitacoes,
     setTotalPages,
     setTotalElements,
@@ -370,6 +351,17 @@ function SolicitacoesPageContent() {
     loadSolicitacoes();
   };
 
+  const getByPath = (obj: unknown, path: string): unknown => {
+    return path
+      .split('.')
+      .reduce<unknown>((acc, key) => {
+        if (acc !== null && typeof acc === 'object' && acc !== undefined && key in (acc as Record<string, unknown>)) {
+          return (acc as Record<string, unknown>)[key];
+        }
+        return undefined;
+      }, obj) ?? null;
+  };
+
   const sortedSolicitacoes = () => {
     if (!solicitacoes || solicitacoes.length === 0) return [];
     const sorted = [...solicitacoes];
@@ -390,10 +382,10 @@ function SolicitacoesPageContent() {
             bValue = b.statusSolicitacao?.nmStatus || getStatusText(b.statusCodigo?.toString() || '') || '';
             break;
 
-          default:
-            aValue = a?.[sortField] as string | number | null;
-            bValue = b?.[sortField] as string | number | null;
-            break;
+        default:
+          aValue = getByPath(a, sortField) as string | number | null;
+          bValue = getByPath(b, sortField) as string | number | null;
+          break;
         }
 
         if (aValue === bValue) return 0;
@@ -526,6 +518,7 @@ function SolicitacoesPageContent() {
               nomeResponsavel: activeFilters.nomeResponsavel || undefined,
               dtCriacaoInicio: activeFilters.dtCriacaoInicio ? `${activeFilters.dtCriacaoInicio}T00:00:00` : undefined,
               dtCriacaoFim: activeFilters.dtCriacaoFim ? `${activeFilters.dtCriacaoFim}T23:59:59` : undefined,
+              sort: sortField ? `${sortField},${sortDirection === 'desc' ? 'desc' : 'asc'}` : undefined,
             }}
             getStatusText={getStatusText}
           />
@@ -583,7 +576,7 @@ function SolicitacoesPageContent() {
               <StickyTableHead>Áreas</StickyTableHead>
               <StickyTableHead
                 className="cursor-pointer"
-                onClick={() => handleSort('nmTema')}
+                onClick={() => handleSort('tema.nmTema')}
               >
                 <div className="flex items-center">
                   Tema
@@ -593,7 +586,7 @@ function SolicitacoesPageContent() {
               <StickyTableHead className="min-w-[220px]">Progresso</StickyTableHead>
               <StickyTableHead
                 className="cursor-pointer"
-                onClick={() => handleSort('flStatus')}
+                onClick={() => handleSort('statusSolicitacao.nmStatus')}
               >
                 <div className="flex items-center">
                   Status

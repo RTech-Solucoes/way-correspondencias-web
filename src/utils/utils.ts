@@ -365,7 +365,7 @@ export const formatDateBr = (dateString?: string): string => {
 
 
 export function buildQueryParams<
-  TParams extends Record<string, unknown>,
+  TParams extends object,
   TKeys extends readonly (keyof TParams & string)[]
 >(
   params: Partial<TParams>,

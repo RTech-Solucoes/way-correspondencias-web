@@ -91,13 +91,20 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
     try {
       setPhotoBusy(true);
       const anexos = await anexosClient.buscarPorIdObjetoETipoObjeto(responsavel.idResponsavel, TipoObjetoAnexo.R);
-      console.log(anexos);
       const byExt = anexos.find(a => /\.(jpg|jpeg|png)$/i.test(a.nmArquivo));
       const chosen = byExt || anexos[0];
       if (chosen) {
         setExistingPhoto({ idAnexo: chosen.idAnexo, nmArquivo: chosen.nmArquivo });
+
+        const cacheKey = `avatar:${responsavel.idResponsavel}:${chosen.nmArquivo}`;
+        const cached = typeof window !== 'undefined' ? sessionStorage.getItem(cacheKey) : null;
+        if (cached) {
+          setPhotoPreview(cached);
+          setExistingPhotoPreview(cached);
+          return;
+        }
+
         const arquivos = await anexosClient.download(responsavel.idResponsavel, TipoObjetoAnexo.R, chosen.nmArquivo);
-        console.log(arquivos);
         const first = arquivos?.find(a => (a.tipoConteudo?.startsWith('image/') ?? /\.(jpg|jpeg|png)$/i.test(a.nomeArquivo || '')));
         if (first?.conteudoArquivo) {
           const extMime = (chosen.nmArquivo || '').toLowerCase().endsWith('.png') ? 'image/png' : (/(\.jpe?g)$/i.test(chosen.nmArquivo || '') ? 'image/jpeg' : undefined);
@@ -105,6 +112,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
           const dataUrl = `data:${mime};base64,${first.conteudoArquivo}`;
           setPhotoPreview(dataUrl);
           setExistingPhotoPreview(dataUrl);
+          try { sessionStorage.setItem(cacheKey, dataUrl); } catch { }
         } else {
           setPhotoPreview(null);
           setExistingPhotoPreview(null);
@@ -112,17 +120,6 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
         return;
       }
 
-      const arquivos = await anexosClient.download(responsavel.idResponsavel, TipoObjetoAnexo.R);
-      const firstImage = arquivos?.find(a => (a.tipoConteudo?.startsWith('image/') ?? /\.(jpg|jpeg|png)$/i.test(a.nomeArquivo || '')));
-      if (firstImage?.conteudoArquivo) {
-        const mime = firstImage.tipoConteudo || 'image/*';
-        const dataUrl = `data:${mime};base64,${firstImage.conteudoArquivo}`;
-        setPhotoPreview(dataUrl);
-        setExistingPhotoPreview(dataUrl);
-      } else {
-        setPhotoPreview(null);
-        setExistingPhotoPreview(null);
-      }
     } catch {
       setExistingPhoto(null);
       setPhotoPreview(null);
@@ -133,42 +130,35 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
   }, [responsavel]);
 
   useEffect(() => {
-    if (open) {
-      buscarPerfis();
-      setErrors({});
+    if (!open) return;
+    setErrors({});
+    if (responsavel) {
+      carregarDadosResponsavel();
+    } else {
+      setFormData({
+        idPerfil: 0,
+        nmUsuarioLogin: '',
+        nmResponsavel: '',
+        dsEmail: '',
+        nrCpf: '',
+        dtNascimento: '',
+        nmCargo: '',
+        idsAreas: []
+      });
+      setSelectedAreaIds([]);
+      setSelectedPhotoFile(null);
+      setPhotoPreview(null);
+      setExistingPhotoPreview(null);
+      setExistingPhoto(null);
     }
-  }, [open, buscarPerfis]);
 
-  useEffect(() => {
-    if (open && perfis.length > 0) {
-      if (responsavel) {
-        carregarDadosResponsavel();
-        loadExistingPhoto();
-      } else {
-        setFormData({
-          idPerfil: 0,
-          nmUsuarioLogin: '',
-          nmResponsavel: '',
-          dsEmail: '',
-          nrCpf: '',
-          dtNascimento: '',
-          nmCargo: '',
-          idsAreas: []
-        });
-        setSelectedAreaIds([]);
-        setSelectedPhotoFile(null);
-        setPhotoPreview(null);
-        setExistingPhotoPreview(null);
-        setExistingPhoto(null);
-      }
-    }
-  }, [open, responsavel, perfis.length, carregarDadosResponsavel, loadExistingPhoto]);
-
-  useEffect(() => {
-    if (open && responsavel) {
-      loadExistingPhoto();
-    }
-  }, [open, responsavel, loadExistingPhoto]);
+    (async () => {
+      await Promise.all([
+        buscarPerfis(),
+        responsavel ? loadExistingPhoto() : Promise.resolve(),
+      ]);
+    })();
+  }, [open, responsavel, buscarPerfis, carregarDadosResponsavel, loadExistingPhoto]);
 
   const validateField = (name: string, value: string) => {
     const newErrors = { ...errors };
@@ -237,8 +227,6 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
       idsAreas: selectedIds
     }));
   }, []);
-
-
 
   const responsavelSchema = z.object({
     nmResponsavel: formValidator.name,

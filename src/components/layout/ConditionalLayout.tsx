@@ -26,23 +26,29 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
       const loadUserData = async () => {
         const idFromToken = authClient.getUserIdResponsavelFromToken();
         const userName = authClient.getUserName();
-        if (idFromToken || userName) {
-          try {
-            const responsavel = idFromToken
-              ? await responsaveisClient.buscarPorId(idFromToken)
-              : await responsaveisClient.buscarPorNmUsuarioLogin(userName!);
-            const avatar = await getResponsavelAvatar(responsavel.idResponsavel);
-            setUser({
-              idResponsavel: responsavel.idResponsavel,
-              name: responsavel.nmResponsavel,
-              username: responsavel.nmUsuarioLogin,
-              email: responsavel.dsEmail,
-              perfil: responsavel.nmPerfil,
-              avatar: avatar || "/images/avatar.svg"
-            });
-          } catch (error) {
-            console.error('Erro ao buscar dados do usuário:', error);
-          } 
+        if (!(idFromToken || userName)) return;
+        try {
+          const [responsavel, avatar] = await Promise.all([
+            idFromToken
+              ? responsaveisClient.buscarPorId(idFromToken)
+              : responsaveisClient.buscarPorNmUsuarioLogin(userName!),
+            (async () => {
+              const id = idFromToken
+                ? idFromToken
+                : (await responsaveisClient.buscarPorNmUsuarioLogin(userName!)).idResponsavel;
+              return await getResponsavelAvatar(id);
+            })()
+          ]);
+          setUser({
+            idResponsavel: responsavel.idResponsavel,
+            name: responsavel.nmResponsavel,
+            username: responsavel.nmUsuarioLogin,
+            email: responsavel.dsEmail,
+            perfil: responsavel.nmPerfil,
+            avatar: avatar || "/images/avatar.svg"
+          });
+        } catch (error) {
+          console.error('Erro ao buscar dados do usuário:', error);
         }
       };
 
