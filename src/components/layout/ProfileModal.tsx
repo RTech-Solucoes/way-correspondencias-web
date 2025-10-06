@@ -255,7 +255,6 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
                 <input
                   ref={fileInputRef}
                   type="file"
-                  disabled
                   accept="image/png,image/jpeg,image/jpg"
                   className="hidden"
                   onChange={async (e) => {
@@ -278,7 +277,6 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
                   
                   className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-gray-900 text-white hover:bg-gray-800 h-10 px-4"
                   onClick={() => fileInputRef.current?.click()}
-                  disabled
                 >
                   {photoPreview ? 'Trocar foto' : 'Adicionar foto'}
                 </button>
@@ -287,19 +285,32 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
                     type="button"
                     className="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-input bg-background h-10 px-4 text-sm"
                     onClick={() => { setSelectedPhotoFile(null); setPhotoPreview(existingPhotoPreview); }}
-                    disabled
                     >
                     Limpar seleção
                   </button>
                 )}
                 {existingPhoto && (
-                  <button
-                    type="button"
-                    disabled={true}
-                    className="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-input bg-background h-10 px-4 text-sm"
-                    >
-                    Remover foto
-                  </button>
+                    <button
+                      type="button"
+                      className="inline-flex items-center justify-center whitespace-nowrap rounded-md border border-input bg-background h-10 px-4 text-sm"
+                      onClick={async () => {
+                        if (!responsavel || !existingPhoto) return;
+                        try {
+                          setPhotoBusy(true);
+                          await responsavelAnexosClient.deletar(responsavel.idResponsavel, existingPhoto.idAnexo);
+                          setExistingPhoto(null);
+                          setPhotoPreview(null);
+                          setExistingPhotoPreview(null);
+                          toast.success('Foto removida');
+                        } catch {
+                          toast.error('Falha ao remover foto');
+                        } finally {
+                          setPhotoBusy(false);
+                        }
+                      }}
+                      >
+                      Remover foto
+                    </button>
                 )}
                 {selectedPhotoFile && (
                   <button
@@ -327,7 +338,6 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
                         setPhotoBusy(false);
                       }
                     }}
-                    disabled
                     >
                     Salvar foto
                   </button>
