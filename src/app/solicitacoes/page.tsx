@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {Suspense, useCallback, useEffect, useMemo, useState} from 'react';
 import {
   StickyTable,
   StickyTableBody,
@@ -56,9 +56,19 @@ import {usePermissoes} from "@/context/permissoes/PermissoesContext";
 import LoadingRows from "@/components/solicitacoes/LoadingRows";
 import { statusList } from '@/api/status-solicitacao/types';
 import { formatDateBr } from '@/utils/utils';
+import { useSearchParams } from 'next/navigation';
 import TimeProgress from '@/components/ui/time-progress';
 
 export default function SolicitacoesPage() {
+  return (
+    <Suspense fallback={<div />}> 
+      <SolicitacoesPageContent />
+    </Suspense>
+  );
+}
+
+function SolicitacoesPageContent() {
+  const searchParams = useSearchParams();
   const {
     solicitacoes,
     setSolicitacoes,
@@ -117,29 +127,7 @@ export default function SolicitacoesPage() {
   const [showTramitacaoModal, setShowTramitacaoModal] = useState(false);
   const [tramitacaoSolicitacaoId, setTramitacaoSolicitacaoId] = useState<number | null>(null);
   const [statuses, setStatuses] = useState<{ idStatusSolicitacao: number; nmStatus: string; flAtivo?: string }[]>([]);
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const userHasOpenedDetailsModal = useCallback((solicitacao: SolicitacaoResponse) => {
-    const payload = {
-      idSolicitacao: solicitacao.idSolicitacao,
-      idAreaOrigem: 0,
-      idAreaDestino: 0,
-      dsObservacao: '',
-      idResponsavel: 0,
-      flAcao: 'V',
-    };
-
-    tramitacoesMutation.mutate(payload, {
-      onSuccess: (data) => {
-        console.log('Tramitação criada com sucesso:', data);
-      },
-      onError: (error) => {
-        console.error('Erro ao criar tramitação:', error);
-        toast.error('Erro ao criar tramitação');
-      },
-    });
-  }, [tramitacoesMutation]);
-
+  
   const handleTramitacoes = (solicitacao: SolicitacaoResponse) => {
     setTramitacaoSolicitacaoId(solicitacao.idSolicitacao);
     setShowTramitacaoModal(true);
@@ -149,6 +137,13 @@ export default function SolicitacoesPage() {
     setShowTramitacaoModal(false);
     setTramitacaoSolicitacaoId(null);
   };
+
+  const prefilledFilters = useMemo(() => {
+    const idSolicitacaoParam = searchParams.get('idSolicitacao');
+    return {
+      idSolicitacao: idSolicitacaoParam ? Number(idSolicitacaoParam) : undefined,
+    };
+  }, [searchParams]);
 
   const loadSolicitacoes = useCallback(async () => {
     try {
@@ -180,7 +175,9 @@ export default function SolicitacoesPage() {
         idTema,
         nomeResponsavel,
         dtCriacaoInicio,
-        dtCriacaoFim
+        dtCriacaoFim,
+        idSolicitacao: prefilledFilters.idSolicitacao,
+        sort: sortField ? `${sortField},${sortDirection === 'desc' ? 'desc' : 'asc'}` : undefined,
       });
 
       if (response && typeof response === 'object' && 'content' in response) {
@@ -202,6 +199,9 @@ export default function SolicitacoesPage() {
     currentPage,
     activeFilters,
     debouncedSearchQuery,
+    prefilledFilters,
+    sortField,
+    sortDirection,
     setSolicitacoes,
     setTotalPages,
     setTotalElements,
@@ -351,6 +351,17 @@ export default function SolicitacoesPage() {
     loadSolicitacoes();
   };
 
+  const getByPath = (obj: unknown, path: string): unknown => {
+    return path
+      .split('.')
+      .reduce<unknown>((acc, key) => {
+        if (acc !== null && typeof acc === 'object' && acc !== undefined && key in (acc as Record<string, unknown>)) {
+          return (acc as Record<string, unknown>)[key];
+        }
+        return undefined;
+      }, obj) ?? null;
+  };
+
   const sortedSolicitacoes = () => {
     if (!solicitacoes || solicitacoes.length === 0) return [];
     const sorted = [...solicitacoes];
@@ -371,10 +382,10 @@ export default function SolicitacoesPage() {
             bValue = b.statusSolicitacao?.nmStatus || getStatusText(b.statusCodigo?.toString() || '') || '';
             break;
 
-          default:
-            aValue = a?.[sortField] as string | number | null;
-            bValue = b?.[sortField] as string | number | null;
-            break;
+        default:
+          aValue = getByPath(a, sortField) as string | number | null;
+          bValue = getByPath(b, sortField) as string | number | null;
+          break;
         }
 
         if (aValue === bValue) return 0;
@@ -507,6 +518,7 @@ export default function SolicitacoesPage() {
               nomeResponsavel: activeFilters.nomeResponsavel || undefined,
               dtCriacaoInicio: activeFilters.dtCriacaoInicio ? `${activeFilters.dtCriacaoInicio}T00:00:00` : undefined,
               dtCriacaoFim: activeFilters.dtCriacaoFim ? `${activeFilters.dtCriacaoFim}T23:59:59` : undefined,
+              sort: sortField ? `${sortField},${sortDirection === 'desc' ? 'desc' : 'asc'}` : undefined,
             }}
             getStatusText={getStatusText}
           />
@@ -564,7 +576,7 @@ export default function SolicitacoesPage() {
               <StickyTableHead>Áreas</StickyTableHead>
               <StickyTableHead
                 className="cursor-pointer"
-                onClick={() => handleSort('nmTema')}
+                onClick={() => handleSort('tema.nmTema')}
               >
                 <div className="flex items-center">
                   Tema
@@ -574,7 +586,7 @@ export default function SolicitacoesPage() {
               <StickyTableHead className="min-w-[220px]">Progresso</StickyTableHead>
               <StickyTableHead
                 className="cursor-pointer"
-                onClick={() => handleSort('flStatus')}
+                onClick={() => handleSort('statusSolicitacao.nmStatus')}
               >
                 <div className="flex items-center">
                   Status

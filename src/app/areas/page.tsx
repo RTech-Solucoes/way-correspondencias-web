@@ -46,6 +46,8 @@ export default function AreasPage() {
     areaToDelete,
     setAreaToDelete,
     hasActiveFilters,
+    sortField,
+    sortDirection,
     handleSort,
     handleEdit,
     handleDelete,
@@ -67,6 +69,7 @@ export default function AreasPage() {
         dsArea: activeFilters.descricao || undefined,
         page: currentPage,
         size: 10,
+        sort: sortField ? `${sortField},${sortDirection === 'desc' ? 'desc' : 'asc'}` : undefined,
       };
 
       const response = await areasClient.buscarPorFiltro(params);
@@ -78,7 +81,7 @@ export default function AreasPage() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, activeFilters, debouncedSearchQuery, setLoading, setAreas, setTotalPages, setTotalElements]);
+  }, [currentPage, activeFilters, debouncedSearchQuery, sortField, sortDirection, setLoading, setAreas, setTotalPages, setTotalElements]);
 
   useEffect(() => {
     loadAreas();

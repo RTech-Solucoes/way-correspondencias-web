@@ -1,9 +1,9 @@
 'use client';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ArrowRightIcon, SpinnerIcon } from '@phosphor-icons/react';
+import { ArrowRightIcon, SpinnerIcon, ClockIcon } from '@phosphor-icons/react';
 import { Badge } from '@/components/ui/badge';
-import { formatDateTime } from '@/utils/utils';
+import { formatDateTime, formatMinutosEmDiasHorasMinutos } from '@/utils/utils';
 import { TipoHistoricoResposta } from '@/api/solicitacoes';
 
 export type HistoricoBaseItem = {
@@ -22,6 +22,7 @@ interface HistoricoBaseModalProps {
   open: boolean;
   onClose: () => void;
   title: string;
+  headerActions?: React.ReactNode;
   loading: boolean;
   loadingText: string;
   emptyText: string;
@@ -32,6 +33,7 @@ export default function HistoricoTramitacaoBaseModal({
   open,
   onClose,
   title,
+  headerActions,
   loading,
   loadingText,
   emptyText,
@@ -41,7 +43,10 @@ export default function HistoricoTramitacaoBaseModal({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[80vh]">
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle>{title}</DialogTitle>
+            {headerActions}
+          </div>
         </DialogHeader>
 
         <div className="flex flex-col flex-1 overflow-y-auto">
@@ -107,6 +112,12 @@ export default function HistoricoTramitacaoBaseModal({
                       </div>
                       {item.nmStatus && (
                         <div className="text-xs text-gray-600">{`Status: ${item.nmStatus}`}</div>
+                      )}
+                      {item.nrTempoGasto && (
+                        <div className="text-xs text-gray-600 flex items-center">
+                          <ClockIcon className="h-3 w-3 text-blue-600 mr-1" />
+                          {`Tempo Gasto: ${formatMinutosEmDiasHorasMinutos(item.nrTempoGasto)}`}
+                        </div>
                       )}
                     </div>
                   </div>

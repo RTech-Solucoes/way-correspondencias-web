@@ -1,6 +1,5 @@
 import dashboardClient from "@/api/dashboard/client";
 import { DashboardListSummary, DashboardOverview } from "@/api/dashboard/type";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -8,6 +7,7 @@ import CardHeader from "../card-header";
 import { capitalizeWords, getStatusColorVision, renderIcon } from "../functions";
 import PaginationTasksStatus from "./PaginationTasksStatus";
 import { statusList } from "@/api/status-solicitacao/types";
+import SolicitacoesPendentes from "../SolicitacoesPendentes";
 
 interface TasksStatusBoardProps {
   refreshTrigger?: number;
@@ -62,7 +62,7 @@ export default function TasksStatusBoard({ refreshTrigger }: TasksStatusBoardPro
     const getRecentOverview = async () => {
       try {
         setLoading(true);
-        const response = await dashboardClient.getRecentOverview(currentPage, 5);
+        const response = await dashboardClient.getRecentOverview(currentPage, 4);
         setListSummary(response.content);
         setTotalPages(response.totalPages);
         setTotalElements(response.totalElements);
@@ -118,7 +118,15 @@ export default function TasksStatusBoard({ refreshTrigger }: TasksStatusBoardPro
         </div>
 
         <div className="mt-6">
-          <h4 className="text-sm font-medium mb-3">Solicitações Recentes</h4>
+          <SolicitacoesPendentes
+            refreshTrigger={refreshTrigger}
+          />
+        </div>
+        
+        <div className="mt-6">
+          <h4 className="text-2xl font-semibold leading-none tracking-tight mb-6">
+            Solicitações Recentes
+          </h4>
           <div className="space-y-3">
             {loading ? (
               <div className="flex items-center justify-center py-4">

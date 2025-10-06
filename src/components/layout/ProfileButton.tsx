@@ -34,10 +34,14 @@ export default function ProfileButton ({
             >
               <div className="text-right">
                 <div className="text-sm font-medium text-gray-900">{getFirstAndLastName(user?.name)}</div>
-                <div className="text-xs text-gray-500">{user?.username}</div>
+                <div className="text-xs text-gray-500">{user?.perfil}</div>
               </div>
               <Avatar className="h-8 w-8 flex-shrink-0">
-                <AvatarImage src={user?.avatar} />
+                <AvatarImage
+                  src={user?.avatar || '/images/avatar.svg'}
+                  alt="Avatar do usuário"
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).src = ''; }}
+                />
                 <AvatarFallback className="w-8 h-8">
                   {getInitials(user?.name)}
                 </AvatarFallback>
@@ -75,5 +79,4 @@ export default function ProfileButton ({
       </>
     )
   }
-
 }

@@ -14,7 +14,7 @@ import ExportSolicitacoesPdf from '@/components/solicitacoes/ExportSolicitacoesP
 import { SolicitacaoFilterParams } from '@/api/solicitacoes/types';
 
 type ExportSolicitacaoMenuProps = {
-  filterParams: Omit<SolicitacaoFilterParams, 'page' | 'size' | 'sort'>;
+  filterParams: Omit<SolicitacaoFilterParams, 'page' | 'size'>;
   getStatusText: (statusCode: string) => string | null;
   className?: string;
 };

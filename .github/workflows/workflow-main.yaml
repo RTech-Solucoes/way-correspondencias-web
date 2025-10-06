@@ -1,98 +1,99 @@
-name: Deploy for Way Web PRD
+name: Deploy Way Correspondencias Web for Production
 
 on:
   push:
-    branches: [ main, master ]
+    branches:
+      - main
+
+env:
+  IMAGE_NAME: way-correspondencias-web
+  CONTAINER_NAME: way-web
 
 jobs:
-  deploy:
+  build:
+    name: Build and Push Image
     runs-on: ubuntu-latest
-    env:
-      WEBHOOK_URL: "https://chat.googleapis.com/v1/spaces/AAQA5qsWFdQ/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=VyWYfeqljUfRTIYU-mvpjOntN4ykR2me8p6Cn_ROEPg"
-      GIT_BRANCH: "master"
 
     steps:
       - name: Checkout código
         uses: actions/checkout@v3
 
-      - name: Configurar Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Testar build da imagem Docker
-        id: docker-build
+      - name: Criar arquivo .env
         run: |
-          docker build --no-cache -t way-web .
+          echo "${{ secrets.ENV_FILE }}" > .env
 
-      - name: Instalar openfortivpn
+      - name: Configurar credenciais AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Login no Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build e Push da imagem
+        id: docker
         run: |
-          sudo apt-get update
-          sudo apt-get install -y openfortivpn
+          IMAGE_REPO=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-west-2.amazonaws.com/$IMAGE_NAME
+          BRANCH_NAME=$(echo "${GITHUB_REF#refs/heads/}" | tr '/' '-')
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          IMAGE_TAG="${BRANCH_NAME}_${SHORT_SHA}"
 
-      - name: Conectar VPN
-        env:
-          VPN_SERVER: vpn1.way262.com.br
-          VPN_USER: T_carlos.silva
-          VPN_PASS: Twaybrasil@262
-          VPN_CERT: cb80f98b2d89f9beb935c8c42b8854ab3b456050a82aaa2a7cafee156b133f7e
+          echo "IMAGE_REPO=$IMAGE_REPO"
+          echo "IMAGE_TAG=$IMAGE_TAG"
+
+          docker build -t $IMAGE_REPO:$IMAGE_TAG .
+          docker push $IMAGE_REPO:$IMAGE_TAG
+
+          echo "IMAGE_FULL=$IMAGE_REPO:$IMAGE_TAG" >> $GITHUB_ENV
+
+      - name: Chamar API de deploy
         run: |
-          sudo openfortivpn $VPN_SERVER \
-            --username="$VPN_USER" \
-            --password="$VPN_PASS" \
-            --trusted-cert="$VPN_CERT" > vpn.log 2>&1 &
-          sleep 30
+          IMAGE="${{ env.IMAGE_FULL }}"
+          CONTAINER="${{ env.CONTAINER_NAME }}"
+          BRANCH=$(echo "${GITHUB_REF#refs/heads/}" | tr '/' '-')
 
-      - name: Testar VPN
-        run: |
-          ping -c 3 10.132.4.129 || exit 1
+          echo "Chamando API de deploy para imagem: $IMAGE, container: $CONTAINER, branch: $BRANCH"
 
-      - name: Deploy aplicação
-        run: |
-          sshpass -p "Suporte@#0608" ssh -o StrictHostKeyChecking=no rtech@10.132.4.129 "cd /home/rtech/way-correspondencias-web && ./deploy.sh"
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST https://gateway.deploy.way.rtechsolution.com.br/deploy/web \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n --arg image "$IMAGE" --arg container "$CONTAINER" --arg branch "$BRANCH" '{image: $image, container: $container, branch: $branch}')")
 
-      - name: Send failure message to Google Chat
-        if: failure()
+          # separar corpo e status HTTP
+          HTTP_BODY=$(echo "$RESPONSE" | head -n1)
+          HTTP_STATUS=$(echo "$RESPONSE" | tail -n1)
+
+          echo "Status: $HTTP_STATUS"
+          echo "Body: $HTTP_BODY"
+
+          # falhar pipeline se não for 200 ou se success=false
+          if [ "$HTTP_STATUS" -ne 200 ] || [ "$(echo "$HTTP_BODY" | jq -r '.success')" != "true" ]; then
+            echo "Erro no deploy"
+            exit 1
+          fi
+
+      - name: Send success message to Google Chat
+        if: success()
         env:
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          GIT_BRANCH: ${{ github.ref_name }}
+          WEBHOOK_URL: https://chat.googleapis.com/v1/spaces/AAQA5qsWFdQ/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=VyWYfeqljUfRTIYU-mvpjOntN4ykR2me8p6Cn_ROEPg
         run: |
-          # Preparar payload no formato do webhook
           PAYLOAD=$(cat << EOF
           {
-            "text": "Deploy do projeto Way",
+            "text": "Deploy do projeto Way Correspondencias",
             "cards": [
               {
                 "sections": [
                   {
                     "widgets": [
-                      {
-                        "keyValue": {
-                          "topLabel": "Projeto",
-                          "content": "way-correspondencias-web"
-                        }
-                      },
-                      {
-                        "keyValue": {
-                          "topLabel": "Branch",
-                          "content": "$GIT_BRANCH"
-                        }
-                      },
-                      {
-                        "keyValue": {
-                          "topLabel": "Status",
-                          "content": "FAILED"
-                        }
-                      },
-                      {
-                        "keyValue": {
-                          "topLabel": "Mensagem",
-                          "content": "Deploy falhou na Pipeline CI/CD"
-                        }
-                      },
-                      {
-                        "keyValue": {
-                          "topLabel": "Commit",
-                          "content": "$COMMIT_MESSAGE"
-                        }
-                      }
+                      { "keyValue": { "topLabel": "Projeto", "content": "way-correspondencias-web" } },
+                      { "keyValue": { "topLabel": "Branch", "content": "$GIT_BRANCH" } },
+                      { "keyValue": { "topLabel": "Status", "content": "SUCCESS ✅" } },
+                      { "keyValue": { "topLabel": "Mensagem", "content": "Deploy para o Way Correspondencias Web realizado com sucesso!" } },
+                      { "keyValue": { "topLabel": "Commit", "content": "$COMMIT_MESSAGE" } }
                     ]
                   }
                 ]
@@ -101,6 +102,34 @@ jobs:
           }
           EOF
           )
-          
-          # Enviar webhook
+          curl -s -X POST -H "Content-Type: application/json" -d "$PAYLOAD" "$WEBHOOK_URL"
+
+      - name: Send failure message to Google Chat
+        if: failure()
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          GIT_BRANCH: ${{ github.ref_name }}
+          WEBHOOK_URL: https://chat.googleapis.com/v1/spaces/AAQA5qsWFdQ/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=VyWYfeqljUfRTIYU-mvpjOntN4ykR2me8p6Cn_ROEPg
+        run: |
+          PAYLOAD=$(cat << EOF
+          {
+            "text": "Deploy do projeto Way Correspondencias",
+            "cards": [
+              {
+                "sections": [
+                  {
+                    "widgets": [
+                      { "keyValue": { "topLabel": "Projeto", "content": "way-correspondencias-web" } },
+                      { "keyValue": { "topLabel": "Branch", "content": "$GIT_BRANCH" } },
+                      { "keyValue": { "topLabel": "Status", "content": "FAILED ❌" } },
+                      { "keyValue": { "topLabel": "Mensagem", "content": "Deploy para o Way Correspondencias Web falhou!" } },
+                      { "keyValue": { "topLabel": "Commit", "content": "$COMMIT_MESSAGE" } }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+          EOF
+          )
           curl -s -X POST -H "Content-Type: application/json" -d "$PAYLOAD" "$WEBHOOK_URL"

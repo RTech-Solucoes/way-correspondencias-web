@@ -10,13 +10,15 @@ interface AppLayoutProps {
   userName?: string;
   userLogin?: string;
   userAvatar?: string;
+  perfil?: string;
 }
 
 export function AppLayout({ 
   children, 
   userName, 
   userLogin, 
-  userAvatar 
+  userAvatar,
+  perfil
 }: AppLayoutProps) {
   const { sidebarWidth } = useSidebar();
 
@@ -26,6 +28,7 @@ export function AppLayout({
         userName={userName}
         userLogin={userLogin}
         userAvatar={userAvatar}
+        perfil={perfil}
       />
 
       <AppSidebar />

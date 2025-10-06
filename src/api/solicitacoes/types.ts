@@ -1,3 +1,4 @@
+import { SolicitacaoResumoResponse } from "@/types/solicitacoes/types";
 import { AnexoResponse } from "../anexos/type";
 import { AreaResponse } from "../areas/types";
 import { ResponsavelResponse } from "../responsaveis/types";
@@ -141,6 +142,7 @@ export interface PagedResponse<T> {
 
 export interface SolicitacaoFilterParams {
   filtro?: string;
+  idSolicitacao?: number;
   idStatusSolicitacao?: number;
   idArea?: number;
   cdIdentificacao?: string;
@@ -241,4 +243,8 @@ export interface HistoricoRespostaItemResponse {
   areaOrigem: AreaResponse;
   areaDestino: AreaResponse;
   nrTempoGasto: number;
+}
+export interface SolicitacaoResumoComHistoricoResponse {
+  solicitacao: SolicitacaoResumoResponse;
+  historicoResposta: HistoricoRespostaItemResponse[];
 }

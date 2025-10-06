@@ -1,4 +1,5 @@
 import { AreaResponse } from "@/api/areas/types";
+import { PerfilResponse } from "../perfis/types";
 
 export interface ResponsavelAreaResponse {
   idResponsavelArea: number;
@@ -12,6 +13,7 @@ export interface ResponsavelResponse {
   nmUsuarioLogin: string;
   nmResponsavel: string;
   dsEmail: string;
+  perfil: PerfilResponse;
   nrCpf: string;
   dtNascimento: string;
   nmCargo: string;
