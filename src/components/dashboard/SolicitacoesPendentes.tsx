@@ -37,7 +37,7 @@ export default function SolicitacoesPendentes({ refreshTrigger }: SolicitacoesPe
     <div className="flex flex-col h-full mb-12">
       <div className="flex justify-between items-center mb-3 mt-9">
         <h4 className="text-2xl font-semibold leading-none tracking-tight">
-          Solicitações aguardando minha resposta
+          Solicitações Pendentes
         </h4>
         {items?.length ? (
           <div className="text-xs text-gray-500">{items.length} aguardando resposta</div>
