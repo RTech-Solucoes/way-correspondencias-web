@@ -83,26 +83,26 @@ const qtdSolicitacaoPendente = pendenteCountData ?? pendenteCountState;
         </div>
 
         <div className="flex items-center">
-          {qtdSolicitacaoPendente > 0 && (
-            <div className="relative mr-4" ref={notifRef}>
-              <button
-                type="button"
-                onClick={handleBellClick}
-                className="relative p-2 rounded-lg hover:bg-gray-50"
-                aria-label="Notificações"
-              >
-                <BellIcon className="h-6 w-6 text-gray-700" />
-                <span className="absolute -top-1 -right-1 inline-flex items-center justify-center rounded-full bg-red-600 text-white text-[10px] font-semibold h-5 min-w-[20px] px-1">
-                  {qtdSolicitacaoPendente}
-                </span>
-              </button>
-              {isPanelOpen && (
-                <div className="absolute right-0 top-full mt-2 w-max max-w-xs rounded-md border border-gray-200 bg-white shadow-md px-3 py-2 text-sm text-gray-700">
-                  {`Você possui ${qtdSolicitacaoPendente} novas solicitações para responder.`}
-                </div>
+          <div className="relative mr-4" ref={notifRef}>
+            <button
+              type="button"
+              onClick={handleBellClick}
+              className="relative p-2 rounded-lg hover:bg-gray-50"
+              aria-label="Notificações"
+            >
+              <BellIcon className="h-6 w-6 text-gray-700" />
+                {qtdSolicitacaoPendente > 0 && (
+                  <span className="absolute -top-1 -right-1 inline-flex items-center justify-center rounded-full bg-red-600 text-white text-[10px] font-semibold h-5 min-w-[20px] px-1">
+                    {qtdSolicitacaoPendente}
+                  </span>
               )}
-            </div>
-          )}
+            </button>
+            {isPanelOpen && (
+              <div className="absolute right-0 top-full mt-2 w-max max-w-xs rounded-md border border-gray-200 bg-white shadow-md px-3 py-2 text-sm text-gray-700">
+                {`Você possui ${qtdSolicitacaoPendente} novas solicitações para responder.`}
+              </div>
+            )}
+          </div>
           <ProfileButton 
             user={user}
             handleLogout={handleLogout}
