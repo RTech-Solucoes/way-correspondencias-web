@@ -111,7 +111,8 @@ export default function DetalhesSolicitacaoModal({
   const criadorLine = useMemo(() => formatDateTime(sol?.dtCriacao), [sol?.dtCriacao]);
   const prazoLine = useMemo(() => {
     const prazoAtual = sol?.solcitacaoPrazos?.find(
-      (p) => +(p?.idStatusSolicitacao) === (sol?.statusSolicitacao?.idStatusSolicitacao)
+      (p) => +(p?.idStatusSolicitacao) === (sol?.statusSolicitacao?.idStatusSolicitacao) &&
+        p?.nrPrazoInterno > 0
     );
 
     if (sol?.statusSolicitacao?.nmStatus === statusList.VENCIDO_AREA_TECNICA.label ) {
@@ -127,8 +128,11 @@ export default function DetalhesSolicitacaoModal({
       );
       return formatDateTime(prazoAtualVencido?.dtPrazoLimite);
     }
+    if (prazoAtual?.dtPrazoLimite) {
+      return formatDateTime(prazoAtual?.dtPrazoLimite);
+    }
 
-    return formatDateTime(prazoAtual?.dtPrazoLimite);
+    return '—';
   }, [sol?.statusSolicitacao?.idStatusSolicitacao, sol?.solcitacaoPrazos, sol?.statusSolicitacao?.nmStatus]);
 
   const isPrazoVencido = useMemo(() => {
@@ -755,7 +759,7 @@ export default function DetalhesSolicitacaoModal({
                 <div className="mt-3 flex items-center gap-2 text-sm">
                   <ClockIcon className="h-4 w-4" />
                   <span className="text-muted-foreground">Prazo para resposta:</span>
-                  <span className={`font-medium ${isPrazoVencido ? 'text-red-600' : ''}`}>{prazoLine}</span>
+                  <span className={`font-medium ${isPrazoVencido && prazoLine !== '—' ? 'text-red-600' : ''}`}>{prazoLine}</span>
                 </div>
               </div>
             </div>
