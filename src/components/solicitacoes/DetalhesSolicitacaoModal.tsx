@@ -216,7 +216,9 @@ export default function DetalhesSolicitacaoModal({
   const isAnaliseRegulatoriaAprovarDevolutiva =
     sol?.statusSolicitacao?.idStatusSolicitacao ===  statusList.ANALISE_REGULATORIA.id &&
     idProximoStatusAnaliseRegulatoria === statusList.EM_APROVACAO.id; 
-  const isFlagVisivel = isAprovacao || isDiretoria || isAnaliseRegulatoriaAprovarDevolutiva;
+  
+  const isConcluido = sol?.statusSolicitacao?.idStatusSolicitacao ===  statusList.CONCLUIDO.id;
+  const isFlagVisivel = isAprovacao || isDiretoria || isAnaliseRegulatoriaAprovarDevolutiva || isConcluido;
 
   const isPermissaoEnviandoDevolutiva = (isFlagVisivel && !canAprovarSolicitacao);
 
@@ -340,6 +342,21 @@ export default function DetalhesSolicitacaoModal({
       e.preventDefault();
       if (!onEnviarDevolutiva) return;
 
+      if (statusText === statusList.CONCLUIDO.label) {
+        if (isFlagVisivel && !flAprovado) {
+          toast.error('É obrigatório escolher uma opção (Sim/Não) para arquivar a solicitação.');
+          return;
+        }
+        if (flAprovado === 'S' && arquivos.length === 0) {
+          toast.error('É obrigatório fazer o upload de pelo menos um documento.');
+          return;
+        }
+        if (flAprovado === 'N' && !resposta.trim()) {
+          toast.error('É obrigatório escrever uma justificativa na caixa de texto.');
+          return;
+        }
+      }
+      
       if (!resposta.trim() && arquivos.length === 0) {
         toast.error('Escreva uma devolutiva ou anexe um arquivo.');
         return;
@@ -378,7 +395,7 @@ export default function DetalhesSolicitacaoModal({
         setSending(false);
       }
     },
-    [onEnviarDevolutiva, resposta, arquivos, sol?.solicitacao?.idSolicitacao, onClose, flAprovado, isFlagVisivel, tpResponsavelUpload]
+    [onEnviarDevolutiva, resposta, arquivos, sol?.solicitacao?.idSolicitacao, onClose, flAprovado, isFlagVisivel, tpResponsavelUpload, statusText]
   );
 
   const handleSalvarParecer = useCallback(async () => {
@@ -529,6 +546,7 @@ export default function DetalhesSolicitacaoModal({
     [statusList.EM_APROVACAO.label]: 'Escrever parecer',
     [statusList.EM_CHANCELA.label]: 'Escrever resposta à Diretoria',
     [statusList.EM_ASSINATURA_DIRETORIA.label]: 'Escrever Parecer',
+    [statusList.CONCLUIDO.label]: 'Informações do arquivamento',
     default: 'Enviar devolutiva ao Regulatório'
   }
 
@@ -537,6 +555,7 @@ export default function DetalhesSolicitacaoModal({
     [statusList.EM_APROVACAO.label]: btnTextareaEmAprovacao,
     [statusList.ANALISE_REGULATORIA.label]: btnLabelStatusAnaliseRegulatoria,
     [statusList.EM_ASSINATURA_DIRETORIA.label]: flAprovado !== '' ? btnStatusEmAssinaturaDiretoria : 'Aprovar Solicitação',
+    [statusList.CONCLUIDO.label]: 'Arquivar Solicitação',
     default: 'Enviar Resposta'
   }
   
@@ -550,6 +569,7 @@ export default function DetalhesSolicitacaoModal({
     [statusList.ANALISE_REGULATORIA.label]: labelFragAnaliseRegulatoria,
     [statusList.EM_ASSINATURA_DIRETORIA.label]: labelFragEmDiretoria,
     [statusList.EM_APROVACAO.label]: labelFragEmAprovacao,
+    [statusList.CONCLUIDO.label]: 'Incluir Protocolo ANTT ?',
     default: 'Aprovar devolutiva?'
   }
 
@@ -601,8 +621,6 @@ export default function DetalhesSolicitacaoModal({
     );
 
     if (sending) return false;
-
-    if (sol?.statusSolicitacao?.nmStatus === statusList.CONCLUIDO.label )  return false;
 
     if (sol?.statusSolicitacao?.nmStatus === statusList.EM_ASSINATURA_DIRETORIA.label) {
 
@@ -665,6 +683,16 @@ export default function DetalhesSolicitacaoModal({
       if (userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR) return true;
       return false;
     }
+
+    if (sol?.statusSolicitacao?.nmStatus === statusList.CONCLUIDO.label) {
+      if (
+        userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR ||
+        userResponsavel?.idPerfil === perfilUtil.GESTOR_DO_SISTEMA
+      ) return true;
+      return false;
+    }
+
+    if (sol?.statusSolicitacao?.nmStatus === statusList.ARQUIVADO.label) return false;
 
     return false;
   })();
