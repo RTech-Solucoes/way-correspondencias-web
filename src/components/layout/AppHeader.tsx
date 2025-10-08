@@ -38,7 +38,6 @@ const [pendenteCountState] = useState<number>(0);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement | null>(null);
 
-
   const handleBellClick = useCallback(async () => {
     setIsPanelOpen((prev) => !prev);
   }, []);
