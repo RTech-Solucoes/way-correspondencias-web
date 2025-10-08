@@ -58,7 +58,7 @@ const nowStr = useMemo(() => new Date().toLocaleString('pt-BR'), []);
   
   if (layoutClient === "way262") {
     labelTitle = "Way 262";
-  } else if (layoutClient === "test") {
+  } else if (layoutClient === "mvp") {
     labelTitle = "RTech";
   }
 

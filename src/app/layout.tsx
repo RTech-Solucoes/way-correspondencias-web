@@ -18,7 +18,7 @@ let labelTitle = "";
   
   if (layoutClient === "way262") {
     labelTitle = "Way 262";
-  } else if (layoutClient === "test") {
+  } else if (layoutClient === "mvp") {
     labelTitle = "RTech";
   }
 

@@ -40,11 +40,11 @@ const styles = StyleSheet.create({
 const layoutClient = process.env.NEXT_PUBLIC_LAYOUT_CLIENT || "way262";
 let labelTitle = "";
   
-if (layoutClient === "way262") {
-	labelTitle = "Way 262";
-} else if (layoutClient === "test") {
-	labelTitle = "RTech";
-}
+	if (layoutClient === "way262") {
+		labelTitle = "Way 262";
+	} else if (layoutClient === "mvp") {
+		labelTitle = "RTech";
+	}
   
 function SolicitacoesPdfDoc({ data, getStatusText }: { data: SolicitacaoResponse[]; getStatusText: (code: string) => string | null }) {
 	const nowStr = useMemo(() => new Date().toLocaleString('pt-BR'), []);
