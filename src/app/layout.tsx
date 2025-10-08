@@ -13,13 +13,22 @@ const defaultFont = DefaultFont({
   variable: '--font-default'
 });
 
+const layoutClient = process.env.NEXT_PUBLIC_LAYOUT_CLIENT || "way262";
+let labelTitle = "";
+  
+  if (layoutClient === "way262") {
+    labelTitle = "Way 262";
+  } else if (layoutClient === "test") {
+    labelTitle = "RTech";
+  }
+
 export const metadata: Metadata = {
-  title: 'Way 262 - Software Regulatório',
-  description: 'Software Regulatório de tramitações Way 262',
+  title: `${labelTitle} - Software Regulatório`,
+  description: `Software Regulatório de tramitações ${labelTitle}`,
   icons: {
-    icon: '/images/favicon.png',
-    shortcut: '/images/favicon.png',
-    apple: '/images/favicon.png',
+    icon: `/images/${layoutClient}-favicon.png`,
+    shortcut: `/images/${layoutClient}-favicon.png`,
+    apple: `/images/${layoutClient}-favicon.png`,
   },
 };
 
