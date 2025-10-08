@@ -41,7 +41,8 @@ export default function ExportSoliExceloesExcel({ filterParams, getStatusText, o
         'Data Início Solicitação', 
         'Data Início Primeira Tramitação',
         'Data Prazo Limite Tramitação',
-        'Data Conclusão Tramitação'
+        'Data Conclusão Tramitação',
+        'Atendido dentro do prazo'
       ];
 
       const escapeCell = (val?: string | number | null) => {
@@ -67,6 +68,13 @@ export default function ExportSoliExceloesExcel({ filterParams, getStatusText, o
         const dtPrazoLimite = s.dtPrazoLimite ? new Date(s.dtPrazoLimite).toLocaleString('pt-BR') : '';
         const dtConclusao = s.dtConclusaoTramitacao ? new Date(s.dtConclusaoTramitacao).toLocaleString('pt-BR') : '';
 
+        let atendidoDentroDoPrazo = '-';
+        if (s.dtConclusaoTramitacao && s.dtPrazoLimite) {
+          const dtConclusaoDate = new Date(s.dtConclusaoTramitacao);
+          const dtPrazoLimiteDate = new Date(s.dtPrazoLimite);
+          atendidoDentroDoPrazo = dtConclusaoDate <= dtPrazoLimiteDate ? 'Sim' : 'Não';
+        }
+
         return [
           escapeCell(s.cdIdentificacao || ''),
           escapeCell(s.dsAssunto || ''),
@@ -76,7 +84,8 @@ export default function ExportSoliExceloesExcel({ filterParams, getStatusText, o
           escapeCell(dtInicio),
           escapeCell(dtPrimeira),
           escapeCell(dtPrazoLimite),
-          escapeCell(dtConclusao)
+          escapeCell(dtConclusao),
+          escapeCell(atendidoDentroDoPrazo)
         ];
       });
 

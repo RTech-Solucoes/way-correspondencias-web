@@ -1041,19 +1041,29 @@ export default function SolicitacaoModal({
   }, [formData.idTema]);
 
   const selectedTema = getSelectedTema();
+
+  const statusOcultos = [
+    statusListType.PRE_ANALISE.id,
+    statusListType.VENCIDO_REGULATORIO.id,
+    statusListType.VENCIDO_AREA_TECNICA.id,
+    statusListType.ARQUIVADO.id,
+  ];
+
   const getDefaultPrazos = useCallback((): StatusSolicPrazoTemaForUI[] => {
     const defaultPrazosPorStatus: { [key: number]: number } = {
-      [statusListType.PRE_ANALISE.id]: 72,
       [statusListType.ANALISE_REGULATORIA.id]: 72,
       [statusListType.EM_APROVACAO.id]: 48,
       [statusListType.EM_ASSINATURA_DIRETORIA.id]: 48,
     };
+        
     const allStatus = statusList.length > 0 ? statusList : STATUS_LIST.map(status => ({
       idStatusSolicitacao: status.id,
       nmStatus: status.label
     }));
 
-    return allStatus.map(status => ({
+    const statusFiltrados = allStatus.filter(status => !statusOcultos.includes(status.idStatusSolicitacao));
+
+    return statusFiltrados.map(status => ({
       idStatusSolicPrazoTema: 0,
       idStatusSolicitacao: status.idStatusSolicitacao,
       idTema: formData?.idTema || 0,
@@ -1074,13 +1084,22 @@ export default function SolicitacaoModal({
   }, [statusPrazos, prazoExcepcional]);
 
   const renderStep3 = useCallback((): JSX.Element => {
-    const statusOptions = statusList.length > 0 ? statusList.map(status => ({
+    const statusOcultos = [
+      statusListType.PRE_ANALISE.id,
+      statusListType.VENCIDO_REGULATORIO.id,
+      statusListType.VENCIDO_AREA_TECNICA.id,
+      statusListType.ARQUIVADO.id,
+    ];
+    
+    const allStatusOptions = statusList.length > 0 ? statusList.map(status => ({
       codigo: status.idStatusSolicitacao,
       nome: status.nmStatus
     })) : STATUS_LIST.map(status => ({
       codigo: status.id,
       nome: status.label
     }));
+    
+    const statusOptions = allStatusOptions.filter(status => !statusOcultos.includes(status.codigo));
 
     return (
       <div className="space-y-6">
@@ -1134,7 +1153,6 @@ export default function SolicitacaoModal({
               ) : (
                 <div className="grid grid-cols-3 gap-4">
                     {statusOptions.map((status, index) => {
-                      const prazoFromSolicitacao = prazosSolicitacaoPorStatus.find(p => p.idStatusSolicitacao === status.codigo)?.nrPrazoInterno;
                       let prazoFromConfig = statusPrazos.find(p => p.idStatusSolicitacao === status.codigo)?.nrPrazoInterno;
                       
                       if (prazoFromConfig === undefined) {
@@ -1494,7 +1512,9 @@ export default function SolicitacaoModal({
         <Label className="text-sm font-semibold text-gray-700">Prazos Configurados por Status</Label>
         <div className="mt-2 space-y-2">
           {(() => {
-            const statusOptionsForSummary = statusList.length > 0 ? statusList.map(status => ({
+
+            
+            const statusFiltrados = statusList.length > 0 ? statusList.map(status => ({
               codigo: status.idStatusSolicitacao,
               nome: status.nmStatus
             })) : STATUS_LIST.map(status => ({
@@ -1502,7 +1522,9 @@ export default function SolicitacaoModal({
               nome: status.label
             }));
 
-            const items = statusOptionsForSummary
+            const opcaoStatusResumo = statusFiltrados.filter(status => !statusOcultos.includes(status.codigo));
+
+            const items = opcaoStatusResumo
               .map((status) => {
                 const prazoFromSolicitacao = prazosSolicitacaoPorStatus.find(p => p.idStatusSolicitacao === status.codigo)?.nrPrazoInterno;
                 const prazoFromConfig = statusPrazos.find(p => p.idStatusSolicitacao === status.codigo)?.nrPrazoInterno;
