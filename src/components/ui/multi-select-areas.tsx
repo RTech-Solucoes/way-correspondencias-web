@@ -3,7 +3,7 @@
 import {useEffect, useState} from 'react';
 import {Label} from '@/components/ui/label';
 import {Badge} from '@/components/ui/badge';
-import {AreaResponse} from '@/api/areas/types';
+import {AreaExecutorAvancadoResponse, AreaResponse} from '@/api/areas/types';
 import {ResponsavelResponse} from '@/api/responsaveis/types';
 import {areasClient} from '@/api/areas/client';
 import {responsaveisClient} from '@/api/responsaveis/client';
@@ -25,8 +25,7 @@ export function MultiSelectAreas({
   className,
   disabled
 }: MultiSelectAreasProps) {
-  const [areas, setAreas] = useState<AreaResponse[]>([]);
-  const [responsaveis, setResponsaveis] = useState<ResponsavelResponse[]>([]);
+  const [areaExecutorAvancado, setAreaExecutorAvancado] = useState<AreaExecutorAvancadoResponse[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -34,19 +33,12 @@ export function MultiSelectAreas({
       try {
         setLoading(true);
 
-        const [areaResponse, responsaveisResponse] = await Promise.all([
-          areasClient.buscarPorFiltro({ size: 1000 }),
-          responsaveisClient.buscarPorFiltro({ size: 1000 })
+        const [areaResponse] = await Promise.all([
+          areasClient.buscarPorExecutorAvancado(),
         ]);
-
-        const areasAtivas = areaResponse.content.filter((area: AreaResponse) => area.flAtivo === 'S');
-        const responsaveisAtivos = responsaveisResponse.content.filter((resp: ResponsavelResponse) => resp.flAtivo === 'S');
-
-        setAreas(areasAtivas);
-        setResponsaveis(responsaveisAtivos);
+        setAreaExecutorAvancado(areaResponse);
       } catch {
-        setAreas([]);
-        setResponsaveis([]);
+        setAreaExecutorAvancado([]);
       } finally {
         setLoading(false);
       }
@@ -67,13 +59,6 @@ export function MultiSelectAreas({
     }
   };
 
-  const getResponsavelForArea = (areaIndex: number) => {
-    if (responsaveis.length === 0) return 'N/A';
-
-    const responsavelIndex = areaIndex % responsaveis.length;
-    return responsaveis[responsavelIndex]?.nmResponsavel || 'N/A';
-  };
-
   return (
     <div
       className={cn("space-y-4", className, disabled && "pointer-events-none")}
@@ -91,7 +76,7 @@ export function MultiSelectAreas({
           className={cn("mt-2 grid grid-cols-1 md:grid-cols-3 gap-3 overflow-y-auto", disabled && "pointer-events-none")}
           aria-disabled={disabled || undefined}
         >
-          {areas.map((area, index) => {
+          {areaExecutorAvancado.map((area, index) => {
             const isChecked = selectedAreaIds.includes(area.idArea);
             return (
               <div
@@ -136,12 +121,12 @@ export function MultiSelectAreas({
                     disabled ? (isChecked ? "bg-gray-200 opacity-80" : "bg-gray-200 opacity-60") : "bg-gray-200"
                   )}
                 >
-                  {getResponsavelForArea(index)}
+                  {area.nmResponsavel || 'N/A'}
                 </Badge>
               </div>
             );
           })}
-          {areas?.length === 0 && !loading && (
+          {areaExecutorAvancado?.length === 0 && !loading && (
             <div className="text-sm text-gray-500 p-4 text-center col-span-3">
               Nenhuma área encontrada
             </div>
