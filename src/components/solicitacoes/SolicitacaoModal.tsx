@@ -1701,7 +1701,7 @@ export default function SolicitacaoModal({
               { title: 'Dados da Solicitação', description: 'Informações básicas' },
               { title: 'Tema e Áreas', description: 'Configuração' },
               { title: 'Status e Prazos', description: 'Definições de tempo' },
-              { title: 'Assinates', description: 'Validador / Assinante' },
+              { title: 'Assinantes', description: 'Validador / Assinante' },
               { title: 'Anexos', description: 'Documentos' },
               { title: 'Resumo', description: 'Finalização' }
             ]}
