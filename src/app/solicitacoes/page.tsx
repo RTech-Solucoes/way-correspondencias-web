@@ -133,11 +133,6 @@ function SolicitacoesPageContent() {
     setShowTramitacaoModal(true);
   };
 
-  const handleCloseTramitacaoModal = () => {
-    setShowTramitacaoModal(false);
-    setTramitacaoSolicitacaoId(null);
-  };
-
   const prefilledFilters = useMemo(() => {
     const idSolicitacaoParam = searchParams.get('idSolicitacao');
     return {
@@ -232,6 +227,12 @@ function SolicitacoesPageContent() {
     } catch {
     }
   }, [setAreas]);
+
+  const handleCloseTramitacaoModal = useCallback(() => {
+    setShowTramitacaoModal(false);
+    setTramitacaoSolicitacaoId(null);
+    loadSolicitacoes();
+  }, [loadSolicitacoes]);
 
   useEffect(() => {
     loadSolicitacoes();
@@ -774,6 +775,7 @@ function SolicitacoesPageContent() {
           onClose={() => {
             setShowSolicitacaoModal(false);
             setSelectedSolicitacao(null);
+            loadSolicitacoes();
           }}
           onSave={onSolicitacaoSave}
           responsaveis={responsaveis}
@@ -788,6 +790,7 @@ function SolicitacoesPageContent() {
             setShowDetalhesModal(false);
             setSelectedSolicitacao(null);
             setDetalhesSolicitacao(null);
+            loadSolicitacoes();
           }}
           solicitacao={detalhesSolicitacao}
           anexos={(detalhesAnexos ?? [])}
