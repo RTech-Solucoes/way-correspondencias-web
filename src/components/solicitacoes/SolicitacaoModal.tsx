@@ -1661,7 +1661,6 @@ export default function SolicitacaoModal({
       loadStatusPrazos();
     }
   }, [formData.idTema, open, loadStatusPrazos]);
-
   useEffect(() => {
     const loadAnexosTypeE = async () => {
       if (( currentStep === 5 || currentStep === 6) && solicitacao?.idSolicitacao) {
