@@ -53,12 +53,21 @@ const getAreasLabel = (nmAreas: string): string => {
     };
     
 const nowStr = useMemo(() => new Date().toLocaleString('pt-BR'), []);
+  const layoutClient = process.env.NEXT_PUBLIC_LAYOUT_CLIENT || "way262";
+  let labelTitle = "";
+  
+  if (layoutClient === "way262") {
+    labelTitle = "Way 262";
+  } else if (layoutClient === "mvp") {
+    labelTitle = "RTech";
+  }
+
 return (
     <Document>
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
           {/* eslint-disable-next-line jsx-a11y/alt-text */}
-          <Image src="/images/way-logo.png" style={styles.logo} />
+          <Image src={`/images/${layoutClient}-logo.png`} style={styles.logo} />
           <View style={styles.titleWrap}>
             <Text style={[styles.title, { fontWeight: 800 }]}>Histórico de Respostas</Text>
             <Text style={styles.subtitle}>Data de exportação: {nowStr}</Text>
@@ -121,7 +130,7 @@ return (
         </View>
 
         <View style={styles.footer} fixed>
-          <Text>Way262</Text>
+          <Text>{labelTitle}</Text>
           <Text render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}` } />
         </View>
       </Page>

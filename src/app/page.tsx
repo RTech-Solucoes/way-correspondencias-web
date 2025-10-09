@@ -30,6 +30,15 @@ export default function LoginPage() {
 
   const router = useRouter();
 
+  const layoutClient = process.env.NEXT_PUBLIC_LAYOUT_CLIENT || "way262";
+  let labelTitle = "";
+  
+  if (layoutClient === "way262") {
+    labelTitle = "Way 262";
+  } else if (layoutClient === "mvp") {
+    labelTitle = "RTech";
+  }
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
@@ -91,7 +100,7 @@ export default function LoginPage() {
       <form onSubmit={handleSubmit} className="flex flex-col w-[45%] max-md:w-full gap-12 p-8 max-[1024px]:p-2 rounded-4xl max-[1460px]:w-[40%] min-[1440px]:max-w-[30%] justify-center mb-32">
         <div>
           <Image
-            src="/images/way-logo.png"
+            src={`/images/${layoutClient}-logo.png`}
             alt="Logo"
             width={400}
             height={221}
@@ -101,7 +110,7 @@ export default function LoginPage() {
 
         <div className="flex flex-col justify-center items-center gap-8 w-full ">
           <div className="flex gap-6 items-center">
-            <h2 className="text-[#101A2D] font-semibold text-2xl text-center">Software Regulatório <span className="text-[#276EEB]">Way 262</span></h2>
+            <h2 className="text-[#101A2D] font-semibold text-2xl text-center">Software Regulatório <span className="text-[#276EEB]">{labelTitle}</span></h2>
           </div>
 
           <div className="flex flex-col gap-6 w-full">

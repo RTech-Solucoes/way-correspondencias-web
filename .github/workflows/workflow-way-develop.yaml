@@ -1,9 +1,9 @@
-name: Deploy Way Correspondencias Web for Production
+name: Deploy Way Correspondencias Web for Develop
 
 on:
   push:
     branches:
-      - main
+      - develop
 
 env:
   IMAGE_NAME: way-correspondencias-web
@@ -20,7 +20,7 @@ jobs:
 
       - name: Criar arquivo .env
         run: |
-          echo "${{ secrets.ENV_FILE }}" > .env
+          echo "${{ secrets.ENV_FILE_WAY_DEV }}" > .env
 
       - name: Configurar credenciais AWS
         uses: aws-actions/configure-aws-credentials@v4

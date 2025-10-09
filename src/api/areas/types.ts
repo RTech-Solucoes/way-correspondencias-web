@@ -35,6 +35,15 @@ export interface AreaFilterParams {
   sort?: string;
 }
 
+export interface AreaExecutorAvancadoResponse {
+  idArea: number;
+  cdArea: string;
+  nmArea: string;
+  totalExecutores: number;
+  nmResponsavel: string;
+  nmCargos: string;
+}
+
 export const areaUtil = {
   OPERACAO: 1,
   CONSERVA: 2,

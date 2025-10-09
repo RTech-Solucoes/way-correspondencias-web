@@ -1,13 +1,13 @@
-name: Deploy Way Correspondencias Web for Develop
+name: Deploy Correspondencias Web for Production
 
 on:
   push:
     branches:
-      - develop
+      - main
 
 env:
-  IMAGE_NAME: way-correspondencias-web
-  CONTAINER_NAME: way-web
+  IMAGE_NAME: correspondencias-web
+  CONTAINER_NAME: correspondencias-web-prd
 
 jobs:
   build:
@@ -20,7 +20,7 @@ jobs:
 
       - name: Criar arquivo .env
         run: |
-          echo "${{ secrets.ENV_FILE_DEV }}" > .env
+          echo "${{ secrets.ENV_FILE_MVP_PRD }}" > .env
 
       - name: Configurar credenciais AWS
         uses: aws-actions/configure-aws-credentials@v4
@@ -57,7 +57,7 @@ jobs:
 
           echo "Chamando API de deploy para imagem: $IMAGE, container: $CONTAINER, branch: $BRANCH"
 
-          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST https://gateway.deploy.way.rtechsolution.com.br/deploy/web \
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST https://deploy.correspondencias.rtechsolution.com.br/correspondencias/web \
             -H "Content-Type: application/json" \
             -d "$(jq -n --arg image "$IMAGE" --arg container "$CONTAINER" --arg branch "$BRANCH" '{image: $image, container: $container, branch: $branch}')")
 
@@ -79,20 +79,20 @@ jobs:
         env:
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
           GIT_BRANCH: ${{ github.ref_name }}
-          WEBHOOK_URL: https://chat.googleapis.com/v1/spaces/AAQA5qsWFdQ/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=VyWYfeqljUfRTIYU-mvpjOntN4ykR2me8p6Cn_ROEPg
+          WEBHOOK_URL: "https://chat.googleapis.com/v1/spaces/AAQALTq0Hq4/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=u97ksV21w57sluxLWx4vBCNB3J38cZn1SQTDmY66_u8"
         run: |
           PAYLOAD=$(cat << EOF
           {
-            "text": "Deploy do projeto Way Correspondencias",
+            "text": "Deploy do projeto Correspondencias",
             "cards": [
               {
                 "sections": [
                   {
                     "widgets": [
-                      { "keyValue": { "topLabel": "Projeto", "content": "way-correspondencias-web" } },
+                      { "keyValue": { "topLabel": "Projeto", "content": "correspondencias-web" } },
                       { "keyValue": { "topLabel": "Branch", "content": "$GIT_BRANCH" } },
                       { "keyValue": { "topLabel": "Status", "content": "SUCCESS ✅" } },
-                      { "keyValue": { "topLabel": "Mensagem", "content": "Deploy para o Way Correspondencias Web realizado com sucesso!" } },
+                      { "keyValue": { "topLabel": "Mensagem", "content": "Deploy para o Correspondencias Web realizado com sucesso!" } },
                       { "keyValue": { "topLabel": "Commit", "content": "$COMMIT_MESSAGE" } }
                     ]
                   }
@@ -109,20 +109,20 @@ jobs:
         env:
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
           GIT_BRANCH: ${{ github.ref_name }}
-          WEBHOOK_URL: https://chat.googleapis.com/v1/spaces/AAQA5qsWFdQ/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=VyWYfeqljUfRTIYU-mvpjOntN4ykR2me8p6Cn_ROEPg
+          WEBHOOK_URL: "https://chat.googleapis.com/v1/spaces/AAQALTq0Hq4/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=u97ksV21w57sluxLWx4vBCNB3J38cZn1SQTDmY66_u8"
         run: |
           PAYLOAD=$(cat << EOF
           {
-            "text": "Deploy do projeto Way Correspondencias",
+            "text": "Deploy do projeto Correspondencias",
             "cards": [
               {
                 "sections": [
                   {
                     "widgets": [
-                      { "keyValue": { "topLabel": "Projeto", "content": "way-correspondencias-web" } },
+                      { "keyValue": { "topLabel": "Projeto", "content": "correspondencias-web" } },
                       { "keyValue": { "topLabel": "Branch", "content": "$GIT_BRANCH" } },
                       { "keyValue": { "topLabel": "Status", "content": "FAILED ❌" } },
-                      { "keyValue": { "topLabel": "Mensagem", "content": "Deploy para o Way Correspondencias Web falhou!" } },
+                      { "keyValue": { "topLabel": "Mensagem", "content": "Deploy para o Correspondencias Web falhou!" } },
                       { "keyValue": { "topLabel": "Commit", "content": "$COMMIT_MESSAGE" } }
                     ]
                   }
@@ -133,3 +133,5 @@ jobs:
           EOF
           )
           curl -s -X POST -H "Content-Type: application/json" -d "$PAYLOAD" "$WEBHOOK_URL"
+
+
