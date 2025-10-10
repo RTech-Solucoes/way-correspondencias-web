@@ -1,6 +1,6 @@
 import { buildQueryParams } from "@/utils/utils";
 import ApiClient from "../client";
-import { AreaResponse, AreaRequest, PagedResponse, AreaFilterParams } from "./types";
+import { AreaResponse, AreaRequest, PagedResponse, AreaFilterParams, AreaExecutorAvancadoResponse } from "./types";
 
 class AreasClient {
   private client: ApiClient;
@@ -57,6 +57,12 @@ class AreasClient {
   async deletar(id: number): Promise<void> {
     return this.client.request<void>(`/${id}`, {
       method: 'DELETE',
+    });
+  }
+
+  async buscarPorExecutorAvancado(): Promise<AreaExecutorAvancadoResponse[]> {
+    return this.client.request<AreaExecutorAvancadoResponse[]>(`/executor-avancado`, {
+      method: 'GET',
     });
   }
 }

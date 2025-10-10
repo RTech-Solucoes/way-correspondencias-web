@@ -67,7 +67,7 @@ const TimeProgress: React.FC<TimeProgressProps> = ({ dtPrimeiraTramitacao: start
   })();
 
   const normalizedStatus = normalizeText(statusLabel || '');
-  const isConcluido = normalizedStatus.includes('concluido');
+  const isConcluido = normalizedStatus.includes('concluido') || normalizedStatus.includes('arquivado');
 
   const barColor = (() => {
     if (porcentagem == null) return 'bg-gray-300';

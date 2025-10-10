@@ -37,6 +37,15 @@ const styles = StyleSheet.create({
 	c10: { width: '8%' }, // Atendido dentro do prazo
 });
 
+const layoutClient = process.env.NEXT_PUBLIC_LAYOUT_CLIENT || "way262";
+let labelTitle = "";
+  
+	if (layoutClient === "way262") {
+		labelTitle = "Way 262";
+	} else if (layoutClient === "mvp") {
+		labelTitle = "RTech";
+	}
+  
 function SolicitacoesPdfDoc({ data, getStatusText }: { data: SolicitacaoResponse[]; getStatusText: (code: string) => string | null }) {
 	const nowStr = useMemo(() => new Date().toLocaleString('pt-BR'), []);
 	return (
@@ -44,7 +53,7 @@ function SolicitacoesPdfDoc({ data, getStatusText }: { data: SolicitacaoResponse
 			<Page size="A4" orientation="landscape" style={styles.page}>
 				<View style={styles.header}>
 					{/* eslint-disable-next-line jsx-a11y/alt-text */}
-					<Image src="/images/way-logo.png" style={styles.logo} />
+					<Image src={`/images/${layoutClient}-logo.png`} style={styles.logo} />
 					<View>
 						<Text style={styles.title}>Relatório de Solicitações</Text>
 						<Text style={styles.subtitle}>Data de exportação: {nowStr}</Text>
@@ -99,7 +108,7 @@ function SolicitacoesPdfDoc({ data, getStatusText }: { data: SolicitacaoResponse
 
 				{/* Footer with page numbers */}
 				<View style={styles.footer} fixed>
-					<Text>Way262</Text>
+					<Text>{labelTitle}</Text>
 					<Text render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}` } />
 				</View>
 			</Page>

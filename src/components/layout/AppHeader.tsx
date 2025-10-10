@@ -38,7 +38,6 @@ const [pendenteCountState] = useState<number>(0);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement | null>(null);
 
-
   const handleBellClick = useCallback(async () => {
     setIsPanelOpen((prev) => !prev);
   }, []);
@@ -66,6 +65,8 @@ const { data: pendenteCountData } = useQuery<number>({
   refetchOnReconnect: true,
   refetchOnMount: 'always',
 });
+  
+const layoutClient = process.env.NEXT_PUBLIC_LAYOUT_CLIENT || "way262";
 
 const qtdSolicitacaoPendente = pendenteCountData ?? pendenteCountState;
 
@@ -74,7 +75,7 @@ const qtdSolicitacaoPendente = pendenteCountData ?? pendenteCountState;
       <div className="flex items-center justify-between h-[82px] px-6">
         <div className="flex items-center">
           <Image
-            src="/images/logo.png"
+            src={`/images/${layoutClient}-logo.png`}
             alt="Logo"
             width={120}
             height={40}
