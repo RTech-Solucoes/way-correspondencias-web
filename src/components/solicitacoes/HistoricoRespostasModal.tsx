@@ -56,17 +56,21 @@ export default function HistoricoRespostasModal({
   };
   
   const items: HistoricoBaseItem[] = useMemo(() => {
-    return (historico || []).map((item) => ({
-      id: item.id,
-      tipo: item.tipo as TipoHistoricoResposta,
-      dsDescricao: item.dsDescricao,
-      responsavelNome: item.responsavel?.nmResponsavel || 'Responsável não informado',
-      dtCriacao: item.dtCriacao || null,
-      nmStatus: item.nmStatus || null,
-      areaOrigem: item.areaOrigem?.nmArea || null,
-      areaDestino: item.areaDestino?.nmArea || null,
-      nrTempoGasto: item.nrTempoGasto || null,
-    }));
+    return (historico || []).map((item) => {
+
+      return {
+        id: item.id,
+        tipo: item.tipo as TipoHistoricoResposta,
+        dsDescricao: item.dsDescricao,
+        responsavelNome: item.responsavel?.nmResponsavel || 'Responsável não informado',
+        dtCriacao: item.dtCriacao || null,
+        nmStatus: item.nmStatus || null,
+        areaOrigem: item.areaOrigem?.nmArea || null,
+        areaDestino: item.areaDestino?.nmArea || null,
+        nrTempoGasto: item.nrTempoGasto || null,
+        idPerfil: item.responsavel?.perfil?.idPerfil || null,
+      };
+    });
   }, [historico]);
 
   if (!open) return null;

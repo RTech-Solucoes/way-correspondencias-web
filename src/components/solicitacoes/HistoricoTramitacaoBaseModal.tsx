@@ -5,6 +5,7 @@ import { ArrowRightIcon, SpinnerIcon, ClockIcon } from '@phosphor-icons/react';
 import { Badge } from '@/components/ui/badge';
 import { formatDateTime, formatMinutosEmDiasHorasMinutos } from '@/utils/utils';
 import { TipoHistoricoResposta } from '@/api/solicitacoes';
+import { perfilUtil } from '@/api/perfis/types';
 
 export type HistoricoBaseItem = {
   id: number | string;
@@ -16,6 +17,7 @@ export type HistoricoBaseItem = {
   areaOrigem?: string | null;
   areaDestino?: string | null;
   nrTempoGasto?: number | null;
+  idPerfil?: number | null;
 };
 
 interface HistoricoBaseModalProps {
@@ -39,6 +41,18 @@ export default function HistoricoTramitacaoBaseModal({
   emptyText,
   items,
 }: HistoricoBaseModalProps) {
+
+  const getParecerLabel = (idPerfil?: number | null) => {
+    
+    if (idPerfil === perfilUtil.VALIDADOR_ASSINANTE) {
+      return 'DIRETORIA (PARECER)';
+    }
+    if (idPerfil === perfilUtil.ADMINISTRADOR || idPerfil === perfilUtil.GESTOR_DO_SISTEMA) {
+      return 'REGULATÓRIO (PARECER)';
+    }
+    return 'PARECER';
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[80vh]">
@@ -72,7 +86,7 @@ export default function HistoricoTramitacaoBaseModal({
                         variant="secondary"
                         className="bg-white/70 text-gray-800 border border-gray-400 text-xs font-medium px-2 py-1"
                       >
-                        DIRETORIA (PARECER)
+                        { getParecerLabel(item.idPerfil) }
                       </Badge>
                     )}
                     {item.tipo === TipoHistoricoResposta.TRAMITACAO && (

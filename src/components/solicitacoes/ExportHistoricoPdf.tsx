@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { HistoricoRespostaItemResponse, TipoHistoricoResposta } from '@/api/solicitacoes/types';
 import { formatDateTime, formatDateTimeBrCompactExport, formatMinutosEmDiasHorasMinutos } from '@/utils/utils';
 import { SolicitacaoResumoResponse } from '@/types/solicitacoes/types';
+import { perfilUtil } from '@/api/perfis/types';
 
 interface ExportHistoricoPdfProps {
   solicitacao: SolicitacaoResumoResponse;
@@ -51,6 +52,16 @@ const getAreasLabel = (nmAreas: string): string => {
         .filter(Boolean)
         .join(', ');
     };
+
+const getParecerLabel = (idPerfil?: number | null) => {
+    if (idPerfil === perfilUtil.VALIDADOR_ASSINANTE) {
+      return 'DIRETORIA (PARECER)';
+    }
+    if (idPerfil === perfilUtil.ADMINISTRADOR || idPerfil === perfilUtil.GESTOR_DO_SISTEMA) {
+      return 'REGULATÓRIO (PARECER)';
+    }
+    return 'PARECER';
+  };
     
 const nowStr = useMemo(() => new Date().toLocaleString('pt-BR'), []);
   const layoutClient = process.env.NEXT_PUBLIC_LAYOUT_CLIENT || "way262";
@@ -99,7 +110,7 @@ return (
             <Text style={styles.small}>Sem registros</Text>
           ) : (
             historico.map((h) => (
-              <View key={h.id} style={styles.item} wrap={false}>
+              <View key={`${h.tipo}-${h.id}`} style={styles.item} wrap={false}>
                     <View style={styles.itemHeader}>
                         {h.tipo === TipoHistoricoResposta.TRAMITACAO && (
                         <View style={styles.rowWrap}>
@@ -109,7 +120,9 @@ return (
                         </View>
                         )}
                         {h.tipo === TipoHistoricoResposta.PARECER && (
-                            <Text style={styles.pill}>DIRETORIA (PARECER)</Text>
+                        <Text style={styles.pill}>
+                          {getParecerLabel(h?.responsavel?.perfil?.idPerfil)}
+                        </Text>
                         )}
                     <Text style={styles.small}>{formatDateTime(h.dtCriacao)}</Text>
                     </View>
