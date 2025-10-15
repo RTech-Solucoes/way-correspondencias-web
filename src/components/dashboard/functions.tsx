@@ -95,7 +95,6 @@ const statusConfig: Record<
     },
 };
 
-// Funções reutilizando o dicionário
 export function renderIcon(status: string) {
     return statusConfig[status]?.icon ?? null;
 }
