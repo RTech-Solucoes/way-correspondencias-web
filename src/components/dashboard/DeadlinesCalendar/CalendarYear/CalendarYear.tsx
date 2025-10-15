@@ -1,26 +1,18 @@
-import { ICalendar } from "@/api/dashboard/type";
+import { ICalendarYear } from "@/api/dashboard/type";
 import FilterCalendarYear from "./FilterCalendarYear";
 
 interface CalendarYearProps {
-  calendarByYear: ICalendar[];
+  calendarByYear: ICalendarYear[];
   currentYear: number;
   navigateYear: (direction: 'prev' | 'next') => void;
 }
 
 export default function CalendarYear({ calendarByYear, currentYear, navigateYear }: CalendarYearProps) {
-  const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-
-  const getObligationCountByMonth = (monthIndex: number) => {
-    return calendarByYear.filter(item => {
-      const itemDate = new Date(item.dtFim);
-      return itemDate.getMonth() === monthIndex;
-    }).length;
-  };
-
-  const isCurrentMonth = (monthIndex: number) => {
+  const isCurrentMonth = (monthName: string) => {
     const currentDate = new Date();
-    return currentDate.getMonth() === monthIndex && currentDate.getFullYear() === currentYear;
+    const currentMonthName = currentDate.toLocaleDateString('pt-BR', { month: 'long' });
+    const normalizedCurrentMonth = currentMonthName.charAt(0).toUpperCase() + currentMonthName.slice(1);
+    return normalizedCurrentMonth === monthName && currentDate.getFullYear() === currentYear;
   };
 
   return (
@@ -28,20 +20,27 @@ export default function CalendarYear({ calendarByYear, currentYear, navigateYear
       <FilterCalendarYear year={currentYear} navigateYear={navigateYear} />
 
       <div className="grid grid-cols-4 gap-4">
-        {months.map((month, index) => {
-          const obligationCount = getObligationCountByMonth(index);
-          const isCurrent = isCurrentMonth(index);
+        {calendarByYear.map((monthData) => {
+          const isCurrent = isCurrentMonth(monthData.mes);
 
           return (
             <div
-              key={month}
-              className={`p-3 rounded-lg border ${isCurrent ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-200'
-                }`}
+              key={monthData.mes}
+              className={`p-4 rounded-lg border transition-all ${
+                isCurrent 
+                  ? 'bg-blue-50 border-blue-300 shadow-md' 
+                  : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-sm'
+              }`}
             >
-              <div className="font-medium text-sm mb-2">{month}</div>
-              <div className="flex justify-between items-center">
+              <div className="font-semibold text-sm mb-2 text-gray-700">{monthData.mes}</div>
+              <div className="flex items-center gap-2">
+                <div className={`text-3xl font-bold ${
+                  monthData.qtde > 0 ? 'text-blue-600' : 'text-gray-400'
+                }`}>
+                  {monthData.qtde}
+                </div>
                 <div className="text-xs text-gray-500">
-                  {obligationCount} obrigações
+                  {monthData.qtde === 1 ? 'solicitação' : 'solicitações'}
                 </div>
               </div>
             </div>
