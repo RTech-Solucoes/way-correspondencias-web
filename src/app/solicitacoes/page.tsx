@@ -214,7 +214,7 @@ function SolicitacoesPageContent() {
 
   const loadTemas = useCallback(async () => {
     try {
-      const response = await temasClient.buscarPorFiltro({size: 100});
+      const response = await temasClient.buscarPorFiltro({size: 400});
       setTemas(response.content ?? []);
     } catch {
     }

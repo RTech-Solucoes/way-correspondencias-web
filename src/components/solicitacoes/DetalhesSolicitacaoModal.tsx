@@ -429,8 +429,9 @@ export default function DetalhesSolicitacaoModal({
           Number(p?.nrNivel) === Number(nextNivel) &&
           p?.responsavel?.idResponsavel === (userResponsavel?.idResponsavel ?? 0) 
       );
-      console.log( 'existingParecer', existingParecer)
-      const canUpdate = Boolean(existingParecer?.idSolicitacaoParecer);
+
+      const isArquivado = sol.statusSolicitacao.idStatusSolicitacao === statusList.ARQUIVADO.id;
+      const canUpdate = Boolean(existingParecer?.idSolicitacaoParecer) && !isArquivado;
 
       if (canUpdate) {
         const atualizado = await solicitacaoParecerClient.atualizar(existingParecer?.idSolicitacaoParecer ?? 0, req);
@@ -636,7 +637,9 @@ export default function DetalhesSolicitacaoModal({
 
       return isRolePermitido && isAssinanteAutorizado && !isDiretorJaAprovou;
     }
-    
+
+    if (sol?.statusSolicitacao?.nmStatus === statusList.ARQUIVADO.label) return false;
+
     if (tramitacaoExecutada != null && tramitacaoExecutada?.length > 0) return false;
 
     if (isAreaRespondeu != null && isAreaRespondeu?.length > 0) return false;
@@ -696,8 +699,6 @@ export default function DetalhesSolicitacaoModal({
       return false;
     }
 
-    if (sol?.statusSolicitacao?.nmStatus === statusList.ARQUIVADO.label) return false;
-
     return false;
   })();
 
@@ -725,6 +726,16 @@ export default function DetalhesSolicitacaoModal({
 
   const diretorPermitidoDsParecer = (() => {
     const isDiretoriaPerfil = userResponsavel?.idPerfil === perfilUtil.VALIDADOR_ASSINANTE;
+
+    if (statusText === statusList.ARQUIVADO.label) {
+      if (
+        (userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR) ||
+        (userResponsavel?.idPerfil === perfilUtil.GESTOR_DO_SISTEMA) ||
+        isDiretoriaPerfil
+      )
+      return true;
+    }
+
     if (!isDiretoriaPerfil) return false;
     if (statusText === statusList.EM_ANALISE_AREA_TECNICA.label &&
       (

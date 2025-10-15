@@ -81,7 +81,7 @@ export default function EmailDetail({
     try {
       const [responsaveisResponse, temasResponse, areaResponse] = await Promise.all([
         responsaveisClient.buscarPorFiltro({ size: 100 }),
-        temasClient.buscarPorFiltro({ size: 100 }),
+        temasClient.buscarPorFiltro({ size: 400 }),
         areasClient.buscarPorFiltro({ size: 100 })
       ]);
 
