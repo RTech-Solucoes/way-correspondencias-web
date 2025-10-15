@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { TextField } from '@/components/ui/text-field';
 import { MultiSelectAreas } from '@/components/ui/multi-select-areas';
 import { ResponsavelRequest, ResponsavelResponse } from '@/api/responsaveis/types';
@@ -10,7 +11,7 @@ import { PerfilResponse } from '@/api/perfis/types';
 import { perfisClient } from '@/api/perfis/client';
 import { User } from '@/types/auth/types';
 import { toast } from 'sonner';
-import { mask } from "@/utils/utils";
+import { mask, validateCPF, validateEmail } from "@/utils/utils";
 import authClient from '@/api/auth/client';
 import anexosClient from '@/api/anexos/client';
 import { TipoObjetoAnexo, ArquivoDTO } from '@/api/anexos/type';
@@ -36,7 +37,6 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
     nmCargo: ''
   });
   const [selectedAreaIds, setSelectedAreaIds] = useState<number[]>([]);
-  const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
   const [perfis, setPerfis] = useState<PerfilResponse[]>([]);
   const [loadingPerfis, setLoadingPerfis] = useState(false);
@@ -46,12 +46,133 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
   const [existingPhotoPreview, setExistingPhotoPreview] = useState<string | null>(null);
   const [existingPhoto, setExistingPhoto] = useState<{ idAnexo: number; nmArquivo: string } | null>(null);
   const [photoBusy, setPhotoBusy] = useState(false);
+  const [savingData, setSavingData] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const getPerfil = (): string => {
     return perfis?.filter(perfil => perfil.idPerfil === formData.idPerfil)?.[0]?.nmPerfil ||
       (loadingPerfis ? 'Carregando...' : 'Nenhum perfil atribuído')
   }
+
+  const validateField = (fieldName: string, value: string): void => {
+    const newErrors = { ...errors };
+
+    switch (fieldName) {
+      case 'dsEmail':
+        if (value && !validateEmail(value)) {
+          newErrors.dsEmail = 'Email inválido';
+        } else {
+          delete newErrors.dsEmail;
+        }
+        break;
+      case 'nrCpf':
+        if (value && !validateCPF(value)) {
+          newErrors.nrCpf = 'CPF inválido';
+        } else {
+          delete newErrors.nrCpf;
+        }
+        break;
+      case 'dtNascimento':
+        if (value) {
+          const birthDate = new Date(value);
+          const today = new Date();
+          if (birthDate > today) {
+            newErrors.dtNascimento = 'Data de nascimento não pode ser futura';
+          } else {
+            delete newErrors.dtNascimento;
+          }
+        } else {
+          delete newErrors.dtNascimento;
+        }
+        break;
+    }
+
+    setErrors(newErrors);
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (formData.dsEmail && !validateEmail(formData.dsEmail)) {
+      newErrors.dsEmail = 'Email inválido';
+    }
+
+    if (formData.nrCpf && !validateCPF(formData.nrCpf)) {
+      newErrors.nrCpf = 'CPF inválido';
+    }
+
+    if (formData.dtNascimento) {
+      const birthDate = new Date(formData.dtNascimento);
+      const today = new Date();
+      if (birthDate > today) {
+        newErrors.dtNascimento = 'Data de nascimento não pode ser futura';
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }
+
+  const handleSaveData = async () => {
+    if (!validateForm()) {
+      toast.error('Por favor, corrija os erros antes de salvar');
+      return;
+    }
+
+    try {
+      setSavingData(true);
+      const idFromToken = authClient.getUserIdResponsavelFromToken();
+      const idResponsavel = user?.idResponsavel ?? idFromToken;
+      
+      if (!idResponsavel) {
+        toast.error('Erro ao identificar usuário');
+        return;
+      }
+
+      const updateData: ResponsavelRequest = {
+        idPerfil: formData.idPerfil,
+        nmUsuarioLogin: formData.nmUsuarioLogin,
+        nmResponsavel: formData.nmResponsavel,
+        dsEmail: formData.dsEmail,
+        nrCpf: formData.nrCpf,
+        dtNascimento: formData.dtNascimento,
+        nmCargo: formData.nmCargo,
+        idsAreas: formData.idsAreas,
+      };
+
+      await responsaveisClient.atualizar(idResponsavel, updateData);
+      toast.success('Dados atualizados com sucesso');
+      onSave?.();
+      onClose();
+    } catch (error) {
+      console.error('Erro ao salvar dados:', error);
+      toast.error('Erro ao salvar dados');
+    } finally {
+      setSavingData(false);
+    }
+  };
+
+  const isFormValid = useCallback(() => {
+    const newErrors: Record<string, string> = {};
+
+    if (formData.dsEmail && !validateEmail(formData.dsEmail)) {
+      newErrors.dsEmail = 'Email inválido';
+    }
+
+    if (formData.nrCpf && !validateCPF(formData.nrCpf)) {
+      newErrors.nrCpf = 'CPF inválido';
+    }
+
+    if (formData.dtNascimento) {
+      const birthDate = new Date(formData.dtNascimento);
+      const today = new Date();
+      if (birthDate > today) {
+        newErrors.dtNascimento = 'Data de nascimento não pode ser futura';
+      }
+    }
+
+    return Object.keys(newErrors).length === 0 && Object.keys(errors).length === 0;
+  }, [formData, errors]);
 
   const buscarPerfis = useCallback(async () => {
     try {
@@ -206,16 +327,18 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
             name="dsEmail"
             type="email"
             value={formData.dsEmail}
-            readOnly
-            disabled
+            onChange={(e) => setFormData(prev => ({ ...prev, dsEmail: e.target.value }))}
+            onBlur={() => validateField('dsEmail', formData.dsEmail)}
+            error={errors.dsEmail}
           />
 
           <TextField
             label="CPF"
             name="nrCpf"
             value={mask.cpf(formData.nrCpf)}
-            readOnly
-            disabled
+            onChange={(e) => setFormData(prev => ({ ...prev, nrCpf: e.target.value.replace(/\D/g, '') }))}
+            onBlur={() => validateField('nrCpf', formData.nrCpf)}
+            error={errors.nrCpf}
           />
 
           <TextField
@@ -223,6 +346,15 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
             name="dtNascimento"
             type="date"
             value={formData.dtNascimento}
+            onChange={(e) => setFormData(prev => ({ ...prev, dtNascimento: e.target.value }))}
+            onBlur={() => validateField('dtNascimento', formData.dtNascimento)}
+            error={errors.dtNascimento}
+          />
+
+          <TextField
+            label="Nome do Cargo"
+            name="nmCargo"
+            value={formData.nmCargo}
             readOnly
             disabled
           />
@@ -354,6 +486,18 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
           />
 
         </form>
+        <DialogFooter className="flex gap-2">
+          <Button type="button" variant="outline" onClick={onClose} disabled={savingData}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleSaveData}
+            disabled={savingData || !isFormValid()}
+            className="disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {savingData ? 'Salvando...' : 'Salvar Alterações'}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

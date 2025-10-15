@@ -727,7 +727,7 @@ export default function DetalhesSolicitacaoModal({
   const diretorPermitidoDsParecer = (() => {
     const isDiretoriaPerfil = userResponsavel?.idPerfil === perfilUtil.VALIDADOR_ASSINANTE;
 
-    if (statusText === statusList.ARQUIVADO.label) {
+  if (statusText === statusList.ARQUIVADO.label) {
       if (
         (userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR) ||
         (userResponsavel?.idPerfil === perfilUtil.GESTOR_DO_SISTEMA) ||
@@ -737,7 +737,9 @@ export default function DetalhesSolicitacaoModal({
     }
 
     if (!isDiretoriaPerfil) return false;
-    if (statusText === statusList.EM_ANALISE_AREA_TECNICA.label &&
+    if (
+      (statusText === statusList.EM_ANALISE_AREA_TECNICA.label || 
+        statusText === statusList.VENCIDO_AREA_TECNICA.label) &&
       (
         flAnaliseGerenteDiretor !== AnaliseGerenteDiretor.N &&
         flAnaliseGerenteDiretor !== AnaliseGerenteDiretor.G

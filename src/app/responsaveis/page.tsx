@@ -37,6 +37,7 @@ import {toast} from 'sonner';
 import {useDebounce} from '@/hooks/use-debounce';
 import {FiltrosAplicados} from '@/components/ui/applied-filters';
 import {usePermissoes} from "@/context/permissoes/PermissoesContext";
+import {useUserGestao} from "@/hooks/use-user-gestao";
 
 
 export default function ResponsaveisPage() {
@@ -79,7 +80,8 @@ export default function ResponsaveisPage() {
   } = useResponsaveis();
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
-  const { canInserirResponsavel, canAtualizarResponsavel, canDeletarResponsavel } = usePermissoes()
+  const { canInserirResponsavel, canAtualizarResponsavel, canDeletarResponsavel } = usePermissoes();
+  const { isAdminOrGestor } = useUserGestao();
 
   const loadResponsaveis = useCallback(async () => {
     try {
@@ -295,19 +297,23 @@ export default function ResponsaveisPage() {
                   <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </StickyTableHead>
-              <StickyTableHead className="cursor-pointer w-36" onClick={() => handleSort('nrCpf')}>
-                <div className="flex items-center">
-                  CPF
-                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
-                </div>
-              </StickyTableHead>
-              <StickyTableHead className="text-right">Ações</StickyTableHead>
+              {isAdminOrGestor && (
+                <StickyTableHead className="cursor-pointer w-36" onClick={() => handleSort('nrCpf')}>
+                  <div className="flex items-center">
+                    CPF
+                    <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
+                  </div>
+                </StickyTableHead>
+              )}
+              {(canDeletarResponsavel || canAtualizarResponsavel) && (
+                <StickyTableHead className="text-right">Ações</StickyTableHead>
+              )}
             </StickyTableRow>
           </StickyTableHeader>
           <StickyTableBody>
             {loading ? (
               <StickyTableRow>
-                <StickyTableCell colSpan={8} className="text-center py-8">
+                <StickyTableCell colSpan={isAdminOrGestor ? 8 : 7} className="text-center py-8">
                   <div className="flex flex-1 items-center justify-center py-8">
                     <SpinnerIcon className="h-6 w-6 animate-spin text-gray-400" />
                     <span className="ml-2 text-gray-500">Buscando responsáveis...</span>
@@ -316,7 +322,7 @@ export default function ResponsaveisPage() {
               </StickyTableRow>
             ) : responsaveis?.length === 0 ? (
               <StickyTableRow>
-                <StickyTableCell colSpan={8} className="text-center py-8">
+                <StickyTableCell colSpan={isAdminOrGestor ? 8 : 7} className="text-center py-8">
                   <div className="flex flex-col items-center space-y-2">
                     <UsersIcon className="h-8 w-8 text-gray-400"/>
                     <p className="text-sm text-gray-500">Nenhum responsável encontrado</p>
@@ -358,7 +364,9 @@ export default function ResponsaveisPage() {
                       {getStatusText(responsavel.flAtivo)}
                     </span>
                   </StickyTableCell>
-                  <StickyTableCell className="w-36">{formatCPF(responsavel.nrCpf)}</StickyTableCell>
+                  {isAdminOrGestor && (
+                    <StickyTableCell className="w-36">{formatCPF(responsavel.nrCpf)}</StickyTableCell>
+                  )}
                   <StickyTableCell className="text-right">
                     <div className="flex items-center justify-end space-x-2">
                       {canAtualizarResponsavel &&
