@@ -582,7 +582,10 @@ export default function DetalhesSolicitacaoModal({
   const btnEnviarDevolutivaLabel = btnEnviarDevolutiva[sol?.statusSolicitacao?.nmStatus as keyof typeof btnEnviarDevolutiva] ?? btnEnviarDevolutiva.default;
   const labelFlAprovacao = textlabelFlag[sol?.statusSolicitacao?.nmStatus as keyof typeof textlabelFlag] ?? textlabelFlag.default;
 
+  const nrNivelUltimaTramitacao = sol?.tramitacoes[0]?.tramitacao?.nrNivel;
+
   const isDiretorJaAprovou = sol?.tramitacoes?.some(t =>
+    t?.tramitacao?.nrNivel === nrNivelUltimaTramitacao &&
     t?.tramitacao?.idStatusSolicitacao === sol?.statusSolicitacao?.idStatusSolicitacao &&
     t?.tramitacao?.flAprovado === 'S' &&
     (t?.tramitacao?.tramitacaoAcao?.some(ta =>
@@ -610,7 +613,6 @@ export default function DetalhesSolicitacaoModal({
   idsResponsaveisAssinates.includes(userResponsavel.idResponsavel);
 
   const enableEnviarDevolutiva = (() => {
-    const nrNivelUltimaTramitacao = sol?.tramitacoes[0]?.tramitacao?.nrNivel;
     const tramitacaoExecutada = sol?.tramitacoes?.filter(t =>
       t?.tramitacao?.nrNivel === nrNivelUltimaTramitacao &&
       t?.tramitacao?.idStatusSolicitacao === sol?.statusSolicitacao?.idStatusSolicitacao &&
@@ -622,6 +624,11 @@ export default function DetalhesSolicitacaoModal({
       t?.tramitacao?.nrNivel === nrNivelUltimaTramitacao &&
       sol?.statusSolicitacao?.idStatusSolicitacao !== statusList.EM_ASSINATURA_DIRETORIA.id &&
       t?.tramitacao?.idStatusSolicitacao === sol?.statusSolicitacao?.idStatusSolicitacao &&
+      !((sol?.statusSolicitacao?.nmStatus === statusList.EM_ANALISE_AREA_TECNICA.label || 
+        sol?.statusSolicitacao?.nmStatus === statusList.VENCIDO_AREA_TECNICA.label) &&
+        (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.D ||
+            flAnaliseGerenteDiretor === AnaliseGerenteDiretor.A)
+      ) &&
       userResponsavel?.areas?.some(a => a?.area?.idArea === t?.tramitacao?.areaOrigem?.idArea)
     );
 
