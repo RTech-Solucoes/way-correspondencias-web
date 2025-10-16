@@ -1,7 +1,6 @@
 import { SolicitacaoResumoResponse } from "@/types/solicitacoes/types";
 import ApiClient from "../client";
-import { SolicitacaoResponse } from "../solicitacoes/types";
-import { DashboardListSummary, DashboardOverview, ICalendar, IRecentActivity, PaginatedResponse, SolicitacaoPrazo } from "./type";
+import { DashboardListSummary, DashboardOverview, ICalendar, ICalendarYear, IRecentActivity, PaginatedResponse, SolicitacaoPrazo } from "./type";
 
 class DashboardClient {
     private client: ApiClient;
@@ -46,8 +45,8 @@ class DashboardClient {
         });
     }
 
-    async getCalendarByYear(ano: number): Promise<ICalendar[]> {
-        return this.client.request<ICalendar[]>(`/list-by-month-in-year?ano=${ano}`, {
+    async getCalendarByYear(ano: number): Promise<ICalendarYear[]> {
+        return this.client.request<ICalendarYear[]>(`/list-by-month-in-year?ano=${ano}`, {
             method: "GET",
         });
     }

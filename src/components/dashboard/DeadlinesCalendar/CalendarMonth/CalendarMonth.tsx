@@ -4,16 +4,23 @@ import FilterCalendarMonth from "./FilterCalendarMonth";
 import { ICalendar } from "@/api/dashboard/type";
 import dashboardClient from "@/api/dashboard/client";
 import { getStatusColorCalendar } from "../../functions";
+import { useRouter } from "next/navigation";
 
 export default function CalendarMonth() {
+  const router = useRouter();
   const [tooltip, setTooltip] = useState<{
     visible: boolean;
     x: number;
     y: number;
-    items: any[];
+    items: ICalendar[];
   }>({ visible: false, x: 0, y: 0, items: [] });
+  const [tooltipHoverTimeout, setTooltipHoverTimeout] = useState<NodeJS.Timeout | null>(null);
 
-  const showTooltip = (e: React.MouseEvent, items: any[]) => {
+  const showTooltip = (e: React.MouseEvent, items: ICalendar[]) => {
+    if (tooltipHoverTimeout) {
+      clearTimeout(tooltipHoverTimeout);
+      setTooltipHoverTimeout(null);
+    }
     setTooltip({
       visible: true,
       x: e.clientX + 10,
@@ -23,10 +30,19 @@ export default function CalendarMonth() {
   };
 
   const hideTooltip = () => {
-    setTooltip({ visible: false, x: 0, y: 0, items: [] });
+    const timeout = setTimeout(() => {
+      setTooltip({ visible: false, x: 0, y: 0, items: [] });
+    }, 200);
+    setTooltipHoverTimeout(timeout);
   };
 
-  // Prevenir scroll quando tooltip está visível
+  const keepTooltipOpen = () => {
+    if (tooltipHoverTimeout) {
+      clearTimeout(tooltipHoverTimeout);
+      setTooltipHoverTimeout(null);
+    }
+  };
+
   useLayoutEffect(() => {
     if (tooltip.visible) {
       document.body.style.overflow = 'hidden';
@@ -38,6 +54,14 @@ export default function CalendarMonth() {
       document.body.style.overflow = 'unset';
     };
   }, [tooltip.visible]);
+
+  useEffect(() => {
+    return () => {
+      if (tooltipHoverTimeout) {
+        clearTimeout(tooltipHoverTimeout);
+      }
+    };
+  }, [tooltipHoverTimeout]);
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [calendarByMonth, setCalendarByMonth] = useState<ICalendar[]>([]);
@@ -143,7 +167,7 @@ export default function CalendarMonth() {
                     -
                   </div>
                 ) : (
-                  dayObligations.slice(0, 3).map((obligation) => {
+                  dayObligations.slice(0, 2).map((obligation) => {
                     const obligationDate = new Date(obligation.dtFim);
                     const time = obligationDate.toLocaleTimeString('pt-BR', {
                       hour: '2-digit',
@@ -153,28 +177,32 @@ export default function CalendarMonth() {
                     return (
                       <div
                         key={obligation.idSolicitacaoPrazo}
-                        className={`p-1 rounded text-xs truncate ${getStatusColorCalendar(obligation.nmStatus)}`}
-                        title={`${obligation.nmTema} - ${time}`}
+                        className={`p-1 rounded text-xs truncate cursor-pointer hover:opacity-80 transition-opacity ${getStatusColorCalendar(obligation.nmStatus)}`}
+                        title={`${obligation.cdIdentificacao} - ${time}`}
+                        onClick={() => router.push(`/solicitacoes?idSolicitacao=${obligation.idSolicitacao}`)}
                       >
                         <div className="font-medium text-xs">{time}</div>
-                        <div className="truncate">{obligation.nmTema}</div>
+                        <div className="truncate">{obligation.cdIdentificacao}</div>
+                        <div className="truncate text-xs opacity-75 mt-1">
+                          {obligation.nmStatus}
+                        </div>
                       </div>
                     );
                   })
                 )}
 
-                {dayObligations.length > 3 && (
+                {dayObligations.length > 2 && (
                   <div
                     className="text-xs text-gray-500 text-center py-1 cursor-pointer"
                     onMouseEnter={(e) =>
                       showTooltip(
                         e,
-                        dayObligations.slice(3)
+                        dayObligations.slice(2)
                       )
                     }
                     onMouseLeave={hideTooltip}
                   >
-                    +{dayObligations.length - 3} mais
+                    +{dayObligations.length - 2} mais
                   </div>
                 )}
               </div>
@@ -185,11 +213,13 @@ export default function CalendarMonth() {
 
       {tooltip.visible && (
         <div
-          className="fixed z-50 bg-white border border-gray-300 shadow-lg rounded-lg p-2 w-64 overflow-y-auto pointer-events-none"
+          className="fixed z-50 bg-white border border-gray-300 shadow-lg rounded-lg p-2 w-64 overflow-y-auto max-h-80"
           style={{
             top: tooltip.y,
             left: tooltip.x
           }}
+          onMouseEnter={keepTooltipOpen}
+          onMouseLeave={hideTooltip}
         >
           <div className="font-semibold text-sm mb-2 text-gray-700">
             Outras Solicitações:
@@ -204,12 +234,16 @@ export default function CalendarMonth() {
             return (
               <div
                 key={obligation.idSolicitacaoPrazo}
-                className={`p-1 mb-1 rounded text-xs ${getStatusColorCalendar(
+                className={`p-1 mb-1 rounded text-xs cursor-pointer hover:opacity-80 transition-opacity ${getStatusColorCalendar(
                   obligation.nmStatus
                 )}`}
+                onClick={() => router.push(`/solicitacoes?idSolicitacao=${obligation.idSolicitacao}`)}
               >
                 <div className="font-medium">{time}</div>
-                <div>{obligation.nmTema}</div>
+                <div>{obligation.cdIdentificacao}</div>
+                <div className="text-xs opacity-75 mt-1">
+                  {obligation.nmStatus}
+                </div>
               </div>
             );
           })}

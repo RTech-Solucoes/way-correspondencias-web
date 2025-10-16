@@ -204,6 +204,11 @@ export const validateCPF = (cpf: string): boolean => {
   return parseInt(cpfLimpo[10]) === digito2;
 };
 
+export const validateEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
 export const hasPermissao = (permissao: string): boolean | null => {
   const permissoesStorage = localStorage.getItem("permissoes-storage");
 

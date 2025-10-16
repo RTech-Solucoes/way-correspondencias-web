@@ -72,6 +72,7 @@ export interface ICalendar {
     idSolicitacao: number;
     idStatusSolicitacao: number;
     nmStatus: string;
+    cdIdentificacao: string;
     idTema: number;
     nmTema: string;
     nrPrazoInterno: number;
@@ -81,4 +82,9 @@ export interface ICalendar {
     minutosRestantes: number;
     estourou: number;
     estourado: boolean;
+}
+
+export interface ICalendarYear {
+    mes: string;
+    qtde: number;
 }

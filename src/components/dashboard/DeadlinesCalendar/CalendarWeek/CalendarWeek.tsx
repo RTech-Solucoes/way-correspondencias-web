@@ -1,17 +1,19 @@
 import { ICalendar } from "@/api/dashboard/type";
 import { getCurrentWeek, getStatusColorCalendar } from "../../functions";
+import { useRouter } from "next/navigation";
 
 interface ICalendarWeekProps {
   calendarByWeek: ICalendar[];
 }
 
 export default function CalendarWeek(props: ICalendarWeekProps) {
+  const router = useRouter();
   const currentWeek = getCurrentWeek();
 
   return (
     <div className="space-y-2">
       <div className="grid grid-cols-7 gap-1 text-center mb-2">
-        {currentWeek.map((dayInfo, index) => {
+        {currentWeek.map((dayInfo) => {
           return (
             <div
               key={dayInfo.dayName}
@@ -25,7 +27,7 @@ export default function CalendarWeek(props: ICalendarWeekProps) {
         })}
       </div>
       <div className="grid grid-cols-7 gap-1">
-        {currentWeek.map((dayInfo, index) => {
+        {currentWeek.map((dayInfo) => {
           const dayObligations = props.calendarByWeek.filter(obligation => {
             const obligationDate = new Date(obligation.dtFim);
             return obligationDate.getDate() === dayInfo.date &&
@@ -39,10 +41,10 @@ export default function CalendarWeek(props: ICalendarWeekProps) {
             >
               {dayObligations?.length === 0 ? (
                 <div className="text-xs text-gray-400 h-full flex items-center justify-center">
-                  Sem obrigações
+                  Sem Prazos
                 </div>
               ) : (
-                dayObligations.map((obligation, i) => {
+                dayObligations.map((obligation) => {
                   const obligationDate = new Date(obligation.dtFim);
                   const time = obligationDate.toLocaleTimeString('pt-BR', {
                     hour: '2-digit',
@@ -52,11 +54,12 @@ export default function CalendarWeek(props: ICalendarWeekProps) {
                   return (
                     <div
                       key={obligation.idSolicitacaoPrazo}
-                      className={`mb-2 p-2 rounded text-xs ${getStatusColorCalendar(obligation.nmStatus)}`}
+                      className={`mb-2 p-2 rounded text-xs cursor-pointer hover:opacity-80 transition-opacity ${getStatusColorCalendar(obligation.nmStatus)}`}
+                      onClick={() => router.push(`/solicitacoes?idSolicitacao=${obligation.idSolicitacao}`)}
                     >
                       <div className="font-medium">{time}</div>
-                      <div>{obligation.nmTema}</div>
-                      <div className="text-xs opacity-75 mt-1">{obligation.nmStatus}</div>
+                      <div className="truncate">{obligation.cdIdentificacao}</div>
+                      <div className="truncate text-xs opacity-75 mt-1">{obligation.nmStatus}</div>
                     </div>
                   );
                 })

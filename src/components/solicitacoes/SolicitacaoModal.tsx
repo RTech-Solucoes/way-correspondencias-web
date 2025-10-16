@@ -1393,17 +1393,11 @@ export default function SolicitacaoModal({
       </div>
 
       <div className="border-t pt-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div>
             <Label className="text-sm font-semibold text-gray-700">Tema</Label>
             <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
               {getSelectedTema()?.nmTema || solicitacao?.tema?.nmTema || solicitacao?.nmTema || 'Não selecionado'}
-            </div>
-          </div>
-          <div>
-            <Label className="text-sm font-semibold text-gray-700">Responsável</Label>
-            <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
-              {responsaveis.find(r => r.idResponsavel === formData.idResponsavel)?.nmResponsavel || 'Não definido'}
             </div>
           </div>
         </div>
