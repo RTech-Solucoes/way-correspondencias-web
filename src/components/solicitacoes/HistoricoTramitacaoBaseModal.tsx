@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { formatDateTime, formatMinutosEmDiasHorasMinutos } from '@/utils/utils';
 import { TipoHistoricoResposta } from '@/api/solicitacoes';
 import { perfilUtil } from '@/api/perfis/types';
+import { statusList } from '@/api/status-solicitacao/types';
 
 export type HistoricoBaseItem = {
   id: number | string;
@@ -114,7 +115,11 @@ export default function HistoricoTramitacaoBaseModal({
                           {item.dsDescricao}
                         </p>
                       ) : (
-                        <p className="text-sm text-gray-600 italic">A solicitação foi direcionada para a(s) área(s) responsável(is)</p>
+                          <p className="text-sm text-gray-600 italic">
+                            {item.nmStatus === statusList.CONCLUIDO.label
+                              ? 'Solicitação Arquivada' 
+                              : 'A solicitação foi direcionada para a(s) área(s) responsável(is)'}
+                          </p>
                       )}
                     </div>
                     <div className="flex flex-col items-end space-y-0.5 text-right">
