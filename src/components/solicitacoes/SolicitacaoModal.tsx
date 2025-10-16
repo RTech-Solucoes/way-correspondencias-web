@@ -1051,6 +1051,7 @@ export default function SolicitacaoModal({
 
   const getDefaultPrazos = useCallback((): StatusSolicPrazoTemaForUI[] => {
     const defaultPrazosPorStatus: { [key: number]: number } = {
+      [statusListType.EM_ANALISE_AREA_TECNICA.id]: 72,
       [statusListType.ANALISE_REGULATORIA.id]: 72,
       [statusListType.EM_APROVACAO.id]: 48,
       [statusListType.EM_ASSINATURA_DIRETORIA.id]: 48,
@@ -1157,7 +1158,7 @@ export default function SolicitacaoModal({
                       
                       if (prazoFromConfig === undefined) {
                         const defaultPrazosPorStatus: { [key: number]: number } = {
-                          [statusListType.PRE_ANALISE.id]: 72,
+                          [statusListType.EM_ANALISE_AREA_TECNICA.id]: 72,
                           [statusListType.ANALISE_REGULATORIA.id]: 72,
                           [statusListType.EM_APROVACAO.id]: 48,
                           [statusListType.EM_ASSINATURA_DIRETORIA.id]: 48,
@@ -1529,7 +1530,9 @@ export default function SolicitacaoModal({
               .map(({ status, horas }) => (
                 <div key={status.codigo} className="flex justify-between items-center p-2 bg-gray-50 rounded text-sm">
                   <span className="font-medium">{status.nome}</span>
-                  <span className="text-gray-600">{horas} horas</span>
+                  <span className="text-gray-600">
+                    {prazoExcepcional ? `${horas} horas` : `${horasParaDias(horas)} dias`}
+                  </span>
                 </div>
               ));
 
