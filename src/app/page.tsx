@@ -162,7 +162,7 @@ export default function LoginPage() {
 
       <div className="relative w-[55%] h-[90vh] m-auto rounded-4xl overflow-hidden max-[1460px]:w-[60%] hidden md:block">
         <Image
-          src="/images/Background-login.png"
+          src={`/images/${layoutClient}-background-login.png`}
           alt="Rodovia"
           fill
           className="object-center"
