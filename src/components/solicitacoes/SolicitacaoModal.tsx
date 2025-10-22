@@ -92,7 +92,8 @@ export default function SolicitacaoModal({
     nrProcesso: '',
     flAnaliseGerenteDiretor: '',
     flExcepcional: 'N',
-    idsResponsaveisAssinates: []
+    idsResponsaveisAssinates: [],
+    flExigeCienciaGerenteRegul: '',
   });
   const [loading, setLoading] = useState(false);
   const [anexos, setAnexos] = useState<File[]>([]);
@@ -217,7 +218,8 @@ export default function SolicitacaoModal({
         nrOficio: solicitacao.nrOficio || '',
         nrProcesso: solicitacao.nrProcesso || '',
         flAnaliseGerenteDiretor: solicitacao.flAnaliseGerenteDiretor || '',
-        flExcepcional: solicitacao.flExcepcional || 'N'
+        flExcepcional: solicitacao.flExcepcional || 'N',
+        flExigeCienciaGerenteRegul: solicitacao.flExigeCienciaGerenteRegul || '',
       });
       
       const isExcepcional = (solicitacao.flExcepcional || 'N') === 'S';
@@ -238,7 +240,8 @@ export default function SolicitacaoModal({
         nrOficio: '',
         nrProcesso: '',
         flAnaliseGerenteDiretor: '',
-        flExcepcional: 'N'
+        flExcepcional: 'N',
+        flExigeCienciaGerenteRegul: '',
       });
       
       setPrazoExcepcional(false);
@@ -385,7 +388,8 @@ export default function SolicitacaoModal({
             dsObservacao: formData.dsObservacao?.trim(),
             nrOficio: formData.nrOficio?.trim(),
             nrProcesso: formData.nrProcesso?.trim(),
-            flAnaliseGerenteDiretor: formData.flAnaliseGerenteDiretor
+            flAnaliseGerenteDiretor: formData.flAnaliseGerenteDiretor,
+            flExigeCienciaGerenteRegul: formData.flExigeCienciaGerenteRegul
           });
         }
 
@@ -712,6 +716,7 @@ export default function SolicitacaoModal({
           nrProcesso: formData.nrProcesso?.trim(),
           flExcepcional: formData.flExcepcional === 'S' ? 'S' : 'N',
           flAnaliseGerenteDiretor: formData.flAnaliseGerenteDiretor,
+          flExigeCienciaGerenteRegul: formData.flExigeCienciaGerenteRegul,
         });
         id = created.idSolicitacao;
 
@@ -721,7 +726,8 @@ export default function SolicitacaoModal({
           dsObservacao: formData.dsObservacao?.trim(),
           nrOficio: formData.nrOficio?.trim(),
           nrProcesso: formData.nrProcesso?.trim(),
-          flAnaliseGerenteDiretor: formData.flAnaliseGerenteDiretor
+          flAnaliseGerenteDiretor: formData.flAnaliseGerenteDiretor,
+          flExigeCienciaGerenteRegul: formData.flExigeCienciaGerenteRegul
         });
 
         await solicitacoesClient.etapaTema(id, {
@@ -884,6 +890,38 @@ export default function SolicitacaoModal({
                 disabled={hasTramitacoes}
               />
               <Label className="text-sm font-light">Não necessita</Label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="flExigeCienciaGerenteRegul" className="text-sm font-medium">
+            Exige manifestação do Gerente do Regulatório? *
+          </Label>
+          <div className="flex items-center gap-4 mt-2">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={(formData.flExigeCienciaGerenteRegul || '').toUpperCase() === 'S'}
+                onCheckedChange={() => setFormData(prev => ({
+                  ...prev,
+                  flExigeCienciaGerenteRegul: 'S'
+                }))}
+                disabled={hasTramitacoes}
+              />
+              <Label className="text-sm font-light">Sim</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={(formData.flExigeCienciaGerenteRegul || '').toUpperCase() === 'N'}
+                onCheckedChange={() => setFormData(prev => ({
+                  ...prev,
+                  flExigeCienciaGerenteRegul: 'N'
+                }))}
+                disabled={hasTramitacoes}
+              />
+              <Label className="text-sm font-light ">Não, apenas ciência</Label>
             </div>
           </div>
         </div>

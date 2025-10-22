@@ -682,7 +682,8 @@ export default function DetalhesSolicitacaoModal({
 
     if (sol?.statusSolicitacao?.nmStatus === statusList.ANALISE_REGULATORIA.label ||
       sol?.statusSolicitacao?.nmStatus === statusList.VENCIDO_REGULATORIO.label) {
-       if (hasAreaInicial) return true;
+        if (userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR) return true;
+        if (hasAreaInicial && userResponsavel?.idPerfil === perfilUtil.GESTOR_DO_SISTEMA) return true;
       return false;
     }
     
