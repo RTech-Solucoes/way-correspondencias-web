@@ -1,45 +1,37 @@
 'use client';
 
-import {useCallback, useMemo, useState, ChangeEvent, FormEvent, useEffect, useRef, CSSProperties} from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
-import { ClockIcon, DownloadIcon, PaperclipIcon, X as XIcon } from '@phosphor-icons/react';
-import { SolicitacaoDetalheResponse } from '@/api/solicitacoes/types';
-import type { AnexoResponse } from '@/api/anexos/type';
-import { ArquivoDTO, TipoObjetoAnexo, TipoResponsavelAnexo } from '@/api/anexos/type';
-import { anexosClient } from '@/api/anexos/client';
-import { base64ToUint8Array, fileToArquivoDTO, saveBlob } from '@/utils/utils';
-import { Checkbox } from '@/components/ui/checkbox';
-import { usePermissoes } from '@/context/permissoes/PermissoesContext';
-import { HistoricoRespostasModalButton } from './HistoricoRespostasModal';
+import { ArquivoDTO, TipoResponsavelAnexo } from '@/api/anexos/type';
+import { areaUtil } from '@/api/areas/types';
 import authClient from '@/api/auth/client';
+import { computeTpResponsavel, perfilUtil } from '@/api/perfis/types';
 import { responsaveisClient } from '@/api/responsaveis/client';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
-import tramitacoesClient from '@/api/tramitacoes/client';
-import { AnaliseGerenteDiretor } from '@/types/solicitacoes/types';
 import { solicitacaoParecerClient } from '@/api/solicitacao-parecer/client';
 import { SolicitacaoParecerResponse } from '@/api/solicitacao-parecer/types';
+import { solicitacoesClient } from '@/api/solicitacoes';
+import { SolicitacaoDetalheResponse, SolicitacaoPrazoResponse } from '@/api/solicitacoes/types';
+import statusSolicitacaoClient, { StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
 import { statusList } from '@/api/status-solicitacao/types';
-import { perfilUtil } from '@/api/perfis/types';
-import { areaUtil } from '@/api/areas/types';
+import tramitacoesClient from '@/api/tramitacoes/client';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Pill } from '@/components/ui/pill';
+import { Textarea } from '@/components/ui/textarea';
+import { usePermissoes } from '@/context/permissoes/PermissoesContext';
+import { AnaliseGerenteDiretor } from '@/types/solicitacoes/types';
+import { fileToArquivoDTO, hoursToDaysAndHours } from '@/utils/utils';
+import { ClockIcon, PaperclipIcon, X as XIcon } from '@phosphor-icons/react';
+import { ChangeEvent, CSSProperties, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
+import AnexoModalTramitacao from './AnexoModalTramitacao';
+import { HistoricoRespostasModalButton } from './HistoricoRespostasModal';
+import InformaçaoStatusEmAnaliseGerReg from './InformaçaoStatusEmAnaliseGerReg';
 
-type AnexoItemShape = {
-  idAnexo: number;
-  idObjeto: number;
-  nmArquivo: string;
-  tpObjeto: TipoObjetoAnexo;
-  tpResponsavel?: TipoResponsavelAnexo;
-};
+import type { AnexoResponse } from '@/api/anexos/type';
+
 
 type DetalhesSolicitacaoModalProps = {
   open: boolean;
@@ -97,6 +89,9 @@ export default function DetalhesSolicitacaoModal({
   const [canToggleDescricao, setCanToggleDescricao] = useState(false);
   const [lineHeightPx, setLineHeightPx] = useState<number | null>(null);
   const { canListarAnexo, canDeletarAnexo, canAprovarSolicitacao } = usePermissoes();
+  const [responsaveis, setResponsaveis] = useState<ResponsavelResponse[]>([]);
+  const [statusListPrazos, setStatusListPrazos] = useState<StatusSolicitacaoResponse[]>([]);
+  const [prazosSolicitacaoPorStatus, setPrazosSolicitacaoPorStatus] = useState<SolicitacaoPrazoResponse[]>([]);
 
   const sol = solicitacao ?? null;
 
@@ -134,6 +129,39 @@ export default function DetalhesSolicitacaoModal({
 
     return '—';
   }, [sol?.statusSolicitacao?.idStatusSolicitacao, sol?.solcitacaoPrazos, sol?.statusSolicitacao?.nmStatus]);
+
+  useEffect(() => {
+    const loadResponsaveis = async () => {
+      const resp = await responsaveisClient.buscarPorFiltro({ size: 1000 });
+      setResponsaveis(resp.content);
+    };
+    loadResponsaveis();
+  }, []);
+
+  useEffect(() => {
+    const loadStatusList = async () => {
+      try {
+        const status = await statusSolicitacaoClient.listarTodos();
+        setStatusListPrazos(status);
+      } catch (error) {
+        console.error('Erro ao carregar lista de status:', error);
+      }
+    };
+
+    if (open) {
+      loadStatusList();
+    }
+  }, [open]);
+
+  useEffect(() => {
+    const loadPrazos = async () => {
+      const prazosSolicitacaoPorStatus = await solicitacoesClient.listarPrazos(solicitacao?.solicitacao?.idSolicitacao || 0);
+      setPrazosSolicitacaoPorStatus(prazosSolicitacaoPorStatus || []);
+    };
+    if (solicitacao?.solicitacao?.idSolicitacao) {
+      loadPrazos();
+    }
+  }, [solicitacao?.solicitacao?.idSolicitacao]);
 
   const isPrazoVencido = useMemo(() => {
     const dataAtual = new Date();
@@ -182,38 +210,6 @@ export default function DetalhesSolicitacaoModal({
 
   const temaLabel = sol?.solicitacao?.tema?.nmTema ?? sol?.solicitacao?.nmTema ?? '—';
 
-  const anexosTramitacoes: AnexoResponse[] = (solicitacao?.tramitacoes ?? []).flatMap((t) => t?.anexos ?? []);
-  const anexosSolic: AnexoResponse[] = solicitacao?.anexosSolicitacao ?? [];
-  const anexosEmail: AnexoResponse[] = solicitacao?.email?.anexos ?? [];
-
-  const mapToItem = (
-    a: Partial<AnexoResponse> & { idAnexo: number; idObjeto: number; nmArquivo: string; tpObjeto?: string }
-  ): AnexoItemShape => ({
-    idAnexo: a.idAnexo,
-    idObjeto: (a as AnexoResponse).idObjeto,
-    nmArquivo: a.nmArquivo,
-    tpObjeto: (((a as AnexoResponse).tpObjeto as unknown) as TipoObjetoAnexo) ?? TipoObjetoAnexo.S,
-    tpResponsavel: (a as { tpResponsavel?: TipoResponsavelAnexo })?.tpResponsavel,
-  });
-
-  const anexosAnalista: AnexoItemShape[] = anexosTramitacoes
-    .filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexo.A)
-    .map(mapToItem);
-
-  const anexosGerente: AnexoItemShape[] = anexosTramitacoes
-    .filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexo.G)
-    .map(mapToItem);
-
-  const anexosDiretor: AnexoItemShape[] = anexosTramitacoes
-    .filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexo.D)
-    .map(mapToItem);
-
-  const anexosRegulatorio: AnexoItemShape[] = anexosTramitacoes 
-    .filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexo.R)
-    .map(mapToItem);
-  
-  const itensSolicitacao: AnexoItemShape[] = anexosSolic.map(mapToItem);
-  const itensEmail: AnexoItemShape[] = anexosEmail.map(mapToItem);
 
   const isAprovacao = sol?.statusSolicitacao?.idStatusSolicitacao ===  statusList.EM_APROVACAO.id; 
   const isDiretoria = sol?.statusSolicitacao?.idStatusSolicitacao ===  statusList.EM_ASSINATURA_DIRETORIA.id; 
@@ -221,8 +217,15 @@ export default function DetalhesSolicitacaoModal({
     sol?.statusSolicitacao?.idStatusSolicitacao ===  statusList.ANALISE_REGULATORIA.id &&
     idProximoStatusAnaliseRegulatoria === statusList.EM_APROVACAO.id; 
   
-  const isConcluido = sol?.statusSolicitacao?.idStatusSolicitacao ===  statusList.CONCLUIDO.id;
-  const isFlagVisivel = isAprovacao || isDiretoria || isAnaliseRegulatoriaAprovarDevolutiva || isConcluido;
+  const isConcluido = sol?.statusSolicitacao?.idStatusSolicitacao === statusList.CONCLUIDO.id;
+  const isAnaliseGerenteRegulatorio = statusText === statusList.EM_ANALISE_GERENTE_REGULATORIO.label;
+
+  const isFlagVisivel =
+    isAprovacao ||
+    isDiretoria ||
+    isAnaliseRegulatoriaAprovarDevolutiva ||
+    isConcluido ||
+    isAnaliseGerenteRegulatorio;
 
   const isPermissaoEnviandoDevolutiva = (isFlagVisivel && !canAprovarSolicitacao);
 
@@ -273,26 +276,6 @@ export default function DetalhesSolicitacaoModal({
       checkResponsavelInicial();
     }
   }, [open, sol?.solicitacao?.idSolicitacao, sol?.solicitacao?.area, sol]);
-
-  function computeTpResponsavel(perfil: number): TipoResponsavelAnexo {
-
-    if (perfil === perfilUtil.ADMINISTRADOR || perfil === perfilUtil.GESTOR_DO_SISTEMA) {
-      return TipoResponsavelAnexo.R;
-    }
-
-    if (perfil === perfilUtil.VALIDADOR_ASSINANTE) {
-      return TipoResponsavelAnexo.D;
-    }
-
-    if (perfil === perfilUtil.EXECUTOR_AVANCADO) {
-      return TipoResponsavelAnexo.G;
-    }
-
-    if (perfil === perfilUtil.EXECUTOR || perfil === perfilUtil.EXECUTOR_RESTRITO || perfil === perfilUtil.TECNICO_SUPORTE) {
-      return TipoResponsavelAnexo.A;
-    }
-    return TipoResponsavelAnexo.A;
-  }
 
   const measureDescricao = useCallback(() => {
     const el = descRef.current;
@@ -345,6 +328,17 @@ export default function DetalhesSolicitacaoModal({
     async (e: FormEvent) => {
       e.preventDefault();
       if (!onEnviarDevolutiva) return;
+
+      if (statusText === statusList.EM_ANALISE_GERENTE_REGULATORIO.label) {
+        if (isFlagVisivel && !flAprovado) {
+          toast.error('É obrigatório escolher uma opção (Sim/Não) para arquivar a solicitação.');
+          return;
+        }
+        if (flAprovado === 'N' && !resposta.trim()) {
+          toast.error('É obrigatório escrever uma justificativa na caixa de texto.');
+          return;
+        }
+      }
 
       if (statusText === statusList.CONCLUIDO.label) {
         if (isFlagVisivel && !flAprovado) {
@@ -452,32 +446,6 @@ export default function DetalhesSolicitacaoModal({
     }
   }, [dsDarecer, onClose, sol?.solicitacao?.idSolicitacao,sol?.tramitacoes, sol?.statusSolicitacao?.idStatusSolicitacao, sol?.solicitacaoPareceres, userResponsavel?.idResponsavel]);
 
-  const handleBaixarAnexo = useCallback(
-    async (anexo: AnexoItemShape) => {
-      try {
-        if (!anexo?.idObjeto || !anexo?.tpObjeto) {
-          toast.error('Dados do anexo inválidos.');
-          return;
-        }
-        const arquivos = await anexosClient.download(anexo.idObjeto, anexo.tpObjeto, anexo.nmArquivo);
-        if (!arquivos || arquivos.length === 0) {
-          toast.error('Nenhum arquivo retornado.');
-          return;
-        }
-        arquivos.forEach((arq: ArquivoDTO) => {
-          const bytes = base64ToUint8Array(arq.conteudoArquivo);
-          const name = arq.nomeArquivo || anexo.nmArquivo || 'arquivo';
-          const mime = arq.tipoConteudo || 'application/octet-stream';
-          saveBlob(bytes, mime, name);
-        });
-        toast.success('Download iniciado.');
-      } catch (e) {
-        console.error(e);
-        toast.error('Não foi possível baixar o anexo.');
-      }
-    },
-    []
-  );
 
   const descricaoCollapsedStyle: CSSProperties =
     !expandDescricao && lineHeightPx
@@ -545,6 +513,10 @@ export default function DetalhesSolicitacaoModal({
   const btnTextareaEmAprovacao = (devolutivaReprovadaUmavezDiretoria && flAprovado === 'N')
     ? 'Encaminhar parecer para Diretoria'
     : 'Encaminhar parecer para o Regulatório';
+  
+  const btnEncaminharParaGestorSistema = (flAprovado === 'N'
+    ? 'Encaminhar para Gestor Sistema'
+    : 'Encaminhar para Área Técnica');
 
   const labelTextareaDevolutiva = {
     [statusList.ANALISE_REGULATORIA.label]: labelStatusAnaliseRegulatoria,
@@ -552,6 +524,7 @@ export default function DetalhesSolicitacaoModal({
     [statusList.EM_CHANCELA.label]: 'Escrever resposta à Diretoria',
     [statusList.EM_ASSINATURA_DIRETORIA.label]: 'Escrever Parecer',
     [statusList.CONCLUIDO.label]: 'Informações do arquivamento',
+    [statusList.EM_ANALISE_GERENTE_REGULATORIO.label]: 'Parecer do Gerente do Regulatório',
     default: 'Enviar devolutiva ao Regulatório'
   }
 
@@ -561,6 +534,7 @@ export default function DetalhesSolicitacaoModal({
     [statusList.ANALISE_REGULATORIA.label]: btnLabelStatusAnaliseRegulatoria,
     [statusList.EM_ASSINATURA_DIRETORIA.label]: flAprovado !== '' ? btnStatusEmAssinaturaDiretoria : 'Aprovar Solicitação',
     [statusList.CONCLUIDO.label]: 'Arquivar Solicitação',
+    [statusList.EM_ANALISE_GERENTE_REGULATORIO.label]: btnEncaminharParaGestorSistema,
     default: 'Enviar Resposta'
   }
   
@@ -575,6 +549,7 @@ export default function DetalhesSolicitacaoModal({
     [statusList.EM_ASSINATURA_DIRETORIA.label]: labelFragEmDiretoria,
     [statusList.EM_APROVACAO.label]: labelFragEmAprovacao,
     [statusList.CONCLUIDO.label]: 'Incluir Protocolo ANTT ?',
+    [statusList.EM_ANALISE_GERENTE_REGULATORIO.label]: 'Aprovar Solicitação?',
     default: 'Aprovar devolutiva?'
   }
 
@@ -646,6 +621,11 @@ export default function DetalhesSolicitacaoModal({
     }
 
     if (sol?.statusSolicitacao?.nmStatus === statusList.ARQUIVADO.label) return false;
+
+    if (sol?.statusSolicitacao?.nmStatus === statusList.EM_ANALISE_GERENTE_REGULATORIO.label) {
+      if (userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR) return true;
+      return false;
+    }
 
     if (tramitacaoExecutada != null && tramitacaoExecutada?.length > 0) return false;
 
@@ -758,6 +738,11 @@ export default function DetalhesSolicitacaoModal({
     return true;
   })();
 
+  const currentPrazoTotal = useMemo(() => {
+    const total = sol?.solcitacaoPrazos?.reduce((acc, curr) => acc + curr.nrPrazoInterno, 0);
+    return total;
+  }, [sol?.solcitacaoPrazos]);
+
   return (
     <>
     <Dialog open={open} onOpenChange={onClose}>
@@ -837,7 +822,23 @@ export default function DetalhesSolicitacaoModal({
               <div className="grid grid-cols-12">
                 <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Nº do processo:</div>
                 <div className="col-span-9 px-4 py-3 text-sm">{sol?.solicitacao?.nrProcesso || '—'}</div>
-              </div>
+                </div>
+                { isAnaliseGerenteRegulatorio && (
+                  <>
+                    <div className="h-px bg-border" />
+                    <div className="grid grid-cols-12">
+                    <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Prazo Principal</div>
+                    <div className="col-span-9 px-4 py-3 text-sm">
+                      {hoursToDaysAndHours(currentPrazoTotal ?? 0)}
+                      {sol?.solicitacao?.flExcepcional === 'S' ? (
+                        <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                          Excepcional
+                        </span>
+                      ) : null}
+                    </div>
+                    </div>
+                  </>
+                )}
             </div>
           </section>
 
@@ -879,78 +880,22 @@ export default function DetalhesSolicitacaoModal({
             </div>
           </section>
 
-          {canListarAnexo && (
-            <section className="space-y-3">
-              <h3 className="text-sm font-semibold">Anexos </h3>
-              <div className="rounded-md border">
-                <div className="grid grid-cols-12 items-center">
-                  <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
-                    Anexos do E-mail
-                  </div>
-                  <div className="col-span-9 px-4 py-3">
-                    <AnexoItem anexos={itensEmail} onBaixar={handleBaixarAnexo} />
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-md border">
-                <div className="grid grid-cols-12 items-center">
-                  <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
-                    Anexos da Solicitação
-                  </div>
-                  <div className="col-span-9 px-4 py-3">
-                    <AnexoItem anexos={itensSolicitacao} onBaixar={handleBaixarAnexo} />
-                  </div>
-                </div>
-            </div>
-
-              <div className="space-y-2">
-                <div className="rounded-md border">
-                  <div className="grid grid-cols-12 items-center">
-                    <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
-                      Anexado pelo Analista
-                    </div>
-                    <div className="col-span-9 px-4 py-3">
-                      <AnexoItem anexos={anexosAnalista} onBaixar={handleBaixarAnexo} />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-md border">
-                  <div className="grid grid-cols-12 items-center">
-                    <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
-                      Anexado pelo Gerente
-                    </div>
-                    <div className="col-span-9 px-4 py-3">
-                      <AnexoItem anexos={anexosGerente} onBaixar={handleBaixarAnexo} />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-md border">
-                  <div className="grid grid-cols-12 items-center">
-                    <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
-                      Anexado pelos Diretores
-                    </div>
-                    <div className="col-span-9 px-4 py-3">
-                      <AnexoItem anexos={anexosDiretor} onBaixar={handleBaixarAnexo} />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-md border">
-                  <div className="grid grid-cols-12 items-center">
-                    <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
-                      Enviado pelo Regulatório
-                    </div>
-                    <div className="col-span-9 px-4 py-3">
-                      <AnexoItem anexos={anexosRegulatorio} onBaixar={handleBaixarAnexo} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
+          {isAnaliseGerenteRegulatorio && (
+            <InformaçaoStatusEmAnaliseGerReg 
+              solicitacao={solicitacao}
+              statusListPrazos={statusListPrazos}
+              prazosSolicitacaoPorStatus={prazosSolicitacaoPorStatus}
+              responsaveis={responsaveis}
+              isAnaliseGerenteRegulatorio={isAnaliseGerenteRegulatorio}
+            />
           )}
+            
+          <AnexoModalTramitacao 
+            solicitacao={solicitacao}
+            canListarAnexo={canListarAnexo}
+            isAnaliseGerenteRegulatorio={isAnaliseGerenteRegulatorio}
+          />
+            
 
           {(isFlagVisivel  && !diretorPermitidoDsParecer) && (
             <section className="space-y-3">
@@ -1028,7 +973,8 @@ export default function DetalhesSolicitacaoModal({
                         className="hidden"
                         multiple
                         onChange={handleUploadChange}
-                        disabled={!enableEnviarDevolutiva} />
+                        disabled={!enableEnviarDevolutiva}
+                    />
                   </label>
 
                 {arquivos.length > 0 && (
@@ -1064,7 +1010,23 @@ export default function DetalhesSolicitacaoModal({
                 </ul>
               )}
             </div>
-          </section>
+            </section>
+            {isAnaliseGerenteRegulatorio && (
+              <section className="space-y-3">
+              <div className="flex items-center justify-between gap-4 mt-2">
+                <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={false}
+                      onCheckedChange={() => {}}
+                      id="cienciaGerenteRegul"
+                    />
+                    <Label htmlFor="cienciaGerenteRegul" className="text-sm font-medium">
+                    Declaro estar ciente da solicitação e de seu conteúdo
+                    </Label>
+                  </div>
+                </div>
+              </section>
+          )}
         </form>
 
         <DialogFooter className="flex gap-3 px-6 pb-6">
@@ -1095,50 +1057,5 @@ export default function DetalhesSolicitacaoModal({
       </DialogContent>
     </Dialog>
     </>
-  );
-}
-
-function AnexoItem({
-  anexos,
-  onBaixar,
-}: {
-  anexos: AnexoItemShape[];
-  onBaixar?: (a: AnexoItemShape) => void | Promise<void>;
-}) {
-  if (!anexos || anexos.length === 0) {
-    return <span className="text-sm text-muted-foreground">Nenhum documento</span>;
-  }
-  return (
-    <ul className="flex flex-col gap-2">
-      {anexos.map((a) => (
-        <li
-          key={`${a.idAnexo}-${a.nmArquivo}`}
-          className="flex items-center justify-between rounded-md border bg-white px-3 py-2"
-        >
-          <span className="truncate text-sm">{a.nmArquivo}</span>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => onBaixar?.(a)}
-            title="Baixar"
-          >
-            <DownloadIcon className="h-4 w-4" />
-          </Button>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function Pill({ children, title }: { children: React.ReactNode; title?: string }) {
-  return (
-    <span
-      title={title}
-      className="inline-flex min-w-0 items-center rounded-full border border-border bg-muted/40 px-2.5 py-0.5 text-xs font-medium text-foreground/90"
-    >
-      <span className="truncate max-w-[160px]">{children}</span>
-    </span>
   );
 }

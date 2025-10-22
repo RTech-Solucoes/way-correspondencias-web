@@ -29,7 +29,7 @@ import AnexoList from '../AnexoComponotent/AnexoList/AnexoList';
 import {statusSolicPrazoTemaClient} from '@/api/status-prazo-tema/client';
 import {StatusSolicPrazoTemaForUI} from '@/api/status-prazo-tema/types';
 import {statusSolicitacaoClient, StatusSolicitacaoResponse} from '@/api/status-solicitacao/client';
-import {AnexoResponse, TipoObjetoAnexo, TipoResponsavelAnexo} from '@/api/anexos/type';
+import {AnexoResponse, TipoObjetoAnexo} from '@/api/anexos/type';
 import {areasClient} from '@/api/areas/client';
 import tramitacoesClient from '@/api/tramitacoes/client';
 import {anexosClient} from '@/api/anexos/client';
@@ -40,6 +40,9 @@ import { AnaliseGerenteDiretor } from '@/types/solicitacoes/types';
 import { STATUS_LIST, statusList as statusListType } from '@/api/status-solicitacao/types';
 import { MultiSelectAssinantes } from '../ui/multi-select-assinates';
 import solicitacaoAssinanteClient from '@/api/solicitacao-assinante/client';
+import { computeTpResponsavel } from '@/api/perfis/types';
+import authClient from '@/api/auth/client';
+import responsaveisClient from '@/api/responsaveis/client';
 
 interface AnexoListItem {
   idAnexo?: number;
@@ -113,6 +116,7 @@ export default function SolicitacaoModal({
   const [hasTramitacoes, setHasTramitacoes] = useState(false);
   const [tramitacoesChecked, setTramitacoesChecked] = useState(false);
   const [prazosSolicitacaoPorStatus, setPrazosSolicitacaoPorStatus] = useState<SolicitacaoPrazoResponse[]>([]);
+  const [userResponsavelIdPerfil, setUserResponsavelIdPerfil] = useState<number>(0);
 
   const handleConfirmSend = useCallback(async () => {
     if (!confirmSendId) return;
@@ -303,6 +307,19 @@ export default function SolicitacaoModal({
     }
   }, [open]);
 
+  useEffect(() => {
+    const loadUserResponsavel = async () => {
+      const userName = authClient.getUserName();
+      if (userName) {
+        const resp = await responsaveisClient.buscarPorNmUsuarioLogin(userName);
+        setUserResponsavelIdPerfil(resp?.idPerfil || 0);
+      }
+    };
+    if (open) {
+      loadUserResponsavel();
+    }
+  }, [open]);
+
   const getResponsavelFromTema = useCallback((temaId: number): number => {
     const tema = temas.find(t => t.idTema === temaId);
     if (tema && responsaveis.length > 0) {
@@ -354,8 +371,9 @@ export default function SolicitacaoModal({
         AnaliseGerenteDiretor.G,
         AnaliseGerenteDiretor.N,
         AnaliseGerenteDiretor.A,
-      ] as string[]).includes((formData.flAnaliseGerenteDiretor || '').toUpperCase());
-  }, [formData.cdIdentificacao, formData.flAnaliseGerenteDiretor]);
+      ] as string[]).includes((formData.flAnaliseGerenteDiretor || '').toUpperCase()) &&
+      (formData.flExigeCienciaGerenteRegul === 'S' || formData.flExigeCienciaGerenteRegul === 'N');
+  }, [formData.cdIdentificacao, formData.flAnaliseGerenteDiretor, formData.flExigeCienciaGerenteRegul]);
 
   const isStep2Valid = useCallback(() => {
     return (formData.idTema !== undefined && formData.idTema > 0 &&
@@ -375,6 +393,10 @@ export default function SolicitacaoModal({
       if (currentStep === 1) {
         if (!formData.cdIdentificacao?.trim()) {
           toast.error("Código de identificação é obrigatório");
+          return;
+        }
+        if (!formData.flExigeCienciaGerenteRegul || (formData.flExigeCienciaGerenteRegul !== 'S' && formData.flExigeCienciaGerenteRegul !== 'N')) {
+          toast.error("É obrigatório selecionar se exige manifestação do Gerente do Regulatório");
           return;
         }
         if (!solicitacao) {
@@ -538,7 +560,7 @@ export default function SolicitacaoModal({
                   nomeArquivo: file.name.trim(),
                   conteudoArquivo: base64Content,
                   tipoArquivo: file.type || 'application/octet-stream',
-                  tpResponsavel: TipoResponsavelAnexo.A // TODO: Colocado apenas para remover erro, necessário ajustar depois
+                  tpResponsavel: computeTpResponsavel(userResponsavelIdPerfil)
                 };
               })
             );
@@ -788,7 +810,7 @@ export default function SolicitacaoModal({
                 nomeArquivo: file.name.trim(),
                 conteudoArquivo: base64.split(',')[1],
                 tipoArquivo: file.type || 'application/octet-stream',
-                tpResponsavel: TipoResponsavelAnexo.A // TODO: Colocado apenas para remover erro, necessário ajustar depois
+                tpResponsavel: computeTpResponsavel(userResponsavelIdPerfil)
               };
             })
           );
