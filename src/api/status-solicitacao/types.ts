@@ -28,7 +28,7 @@ export const STATUS_LIST: StatusMeta[] = [
   { id: 8, key: 'EM_ASSINATURA_DIRETORIA', label: 'Em assinatura Diretoria' },
   { id: 9, key: 'CONCLUIDO', label: 'Concluído' },
   { id: 10, key: 'ARQUIVADO', label: 'Arquivado' },
-  { id: 11, key: 'EM_ANALISE_GERENTE_REGULATORIO', label: 'Em análise Gerente do Regulatório' },
+  { id: 16, key: 'EM_ANALISE_GERENTE_REGULATORIO', label: 'Análise Gerente do Regulatório' },
 ];
 
 export const statusList: Record<StatusKey, StatusMeta> = {

@@ -16,9 +16,10 @@ interface FiltersState {
   status: string;
   dateFrom: string;
   dateTo: string;
-  nomeResponsavel: string;
+  nmResponsavel: string;
   dtCriacaoInicio: string;
   dtCriacaoFim: string;
+  flExigeCienciaGerenteRegul: string;
 }
 
 export interface SolicitacoesContextProps {
@@ -98,13 +99,19 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
     status: '',
     dateFrom: '',
     dateTo: '',
-    nomeResponsavel: '',
+    nmResponsavel: '',
     dtCriacaoInicio: '',
     dtCriacaoFim: '',
+    flExigeCienciaGerenteRegul: 'all',
   });
   const [activeFilters, setActiveFilters] = useState(filters);
 
-  const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
+  const hasActiveFilters = Object.entries(activeFilters).some(([key, value]) => {
+    if (key === 'flExigeCienciaGerenteRegul') {
+      return value !== 'all' && value !== '';
+    }
+    return value !== '';
+  });
 
   const handleEdit = (solicitacao: SolicitacaoResponse) => {
     setSelectedSolicitacao(solicitacao);
@@ -136,9 +143,10 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
       status: '',
       dateFrom: '',
       dateTo: '',
-      nomeResponsavel: '',
+      nmResponsavel: '',
       dtCriacaoInicio: '',
       dtCriacaoFim: '',
+      flExigeCienciaGerenteRegul: 'all',
     };
     setFilters(clearedFilters);
     setActiveFilters(clearedFilters);

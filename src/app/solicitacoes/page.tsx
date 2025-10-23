@@ -156,9 +156,12 @@ function SolicitacoesPageContent() {
         ? Number(activeFilters.tema)
         : undefined;
       const cdIdentificacao = activeFilters.identificacao || undefined;
-      const nomeResponsavel = activeFilters.nomeResponsavel || undefined;
+      const nmResponsavel = activeFilters.nmResponsavel || undefined;
       const dtCriacaoInicio = activeFilters.dtCriacaoInicio ? `${activeFilters.dtCriacaoInicio}T00:00:00` : undefined;
       const dtCriacaoFim = activeFilters.dtCriacaoFim ? `${activeFilters.dtCriacaoFim}T23:59:59` : undefined;
+      const flExigeCienciaGerenteRegul = activeFilters.flExigeCienciaGerenteRegul && activeFilters.flExigeCienciaGerenteRegul !== 'all' 
+        ? activeFilters.flExigeCienciaGerenteRegul 
+        : undefined;
 
       const response = await solicitacoesClient.buscarPorFiltro({
         filtro,
@@ -168,9 +171,10 @@ function SolicitacoesPageContent() {
         idArea,
         cdIdentificacao,
         idTema,
-        nomeResponsavel,
+        nmResponsavel,
         dtCriacaoInicio,
         dtCriacaoFim,
+        flExigeCienciaGerenteRegul,
         idSolicitacao: prefilledFilters.idSolicitacao,
         sort: sortField ? `${sortField},${sortDirection === 'desc' ? 'desc' : 'asc'}` : undefined,
       });
@@ -297,13 +301,13 @@ function SolicitacoesPageContent() {
         setFilters(newFilters);
       }
     }] : []),
-    ...(activeFilters.nomeResponsavel ? [{
-      key: 'nomeResponsavel',
+    ...(activeFilters.nmResponsavel ? [{
+      key: 'nmResponsavel',
       label: 'Nome do Responsável',
-      value: activeFilters.nomeResponsavel,
+      value: activeFilters.nmResponsavel,
       color: 'yellow' as const,
       onRemove: () => {
-        const newFilters = { ...activeFilters, nomeResponsavel: '' };
+        const newFilters = { ...activeFilters, nmResponsavel: '' };
         setActiveFilters(newFilters);
         setFilters(newFilters);
       }
@@ -326,6 +330,17 @@ function SolicitacoesPageContent() {
       color: 'pink' as const,
       onRemove: () => {
         const newFilters = { ...activeFilters, dtCriacaoFim: '' };
+        setActiveFilters(newFilters);
+        setFilters(newFilters);
+      }
+    }] : []),
+    ...(activeFilters.flExigeCienciaGerenteRegul && activeFilters.flExigeCienciaGerenteRegul !== 'all' ? [{
+      key: 'flExigeCienciaGerenteRegul',
+      label: 'Exige Ciência do Gerente',
+      value: activeFilters.flExigeCienciaGerenteRegul === 'S' ? 'Sim' : 'Não, apenas ciência',
+      color: 'blue' as const,
+      onRemove: () => {
+        const newFilters = { ...activeFilters, flExigeCienciaGerenteRegul: 'all' };
         setActiveFilters(newFilters);
         setFilters(newFilters);
       }
@@ -516,7 +531,7 @@ function SolicitacoesPageContent() {
               idArea: activeFilters.area && activeFilters.area !== 'all' ? Number(activeFilters.area) : undefined,
               idTema: activeFilters.tema && activeFilters.tema !== 'all' ? Number(activeFilters.tema) : undefined,
               cdIdentificacao: activeFilters.identificacao || undefined,
-              nomeResponsavel: activeFilters.nomeResponsavel || undefined,
+              nmResponsavel: activeFilters.nmResponsavel || undefined,
               dtCriacaoInicio: activeFilters.dtCriacaoInicio ? `${activeFilters.dtCriacaoInicio}T00:00:00` : undefined,
               dtCriacaoFim: activeFilters.dtCriacaoFim ? `${activeFilters.dtCriacaoFim}T23:59:59` : undefined,
               sort: sortField ? `${sortField},${sortDirection === 'desc' ? 'desc' : 'asc'}` : undefined,
@@ -585,6 +600,7 @@ function SolicitacoesPageContent() {
                 </div>
               </StickyTableHead>
               <StickyTableHead className="min-w-[220px]">Progresso</StickyTableHead>
+              <StickyTableHead className="min-w-[220px] text-center">Aprovação Gerente do Regulatório</StickyTableHead>
               <StickyTableHead
                 className="cursor-pointer"
                 onClick={() => handleSort('statusSolicitacao.nmStatus')}
@@ -667,6 +683,10 @@ function SolicitacoesPageContent() {
                         now={new Date().toISOString()}
                         statusLabel={solicitacao.statusSolicitacao?.nmStatus}
                       />
+                    </StickyTableCell>
+                    <StickyTableCell className="min-w-[220px] text-center">
+                      {solicitacao.flExigeCienciaGerenteRegul === 'N' ? 'Não, apenas ciência' :
+                        (solicitacao.flExigeCienciaGerenteRegul === 'S' ? 'Sim' : '-')}
                     </StickyTableCell>
                     <StickyTableCell>
                       <Badge
@@ -760,7 +780,6 @@ function SolicitacoesPageContent() {
         onOpenChange={setShowFilterModal}
         filters={filters}
         setFilters={setFilters}
-        responsaveis={responsaveis}
         temas={temas}
         areas={areas}
         statuses={statuses}

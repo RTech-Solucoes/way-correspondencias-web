@@ -152,9 +152,10 @@ export interface SolicitacaoFilterParams {
   idArea?: number;
   cdIdentificacao?: string;
   idTema?: number;
-  nomeResponsavel?: string;
+  nmResponsavel?: string;
   dtCriacaoInicio?: string;
   dtCriacaoFim?: string;
+  flExigeCienciaGerenteRegul?: string;
   page?: number;
   size?: number;
   sort?: string;
