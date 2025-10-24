@@ -145,6 +145,9 @@ return (
                   {typeof h.nrTempoGasto === 'number' ? (
                     <Text style={styles.small}><Text style={styles.smallBold}>Tempo de resposta:</Text> {formatMinutosEmDiasHorasMinutos(h.nrTempoGasto)}</Text>
                   ) : null}
+                  {h.flAprovado && (
+                    <Text style={styles.small}><Text style={styles.smallBold}>Aprovado:</Text> {h.flAprovado === 'S' ? 'Sim' : 'Não'}</Text>
+                  )}
                 </View>
               </View>
             ))

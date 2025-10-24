@@ -20,6 +20,7 @@ export type HistoricoBaseItem = {
   areaDestino?: string | null;
   nrTempoGasto?: number | null;
   idPerfil?: number | null;
+  flAprovado?: string | null;
 };
 
 interface HistoricoBaseModalProps {
@@ -44,6 +45,7 @@ export default function HistoricoTramitacaoBaseModal({
   items,
 }: HistoricoBaseModalProps) {
 
+  console.log('items', items);
   const getParecerLabel = (idPerfil?: number | null) => {
     
     if (idPerfil === perfilUtil.VALIDADOR_ASSINANTE) {
@@ -111,16 +113,16 @@ export default function HistoricoTramitacaoBaseModal({
                   </div>
                   <div className="mb-3 flex items-end justify-between gap-3">
                     <div className="flex-1 min-w-0 mr-4">
-                      {item.dsObservacao && item.dsObservacao.trim() !== '' ? (
+                      {(item.dsDescricao && item.dsDescricao.trim() !== '') || (item.dsObservacao && item.dsObservacao.trim() !== '') ? (
                         <p className="text-sm text-gray-800 font-medium leading-relaxed break-words">
-                          {item.dsObservacao}
+                          {item.dsDescricao || item.dsObservacao}
                         </p>
                       ) : (
                         <p className="text-sm text-gray-600 italic">
-                          {item.nmStatus === statusList.PRE_ANALISE.label 
+                          {item.nmStatus === statusList.PRE_ANALISE.label
                             ? 'Solicitação Encaminhada para Gerente do Regulatório' 
                             : item.nmStatus === statusList.EM_ANALISE_GERENTE_REGULATORIO.label
-                            ? 'Solicitação Encaminhada para Gerente do Sistema' 
+                            ? 'Ciência do Gerente do Regulatório' 
                             : item.nmStatus === statusList.CONCLUIDO.label
                             ? 'Solicitação Arquivada' 
                             : 'A solicitação foi direcionada para a(s) área(s) responsável(is)'}
@@ -136,6 +138,11 @@ export default function HistoricoTramitacaoBaseModal({
                       </div>
                       {item.nmStatus && (
                         <div className="text-xs text-gray-600">{`Status: ${item.nmStatus}`}</div>
+                      )}
+                      {item.flAprovado && (
+                        <div className="text-xs text-gray-600 flex items-center">
+                          {`Aprovado: ${item.flAprovado === 'S' ? 'Sim' : 'Não'}`}
+                        </div>
                       )}
                       {item.nrTempoGasto && (
                         <div className="text-xs text-gray-600 flex items-center">

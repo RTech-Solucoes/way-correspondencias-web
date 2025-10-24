@@ -30,6 +30,13 @@ const statusConfig: Record<
         bgColor: "#b68500",
         textColor: "#b68500",
     },
+    [statusList.EM_ANALISE_GERENTE_REGULATORIO.label]: {
+        icon: <FileSearch className="h-4 w-4 text-amber-600 mr-2" />,
+        visionColor: "bg-[#87CEEB]",
+        calendarColor: "bg-[#87CEEB] text-white",
+        bgColor: "#87CEEB",
+        textColor: "#87CEEB",
+    },
     [statusList.VENCIDO_REGULATORIO.label]: {
         icon: <XCircleIcon className="h-4 w-4 text-rose-700 mr-2" />,
         visionColor: "bg-rose-500",
@@ -40,9 +47,9 @@ const statusConfig: Record<
     [statusList.EM_ANALISE_AREA_TECNICA.label]: {
         icon: <PencilIcon className="h-4 w-4 text-amber-700 mr-2" />,
         visionColor: "bg-amber-500",
-        calendarColor: "bg-[#337efe] text-white",
-        bgColor: "#337efe",
-        textColor: "#337efe",
+        calendarColor: "bg-[#4A90E2] text-white",
+        bgColor: "#4A90E2",
+        textColor: "#4A90E2",
     },
     [statusList.VENCIDO_AREA_TECNICA.label]: {
         icon: <XCircleIcon className="h-4 w-4 text-rose-600 mr-2" />,

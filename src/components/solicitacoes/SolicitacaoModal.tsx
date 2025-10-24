@@ -1515,7 +1515,7 @@ export default function SolicitacaoModal({
       </div>
 
       <div className="border-t pt-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <div>
             <Label className="text-sm font-semibold text-gray-700">Prazo Principal</Label>
             <div className="p-3 border border-yellow-200 rounded-lg text-sm">
@@ -1529,8 +1529,15 @@ export default function SolicitacaoModal({
           </div>
           <div>
             <Label className="text-sm font-semibold text-gray-700">Exige aprovação especial</Label>
-            <div className="p-3 bg-gray-50 border rounded-lg text-sm">
-              {getTipoAprovacaoLabel(solicitacao?.flAnaliseGerenteDiretor ?? '')}
+            <div className="p-3 border rounded-lg text-sm">
+              {getTipoAprovacaoLabel(formData.flAnaliseGerenteDiretor ?? '')}
+            </div>
+          </div>
+          <div>
+            <Label className="text-sm font-semibold text-gray-700">Exige manifestação do Gerente do Regulatório</Label>
+            <div className="p-3 border rounded-lg text-sm">
+              {formData.flExigeCienciaGerenteRegul === 'S' ? 'Sim' : 
+               formData.flExigeCienciaGerenteRegul === 'N' ? 'Não, apenas ciência' : '—'}
             </div>
           </div>
         </div>
@@ -1669,7 +1676,7 @@ export default function SolicitacaoModal({
         </div>
       </div>
     </div>
-  ), [formData.cdIdentificacao, formData.nrOficio, formData.nrProcesso, formData.dsAssunto, formData.dsObservacao, formData.dsSolicitacao, formData.idsAreas, formData.nrPrazo, formData.idResponsavel, formData.tpPrazo, formData.idsResponsaveisAssinates, getSelectedTema, solicitacao?.tema?.nmTema, solicitacao?.nmTema, solicitacao?.statusSolicitacao?.idStatusSolicitacao, solicitacao?.statusSolicitacao?.nmStatus, solicitacao?.statusCodigo, responsaveis, statusPrazos, anexos, anexosBackend, anexosTypeE, canListarAnexo, allAreas, getResponsavelByArea, statusList, handleDownloadAnexoBackend, handleDownloadAnexoEmail, currentPrazoTotal, prazoExcepcional, prazosSolicitacaoPorStatus]);
+  ), [formData.cdIdentificacao, formData.nrOficio, formData.nrProcesso, formData.dsAssunto, formData.dsObservacao, formData.dsSolicitacao, formData.idsAreas, formData.nrPrazo, formData.idResponsavel, formData.tpPrazo, formData.idsResponsaveisAssinates, formData.flAnaliseGerenteDiretor, formData.flExigeCienciaGerenteRegul, getSelectedTema, solicitacao?.tema?.nmTema, solicitacao?.nmTema, solicitacao?.statusSolicitacao?.idStatusSolicitacao, solicitacao?.statusSolicitacao?.nmStatus, solicitacao?.statusCodigo, responsaveis, statusPrazos, anexos, anexosBackend, anexosTypeE, canListarAnexo, allAreas, getResponsavelByArea, statusList, handleDownloadAnexoBackend, handleDownloadAnexoEmail, currentPrazoTotal, prazoExcepcional, prazosSolicitacaoPorStatus, statusOcultos]);
 
   useEffect(() => {
     const loadStatusList = async () => {
@@ -1921,7 +1928,7 @@ export default function SolicitacaoModal({
         open={showConfirmSend}
         onOpenChange={setShowConfirmSend}
         title="Confirmar envio"
-        description="Após o envio da Solicitação não será possível alterá-la. Deseja prosseguir com o envio?"
+        description="Deseja encaminhar para o Gerente do Regulatório?"
         confirmText="Sim"
         cancelText="Voltar a solicitação"
         onConfirm={handleConfirmSend}

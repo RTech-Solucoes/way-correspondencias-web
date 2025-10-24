@@ -249,6 +249,7 @@ export interface HistoricoRespostaItemResponse {
   areaOrigem: AreaResponse;
   areaDestino: AreaResponse;
   nrTempoGasto: number;
+  flAprovado: string | null;
 }
 export interface SolicitacaoResumoComHistoricoResponse {
   solicitacao: SolicitacaoResumoResponse;

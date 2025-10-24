@@ -341,7 +341,7 @@ export default function DetalhesSolicitacaoModal({
           return;
         }
         
-        if (flAprovado === null || flAprovado === '' || flAprovado === 'N') {
+        if (!isExisteCienciaGerenteRegul && (flAprovado === null || flAprovado === '' || flAprovado === 'N')) {
           toast.error('É obrigatório marcar a opção "Declaro estar ciente da solicitação e de seu conteúdo".');
           return;
         }
@@ -350,6 +350,7 @@ export default function DetalhesSolicitacaoModal({
           toast.error('É obrigatório escrever uma justificativa na caixa de texto.');
           return;
         }
+        
       }
 
       if (statusText === statusList.CONCLUIDO.label) {
@@ -367,7 +368,7 @@ export default function DetalhesSolicitacaoModal({
         }
       }
       
-      if (!resposta.trim() && arquivos.length === 0) {
+      if (!resposta.trim() && arquivos.length === 0 && !sol?.solicitacao?.flExigeCienciaGerenteRegul) {
         toast.error('Escreva uma devolutiva ou anexe um arquivo.');
         return;
       }
@@ -405,7 +406,7 @@ export default function DetalhesSolicitacaoModal({
         setSending(false);
       }
     },
-    [onEnviarDevolutiva, resposta, arquivos, sol?.solicitacao?.idSolicitacao, onClose, flAprovado, isFlagVisivel, tpResponsavelUpload, statusText]
+    [onEnviarDevolutiva, resposta, arquivos, sol?.solicitacao?.idSolicitacao, sol?.solicitacao?.flExigeCienciaGerenteRegul, onClose, flAprovado, isFlagVisivel, tpResponsavelUpload, statusText, isExisteCienciaGerenteRegul]
   );
 
   const handleSalvarParecer = useCallback(async () => {
@@ -465,7 +466,7 @@ export default function DetalhesSolicitacaoModal({
       : {};
 
   const quantidadeDevolutivas = (() => {
-    const qtdTramitacoes = solicitacao?.tramitacoes?.filter(t => !!t?.tramitacao?.dsObservacao)?.length ?? 0;
+    const qtdTramitacoes = solicitacao?.tramitacoes?.filter(t => !!t?.tramitacao?.idTramitacao)?.length ?? 0;
     const qtdPareceres = sol?.solicitacaoPareceres?.length ?? 0;
     return qtdTramitacoes + qtdPareceres;
   })();
