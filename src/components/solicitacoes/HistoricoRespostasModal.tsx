@@ -69,6 +69,7 @@ export default function HistoricoRespostasModal({
         areaDestino: item.areaDestino?.nmArea || null,
         nrTempoGasto: item.nrTempoGasto || null,
         idPerfil: item.responsavel?.perfil?.idPerfil || null,
+        flAprovado: item.flAprovado || null,
       };
     });
   }, [historico]);

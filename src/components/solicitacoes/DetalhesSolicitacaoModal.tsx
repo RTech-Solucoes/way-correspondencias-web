@@ -20,7 +20,7 @@ import { Label } from '@/components/ui/label';
 import { Pill } from '@/components/ui/pill';
 import { Textarea } from '@/components/ui/textarea';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
-import { AnaliseGerenteDiretor } from '@/types/solicitacoes/types';
+import { AnaliseGerenteDiretor, getTipoAprovacaoLabel } from '@/types/solicitacoes/types';
 import { fileToArquivoDTO, hoursToDaysAndHours } from '@/utils/utils';
 import { ClockIcon, PaperclipIcon, X as XIcon } from '@phosphor-icons/react';
 import { ChangeEvent, CSSProperties, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -92,7 +92,8 @@ export default function DetalhesSolicitacaoModal({
   const [responsaveis, setResponsaveis] = useState<ResponsavelResponse[]>([]);
   const [statusListPrazos, setStatusListPrazos] = useState<StatusSolicitacaoResponse[]>([]);
   const [prazosSolicitacaoPorStatus, setPrazosSolicitacaoPorStatus] = useState<SolicitacaoPrazoResponse[]>([]);
-
+  
+ // solicitacao!.statusSolicitacao!.nmStatus = statusList.EM_ANALISE_GERENTE_REGULATORIO.label;
   const sol = solicitacao ?? null;
 
   const identificador = useMemo(
@@ -101,7 +102,12 @@ export default function DetalhesSolicitacaoModal({
   );
 
   const statusText = sol?.statusSolicitacao?.nmStatus ?? statusLabel;
+ // const statusText = statusList.EM_ANALISE_GERENTE_REGULATORIO.label;
+
   const flAnaliseGerenteDiretor = sol?.solicitacao?.flAnaliseGerenteDiretor as AnaliseGerenteDiretor;
+  const isExisteCienciaGerenteRegul =
+    (sol?.solicitacao?.flExigeCienciaGerenteRegul !== undefined &&
+      sol?.solicitacao?.flExigeCienciaGerenteRegul === 'S') ? true : false;
 
   const criadorLine = useMemo(() => formatDateTime(sol?.dtCriacao), [sol?.dtCriacao]);
   const prazoLine = useMemo(() => {
@@ -225,7 +231,7 @@ export default function DetalhesSolicitacaoModal({
     isDiretoria ||
     isAnaliseRegulatoriaAprovarDevolutiva ||
     isConcluido ||
-    isAnaliseGerenteRegulatorio;
+    (isAnaliseGerenteRegulatorio && isExisteCienciaGerenteRegul);
 
   const isPermissaoEnviandoDevolutiva = (isFlagVisivel && !canAprovarSolicitacao);
 
@@ -331,13 +337,20 @@ export default function DetalhesSolicitacaoModal({
 
       if (statusText === statusList.EM_ANALISE_GERENTE_REGULATORIO.label) {
         if (isFlagVisivel && !flAprovado) {
-          toast.error('É obrigatório escolher uma opção (Sim/Não) para arquivar a solicitação.');
+          toast.error('É obrigatório aprovar ou reprovar a solicitação (Sim/Não).');
           return;
         }
-        if (flAprovado === 'N' && !resposta.trim()) {
+        
+        if (!isExisteCienciaGerenteRegul && (flAprovado === null || flAprovado === '' || flAprovado === 'N')) {
+          toast.error('É obrigatório marcar a opção "Declaro estar ciente da solicitação e de seu conteúdo".');
+          return;
+        }
+
+        if (isExisteCienciaGerenteRegul && !resposta.trim()) {
           toast.error('É obrigatório escrever uma justificativa na caixa de texto.');
           return;
         }
+        
       }
 
       if (statusText === statusList.CONCLUIDO.label) {
@@ -355,7 +368,7 @@ export default function DetalhesSolicitacaoModal({
         }
       }
       
-      if (!resposta.trim() && arquivos.length === 0) {
+      if (!resposta.trim() && arquivos.length === 0 && !sol?.solicitacao?.flExigeCienciaGerenteRegul) {
         toast.error('Escreva uma devolutiva ou anexe um arquivo.');
         return;
       }
@@ -393,7 +406,7 @@ export default function DetalhesSolicitacaoModal({
         setSending(false);
       }
     },
-    [onEnviarDevolutiva, resposta, arquivos, sol?.solicitacao?.idSolicitacao, onClose, flAprovado, isFlagVisivel, tpResponsavelUpload, statusText]
+    [onEnviarDevolutiva, resposta, arquivos, sol?.solicitacao?.idSolicitacao, sol?.solicitacao?.flExigeCienciaGerenteRegul, onClose, flAprovado, isFlagVisivel, tpResponsavelUpload, statusText, isExisteCienciaGerenteRegul]
   );
 
   const handleSalvarParecer = useCallback(async () => {
@@ -453,7 +466,7 @@ export default function DetalhesSolicitacaoModal({
       : {};
 
   const quantidadeDevolutivas = (() => {
-    const qtdTramitacoes = solicitacao?.tramitacoes?.filter(t => !!t?.tramitacao?.dsObservacao)?.length ?? 0;
+    const qtdTramitacoes = solicitacao?.tramitacoes?.filter(t => !!t?.tramitacao?.idTramitacao)?.length ?? 0;
     const qtdPareceres = sol?.solicitacaoPareceres?.length ?? 0;
     return qtdTramitacoes + qtdPareceres;
   })();
@@ -514,9 +527,9 @@ export default function DetalhesSolicitacaoModal({
     ? 'Encaminhar parecer para Diretoria'
     : 'Encaminhar parecer para o Regulatório';
   
-  const btnEncaminharParaGestorSistema = (flAprovado === 'N'
-    ? 'Encaminhar para Gestor Sistema'
-    : 'Encaminhar para Área Técnica');
+  const btnEncaminharParaGestorSistema = (flAprovado === 'N' && isExisteCienciaGerenteRegul)
+    ? 'Encaminhar para Analista do Regulatório'
+    : 'Encaminhar para Área Técnica';
 
   const labelTextareaDevolutiva = {
     [statusList.ANALISE_REGULATORIA.label]: labelStatusAnaliseRegulatoria,
@@ -823,11 +836,18 @@ export default function DetalhesSolicitacaoModal({
                 <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Nº do processo:</div>
                 <div className="col-span-9 px-4 py-3 text-sm">{sol?.solicitacao?.nrProcesso || '—'}</div>
                 </div>
-                { isAnaliseGerenteRegulatorio && (
-                  <>
-                    <div className="h-px bg-border" />
+              <div className="h-px bg-border" />
+                <div className="grid grid-cols-12">
+                <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Exige aprovação especial:</div>
+                <div className="col-span-9 px-4 py-3 text-sm">
+                  {getTipoAprovacaoLabel(sol?.solicitacao?.flAnaliseGerenteDiretor ?? '')}
+                </div>
+              </div>
+              {isAnaliseGerenteRegulatorio && (
+                <>
+                  <div className="h-px bg-border" />
                     <div className="grid grid-cols-12">
-                    <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Prazo Principal</div>
+                    <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Prazo Principal:</div>
                     <div className="col-span-9 px-4 py-3 text-sm">
                       {hoursToDaysAndHours(currentPrazoTotal ?? 0)}
                       {sol?.solicitacao?.flExcepcional === 'S' ? (
@@ -836,8 +856,8 @@ export default function DetalhesSolicitacaoModal({
                         </span>
                       ) : null}
                     </div>
-                    </div>
-                  </>
+                  </div>
+                </>
                 )}
             </div>
           </section>
@@ -896,7 +916,23 @@ export default function DetalhesSolicitacaoModal({
             isAnaliseGerenteRegulatorio={isAnaliseGerenteRegulatorio}
           />
             
-
+          {(isAnaliseGerenteRegulatorio && !isExisteCienciaGerenteRegul) && (
+              <section className="space-y-3">
+              <div className="flex items-center justify-between gap-4 mt-2">
+                <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={flAprovado === 'S'}
+                      onCheckedChange={() => setFlAprovado(prev => prev === 'S' ? 'N' : 'S')}
+                      id="flAprovado"
+                    />
+                    <Label htmlFor="flAprovado" className="text-sm font-medium">
+                    Declaro estar ciente da solicitação e de seu conteúdo
+                    </Label>
+                  </div>
+                </div>
+              </section>
+            )}
+            
           {(isFlagVisivel  && !diretorPermitidoDsParecer) && (
             <section className="space-y-3">
               <div className="space-y-2">
@@ -1011,22 +1047,6 @@ export default function DetalhesSolicitacaoModal({
               )}
             </div>
             </section>
-            {isAnaliseGerenteRegulatorio && (
-              <section className="space-y-3">
-              <div className="flex items-center justify-between gap-4 mt-2">
-                <div className="flex items-center gap-2">
-                    <Checkbox
-                      checked={false}
-                      onCheckedChange={() => {}}
-                      id="cienciaGerenteRegul"
-                    />
-                    <Label htmlFor="cienciaGerenteRegul" className="text-sm font-medium">
-                    Declaro estar ciente da solicitação e de seu conteúdo
-                    </Label>
-                  </div>
-                </div>
-              </section>
-          )}
         </form>
 
         <DialogFooter className="flex gap-3 px-6 pb-6">

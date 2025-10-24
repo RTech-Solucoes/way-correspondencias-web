@@ -33,9 +33,10 @@ class SolicitacoesClient {
       'idArea',
       'cdIdentificacao',
       'idTema',
-      'nomeResponsavel',
+      'nmResponsavel',
       'dtCriacaoInicio',
       'dtCriacaoFim',
+      'flExigeCienciaGerenteRegul',
       'sort',
     ] as const;
 

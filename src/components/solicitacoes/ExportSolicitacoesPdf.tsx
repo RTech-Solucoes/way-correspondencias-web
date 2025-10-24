@@ -25,16 +25,17 @@ const styles = StyleSheet.create({
 	head: { fontWeight: 700, backgroundColor: '#f2f2f2' },
 	footer: { position: 'absolute', left: 24, right: 24, bottom: 12, fontSize: 9, color: '#555', flexDirection: 'row', justifyContent: 'space-between' },
 	// colunas da tabela
-	c1: { width: '12%' }, // Identificação
-	c2: { width: '22%' }, // Assunto
-	c3: { width: '12%' }, // Áreas
-	c4: { width: '10%' }, // Tema
-	c5: { width: '10%' }, // Status
-	c6: { width: '8%' }, // Data Início Solicitação
-	c7: { width: '8%' }, // Data Início Primeira Tramitação
-	c8: { width: '8%' }, // Data Prazo Limite Tramitação
-	c9: { width: '8%' }, // Data Conclusão Tramitação
-	c10: { width: '8%' }, // Atendido dentro do prazo
+	c1: { width: '10%' }, // Identificação
+	c2: { width: '18%' }, // Assunto
+	c3: { width: '10%' }, // Áreas
+	c4: { width: '8%' }, // Tema
+	c5: { width: '8%' }, // Status
+	c6: { width: '8%' }, // Aprovação Gerente do Regulatório
+	c7: { width: '7%' }, // Data Início Solicitação
+	c8: { width: '7%' }, // Data Início Primeira Tramitação
+	c9: { width: '7%' }, // Data Prazo Limite Tramitação
+	c10: { width: '7%' }, // Data Conclusão Tramitação
+	c11: { width: '7%' }, // Atendido dentro do prazo
 });
 
 const layoutClient = process.env.NEXT_PUBLIC_LAYOUT_CLIENT || "way262";
@@ -67,11 +68,12 @@ function SolicitacoesPdfDoc({ data, getStatusText }: { data: SolicitacaoResponse
 						<Text style={[styles.cell, styles.c3]}>Áreas</Text>
 						<Text style={[styles.cell, styles.c4]}>Tema</Text>
 						<Text style={[styles.cell, styles.c5]}>Status</Text>
-						<Text style={[styles.cell, styles.c6]}>Data Início Solicitação</Text>
-						<Text style={[styles.cell, styles.c7]}>Data Início Primeira Tramitação</Text>
-						<Text style={[styles.cell, styles.c8]}>Data Prazo Limite Tramitação</Text>
-						<Text style={[styles.cell, styles.c9]}>Data Conclusão Tramitação</Text>
-						<Text style={[styles.cell, styles.c10]}>Atendido dentro do prazo</Text>
+						<Text style={[styles.cell, styles.c6]}>Aprovação Gerente do Regulatório</Text>
+						<Text style={[styles.cell, styles.c7]}>Data Início Solicitação</Text>
+						<Text style={[styles.cell, styles.c8]}>Data Início Primeira Tramitação</Text>
+						<Text style={[styles.cell, styles.c9]}>Data Prazo Limite Tramitação</Text>
+						<Text style={[styles.cell, styles.c10]}>Data Conclusão Tramitação</Text>
+						<Text style={[styles.cell, styles.c11]}>Atendido dentro do prazo</Text>
 					</View>
 
 					{data.map((s, idx) => {
@@ -81,6 +83,9 @@ function SolicitacoesPdfDoc({ data, getStatusText }: { data: SolicitacaoResponse
 							.join(', ');
 						const tema = s.nmTema || s.tema?.nmTema || '';
 						const status = s.statusSolicitacao?.nmStatus || getStatusText(s.statusCodigo?.toString() || '') || '';
+						
+						const aprovacaoGerente = s.flExigeCienciaGerenteRegul === 'N' ? 'Não, apenas ciência' :
+							(s.flExigeCienciaGerenteRegul === 'S' ? 'Sim' : '-');
 						
 						let atendidoDentroDoPrazo = '-';
 						if (s.dtConclusaoTramitacao && s.dtPrazoLimite) {
@@ -96,11 +101,12 @@ function SolicitacoesPdfDoc({ data, getStatusText }: { data: SolicitacaoResponse
 								<Text style={[styles.cell, styles.c3]}>{areasNomes}</Text>
 								<Text style={[styles.cell, styles.c4]}>{tema}</Text>
 								<Text style={[styles.cell, styles.c5]}>{status}</Text>
-								<Text style={[styles.cell, styles.c6]}>{formatDateTimeBr(s.dtCriacao)}</Text>
-								<Text style={[styles.cell, styles.c7]}>{formatDateTimeBr(s.dtPrimeiraTramitacao)}</Text>
-								<Text style={[styles.cell, styles.c8]}>{formatDateTimeBr(s.dtPrazoLimite)}</Text>
-								<Text style={[styles.cell, styles.c9]}>{formatDateTimeBr(s.dtConclusaoTramitacao)}</Text>
-								<Text style={[styles.cell, styles.c10]}>{atendidoDentroDoPrazo}</Text>
+								<Text style={[styles.cell, styles.c6]}>{aprovacaoGerente}</Text>
+								<Text style={[styles.cell, styles.c7]}>{formatDateTimeBr(s.dtCriacao)}</Text>
+								<Text style={[styles.cell, styles.c8]}>{formatDateTimeBr(s.dtPrimeiraTramitacao)}</Text>
+								<Text style={[styles.cell, styles.c9]}>{formatDateTimeBr(s.dtPrazoLimite)}</Text>
+								<Text style={[styles.cell, styles.c10]}>{formatDateTimeBr(s.dtConclusaoTramitacao)}</Text>
+								<Text style={[styles.cell, styles.c11]}>{atendidoDentroDoPrazo}</Text>
 							</View>
 						);
 					})}
