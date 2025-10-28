@@ -16,6 +16,10 @@ import {
 import { ObrigacoesProvider, useObrigacoes } from "@/context/obrigacoes/ObrigacoesContext";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CalendarCheckIcon } from "lucide-react";
+import { ObrigacaoModal } from "@/components/obrigacoes/ObrigacaoModal";
+import { FilterModalObrigacao } from "@/components/obrigacoes/FilterModalObrigacao";
+import { DeleteObrigacaoDialog } from "@/components/obrigacoes/DeleteObrigacaoDialog";
+import { ObrigacaoContratualResponse } from "@/api/obrigacao-contratual/types";
 
 function ObrigacoesContent() {
   const {
@@ -29,13 +33,33 @@ function ObrigacoesContent() {
     setCurrentPage,
     setShowObrigacaoModal,
     setShowFilterModal,
+    setSelectedObrigacao,
+    setShowDeleteDialog,
+    setObrigacaoToDelete,
   } = useObrigacoes();
 
   const hasActiveFilters = false; 
 
+  const handleEditObrigacao = (obrigacao: ObrigacaoContratualResponse | null) => {
+   // if (obrigacao) {
+      setSelectedObrigacao(obrigacao);
+      setShowObrigacaoModal(true);
+     //}
+  };
+
+  const handleDeleteObrigacao = (obrigacao: ObrigacaoContratualResponse) => {
+    setObrigacaoToDelete(obrigacao);
+    setShowDeleteDialog(true);
+  };
+
   return (
-    <div className="flex flex-col min-h-0 flex-1">
-      <div className="flex items-center justify-between mb-6">
+    <>
+      <ObrigacaoModal />
+      <FilterModalObrigacao />
+      <DeleteObrigacaoDialog />
+      
+      <div className="flex flex-col min-h-0 flex-1">
+        <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-semibold text-gray-900">Obrigações Contratuais</h1>
 
         <div className="flex items-center space-x-2">
@@ -145,6 +169,7 @@ function ObrigacoesContent() {
                         variant="ghost" 
                         size="sm"
                         title="Editar"
+                        onClick={() => handleEditObrigacao(null)}
                       >
                         <PencilSimpleIcon className="h-4 w-4" />
                       </Button>
@@ -153,6 +178,7 @@ function ObrigacoesContent() {
                         size="sm"
                         className="text-red-600 hover:text-red-700"
                         title="Excluir"
+                        onClick={() => handleDeleteObrigacao({} as ObrigacaoContratualResponse)}
                       >
                         <TrashIcon className="h-4 w-4" />
                       </Button>
@@ -161,13 +187,13 @@ function ObrigacoesContent() {
               </TableRow>
             ) : (
               obrigacoes.map((obrigacao) => (
-                <TableRow key={obrigacao.id}>
-                  <TableCell>{obrigacao.id}</TableCell>
-                  <TableCell>{obrigacao.titulo}</TableCell>
-                  <TableCell>{obrigacao.contrato}</TableCell>
-                  <TableCell>{obrigacao.responsavel}</TableCell>
-                  <TableCell>{obrigacao.status}</TableCell>
-                  <TableCell>{obrigacao.dataVencimento}</TableCell>
+                <TableRow key={obrigacao.idObrigacaoContratual}>
+                  <TableCell>{obrigacao.idObrigacaoContratual}</TableCell>
+                  <TableCell>{obrigacao.dsTarefa}</TableCell>
+                  <TableCell>{obrigacao.dsItem}</TableCell>
+                  <TableCell>{obrigacao.cdIdentificador}</TableCell>
+                  <TableCell>{obrigacao.tpClassificacao}</TableCell>
+                  <TableCell>{obrigacao.tpPeriodicidade}</TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end space-x-2">
                       <Button 
@@ -181,6 +207,7 @@ function ObrigacoesContent() {
                         variant="ghost" 
                         size="sm"
                         title="Editar"
+                        onClick={() => handleEditObrigacao(obrigacao)}
                       >
                         <PencilSimpleIcon className="h-4 w-4" />
                       </Button>
@@ -189,6 +216,7 @@ function ObrigacoesContent() {
                         size="sm"
                         className="text-red-600 hover:text-red-700"
                         title="Excluir"
+                        onClick={() => handleDeleteObrigacao(obrigacao)}
                       >
                         <TrashIcon className="h-4 w-4" />
                       </Button>
@@ -201,6 +229,7 @@ function ObrigacoesContent() {
         </Table>
       </div>
     </div>
+    </>
   );
 }
 
