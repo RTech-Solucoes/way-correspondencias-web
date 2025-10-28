@@ -1,5 +1,4 @@
 import {Button} from "@/components/ui/button";
-import PageTitle from "@/components/ui/page-title";
 import {ArrowClockwiseIcon} from "@phosphor-icons/react";
 
 interface IDashboardHeader {
@@ -11,9 +10,9 @@ export default function DashboardHeader(props: IDashboardHeader) {
   return (
     <div className="flex items-center justify-between">
       <div>
-        <PageTitle />
+        <h1 className="text-xl font-semibold mb-4 text-gray-900">Dashboard - Correspondências</h1>
         <p className="text-gray-500 mt-1">
-          Visão geral do sistema e métricas importantes
+          Visão geral das correspondências e métricas importantes
         </p>
       </div>
       <div className="flex items-center space-x-2">
