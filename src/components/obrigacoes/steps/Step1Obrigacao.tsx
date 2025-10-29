@@ -32,19 +32,6 @@ export function Step1Obrigacao({ formData, updateFormData }: Step1ObrigacaoProps
     return (
       <div className="space-y-6 ">
         <div className="flex gap-4">
-            <div className="space-y-2" style={{ width: '25%' }}>
-                <Label htmlFor="cdIdentificador">
-                Identificador* <span className="text-xs text-gray-500">(Código identificador)</span>
-                </Label>
-                <Input
-                    id="cdIdentificador"
-                    placeholder="Ex: 040ENG02620001-01"
-                    value={formData.cdIdentificador || ''}
-                    onChange={(e) => updateFormData({ cdIdentificador: e.target.value })}
-                    required
-                />
-            </div>
-
             <div className="space-y-2" style={{ width: '75%' }}>
             <Label htmlFor="dsTarefa">Tarefa*</Label>
                 <Input
