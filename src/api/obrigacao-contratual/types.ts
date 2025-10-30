@@ -1,7 +1,9 @@
-import { Classificacao, Periodicidade, Criticidade, Natureza } from './enums';
+import { ClassificacaoEnum, PeriodicidadeEnum, CriticidadeEnum, NaturezaEnum } from './enums';
 
 export interface ObrigacaoContratual {
   idObrigacaoContratual: number;
+  idObrigacaoContratualVinculo?: number | null;
+  idObrigacaoContratualPai?: number | null;
   dtCriacao: string;
   dtAtualizacao?: string | null;
   nrCpfCriacao?: string | null;
@@ -13,11 +15,10 @@ export interface ObrigacaoContratual {
   idAreaCondicionante?: number | null;
   cdIdentificador: string;
   dsTarefa: string;
-  dsItem: string;
-  tpClassificacao?: Classificacao | null;
-  tpPeriodicidade?: Periodicidade | null;
-  tpCriticidade?: Criticidade | null;
-  tpNatureza?: Natureza | null;
+  tpClassificacao?: ClassificacaoEnum | null;
+  tpPeriodicidade?: PeriodicidadeEnum | null;
+  tpCriticidade?: CriticidadeEnum | null;
+  tpNatureza?: NaturezaEnum | null;
   dsComentario?: string | null;
   dtInicio?: string | null;
   dtTermino?: string | null;
@@ -25,7 +26,7 @@ export interface ObrigacaoContratual {
   dtConclusao?: string | null;
   nrDuracaoDias?: number | null;
   dsAntt?: string | null;
-  dsPas?: string | null;
+  dsProtocoloExterno?: string | null;
   dsTac?: string | null;
   nrNivel: number;
   flAtivo: string;
@@ -39,23 +40,29 @@ export interface ObrigacaoContratualRequest {
   idTema?: number | null;
   idAreaAtribuida?: number | null;
   idAreaCondicionante?: number | null;
+  idsAreasCondicionantes?: number[]; 
+  idObrigacaoContratualPai?: number | null; 
+  idObrigacaoContratualVinculo?: number | null; 
   cdIdentificador: string;
   dsTarefa: string;
-  dsItem: string;
-  tpClassificacao?: Classificacao | null;
-  tpPeriodicidade?: Periodicidade | null;
-  tpCriticidade?: Criticidade | null;
-  tpNatureza?: Natureza | null;
-  dsComentario?: string | null;
+  tpClassificacao?: ClassificacaoEnum | null;
+  tpPeriodicidade?: PeriodicidadeEnum | null;
+  tpCriticidade?: CriticidadeEnum | null;
+  tpNatureza?: NaturezaEnum | null;
+  dsObservacao?: string | null;
   dtInicio?: string | null;
   dtTermino?: string | null;
   dtLimite?: string | null;
   dtConclusao?: string | null;
   nrDuracaoDias?: number | null;
-  dsAntt?: string | null;
-  dsPas?: string | null;
+  dsAntt?: string;
+  dsProtocoloExterno?: string | null;
   dsTac?: string | null;
   nrNivel?: number;
   flAtivo?: string;
 }
 
+export interface ObrigacaoBuscaSimpleResponse {
+  idObrigacaoContratual: number;
+  cdIdentificador: string;
+}

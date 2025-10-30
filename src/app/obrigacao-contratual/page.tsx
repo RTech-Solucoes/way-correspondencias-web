@@ -190,7 +190,7 @@ function ObrigacoesContent() {
                 <TableRow key={obrigacao.idObrigacaoContratual}>
                   <TableCell>{obrigacao.idObrigacaoContratual}</TableCell>
                   <TableCell>{obrigacao.dsTarefa}</TableCell>
-                  <TableCell>{obrigacao.dsItem}</TableCell>
+                  <TableCell>{obrigacao.dsTarefa}</TableCell>
                   <TableCell>{obrigacao.cdIdentificador}</TableCell>
                   <TableCell>{obrigacao.tpClassificacao}</TableCell>
                   <TableCell>{obrigacao.tpPeriodicidade}</TableCell>

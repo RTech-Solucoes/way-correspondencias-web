@@ -10,6 +10,7 @@ import {
   PagedResponse,
   SolicitacaoDetalheResponse,
   SolicitacaoFilterParams,
+  SolicitacaoBuscaSimpleResponse,
 } from './types';
 import { solicitacaoAnexosClient } from './anexos-client';
 import { AnexoResponse, ArquivoDTO } from '../anexos/type';
@@ -112,6 +113,10 @@ class SolicitacoesClient {
     return this.client.request<SolicitacaoDetalheResponse>(`/detalhe/${id}`, {
       method: 'GET',
     });
+  }
+
+  async buscarSimplesPorFiltro(filtro?: string): Promise<SolicitacaoBuscaSimpleResponse[]> {
+    return this.client.request<SolicitacaoBuscaSimpleResponse[]>(`/simples?filtro=${filtro}`, { method: 'GET' });
   }
 }
 

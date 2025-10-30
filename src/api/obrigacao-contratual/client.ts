@@ -1,5 +1,5 @@
 import ApiClient from "../client";
-import { ObrigacaoContratualRequest, ObrigacaoContratualResponse } from "./types";
+import { ObrigacaoBuscaSimpleResponse, ObrigacaoContratualRequest, ObrigacaoContratualResponse } from "./types";
 
 export interface PaginatedResponse<T> {
     content: T[];
@@ -79,6 +79,18 @@ export class ObrigacaoContratualClient {
 
     async salvarStep6(data: Partial<ObrigacaoContratualRequest>): Promise<void> {
 
+    }
+
+    async buscarSimplesPorFiltro(filtro?: string, tpClassificacao?: string | null): Promise<ObrigacaoBuscaSimpleResponse[]> {
+        const params = new URLSearchParams();
+        if (filtro) {
+            params.append('filtro', filtro);
+        }
+        if (tpClassificacao && tpClassificacao !== '') {
+            params.append('tpClassificacao', tpClassificacao);
+        }
+        const queryString = params.toString();
+        return this.client.request<ObrigacaoBuscaSimpleResponse[]>(`/simples${queryString ? `?${queryString}` : ''}`, { method: 'GET' });
     }
 }
 

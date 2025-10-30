@@ -26,8 +26,9 @@ export enum TipoResponsavelAnexo {
 }
 
 export enum TipoObjetoAnexo {
-  E = "E",
-  T = "T",
-  S = "S",
-  R = "R"
+  E = "E", // Email
+  T = "T", // Tramitacao
+  S = "S", // Solicitacao
+  R = "R", // Responsavel
+  O = "O", // Obrigacao Contratual
 }

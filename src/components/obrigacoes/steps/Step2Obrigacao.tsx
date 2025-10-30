@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ObrigacaoFormData } from '../ObrigacaoModal';
 import { TemaResponse } from '@/api/temas/types';
 import { MultiSelectAreas } from '@/components/ui/multi-select-areas';
+import temasClient from '@/api/temas/client';
 
 interface Step2ObrigacaoProps {
   formData: ObrigacaoFormData;
@@ -23,13 +24,21 @@ export function Step2Obrigacao({ formData, updateFormData }: Step2ObrigacaoProps
     loadData();
   }, []);
 
+  useEffect(() => {
+    if (formData?.idAreaAtribuida) {
+      setAreasAtribuidas([formData.idAreaAtribuida]);
+    }
+    if (formData?.idsAreasCondicionantes && formData.idsAreasCondicionantes.length > 0) {
+      setAreasCondicionantes(formData.idsAreasCondicionantes);
+    }
+  }, [formData?.idAreaAtribuida, formData?.idsAreasCondicionantes]);
+
   const loadData = async () => {
     setLoading(true);
     try {
-      setTemas([
-        { idTema: 1, nmTema: 'Tema 1', dsTema: 'Descrição do tema 1', nrPrazo: 0, tpPrazo: '', flAtivo: 'S', areas: [] },
-        { idTema: 2, nmTema: 'Tema 2', dsTema: 'Descrição do tema 2', nrPrazo: 0, tpPrazo: '', flAtivo: 'S', areas: [] },
-      ]);
+      temasClient.buscarPorFiltro({ size: 1000 }).then((response) => {
+        setTemas(response.content);
+      });
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     } finally {
@@ -40,8 +49,10 @@ export function Step2Obrigacao({ formData, updateFormData }: Step2ObrigacaoProps
   const handleAreasChange = (selectedIds: number[]) => {
     if (tipoAreaSelecionado === 'atribuida') {
       setAreasAtribuidas(selectedIds);
+      updateFormData({ idAreaAtribuida: selectedIds[0] || null });
     } else {
       setAreasCondicionantes(selectedIds);
+      updateFormData({ idsAreasCondicionantes: selectedIds });
     }
   };
 
@@ -52,7 +63,7 @@ export function Step2Obrigacao({ formData, updateFormData }: Step2ObrigacaoProps
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <Label htmlFor="idTema">Tema</Label>
+        <Label htmlFor="idTema">Tema*</Label>
         <Select
           value={formData.idTema?.toString() || ''}
           onValueChange={(value) => updateFormData({ idTema: parseInt(value) })}
@@ -72,7 +83,7 @@ export function Step2Obrigacao({ formData, updateFormData }: Step2ObrigacaoProps
       </div>
 
       <div className="space-y-2">
-        <Label>Atribuído a</Label>
+        <Label>Atribuído a*</Label>
         <div className="flex gap-2">
           <button
             type="button"
@@ -84,7 +95,7 @@ export function Step2Obrigacao({ formData, updateFormData }: Step2ObrigacaoProps
             }`}
             disabled={loading}
           >
-            Área Atribuída a
+            Área Atribuída a*
           </button>
           <button
             type="button"
@@ -104,8 +115,9 @@ export function Step2Obrigacao({ formData, updateFormData }: Step2ObrigacaoProps
       <MultiSelectAreas
         selectedAreaIds={getSelectedAreaIds()}
         onSelectionChange={handleAreasChange}
-        label={tipoAreaSelecionado === 'atribuida' ? 'Selecione as Áreas Atribuídas' : 'Selecione as Áreas Condicionantes'}
+        label={tipoAreaSelecionado === 'atribuida' ? 'Selecione a Área Atribuída*' : 'Selecione as Áreas Condicionantes*'}
         disabled={loading}
+        maxSelection={tipoAreaSelecionado === 'atribuida' ? 1 : undefined}
       />
     </div>
   );

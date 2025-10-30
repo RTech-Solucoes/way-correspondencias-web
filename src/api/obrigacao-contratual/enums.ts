@@ -1,18 +1,16 @@
-export enum Classificacao {
+export enum ClassificacaoEnum {
   PRINCIPAL = 'PRINCIPAL',
   CONDICIONADA = 'CONDICIONADA',
-  DERIVADA = 'DERIVADA',
   SUPERVENIENTE = 'SUPERVENIENTE',
 }
 
-export const classificacaoLabels: Record<Classificacao, string> = {
-  [Classificacao.PRINCIPAL]: 'Principal',
-  [Classificacao.CONDICIONADA]: 'Condicionada',
-  [Classificacao.DERIVADA]: 'Derivada',
-  [Classificacao.SUPERVENIENTE]: 'Superveniente',
+export const classificacaoLabels: Record<ClassificacaoEnum, string> = {
+  [ClassificacaoEnum.PRINCIPAL]: 'Principal',
+  [ClassificacaoEnum.CONDICIONADA]: 'Condicionada',
+  [ClassificacaoEnum.SUPERVENIENTE]: 'Superveniente',
 };
 
-export enum Periodicidade {
+export enum PeriodicidadeEnum {
   SEMANAL = 'SEMANAL',
   MENSAL = 'MENSAL',
   ANUAL = 'ANUAL',
@@ -23,30 +21,30 @@ export enum Periodicidade {
   EXTRAORDINARIA = 'EXTRAORDINARIA',
 }
 
-export const periodicidadeLabels: Record<Periodicidade, string> = {
-  [Periodicidade.SEMANAL]: 'Semanal',
-  [Periodicidade.MENSAL]: 'Mensal',
-  [Periodicidade.ANUAL]: 'Anual',
-  [Periodicidade.SEMESTRAL]: 'Semestral',
-  [Periodicidade.BIMESTRAL]: 'Bimestral',
-  [Periodicidade.TRIMESTRAL]: 'Trimestral',
-  [Periodicidade.UNICA]: 'Única',
-  [Periodicidade.EXTRAORDINARIA]: 'Extraordinária',
+export const periodicidadeLabels: Record<PeriodicidadeEnum, string> = {
+  [PeriodicidadeEnum.SEMANAL]: 'Semanal',
+  [PeriodicidadeEnum.MENSAL]: 'Mensal',
+  [PeriodicidadeEnum.ANUAL]: 'Anual',
+  [PeriodicidadeEnum.SEMESTRAL]: 'Semestral',
+  [PeriodicidadeEnum.BIMESTRAL]: 'Bimestral',
+  [PeriodicidadeEnum.TRIMESTRAL]: 'Trimestral',
+  [PeriodicidadeEnum.UNICA]: 'Única',
+  [PeriodicidadeEnum.EXTRAORDINARIA]: 'Extraordinária',
 };
 
-export enum Criticidade {
+export enum CriticidadeEnum {
   ALTA = 'ALTA',
   MEDIA = 'MEDIA',
   BAIXA = 'BAIXA',
 }
 
-export const criticidadeLabels: Record<Criticidade, string> = {
-  [Criticidade.ALTA]: 'Alta',
-  [Criticidade.MEDIA]: 'Média',
-  [Criticidade.BAIXA]: 'Baixa',
+export const criticidadeLabels: Record<CriticidadeEnum, string> = {
+  [CriticidadeEnum.ALTA]: 'Alta',
+  [CriticidadeEnum.MEDIA]: 'Média',
+  [CriticidadeEnum.BAIXA]: 'Baixa',
 };
 
-export enum Natureza {
+export enum NaturezaEnum {
   CONTRATUAL = 'CONTRATUAL',
   REGULATORIA = 'REGULATORIA',
   AMBIENTAL = 'AMBIENTAL',
@@ -55,31 +53,31 @@ export enum Natureza {
   TECNICA_OPERACIONAL = 'TECNICA_OPERACIONAL',
 }
 
-export const naturezaLabels: Record<Natureza, string> = {
-  [Natureza.CONTRATUAL]: 'Contratual',
-  [Natureza.REGULATORIA]: 'Regulatória',
-  [Natureza.AMBIENTAL]: 'Ambiental',
-  [Natureza.ECONOMICO_FINANCEIRA]: 'Econômico-financeira',
-  [Natureza.JURIDICA_ADMINISTRATIVA]: 'Jurídica/Administrativa',
-  [Natureza.TECNICA_OPERACIONAL]: 'Técnica-operacional',
+export const naturezaLabels: Record<NaturezaEnum, string> = {
+  [NaturezaEnum.CONTRATUAL]: 'Contratual',
+  [NaturezaEnum.REGULATORIA]: 'Regulatória',
+  [NaturezaEnum.AMBIENTAL]: 'Ambiental',
+  [NaturezaEnum.ECONOMICO_FINANCEIRA]: 'Econômico-financeira',
+  [NaturezaEnum.JURIDICA_ADMINISTRATIVA]: 'Jurídica/Administrativa',
+  [NaturezaEnum.TECNICA_OPERACIONAL]: 'Técnica-operacional',
 };
 
-export const classificacaoList = Object.values(Classificacao).map((value) => ({
+export const classificacaoList = Object.values(ClassificacaoEnum).map((value) => ({
   value,
   label: classificacaoLabels[value],
 }));
 
-export const periodicidadeList = Object.values(Periodicidade).map((value) => ({
+export const periodicidadeList = Object.values(PeriodicidadeEnum).map((value) => ({
   value,
   label: periodicidadeLabels[value],
 }));
 
-export const criticidadeList = Object.values(Criticidade).map((value) => ({
+export const criticidadeList = Object.values(CriticidadeEnum).map((value) => ({
   value,
   label: criticidadeLabels[value],
 }));
 
-export const naturezaList = Object.values(Natureza).map((value) => ({
+export const naturezaList = Object.values(NaturezaEnum).map((value) => ({
   value,
   label: naturezaLabels[value],
 }));

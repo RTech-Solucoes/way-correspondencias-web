@@ -248,3 +248,8 @@ export interface SolicitacaoResumoComHistoricoResponse {
   solicitacao: SolicitacaoResumoResponse;
   historicoResposta: HistoricoRespostaItemResponse[];
 }
+
+export interface SolicitacaoBuscaSimpleResponse {
+  idSolicitacao: number;
+  cdIdentificacao: string;
+}
