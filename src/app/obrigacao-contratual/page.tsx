@@ -33,19 +33,11 @@ function ObrigacoesContent() {
     setCurrentPage,
     setShowObrigacaoModal,
     setShowFilterModal,
-    setSelectedObrigacao,
     setShowDeleteDialog,
     setObrigacaoToDelete,
   } = useObrigacoes();
 
   const hasActiveFilters = false; 
-
-  const handleEditObrigacao = (obrigacao: ObrigacaoContratualResponse | null) => {
-   // if (obrigacao) {
-      setSelectedObrigacao(obrigacao);
-      setShowObrigacaoModal(true);
-     //}
-  };
 
   const handleDeleteObrigacao = (obrigacao: ObrigacaoContratualResponse) => {
     setObrigacaoToDelete(obrigacao);
@@ -169,7 +161,7 @@ function ObrigacoesContent() {
                         variant="ghost" 
                         size="sm"
                         title="Editar"
-                        onClick={() => handleEditObrigacao(null)}
+                        onClick={() => {}}
                       >
                         <PencilSimpleIcon className="h-4 w-4" />
                       </Button>
@@ -207,7 +199,7 @@ function ObrigacoesContent() {
                         variant="ghost" 
                         size="sm"
                         title="Editar"
-                        onClick={() => handleEditObrigacao(obrigacao)}
+                        onClick={() => {}}
                       >
                         <PencilSimpleIcon className="h-4 w-4" />
                       </Button>

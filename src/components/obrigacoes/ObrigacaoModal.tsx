@@ -23,7 +23,7 @@ const steps = [
   { title: 'Temas e Áreas', description: 'Categorização' },
   { title: 'Prazos', description: 'Datas e periodicidade' },
   { title: 'Uploads', description: 'Anexos e documentos' },
-  { title: 'Vínculos', description: 'ANTT, PAS, TAC' },
+  { title: 'Vínculos', description: 'Vincular dados' },
   { title: 'Resumo', description: 'Revisão final' },
 ];
 

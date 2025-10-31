@@ -83,8 +83,7 @@ export function Step2Obrigacao({ formData, updateFormData }: Step2ObrigacaoProps
       </div>
 
       <div className="space-y-2">
-        <Label>Atribuído a*</Label>
-        <div className="flex gap-2">
+        <div className="flex gap-2 pt-5">
           <button
             type="button"
             onClick={() => setTipoAreaSelecionado('atribuida')}
@@ -115,7 +114,7 @@ export function Step2Obrigacao({ formData, updateFormData }: Step2ObrigacaoProps
       <MultiSelectAreas
         selectedAreaIds={getSelectedAreaIds()}
         onSelectionChange={handleAreasChange}
-        label={tipoAreaSelecionado === 'atribuida' ? 'Selecione a Área Atribuída*' : 'Selecione as Áreas Condicionantes*'}
+        label={tipoAreaSelecionado === 'atribuida' ? 'Selecione a Área Atribuída*' : 'Selecione as Áreas Condicionantes'}
         disabled={loading}
         maxSelection={tipoAreaSelecionado === 'atribuida' ? 1 : undefined}
       />
