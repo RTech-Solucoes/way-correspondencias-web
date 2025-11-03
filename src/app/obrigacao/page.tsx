@@ -9,7 +9,6 @@ import {
   MagnifyingGlassIcon,
   FunnelSimpleIcon,
   XIcon,
-  PencilSimpleIcon,
   TrashIcon,
   EyeIcon
 } from "@phosphor-icons/react";
@@ -19,7 +18,7 @@ import { CalendarCheckIcon } from "lucide-react";
 import { ObrigacaoModal } from "@/components/obrigacoes/ObrigacaoModal";
 import { FilterModalObrigacao } from "@/components/obrigacoes/FilterModalObrigacao";
 import { DeleteObrigacaoDialog } from "@/components/obrigacoes/DeleteObrigacaoDialog";
-import { ObrigacaoContratualResponse } from "@/api/obrigacao-contratual/types";
+import { ObrigacaoResponse } from "@/api/obrigacao/types";
 
 function ObrigacoesContent() {
   const {
@@ -39,7 +38,7 @@ function ObrigacoesContent() {
 
   const hasActiveFilters = false; 
 
-  const handleDeleteObrigacao = (obrigacao: ObrigacaoContratualResponse) => {
+  const handleDeleteObrigacao = (obrigacao: ObrigacaoResponse) => {
     setObrigacaoToDelete(obrigacao);
     setShowDeleteDialog(true);
   };
@@ -160,17 +159,9 @@ function ObrigacoesContent() {
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        title="Editar"
-                        onClick={() => {}}
-                      >
-                        <PencilSimpleIcon className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
                         className="text-red-600 hover:text-red-700"
                         title="Excluir"
-                        onClick={() => handleDeleteObrigacao({} as ObrigacaoContratualResponse)}
+                        onClick={() => handleDeleteObrigacao({} as ObrigacaoResponse)}
                       >
                         <TrashIcon className="h-4 w-4" />
                       </Button>
@@ -179,13 +170,13 @@ function ObrigacoesContent() {
               </TableRow>
             ) : (
               obrigacoes.map((obrigacao) => (
-                <TableRow key={obrigacao.idObrigacaoContratual}>
-                  <TableCell>{obrigacao.idObrigacaoContratual}</TableCell>
+                <TableRow key={obrigacao.idSolicitacao}>
+                  <TableCell>{obrigacao.idSolicitacao}</TableCell>
                   <TableCell>{obrigacao.dsTarefa}</TableCell>
                   <TableCell>{obrigacao.dsTarefa}</TableCell>
-                  <TableCell>{obrigacao.cdIdentificador}</TableCell>
-                  <TableCell>{obrigacao.tpClassificacao}</TableCell>
-                  <TableCell>{obrigacao.tpPeriodicidade}</TableCell>
+                  <TableCell>{obrigacao.cdIdentificacao}</TableCell>
+                  <TableCell>{obrigacao.tipoClassificacao?.cdTipo}</TableCell>
+                  <TableCell>{obrigacao.tipoPeriodicidade?.cdTipo}</TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end space-x-2">
                       <Button 
@@ -194,14 +185,6 @@ function ObrigacoesContent() {
                         title="Ver detalhes"
                       >
                         <EyeIcon className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        title="Editar"
-                        onClick={() => {}}
-                      >
-                        <PencilSimpleIcon className="h-4 w-4" />
                       </Button>
                       <Button 
                         variant="ghost" 

@@ -8,8 +8,7 @@ import { Input as ShadInput } from '@/components/ui/input';
 import { SolicitacaoBuscaSimpleResponse } from '@/api/solicitacoes/types';
 import solicitacoesClient from '@/api/solicitacoes/client';
 import { useEffect, useState } from 'react';
-import obrigacaoContratualClient from '@/api/obrigacao-contratual/client';
-import { ObrigacaoBuscaSimpleResponse } from '@/api/obrigacao-contratual/types';
+import { TipoEnum } from '@/api/tipos/types';
 
 interface Step5ObrigacaoProps {
   formData?: ObrigacaoFormData;
@@ -19,18 +18,52 @@ interface Step5ObrigacaoProps {
 export function Step5Obrigacao({ formData, updateFormData }: Step5ObrigacaoProps) {
 
   const [solicitacoes, setSolicitacoes] = useState<SolicitacaoBuscaSimpleResponse[]>([]);
-  const [busca, setBusca] = useState<string>('');
+  const [buscaSolicitacao, setBuscaSolicitacao] = useState<string>('');
   const [carregandoBusca, setCarregandoBusca] = useState<boolean>(false);
   const [buscaObrigacao, setBuscaObrigacao] = useState<string>('');
-  const [resultadoObrigacoes, setResultadoObrigacoes] = useState<ObrigacaoBuscaSimpleResponse[]>([]);
+  const [resultadoObrigacoes, setResultadoObrigacoes] = useState<SolicitacaoBuscaSimpleResponse[]>([]);
   const [carregandoBuscaObrigacao, setCarregandoBuscaObrigacao] = useState<boolean>(false);
+  const [carregandoInicial, setCarregandoInicial] = useState<boolean>(false);
+
+  useEffect(() => {
+    let isCancelled = false;
+    const carregarInicial = async () => {
+      try {
+        setCarregandoInicial(true);
+        const [correspondencias, obrigacoes] = await Promise.all([
+          solicitacoesClient.buscarSimplesPorFiltro('', TipoEnum.CORRESPONDENCIA),
+          solicitacoesClient.buscarSimplesPorFiltro('', TipoEnum.OBRIGACAO)
+        ]);
+        
+        if (!isCancelled) {
+          setSolicitacoes(correspondencias || []);
+          setResultadoObrigacoes(obrigacoes || []);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar dados iniciais:', error);
+      } finally {
+        if (!isCancelled) {
+          setCarregandoInicial(false);
+        }
+      }
+    };
+
+    carregarInicial();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let isCancelled = false;
     const carregar = async () => {
       try {
         setCarregandoBusca(true);
-        const resposta = await solicitacoesClient.buscarSimplesPorFiltro(busca || '');
+        const resposta = await solicitacoesClient.buscarSimplesPorFiltro(
+          buscaSolicitacao || '',
+          TipoEnum.CORRESPONDENCIA
+        );
         if (!isCancelled) setSolicitacoes(resposta || []);
       } finally {
         if (!isCancelled) setCarregandoBusca(false);
@@ -41,7 +74,7 @@ export function Step5Obrigacao({ formData, updateFormData }: Step5ObrigacaoProps
       isCancelled = true;
       clearTimeout(t);
     };
-  }, [busca]);
+  }, [buscaSolicitacao]);
 
   useEffect(() => {
     let cancelado = false;
@@ -49,7 +82,7 @@ export function Step5Obrigacao({ formData, updateFormData }: Step5ObrigacaoProps
       try {
         setCarregandoBuscaObrigacao(true);
         const termo = (buscaObrigacao || '').trim();
-        const resp = await obrigacaoContratualClient.buscarSimplesPorFiltro(termo);
+        const resp = await solicitacoesClient.buscarSimplesPorFiltro(termo || '', TipoEnum.OBRIGACAO);
         if (!cancelado) setResultadoObrigacoes(resp || []);
       } finally {
         if (!cancelado) setCarregandoBuscaObrigacao(false);
@@ -65,10 +98,12 @@ export function Step5Obrigacao({ formData, updateFormData }: Step5ObrigacaoProps
 
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col space-y-4">
-          <Label htmlFor="idSolicitacao">Vincular Correspondência</Label>
+          <Label htmlFor="idSolicitacaoCorrespondencia">Vincular Correspondência</Label>
           <Select
-            value={formData?.idSolicitacao?.toString() || ''}
-            onValueChange={(value) => updateFormData?.({ idSolicitacao: parseInt(value) })}
+            value={formData?.idSolicitacaoCorrespondencia?.toString() || formData?.idSolicitacao?.toString() || ''}
+            onValueChange={(value) => updateFormData?.({ 
+              idSolicitacaoCorrespondencia: parseInt(value),
+            })}
           >
             <SelectTrigger>
               <SelectValue placeholder="Selecione" />
@@ -76,8 +111,8 @@ export function Step5Obrigacao({ formData, updateFormData }: Step5ObrigacaoProps
             <SelectContent>
               <div className="p-2 border-b">
                 <ShadInput
-                  value={buscaObrigacao}
-                  onChange={(e) => setBuscaObrigacao(e.target.value)}
+                  value={buscaSolicitacao}
+                  onChange={(e) => setBuscaSolicitacao(e.target.value)}
                   placeholder="Pesquisar por código..."
                   autoFocus
                   onKeyDown={(e) => e.stopPropagation()}
@@ -85,15 +120,15 @@ export function Step5Obrigacao({ formData, updateFormData }: Step5ObrigacaoProps
                   onMouseDown={(e) => e.stopPropagation()}
                 />
               </div>
-              {carregandoBusca && (
+              {(carregandoBusca || carregandoInicial) && (
                 <div className="px-3 py-2 text-xs text-gray-500">Carregando...</div>
               )}
-              {solicitacoes.map((solicitacao) => (
+              {!carregandoInicial && solicitacoes.map((solicitacao) => (
                 <SelectItem key={solicitacao.idSolicitacao} value={solicitacao.idSolicitacao.toString()}>
                   {solicitacao.cdIdentificacao}
                 </SelectItem>
               ))}
-              {(!carregandoBusca && solicitacoes.length === 0) && (
+              {(!carregandoBusca && !carregandoInicial && solicitacoes.length === 0) && (
                 <div className="px-3 py-2 text-xs text-gray-500">Nenhuma correspondência encontrada</div>
               )}
             </SelectContent>
@@ -125,10 +160,12 @@ export function Step5Obrigacao({ formData, updateFormData }: Step5ObrigacaoProps
         </div>
 
         <div className="flex flex-col space-y-4">
-          <Label htmlFor="idObrigacaoContratualRef">Obrigação recusada pelo Verificador ou ANTT</Label>
+          <Label htmlFor="idObrigacaoRecusada">Obrigação recusada pelo Verificador ou ANTT</Label>
           <Select
-            value={formData?.idObrigacaoContratualVinculo?.toString() || ''}
-            onValueChange={(value) => updateFormData?.({ idObrigacaoContratualVinculo: parseInt(value) })}
+            value={formData?.idObrigacaoRecusada?.toString() || formData?.idObrigacaoContratualVinculo?.toString() || ''}
+            onValueChange={(value) => updateFormData?.({ 
+              idObrigacaoRecusada: parseInt(value),
+            })}
           >
             <SelectTrigger>
               <SelectValue placeholder="Selecione" />
@@ -145,16 +182,16 @@ export function Step5Obrigacao({ formData, updateFormData }: Step5ObrigacaoProps
                   onMouseDown={(e) => e.stopPropagation()}
                 />
               </div>
-              {carregandoBuscaObrigacao && (
+              {(carregandoBuscaObrigacao || carregandoInicial) && (
                 <div className="px-3 py-2 text-xs text-gray-500">Carregando...</div>
               )}
-              {resultadoObrigacoes.map((obrigacao) => (
-                <SelectItem key={obrigacao.idObrigacaoContratual} value={obrigacao.idObrigacaoContratual.toString()}>
-                  {obrigacao.cdIdentificador}
+              {!carregandoInicial && resultadoObrigacoes.map((obrigacao) => (
+                <SelectItem key={obrigacao.idSolicitacao} value={obrigacao.idSolicitacao.toString()}>
+                  {obrigacao.cdIdentificacao}
                 </SelectItem>
               ))}
-              {(!carregandoBuscaObrigacao && resultadoObrigacoes.length === 0) && (
-                <div className="px-3 py-2 text-xs text-gray-500">Nenhuma correspondência encontrada</div>
+              {(!carregandoBuscaObrigacao && !carregandoInicial && resultadoObrigacoes.length === 0) && (
+                <div className="px-3 py-2 text-xs text-gray-500">Nenhuma obrigação encontrada</div>
               )}
             </SelectContent>
           </Select>

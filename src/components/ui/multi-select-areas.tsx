@@ -15,6 +15,7 @@ interface MultiSelectAreasProps {
   className?: string;
   disabled?: boolean;
   maxSelection?: number;
+  excludedAreaIds?: number[]; 
 }
 
 export function MultiSelectAreas({
@@ -23,7 +24,8 @@ export function MultiSelectAreas({
   label = "Áreas",
   className,
   disabled,
-  maxSelection
+  maxSelection,
+  excludedAreaIds = []
 }: MultiSelectAreasProps) {
   const [areaExecutorAvancado, setAreaExecutorAvancado] = useState<AreaExecutorAvancadoResponse[]>([]);
   const [loading, setLoading] = useState(false);
@@ -82,7 +84,9 @@ export function MultiSelectAreas({
           className={cn("mt-2 grid grid-cols-1 md:grid-cols-3 gap-3 overflow-y-auto", disabled && "pointer-events-none")}
           aria-disabled={disabled || undefined}
         >
-          {areaExecutorAvancado.map((area, index) => {
+          {areaExecutorAvancado
+            .filter((area) => !excludedAreaIds.includes(area.idArea))
+            .map((area) => {
             const isChecked = selectedAreaIds.includes(area.idArea);
             return (
               <div

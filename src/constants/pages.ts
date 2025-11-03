@@ -57,7 +57,7 @@ export const PAGES_DEF: PageDef[] = [
     module: "obrigacoes"
   },
   {
-    path: "/obrigacao-contratual",
+    path: "/obrigacao",
     label: "Obrigações Contratuais",
     icon: StackIcon,
     permission: Permissoes.SOLICITACAO_LISTAR,

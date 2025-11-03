@@ -14,6 +14,7 @@ import {
 } from './types';
 import { solicitacaoAnexosClient } from './anexos-client';
 import { AnexoResponse, ArquivoDTO } from '../anexos/type';
+import { TipoEnum } from '../tipos/types';
 
 class SolicitacoesClient {
 
@@ -115,8 +116,29 @@ class SolicitacoesClient {
     });
   }
 
-  async buscarSimplesPorFiltro(filtro?: string): Promise<SolicitacaoBuscaSimpleResponse[]> {
-    return this.client.request<SolicitacaoBuscaSimpleResponse[]>(`/simples?filtro=${filtro}`, { method: 'GET' });
+  async buscarSimplesPorFiltro(
+    filtro?: string,
+    cdTipoFluxo?: TipoEnum,
+    cdTipoClassificacao?: TipoEnum
+  ): Promise<SolicitacaoBuscaSimpleResponse[]> {
+    const params = {
+      filtro,
+      cdTipoFluxo,
+      cdTipoClassificacao,
+    };
+    
+    const allowedKeys = [
+      'filtro',
+      'cdTipoFluxo',
+      'cdTipoClassificacao',
+    ] as const;
+
+    const qs = buildQueryParams(params, allowedKeys).toString();
+    
+    return this.client.request<SolicitacaoBuscaSimpleResponse[]>(
+      `/simples${qs ? `?${qs}` : ''}`,
+      { method: 'GET' }
+    );
   }
 }
 

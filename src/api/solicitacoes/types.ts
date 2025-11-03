@@ -4,6 +4,7 @@ import { AreaResponse } from "../areas/types";
 import { ResponsavelResponse } from "../responsaveis/types";
 import { SolicitacaoParecerResponse } from "../solicitacao-parecer/types";
 import { TramitacaoAcao } from "../tramitacoes/types";
+import { TipoResponse } from "../tipos/types";
 
 export interface AreaSolicitacao {
   idArea: number;
@@ -11,6 +12,7 @@ export interface AreaSolicitacao {
   cdArea?: string | null;
   dsArea?: string | null;
   flAtivo: string;
+  tipoArea?: TipoResponse | null;
 }
 
 export interface AreaTema {

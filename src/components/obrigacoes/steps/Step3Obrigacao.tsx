@@ -25,6 +25,18 @@ export function Step3Obrigacao({ formData, updateFormData }: Step3ObrigacaoProps
     return null;
   }, [formData.dtInicio, formData.dtTermino]);
 
+  const erroDataLimite = useMemo(() => {
+    if (formData.dtTermino && formData.dtLimite) {
+      const dataTermino = new Date(formData.dtTermino);
+      const dataLimite = new Date(formData.dtLimite);
+      
+      if (dataLimite <= dataTermino) {
+        return 'A data limite deve ser maior que a data de término';
+      }
+    }
+    return null;
+  }, [formData.dtTermino, formData.dtLimite]);
+
   useEffect(() => {
     if (formData.dtInicio && formData.dtTermino) {
       const dataInicio = new Date(formData.dtInicio);
@@ -74,8 +86,12 @@ export function Step3Obrigacao({ formData, updateFormData }: Step3ObrigacaoProps
             type="date"
             value={formData.dtLimite || ''}
             onChange={(e) => updateFormData({ dtLimite: e.target.value })}
+            className={erroDataLimite ? 'border-red-500' : ''}
           />
-          </div>
+          {erroDataLimite && (
+            <p className="text-sm text-red-500 mt-1">{erroDataLimite}</p>
+          )}
+        </div>
       </div>
       
       <div className="space-y-2"> 

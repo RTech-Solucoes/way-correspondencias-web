@@ -48,11 +48,23 @@ export function Step2Obrigacao({ formData, updateFormData }: Step2ObrigacaoProps
 
   const handleAreasChange = (selectedIds: number[]) => {
     if (tipoAreaSelecionado === 'atribuida') {
+      const novaAreaAtribuida = selectedIds[0] || null;
       setAreasAtribuidas(selectedIds);
-      updateFormData({ idAreaAtribuida: selectedIds[0] || null });
+      updateFormData({ idAreaAtribuida: novaAreaAtribuida });
+      
+      if (novaAreaAtribuida && areasCondicionantes.includes(novaAreaAtribuida)) {
+        const novasCondicionantes = areasCondicionantes.filter(id => id !== novaAreaAtribuida);
+        setAreasCondicionantes(novasCondicionantes);
+        updateFormData({ 
+          idsAreasCondicionantes: novasCondicionantes,
+        });
+      }
     } else {
-      setAreasCondicionantes(selectedIds);
-      updateFormData({ idsAreasCondicionantes: selectedIds });
+      const novasCondicionantes = selectedIds.filter(id => id !== formData.idAreaAtribuida);
+      setAreasCondicionantes(novasCondicionantes);
+      updateFormData({ 
+        idsAreasCondicionantes: novasCondicionantes || [],
+      });
     }
   };
 
@@ -117,6 +129,7 @@ export function Step2Obrigacao({ formData, updateFormData }: Step2ObrigacaoProps
         label={tipoAreaSelecionado === 'atribuida' ? 'Selecione a Área Atribuída*' : 'Selecione as Áreas Condicionantes'}
         disabled={loading}
         maxSelection={tipoAreaSelecionado === 'atribuida' ? 1 : undefined}
+        excludedAreaIds={tipoAreaSelecionado === 'condicionante' && formData.idAreaAtribuida ? [formData.idAreaAtribuida] : []}
       />
     </div>
   );

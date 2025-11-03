@@ -3,7 +3,7 @@
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useObrigacoes } from '@/context/obrigacoes/ObrigacoesContext';
 import { useState } from 'react';
-import obrigacaoContratualClient from '@/api/obrigacao-contratual/client';
+import obrigacaoContratualClient from '@/api/obrigacao/client';
 
 export function DeleteObrigacaoDialog() {
   const {
@@ -20,10 +20,10 @@ export function DeleteObrigacaoDialog() {
 
     setLoading(true);
     try {
-      await obrigacaoContratualClient.deletar(obrigacaoToDelete.idObrigacaoContratual);
+      await obrigacaoContratualClient.deletar(obrigacaoToDelete.idSolicitacao);
       
       setObrigacoes((prev) =>
-        prev.filter((o) => o.idObrigacaoContratual !== obrigacaoToDelete.idObrigacaoContratual)
+        prev.filter((o) => o.idSolicitacao !== obrigacaoToDelete.idSolicitacao)
       );
 
       handleClose();

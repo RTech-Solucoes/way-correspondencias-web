@@ -1,0 +1,59 @@
+export interface TipoResponse {
+  idTipo: number;
+  nmCategoria: CategoriaEnum;
+  cdTipo: string;
+  dsTipo: string;
+  flAtivo: StatusAtivo;
+}
+
+export enum CategoriaEnum {
+  FLUXO = 'FLUXO',
+  AREA = 'AREA',
+  CLASSIFICACAO = 'CLASSIFICACAO',
+  PERIODICIDADE = 'PERIODICIDADE',
+  CRITICIDADE = 'CRITICIDADE',
+  NATUREZA = 'NATUREZA'
+}
+
+export enum StatusAtivo {
+  S = 'S',
+  N = 'N'
+}
+
+export enum TipoEnum {
+    // FLUXO
+    CORRESPONDENCIA = 'CORRESPONDENCIA',
+    OBRIGACAO = 'OBRIGACAO',
+    
+    // AREA
+    ATRIBUIDA = 'ATRIBUIDA',
+    CONDICIONANTE = 'CONDICIONANTE',
+    
+    // CLASSIFICACAO
+    PRINCIPAL = 'PRINCIPAL',
+    CONDICIONADA = 'CONDICIONADA',
+    SUPERVINIENTE = 'SUPERVINIENTE',
+    
+    // PERIODICIDADE
+    SEMANAL = 'SEMANAL',
+    MENSAL = 'MENSAL',
+    ANUAL = 'ANUAL',
+    SEMESTRAL = 'SEMESTRAL',
+    BIMESTRAL = 'BIMESTRAL',
+    TRIMESTRAL = 'TRIMESTRAL',
+    UNICA = 'UNICA',
+    EXTRAORDINARIA = 'EXTRAORDINARIA',
+    
+    // CRITICIDADE
+    ALTA = 'ALTA',
+    MEDIA = 'MEDIA',
+    BAIXA = 'BAIXA',
+    
+    // NATUREZA
+    CONTRATUAL = 'CONTRATUAL',
+    REGULATORIA = 'REGULATORIA',
+    AMBIENTAL = 'AMBIENTAL',
+    ECONOMICO_FINANCEIRA = 'ECONOMICO_FINANCEIRA',
+    JURIDICA_ADMINISTRATIVA = 'JURIDICA_ADMINISTRATIVA',
+    TECNICA_OPERACIONAL = 'TECNICA_OPERACIONAL',
+}

@@ -1,7 +1,7 @@
 'use client'
 
 import {createContext, Dispatch, ReactNode, SetStateAction, useContext, useState} from "react";
-import {ObrigacaoContratualResponse} from '@/api/obrigacao-contratual/types';
+import { ObrigacaoResponse} from '@/api/obrigacao/types';
 
 interface FiltersState {
   titulo: string;
@@ -13,22 +13,22 @@ interface FiltersState {
 }
 
 export interface ObrigacoesContextProps {
-  obrigacoes: ObrigacaoContratualResponse[];
-  setObrigacoes: Dispatch<SetStateAction<ObrigacaoContratualResponse[]>>;
+  obrigacoes: ObrigacaoResponse[];
+  setObrigacoes: Dispatch<SetStateAction<ObrigacaoResponse[]>>;
   loading: boolean;
   setLoading: Dispatch<SetStateAction<boolean>>;
   searchQuery: string;
   setSearchQuery: Dispatch<SetStateAction<string>>;
-  selectedObrigacao: ObrigacaoContratualResponse | null;
-  setSelectedObrigacao: Dispatch<SetStateAction<ObrigacaoContratualResponse | null>>;
+  selectedObrigacao: ObrigacaoResponse | null;
+  setSelectedObrigacao: Dispatch<SetStateAction<ObrigacaoResponse | null>>;
   showObrigacaoModal: boolean;
   setShowObrigacaoModal: Dispatch<SetStateAction<boolean>>;
   showFilterModal: boolean;
   setShowFilterModal: Dispatch<SetStateAction<boolean>>;
   showDeleteDialog: boolean;
   setShowDeleteDialog: Dispatch<SetStateAction<boolean>>;
-  obrigacaoToDelete: ObrigacaoContratualResponse | null;
-  setObrigacaoToDelete: Dispatch<SetStateAction<ObrigacaoContratualResponse | null>>;
+  obrigacaoToDelete: ObrigacaoResponse | null;
+  setObrigacaoToDelete: Dispatch<SetStateAction<ObrigacaoResponse | null>>;
   currentPage: number;
   setCurrentPage: Dispatch<SetStateAction<number>>;
   totalPages: number;
@@ -42,14 +42,14 @@ export interface ObrigacoesContextProps {
 const ObrigacoesContext = createContext<ObrigacoesContextProps | undefined>(undefined);
 
 export function ObrigacoesProvider({children}: { children: ReactNode }) {
-  const [obrigacoes, setObrigacoes] = useState<ObrigacaoContratualResponse[]>([]);
+  const [obrigacoes, setObrigacoes] = useState<ObrigacaoResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedObrigacao, setSelectedObrigacao] = useState<ObrigacaoContratualResponse | null>(null);
+  const [selectedObrigacao, setSelectedObrigacao] = useState<ObrigacaoResponse | null>(null);
   const [showObrigacaoModal, setShowObrigacaoModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [obrigacaoToDelete, setObrigacaoToDelete] = useState<ObrigacaoContratualResponse | null>(null);
+  const [obrigacaoToDelete, setObrigacaoToDelete] = useState<ObrigacaoResponse | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);

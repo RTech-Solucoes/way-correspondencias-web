@@ -5,20 +5,12 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ObrigacaoFormData } from '../ObrigacaoModal';
-import { 
-  classificacaoList, 
-  ClassificacaoEnum,
-  PeriodicidadeEnum,
-  CriticidadeEnum,
-  NaturezaEnum,
-  naturezaList,
-  criticidadeList,
-  periodicidadeList
-} from '@/api/obrigacao-contratual/enums';
 import { statusObrigacaoList, statusObrigacaoLabels, StatusObrigacao } from '@/api/status-obrigacao/types';
-import obrigacaoContratualClient from '@/api/obrigacao-contratual/client';
-import { ObrigacaoBuscaSimpleResponse } from '@/api/obrigacao-contratual/types';
+import { SolicitacaoBuscaSimpleResponse } from '@/api/solicitacoes/types';
+import tiposClient from '@/api/tipos/client';
+import { TipoResponse, CategoriaEnum, TipoEnum } from '@/api/tipos/types';
 import { useEffect, useState } from 'react';
+import { solicitacoesClient } from '@/api/solicitacoes';
 
 interface Step1ObrigacaoProps {
   formData: ObrigacaoFormData;
@@ -32,15 +24,60 @@ export function Step1Obrigacao({ formData, updateFormData }: Step1ObrigacaoProps
     const currentStatus = statusObrigacaoList.find(status => status.id === currentStatusId);
     const statusLabel = currentStatus ? statusObrigacaoLabels[currentStatus.nmStatus as StatusObrigacao] : 'Não Iniciado';
     const [buscaObrigacao, setBuscaObrigacao] = useState<string>('');
-    const [resultadoObrigacoes, setResultadoObrigacoes] = useState<ObrigacaoBuscaSimpleResponse[]>([]);
-    const isCondicionada = formData.tpClassificacao === ClassificacaoEnum.CONDICIONADA;
+    const [resultadoObrigacoes, setResultadoObrigacoes] = useState<SolicitacaoBuscaSimpleResponse[]>([]);
+    
+    const [tipoClassificacaoCondicionada, setTipoClassificacaoCondicionada] = useState<number | null>(null);
+    const isCondicionada = formData.idTipoClassificacao === tipoClassificacaoCondicionada;
+    
+    const [classificacoes, setClassificacoes] = useState<TipoResponse[]>([]);
+    const [periodicidades, setPeriodicidades] = useState<TipoResponse[]>([]);
+    const [criticidades, setCriticidades] = useState<TipoResponse[]>([]);
+    const [naturezas, setNaturezas] = useState<TipoResponse[]>([]);
+    const [loadingTipos, setLoadingTipos] = useState<boolean>(false);
+
+    useEffect(() => {
+        const carregarTipos = async () => {
+            setLoadingTipos(true);
+            try {
+                const tipos = await tiposClient.buscarPorCategorias([
+                    CategoriaEnum.CLASSIFICACAO,
+                    CategoriaEnum.PERIODICIDADE,
+                    CategoriaEnum.CRITICIDADE,
+                    CategoriaEnum.NATUREZA
+                ]);
+                
+                const classif = tipos.filter(t => t.nmCategoria === CategoriaEnum.CLASSIFICACAO);
+                setClassificacoes(classif);
+                
+                const condicionada = classif.find(t => t.cdTipo === TipoEnum.CONDICIONADA);
+                if (condicionada) {
+                    setTipoClassificacaoCondicionada(condicionada.idTipo);
+                }
+                
+                setPeriodicidades(tipos.filter(t => t.nmCategoria === CategoriaEnum.PERIODICIDADE));
+                setCriticidades(tipos.filter(t => t.nmCategoria === CategoriaEnum.CRITICIDADE));
+                setNaturezas(tipos.filter(t => t.nmCategoria === CategoriaEnum.NATUREZA));
+            } catch (error) {
+                console.error('Erro ao carregar tipos:', error);
+            } finally {
+                setLoadingTipos(false);
+            }
+        };
+        
+        carregarTipos();
+    }, []);
 
     useEffect(() => {
       if (!isCondicionada) return;
       let cancelado = false;
       const carregar = async () => {
         const termo = (buscaObrigacao || '').trim();
-        const resp = await obrigacaoContratualClient.buscarSimplesPorFiltro(termo, ClassificacaoEnum.PRINCIPAL);
+        const resp = await solicitacoesClient.buscarSimplesPorFiltro(
+            termo,
+            TipoEnum.OBRIGACAO,
+            TipoEnum.PRINCIPAL
+        );
+        console.log(resp);
         if (!cancelado) setResultadoObrigacoes(resp || []);
       };
       const t = setTimeout(carregar, 1000);
@@ -86,18 +123,23 @@ export function Step1Obrigacao({ formData, updateFormData }: Step1ObrigacaoProps
             </div>
 
             <div className="space-y-2 w-full">
-                <Label htmlFor="tpClassificacao">Classificação da Obrigação*</Label>
+                <Label htmlFor="idTipoClassificacao">Classificação da Obrigação*</Label>
                 <Select
-                    value={formData.tpClassificacao || ''}
-                    onValueChange={(value) => updateFormData({ tpClassificacao: value as ClassificacaoEnum })}
+                    value={formData.idTipoClassificacao?.toString() || ''}
+                    onValueChange={(value) => {
+                        updateFormData({ 
+                            idTipoClassificacao: parseInt(value)
+                        });
+                    }}
+                    disabled={loadingTipos}
                 >
-                <SelectTrigger id="tpClassificacao">
-                <SelectValue placeholder="Selecione" />
+                <SelectTrigger id="idTipoClassificacao">
+                <SelectValue placeholder={loadingTipos ? 'Carregando...' : 'Selecione'} />
                 </SelectTrigger>
                 <SelectContent>
-                {classificacaoList.map((item) => (
-                    <SelectItem key={item.value} value={item.value}>
-                    {item.label}
+                {classificacoes.map((tipo) => (
+                    <SelectItem key={tipo.idTipo} value={tipo.idTipo.toString()}>
+                    {tipo.dsTipo}
                     </SelectItem>
                 ))}
                 </SelectContent>
@@ -109,8 +151,10 @@ export function Step1Obrigacao({ formData, updateFormData }: Step1ObrigacaoProps
                   <>
                     <Label htmlFor="idObrigacaoContratualPai">Obrigação Principal</Label>
                     <Select
-                      value={formData.idObrigacaoContratualPai?.toString() || ''}
-                      onValueChange={(value) => updateFormData({ idObrigacaoContratualPai: parseInt(value) })}
+                      value={formData.idObrigacaoPrincipal?.toString() || ''}
+                      onValueChange={(value) => updateFormData({ 
+                          idObrigacaoPrincipal: parseInt(value)
+                      })}
                     >
                       <SelectTrigger id="idObrigacaoContratualPai">
                         <SelectValue placeholder="Buscar e selecionar a obrigação principal" />
@@ -128,8 +172,8 @@ export function Step1Obrigacao({ formData, updateFormData }: Step1ObrigacaoProps
                           />
                         </div>
                         {resultadoObrigacoes.map((o) => (
-                          <SelectItem key={o.idObrigacaoContratual} value={o.idObrigacaoContratual.toString()}>
-                            {o.cdIdentificador}
+                          <SelectItem key={o.idSolicitacao} value={o.idSolicitacao.toString()}>
+                            {o.cdIdentificacao}
                           </SelectItem>
                         ))}
                         {resultadoObrigacoes.length === 0 && (
@@ -145,36 +189,46 @@ export function Step1Obrigacao({ formData, updateFormData }: Step1ObrigacaoProps
 
         <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
-                <Label htmlFor="tpPeriodicidade">Periódica*</Label>
+                <Label htmlFor="idTipoPeriodicidade">Periódica*</Label>
                 <Select
-                    value={formData.tpPeriodicidade || ''}
-                    onValueChange={(value) => updateFormData({ tpPeriodicidade: value as PeriodicidadeEnum })}
+                    value={formData.idTipoPeriodicidade?.toString() || ''}
+                    onValueChange={(value) => {
+                        updateFormData({ 
+                            idTipoPeriodicidade: parseInt(value)
+                        });
+                    }}
+                    disabled={loadingTipos}
                 >
-                    <SelectTrigger id="tpPeriodicidade">
-                        <SelectValue placeholder="Selecione" />
+                    <SelectTrigger id="idTipoPeriodicidade">
+                        <SelectValue placeholder={loadingTipos ? 'Carregando...' : 'Selecione'} />
                     </SelectTrigger>
                     <SelectContent>
-                        {periodicidadeList.map((item) => (
-                            <SelectItem key={item.value} value={item.value}>
-                                {item.label}
+                        {periodicidades.map((tipo) => (
+                            <SelectItem key={tipo.idTipo} value={tipo.idTipo.toString()}>
+                                {tipo.dsTipo}
                             </SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
             </div>
             <div className="space-y-2">
-                <Label htmlFor="tpCriticidade">Criticidade*</Label>
+                <Label htmlFor="idTipoCriticidade">Criticidade*</Label>
                 <Select
-                    value={formData.tpCriticidade || ''}
-                    onValueChange={(value) => updateFormData({ tpCriticidade: value as CriticidadeEnum })}
+                    value={formData.idTipoCriticidade?.toString() || ''}
+                    onValueChange={(value) => {
+                        updateFormData({ 
+                            idTipoCriticidade: parseInt(value)
+                        });
+                    }}
+                    disabled={loadingTipos}
                 >
-                    <SelectTrigger id="tpCriticidade">
-                        <SelectValue placeholder="Selecione" />
+                    <SelectTrigger id="idTipoCriticidade">
+                        <SelectValue placeholder={loadingTipos ? 'Carregando...' : 'Selecione'} />
                     </SelectTrigger>
                     <SelectContent>
-                        {criticidadeList.map((item) => (
-                            <SelectItem key={item.value} value={item.value}>
-                                {item.label}
+                        {criticidades.map((tipo) => (
+                            <SelectItem key={tipo.idTipo} value={tipo.idTipo.toString()}>
+                                {tipo.dsTipo}
                             </SelectItem>
                         ))}
                     </SelectContent>
@@ -182,18 +236,23 @@ export function Step1Obrigacao({ formData, updateFormData }: Step1ObrigacaoProps
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="tpNatureza">Natureza*</Label>
+                <Label htmlFor="idTipoNatureza">Natureza*</Label>
                 <Select
-                    value={formData.tpNatureza || ''}
-                    onValueChange={(value) => updateFormData({ tpNatureza: value as NaturezaEnum })}
+                    value={formData.idTipoNatureza?.toString() || ''}
+                    onValueChange={(value) => {
+                        updateFormData({ 
+                            idTipoNatureza: parseInt(value)
+                        });
+                    }}
+                    disabled={loadingTipos}
                 >
-                <SelectTrigger id="tpNatureza">
-                <SelectValue placeholder="Selecione" />
+                <SelectTrigger id="idTipoNatureza">
+                <SelectValue placeholder={loadingTipos ? 'Carregando...' : 'Selecione'} />
                 </SelectTrigger>
                 <SelectContent>
-                {naturezaList.map((item) => (
-                    <SelectItem key={item.value} value={item.value}>
-                    {item.label}
+                {naturezas.map((tipo) => (
+                    <SelectItem key={tipo.idTipo} value={tipo.idTipo.toString()}>
+                    {tipo.dsTipo}
                     </SelectItem>
                 ))}
                 </SelectContent>

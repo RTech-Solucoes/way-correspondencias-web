@@ -5,8 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Stepper } from '@/components/ui/stepper';
 import { Button } from '@/components/ui/button';
 import { useObrigacoes } from '@/context/obrigacoes/ObrigacoesContext';
-import { ObrigacaoContratualRequest } from '@/api/obrigacao-contratual/types';
-import { ClassificacaoEnum } from '@/api/obrigacao-contratual/enums';
+import { ObrigacaoRequest } from '@/api/obrigacao/types';
 
 import { Step1Obrigacao } from './steps/Step1Obrigacao';
 import { Step2Obrigacao } from './steps/Step2Obrigacao';
@@ -14,9 +13,22 @@ import { Step3Obrigacao } from './steps/Step3Obrigacao';
 import { Step4Obrigacao } from './steps/Step4Obrigacao';
 import { Step5Obrigacao } from './steps/Step5Obrigacao';
 import { Step6Obrigacao } from './steps/Step6Obrigacao';
-import obrigacaoContratualClient from '@/api/obrigacao-contratual/client';
+import obrigacaoContratualClient from '@/api/obrigacao/client';
+import { TipoEnum, CategoriaEnum } from '@/api/tipos/types';
+import tiposClient from '@/api/tipos/client';
+import { ArquivoDTO, TipoObjetoAnexo, TipoResponsavelAnexo } from '@/api/anexos/type';
+import anexosClient from '@/api/anexos/client';
 
-export type ObrigacaoFormData = Partial<ObrigacaoContratualRequest>;
+export interface ObrigacaoFormData extends Partial<ObrigacaoRequest> {
+  cdIdentificador?: string;
+  idStatusObrigacao?: number;
+  idObrigacaoContratualPai?: number | null;
+  idsAreasCondicionantes?: number[];
+  idSolicitacao?: number | null;
+  idObrigacaoContratualVinculo?: number | null;
+  nrNivel?: number;
+  flAtivo?: string;
+}
 
 const steps = [
   { title: 'Dados', description: 'Informações da obrigação' },
@@ -28,95 +40,88 @@ const steps = [
 ];
 
 export function ObrigacaoModal() {
-  const { showObrigacaoModal, setShowObrigacaoModal, selectedObrigacao, setSelectedObrigacao } = useObrigacoes();
+  const { showObrigacaoModal, setShowObrigacaoModal } = useObrigacoes();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [idTipoClassificacaoCondicionada, setIdTipoClassificacaoCondicionada] = useState<number | null>(null);
+  const [anexosParaEnviar, setAnexosParaEnviar] = useState<File[]>([]);
   const [formData, setFormData] = useState<ObrigacaoFormData>({
     cdIdentificador: '',
     dsTarefa: '',
-    tpClassificacao: null,
-    tpPeriodicidade: null,
-    tpCriticidade: null,
-    tpNatureza: null,
+    idTipoClassificacao: null,
+    idTipoPeriodicidade: null,
+    idTipoCriticidade: null,
+    idTipoNatureza: null,
     dsObservacao: '',
+    idObrigacaoPrincipal: null,
     idTema: null,
     idAreaAtribuida: null,
-    idAreaCondicionante: null,
     idsAreasCondicionantes: [],
     dtInicio: null,
     dtTermino: null,
     dtLimite: null,
     nrDuracaoDias: null,
+    idSolicitacaoCorrespondencia: null,
     dsAntt: '',
     dsProtocoloExterno: '',
+    idObrigacaoRecusada: null,
     dsTac: '',
-    idStatusObrigacao: 1,
-    nrNivel: 1,
-    flAtivo: 'S',
+    idStatusSolicitacao: 11,
   });
 
   useEffect(() => {
     if (showObrigacaoModal) {
-      if (selectedObrigacao) {
-        const obrigacaoData = selectedObrigacao as ObrigacaoFormData;
-        setFormData({
-          cdIdentificador: selectedObrigacao.cdIdentificador || '',
-          dsTarefa: selectedObrigacao.dsTarefa || '',
-          tpClassificacao: selectedObrigacao.tpClassificacao || null,
-          tpPeriodicidade: selectedObrigacao.tpPeriodicidade || null,
-          tpCriticidade: selectedObrigacao.tpCriticidade || null,
-          tpNatureza: selectedObrigacao.tpNatureza || null,
-          dsObservacao: selectedObrigacao.dsComentario || '',
-          idTema: selectedObrigacao.idTema || null,
-          idAreaAtribuida: selectedObrigacao.idAreaAtribuida || null,
-          idAreaCondicionante: selectedObrigacao.idAreaCondicionante || null,
-          idsAreasCondicionantes: obrigacaoData.idsAreasCondicionantes || [],
-          dtInicio: selectedObrigacao.dtInicio || null,
-          dtTermino: selectedObrigacao.dtTermino || null,
-          dtLimite: selectedObrigacao.dtLimite || null,
-          nrDuracaoDias: selectedObrigacao.nrDuracaoDias || null,
-          dsAntt: selectedObrigacao.dsAntt || '',
-          dsProtocoloExterno: selectedObrigacao.dsProtocoloExterno || '',
-          dsTac: selectedObrigacao.dsTac || '',
-          idStatusObrigacao: selectedObrigacao.idStatusObrigacao || 1,
-          nrNivel: selectedObrigacao.nrNivel || 1,
-          flAtivo: selectedObrigacao.flAtivo || 'S',
-        });
-      } else {
-        setFormData((prev) => ({
-          ...prev,
-          idStatusObrigacao: 1,
-        }));
-      }
+      setFormData((prev) => ({
+        ...prev,
+        idStatusSolicitacao: 11,
+      }));
     }
-  }, [showObrigacaoModal, selectedObrigacao]);
+  }, [showObrigacaoModal]);
+
+  useEffect(() => {
+    const carregarTipoCondicionada = async () => {
+      try {
+        const tipos = await tiposClient.buscarPorCategorias([CategoriaEnum.CLASSIFICACAO]);
+        const condicionada = tipos.find(t => t.cdTipo === TipoEnum.CONDICIONADA);
+        if (condicionada) {
+          setIdTipoClassificacaoCondicionada(condicionada.idTipo);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar tipo de classificação condicionada:', error);
+      }
+    };
+    
+    if (showObrigacaoModal) {
+      carregarTipoCondicionada();
+    }
+  }, [showObrigacaoModal]);
 
   const handleClose = () => {
     setShowObrigacaoModal(false);
-    setSelectedObrigacao(null);
     setCurrentStep(1);
+    setAnexosParaEnviar([]);
     setFormData({
-      cdIdentificador: '',
+      idSolicitacao: null,
       dsTarefa: '',
-      tpClassificacao: null,
-      tpPeriodicidade: null,
-      tpCriticidade: null,
-      tpNatureza: null,
-      dsObservacao: '',
-      idTema: null,
-      idAreaAtribuida: null,
-      idAreaCondicionante: null,
+      idStatusSolicitacao: 12,
+      idTipoClassificacao: null,
+      idTipoPeriodicidade: null,
+      idTipoCriticidade: null,
+      idTipoNatureza: null,
+      dsObservacao: null,
+      idObrigacaoPrincipal: null,
       idsAreasCondicionantes: [],
+      idAreaAtribuida: null,
+      idTema: null,
       dtInicio: null,
       dtTermino: null,
       dtLimite: null,
       nrDuracaoDias: null,
-      dsAntt: '',
-      dsProtocoloExterno: '',
-      dsTac: '',
-      idStatusObrigacao: 1,
-      nrNivel: 1,
-      flAtivo: 'S',
+      idSolicitacaoCorrespondencia: null,
+      dsAntt: null,
+      dsProtocoloExterno: null,
+      idObrigacaoRecusada: null,
+      dsTac: null,
     });
   };
 
@@ -127,16 +132,15 @@ export function ObrigacaoModal() {
   const validateStep = useCallback((step: number): boolean => {
     switch (step) {
       case 1:
-        const isClassificacaoCondicionada = formData.tpClassificacao === ClassificacaoEnum.CONDICIONADA;
-        
         if (!formData.dsTarefa?.trim()) return false;
-        if (!formData.tpClassificacao) return false;
-        if (!formData.tpPeriodicidade) return false;
-        if (!formData.tpCriticidade) return false;
-        if (!formData.tpNatureza) return false;
-        
-        if (isClassificacaoCondicionada && !formData.idObrigacaoContratualPai) return false;
+        if (!formData.idTipoClassificacao) return false;
+        if (!formData.idTipoPeriodicidade) return false;
+        if (!formData.idTipoCriticidade) return false;
+        if (!formData.idTipoNatureza) return false;
               
+        const isClassificacaoCondicionada = formData.idTipoClassificacao === idTipoClassificacaoCondicionada;
+        if (isClassificacaoCondicionada && !formData.idObrigacaoPrincipal && !formData.idObrigacaoContratualPai) return false;
+    
         return true;
 
       case 2:
@@ -160,7 +164,7 @@ export function ObrigacaoModal() {
       default:
         return true;
     }
-  }, [formData]);
+  }, [formData, idTipoClassificacaoCondicionada]);
 
   const isvalidProximaStep = useMemo(() => {
     return validateStep(currentStep);
@@ -174,23 +178,63 @@ export function ObrigacaoModal() {
       }
     
       switch (currentStep) {
-        case 1:
-            await obrigacaoContratualClient.salvarStep1(formData);
-            break;
-        case 2:
-            await obrigacaoContratualClient.salvarStep2(formData);
-            break;
-        case 3:
-            await obrigacaoContratualClient.salvarStep3(formData);
-            break;
-        case 4:
-            await obrigacaoContratualClient.salvarStep4(formData);
-            break;
         case 5:
-            await obrigacaoContratualClient.salvarStep5(formData);
+            let arquivosDTO: ArquivoDTO[] = [];
+            
+            if (anexosParaEnviar.length > 0) {
+              let anexosExistentes: string[] = [];
+              if (formData.idSolicitacao) {
+                try {
+                  const anexosBackend = await anexosClient.buscarPorIdObjetoETipoObjeto(
+                    formData.idSolicitacao,
+                    TipoObjetoAnexo.O
+                  );
+                  anexosExistentes = anexosBackend.map(a => a.nmArquivo.toLowerCase());
+                } catch (error) {
+                  console.error('Erro ao carregar anexos existentes:', error);
+                }
+              }
+
+              arquivosDTO = await Promise.all(
+                anexosParaEnviar.map(async (file) => {
+                  const base64 = await new Promise<string>((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                      const result = reader.result as string;
+                      const commaIndex = result.indexOf(',');
+                      resolve(commaIndex >= 0 ? result.substring(commaIndex + 1) : result);
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                  });
+
+                  return {
+                    nomeArquivo: file.name,
+                    tipoConteudo: file.type,
+                    tpResponsavel: TipoResponsavelAnexo.A,
+                    conteudoArquivo: base64,
+                  };
+                })
+              );
+
+              const nomesExistentes = new Set(anexosExistentes);
+              arquivosDTO = arquivosDTO.filter(
+                arquivo => arquivo.nomeArquivo && !nomesExistentes.has(arquivo.nomeArquivo.toLowerCase())
+              );
+            }
+
+            const formDataComAnexos = {
+              ...formData,
+              arquivos: arquivosDTO.length > 0 ? arquivosDTO : undefined,
+            };
+
+            const response = await obrigacaoContratualClient.criar(formDataComAnexos);
+            if (response.idSolicitacao) {
+                updateFormData({ idSolicitacao: response.idSolicitacao });
+            }
             break;
         case 6:
-            await obrigacaoContratualClient.salvarStep6(formData);
+            //await obrigacaoContratualClient.salvarStep6(formData);
             handleClose();
             break;
       }
@@ -215,16 +259,15 @@ export function ObrigacaoModal() {
   };
 
   const renderStepContent = () => {
-    const isEditing = !!selectedObrigacao;
     switch (currentStep) {
       case 1:
-        return <Step1Obrigacao formData={formData} updateFormData={updateFormData} isEditing={isEditing} />;
+        return <Step1Obrigacao formData={formData} updateFormData={updateFormData} isEditing={false} />;
       case 2:
         return <Step2Obrigacao formData={formData} updateFormData={updateFormData} />;
       case 3:
         return <Step3Obrigacao formData={formData} updateFormData={updateFormData} />;
       case 4:
-        return <Step4Obrigacao formData={formData} updateFormData={updateFormData} />;
+        return <Step4Obrigacao formData={formData} updateFormData={updateFormData} anexos={anexosParaEnviar} onAnexosChange={setAnexosParaEnviar} />;
       case 5:
         return <Step5Obrigacao formData={formData} updateFormData={updateFormData} />;
       case 6:
@@ -239,7 +282,7 @@ export function ObrigacaoModal() {
       <DialogContent className="w-[70vw] h-[89vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">
-            {selectedObrigacao ? 'Editar Obrigação' : 'Nova obrigação'}
+            Nova obrigação
           </DialogTitle>
         </DialogHeader>
 
@@ -268,9 +311,7 @@ export function ObrigacaoModal() {
               </Button>
             ) : (
               <Button onClick={handleNext} disabled={loading || !isvalidProximaStep}>
-                {loading 
-                  ? (selectedObrigacao ? 'Atualizando...' : 'Criando...') 
-                  : (selectedObrigacao ? 'Atualizar Obrigação' : 'Criar Obrigação')}
+                {loading ? 'Criando...' : 'Criar Obrigação'}
               </Button>
             )}
           </div>
