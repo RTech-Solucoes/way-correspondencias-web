@@ -6,6 +6,7 @@ import { Stepper } from '@/components/ui/stepper';
 import { Button } from '@/components/ui/button';
 import { useObrigacoes } from '@/context/obrigacoes/ObrigacoesContext';
 import { ObrigacaoRequest } from '@/api/obrigacao/types';
+import { CaretRightIcon, CaretLeftIcon, CheckCircle } from '@phosphor-icons/react';
 
 import { Step1Obrigacao } from './steps/Step1Obrigacao';
 import { Step2Obrigacao } from './steps/Step2Obrigacao';
@@ -18,6 +19,7 @@ import { TipoEnum, CategoriaEnum } from '@/api/tipos/types';
 import tiposClient from '@/api/tipos/client';
 import { ArquivoDTO, TipoObjetoAnexo, TipoResponsavelAnexo } from '@/api/anexos/type';
 import anexosClient from '@/api/anexos/client';
+import { CheckCircleIcon } from 'lucide-react';
 
 export interface ObrigacaoFormData extends Partial<ObrigacaoRequest> {
   cdIdentificador?: string;
@@ -300,18 +302,22 @@ export function ObrigacaoModal() {
             variant="outline"
             onClick={handlePrevious}
             disabled={currentStep === 1 || loading}
+            className="flex items-center gap-2"
           >
-          Etapa Anterior
+            <CaretLeftIcon className="h-4 w-4" />
+            Etapa Anterior
           </Button>
           
           <div className="flex gap-2">
             {currentStep < steps.length ? (
-              <Button onClick={handleNext} disabled={loading || !isvalidProximaStep}>
+              <Button onClick={handleNext} disabled={loading || !isvalidProximaStep} className="flex items-center gap-2">
+                {!loading && <CaretRightIcon className="h-4 w-4" />}
                 {loading ? 'Salvando...' : 'Próxima etapa'}
               </Button>
             ) : (
-              <Button onClick={handleNext} disabled={loading || !isvalidProximaStep}>
-                {loading ? 'Criando...' : 'Criar Obrigação'}
+              <Button onClick={handleNext} disabled={loading || !isvalidProximaStep} className="flex items-center gap-2">
+                {!loading && <CheckCircleIcon className="h-4 w-4" />}
+                {loading ? 'Concluindo...' : 'Concluir'}
               </Button>
             )}
           </div>
