@@ -291,22 +291,21 @@ export function Step6Obrigacao({ formData }: Step6ObrigacaoProps) {
       </div>
 
       <div className="border-t pt-4">
-        <Label className="text-sm font-semibold text-gray-700">Vínculos</Label>
         <div className="grid grid-cols-3 gap-4 mt-2">
           <div>
-            <span className="text-xs text-gray-500 block mb-1">ANTT</span>
+            <span className="text-sm font-semibold text-gray-700">ANTT</span>
             <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
               {obrigacaoDetalhe?.dsAntt || formData?.dsAntt || 'Não informado'}
             </div>
           </div>
           <div>
-            <span className="text-xs text-gray-500 block mb-1">Outras Informações</span>
+            <span className="text-sm font-semibold text-gray-700">Outras Informações</span>
             <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
               {obrigacaoDetalhe?.dsProtocoloExterno || formData?.dsProtocoloExterno || 'Não informado'}
             </div>
           </div>
           <div>
-            <span className="text-xs text-gray-500 block mb-1">TAC</span>
+            <span className="text-sm font-semibold text-gray-700">TAC</span>
             <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
               {obrigacaoDetalhe?.dsTac || formData?.dsTac || 'Não informado'}
             </div>
