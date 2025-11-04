@@ -1,7 +1,8 @@
 'use client'
 
-import {createContext, Dispatch, ReactNode, SetStateAction, useContext, useState} from "react";
-import { ObrigacaoResponse} from '@/api/obrigacao/types';
+import {createContext, Dispatch, ReactNode, SetStateAction, useContext, useState, useCallback, useEffect} from "react";
+import { ObrigacaoResponse, ObrigacaoFiltroRequest} from '@/api/obrigacao/types';
+import obrigacaoContratualClient from '@/api/obrigacao/client';
 
 interface FiltersState {
   titulo: string;
@@ -10,6 +11,15 @@ interface FiltersState {
   status: string;
   dateFrom: string;
   dateTo: string;
+  idStatusObrigacao: string;
+  idAreaAtribuida: string;
+  dtLimiteInicio: string;
+  dtLimiteFim: string;
+  dtInicioInicio: string;
+  dtInicioFim: string;
+  idTema: string;
+  idTipoClassificacao: string;
+  idTipoPeriodicidade: string;
 }
 
 export interface ObrigacoesContextProps {
@@ -37,6 +47,7 @@ export interface ObrigacoesContextProps {
   setTotalElements: Dispatch<SetStateAction<number>>;
   filters: FiltersState;
   setFilters: Dispatch<SetStateAction<FiltersState>>;
+  loadObrigacoes: () => Promise<void>;
 }
 
 const ObrigacoesContext = createContext<ObrigacoesContextProps | undefined>(undefined);
@@ -60,7 +71,52 @@ export function ObrigacoesProvider({children}: { children: ReactNode }) {
     status: '',
     dateFrom: '',
     dateTo: '',
+    idStatusObrigacao: '',
+    idAreaAtribuida: '',
+    dtLimiteInicio: '',
+    dtLimiteFim: '',
+    dtInicioInicio: '',
+    dtInicioFim: '',
+    idTema: '',
+    idTipoClassificacao: '',
+    idTipoPeriodicidade: '',
   });
+
+  const loadObrigacoes = useCallback(async () => {
+    setLoading(true);
+    try {
+      const filtro: ObrigacaoFiltroRequest = {
+        filtro: searchQuery || null,
+        idStatusSolicitacao: filters.idStatusObrigacao ? parseInt(filters.idStatusObrigacao) : null,
+        idAreaAtribuida: filters.idAreaAtribuida ? parseInt(filters.idAreaAtribuida) : null,
+        dtLimiteInicio: filters.dtLimiteInicio || null,
+        dtLimiteFim: filters.dtLimiteFim || null,
+        dtInicioInicio: filters.dtInicioInicio || null,
+        dtInicioFim: filters.dtInicioFim || null,
+        idTema: filters.idTema ? parseInt(filters.idTema) : null,
+        idTipoClassificacao: filters.idTipoClassificacao ? parseInt(filters.idTipoClassificacao) : null,
+        idTipoPeriodicidade: filters.idTipoPeriodicidade ? parseInt(filters.idTipoPeriodicidade) : null,
+        page: currentPage,
+        size: 15,
+      };
+
+      const response = await obrigacaoContratualClient.buscarLista(filtro);
+      setObrigacoes(response.content || []);
+      setTotalPages(response.totalPages || 0);
+      setTotalElements(response.totalElements || 0);
+    } catch (error) {
+      console.error('Erro ao carregar obrigações:', error);
+      setObrigacoes([]);
+      setTotalPages(0);
+      setTotalElements(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [filters, currentPage, searchQuery]);
+
+  useEffect(() => {
+    loadObrigacoes();
+  }, [loadObrigacoes]);
 
   return (
     <ObrigacoesContext.Provider
@@ -89,6 +145,7 @@ export function ObrigacoesProvider({children}: { children: ReactNode }) {
         setTotalElements,
         filters,
         setFilters,
+        loadObrigacoes,
       }}
     >
       {children}

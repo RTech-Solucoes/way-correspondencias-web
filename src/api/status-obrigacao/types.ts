@@ -25,11 +25,11 @@ export const statusObrigacaoLabels: Record<StatusObrigacao, string> = {
 }
 
 export const statusObrigacaoList: StatusObrigacaoResponse[] = [
-    { id: 1, nmStatus: StatusObrigacao.NAO_INICIADO },
-    { id: 2, nmStatus: StatusObrigacao.PENDENTE },
-    { id: 3, nmStatus: StatusObrigacao.EM_ANDAMENTO },
-    { id: 4, nmStatus: StatusObrigacao.EM_VALIDACAO_REGULATORIO },
-    { id: 5, nmStatus: StatusObrigacao.ATRASADA },
-    { id: 6, nmStatus: StatusObrigacao.CONCLUIDO },
-    { id: 7, nmStatus: StatusObrigacao.NAO_APLICAVEL_SUSPENSA },
+    { id: 12, nmStatus: StatusObrigacao.NAO_INICIADO },
+    { id: 13, nmStatus: StatusObrigacao.PENDENTE },
+    { id: 14, nmStatus: StatusObrigacao.EM_ANDAMENTO },
+    { id: 15, nmStatus: StatusObrigacao.EM_VALIDACAO_REGULATORIO },
+    { id: 16, nmStatus: StatusObrigacao.ATRASADA },
+    { id: 9, nmStatus: StatusObrigacao.CONCLUIDO },
+    { id: 18, nmStatus: StatusObrigacao.NAO_APLICAVEL_SUSPENSA },
 ]

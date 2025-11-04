@@ -1,5 +1,6 @@
+import { buildQueryParams } from "@/utils/utils";
 import ApiClient from "../client";
-import { ObrigacaoResponse, ObrigacaoRequest, ObrigacaoDetalheResponse } from "./types";
+import { ObrigacaoResponse, ObrigacaoRequest, ObrigacaoDetalheResponse, ObrigacaoFiltroRequest } from "./types";
 import { ObrigacaoFormData } from "@/components/obrigacoes/ObrigacaoModal";
 
 export interface PaginatedResponse<T> {
@@ -68,6 +69,30 @@ export class ObrigacaoClient {
 
     async buscarDetalhePorId(id: number): Promise<ObrigacaoDetalheResponse> {
         return this.client.request<ObrigacaoDetalheResponse>(`/detalhe/${id}`, {
+            method: 'GET',
+        });
+    }
+
+    async buscarLista(filtro: ObrigacaoFiltroRequest = {}): Promise<PaginatedResponse<ObrigacaoResponse>> {
+
+        const allowedKeys = [
+            'filtro',
+            'page',
+            'size',
+            'sort',
+            'idStatusSolicitacao',
+            'idAreaAtribuida',
+            'dtLimiteInicio',
+            'dtLimiteFim',
+            'dtInicioInicio',
+            'dtInicioFim',
+            'idTema',
+            'idTipoClassificacao',
+            'idTipoPeriodicidade',
+        ] as const;
+
+        const qs = buildQueryParams(filtro, allowedKeys).toString();
+        return this.client.request<PaginatedResponse<ObrigacaoResponse>>(`?${qs}`, {
             method: 'GET',
         });
     }

@@ -72,3 +72,19 @@ export interface ObrigacaoDetalheResponse {
   obrigacao: ObrigacaoResponse;
   anexos: AnexoResponse[];
 }
+
+export interface ObrigacaoFiltroRequest {
+  filtro?: string | null;
+  idStatusSolicitacao?: number | null;
+  idAreaAtribuida?: number | null;
+  dtLimiteInicio?: string | null;
+  dtLimiteFim?: string | null;
+  dtInicioInicio?: string | null;
+  dtInicioFim?: string | null;
+  idTema?: number | null;
+  idTipoClassificacao?: number | null;
+  idTipoPeriodicidade?: number | null;
+  page?: number;
+  size?: number;
+  sort?: string;
+}

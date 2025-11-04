@@ -41,7 +41,7 @@ const steps = [
 ];
 
 export function ObrigacaoModal() {
-  const { showObrigacaoModal, setShowObrigacaoModal } = useObrigacoes();
+  const { showObrigacaoModal, setShowObrigacaoModal, loadObrigacoes } = useObrigacoes();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [idTipoClassificacaoCondicionada, setIdTipoClassificacaoCondicionada] = useState<number | null>(null);
@@ -67,14 +67,14 @@ export function ObrigacaoModal() {
     dsProtocoloExterno: '',
     idObrigacaoRecusada: null,
     dsTac: '',
-    idStatusSolicitacao: 11,
+    idStatusSolicitacao: 12,
   });
 
   useEffect(() => {
     if (showObrigacaoModal) {
       setFormData((prev) => ({
         ...prev,
-        idStatusSolicitacao: 11,
+        idStatusSolicitacao: 12,
       }));
     }
   }, [showObrigacaoModal]);
@@ -124,6 +124,7 @@ export function ObrigacaoModal() {
       idObrigacaoRecusada: null,
       dsTac: null,
     });
+    loadObrigacoes();
   };
 
   const updateFormData = (data: Partial<ObrigacaoFormData>) => {
@@ -215,6 +216,7 @@ export function ObrigacaoModal() {
             if (response.idSolicitacao) {
                 updateFormData({ idSolicitacao: response.idSolicitacao });
             }
+            loadObrigacoes();
             break;
         case 6:
             //await obrigacaoContratualClient.salvarStep6(formData);
