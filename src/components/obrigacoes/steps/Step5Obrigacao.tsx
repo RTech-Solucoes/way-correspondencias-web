@@ -100,13 +100,13 @@ export function Step5Obrigacao({ formData, updateFormData }: Step5ObrigacaoProps
         <div className="flex flex-col space-y-4">
           <Label htmlFor="idSolicitacaoCorrespondencia">Vincular Correspondência</Label>
           <Select
-            value={formData?.idSolicitacaoCorrespondencia?.toString() || formData?.idSolicitacao?.toString() || ''}
+            value={formData?.idSolicitacaoCorrespondencia?.toString() || formData?.idSolicitacao?.toString() || 'none'}
             onValueChange={(value) => updateFormData?.({ 
-              idSolicitacaoCorrespondencia: parseInt(value),
+              idSolicitacaoCorrespondencia: value === 'none' ? null : parseInt(value),
             })}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Selecione" />
+              <SelectValue placeholder="Nenhuma" />
             </SelectTrigger>
             <SelectContent>
               <div className="p-2 border-b">
@@ -120,6 +120,9 @@ export function Step5Obrigacao({ formData, updateFormData }: Step5ObrigacaoProps
                   onMouseDown={(e) => e.stopPropagation()}
                 />
               </div>
+              <SelectItem value="none">
+                Nenhuma
+              </SelectItem>
               {(carregandoBusca || carregandoInicial) && (
                 <div className="px-3 py-2 text-xs text-gray-500">Carregando...</div>
               )}
@@ -162,9 +165,9 @@ export function Step5Obrigacao({ formData, updateFormData }: Step5ObrigacaoProps
         <div className="flex flex-col space-y-4">
           <Label htmlFor="idObrigacaoRecusada">Obrigação recusada pelo Verificador ou ANTT</Label>
           <Select
-            value={formData?.idObrigacaoRecusada?.toString() || formData?.idObrigacaoContratualVinculo?.toString() || ''}
+            value={formData?.idObrigacaoRecusada?.toString() || formData?.idObrigacaoContratualVinculo?.toString() || 'none'}
             onValueChange={(value) => updateFormData?.({ 
-              idObrigacaoRecusada: parseInt(value),
+              idObrigacaoRecusada: value === 'none' ? null : parseInt(value),
             })}
           >
             <SelectTrigger>
@@ -182,6 +185,9 @@ export function Step5Obrigacao({ formData, updateFormData }: Step5ObrigacaoProps
                   onMouseDown={(e) => e.stopPropagation()}
                 />
               </div>
+              <SelectItem value="none">
+                Nenhuma
+              </SelectItem>
               {(carregandoBuscaObrigacao || carregandoInicial) && (
                 <div className="px-3 py-2 text-xs text-gray-500">Carregando...</div>
               )}
@@ -199,10 +205,10 @@ export function Step5Obrigacao({ formData, updateFormData }: Step5ObrigacaoProps
       </div>
 
       <div className="flex flex-col space-y-4">
-        <Label htmlFor="dsProtocoloExterno">Outro Protocolo Externo</Label>
+        <Label htmlFor="dsProtocoloExterno">Outras Informações</Label>
         <Input
           id="dsProtocoloExterno"
-          placeholder="Digite o Outro Protocolo Externo"
+          placeholder="Digite outras Informações"
           type="text"
           value={formData?.dsProtocoloExterno || ''}
           onChange={(e) => updateFormData?.({ dsProtocoloExterno: e.target.value })}

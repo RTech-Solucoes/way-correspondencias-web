@@ -6,7 +6,7 @@ import { Stepper } from '@/components/ui/stepper';
 import { Button } from '@/components/ui/button';
 import { useObrigacoes } from '@/context/obrigacoes/ObrigacoesContext';
 import { ObrigacaoRequest } from '@/api/obrigacao/types';
-import { CaretRightIcon, CaretLeftIcon, CheckCircle } from '@phosphor-icons/react';
+import { CaretRightIcon, CaretLeftIcon } from '@phosphor-icons/react';
 
 import { Step1Obrigacao } from './steps/Step1Obrigacao';
 import { Step2Obrigacao } from './steps/Step2Obrigacao';
@@ -17,8 +17,7 @@ import { Step6Obrigacao } from './steps/Step6Obrigacao';
 import obrigacaoContratualClient from '@/api/obrigacao/client';
 import { TipoEnum, CategoriaEnum } from '@/api/tipos/types';
 import tiposClient from '@/api/tipos/client';
-import { ArquivoDTO, TipoObjetoAnexo, TipoResponsavelAnexo } from '@/api/anexos/type';
-import anexosClient from '@/api/anexos/client';
+import { ArquivoDTO, TipoResponsavelAnexo } from '@/api/anexos/type';
 import { CheckCircleIcon } from 'lucide-react';
 
 export interface ObrigacaoFormData extends Partial<ObrigacaoRequest> {
@@ -184,19 +183,6 @@ export function ObrigacaoModal() {
             let arquivosDTO: ArquivoDTO[] = [];
             
             if (anexosParaEnviar.length > 0) {
-              let anexosExistentes: string[] = [];
-              if (formData.idSolicitacao) {
-                try {
-                  const anexosBackend = await anexosClient.buscarPorIdObjetoETipoObjeto(
-                    formData.idSolicitacao,
-                    TipoObjetoAnexo.O
-                  );
-                  anexosExistentes = anexosBackend.map(a => a.nmArquivo.toLowerCase());
-                } catch (error) {
-                  console.error('Erro ao carregar anexos existentes:', error);
-                }
-              }
-
               arquivosDTO = await Promise.all(
                 anexosParaEnviar.map(async (file) => {
                   const base64 = await new Promise<string>((resolve, reject) => {
@@ -217,11 +203,6 @@ export function ObrigacaoModal() {
                     conteudoArquivo: base64,
                   };
                 })
-              );
-
-              const nomesExistentes = new Set(anexosExistentes);
-              arquivosDTO = arquivosDTO.filter(
-                arquivo => arquivo.nomeArquivo && !nomesExistentes.has(arquivo.nomeArquivo.toLowerCase())
               );
             }
 

@@ -281,7 +281,7 @@ export function Step6Obrigacao({ formData }: Step6ObrigacaoProps) {
           </div>
           </div>
         <div>
-          <Label className="text-sm font-semibold text-gray-700">Numero de Dias</Label>
+          <Label className="text-sm font-semibold text-gray-700">Duração (Dias)</Label>
           <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm mt-2">
             {(obrigacaoDetalhe?.nrDuracaoDias ?? formData?.nrDuracaoDias) ? `${obrigacaoDetalhe?.nrDuracaoDias ?? formData?.nrDuracaoDias} dias` : 'Não informado'}
           </div>
@@ -300,7 +300,7 @@ export function Step6Obrigacao({ formData }: Step6ObrigacaoProps) {
             </div>
           </div>
           <div>
-            <span className="text-xs text-gray-500 block mb-1">Outro Protocolo Externo</span>
+            <span className="text-xs text-gray-500 block mb-1">Outras Informações</span>
             <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
               {obrigacaoDetalhe?.dsProtocoloExterno || formData?.dsProtocoloExterno || 'Não informado'}
             </div>
@@ -314,36 +314,35 @@ export function Step6Obrigacao({ formData }: Step6ObrigacaoProps) {
         </div>
       </div>
 
-      <div className="border-t pt-4">
-        <Label className="text-sm font-semibold text-gray-700">Vínculo com Correspondência</Label>
-        <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm mt-2">
-          {obrigacaoDetalhe?.correspondencia 
-            ? `Correspondência #${obrigacaoDetalhe.correspondencia.cdIdentificacao || `#${obrigacaoDetalhe.correspondencia.idSolicitacao}`}`
-            : formData?.idSolicitacaoCorrespondencia
-            ? `Correspondência #${formData.idSolicitacaoCorrespondencia}`
-            : 'Não informado'}
+      <div className="grid grid-cols-3 gap-4 mt-2">
+        <div className="border-t pt-4">
+          <Label className="text-sm font-semibold text-gray-700">Vínculo com Correspondência</Label>
+          <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm mt-2">
+            {obrigacaoDetalhe?.correspondencia 
+              ? `${obrigacaoDetalhe.correspondencia.cdIdentificacao}`
+              : 'Não informado'}
+          </div>
         </div>
-      </div>
 
-      <div className="border-t pt-4">
-        <Label className="text-sm font-semibold text-gray-700">Obrigação recusada pelo Verificador ou ANTT</Label>
-        <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm mt-2">
-          {obrigacaoDetalhe?.obrigacaoRecusada
-            ? `Obrigação #${obrigacaoDetalhe.obrigacaoRecusada.cdIdentificacao}`
-            : 'Não informado'}
+        <div className="border-t pt-4">
+          <Label className="text-sm font-semibold text-gray-700">Obrigação recusada pelo Verificador ou ANTT</Label>
+          <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm mt-2">
+            {obrigacaoDetalhe?.obrigacaoRecusada
+              ? `${obrigacaoDetalhe.obrigacaoRecusada.cdIdentificacao}`
+              : 'Não informado'}
+          </div>
         </div>
-      </div>
-      
+        
 
-      <div className="border-t pt-4">
-        <Label className="text-sm font-semibold text-gray-700">Obrigação Principal</Label>
-        <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm mt-2">
-          {obrigacaoDetalhe?.obrigacaoPrincipal
-            ? `Obrigação #${obrigacaoDetalhe.obrigacaoPrincipal.cdIdentificacao}`
-            : 'Não informado'}
+        <div className="border-t pt-4">
+          <Label className="text-sm font-semibold text-gray-700">Obrigação Principal</Label>
+          <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm mt-2">
+            {obrigacaoDetalhe?.obrigacaoPrincipal
+              ? `${obrigacaoDetalhe.obrigacaoPrincipal.cdIdentificacao}`
+              : 'Não informado'}
+          </div>
         </div>
       </div>
-    
 
       <div className="border-t pt-4">
         <Label className="text-sm font-semibold text-gray-700">Anexos ({anexosBackend.length})</Label>

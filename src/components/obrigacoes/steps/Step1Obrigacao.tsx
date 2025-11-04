@@ -123,7 +123,7 @@ export function Step1Obrigacao({ formData, updateFormData }: Step1ObrigacaoProps
             </div>
 
             <div className="space-y-2 w-full">
-                <Label htmlFor="idTipoClassificacao">Classificação da Obrigação*</Label>
+                <Label htmlFor="idTipoClassificacao">Classificação*</Label>
                 <Select
                     value={formData.idTipoClassificacao?.toString() || ''}
                     onValueChange={(value) => {
@@ -151,9 +151,9 @@ export function Step1Obrigacao({ formData, updateFormData }: Step1ObrigacaoProps
                   <>
                     <Label htmlFor="idObrigacaoContratualPai">Obrigação Principal</Label>
                     <Select
-                      value={formData.idObrigacaoPrincipal?.toString() || ''}
+                      value={formData.idObrigacaoPrincipal?.toString() || 'none'}
                       onValueChange={(value) => updateFormData({ 
-                          idObrigacaoPrincipal: parseInt(value)
+                          idObrigacaoPrincipal: value === 'none' ? null : parseInt(value)
                       })}
                     >
                       <SelectTrigger id="idObrigacaoContratualPai">
@@ -170,7 +170,10 @@ export function Step1Obrigacao({ formData, updateFormData }: Step1ObrigacaoProps
                             onClick={(e) => e.stopPropagation()}
                             onMouseDown={(e) => e.stopPropagation()}
                           />
-                        </div>
+                            </div>
+                        <SelectItem value="none">
+                            Nenhuma
+                        </SelectItem>
                         {resultadoObrigacoes.map((o) => (
                           <SelectItem key={o.idSolicitacao} value={o.idSolicitacao.toString()}>
                             {o.cdIdentificacao}
@@ -189,7 +192,7 @@ export function Step1Obrigacao({ formData, updateFormData }: Step1ObrigacaoProps
 
         <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
-                <Label htmlFor="idTipoPeriodicidade">Periódica*</Label>
+                <Label htmlFor="idTipoPeriodicidade">Periodicidade*</Label>
                 <Select
                     value={formData.idTipoPeriodicidade?.toString() || ''}
                     onValueChange={(value) => {
