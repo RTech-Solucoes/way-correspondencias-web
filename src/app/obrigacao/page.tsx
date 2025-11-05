@@ -28,7 +28,8 @@ import { formatDateBr } from "@/utils/utils";
 import { AreaResponse } from "@/api/areas/types";
 import { TemaResponse } from "@/api/temas/types";
 import { TipoResponse } from "@/api/tipos/types";
-import { ObrigacaoActionsMenu } from "@/components/obrigacoes/ObrigacaoActionsMenu";
+import { ObrigacaoAcoesMenu } from "@/components/obrigacoes/ObrigacaoAcoesMenu";
+import TimeProgress from "@/components/ui/time-progress";
 
 function ObrigacoesContent() {
   const {
@@ -340,18 +341,19 @@ function ObrigacoesContent() {
       )}
 
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Código</TableHead>
-              <TableHead>Tarefa</TableHead>
+              <TableHead>ID</TableHead>
+              <TableHead className="min-w-[250px]">Tarefa</TableHead>
               <TableHead>Tema</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Atribuído a</TableHead>
               <TableHead>Progresso</TableHead>
               <TableHead>Data de Término</TableHead>
               <TableHead>Data Limite</TableHead>
-              <TableHead className="w-[100px] text-center">Ações</TableHead>
+              <TableHead className="w-[100px] text-center sticky right-0 bg-white z-10 shadow-sm">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -363,7 +365,7 @@ function ObrigacoesContent() {
               </TableRow>
             ) : obrigacoes.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={9} className="text-center py-8 text-gray-500">
                   Nenhuma obrigação encontrada
                 </TableCell>
               </TableRow>
@@ -371,7 +373,11 @@ function ObrigacoesContent() {
               obrigacoes.map((obrigacao) => (
                 <TableRow key={obrigacao.idSolicitacao}>
                   <TableCell className="font-medium">{obrigacao.cdIdentificacao || '-'}</TableCell>
-                  <TableCell>{obrigacao.dsTarefa || '-'}</TableCell>
+                  <TableCell className="min-w-[250px]">
+                    <div className="line-clamp-4" title={obrigacao.dsTarefa || undefined}>
+                      {obrigacao.dsTarefa || '-'}
+                    </div>
+                  </TableCell>
                   <TableCell>{obrigacao.tema?.nmTema || '-'}</TableCell>
                   <TableCell>
                     <Badge
@@ -397,23 +403,37 @@ function ObrigacoesContent() {
                     }
                   </TableCell>
                   <TableCell>
-                  <span>Data Limite - Data de Inicio</span>
+                    <TimeProgress
+                        start={obrigacao.dtInicio 
+                          ? (obrigacao.dtInicio.includes('T') 
+                            ? obrigacao.dtInicio 
+                            : `${obrigacao.dtInicio}T00:00:00`)
+                          : null}
+                        end={obrigacao.dtLimite 
+                          ? (obrigacao.dtLimite.includes('T') 
+                            ? obrigacao.dtLimite 
+                            : `${obrigacao.dtLimite}T23:59:59`)
+                          : null}
+                        finishedAt={obrigacao.dtConclusao}
+                        now={new Date().toISOString()}
+                        statusLabel={obrigacao.statusSolicitacao?.nmStatus}
+                      />
                   </TableCell>
                   <TableCell>
                     {obrigacao.dtTermino 
-                      ? new Date(obrigacao.dtTermino).toLocaleDateString('pt-BR')
+                      ? formatDateBr(obrigacao.dtTermino)
                       : '-'
                     }
                   </TableCell>
                   <TableCell>
                     {obrigacao.dtLimite 
-                      ? new Date(obrigacao.dtLimite).toLocaleDateString('pt-BR')
+                      ?  formatDateBr(obrigacao.dtLimite)
                       : '-'
                     }
                   </TableCell>
-                  <TableCell className="text-center">
+                  <TableCell className="text-center sticky right-0 bg-white z-10 shadow-sm">
                     <div className="flex items-center justify-center">
-                      <ObrigacaoActionsMenu
+                      <ObrigacaoAcoesMenu
                         obrigacao={obrigacao}
                         onVisualizar={(obrigacao) => {
                           console.log('Visualizar obrigação:', obrigacao.idSolicitacao);
@@ -439,6 +459,7 @@ function ObrigacoesContent() {
             )}
           </TableBody>
         </Table>
+        </div>
       </div>
     </div>
     </>

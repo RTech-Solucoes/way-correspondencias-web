@@ -18,7 +18,7 @@ import {
 import { ObrigacaoResponse } from "@/api/obrigacao/types";
 import { BriefcaseIcon, FileTextIcon } from "lucide-react";
 
-interface ObrigacaoActionsMenuProps {
+interface ObrigacaoAcoesMenuProps {
   obrigacao: ObrigacaoResponse;
   onVisualizar?: (obrigacao: ObrigacaoResponse) => void;
   onEditar?: (obrigacao: ObrigacaoResponse) => void;
@@ -28,7 +28,7 @@ interface ObrigacaoActionsMenuProps {
   onExcluir?: (obrigacao: ObrigacaoResponse) => void;
 }
 
-export function ObrigacaoActionsMenu({
+export function ObrigacaoAcoesMenu({
   obrigacao,
   onVisualizar,
   onEditar,
@@ -36,16 +36,16 @@ export function ObrigacaoActionsMenu({
   onEncaminharTramitacao,
   onEnviarArea,
   onExcluir,
-}: ObrigacaoActionsMenuProps) {
+}: ObrigacaoAcoesMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button 
           variant="ghost" 
           size="sm"
-          className="h-8 w-8 p-0"
+          className="h-8 w-8 p-0 rounded-full shadow-sm border-0 hover:shadow-md transition-shadow flex items-center justify-center"
         >
-          <DotsThreeOutlineIcon className="h-4 w-4" />
+          <DotsThreeOutlineIcon className="h-5 w-5" weight="fill" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">

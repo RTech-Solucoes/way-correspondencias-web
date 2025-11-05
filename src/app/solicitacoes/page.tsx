@@ -661,9 +661,9 @@ function SolicitacoesPageContent() {
                     <StickyTableCell>{solicitacao.nmTema || solicitacao?.tema?.nmTema || '-'}</StickyTableCell>
                     <StickyTableCell className="min-w-[220px]">
                       <TimeProgress
-                        dtPrimeiraTramitacao={solicitacao.dtPrimeiraTramitacao}
-                        dtPrazoLimite={solicitacao.dtPrazoLimite}
-                        dataConclusaoTramitacao={solicitacao.dtConclusaoTramitacao}
+                        start={solicitacao.dtPrimeiraTramitacao}
+                        end={solicitacao.dtPrazoLimite}
+                        finishedAt={solicitacao.dtConclusaoTramitacao}
                         now={new Date().toISOString()}
                         statusLabel={solicitacao.statusSolicitacao?.nmStatus}
                       />
