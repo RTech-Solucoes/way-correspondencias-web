@@ -97,7 +97,17 @@ export class ObrigacaoClient {
         });
     }
 
+    async importarObrigacoesExcel(file: File): Promise<{ mensagem: string; obrigacoesImportadas: number }> {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        return this.client.request<{ mensagem: string; obrigacoesImportadas: number }>('/importar-excel', {
+            method: 'POST',
+            body: formData,
+        });
+    }
+
 }
 
-const obrigacaoContratualClient = new ObrigacaoClient();
-export default obrigacaoContratualClient;
+const obrigacaoClient = new ObrigacaoClient();
+export default obrigacaoClient;

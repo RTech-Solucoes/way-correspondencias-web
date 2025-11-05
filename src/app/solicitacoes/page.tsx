@@ -50,7 +50,6 @@ import {
   SolicitacaoDetalheResponse,
   SolicitacaoResponse
 } from '@/api/solicitacoes/types';
-import {useTramitacoesMutation} from '@/hooks/use-tramitacoes';
 import tramitacoesClient from '@/api/tramitacoes/client';
 import {usePermissoes} from "@/context/permissoes/PermissoesContext";
 import LoadingRows from "@/components/solicitacoes/LoadingRows";
@@ -116,7 +115,6 @@ function SolicitacoesPageContent() {
     handleSort,
   } = useSolicitacoes();
 
-  const tramitacoesMutation = useTramitacoesMutation();
   const {canInserirSolicitacao, canAtualizarSolicitacao, canDeletarSolicitacao} = usePermissoes()
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 

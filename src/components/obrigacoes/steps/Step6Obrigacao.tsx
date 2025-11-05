@@ -5,7 +5,7 @@ import { StatusObrigacao, statusObrigacaoLabels, statusObrigacaoList } from '@/a
 import { AnexoResponse, TipoObjetoAnexo } from '@/api/anexos/type';
 import { useEffect, useState } from 'react';
 import { Label } from '@/components/ui/label';
-import obrigacaoContratualClient from '@/api/obrigacao/client';
+import obrigacaoClient from '@/api/obrigacao/client';
 import anexosClient from '@/api/anexos/client';
 import { base64ToUint8Array, saveBlob } from '@/utils/utils';
 import AnexoList from '@/components/AnexoComponotent/AnexoList/AnexoList';
@@ -35,7 +35,7 @@ export function Step6Obrigacao({ formData }: Step6ObrigacaoProps) {
 
       try {
         setLoading(true);
-        const detalhe = await obrigacaoContratualClient.buscarDetalhePorId(formData.idSolicitacao);
+        const detalhe = await obrigacaoClient.buscarDetalhePorId(formData.idSolicitacao);
         setObrigacaoDetalhe(detalhe.obrigacao);
         setAnexosBackend(detalhe.anexos);
 

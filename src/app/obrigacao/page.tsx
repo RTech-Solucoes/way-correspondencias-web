@@ -9,6 +9,7 @@ import {
   MagnifyingGlassIcon,
   FunnelSimpleIcon,
   XIcon,
+  UploadIcon,
 } from "@phosphor-icons/react";
 import { ObrigacoesProvider, useObrigacoes } from "@/context/obrigacoes/ObrigacoesContext";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -29,6 +30,7 @@ import { AreaResponse } from "@/api/areas/types";
 import { TemaResponse } from "@/api/temas/types";
 import { TipoResponse } from "@/api/tipos/types";
 import { ObrigacaoAcoesMenu } from "@/components/obrigacoes/ObrigacaoAcoesMenu";
+import { ImportObrigacoesModal } from "@/components/obrigacoes/ImportObrigacoesModal";
 import TimeProgress from "@/components/ui/time-progress";
 
 function ObrigacoesContent() {
@@ -53,6 +55,7 @@ function ObrigacoesContent() {
   const [temas, setTemas] = useState<TemaResponse[]>([]);
   const [classificacoes, setClassificacoes] = useState<TipoResponse[]>([]);
   const [periodicidades, setPeriodicidades] = useState<TipoResponse[]>([]);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   useEffect(() => {
     const carregarDados = async () => {
@@ -261,6 +264,10 @@ function ObrigacoesContent() {
       <ObrigacaoModal />
       <FilterModalObrigacao />
       <DeleteObrigacaoDialog />
+      <ImportObrigacoesModal 
+        open={showImportModal} 
+        onClose={() => setShowImportModal(false)} 
+      />
       
       <div className="flex flex-col min-h-0 flex-1">
         <div className="flex items-center justify-between mb-6">
@@ -320,6 +327,15 @@ function ObrigacoesContent() {
           >
             <FunnelSimpleIcon className="h-4 w-4 mr-2" />
             Filtrar
+          </Button>
+
+          <Button
+            variant="outline"
+            className="h-10 px-4"
+            onClick={() => setShowImportModal(true)}
+          >
+            <UploadIcon className="h-4 w-4 mr-2" />
+            Importar Obrigações
           </Button>
 
           <Button

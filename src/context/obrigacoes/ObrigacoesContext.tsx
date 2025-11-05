@@ -2,7 +2,7 @@
 
 import {createContext, Dispatch, ReactNode, SetStateAction, useContext, useState, useCallback, useEffect} from "react";
 import { ObrigacaoResponse, ObrigacaoFiltroRequest} from '@/api/obrigacao/types';
-import obrigacaoContratualClient from '@/api/obrigacao/client';
+import obrigacaoClient from '@/api/obrigacao/client';
 
 interface FiltersState {
   titulo: string;
@@ -97,10 +97,10 @@ export function ObrigacoesProvider({children}: { children: ReactNode }) {
         idTipoClassificacao: filters.idTipoClassificacao ? parseInt(filters.idTipoClassificacao) : null,
         idTipoPeriodicidade: filters.idTipoPeriodicidade ? parseInt(filters.idTipoPeriodicidade) : null,
         page: currentPage,
-        size: 15,
+        size: 8,
       };
 
-      const response = await obrigacaoContratualClient.buscarLista(filtro);
+      const response = await obrigacaoClient.buscarLista(filtro);
       setObrigacoes(response.content || []);
       setTotalPages(response.totalPages || 0);
       setTotalElements(response.totalElements || 0);

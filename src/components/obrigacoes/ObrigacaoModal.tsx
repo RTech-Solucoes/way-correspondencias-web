@@ -14,7 +14,7 @@ import { Step3Obrigacao } from './steps/Step3Obrigacao';
 import { Step4Obrigacao } from './steps/Step4Obrigacao';
 import { Step5Obrigacao } from './steps/Step5Obrigacao';
 import { Step6Obrigacao } from './steps/Step6Obrigacao';
-import obrigacaoContratualClient from '@/api/obrigacao/client';
+import obrigacaoClient from '@/api/obrigacao/client';
 import { TipoEnum, CategoriaEnum } from '@/api/tipos/types';
 import tiposClient from '@/api/tipos/client';
 import { ArquivoDTO, TipoResponsavelAnexo } from '@/api/anexos/type';
@@ -212,7 +212,7 @@ export function ObrigacaoModal() {
               arquivos: arquivosDTO.length > 0 ? arquivosDTO : undefined,
             };
 
-            const response = await obrigacaoContratualClient.criar(formDataComAnexos);
+            const response = await obrigacaoClient.criar(formDataComAnexos);
             if (response.idSolicitacao) {
                 updateFormData({ idSolicitacao: response.idSolicitacao });
             }
