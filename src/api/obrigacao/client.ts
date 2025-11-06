@@ -18,21 +18,6 @@ export class ObrigacaoClient {
         this.client = new ApiClient('/obrigacoes');
     }
 
-    async buscarFiltroPaginado(page: number = 0, size: number = 10, search?: string): Promise<PaginatedResponse<ObrigacaoResponse>> {
-        const params = new URLSearchParams({
-            page: page.toString(),
-            size: size.toString(),
-        });
-
-        if (search) {
-            params.append('search', search);
-        }
-
-        return this.client.request<PaginatedResponse<ObrigacaoResponse>>(`?${params.toString()}`, {
-            method: 'GET',
-        });
-    }
-
     async buscarPorId(id: number): Promise<ObrigacaoResponse> {
         return this.client.request<ObrigacaoResponse>(`/${id}`, {
             method: 'GET',
@@ -104,6 +89,12 @@ export class ObrigacaoClient {
         return this.client.request<{ mensagem: string; obrigacoesImportadas: number }>('/importar-excel', {
             method: 'POST',
             body: formData,
+        });
+    }
+
+    async replicarObrigacoesPorPeriodicidade(id: number): Promise<{ mensagem: string; obrigacaoReplicada: boolean }> {
+        return this.client.request<{ mensagem: string; obrigacaoReplicada: boolean }>(`/replicar-periodicidade/${id}`, {
+            method: 'POST',
         });
     }
 
