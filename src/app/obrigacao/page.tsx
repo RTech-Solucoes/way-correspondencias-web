@@ -414,7 +414,7 @@ function ObrigacoesContent() {
                   </TableCell>
                   <TableCell>
                     {obrigacao.areas && obrigacao.areas.length > 0 
-                      ? (obrigacao.areas.find(a => a.tipoArea?.cdTipo === TipoEnum.ATRIBUIDA)?.nmArea || obrigacao.areas[0]?.nmArea || '-')
+                      ? (obrigacao.areas.find(a => a.tipoArea?.cdTipo === TipoEnum.ATRIBUIDA)?.nmArea)
                       : '-'
                     }
                   </TableCell>

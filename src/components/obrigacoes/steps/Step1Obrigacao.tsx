@@ -30,7 +30,6 @@ export function Step1Obrigacao({ formData, updateFormData }: Step1ObrigacaoProps
     const isCondicionada = formData.idTipoClassificacao === tipoClassificacaoCondicionada;
     
     const [classificacoes, setClassificacoes] = useState<TipoResponse[]>([]);
-    const [periodicidades, setPeriodicidades] = useState<TipoResponse[]>([]);
     const [criticidades, setCriticidades] = useState<TipoResponse[]>([]);
     const [naturezas, setNaturezas] = useState<TipoResponse[]>([]);
     const [loadingTipos, setLoadingTipos] = useState<boolean>(false);
@@ -41,7 +40,6 @@ export function Step1Obrigacao({ formData, updateFormData }: Step1ObrigacaoProps
             try {
                 const tipos = await tiposClient.buscarPorCategorias([
                     CategoriaEnum.CLASSIFICACAO,
-                    CategoriaEnum.PERIODICIDADE,
                     CategoriaEnum.CRITICIDADE,
                     CategoriaEnum.NATUREZA
                 ]);
@@ -54,7 +52,6 @@ export function Step1Obrigacao({ formData, updateFormData }: Step1ObrigacaoProps
                     setTipoClassificacaoCondicionada(condicionada.idTipo);
                 }
                 
-                setPeriodicidades(tipos.filter(t => t.nmCategoria === CategoriaEnum.PERIODICIDADE));
                 setCriticidades(tipos.filter(t => t.nmCategoria === CategoriaEnum.CRITICIDADE));
                 setNaturezas(tipos.filter(t => t.nmCategoria === CategoriaEnum.NATUREZA));
             } catch (error) {
@@ -190,30 +187,7 @@ export function Step1Obrigacao({ formData, updateFormData }: Step1ObrigacaoProps
 
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-2">
-                <Label htmlFor="idTipoPeriodicidade">Periodicidade*</Label>
-                <Select
-                    value={formData.idTipoPeriodicidade?.toString() || ''}
-                    onValueChange={(value) => {
-                        updateFormData({ 
-                            idTipoPeriodicidade: parseInt(value)
-                        });
-                    }}
-                    disabled={loadingTipos}
-                >
-                    <SelectTrigger id="idTipoPeriodicidade">
-                        <SelectValue placeholder={loadingTipos ? 'Carregando...' : 'Selecione'} />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {periodicidades.map((tipo) => (
-                            <SelectItem key={tipo.idTipo} value={tipo.idTipo.toString()}>
-                                {tipo.dsTipo}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
+        <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
                 <Label htmlFor="idTipoCriticidade">Criticidade*</Label>
                 <Select

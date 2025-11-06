@@ -19,6 +19,7 @@ import { TipoEnum, CategoriaEnum } from '@/api/tipos/types';
 import tiposClient from '@/api/tipos/client';
 import { ArquivoDTO, TipoResponsavelAnexo } from '@/api/anexos/type';
 import { CheckCircleIcon } from 'lucide-react';
+import { toast } from 'sonner';
 
 export interface ObrigacaoFormData extends Partial<ObrigacaoRequest> {
   cdIdentificador?: string;
@@ -136,10 +137,9 @@ export function ObrigacaoModal() {
       case 1:
         if (!formData.dsTarefa?.trim()) return false;
         if (!formData.idTipoClassificacao) return false;
-        if (!formData.idTipoPeriodicidade) return false;
         if (!formData.idTipoCriticidade) return false;
         if (!formData.idTipoNatureza) return false;
-              
+        
         const isClassificacaoCondicionada = formData.idTipoClassificacao === idTipoClassificacaoCondicionada;
         if (isClassificacaoCondicionada && !formData.idObrigacaoPrincipal && !formData.idObrigacaoContratualPai) return false;
     
@@ -153,12 +153,8 @@ export function ObrigacaoModal() {
       case 3:
         if (!formData.dtInicio) return false;
         if (!formData.dtTermino) return false;
-        
-        if (formData.dtInicio && formData.dtTermino) {
-          const dataInicio = new Date(formData.dtInicio);
-          const dataTermino = new Date(formData.dtTermino);
-          if (dataTermino < dataInicio) return false;
-        }
+        if (!formData.idTipoPeriodicidade) return false;
+
         if (!formData.dtLimite) return false;
         
         return true;
@@ -219,7 +215,16 @@ export function ObrigacaoModal() {
             loadObrigacoes();
             break;
         case 6:
-            //await obrigacaoContratualClient.salvarStep6(formData);
+            if (formData.idSolicitacao) {
+              try {
+                const response = await obrigacaoClient.replicarObrigacoesPorPeriodicidade(formData.idSolicitacao);
+                toast.success(response.mensagem);
+                loadObrigacoes();
+              } catch (error) {
+                console.error('Erro ao replicar obrigação:', error);
+                toast.error('Erro ao replicar obrigação por periodicidade.');
+              }
+            }
             handleClose();
             break;
       }
