@@ -1,15 +1,3 @@
-export interface Solicitacao {
-  idSolicitacao: string;
-  cdSolicitante: string[];
-  dsAssunto: string;
-  cdIdentificacao: string;
-  dsDescricao: string;
-  dsAnexos: string[];
-  status: 'pendente' | 'em_andamento' | 'concluido' | 'atrasado';
-  dtCriacao: string;
-  idResponsavel?: string;
-  flAnaliseGerenteDiretor?: string;
-}
 
 export enum AnaliseGerenteDiretor {
   D = 'D', // Diretor
@@ -30,3 +18,18 @@ export interface SolicitacaoResumoResponse {
   dtPrazoLimite: string;
   dtConclusaoTramitacao: string;
 }
+
+export const getTipoAprovacaoLabel = (tipoAnalise?: string) => {
+  switch (tipoAnalise) {
+    case AnaliseGerenteDiretor.G:
+      return 'Gerente';
+    case AnaliseGerenteDiretor.D:
+      return 'Diretor';
+    case AnaliseGerenteDiretor.A:
+      return 'Ambos';
+    case AnaliseGerenteDiretor.N:
+      return 'Não Necessita';
+    default:
+      return '—';
+  }
+};

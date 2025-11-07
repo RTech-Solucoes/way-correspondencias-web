@@ -1,45 +1,43 @@
 'use client';
 
-import {ChangeEvent, FormEvent, JSX, useCallback, useEffect, useMemo, useState} from 'react';
-import {useRouter} from 'next/navigation';
-import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog';
-import {Button} from '@/components/ui/button';
-import {TextField} from '@/components/ui/text-field';
-import {Textarea} from '@/components/ui/textarea';
-import {Label} from '@/components/ui/label';
-import {Checkbox} from '@/components/ui/checkbox';
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
-import {SolicitacaoRequest, SolicitacaoResponse, SolicitacaoPrazoResponse} from '@/api/solicitacoes/types';
-import {ResponsavelResponse} from '@/api/responsaveis/types';
-import {TemaResponse} from '@/api/temas/types';
-import {solicitacoesClient} from '@/api/solicitacoes/client';
-import {toast} from 'sonner';
-import {base64ToUint8Array, capitalize, getRows, hoursToDaysAndHours, saveBlob} from '@/utils/utils';
-import {MultiSelectAreas} from '@/components/ui/multi-select-areas';
-import {
-  ArrowArcRightIcon,
-  CaretLeftIcon,
-  CaretRightIcon,
-  DownloadSimpleIcon,
-} from '@phosphor-icons/react';
-import {Stepper} from '@/components/ui/stepper';
-import {Input} from '@nextui-org/react';
+import { anexosClient } from '@/api/anexos/client';
+import { AnexoResponse, TipoObjetoAnexo } from '@/api/anexos/type';
+import { areasClient } from '@/api/areas/client';
+import { AreaResponse } from '@/api/areas/types';
+import authClient from '@/api/auth/client';
+import { computeTpResponsavel } from '@/api/perfis/types';
+import responsaveisClient from '@/api/responsaveis/client';
+import { ResponsavelResponse } from '@/api/responsaveis/types';
+import solicitacaoAssinanteClient from '@/api/solicitacao-assinante/client';
+import { solicitacoesClient } from '@/api/solicitacoes/client';
+import { SolicitacaoPrazoResponse, SolicitacaoRequest, SolicitacaoResponse } from '@/api/solicitacoes/types';
+import { statusSolicPrazoTemaClient } from '@/api/status-prazo-tema/client';
+import { StatusSolicPrazoTemaForUI } from '@/api/status-prazo-tema/types';
+import { statusSolicitacaoClient, StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
+import { STATUS_LIST, statusList as statusListType } from '@/api/status-solicitacao/types';
+import { TemaResponse } from '@/api/temas/types';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { MultiSelectAreas } from '@/components/ui/multi-select-areas';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Stepper } from '@/components/ui/stepper';
+import { TextField } from '@/components/ui/text-field';
+import { Textarea } from '@/components/ui/textarea';
+import { usePermissoes } from '@/context/permissoes/PermissoesContext';
+import { AnaliseGerenteDiretor, getTipoAprovacaoLabel } from '@/types/solicitacoes/types';
+import { base64ToUint8Array, capitalize, getRows, hoursToDaysAndHours, saveBlob } from '@/utils/utils';
+import { Input } from '@nextui-org/react';
+import { ArrowArcRightIcon, CaretLeftIcon, CaretRightIcon, DownloadSimpleIcon } from '@phosphor-icons/react';
+import { useRouter } from 'next/navigation';
+import { ChangeEvent, FormEvent, JSX, useCallback, useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
+
 import AnexoComponent from '../AnexoComponotent/AnexoComponent';
 import AnexoList from '../AnexoComponotent/AnexoList/AnexoList';
-import {statusSolicPrazoTemaClient} from '@/api/status-prazo-tema/client';
-import {StatusSolicPrazoTemaForUI} from '@/api/status-prazo-tema/types';
-import {statusSolicitacaoClient, StatusSolicitacaoResponse} from '@/api/status-solicitacao/client';
-import {AnexoResponse, TipoObjetoAnexo, TipoResponsavelAnexo} from '@/api/anexos/type';
-import {areasClient} from '@/api/areas/client';
-import tramitacoesClient from '@/api/tramitacoes/client';
-import {anexosClient} from '@/api/anexos/client';
-import {AreaResponse} from '@/api/areas/types';
-import {usePermissoes} from "@/context/permissoes/PermissoesContext";
-import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
-import { AnaliseGerenteDiretor } from '@/types/solicitacoes/types';
-import { STATUS_LIST, statusList as statusListType } from '@/api/status-solicitacao/types';
 import { MultiSelectAssinantes } from '../ui/multi-select-assinates';
-import solicitacaoAssinanteClient from '@/api/solicitacao-assinante/client';
 
 interface AnexoListItem {
   idAnexo?: number;
@@ -92,7 +90,8 @@ export default function SolicitacaoModal({
     nrProcesso: '',
     flAnaliseGerenteDiretor: '',
     flExcepcional: 'N',
-    idsResponsaveisAssinates: []
+    idsResponsaveisAssinates: [],
+    flExigeCienciaGerenteRegul: '',
   });
   const [loading, setLoading] = useState(false);
   const [anexos, setAnexos] = useState<File[]>([]);
@@ -109,9 +108,17 @@ export default function SolicitacaoModal({
   const [showConfirmSend, setShowConfirmSend] = useState(false);
   const [confirmSendId, setConfirmSendId] = useState<number | null>(null);
   const [confirmSendToast, setConfirmSendToast] = useState<string>('');
-  const [hasTramitacoes, setHasTramitacoes] = useState(false);
-  const [tramitacoesChecked, setTramitacoesChecked] = useState(false);
   const [prazosSolicitacaoPorStatus, setPrazosSolicitacaoPorStatus] = useState<SolicitacaoPrazoResponse[]>([]);
+  const [userResponsavelIdPerfil, setUserResponsavelIdPerfil] = useState<number>(0);
+  
+  const canEditSolicitacao = useMemo(() => {
+    if (!solicitacao) return true; 
+    
+    const isPreAnalise = solicitacao.statusSolicitacao?.idStatusSolicitacao === statusListType.PRE_ANALISE.id || 
+                         solicitacao.statusSolicitacao?.nmStatus === statusListType.PRE_ANALISE.label;
+    
+    return isPreAnalise;
+  }, [solicitacao]);
 
   const handleConfirmSend = useCallback(async () => {
     if (!confirmSendId) return;
@@ -174,30 +181,6 @@ export default function SolicitacaoModal({
   }, [prazoExcepcional]);
 
   useEffect(() => {
-    const loadTramitacoes = async () => {
-      try {
-        const id = solicitacao?.idSolicitacao || createdSolicitacao?.idSolicitacao;
-        if (id) {
-          const list = await tramitacoesClient.listarPorSolicitacao(id);
-          setHasTramitacoes((list?.length ?? 0) > 0);
-        } else {
-          setHasTramitacoes(false);
-        }
-      } catch {
-        setHasTramitacoes(false);
-      } finally {
-        setTramitacoesChecked(true);
-      }
-    };
-    if (open) {
-      setTramitacoesChecked(false);
-      loadTramitacoes();
-    } else {
-      setTramitacoesChecked(false);
-    }
-  }, [open, solicitacao?.idSolicitacao, createdSolicitacao?.idSolicitacao]);
-
-  useEffect(() => {
     if (solicitacao) {
       setFormData({
         idEmail: solicitacao.idEmail,
@@ -217,7 +200,8 @@ export default function SolicitacaoModal({
         nrOficio: solicitacao.nrOficio || '',
         nrProcesso: solicitacao.nrProcesso || '',
         flAnaliseGerenteDiretor: solicitacao.flAnaliseGerenteDiretor || '',
-        flExcepcional: solicitacao.flExcepcional || 'N'
+        flExcepcional: solicitacao.flExcepcional || 'N',
+        flExigeCienciaGerenteRegul: solicitacao.flExigeCienciaGerenteRegul || '',
       });
       
       const isExcepcional = (solicitacao.flExcepcional || 'N') === 'S';
@@ -238,7 +222,8 @@ export default function SolicitacaoModal({
         nrOficio: '',
         nrProcesso: '',
         flAnaliseGerenteDiretor: '',
-        flExcepcional: 'N'
+        flExcepcional: 'N',
+        flExigeCienciaGerenteRegul: '',
       });
       
       setPrazoExcepcional(false);
@@ -300,6 +285,19 @@ export default function SolicitacaoModal({
     }
   }, [open]);
 
+  useEffect(() => {
+    const loadUserResponsavel = async () => {
+      const userName = authClient.getUserName();
+      if (userName) {
+        const resp = await responsaveisClient.buscarPorNmUsuarioLogin(userName);
+        setUserResponsavelIdPerfil(resp?.idPerfil || 0);
+      }
+    };
+    if (open) {
+      loadUserResponsavel();
+    }
+  }, [open]);
+
   const getResponsavelFromTema = useCallback((temaId: number): number => {
     const tema = temas.find(t => t.idTema === temaId);
     if (tema && responsaveis.length > 0) {
@@ -351,8 +349,9 @@ export default function SolicitacaoModal({
         AnaliseGerenteDiretor.G,
         AnaliseGerenteDiretor.N,
         AnaliseGerenteDiretor.A,
-      ] as string[]).includes((formData.flAnaliseGerenteDiretor || '').toUpperCase());
-  }, [formData.cdIdentificacao, formData.flAnaliseGerenteDiretor]);
+      ] as string[]).includes((formData.flAnaliseGerenteDiretor || '').toUpperCase()) &&
+      (formData.flExigeCienciaGerenteRegul === 'S' || formData.flExigeCienciaGerenteRegul === 'N');
+  }, [formData.cdIdentificacao, formData.flAnaliseGerenteDiretor, formData.flExigeCienciaGerenteRegul]);
 
   const isStep2Valid = useCallback(() => {
     return (formData.idTema !== undefined && formData.idTema > 0 &&
@@ -374,18 +373,23 @@ export default function SolicitacaoModal({
           toast.error("Código de identificação é obrigatório");
           return;
         }
+        if (!formData.flExigeCienciaGerenteRegul || (formData.flExigeCienciaGerenteRegul !== 'S' && formData.flExigeCienciaGerenteRegul !== 'N')) {
+          toast.error("É obrigatório selecionar se exige manifestação do Gerente do Regulatório");
+          return;
+        }
         if (!solicitacao) {
           setCurrentStep(2);
           return;
         }
-        if (!hasTramitacoes) {
+        if (canEditSolicitacao) {
           await solicitacoesClient.etapaIdentificacao(solicitacao.idSolicitacao, {
             cdIdentificacao: formData.cdIdentificacao?.trim(),
             dsAssunto: formData.dsAssunto?.trim(),
             dsObservacao: formData.dsObservacao?.trim(),
             nrOficio: formData.nrOficio?.trim(),
             nrProcesso: formData.nrProcesso?.trim(),
-            flAnaliseGerenteDiretor: formData.flAnaliseGerenteDiretor
+            flAnaliseGerenteDiretor: formData.flAnaliseGerenteDiretor,
+            flExigeCienciaGerenteRegul: formData.flExigeCienciaGerenteRegul
           });
         }
 
@@ -414,7 +418,7 @@ export default function SolicitacaoModal({
           setCurrentStep(3);
           return;
         }
-        if (!hasTramitacoes) {
+        if (canEditSolicitacao) {
           await solicitacoesClient.etapaTema(solicitacao.idSolicitacao, {
             idTema: formData.idTema,
             tpPrazo: formData.tpPrazo || undefined,
@@ -430,7 +434,7 @@ export default function SolicitacaoModal({
           setCurrentStep(4);
           return;
         }
-        if (!hasTramitacoes) {
+        if (canEditSolicitacao) {
           const solicitacoesPrazos = statusPrazos
             .filter(p => p.nrPrazoInterno && p.nrPrazoInterno > 0 && p.idStatusSolicitacao)
             .map(p => ({
@@ -461,7 +465,7 @@ export default function SolicitacaoModal({
           return;
         }
 
-        if (!hasTramitacoes && formData.idsResponsaveisAssinates && formData.idsResponsaveisAssinates.length > 0) {
+        if (canEditSolicitacao && formData.idsResponsaveisAssinates && formData.idsResponsaveisAssinates.length > 0) {
           await solicitacaoAssinanteClient.criar(formData.idsResponsaveisAssinates.map(id => ({
             idSolicitacao: solicitacao.idSolicitacao,
             idStatusSolicitacao: statusListType.EM_ASSINATURA_DIRETORIA.id,
@@ -476,7 +480,7 @@ export default function SolicitacaoModal({
           setCurrentStep(6);
           return;
         }
-        if (!hasTramitacoes) {
+        if (canEditSolicitacao) {
           if (anexos.length > 0) {
             const existingNames = new Set([
               ...anexosBackend.map(a => (a.nmArquivo || '').trim().toLowerCase()),
@@ -534,7 +538,7 @@ export default function SolicitacaoModal({
                   nomeArquivo: file.name.trim(),
                   conteudoArquivo: base64Content,
                   tipoArquivo: file.type || 'application/octet-stream',
-                  tpResponsavel: TipoResponsavelAnexo.A // TODO: Colocado apenas para remover erro, necessário ajustar depois
+                  tpResponsavel: computeTpResponsavel(userResponsavelIdPerfil)
                 };
               })
             );
@@ -565,7 +569,7 @@ export default function SolicitacaoModal({
 
       onFinish();
     }
-  }, [currentStep, formData, solicitacao, statusPrazos, anexos, anexosBackend, anexosTypeE, hasTramitacoes]);
+  }, [currentStep, formData, solicitacao, statusPrazos, anexos, anexosBackend, anexosTypeE, canEditSolicitacao]);
 
   const handlePreviousStep = useCallback(() => {
     if (currentStep === 2) {
@@ -675,14 +679,14 @@ export default function SolicitacaoModal({
       let id = solicitacao?.idSolicitacao || createdSolicitacao?.idSolicitacao;
 
       if (createdSolicitacao?.idSolicitacao) {
-        if (hasTramitacoes) { toast.message('Esta solicitação já possui tramitações iniciadas. Edição bloqueada.'); setLoading(false); return; }
+        if (!canEditSolicitacao) { toast.message('Esta solicitação não pode ser editada no status atual.'); setLoading(false); return; }
         setConfirmSendId(createdSolicitacao.idSolicitacao);
         setConfirmSendToast('Solicitação criada com sucesso!');
         setShowConfirmSend(true);
         setLoading(false);
         return;
       } else if (solicitacao?.idSolicitacao) {
-        if (hasTramitacoes) { toast.message('Esta solicitação já possui tramitações iniciadas. Edição bloqueada.'); setLoading(false); return; }
+        if (!canEditSolicitacao) { toast.message('Esta solicitação não pode ser editada no status atual.'); setLoading(false); return; }
         setConfirmSendId(solicitacao.idSolicitacao);
         setConfirmSendToast('Solicitação encaminhada com sucesso!');
         setShowConfirmSend(true);
@@ -712,6 +716,7 @@ export default function SolicitacaoModal({
           nrProcesso: formData.nrProcesso?.trim(),
           flExcepcional: formData.flExcepcional === 'S' ? 'S' : 'N',
           flAnaliseGerenteDiretor: formData.flAnaliseGerenteDiretor,
+          flExigeCienciaGerenteRegul: formData.flExigeCienciaGerenteRegul,
         });
         id = created.idSolicitacao;
 
@@ -721,7 +726,8 @@ export default function SolicitacaoModal({
           dsObservacao: formData.dsObservacao?.trim(),
           nrOficio: formData.nrOficio?.trim(),
           nrProcesso: formData.nrProcesso?.trim(),
-          flAnaliseGerenteDiretor: formData.flAnaliseGerenteDiretor
+          flAnaliseGerenteDiretor: formData.flAnaliseGerenteDiretor,
+          flExigeCienciaGerenteRegul: formData.flExigeCienciaGerenteRegul
         });
 
         await solicitacoesClient.etapaTema(id, {
@@ -782,7 +788,7 @@ export default function SolicitacaoModal({
                 nomeArquivo: file.name.trim(),
                 conteudoArquivo: base64.split(',')[1],
                 tipoArquivo: file.type || 'application/octet-stream',
-                tpResponsavel: TipoResponsavelAnexo.A // TODO: Colocado apenas para remover erro, necessário ajustar depois
+                tpResponsavel: computeTpResponsavel(userResponsavelIdPerfil)
               };
             })
           );
@@ -815,7 +821,7 @@ export default function SolicitacaoModal({
           required
           autoFocus
           maxLength={50}
-          disabled={hasTramitacoes}
+          disabled={!canEditSolicitacao}
         />
         <TextField
           label="Nº Ofício"
@@ -823,7 +829,7 @@ export default function SolicitacaoModal({
           value={formData.nrOficio}
           onChange={handleInputChange}
           maxLength={50}
-          disabled={hasTramitacoes}
+          disabled={!canEditSolicitacao}
         />
         <TextField
           label="Nº Processo"
@@ -831,7 +837,7 @@ export default function SolicitacaoModal({
           value={formData.nrProcesso}
           onChange={handleInputChange}
           maxLength={50}
-          disabled={hasTramitacoes}
+          disabled={!canEditSolicitacao}
         />
       </div>
 
@@ -848,7 +854,7 @@ export default function SolicitacaoModal({
                   ...prev,
                   flAnaliseGerenteDiretor: AnaliseGerenteDiretor.G
                 }))}
-                disabled={hasTramitacoes}
+                disabled={!canEditSolicitacao}
               />
               <Label className="text-sm font-light">Gerente</Label>
             </div>
@@ -859,7 +865,7 @@ export default function SolicitacaoModal({
                   ...prev,
                   flAnaliseGerenteDiretor: AnaliseGerenteDiretor.D
                 }))}
-                disabled={hasTramitacoes}
+                disabled={!canEditSolicitacao}
               />
               <Label className="text-sm font-light ">Diretor</Label>
             </div>
@@ -870,7 +876,7 @@ export default function SolicitacaoModal({
                   ...prev,
                   flAnaliseGerenteDiretor: AnaliseGerenteDiretor.A
                 }))}
-                disabled={hasTramitacoes}
+                disabled={!canEditSolicitacao}
               />
               <Label className="text-sm font-light">Ambos</Label>
             </div>
@@ -881,9 +887,41 @@ export default function SolicitacaoModal({
                   ...prev,
                   flAnaliseGerenteDiretor: AnaliseGerenteDiretor.N
                 }))}
-                disabled={hasTramitacoes}
+                disabled={!canEditSolicitacao}
               />
               <Label className="text-sm font-light">Não necessita</Label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="flExigeCienciaGerenteRegul" className="text-sm font-medium">
+            Exige manifestação do Gerente do Regulatório? *
+          </Label>
+          <div className="flex items-center gap-4 mt-2">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={(formData.flExigeCienciaGerenteRegul || '').toUpperCase() === 'S'}
+                onCheckedChange={() => setFormData(prev => ({
+                  ...prev,
+                  flExigeCienciaGerenteRegul: 'S'
+                }))}
+                disabled={!canEditSolicitacao}
+              />
+              <Label className="text-sm font-light">Sim</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={(formData.flExigeCienciaGerenteRegul || '').toUpperCase() === 'N'}
+                onCheckedChange={() => setFormData(prev => ({
+                  ...prev,
+                  flExigeCienciaGerenteRegul: 'N'
+                }))}
+                disabled={!canEditSolicitacao}
+              />
+              <Label className="text-sm font-light ">Não, apenas ciência</Label>
             </div>
           </div>
         </div>
@@ -897,7 +935,7 @@ export default function SolicitacaoModal({
           value={formData.dsAssunto}
           onChange={handleInputChange}
           rows={4}
-          disabled={hasTramitacoes}
+          disabled={true}
         />
       </div>
 
@@ -909,7 +947,7 @@ export default function SolicitacaoModal({
           value={formData.dsObservacao}
           onChange={handleInputChange}
           rows={4}
-          disabled={hasTramitacoes}
+          disabled={!canEditSolicitacao}
         />
       </div>
 
@@ -921,7 +959,7 @@ export default function SolicitacaoModal({
           value={formData.dsSolicitacao}
           onChange={handleInputChange}
           rows={getRows(formData.dsSolicitacao)}
-          disabled={solicitacao?.idSolicitacao !== undefined}
+          disabled={true}
         />
       </div>
     </div>
@@ -943,7 +981,7 @@ export default function SolicitacaoModal({
               tpPrazo: 'H'
             }));
           }}
-          disabled={hasTramitacoes}
+          disabled={!canEditSolicitacao}
         >
           <SelectTrigger>
             <SelectValue placeholder="Selecione o tema" />
@@ -963,18 +1001,14 @@ export default function SolicitacaoModal({
         </Select>
       </div>
 
-      {!tramitacoesChecked ? (
-        <div className="text-sm text-gray-500">Verificando tramitações...</div>
-      ) : (
         <MultiSelectAreas
           selectedAreaIds={formData.idsAreas || []}
           onSelectionChange={handleAreasSelectionChange}
-          disabled={hasTramitacoes}
+          disabled={!canEditSolicitacao}
           label="Áreas *"
         />
-      )}
     </div>
-  ), [formData.idTema, formData.idsAreas, temas, getResponsavelFromTema, handleAreasSelectionChange, solicitacao, hasTramitacoes, tramitacoesChecked]);
+  ), [formData.idTema, formData.idsAreas, temas, getResponsavelFromTema, handleAreasSelectionChange, solicitacao, canEditSolicitacao]);
 
   function horasParaDias(horas: number): number {
     return Math.floor(horas / 24);
@@ -1051,6 +1085,7 @@ export default function SolicitacaoModal({
 
   const getDefaultPrazos = useCallback((): StatusSolicPrazoTemaForUI[] => {
     const defaultPrazosPorStatus: { [key: number]: number } = {
+      [statusListType.EM_ANALISE_GERENTE_REGULATORIO.id]: 48,
       [statusListType.EM_ANALISE_AREA_TECNICA.id]: 72,
       [statusListType.ANALISE_REGULATORIA.id]: 72,
       [statusListType.EM_APROVACAO.id]: 48,
@@ -1100,7 +1135,14 @@ export default function SolicitacaoModal({
       nome: status.label
     }));
     
-    const statusOptions = allStatusOptions.filter(status => !statusOcultos.includes(status.codigo));
+    const statusOptions = allStatusOptions
+      .filter(status => !statusOcultos.includes(status.codigo))
+      .sort((a, b) => {
+        if (a.codigo === statusListType.EM_ANALISE_GERENTE_REGULATORIO.id) return -1;
+        if (b.codigo === statusListType.EM_ANALISE_GERENTE_REGULATORIO.id) return 1;
+        
+        return a.codigo - b.codigo;
+      });
 
     return (
       <div className="space-y-6">
@@ -1113,9 +1155,9 @@ export default function SolicitacaoModal({
                   <Checkbox
                     id="prazoExcepcional"
                     checked={prazoExcepcional}
-                    disabled={hasTramitacoes}
+                    disabled={!canEditSolicitacao}
                     onCheckedChange={async (checked) => {
-                      if (hasTramitacoes) return;
+                      if (!canEditSolicitacao) return;
                       const ativo = !!checked;
                       setPrazoExcepcional(ativo);
 
@@ -1158,6 +1200,7 @@ export default function SolicitacaoModal({
                       
                       if (prazoFromConfig === undefined) {
                         const defaultPrazosPorStatus: { [key: number]: number } = {
+                          [statusListType.EM_ANALISE_GERENTE_REGULATORIO.id]: 48,
                           [statusListType.EM_ANALISE_AREA_TECNICA.id]: 72,
                           [statusListType.ANALISE_REGULATORIA.id]: 72,
                           [statusListType.EM_APROVACAO.id]: 48,
@@ -1213,7 +1256,7 @@ export default function SolicitacaoModal({
                                   const valorParaSalvar = prazoExcepcional ? novoValor : novoValor * 24;
                                   updateLocalPrazo(status.codigo, valorParaSalvar);
                                 }}
-                                disabled={hasTramitacoes}
+                                disabled={!canEditSolicitacao}
                                 className="w-8 h-8 p-0 flex items-center justify-center"
                               >-</Button>
                               <Input
@@ -1227,7 +1270,7 @@ export default function SolicitacaoModal({
                                   }
                                 }}
                                 placeholder="0"
-                                isDisabled={hasTramitacoes}
+                                isDisabled={!canEditSolicitacao}
                                 className="flex-1"
                                 classNames={{
                                   input: "text-center"
@@ -1248,7 +1291,7 @@ export default function SolicitacaoModal({
                                   const valorParaSalvar = prazoExcepcional ? novoValor : novoValor * 24;
                                   updateLocalPrazo(status.codigo, valorParaSalvar);
                                 }}
-                                disabled={hasTramitacoes}
+                                disabled={!canEditSolicitacao}
                                 className="w-8 h-8 p-0 flex items-center justify-center"
                               >+</Button>
                             </div>
@@ -1264,18 +1307,18 @@ export default function SolicitacaoModal({
         ) : null}
       </div>
     )
-  }, [prazoExcepcional, formData.idTema, loadingStatusPrazos, statusPrazos, updateLocalPrazo, setFormData, statusList, getSelectedTema, loadStatusPrazos, anexosBackend, currentPrazoTotal, hasTramitacoes]);
+  }, [prazoExcepcional, formData.idTema, loadingStatusPrazos, statusPrazos, updateLocalPrazo, setFormData, statusList, getSelectedTema, loadStatusPrazos, anexosBackend, currentPrazoTotal, canEditSolicitacao]);
 
   const renderStep4 = useCallback(() => (
     <div className="space-y-6">
       <MultiSelectAssinantes
           selectedResponsavelIds={formData.idsResponsaveisAssinates || []}
           onSelectionChange={handleResponsaveisSelectionChange}
-          disabled={hasTramitacoes}
+          disabled={!canEditSolicitacao}
           label="Selecione os validadores em 'Em Assinatura Diretoria' *"
         />
     </div>
-  ), [formData.idsResponsaveisAssinates, handleResponsaveisSelectionChange, hasTramitacoes]);
+  ), [formData.idsResponsaveisAssinates, handleResponsaveisSelectionChange]);
 
   const renderStep5 = useCallback(() => (
     <div className="space-y-6">
@@ -1284,7 +1327,7 @@ export default function SolicitacaoModal({
         {canInserirAnexo &&
           <AnexoComponent
             onAddAnexos={handleAddAnexos}
-            disabled={hasTramitacoes}
+            disabled={!canEditSolicitacao}
           />
         }
 
@@ -1343,7 +1386,7 @@ export default function SolicitacaoModal({
         )}
       </div>
     </div>
-  ), [anexos, anexosBackend, anexosTypeE, handleAddAnexos, handleRemoveAnexo, handleRemoveAnexoBackend, handleDownloadAnexoBackend, handleDownloadAnexoEmail, canListarAnexo, canInserirAnexo]);
+  ), [anexos, anexosBackend, anexosTypeE, handleAddAnexos, handleRemoveAnexo, handleRemoveAnexoBackend, handleDownloadAnexoBackend, handleDownloadAnexoEmail, canListarAnexo, canInserirAnexo, canEditSolicitacao]);
 
   const renderStep6 = useCallback(() => (
     <div className="space-y-6">
@@ -1472,7 +1515,7 @@ export default function SolicitacaoModal({
       </div>
 
       <div className="border-t pt-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <div>
             <Label className="text-sm font-semibold text-gray-700">Prazo Principal</Label>
             <div className="p-3 border border-yellow-200 rounded-lg text-sm">
@@ -1485,19 +1528,16 @@ export default function SolicitacaoModal({
             </div>
           </div>
           <div>
-            <Label className="text-sm font-semibold text-gray-700">Status</Label>
-            <div className="p-3 bg-gray-50 border rounded-lg text-sm">
-              {(() => {
-                if (solicitacao?.statusSolicitacao?.idStatusSolicitacao) {
-                  return solicitacao.statusSolicitacao.nmStatus;
-                }
-                if (solicitacao?.statusCodigo) {
-                  const statusAtual = statusList.find(s => s.idStatusSolicitacao === solicitacao.statusCodigo);
-                  return statusAtual?.nmStatus || solicitacao.statusCodigo;
-                }
-                const statusAtual = statusList.find(s => s.idStatusSolicitacao === 1);
-                return statusAtual?.nmStatus || statusListType.PRE_ANALISE.label;
-              })()}
+            <Label className="text-sm font-semibold text-gray-700">Exige aprovação especial</Label>
+            <div className="p-3 border rounded-lg text-sm">
+              {getTipoAprovacaoLabel(formData.flAnaliseGerenteDiretor ?? '')}
+            </div>
+          </div>
+          <div>
+            <Label className="text-sm font-semibold text-gray-700">Exige manifestação do Gerente do Regulatório</Label>
+            <div className="p-3 border rounded-lg text-sm">
+              {formData.flExigeCienciaGerenteRegul === 'S' ? 'Sim' : 
+               formData.flExigeCienciaGerenteRegul === 'N' ? 'Não, apenas ciência' : '—'}
             </div>
           </div>
         </div>
@@ -1636,7 +1676,7 @@ export default function SolicitacaoModal({
         </div>
       </div>
     </div>
-  ), [formData.cdIdentificacao, formData.nrOficio, formData.nrProcesso, formData.dsAssunto, formData.dsObservacao, formData.dsSolicitacao, formData.idsAreas, formData.nrPrazo, formData.idResponsavel, formData.tpPrazo, getSelectedTema, solicitacao?.tema?.nmTema, solicitacao?.nmTema, responsaveis, statusPrazos, anexos, anexosBackend, anexosTypeE, canListarAnexo, allAreas, getResponsavelByArea, statusList, handleDownloadAnexoBackend, handleDownloadAnexoEmail]);
+  ), [formData.cdIdentificacao, formData.nrOficio, formData.nrProcesso, formData.dsAssunto, formData.dsObservacao, formData.dsSolicitacao, formData.idsAreas, formData.nrPrazo, formData.idResponsavel, formData.tpPrazo, formData.idsResponsaveisAssinates, formData.flAnaliseGerenteDiretor, formData.flExigeCienciaGerenteRegul, getSelectedTema, solicitacao?.tema?.nmTema, solicitacao?.nmTema, solicitacao?.statusSolicitacao?.idStatusSolicitacao, solicitacao?.statusSolicitacao?.nmStatus, solicitacao?.statusCodigo, responsaveis, statusPrazos, anexos, anexosBackend, anexosTypeE, canListarAnexo, allAreas, getResponsavelByArea, statusList, handleDownloadAnexoBackend, handleDownloadAnexoEmail, currentPrazoTotal, prazoExcepcional, prazosSolicitacaoPorStatus, statusOcultos]);
 
   useEffect(() => {
     const loadStatusList = async () => {
@@ -1746,7 +1786,7 @@ export default function SolicitacaoModal({
               onClick={() => handleNextStep()}
               disabled={!isStep1Valid()}
               className="flex items-center gap-2"
-              tooltip={hasTramitacoes ? 'Esta solicitação já possui tramitações iniciadas. Edição bloqueada.' : ''}
+              tooltip={!canEditSolicitacao ? 'Esta solicitação não pode ser editada no status atual.' : ''}
             >
               Próximo
               <CaretRightIcon size={16} />
@@ -1770,7 +1810,7 @@ export default function SolicitacaoModal({
                 onClick={() => handleNextStep()}
                 disabled={loading || !isStep2Valid()}
                 className="flex items-center gap-2"
-                tooltip={hasTramitacoes ? 'Esta solicitação já possui tramitações iniciadas. Edição bloqueada.' : ''}
+                tooltip={!canEditSolicitacao ? 'Esta solicitação não pode ser editada no status atual.' : ''}
               >
                 Próximo
                 <CaretRightIcon size={16} />
@@ -1795,7 +1835,7 @@ export default function SolicitacaoModal({
                 onClick={() => handleNextStep()}
                 disabled={loading}
                 className="flex items-center gap-2"
-                tooltip={hasTramitacoes ? 'Esta solicitação já possui tramitações iniciadas. Edição bloqueada.' : ''}
+                tooltip={!canEditSolicitacao ? 'Esta solicitação não pode ser editada no status atual.' : ''}
               >
                 Próximo
                 <CaretRightIcon size={16} />
@@ -1821,8 +1861,8 @@ export default function SolicitacaoModal({
                 disabled={loading || !isStep4Valid()}
                 className="flex items-center gap-2"
                 tooltip={
-                  hasTramitacoes 
-                    ? 'Esta solicitação já possui tramitações iniciadas. Edição bloqueada.'
+                  !canEditSolicitacao 
+                    ? 'Esta solicitação não pode ser editada no status atual.'
                     : !isStep4Valid() 
                       ? 'Selecione exatamente 2 validadores/assinantes para continuar'
                       : undefined
@@ -1850,7 +1890,7 @@ export default function SolicitacaoModal({
                 onClick={() => handleNextStep()}
                 disabled={loading}
                 className="flex items-center gap-2"
-                tooltip={hasTramitacoes ? 'Esta solicitação já possui tramitações iniciadas. Edição bloqueada.' : ''}
+                tooltip={!canEditSolicitacao ? 'Esta solicitação não pode ser editada no status atual.' : ''}
               >
                 Próximo
                 <CaretRightIcon size={16} />
@@ -1873,12 +1913,12 @@ export default function SolicitacaoModal({
               <Button
                 type="submit"
                 form="solicitacao-form"
-                disabled={loading || hasTramitacoes}
+                disabled={loading || !canEditSolicitacao}
                 className="flex items-center gap-2"
-                tooltip={hasTramitacoes ? 'Esta solicitação já possui tramitações iniciadas. Edição bloqueada.' : ''}
+                tooltip={!canEditSolicitacao ? 'Esta solicitação não pode ser editada no status atual.' : ''}
               >
                 {solicitacao && <ArrowArcRightIcon className={"w-4 h-4 mr-1"} />}
-                {loading ? 'Salvando...' : solicitacao ? 'Encaminhar solicitação' : 'Criar Solicitação'}
+                {loading ? 'Salvando...' : solicitacao ? 'Encaminhar para Analista do Regulatório' : 'Criar Solicitação'}
               </Button>
             </>
           )}
@@ -1888,9 +1928,7 @@ export default function SolicitacaoModal({
         open={showConfirmSend}
         onOpenChange={setShowConfirmSend}
         title="Confirmar envio"
-        description={
-          "Após o envio da Solicitação não será possível alterá-la. Deseja prosseguir com o envio?"
-        }
+        description="Deseja encaminhar para o Gerente do Regulatório?"
         confirmText="Sim"
         cancelText="Voltar a solicitação"
         onConfirm={handleConfirmSend}
