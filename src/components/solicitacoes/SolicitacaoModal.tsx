@@ -38,6 +38,7 @@ import { toast } from 'sonner';
 import AnexoComponent from '../AnexoComponotent/AnexoComponent';
 import AnexoList from '../AnexoComponotent/AnexoList/AnexoList';
 import { MultiSelectAssinantes } from '../ui/multi-select-assinates';
+import { CategoriaEnum, TipoEnum } from '@/api/tipos/types';
 
 interface AnexoListItem {
   idAnexo?: number;
@@ -1681,7 +1682,7 @@ export default function SolicitacaoModal({
   useEffect(() => {
     const loadStatusList = async () => {
       try {
-        const status = await statusSolicitacaoClient.listarTodos();
+        const status = await statusSolicitacaoClient.listarTodos(CategoriaEnum.STATUS, [TipoEnum.TODOS, TipoEnum.CORRESPONDENCIA]);
         setStatusList(status);
       } catch (error) {
         console.error('Erro ao carregar lista de status:', error);

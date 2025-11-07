@@ -31,6 +31,7 @@ import { HistoricoRespostasModalButton } from './HistoricoRespostasModal';
 import InformaçaoStatusEmAnaliseGerReg from './InformaçaoStatusEmAnaliseGerReg';
 
 import type { AnexoResponse } from '@/api/anexos/type';
+import { CategoriaEnum, TipoEnum } from '@/api/tipos/types';
 
 
 type DetalhesSolicitacaoModalProps = {
@@ -147,7 +148,7 @@ export default function DetalhesSolicitacaoModal({
   useEffect(() => {
     const loadStatusList = async () => {
       try {
-        const status = await statusSolicitacaoClient.listarTodos();
+        const status = await statusSolicitacaoClient.listarTodos(CategoriaEnum.STATUS, [TipoEnum.TODOS, TipoEnum.CORRESPONDENCIA]);
         setStatusListPrazos(status);
       } catch (error) {
         console.error('Erro ao carregar lista de status:', error);
