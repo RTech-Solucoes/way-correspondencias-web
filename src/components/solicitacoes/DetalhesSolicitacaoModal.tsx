@@ -367,8 +367,8 @@ export default function DetalhesSolicitacaoModal({
           return;
         }
       }
-      
-      if (!resposta.trim() && arquivos.length === 0 && !sol?.solicitacao?.flExigeCienciaGerenteRegul) {
+
+      if (!resposta.trim() && arquivos.length === 0) {
         toast.error('Escreva uma devolutiva ou anexe um arquivo.');
         return;
       }
