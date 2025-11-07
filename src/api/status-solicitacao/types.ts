@@ -8,7 +8,8 @@ export type StatusKey =
   | 'EM_CHANCELA'
   | 'EM_ASSINATURA_DIRETORIA'
   | 'CONCLUIDO'
-  | 'ARQUIVADO';
+  | 'ARQUIVADO'
+  | 'EM_ANALISE_GERENTE_REGULATORIO';
 
 export interface StatusMeta {
   id: number;
@@ -27,6 +28,7 @@ export const STATUS_LIST: StatusMeta[] = [
   { id: 8, key: 'EM_ASSINATURA_DIRETORIA', label: 'Em assinatura Diretoria' },
   { id: 9, key: 'CONCLUIDO', label: 'Concluído' },
   { id: 10, key: 'ARQUIVADO', label: 'Arquivado' },
+  { id: 11, key: 'EM_ANALISE_GERENTE_REGULATORIO', label: 'Em análise Gerente do Regulatório' },
 ];
 
 export const statusList: Record<StatusKey, StatusMeta> = {
@@ -40,4 +42,5 @@ export const statusList: Record<StatusKey, StatusMeta> = {
   EM_ASSINATURA_DIRETORIA: STATUS_LIST[7],
   CONCLUIDO: STATUS_LIST[8],
   ARQUIVADO: STATUS_LIST[9],
+  EM_ANALISE_GERENTE_REGULATORIO: STATUS_LIST[10],
 };

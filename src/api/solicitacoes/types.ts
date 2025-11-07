@@ -80,6 +80,7 @@ export interface SolicitacaoResponse extends BaseResponse {
   dtPrazoLimite?: string;
   dtPrimeiraTramitacao?: string;
   dtConclusaoTramitacao?: string;
+  flExigeCienciaGerenteRegul?: string;
 }
 
 export interface SolicitacaoRequest {
@@ -101,6 +102,9 @@ export interface SolicitacaoRequest {
   flExcepcional?: string;
   flAnaliseGerenteDiretor?: string;
   idsResponsaveisAssinates?: number[];
+  flExigeCienciaGerenteRegul?: string;
+  flAprovacaoGerenteRegul?: string;
+  dsObservacaoGerenteRegul?: string;
 }
 
 export interface SolicitacaoTemaRequest {
@@ -114,6 +118,7 @@ export interface SolicitacaoIdentificacaoRequest {
   nrOficio?: string;
   nrProcesso?: string;
   flAnaliseGerenteDiretor?: string;
+  flExigeCienciaGerenteRegul?: string;
 }
 
 export interface SolicitacaoPrazoResponse {
@@ -147,9 +152,10 @@ export interface SolicitacaoFilterParams {
   idArea?: number;
   cdIdentificacao?: string;
   idTema?: number;
-  nomeResponsavel?: string;
+  nmResponsavel?: string;
   dtCriacaoInicio?: string;
   dtCriacaoFim?: string;
+  flExigeCienciaGerenteRegul?: string;
   page?: number;
   size?: number;
   sort?: string;
@@ -243,6 +249,7 @@ export interface HistoricoRespostaItemResponse {
   areaOrigem: AreaResponse;
   areaDestino: AreaResponse;
   nrTempoGasto: number;
+  flAprovado: string | null;
 }
 export interface SolicitacaoResumoComHistoricoResponse {
   solicitacao: SolicitacaoResumoResponse;

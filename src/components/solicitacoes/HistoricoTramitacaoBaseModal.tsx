@@ -12,6 +12,7 @@ export type HistoricoBaseItem = {
   id: number | string;
   tipo: TipoHistoricoResposta;
   dsDescricao?: string | null;
+  dsObservacao?: string | null;
   responsavelNome?: string | null;
   dtCriacao?: string | null;
   nmStatus?: string | null;
@@ -19,6 +20,7 @@ export type HistoricoBaseItem = {
   areaDestino?: string | null;
   nrTempoGasto?: number | null;
   idPerfil?: number | null;
+  flAprovado?: string | null;
 };
 
 interface HistoricoBaseModalProps {
@@ -43,6 +45,7 @@ export default function HistoricoTramitacaoBaseModal({
   items,
 }: HistoricoBaseModalProps) {
 
+  console.log('items', items);
   const getParecerLabel = (idPerfil?: number | null) => {
     
     if (idPerfil === perfilUtil.VALIDADOR_ASSINANTE) {
@@ -110,16 +113,20 @@ export default function HistoricoTramitacaoBaseModal({
                   </div>
                   <div className="mb-3 flex items-end justify-between gap-3">
                     <div className="flex-1 min-w-0 mr-4">
-                      {item.dsDescricao ? (
+                      {(item.dsDescricao && item.dsDescricao.trim() !== '') || (item.dsObservacao && item.dsObservacao.trim() !== '') ? (
                         <p className="text-sm text-gray-800 font-medium leading-relaxed break-words">
-                          {item.dsDescricao}
+                          {item.dsDescricao || item.dsObservacao}
                         </p>
                       ) : (
-                          <p className="text-sm text-gray-600 italic">
-                            {item.nmStatus === statusList.CONCLUIDO.label
-                              ? 'Solicitação Arquivada' 
-                              : 'A solicitação foi direcionada para a(s) área(s) responsável(is)'}
-                          </p>
+                        <p className="text-sm text-gray-600 italic">
+                          {item.nmStatus === statusList.PRE_ANALISE.label
+                            ? 'Solicitação Encaminhada para Gerente do Regulatório' 
+                            : item.nmStatus === statusList.EM_ANALISE_GERENTE_REGULATORIO.label
+                            ? 'Ciência do Gerente do Regulatório' 
+                            : item.nmStatus === statusList.CONCLUIDO.label
+                            ? 'Solicitação Arquivada' 
+                            : 'A solicitação foi direcionada para a(s) área(s) responsável(is)'}
+                        </p>
                       )}
                     </div>
                     <div className="flex flex-col items-end space-y-0.5 text-right">
@@ -131,6 +138,11 @@ export default function HistoricoTramitacaoBaseModal({
                       </div>
                       {item.nmStatus && (
                         <div className="text-xs text-gray-600">{`Status: ${item.nmStatus}`}</div>
+                      )}
+                      {item.flAprovado && (
+                        <div className="text-xs text-gray-600 flex items-center">
+                          {`Aprovado: ${item.flAprovado === 'S' ? 'Sim' : 'Não'}`}
+                        </div>
                       )}
                       {item.nrTempoGasto && (
                         <div className="text-xs text-gray-600 flex items-center">

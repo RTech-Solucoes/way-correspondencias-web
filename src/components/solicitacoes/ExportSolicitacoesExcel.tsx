@@ -38,6 +38,7 @@ export default function ExportSoliExceloesExcel({ filterParams, getStatusText, o
         'Áreas',
         'Tema',
         'Status',
+        'Aprovação Gerente do Regulatório',
         'Data Início Solicitação', 
         'Data Início Primeira Tramitação',
         'Data Prazo Limite Tramitação',
@@ -62,6 +63,9 @@ export default function ExportSoliExceloesExcel({ filterParams, getStatusText, o
 
         const tema = s.nmTema || s.tema?.nmTema || '';
         const status = s.statusSolicitacao?.nmStatus || getStatusText(s.statusCodigo?.toString() || '') || '';
+        
+        const aprovacaoGerente = s.flExigeCienciaGerenteRegul === 'N' ? 'Não, apenas ciência' :
+          (s.flExigeCienciaGerenteRegul === 'S' ? 'Sim' : '-');
 
         const dtInicio = s.dtCriacao ? new Date(s.dtCriacao).toLocaleString('pt-BR') : '';
         const dtPrimeira = s.dtPrimeiraTramitacao ? new Date(s.dtPrimeiraTramitacao).toLocaleString('pt-BR') : '';
@@ -81,6 +85,7 @@ export default function ExportSoliExceloesExcel({ filterParams, getStatusText, o
           escapeCell(areasNomes),
           escapeCell(tema),
           escapeCell(status),
+          escapeCell(aprovacaoGerente),
           escapeCell(dtInicio),
           escapeCell(dtPrimeira),
           escapeCell(dtPrazoLimite),

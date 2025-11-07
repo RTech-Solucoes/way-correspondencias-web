@@ -7,9 +7,22 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
 import { Button } from '@/components/ui/button';
-import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { TemaResponse } from '@/api/temas/types';
 import { AreaResponse } from '@/api/areas/types';
+
+type FiltersState = {
+  identificacao: string;
+  responsavel: string;
+  tema: string;
+  area: string;
+  status: string;
+  dateFrom: string;
+  dateTo: string;
+  nmResponsavel: string;
+  dtCriacaoInicio: string;
+  dtCriacaoFim: string;
+  flExigeCienciaGerenteRegul: string;
+};
 
 interface FilterModalProps {
   open: boolean;
@@ -22,12 +35,12 @@ interface FilterModalProps {
     area: string;
     dateFrom: string;
     dateTo: string;
-    nomeResponsavel: string;
+    nmResponsavel: string;
     dtCriacaoInicio: string;
     dtCriacaoFim: string;
+    flExigeCienciaGerenteRegul: string;
   };
-  setFilters: (filters: any) => void;
-  responsaveis: ResponsavelResponse[];
+  setFilters: (filters: FiltersState) => void;
   temas: TemaResponse[];
   areas: AreaResponse[];
   statuses: StatusSolicitacaoResponse[];
@@ -40,7 +53,6 @@ export default function FilterModal({
   onOpenChange,
   filters,
   setFilters,
-  responsaveis,
   temas,
   areas,
   statuses,
@@ -152,15 +164,31 @@ export default function FilterModal({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="nomeResponsavel">Nome do Responsável</Label>
+              <Label htmlFor="nmResponsavel">Nome do Responsável</Label>
                 <Input
-                  id="nomeResponsavel"
-                  value={filters.nomeResponsavel}
-                  onChange={(e) => setFilters({ ...filters, nomeResponsavel: e.target.value })}
+                  id="nmResponsavel"
+                  value={filters.nmResponsavel}
+                  onChange={(e) => setFilters({ ...filters, nmResponsavel: e.target.value })}
                   placeholder="Nome do responsável"
                 />
                 <div>  
               </div>
+            </div>
+            <div>
+              <Label htmlFor="flExigeCienciaGerenteRegul">Exige Ciência do Gerente do Regulatório</Label>
+              <Select
+                value={filters.flExigeCienciaGerenteRegul}
+                onValueChange={(value) => setFilters({ ...filters, flExigeCienciaGerenteRegul: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a opção" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="S">Sim</SelectItem>
+                  <SelectItem value="N">Não, apenas ciência</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>

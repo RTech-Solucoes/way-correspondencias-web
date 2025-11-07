@@ -6,6 +6,7 @@ import { HistoricoRespostaItemResponse, TipoHistoricoResposta } from '@/api/soli
 import { formatDateTime, formatDateTimeBrCompactExport, formatMinutosEmDiasHorasMinutos } from '@/utils/utils';
 import { SolicitacaoResumoResponse } from '@/types/solicitacoes/types';
 import { perfilUtil } from '@/api/perfis/types';
+import { statusList } from '@/api/status-solicitacao/types';
 
 interface ExportHistoricoPdfProps {
   solicitacao: SolicitacaoResumoResponse;
@@ -126,9 +127,17 @@ return (
                         )}
                     <Text style={styles.small}>{formatDateTime(h.dtCriacao)}</Text>
                     </View>
-                    { h.dsDescricao
+                    { h.dsDescricao && h.dsDescricao.trim() !== ''
                         ? <Text style={[styles.small, { marginTop: 4 }, { marginBottom: 4 }]}>{h.dsDescricao}</Text>
-                        : <Text style={styles.smallItalic}>A solicitação foi direcionada para a(s) área(s) responsável(is)</Text>
+                        : <Text style={styles.smallItalic}>
+                            {h.nmStatus ===  statusList.PRE_ANALISE.label 
+                              ? 'Solicitação Encaminhada para Gerente do Regulatório' 
+                              : h.nmStatus === statusList.EM_ANALISE_GERENTE_REGULATORIO.label
+                              ? 'Solicitação Encaminhada para Gerente do Sistema' 
+                              : h.nmStatus === statusList.CONCLUIDO.label
+                              ? 'Solicitação Arquivada' 
+                              : 'A solicitação foi direcionada para a(s) área(s) responsável(is)'}
+                          </Text>
                     }
                 <View style={{ marginTop: 4 }}>
                   <Text style={styles.small}><Text style={styles.smallBold}>Responsável:</Text> {h?.responsavel?.nmResponsavel || '—'}</Text>
@@ -136,6 +145,9 @@ return (
                   {typeof h.nrTempoGasto === 'number' ? (
                     <Text style={styles.small}><Text style={styles.smallBold}>Tempo de resposta:</Text> {formatMinutosEmDiasHorasMinutos(h.nrTempoGasto)}</Text>
                   ) : null}
+                  {h.flAprovado && (
+                    <Text style={styles.small}><Text style={styles.smallBold}>Aprovado:</Text> {h.flAprovado === 'S' ? 'Sim' : 'Não'}</Text>
+                  )}
                 </View>
               </View>
             ))
