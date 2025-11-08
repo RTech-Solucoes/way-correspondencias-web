@@ -251,7 +251,7 @@ export function ObrigacaoModal() {
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
-        return <Step1Obrigacao formData={formData} updateFormData={updateFormData} isEditing={false} />;
+        return <Step1Obrigacao formData={formData} updateFormData={updateFormData} />;
       case 2:
         return <Step2Obrigacao formData={formData} updateFormData={updateFormData} />;
       case 3:

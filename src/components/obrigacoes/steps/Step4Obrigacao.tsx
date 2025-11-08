@@ -4,9 +4,10 @@ import AnexoComponent from '@/components/AnexoComponotent/AnexoComponent';
 import AnexoList from '@/components/AnexoComponotent/AnexoList/AnexoList';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
 import { Label } from '@radix-ui/react-label';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { ObrigacaoFormData } from '../ObrigacaoModal';
+import { AnexoResponse } from '@/api/anexos/type';
 
 
 interface Step4ObrigacaoProps {
@@ -14,9 +15,21 @@ interface Step4ObrigacaoProps {
   updateFormData: (data: Partial<ObrigacaoFormData>) => void;
   anexos: File[];
   onAnexosChange: (anexos: File[]) => void;
+  existingAnexos?: AnexoResponse[];
+  onDownloadExisting?: (anexo: AnexoResponse) => void | Promise<void>;
+  onRemoveExisting?: (anexo: AnexoResponse) => void | Promise<void>;
+  existingAnexosLoading?: boolean;
 }
 
-export function Step4Obrigacao({ formData, updateFormData, anexos, onAnexosChange }: Step4ObrigacaoProps) {
+export function Step4Obrigacao({
+  formData,
+  anexos,
+  onAnexosChange,
+  existingAnexos,
+  onDownloadExisting,
+  onRemoveExisting,
+  existingAnexosLoading,
+}: Step4ObrigacaoProps) {
   const {canListarAnexo, canInserirAnexo} = usePermissoes();
   const [loading, setLoading] = useState(false);
 
@@ -30,6 +43,40 @@ export function Step4Obrigacao({ formData, updateFormData, anexos, onAnexosChang
   const handleRemoveAnexo = useCallback((index: number) => {
     onAnexosChange(anexos.filter((_, i) => i !== index));
   }, [anexos, onAnexosChange]);
+
+  const backendAnexos = useMemo(() => {
+    if (!existingAnexos) {
+      return [];
+    }
+    return existingAnexos.map((anexo) => ({
+      idAnexo: anexo.idAnexo,
+      idObjeto: anexo.idObjeto,
+      name: anexo.nmArquivo,
+      nmArquivo: anexo.nmArquivo,
+      dsCaminho: anexo.dsCaminho,
+      tpObjeto: anexo.tpObjeto,
+    }));
+  }, [existingAnexos]);
+
+  const handleDownloadExisting = useCallback((backend: { idAnexo?: number; nmArquivo?: string }) => {
+    if (!onDownloadExisting || !existingAnexos) {
+      return;
+    }
+    const target = existingAnexos.find((anexo) => anexo.idAnexo === backend.idAnexo);
+    if (target) {
+      onDownloadExisting(target);
+    }
+  }, [existingAnexos, onDownloadExisting]);
+
+  const handleRemoveExisting = useCallback((index: number) => {
+    if (!onRemoveExisting || !existingAnexos) {
+      return;
+    }
+    const target = existingAnexos[index];
+    if (target) {
+      onRemoveExisting(target);
+    }
+  }, [existingAnexos, onRemoveExisting]);
 
   return (
     <div className="space-y-6">
@@ -55,6 +102,22 @@ export function Step4Obrigacao({ formData, updateFormData, anexos, onAnexosChang
         {anexos.length === 0 && !formData.idSolicitacao && (
           <div className="text-sm text-gray-500">
             Adicione os anexos que deseja enviar.
+          </div>
+        )}
+        {canListarAnexo && existingAnexos !== undefined && (
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Anexos atuais</Label>
+            {existingAnexosLoading ? (
+              <div className="text-sm text-gray-500">Carregando anexos...</div>
+            ) : backendAnexos.length > 0 ? (
+              <AnexoList
+                anexos={backendAnexos}
+                onDownload={onDownloadExisting ? (anexo) => handleDownloadExisting(anexo) : undefined}
+                onRemove={onRemoveExisting ? (index) => handleRemoveExisting(index) : undefined}
+              />
+            ) : (
+              <div className="text-sm text-gray-500">Nenhum anexo cadastrado.</div>
+            )}
           </div>
         )}
       </div>

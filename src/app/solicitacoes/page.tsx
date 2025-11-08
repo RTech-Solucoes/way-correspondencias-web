@@ -57,6 +57,7 @@ import { statusList } from '@/api/status-solicitacao/types';
 import { formatDateBr } from '@/utils/utils';
 import { useSearchParams } from 'next/navigation';
 import TimeProgress from '@/components/ui/time-progress';
+import { CategoriaEnum, TipoEnum } from '@/api/tipos/types';
 
 export default function SolicitacoesPage() {
   return (
@@ -238,7 +239,7 @@ function SolicitacoesPageContent() {
 
   useEffect(() => {
     loadSolicitacoes();
-    statusSolicitacaoClient.listarTodos().then(setStatuses).catch(() => {});
+    statusSolicitacaoClient.listarTodos(CategoriaEnum.STATUS, [TipoEnum.TODOS, TipoEnum.CORRESPONDENCIA]).then(setStatuses).catch(() => {});
     loadResponsaveis();
     loadTemas();
     loadAreas();

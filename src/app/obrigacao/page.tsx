@@ -20,6 +20,7 @@ import { DeleteObrigacaoDialog } from "@/components/obrigacoes/DeleteObrigacaoDi
 import { ObrigacaoResponse } from "@/api/obrigacao/types";
 import { FiltrosAplicados } from "@/components/ui/applied-filters";
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { statusObrigacaoList, statusObrigacaoLabels, StatusObrigacao } from "@/api/status-obrigacao/types";
 import areasClient from "@/api/areas/client";
 import temasClient from "@/api/temas/client";
@@ -56,6 +57,7 @@ function ObrigacoesContent() {
   const [classificacoes, setClassificacoes] = useState<TipoResponse[]>([]);
   const [periodicidades, setPeriodicidades] = useState<TipoResponse[]>([]);
   const [showImportModal, setShowImportModal] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const carregarDados = async () => {
@@ -455,7 +457,10 @@ function ObrigacoesContent() {
                           console.log('Visualizar obrigação:', obrigacao.idSolicitacao);
                         }}
                         onEditar={(obrigacao) => {
-                          console.log('Editar obrigação:', obrigacao.idSolicitacao);
+                          if (!obrigacao.idSolicitacao) {
+                            return;
+                          }
+                          router.push(`/obrigacao/${obrigacao.idSolicitacao}/editar`);
                         }}
                         onAnexarProtocolo={(obrigacao) => {
                           console.log('Anexar protocolo:', obrigacao.idSolicitacao);

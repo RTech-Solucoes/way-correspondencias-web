@@ -92,7 +92,7 @@ export default function AnexoComponent({onAddAnexos, disabled = false}: AnexoPro
                 Arraste e solte arquivos aqui, ou clique para selecionar
               </p>
               <p className="text-sm text-gray-400">
-                Suporta: PDF, DOC, DOCX, XLS, XLSX, PNG, JPG, JPEG, GIF
+                Suporta: PDF, DOC, DOCX, XLS, CSV, XLSX, PNG, JPG, JPEG, GIF
               </p>
             </>
           )}

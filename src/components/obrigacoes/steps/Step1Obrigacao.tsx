@@ -5,24 +5,25 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ObrigacaoFormData } from '../ObrigacaoModal';
-import { statusObrigacaoList, statusObrigacaoLabels, StatusObrigacao } from '@/api/status-obrigacao/types';
 import { SolicitacaoBuscaSimpleResponse } from '@/api/solicitacoes/types';
 import tiposClient from '@/api/tipos/client';
 import { TipoResponse, CategoriaEnum, TipoEnum } from '@/api/tipos/types';
 import { useEffect, useState } from 'react';
 import { solicitacoesClient } from '@/api/solicitacoes';
+import statusSolicitacaoClient, { StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
 
 interface Step1ObrigacaoProps {
   formData: ObrigacaoFormData;
   updateFormData: (data: Partial<ObrigacaoFormData>) => void;
-  isEditing?: boolean;
+  statusOptions?: StatusSolicitacaoResponse[];
 }
 
-export function Step1Obrigacao({ formData, updateFormData }: Step1ObrigacaoProps) {
+export function Step1Obrigacao({
+  formData,
+  updateFormData,
+  statusOptions = [],
+}: Step1ObrigacaoProps) {
 
-    const currentStatusId = formData.idStatusObrigacao || 1;
-    const currentStatus = statusObrigacaoList.find(status => status.id === currentStatusId);
-    const statusLabel = currentStatus ? statusObrigacaoLabels[currentStatus.nmStatus as StatusObrigacao] : 'Não Iniciado';
     const [buscaObrigacao, setBuscaObrigacao] = useState<string>('');
     const [resultadoObrigacoes, setResultadoObrigacoes] = useState<SolicitacaoBuscaSimpleResponse[]>([]);
     
@@ -33,6 +34,46 @@ export function Step1Obrigacao({ formData, updateFormData }: Step1ObrigacaoProps
     const [criticidades, setCriticidades] = useState<TipoResponse[]>([]);
     const [naturezas, setNaturezas] = useState<TipoResponse[]>([]);
     const [loadingTipos, setLoadingTipos] = useState<boolean>(false);
+    const [statuses, setStatuses] = useState<StatusSolicitacaoResponse[]>(statusOptions);
+    const [loadingStatuses, setLoadingStatuses] = useState<boolean>(false);
+
+    useEffect(() => {
+      if (statusOptions.length > 0) {
+        setStatuses(statusOptions);
+      }
+    }, [statusOptions]);
+
+    useEffect(() => {
+      if (statusOptions.length > 0) {
+        return;
+      }
+
+      let cancelado = false;
+      const carregarStatuses = async () => {
+        setLoadingStatuses(true);
+        try {
+          const response = await statusSolicitacaoClient.listarTodos(
+            CategoriaEnum.STATUS,
+            [TipoEnum.TODOS, TipoEnum.OBRIGACAO],
+          );
+          if (!cancelado) {
+            setStatuses(response);
+          }
+        } catch (error) {
+          console.error('Erro ao carregar status da obrigação:', error);
+        } finally {
+          if (!cancelado) {
+            setLoadingStatuses(false);
+          }
+        }
+      };
+
+      carregarStatuses();
+
+      return () => {
+        cancelado = true;
+      };
+    }, [statusOptions.length]);
 
     useEffect(() => {
         const carregarTipos = async () => {
@@ -100,22 +141,24 @@ export function Step1Obrigacao({ formData, updateFormData }: Step1ObrigacaoProps
 
         <div className="flex flex-row w-full gap-4">
             <div className="space-y-2 w-full">
-                <Label htmlFor="idStatusObrigacao">Status*</Label>
+                <Label htmlFor="idStatusSolicitacao">Status*</Label>
                 <Select
-                    value={currentStatusId.toString()}
-                    onValueChange={() => {}}
+                    value={formData.idStatusSolicitacao?.toString() || ''}
+                    onValueChange={(value) => {
+                      updateFormData({ idStatusSolicitacao: parseInt(value, 10) });
+                    }}
                     disabled={true}
-                    >
-                    <SelectTrigger id="idStatusObrigacao" disabled={true}>
-                    <SelectValue>{statusLabel}</SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                    {statusObrigacaoList.map((status) => (
-                        <SelectItem key={status.id} value={status.id.toString()}>
-                        {statusObrigacaoLabels[status.nmStatus as StatusObrigacao]}
-                        </SelectItem>
+                >
+                  <SelectTrigger id="idStatusSolicitacao">
+                    <SelectValue placeholder={loadingStatuses ? 'Carregando...' : 'Selecione'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statuses.map((status) => (
+                      <SelectItem key={status.idStatusSolicitacao} value={status.idStatusSolicitacao.toString()}>
+                        {status.nmStatus}
+                      </SelectItem>
                     ))}
-                    </SelectContent>
+                  </SelectContent>
                 </Select>
             </div>
 
