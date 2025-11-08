@@ -189,14 +189,14 @@ export function Step1Obrigacao({
             {isCondicionada && (
                 <div className="space-y-2 w-full">
                   <>
-                    <Label htmlFor="idObrigacaoContratualPai">Obrigação Principal</Label>
+                    <Label htmlFor="idObrigacaoPrincipal">Obrigação Principal</Label>
                     <Select
                       value={formData.idObrigacaoPrincipal?.toString() || 'none'}
                       onValueChange={(value) => updateFormData({ 
                           idObrigacaoPrincipal: value === 'none' ? null : parseInt(value)
                       })}
                     >
-                      <SelectTrigger id="idObrigacaoContratualPai">
+                      <SelectTrigger id="idObrigacaoPrincipal">
                         <SelectValue placeholder="Buscar e selecionar a obrigação principal" />
                       </SelectTrigger>
                       <SelectContent>

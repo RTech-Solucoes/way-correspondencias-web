@@ -23,13 +23,7 @@ import { toast } from 'sonner';
 
 export interface ObrigacaoFormData extends Partial<ObrigacaoRequest> {
   cdIdentificador?: string;
-  idStatusObrigacao?: number;
-  idObrigacaoContratualPai?: number | null;
-  idsAreasCondicionantes?: number[];
-  idSolicitacao?: number | null;
-  idObrigacaoContratualVinculo?: number | null;
-  nrNivel?: number;
-  flAtivo?: string;
+ 
 }
 
 const steps = [
@@ -141,7 +135,7 @@ export function ObrigacaoModal() {
         if (!formData.idTipoNatureza) return false;
         
         const isClassificacaoCondicionada = formData.idTipoClassificacao === idTipoClassificacaoCondicionada;
-        if (isClassificacaoCondicionada && !formData.idObrigacaoPrincipal && !formData.idObrigacaoContratualPai) return false;
+        if (isClassificacaoCondicionada && !formData.idObrigacaoPrincipal && !formData.idObrigacaoPrincipal) return false;
     
         return true;
 
