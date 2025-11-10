@@ -53,7 +53,7 @@ export function Step1Obrigacao({
         setLoadingStatuses(true);
         try {
           const response = await statusSolicitacaoClient.listarTodos(
-            CategoriaEnum.STATUS,
+            CategoriaEnum.CLASSIFICACAO_STATUS_SOLICITACAO,
             [TipoEnum.TODOS, TipoEnum.OBRIGACAO],
           );
           if (!cancelado) {
@@ -80,12 +80,12 @@ export function Step1Obrigacao({
             setLoadingTipos(true);
             try {
                 const tipos = await tiposClient.buscarPorCategorias([
-                    CategoriaEnum.CLASSIFICACAO,
-                    CategoriaEnum.CRITICIDADE,
-                    CategoriaEnum.NATUREZA
+                    CategoriaEnum.CLASSIFICACAO_OBRIG,
+                    CategoriaEnum.CRITICIDADE_OBRIG,
+                    CategoriaEnum.NATUREZA_OBRIG
                 ]);
                 
-                const classif = tipos.filter(t => t.nmCategoria === CategoriaEnum.CLASSIFICACAO);
+                const classif = tipos.filter(t => t.nmCategoria === CategoriaEnum.CLASSIFICACAO_OBRIG);
                 setClassificacoes(classif);
                 
                 const condicionada = classif.find(t => t.cdTipo === TipoEnum.CONDICIONADA);
@@ -93,8 +93,8 @@ export function Step1Obrigacao({
                     setTipoClassificacaoCondicionada(condicionada.idTipo);
                 }
                 
-                setCriticidades(tipos.filter(t => t.nmCategoria === CategoriaEnum.CRITICIDADE));
-                setNaturezas(tipos.filter(t => t.nmCategoria === CategoriaEnum.NATUREZA));
+                setCriticidades(tipos.filter(t => t.nmCategoria === CategoriaEnum.CRITICIDADE_OBRIG));
+                setNaturezas(tipos.filter(t => t.nmCategoria === CategoriaEnum.NATUREZA_OBRIG));
             } catch (error) {
                 console.error('Erro ao carregar tipos:', error);
             } finally {

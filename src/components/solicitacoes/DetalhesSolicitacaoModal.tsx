@@ -148,7 +148,7 @@ export default function DetalhesSolicitacaoModal({
   useEffect(() => {
     const loadStatusList = async () => {
       try {
-        const status = await statusSolicitacaoClient.listarTodos(CategoriaEnum.STATUS, [TipoEnum.TODOS, TipoEnum.CORRESPONDENCIA]);
+        const status = await statusSolicitacaoClient.listarTodos(CategoriaEnum.CLASSIFICACAO_STATUS_SOLICITACAO, [TipoEnum.TODOS, TipoEnum.CORRESPONDENCIA]);
         setStatusListPrazos(status);
       } catch (error) {
         console.error('Erro ao carregar lista de status:', error);

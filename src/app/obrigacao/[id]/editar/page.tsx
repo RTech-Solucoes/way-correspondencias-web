@@ -111,7 +111,7 @@ export default function EditarObrigacaoPage() {
   const [statusOptions, setStatusOptions] = useState<StatusSolicitacaoResponse[]>([]);
 
   useEffect(() => {
-    tiposClient.buscarPorCategorias([CategoriaEnum.CLASSIFICACAO])
+    tiposClient.buscarPorCategorias([CategoriaEnum.CLASSIFICACAO_OBRIG])
       .then((tipos) => {
         const condicionada = tipos.find((tipo) => tipo.cdTipo === TipoEnum.CONDICIONADA);
         if (condicionada) {
@@ -153,7 +153,7 @@ export default function EditarObrigacaoPage() {
 
   useEffect(() => {
     statusSolicitacaoClient
-      .listarTodos(CategoriaEnum.STATUS, [TipoEnum.TODOS, TipoEnum.OBRIGACAO])
+      .listarTodos(CategoriaEnum.CLASSIFICACAO_STATUS_SOLICITACAO, [TipoEnum.TODOS, TipoEnum.OBRIGACAO])
       .then(setStatusOptions)
       .catch((error) => {
         console.error('Erro ao carregar status de solicitação:', error);

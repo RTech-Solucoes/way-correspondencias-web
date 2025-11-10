@@ -29,14 +29,14 @@ export function Step3Obrigacao({ formData, updateFormData }: Step3ObrigacaoProps
         setLoadingTipos(true);
         try {
             const tipos = await tiposClient.buscarPorCategorias([
-                CategoriaEnum.PERIODICIDADE,
+                CategoriaEnum.PERIODICIDADE_OBRIG,
             ]);
             
             const unica = tipos.find(t => t.cdTipo === TipoEnum.UNICA && t.flAtivo === StatusAtivo.S);
             setTipoUnica(unica || null);
             
             const periodic = tipos
-                .filter(t => t.nmCategoria === CategoriaEnum.PERIODICIDADE)
+                .filter(t => t.nmCategoria === CategoriaEnum.PERIODICIDADE_OBRIG)
                 .filter(t => t.flAtivo === StatusAtivo.S && t.cdTipo !== TipoEnum.UNICA);
           
             setPeriodicidadesSelecionadas(periodic);

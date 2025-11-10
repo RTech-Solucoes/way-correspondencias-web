@@ -239,7 +239,7 @@ function SolicitacoesPageContent() {
 
   useEffect(() => {
     loadSolicitacoes();
-    statusSolicitacaoClient.listarTodos(CategoriaEnum.STATUS, [TipoEnum.TODOS, TipoEnum.CORRESPONDENCIA]).then(setStatuses).catch(() => {});
+    statusSolicitacaoClient.listarTodos(CategoriaEnum.CLASSIFICACAO_STATUS_SOLICITACAO, [TipoEnum.TODOS, TipoEnum.CORRESPONDENCIA]).then(setStatuses).catch(() => {});
     loadResponsaveis();
     loadTemas();
     loadAreas();

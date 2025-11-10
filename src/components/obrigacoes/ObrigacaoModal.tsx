@@ -77,7 +77,7 @@ export function ObrigacaoModal() {
   useEffect(() => {
     const carregarTipoCondicionada = async () => {
       try {
-        const tipos = await tiposClient.buscarPorCategorias([CategoriaEnum.CLASSIFICACAO]);
+        const tipos = await tiposClient.buscarPorCategorias([CategoriaEnum.CLASSIFICACAO_OBRIG]);
         const condicionada = tipos.find(t => t.cdTipo === TipoEnum.CONDICIONADA);
         if (condicionada) {
           setIdTipoClassificacaoCondicionada(condicionada.idTipo);

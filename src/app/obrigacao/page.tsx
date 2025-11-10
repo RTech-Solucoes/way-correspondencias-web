@@ -65,14 +65,14 @@ function ObrigacoesContent() {
         const [areasResponse, temasResponse, tiposResponse] = await Promise.all([
           areasClient.buscarPorFiltro({ size: 1000 }),
           temasClient.buscarPorFiltro({ size: 1000 }),
-          tiposClient.buscarPorCategorias([CategoriaEnum.CLASSIFICACAO, CategoriaEnum.PERIODICIDADE])
+          tiposClient.buscarPorCategorias([CategoriaEnum.CLASSIFICACAO_OBRIG, CategoriaEnum.PERIODICIDADE_OBRIG])
         ]);
 
         setAreas(areasResponse.content || []);
         setTemas(temasResponse.content || []);
         
-        const classif = tiposResponse.filter(t => t.nmCategoria === CategoriaEnum.CLASSIFICACAO);
-        const periodic = tiposResponse.filter(t => t.nmCategoria === CategoriaEnum.PERIODICIDADE);
+        const classif = tiposResponse.filter(t => t.nmCategoria === CategoriaEnum.CLASSIFICACAO_OBRIG);
+        const periodic = tiposResponse.filter(t => t.nmCategoria === CategoriaEnum.PERIODICIDADE_OBRIG);
         
         setClassificacoes(classif);
         setPeriodicidades(periodic);

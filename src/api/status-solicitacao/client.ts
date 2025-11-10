@@ -7,7 +7,7 @@ export interface StatusSolicitacaoResponse {
   nmStatus: string;
   cdStatus?: string;
   flAtivo?: string;
-  tipo?: TipoResponse;
+  tipoClassificacaoStatus?: TipoResponse;
   dsStatus?: string;
 }
 
