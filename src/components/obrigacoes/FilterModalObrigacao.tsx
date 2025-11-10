@@ -71,14 +71,14 @@ export function FilterModalObrigacao() {
         const [areasResponse, temasResponse, tiposResponse] = await Promise.all([
           areasClient.buscarPorFiltro({ size: 1000 }),
           temasClient.buscarPorFiltro({ size: 1000 }),
-          tiposClient.buscarPorCategorias([CategoriaEnum.CLASSIFICACAO_OBRIG, CategoriaEnum.PERIODICIDADE_OBRIG])
+          tiposClient.buscarPorCategorias([CategoriaEnum.OBRIG_CLASSIFICACAO, CategoriaEnum.OBRIG_PERIODICIDADE])
         ]);
 
         setAreas(areasResponse.content || []);
         setTemas(temasResponse.content || []);
         
-        const classif = tiposResponse.filter(t => t.nmCategoria === CategoriaEnum.CLASSIFICACAO_OBRIG);
-        const periodic = tiposResponse.filter(t => t.nmCategoria === CategoriaEnum.PERIODICIDADE_OBRIG);
+        const classif = tiposResponse.filter(t => t.nmCategoria === CategoriaEnum.OBRIG_CLASSIFICACAO);
+        const periodic = tiposResponse.filter(t => t.nmCategoria === CategoriaEnum.OBRIG_PERIODICIDADE);
         
         setClassificacoes(classif);
         setPeriodicidades(periodic);

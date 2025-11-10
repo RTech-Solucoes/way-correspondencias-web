@@ -111,7 +111,7 @@ export default function EditarObrigacaoPage() {
   const [statusOptions, setStatusOptions] = useState<StatusSolicitacaoResponse[]>([]);
 
   useEffect(() => {
-    tiposClient.buscarPorCategorias([CategoriaEnum.CLASSIFICACAO_OBRIG])
+    tiposClient.buscarPorCategorias([CategoriaEnum.OBRIG_CLASSIFICACAO])
       .then((tipos) => {
         const condicionada = tipos.find((tipo) => tipo.cdTipo === TipoEnum.CONDICIONADA);
         if (condicionada) {
