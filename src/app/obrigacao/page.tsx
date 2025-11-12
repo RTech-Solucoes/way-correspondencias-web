@@ -22,6 +22,7 @@ import { FiltrosAplicados } from "@/components/ui/applied-filters";
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { statusObrigacaoList, statusObrigacaoLabels, StatusObrigacao } from "@/api/status-obrigacao/types";
+import { getObrigacaoStatusStyle } from "@/utils/obrigacoes/status";
 import areasClient from "@/api/areas/client";
 import temasClient from "@/api/temas/client";
 import tiposClient from "@/api/tipos/client";
@@ -215,52 +216,6 @@ function ObrigacoesContent() {
     setShowDeleteDialog(true);
   };
 
-  const getStatusBadgeVariant = (statusId: string | number | undefined, statusName: string | undefined): "default" | "secondary" | "destructive" | "outline" => {
-    if (!statusId && !statusName) return 'default';
-    
-    const naoIniciadoStatus = statusObrigacaoList.find(s => s.nmStatus === StatusObrigacao.NAO_INICIADO);
-    const concluidoStatus = statusObrigacaoList.find(s => s.nmStatus === StatusObrigacao.CONCLUIDO);
-
-    if (statusId && naoIniciadoStatus && parseInt(statusId.toString()) === naoIniciadoStatus.id) {
-      return 'secondary';
-    }
-    if (statusName && statusName.toUpperCase().includes(StatusObrigacao.NAO_INICIADO)) {
-      return 'secondary';
-    }
-
-    if (statusId && concluidoStatus && parseInt(statusId.toString()) === concluidoStatus.id) {
-      return 'outline';
-    }
-    if (statusName && statusName.toUpperCase().includes(StatusObrigacao.CONCLUIDO)) {
-      return 'outline';
-    }
-
-    return 'default';
-  };
-
-  const getStatusBadgeBg = (statusId: string | number | undefined, statusName: string | undefined): string => {
-    if (!statusId && !statusName) return '#1447e6';
-    
-    const naoIniciadoStatus = statusObrigacaoList.find(s => s.nmStatus === StatusObrigacao.NAO_INICIADO);
-    const concluidoStatus = statusObrigacaoList.find(s => s.nmStatus === StatusObrigacao.CONCLUIDO);
-
-    if (statusId && naoIniciadoStatus && parseInt(statusId.toString()) === naoIniciadoStatus.id) {
-      return '#b68500'; 
-    }
-    if (statusName && statusName.toUpperCase().includes(StatusObrigacao.NAO_INICIADO)) {
-      return '#b68500';
-    }
-
-    if (statusId && concluidoStatus && parseInt(statusId.toString()) === concluidoStatus.id) {
-      return '#008000'; 
-    }
-    if (statusName && statusName.toUpperCase().includes(StatusObrigacao.CONCLUIDO)) {
-      return '#008000';
-    }
-
-    return '#1447e6'; 
-  };
-
   return (
     <>
       <ObrigacaoModal />
@@ -398,21 +353,24 @@ function ObrigacoesContent() {
                   </TableCell>
                   <TableCell>{obrigacao.tema?.nmTema || '-'}</TableCell>
                   <TableCell>
-                    <Badge
-                      className="whitespace-nowrap truncate text-white"
-                      variant={getStatusBadgeVariant(
+                    {(() => {
+                      const statusStyle = getObrigacaoStatusStyle(
                         obrigacao.statusSolicitacao?.idStatusSolicitacao?.toString(),
                         obrigacao.statusSolicitacao?.nmStatus
-                      )}
-                      style={{
-                        backgroundColor: getStatusBadgeBg(
-                          obrigacao.statusSolicitacao?.idStatusSolicitacao?.toString(),
-                          obrigacao.statusSolicitacao?.nmStatus
-                        )
-                      }}
-                    >
-                      {obrigacao.statusSolicitacao?.nmStatus || '-'}
-                    </Badge>
+                      );
+                      return (
+                        <Badge
+                          className="whitespace-nowrap truncate"
+                          variant={statusStyle.variant}
+                          style={{
+                            backgroundColor: statusStyle.backgroundColor,
+                            color: statusStyle.textColor,
+                          }}
+                        >
+                          {obrigacao.statusSolicitacao?.nmStatus || '-'}
+                        </Badge>
+                      );
+                    })()}
                   </TableCell>
                   <TableCell>
                     {obrigacao.areas && obrigacao.areas.length > 0 
@@ -421,21 +379,31 @@ function ObrigacoesContent() {
                     }
                   </TableCell>
                   <TableCell>
-                    <TimeProgress
-                        start={obrigacao.dtInicio 
-                          ? (obrigacao.dtInicio.includes('T') 
-                            ? obrigacao.dtInicio 
-                            : `${obrigacao.dtInicio}T00:00:00`)
-                          : null}
-                        end={obrigacao.dtLimite 
-                          ? (obrigacao.dtLimite.includes('T') 
-                            ? obrigacao.dtLimite 
-                            : `${obrigacao.dtLimite}T23:59:59`)
-                          : null}
+                    {obrigacao.dtInicio && obrigacao.dtLimite ? (
+                      <TimeProgress
+                        start={
+                          obrigacao.dtInicio
+                            ? obrigacao.dtInicio.includes('T')
+                              ? obrigacao.dtInicio
+                              : `${obrigacao.dtInicio}T00:00:00`
+                            : null
+                        }
+                        end={
+                          obrigacao.dtLimite
+                            ? obrigacao.dtLimite.includes('T')
+                              ? obrigacao.dtLimite
+                              : `${obrigacao.dtLimite}T23:59:59`
+                            : null
+                        }
                         finishedAt={obrigacao.dtConclusao}
                         now={new Date().toISOString()}
                         statusLabel={obrigacao.statusSolicitacao?.nmStatus}
                       />
+                    ) : (
+                      <span className="text-gray-400 text-sm">
+                        Preencha corretamente as datas de início e limite para exibir o progresso
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell>
                     {obrigacao.dtTermino 
@@ -454,7 +422,10 @@ function ObrigacoesContent() {
                       <ObrigacaoAcoesMenu
                         obrigacao={obrigacao}
                         onVisualizar={(obrigacao) => {
-                          console.log('Visualizar obrigação:', obrigacao.idSolicitacao);
+                          if (!obrigacao.idSolicitacao) {
+                            return;
+                          }
+                          router.push(`/obrigacao/${obrigacao.idSolicitacao}/conferencia`);
                         }}
                         onEditar={(obrigacao) => {
                           if (!obrigacao.idSolicitacao) {

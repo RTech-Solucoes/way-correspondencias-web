@@ -63,8 +63,8 @@ export function Step3Obrigacao({ formData, updateFormData }: Step3ObrigacaoProps
       const dataInicio = new Date(formData.dtInicio);
       const dataTermino = new Date(formData.dtTermino);
       
-      if (dataTermino < dataInicio) {
-        return 'A data de término não pode ser menor que a data de início';
+      if (dataTermino <= dataInicio) {
+        return 'A data de término deve ser maior que a data de início';
       }
     }
     return null;
@@ -91,7 +91,7 @@ export function Step3Obrigacao({ formData, updateFormData }: Step3ObrigacaoProps
       const diferencaEmDias = Math.round(diferencaEmMs / (1000 * 60 * 60 * 24));
       
       if (diferencaEmDias !== formData.nrDuracaoDias) {
-        updateFormData({ nrDuracaoDias: diferencaEmDias >= 0 ? diferencaEmDias : 0 });
+        updateFormData({ nrDuracaoDias: diferencaEmDias > 0 ? diferencaEmDias : 0 });
       }
     }
   }, [formData.dtInicio, formData.dtTermino]);

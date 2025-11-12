@@ -12,7 +12,7 @@ import { Step3Obrigacao } from '@/components/obrigacoes/steps/Step3Obrigacao';
 import { Step4Obrigacao } from '@/components/obrigacoes/steps/Step4Obrigacao';
 import { Step5Obrigacao } from '@/components/obrigacoes/steps/Step5Obrigacao';
 import { toast } from 'sonner';
-import { ArrowLeft, Loader2, Save } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Loader2, Save } from 'lucide-react';
 import { TipoEnum, CategoriaEnum } from '@/api/tipos/types';
 import tiposClient from '@/api/tipos/client';
 import { AnexoResponse, ArquivoDTO, TipoObjetoAnexo, TipoResponsavelAnexo } from '@/api/anexos/type';
@@ -161,7 +161,30 @@ export default function EditarObrigacaoPage() {
   }, []);
 
   const updateFormData = useCallback((data: Partial<ObrigacaoFormData>) => {
-    setFormData((prev) => (prev ? { ...prev, ...data } : prev));
+    setFormData((prev) => {
+      if (!prev) return prev;
+
+      const updated = { ...prev, ...data };
+
+      if (updated.dtInicio && updated.dtTermino) {
+        const dataInicio = new Date(updated.dtInicio);
+        const dataTermino = new Date(updated.dtTermino);
+
+        if (dataTermino <= dataInicio) {
+          toast.error('A data de término deve ser maior que a data de início.');
+          updated.dtTermino = prev.dtTermino;
+        } else {
+          const diferencaEmMs = dataTermino.getTime() - dataInicio.getTime();
+          const diferencaEmDias = Math.round(diferencaEmMs / (1000 * 60 * 60 * 24));
+
+          if (diferencaEmDias !== updated.nrDuracaoDias) {
+            updated.nrDuracaoDias = diferencaEmDias;
+          }
+        }
+      }
+
+      return updated;
+    });
   }, []);
 
   const validateStep = useCallback((step: number): boolean => {
@@ -189,6 +212,13 @@ export default function EditarObrigacaoPage() {
         if (!formData.dtTermino) return false;
         if (!formData.dtLimite) return false;
         if (!formData.idTipoPeriodicidade) return false;
+
+        if (formData.dtInicio && formData.dtTermino) {
+          const dataInicio = new Date(formData.dtInicio);
+          const dataTermino = new Date(formData.dtTermino);
+          if (dataTermino <= dataInicio) return false;
+        }
+
         return true;
       default:
         return true;
@@ -279,7 +309,9 @@ export default function EditarObrigacaoPage() {
                 TipoObjetoAnexo.O,
                 anexo.nmArquivo,
               );
-              return arquivos.map((arquivo) => ({
+              // Garantir que arquivos seja sempre um array
+              const arquivosArray = Array.isArray(arquivos) ? arquivos : arquivos ? [arquivos] : [];
+              return arquivosArray.map((arquivo) => ({
                 nomeArquivo: arquivo.nomeArquivo || anexo.nmArquivo,
                 tipoConteudo: arquivo.tipoConteudo || 'application/octet-stream',
                 tpResponsavel: arquivo.tpResponsavel ?? TipoResponsavelAnexo.A,
@@ -426,24 +458,22 @@ export default function EditarObrigacaoPage() {
                 <span className="text-base font-medium">Obrigações</span>
               </button>
             </Link>
-            <span className="text-gray-300">/</span>
-            <span className="font-medium text-gray-700">{formData.idSolicitacao?.toString() || ''}</span>
-            <span className="text-gray-300">/</span>
-            <span className="font-medium text-gray-700">Editar obrigação</span>
+            <ChevronRight className="h-3.5 w-3.5 text-black" />
+            <span className="font-medium text-gray-700">{formData?.cdIdentificador?.toString() || 'Não identificado'}</span>
           </div>
           <h1 className="text-2xl font-semibold text-gray-900">Editar obrigação</h1>
         </div>
 
-        <div className="flex justify-center px-6 py-8">
-          <div className="inline-flex items-center gap-2 w-[] rounded-full border border-gray-200 bg-white px-2 py-2 shadow-sm">
-            {tabs.map((tab) => {
+        <div className="px-6">
+          <div className="flex w-full items-center justify-between gap-2 rounded-full border border-gray-200 bg-white px-2 py-2 shadow-sm">
+            {tabs.map((tab: TabDefinition) => {
               const isActive = activeTab === tab.key;
               return (
                 <button
                   key={tab.key}
                   type="button"
                   onClick={() => setActiveTab(tab.key)}
-                  className={`rounded-full px-8 py-3 text-base font-semibold transition-all ${
+                  className={`flex-1 rounded-full px-6 py-3 text-center text-base font-semibold transition-all ${
                     isActive ? 'bg-blue-500 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100'
                   }`}
                 >

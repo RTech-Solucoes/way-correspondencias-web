@@ -101,7 +101,7 @@ export function Step6Obrigacao({ formData }: Step6ObrigacaoProps) {
     if (obrigacaoDetalhe?.statusSolicitacao) {
       return obrigacaoDetalhe.statusSolicitacao.nmStatus || 'Não informado';
     }
-    const current = statusObrigacaoList.find((s) => s.id === formData?.idStatusObrigacao);
+    const current = statusObrigacaoList.find((s) => s.id === formData?.idStatusSolicitacao);
     return current ? statusObrigacaoLabels[current.nmStatus as StatusObrigacao] : 'Não Iniciado';
   };
 
