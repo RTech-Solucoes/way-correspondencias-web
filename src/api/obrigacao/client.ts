@@ -1,6 +1,6 @@
 import { buildQueryParams } from "@/utils/utils";
 import ApiClient from "../client";
-import { ObrigacaoResponse, ObrigacaoRequest, ObrigacaoDetalheResponse, ObrigacaoFiltroRequest } from "./types";
+import { ObrigacaoResponse, ObrigacaoRequest, ObrigacaoDetalheResponse, ObrigacaoFiltroRequest, ObrigacoesRelacionadasResponse } from "./types";
 import { ObrigacaoFormData } from "@/components/obrigacoes/ObrigacaoModal";
 
 export interface PaginatedResponse<T> {
@@ -95,6 +95,12 @@ export class ObrigacaoClient {
     async replicarObrigacoesPorPeriodicidade(id: number): Promise<{ mensagem: string; obrigacaoReplicada: boolean }> {
         return this.client.request<{ mensagem: string; obrigacaoReplicada: boolean }>(`/replicar-periodicidade/${id}`, {
             method: 'POST',
+        });
+    }
+
+    async buscarObrigacoesRelacionadas(id: number): Promise<ObrigacoesRelacionadasResponse> {
+        return this.client.request<ObrigacoesRelacionadasResponse>(`/${id}/condicionadas`, {
+            method: 'GET',
         });
     }
 

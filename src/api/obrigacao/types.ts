@@ -88,3 +88,7 @@ export interface ObrigacaoFiltroRequest {
   size?: number;
   sort?: string;
 }
+
+export interface ObrigacoesRelacionadasResponse {
+  obrigacoesCondicionadas: ObrigacaoResumoResponse[];
+}
