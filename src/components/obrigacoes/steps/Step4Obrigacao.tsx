@@ -4,11 +4,10 @@ import AnexoComponent from '@/components/AnexoComponotent/AnexoComponent';
 import AnexoList from '@/components/AnexoComponotent/AnexoList/AnexoList';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
 import { Label } from '@radix-ui/react-label';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { ObrigacaoFormData } from '../ObrigacaoModal';
-import { AnexoResponse } from '@/api/anexos/type';
-
+import { AnexoResponse, TipoDocumentoAnexoEnum } from '@/api/anexos/type';
 
 interface Step4ObrigacaoProps {
   formData: ObrigacaoFormData;
@@ -31,7 +30,6 @@ export function Step4Obrigacao({
   existingAnexosLoading,
 }: Step4ObrigacaoProps) {
   const {canListarAnexo, canInserirAnexo} = usePermissoes();
-  const [loading, setLoading] = useState(false);
 
   const handleAddAnexos = useCallback((files: FileList | null) => {
     if (files && files.length > 0) {
@@ -48,7 +46,9 @@ export function Step4Obrigacao({
     if (!existingAnexos) {
       return [];
     }
-    return existingAnexos.map((anexo) => ({
+    const anexosFiltrados = existingAnexos.filter((anexo) => anexo.tpDocumento === TipoDocumentoAnexoEnum.C);
+    
+    return anexosFiltrados.map((anexo) => ({
       idAnexo: anexo.idAnexo,
       idObjeto: anexo.idObjeto,
       name: anexo.nmArquivo,
@@ -84,7 +84,6 @@ export function Step4Obrigacao({
         {canInserirAnexo && (
           <AnexoComponent
             onAddAnexos={handleAddAnexos}
-            disabled={loading}
           />
         )}
 
@@ -93,10 +92,6 @@ export function Step4Obrigacao({
             <Label className="text-sm font-medium mb-2 block">Anexos adicionados:</Label>
             <AnexoList anexos={anexos} onRemove={handleRemoveAnexo} />
           </div>
-        )}
-
-        {loading && (
-          <div className="text-sm text-gray-500">Carregando anexos...</div>
         )}
 
         {anexos.length === 0 && !formData.idSolicitacao && (

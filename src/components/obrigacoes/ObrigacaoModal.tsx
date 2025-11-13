@@ -17,7 +17,9 @@ import { Step6Obrigacao } from './steps/Step6Obrigacao';
 import obrigacaoClient from '@/api/obrigacao/client';
 import { TipoEnum, CategoriaEnum } from '@/api/tipos/types';
 import tiposClient from '@/api/tipos/client';
-import { ArquivoDTO, TipoResponsavelAnexo } from '@/api/anexos/type';
+import { ArquivoDTO, TipoResponsavelAnexoEnum, TipoDocumentoAnexoEnum } from '@/api/anexos/type';
+import { computeTpResponsavel } from '@/api/perfis/types';
+import { useUserGestao } from '@/hooks/use-user-gestao';
 import { CheckCircleIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -37,6 +39,7 @@ const steps = [
 
 export function ObrigacaoModal() {
   const { showObrigacaoModal, setShowObrigacaoModal, loadObrigacoes } = useObrigacoes();
+  const { idPerfil } = useUserGestao();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [idTipoClassificacaoCondicionada, setIdTipoClassificacaoCondicionada] = useState<number | null>(null);
@@ -187,11 +190,16 @@ export function ObrigacaoModal() {
                     reader.readAsDataURL(file);
                   });
 
+                  const tpResponsavel = idPerfil 
+                    ? computeTpResponsavel(idPerfil) 
+                    : TipoResponsavelAnexoEnum.A;
+
                   return {
                     nomeArquivo: file.name,
                     tipoConteudo: file.type,
-                    tpResponsavel: TipoResponsavelAnexo.A,
+                    tpResponsavel,
                     conteudoArquivo: base64,
+                    tpDocumento: TipoDocumentoAnexoEnum.C, 
                   };
                 })
               );

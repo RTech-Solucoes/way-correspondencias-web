@@ -2,7 +2,7 @@
 
 import { ObrigacaoFormData } from '../ObrigacaoModal';
 import { StatusObrigacao, statusObrigacaoLabels, statusObrigacaoList } from '@/api/status-obrigacao/types';
-import { AnexoResponse, TipoObjetoAnexo } from '@/api/anexos/type';
+import { AnexoResponse, TipoObjetoAnexoEnum } from '@/api/anexos/type';
 import { useEffect, useState } from 'react';
 import { Label } from '@/components/ui/label';
 import obrigacaoClient from '@/api/obrigacao/client';
@@ -119,7 +119,7 @@ export function Step6Obrigacao({ formData }: Step6ObrigacaoProps) {
 
       const arquivos = await anexosClient.download(
         anexo.idObjeto,
-        TipoObjetoAnexo.O,
+        TipoObjetoAnexoEnum.O,
         anexo.nmArquivo
       );
 

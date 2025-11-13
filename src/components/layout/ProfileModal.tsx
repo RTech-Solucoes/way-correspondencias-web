@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 import { mask, validateCPF, validateEmail } from "@/utils/utils";
 import authClient from '@/api/auth/client';
 import anexosClient from '@/api/anexos/client';
-import { TipoObjetoAnexo, ArquivoDTO } from '@/api/anexos/type';
+import { TipoObjetoAnexoEnum, ArquivoDTO } from '@/api/anexos/type';
 import { responsavelAnexosClient } from '@/api/responsaveis/anexos-client';
 
 interface ProfileModalProps {
@@ -231,12 +231,12 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
     if (!idResponsavel) return;
     try {
       setPhotoBusy(true);
-      const anexos = await anexosClient.buscarPorIdObjetoETipoObjeto(idResponsavel, TipoObjetoAnexo.R);
+      const anexos = await anexosClient.buscarPorIdObjetoETipoObjeto(idResponsavel, TipoObjetoAnexoEnum.R);
       const byExt = anexos.find(a => /(\.jpg|jpeg|png)$/i.test(a.nmArquivo));
       const chosen = byExt || anexos[0];
       if (chosen) {
         setExistingPhoto({ idAnexo: chosen.idAnexo, nmArquivo: chosen.nmArquivo });
-        const arquivos = await anexosClient.download(idResponsavel, TipoObjetoAnexo.R, chosen.nmArquivo);
+        const arquivos = await anexosClient.download(idResponsavel, TipoObjetoAnexoEnum.R, chosen.nmArquivo);
         const first = arquivos?.find(a => (a.tipoConteudo?.startsWith('image/') ?? /(\.jpg|jpeg|png)$/i.test(a.nomeArquivo || '')));
         if (first?.conteudoArquivo) {
           const lower = (chosen.nmArquivo || '').toLowerCase();

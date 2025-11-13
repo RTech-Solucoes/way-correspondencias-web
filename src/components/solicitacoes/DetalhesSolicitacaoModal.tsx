@@ -1,6 +1,6 @@
 'use client';
 
-import { ArquivoDTO, TipoResponsavelAnexo } from '@/api/anexos/type';
+import { ArquivoDTO, TipoResponsavelAnexoEnum } from '@/api/anexos/type';
 import { areaUtil } from '@/api/areas/types';
 import authClient from '@/api/auth/client';
 import { computeTpResponsavel, perfilUtil } from '@/api/perfis/types';
@@ -81,7 +81,7 @@ export default function DetalhesSolicitacaoModal({
   const [expandDescricao, setExpandDescricao] = useState(false);
   const [sending, setSending] = useState(false);
   const [flAprovado, setFlAprovado] = useState<'S' | 'N' | ''>('');
-  const [tpResponsavelUpload, setTpResponsavelUpload] = useState<TipoResponsavelAnexo>(TipoResponsavelAnexo.A);
+  const [tpResponsavelUpload, setTpResponsavelUpload] = useState<TipoResponsavelAnexoEnum>(TipoResponsavelAnexoEnum.A);
   const [hasAreaInicial, setHasAreaInicial] = useState(false);
   const [userResponsavel, setUserResponsavel] = useState<ResponsavelResponse | null>(null);
   const [idProximoStatusAnaliseRegulatoria, setIdProximoStatusAnaliseRegulatoria] = useState<number | null>(null);
@@ -241,7 +241,7 @@ export default function DetalhesSolicitacaoModal({
       try {
         const userName = authClient.getUserName();
         if (!userName) {
-          setTpResponsavelUpload(TipoResponsavelAnexo.A);
+          setTpResponsavelUpload(TipoResponsavelAnexoEnum.A);
           setHasAreaInicial(false);
           return;
         }
@@ -274,7 +274,7 @@ export default function DetalhesSolicitacaoModal({
         setTpResponsavelUpload(tp);
         setHasAreaInicial(isInSolicAreas);
       } catch {
-        setTpResponsavelUpload(TipoResponsavelAnexo.A);
+        setTpResponsavelUpload(TipoResponsavelAnexoEnum.A);
         setHasAreaInicial(false);
       }
     };

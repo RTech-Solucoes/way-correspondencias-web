@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { base64ToUint8Array, saveBlob } from '@/utils/utils';
 import { toast } from 'sonner';
-import { AnexoResponse, TipoObjetoAnexo, ArquivoDTO } from '@/api/anexos/type';
+import { AnexoResponse, TipoObjetoAnexoEnum, ArquivoDTO } from '@/api/anexos/type';
 import anexosClient from '@/api/anexos/client';
 import { StatusObrigacao, statusObrigacaoLabels } from '@/api/status-obrigacao/types';
 import { TipoEnum } from '@/api/tipos/types';
@@ -20,6 +20,8 @@ import { ConferenciaStepAreasETemas } from '@/components/obrigacoes/conferencia/
 import { ConferenciaStepPrazos } from '@/components/obrigacoes/conferencia/ConferenciaStepPrazos';
 import { ConferenciaStepAnexos } from '@/components/obrigacoes/conferencia/ConferenciaStepAnexos';
 import { ConferenciaStepVinculos } from '@/components/obrigacoes/conferencia/ConferenciaStepVinculos';
+import { ConferenciaSidebar } from '@/components/obrigacoes/conferencia/sidebarRigth/ConferenciaSidebar';
+import { useUserGestao } from '@/hooks/use-user-gestao';
 
 type TabKey = 'dados' | 'temas' | 'prazos' | 'anexos' | 'vinculos';
 const tabs: { key: TabKey; label: string }[] = [
@@ -33,6 +35,7 @@ const tabs: { key: TabKey; label: string }[] = [
 export default function ConferenciaObrigacaoPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const { isAdminOrGestor } = useUserGestao();
 
   const [activeTab, setActiveTab] = useState<TabKey>('dados');
   const [detalhe, setDetalhe] = useState<ObrigacaoDetalheResponse | null>(null);
@@ -92,7 +95,7 @@ export default function ConferenciaObrigacaoPage() {
         
         const idObjeto = anexo.idObjeto || obrigacao.idSolicitacao;
         
-        const arquivos = await anexosClient.download(idObjeto, TipoObjetoAnexo.O, anexo.nmArquivo);
+        const arquivos = await anexosClient.download(idObjeto, TipoObjetoAnexoEnum.O, anexo.nmArquivo);
         
         // Garantir que arquivos seja sempre um array
         const arquivosArray: ArquivoDTO[] = Array.isArray(arquivos) 
@@ -162,35 +165,35 @@ export default function ConferenciaObrigacaoPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
-      <main className="flex flex-1 flex-col gap-6 px-8 py-6 pb-32">
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <Link href="/obrigacao" className="hover:text-gray-700">
-              <button
-                type="button"
-                onClick={() => router.push('/obrigacao')}
-                className="flex items-center gap-3 text-gray-600 transition-colors hover:text-gray-900"
-              >
-                <span className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white">
-                  <ArrowLeft className="h-4 w-4" />
-                </span>
-                <span className="text-base font-medium">Obrigações</span>
-              </button>
-            </Link>
-            <ChevronRight className="h-3.5 w-3.5 text-black" />
-            <span className="font-medium text-gray-700">{obrigacao.cdIdentificacao?.toString() || 'Não identificado'}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-semibold text-gray-900">Conferência de obrigação</h1>
-              <p className="text-sm text-gray-500">
-                Visualize os dados completos, anexos e vínculos relacionados à obrigação selecionada.
-              </p>
+      <main className="flex flex-1 gap-6 px-8 py-6 pb-32 pr-[calc(28rem+2rem)]">
+        <div className="flex flex-1 flex-col gap-6">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <Link href="/obrigacao" className="hover:text-gray-700">
+                <button
+                  type="button"
+                  onClick={() => router.push('/obrigacao')}
+                  className="flex items-center gap-3 text-gray-600 transition-colors hover:text-gray-900"
+                >
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white">
+                    <ArrowLeft className="h-4 w-4" />
+                  </span>
+                  <span className="text-base font-medium">Obrigações</span>
+                </button>
+              </Link>
+              <ChevronRight className="h-3.5 w-3.5 text-black" />
+              <span className="font-medium text-gray-700">{obrigacao.cdIdentificacao?.toString() || 'Não identificado'}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-semibold text-gray-900">Conferência de obrigação</h1>
+                <p className="text-sm text-gray-500">
+                  Visualize os dados completos, anexos e vínculos relacionados à obrigação selecionada.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="flex flex-1 gap-6">
           <div className="flex flex-1 flex-col gap-6">
             <Tabs
               value={activeTab}
@@ -264,35 +267,60 @@ export default function ConferenciaObrigacaoPage() {
               </div>
             </Tabs>
           </div>
-          { /* Add sidebar da direita - Registros (Anexos, Comentários) */}
         </div>
       </main>
-      <footer className="fixed bottom-0 left-0 right-0 border-t border-gray-200 bg-white px-8 py-4">
+      {detalhe && (
+        <ConferenciaSidebar detalhe={detalhe} />
+      )}
+      <footer className="fixed bottom-0 left-0 right-0 z-11 border-t border-gray-200 bg-white px-8 py-4">
         <div className="ml-auto flex w-full max-w-6xl flex-wrap items-center justify-end gap-3">
-          <Button
-            type="button"
-            className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800"
-            onClick={() => toast.info('Funcionalidade de anexar correspondência em desenvolvimento.')}
-          >
-            <Paperclip className="h-4 w-4" />
-            Anexar correspondência
-          </Button>
-          <Button
-            type="button"
-            className="flex items-center gap-2 rounded-full bg-orange-500 px-6 py-3 text-sm font-semibold text-white hover:bg-orange-600"
-            onClick={() => toast.info('Solicitação de ajustes disponível em breve.')}
-          >
-            <MessageSquare className="h-4 w-4" />
-            Solicitar ajustes
-          </Button>
-          <Button
-            type="button"
-            className="flex items-center gap-2 rounded-full bg-blue-500 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-600"
-            onClick={() => toast.success('Conferência aprovada!')}
-          >
-            <CheckCircle2 className="h-4 w-4" />
-            Aprovar conferência
-          </Button>
+          {isAdminOrGestor ? (
+            <>
+              <Button
+                type="button"
+                className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800"
+                onClick={() => toast.info('Funcionalidade de anexar correspondência em desenvolvimento.')}
+              >
+                <Paperclip className="h-4 w-4" />
+                Anexar correspondência
+              </Button>
+              <Button
+                type="button"
+                className="flex items-center gap-2 rounded-full bg-orange-500 px-6 py-3 text-sm font-semibold text-white hover:bg-orange-600"
+                onClick={() => toast.info('Solicitação de ajustes disponível em breve.')}
+              >
+                <MessageSquare className="h-4 w-4" />
+                Solicitar ajustes
+              </Button>
+              <Button
+                type="button"
+                className="flex items-center gap-2 rounded-full bg-blue-500 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-600"
+                onClick={() => toast.success('Conferência aprovada!')}
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                Aprovar conferência
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                type="button"
+                className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800"
+                onClick={() => toast.info('Funcionalidade de anexar evidência de cumprimento em desenvolvimento.')}
+              >
+                <Paperclip className="h-4 w-4" />
+                Anexar evidência de cumprimento
+              </Button>
+              <Button
+                type="button"
+                className="flex items-center gap-2 rounded-full bg-blue-500 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-600"
+                onClick={() => toast.info('Funcionalidade de enviar para análise do regulatório em desenvolvimento.')}
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                Enviar para análise do regulatório
+              </Button>
+            </>
+          )}
         </div>
       </footer>
     </div>

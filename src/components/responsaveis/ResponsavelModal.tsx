@@ -15,7 +15,7 @@ import {toast} from 'sonner';
 import {formValidator, mask} from "@/utils/utils";
 import {z} from 'zod';
 import { responsavelAnexosClient } from '@/api/responsaveis/anexos-client';
-import { ArquivoDTO, TipoObjetoAnexo } from '@/api/anexos/type';
+import { ArquivoDTO, TipoObjetoAnexoEnum } from '@/api/anexos/type';
 import anexosClient from '@/api/anexos/client';
 
 interface ResponsavelModalProps {
@@ -90,7 +90,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
     if (!responsavel) return;
     try {
       setPhotoBusy(true);
-      const anexos = await anexosClient.buscarPorIdObjetoETipoObjeto(responsavel.idResponsavel, TipoObjetoAnexo.R);
+      const anexos = await anexosClient.buscarPorIdObjetoETipoObjeto(responsavel.idResponsavel, TipoObjetoAnexoEnum.R);
       const byExt = anexos.find(a => /\.(jpg|jpeg|png)$/i.test(a.nmArquivo));
       const chosen = byExt || anexos[0];
       if (chosen) {
@@ -104,7 +104,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
           return;
         }
 
-        const arquivos = await anexosClient.download(responsavel.idResponsavel, TipoObjetoAnexo.R, chosen.nmArquivo);
+        const arquivos = await anexosClient.download(responsavel.idResponsavel, TipoObjetoAnexoEnum.R, chosen.nmArquivo);
         const first = arquivos?.find(a => (a.tipoConteudo?.startsWith('image/') ?? /\.(jpg|jpeg|png)$/i.test(a.nomeArquivo || '')));
         if (first?.conteudoArquivo) {
           const extMime = (chosen.nmArquivo || '').toLowerCase().endsWith('.png') ? 'image/png' : (/(\.jpe?g)$/i.test(chosen.nmArquivo || '') ? 'image/jpeg' : undefined);

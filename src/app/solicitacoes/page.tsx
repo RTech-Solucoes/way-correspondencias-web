@@ -43,7 +43,7 @@ import FilterModal from '@/components/solicitacoes/FilterModal';
 import { statusSolicitacaoClient } from '@/api/status-solicitacao/client';
 import { FiltrosAplicados } from '@/components/ui/applied-filters';
 import anexosClient from '@/api/anexos/client';
-import {AnexoResponse, TipoObjetoAnexo, ArquivoDTO} from '@/api/anexos/type';
+import {AnexoResponse, TipoObjetoAnexoEnum, ArquivoDTO} from '@/api/anexos/type';
 import {
   AreaSolicitacao,
   PagedResponse,
@@ -429,7 +429,7 @@ function SolicitacoesPageContent() {
     try {
       const detalhes = await solicitacoesClient.buscarDetalhesPorId(s.idSolicitacao);
       setDetalhesSolicitacao(detalhes);
-      const anexos = await anexosClient.buscarPorIdObjetoETipoObjeto(s.idSolicitacao, TipoObjetoAnexo.S);
+      const anexos = await anexosClient.buscarPorIdObjetoETipoObjeto(s.idSolicitacao, TipoObjetoAnexoEnum.S);
       setDetalhesAnexos(anexos || []);
     } catch {
       toast.error('Erro ao carregar os detalhes da solicitação');

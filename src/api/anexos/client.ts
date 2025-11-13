@@ -1,5 +1,5 @@
 import ApiClient from '../client';
-import { AnexoResponse, ArquivoDTO, TipoObjetoAnexo } from './type';
+import { AnexoResponse, ArquivoDTO, TipoObjetoAnexoEnum } from './type';
 
 class AnexosClient {
   private client: ApiClient;
@@ -8,14 +8,14 @@ class AnexosClient {
     this.client = new ApiClient('/anexos');
   }
 
-  async buscarPorIdObjetoETipoObjeto(idObjeto: number, tpObjeto: TipoObjetoAnexo): Promise<AnexoResponse[]> {
+  async buscarPorIdObjetoETipoObjeto(idObjeto: number, tpObjeto: TipoObjetoAnexoEnum): Promise<AnexoResponse[]> {
     return this.client.request<AnexoResponse[]>(
       `/idObjeto/${idObjeto}/tpObjeto/${tpObjeto}`,
       { method: 'GET' }
     );
   }
   
-  async download(idObjeto: number, tpObjeto: TipoObjetoAnexo, nmArquivo?: string): Promise<ArquivoDTO[]> {
+  async download(idObjeto: number, tpObjeto: TipoObjetoAnexoEnum, nmArquivo?: string): Promise<ArquivoDTO[]> {
     const queryParams = new URLSearchParams();
     if (nmArquivo) queryParams.append('nmArquivo', nmArquivo);
 
