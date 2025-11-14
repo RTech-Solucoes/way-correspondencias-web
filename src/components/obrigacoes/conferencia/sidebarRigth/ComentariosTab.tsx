@@ -1,12 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { MessageSquare, Reply, Trash2, Briefcase } from 'lucide-react';
-import { toast } from 'sonner';
+import { MessageSquare } from 'lucide-react';
 import { SolicitacaoParecerResponse } from '@/api/solicitacao-parecer/types';
 import { formatDateTimeBr } from '@/utils/utils';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
+import { AreaSolicitacao } from '@/api/solicitacoes/types';
+import { CardComentario } from './CardComentario';
 
 interface ComentariosTabProps {
   solicitacaoPareceres: SolicitacaoParecerResponse[];
@@ -15,6 +16,7 @@ interface ComentariosTabProps {
   idResponsavelLogado?: number | null;
   onDeletar?: (idSolicitacaoParecer: number) => void;
   onResponder?: (parecer: SolicitacaoParecerResponse) => void;
+  areaAtribuida?: AreaSolicitacao | null;
 }
 
 export function ComentariosTab({ 
@@ -23,10 +25,22 @@ export function ComentariosTab({
   loading = false, 
   idResponsavelLogado,
   onDeletar,
-  onResponder
+  onResponder,
+  areaAtribuida
 }: ComentariosTabProps) {
   const [parecerParaDeletar, setParecerParaDeletar] = useState<number | null>(null);
   const comentariosCount = solicitacaoPareceres.length;
+
+  const handleScrollToComment = (idSolicitacaoParecer: number) => {
+    const element = document.getElementById(`comentario-${idSolicitacaoParecer}`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      element.classList.add('ring-2', 'ring-purple-500', 'ring-offset-2');
+      setTimeout(() => {
+        element.classList.remove('ring-2', 'ring-purple-500', 'ring-offset-2');
+      }, 2000);
+    }
+  };
 
   const handleConfirmarDeletar = () => {
     if (parecerParaDeletar && onDeletar) {
@@ -156,88 +170,53 @@ export function ComentariosTab({
                 ? formatDateTimeBr(parecer.dtCriacao) 
                 : '';
               const autor = parecer.responsavel?.nmResponsavel || 'Usuário';
-              const area = parecer.responsavel?.areas?.[0]?.area?.nmArea || parecer.responsavel?.nmPerfil || 'Regulatório';
               
-              const podeDeletar = idResponsavelLogado && 
+              let areasResponsavel = parecer.responsavel?.areas || [];
+              
+              if (areasResponsavel.length === 0 && parecer.responsavel?.idResponsavel) {
+                const responsavelCompleto = responsaveis.find(
+                  (r) => r.idResponsavel === parecer.responsavel?.idResponsavel
+                );
+                if (responsavelCompleto?.areas) {
+                  areasResponsavel = responsavelCompleto.areas;
+                }
+              }
+              
+              let area = 'Regulatório';
+              if (areasResponsavel.length > 0) {
+                if (areasResponsavel.length > 1 && areaAtribuida) {
+                  const areaAtribuidaEncontrada = areasResponsavel.find(
+                    (respArea) => respArea.area?.idArea === areaAtribuida.idArea
+                  );
+                  
+                  if (areaAtribuidaEncontrada) {
+                    area = areaAtribuida.nmArea;
+                  } else {
+                    area = areasResponsavel[0]?.area?.nmArea || 'Regulatório';
+                  }
+                } else {
+                  area = areasResponsavel[0]?.area?.nmArea || 'Regulatório';
+                }
+              }
+              
+              const podeDeletar = !!(idResponsavelLogado && 
                                   parecer.responsavel?.idResponsavel && 
-                                  parecer.responsavel.idResponsavel === idResponsavelLogado;
+                                  parecer.responsavel.idResponsavel === idResponsavelLogado);
 
               return (
-                <div
+                <CardComentario
                   key={parecer.idSolicitacaoParecer}
-                  className="rounded-2xl border border-gray-100 bg-white px-4 py-4 shadow-sm"
-                >
-                  {comentarioReferenciado ? (
-                    <div className="mb-3 border-l-4 border-purple-500 bg-gray-50 rounded-r-lg p-3 text-sm">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Reply className="h-3 w-3 text-purple-600" />
-                        <span className="font-semibold text-purple-600 text-xs">
-                          {comentarioReferenciado.responsavel?.nmResponsavel || 'Usuário'}
-                        </span>
-                      </div>
-                      <p className="text-gray-700 text-xs line-clamp-2">
-                        {comentarioReferenciado.dsDarecer || 'Comentário referenciado'}
-                      </p>
-                    </div>
-                  ) : null}
-                  
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-semibold text-gray-900">{autor}</span>
-                    <span className="text-xs text-gray-400">{dataFormatada}</span>
-                  </div>
-                  <p className="mt-2 text-sm text-black">
-                    {parts.map((part, idx) => {
-                      if (typeof part === 'object' && 'type' in part && part.type === 'mention') {
-                        if (part.isValid) {
-                          return (
-                            <span key={idx} className="text-purple-600 font-semibold" style={{ color: '#9333ea', fontWeight: 600 }}>
-                              @{part.name}
-                            </span>
-                          );
-                        } else {
-                          return (
-                            <span key={idx} className="text-black" style={{ color: '#000000' }}>
-                              @{part.name}
-                            </span>
-                          );
-                        }
-                      }
-                      return <span key={idx} className="text-black" style={{ color: '#000000' }}>{String(part)}</span>;
-                    })}
-                  </p>
-                <div className="mt-3 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                    <Briefcase className="h-3.5 w-3.5" />
-                    <span>{area}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <button 
-                      type="button" 
-                      className="flex items-center gap-1 text-blue-600 hover:text-blue-700 text-sm font-medium"
-                      onClick={() => {
-                        if (onResponder) {
-                          onResponder(parecer);
-                        } else {
-                          toast.info('Funcionalidade de resposta disponível em breve.');
-                        }
-                      }}
-                    >
-                      <Reply className="h-3.5 w-3.5" />
-                      Responder
-                    </button>
-                    {podeDeletar && onDeletar && (
-                      <button 
-                        type="button" 
-                        className="text-gray-400 hover:text-red-600 transition-colors"
-                        onClick={() => setParecerParaDeletar(parecer.idSolicitacaoParecer)}
-                        title="Excluir comentário"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
+                  parecer={parecer}
+                  comentarioReferenciado={comentarioReferenciado}
+                  parts={parts}
+                  dataFormatada={dataFormatada}
+                  autor={autor}
+                  area={area}
+                  podeDeletar={podeDeletar}
+                  onResponder={onResponder}
+                  onDeletar={(id) => setParecerParaDeletar(id)}
+                  onScrollToComment={handleScrollToComment}
+                />
               );
             });
           })()}

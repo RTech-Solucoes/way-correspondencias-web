@@ -17,6 +17,7 @@ import { SolicitacaoParecerResponse } from '@/api/solicitacao-parecer/types';
 import { authClient } from '@/api/auth/client';
 import { responsaveisClient } from '@/api/responsaveis/client';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
+import { TipoEnum } from '@/api/tipos/types';
 
 interface ConferenciaSidebarProps {
   detalhe: ObrigacaoDetalheResponse;
@@ -37,6 +38,10 @@ export function ConferenciaSidebar({ detalhe }: ConferenciaSidebarProps) {
   const [loadingComentarios, setLoadingComentarios] = useState(false);
   const [enviandoComentario, setEnviandoComentario] = useState(false);
   const [parecerReferencia, setParecerReferencia] = useState<number | null>(null);
+
+  const areaAtribuida = useMemo(() => {
+    return detalhe?.obrigacao?.areas?.find((area) => area.tipoArea?.cdTipo === TipoEnum.ATRIBUIDA);
+  }, [detalhe?.obrigacao?.areas]);
 
   const mockAnexos = useMemo<AnexoResponse[]>(() => [
     {
@@ -358,6 +363,7 @@ export function ConferenciaSidebar({ detalhe }: ConferenciaSidebarProps) {
                 idResponsavelLogado={idResponsavelLogado}
                 onDeletar={handleDeletarParecer}
                 onResponder={handleResponder}
+                areaAtribuida={areaAtribuida}
               />
             )}
           </div>
