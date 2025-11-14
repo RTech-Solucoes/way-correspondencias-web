@@ -94,3 +94,8 @@ export interface ObrigacaoFiltroRequest {
 export interface ObrigacoesRelacionadasResponse {
   obrigacoesCondicionadas: ObrigacaoResumoResponse[];
 }
+
+export interface LinkAnexoRequest {
+  dsCaminho: string;
+  tpResponsavel: string;
+}

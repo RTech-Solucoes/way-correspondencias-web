@@ -9,7 +9,7 @@ import anexosClient from '@/api/anexos/client';
 import { base64ToUint8Array, cn, saveBlob } from '@/utils/utils';
 import type { ObrigacaoDetalheResponse } from '@/api/obrigacao/types';
 import type { AnexoResponse } from '@/api/anexos/type';
-import { TipoObjetoAnexoEnum, TipoResponsavelAnexoEnum } from '@/api/anexos/type';
+import { TipoObjetoAnexoEnum, TipoResponsavelAnexoEnum, TipoDocumentoAnexoEnum } from '@/api/anexos/type';
 import { AnexosTab } from './AnexosTab';
 import { ComentariosTab } from './ComentariosTab';
 import solicitacaoParecerClient from '@/api/solicitacao-parecer/client';
@@ -18,9 +18,13 @@ import { authClient } from '@/api/auth/client';
 import { responsaveisClient } from '@/api/responsaveis/client';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { TipoEnum } from '@/api/tipos/types';
+import obrigacaoAnexosClient from '@/api/obrigacao/anexos-client';
+import { useUserGestao } from '@/hooks/use-user-gestao';
+import { computeTpResponsavel } from '@/api/perfis/types';
 
 interface ConferenciaSidebarProps {
   detalhe: ObrigacaoDetalheResponse;
+  onRefreshAnexos?: () => void;
 }
 
 enum RegistroTabKey {
@@ -28,9 +32,9 @@ enum RegistroTabKey {
   COMENTARIOS = 'comentarios',
 }
 
-export function ConferenciaSidebar({ detalhe }: ConferenciaSidebarProps) {
+export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSidebarProps) {
+  const { idPerfil } = useUserGestao();
   const [registroTab, setRegistroTab] = useState<RegistroTabKey>(RegistroTabKey.ANEXOS);
-  const [evidenceLinks, setEvidenceLinks] = useState<Array<{ link: string; data: string; responsavel: string }>>([]);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const [comentarioTexto, setComentarioTexto] = useState('');
   const [solicitacaoPareceres, setSolicitacaoPareceres] = useState<SolicitacaoParecerResponse[]>([]);
@@ -43,78 +47,23 @@ export function ConferenciaSidebar({ detalhe }: ConferenciaSidebarProps) {
     return detalhe?.obrigacao?.areas?.find((area) => area.tipoArea?.cdTipo === TipoEnum.ATRIBUIDA);
   }, [detalhe?.obrigacao?.areas]);
 
-  const mockAnexos = useMemo<AnexoResponse[]>(() => [
-    {
-      idAnexo: 1,
-      idObjeto: 1,
-      tpObjeto: 'O',
-      nmArquivo: 'evidência.pdf',
-      dsCaminho: '/anexos/evidencia.pdf',
-      tpResponsavel: TipoResponsavelAnexoEnum.A,
-      flAtivo: 'ATIVO',
-      dtCriacao: '2025-10-10T00:00:00.000Z',
-    },
-    {
-      idAnexo: 2,
-      idObjeto: 1,
-      tpObjeto: 'O',
-      nmArquivo: 'correspondência.pdf',
-      dsCaminho: '/anexos/correspondencia.pdf',
-      tpResponsavel: TipoResponsavelAnexoEnum.R,
-      flAtivo: 'ATIVO',
-      dtCriacao: '2025-10-10T00:00:00.000Z',
-    },
-    {
-      idAnexo: 3,
-      idObjeto: 1,
-      tpObjeto: 'O',
-      nmArquivo: 'doc_name.xlsx',
-      dsCaminho: '/anexos/doc_name.xlsx',
-      tpResponsavel: TipoResponsavelAnexoEnum.A,
-      flAtivo: 'ATIVO',
-      dtCriacao: '2025-10-10T00:00:00.000Z',
-    },
-    {
-      idAnexo: 4,
-      idObjeto: 1,
-      tpObjeto: 'O',
-      nmArquivo: 'doc_name.docx',
-      dsCaminho: '/anexos/doc_name.docx',
-      tpResponsavel: TipoResponsavelAnexoEnum.R,
-      flAtivo: 'ATIVO',
-      dtCriacao: '2025-10-10T00:00:00.000Z',
-    },
-    {
-      idAnexo: 5,
-      idObjeto: 1,
-      tpObjeto: 'O',
-      nmArquivo: 'doc_name.xlsx',
-      dsCaminho: '/anexos/doc_name.xlsx',
-      tpResponsavel: TipoResponsavelAnexoEnum.A,
-      flAtivo: 'ATIVO',
-      dtCriacao: '2025-10-10T00:00:00.000Z',
-    },
-    {
-      idAnexo: 6,
-      idObjeto: 1,
-      tpObjeto: 'O',
-      nmArquivo: 'doc_name.docx',
-      dsCaminho: '/anexos/doc_name.docx',
-      tpResponsavel: TipoResponsavelAnexoEnum.R,
-      flAtivo: 'ATIVO',
-      dtCriacao: '2025-10-10T00:00:00.000Z',
-    },
-  ], []);
+  const responsavelInfo = useMemo(() => {
+    const tpResponsavel = idPerfil ? computeTpResponsavel(idPerfil) : TipoResponsavelAnexoEnum.A;
+    const responsavelMap: Record<TipoResponsavelAnexoEnum, string> = {
+      [TipoResponsavelAnexoEnum.A]: 'Analista',
+      [TipoResponsavelAnexoEnum.G]: 'Gestor',
+      [TipoResponsavelAnexoEnum.D]: 'Diretor',
+      [TipoResponsavelAnexoEnum.R]: 'Regulatório',
+    };
+    const responsavelNome = responsavelMap[tpResponsavel] || 'Analista';
+    
+    return {
+      tpResponsavel,
+      responsavelNome,
+    };
+  }, [idPerfil]);
 
-  const mockEvidenceLinks = useMemo(() => [
-    {
-      link: 'https://drive.google.com/drive/ua...',
-      data: '2025-10-10T00:00:00.000Z',
-      responsavel: 'Analista',
-    },
-  ], []);
-
-  const anexos = useMemo(() => detalhe.anexos?.length ? detalhe.anexos : mockAnexos, [detalhe.anexos, mockAnexos]);
+  const anexos = useMemo(() => detalhe.anexos || [], [detalhe.anexos]);
 
   useEffect(() => {
     const carregarDados = async () => {
@@ -144,7 +93,7 @@ export function ConferenciaSidebar({ detalhe }: ConferenciaSidebarProps) {
   }, [detalhe?.obrigacao?.idSolicitacao]);
 
   const comentariosCount = solicitacaoPareceres.length;
-  const anexosCount = anexos.length + (evidenceLinks.length > 0 ? evidenceLinks.length : mockEvidenceLinks.length);
+  const anexosCount = anexos.filter((anexo) => anexo.tpDocumento !== TipoDocumentoAnexoEnum.C).length;
   
   const idResponsavelLogado = authClient.getUserIdResponsavelFromToken();
 
@@ -154,10 +103,9 @@ export function ConferenciaSidebar({ detalhe }: ConferenciaSidebarProps) {
       toast.success('Comentário removido com sucesso.');
       
       if (detalhe?.obrigacao?.idSolicitacao) {
-        // Recarregar pareceres e responsáveis juntos
         const [pareceres, responsaveisResponse] = await Promise.all([
           solicitacaoParecerClient.buscarPorIdSolicitacao(detalhe.obrigacao.idSolicitacao),
-          responsaveisClient.buscarPorFiltro({ size: 1000 })
+          responsaveisClient.buscarPorFiltro({ size: 5000 })
         ]);
         
         setSolicitacaoPareceres(pareceres || []);
@@ -175,12 +123,17 @@ export function ConferenciaSidebar({ detalhe }: ConferenciaSidebarProps) {
       try {
         await anexosClient.deletar(anexo.idAnexo);
         toast.success('Anexo removido com sucesso.');
+        
+        // Recarrega os anexos para atualizar a lista
+        if (onRefreshAnexos) {
+          await onRefreshAnexos();
+        }
       } catch (error) {
         console.error('Erro ao deletar anexo:', error);
         toast.error('Erro ao deletar o anexo.');
       }
     },
-    [],
+    [onRefreshAnexos],
   );
 
   const handleDownloadAnexo = useCallback(
@@ -210,16 +163,53 @@ export function ConferenciaSidebar({ detalhe }: ConferenciaSidebarProps) {
     [],
   );
 
-  const handleEvidenceLinkRemove = useCallback((link: string) => {
-    setEvidenceLinks((prev) => prev.filter((item) => item.link !== link));
-    toast.success('Link removido.');
-  }, []);
+  const handleEvidenceLinkRemove = useCallback(async (link: string) => {
+    const anexoLink = anexos.find(
+      (anexo) => anexo.tpDocumento === TipoDocumentoAnexoEnum.L && 
+                 (anexo.dsCaminho === link || anexo.nmArquivo === link)
+    );
 
-  const handleEvidenceLinkAdd = useCallback((link: string) => {
-    const hoje = new Date().toISOString();
-    const responsavel = 'Analista';
-    setEvidenceLinks((prev) => [...prev, { link, data: hoje, responsavel }]);
-  }, []);
+    if (anexoLink && detalhe?.obrigacao?.idSolicitacao) {
+      try {
+        await obrigacaoAnexosClient.deletar(detalhe.obrigacao.idSolicitacao, anexoLink.idAnexo);
+        toast.success('Link removido com sucesso.');
+        
+        // Recarrega os anexos para atualizar a lista
+        if (onRefreshAnexos) {
+          await onRefreshAnexos();
+        }
+      } catch (error) {
+        console.error('Erro ao deletar link:', error);
+        toast.error('Erro ao remover o link.');
+      }
+    } else {
+      toast.error('Link não encontrado.');
+    }
+  }, [anexos, detalhe?.obrigacao?.idSolicitacao, onRefreshAnexos]);
+
+  const handleEvidenceLinkAdd = useCallback(async (link: string) => {
+    if (!detalhe?.obrigacao?.idSolicitacao) {
+      toast.error('ID da obrigação não encontrado.');
+      return;
+    }
+
+    try {
+      await obrigacaoAnexosClient.inserirLink(detalhe.obrigacao.idSolicitacao, {
+        dsCaminho: link,
+        tpResponsavel: responsavelInfo.tpResponsavel,
+      });
+
+      toast.success('Link adicionado com sucesso.');
+      
+      // Recarrega os anexos para mostrar o link recém-adicionado
+      if (onRefreshAnexos) {
+        await onRefreshAnexos();
+      }
+    } catch (error) {
+      console.error('Erro ao adicionar link:', error);
+      toast.error('Erro ao adicionar link. Tente novamente.');
+    }
+  }, [detalhe?.obrigacao?.idSolicitacao, responsavelInfo, onRefreshAnexos]);
 
   const handleResponder = useCallback((parecer: SolicitacaoParecerResponse) => {
     const nomeResponsavel = parecer.responsavel?.nmResponsavel || 'Usuário';
@@ -271,10 +261,9 @@ export function ConferenciaSidebar({ detalhe }: ConferenciaSidebarProps) {
       setComentarioTexto('');
       setParecerReferencia(null);
 
-      // Recarregar pareceres e responsáveis juntos
       const [pareceres, responsaveisResponse] = await Promise.all([
         solicitacaoParecerClient.buscarPorIdSolicitacao(detalhe.obrigacao.idSolicitacao),
-        responsaveisClient.buscarPorFiltro({ size: 1000 })
+        responsaveisClient.buscarPorFiltro({ size: 5000 })
       ]);
       
       setSolicitacaoPareceres(pareceres || []);
@@ -347,13 +336,14 @@ export function ConferenciaSidebar({ detalhe }: ConferenciaSidebarProps) {
             {registroTab === RegistroTabKey.ANEXOS ? (
               <AnexosTab
                 anexos={anexos}
-                evidenceLinks={evidenceLinks}
-                mockEvidenceLinks={mockEvidenceLinks}
                 downloadingId={downloadingId}
                 onDeleteAnexo={handleDeleteAnexo}
                 onDownloadAnexo={handleDownloadAnexo}
                 onEvidenceLinkRemove={handleEvidenceLinkRemove}
                 onEvidenceLinkAdd={handleEvidenceLinkAdd}
+                idObrigacao={detalhe?.obrigacao?.idSolicitacao || 0}
+                idPerfil={idPerfil ?? undefined}
+                onRefreshAnexos={onRefreshAnexos}
               />
             ) : (
               <ComentariosTab

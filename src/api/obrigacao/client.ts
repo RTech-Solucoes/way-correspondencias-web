@@ -1,7 +1,14 @@
-import { buildQueryParams } from "@/utils/utils";
-import ApiClient from "../client";
-import { ObrigacaoResponse, ObrigacaoRequest, ObrigacaoDetalheResponse, ObrigacaoFiltroRequest, ObrigacoesRelacionadasResponse } from "./types";
-import { ObrigacaoFormData } from "@/components/obrigacoes/ObrigacaoModal";
+import { ObrigacaoFormData } from '@/components/obrigacoes/ObrigacaoModal';
+import { buildQueryParams } from '@/utils/utils';
+
+import ApiClient from '../client';
+import {
+    ObrigacaoDetalheResponse,
+    ObrigacaoFiltroRequest,
+    ObrigacaoRequest,
+    ObrigacaoResponse,
+    ObrigacoesRelacionadasResponse,
+} from './types';
 
 export interface PaginatedResponse<T> {
     content: T[];
@@ -101,6 +108,12 @@ export class ObrigacaoClient {
     async buscarObrigacoesRelacionadas(id: number): Promise<ObrigacoesRelacionadasResponse> {
         return this.client.request<ObrigacoesRelacionadasResponse>(`/${id}/condicionadas`, {
             method: 'GET',
+        });
+    }
+
+    async atualizarFlEnviandoArea(id: number): Promise<{ mensagem: string; flEnviandoArea: string }> {
+        return this.client.request<{ mensagem: string; flEnviandoArea: string }>(`/${id}/enviando-area`, {
+            method: 'PUT',
         });
     }
 

@@ -8,66 +8,92 @@ import { toast } from 'sonner';
 import { ItemAnexo, ItemAnexoLink } from '../ItensAnexos';
 import type { AnexoResponse } from '@/api/anexos/type';
 import { TipoDocumentoAnexoEnum } from '@/api/anexos/type';
+import { AnexoObrigacaoModal } from '../AnexoObrigacaoModal';
 
 interface AnexosTabProps {
   anexos: AnexoResponse[];
-  evidenceLinks: Array<{ link: string; data: string; responsavel: string }>;
-  mockEvidenceLinks: Array<{ link: string; data: string; responsavel: string }>;
   downloadingId: number | null;
   onDeleteAnexo: (anexo: AnexoResponse) => Promise<void>;
   onDownloadAnexo: (anexo: AnexoResponse) => Promise<void>;
   onEvidenceLinkRemove: (link: string) => void;
   onEvidenceLinkAdd?: (link: string) => void;
+  idObrigacao: number;
+  idPerfil?: number;
+  onRefreshAnexos?: () => void;
 }
 
 export function AnexosTab({
   anexos,
-  evidenceLinks,
-  mockEvidenceLinks,
   downloadingId,
   onDeleteAnexo,
   onDownloadAnexo,
   onEvidenceLinkRemove,
   onEvidenceLinkAdd,
+  idObrigacao,
+  idPerfil,
+  onRefreshAnexos,
 }: AnexosTabProps) {
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [evidenceLinkValue, setEvidenceLinkValue] = useState('');
+  const [linkError, setLinkError] = useState<string | null>(null);
+  const [showAnexarEvidenciaModal, setShowAnexarEvidenciaModal] = useState(false);
 
+  // Evidência de cumprimento
   const evidenceAnexos = useMemo(() => {
-    // Filtrar por tpDocumento === "E" (Evidência de cumprimento)
-    return anexos.filter((anexo) => {
-      return anexo.tpDocumento === TipoDocumentoAnexoEnum.E;
-    });
+    return anexos.filter((anexo) => anexo.tpDocumento === TipoDocumentoAnexoEnum.E);
   }, [anexos]);
 
+  // Link 
   const evidenceLinksAnexos = useMemo(() => {
-    // Filtrar por tpDocumento === "L" (Links de evidência)
-    return anexos.filter((anexo) => {
-      return anexo.tpDocumento === TipoDocumentoAnexoEnum.L;
-    });
+    return anexos.filter((anexo) => anexo.tpDocumento === TipoDocumentoAnexoEnum.L);
   }, [anexos]);
 
+  // Correspondência
   const correspondenciaAnexos = useMemo(() => {
-    // Filtrar por tpDocumento === "R" (Correspondência)
-    return anexos.filter((anexo) => {
-      return anexo.tpDocumento === TipoDocumentoAnexoEnum.R;
-    });
+    return anexos.filter((anexo) => anexo.tpDocumento === TipoDocumentoAnexoEnum.R);
   }, [anexos]);
 
+  // Outros anexos - Auxiliar
   const outrosAnexos = useMemo(() => {
-    // Filtrar por tpDocumento === "O" (Outros anexos)
-    return anexos.filter((anexo) => {
-      return anexo.tpDocumento === TipoDocumentoAnexoEnum.O;
-    });
+    return anexos.filter((anexo) => anexo.tpDocumento === TipoDocumentoAnexoEnum.A);
   }, [anexos]);
 
   const handleToggleLinkInput = useCallback(() => {
     setShowLinkInput(true);
   }, []);
 
+  const validateUrl = useCallback((url: string): boolean => {
+    if (!url.trim()) {
+      return false;
+    }
+    
+    try {
+      const urlWithProtocol = url.startsWith('http://') || url.startsWith('https://') 
+        ? url 
+        : `https://${url}`;
+      
+      const urlObj = new URL(urlWithProtocol);
+      
+      return urlObj.hostname.length > 0 && urlObj.hostname.includes('.');
+    } catch {
+      return false;
+    }
+  }, []);
+
   const handleEvidenceLinkValueChange = useCallback((value: string) => {
     setEvidenceLinkValue(value);
-  }, []);
+    
+    if (value.trim()) {
+      const isValid = validateUrl(value);
+      if (!isValid) {
+        setLinkError('Formato do link inválido');
+      } else {
+        setLinkError(null);
+      }
+    } else {
+      setLinkError(null);
+    }
+  }, [validateUrl]);
 
   const handleEvidenceLinkSave = useCallback(() => {
     const trimmed = evidenceLinkValue.trim();
@@ -76,18 +102,24 @@ export function AnexosTab({
       return;
     }
 
+    if (!validateUrl(trimmed)) {
+      setLinkError('Formato do link inválido');
+      return;
+    }
+
     if (onEvidenceLinkAdd) {
       onEvidenceLinkAdd(trimmed);
     }
     
-    toast.success('Link adicionado com sucesso.');
     setEvidenceLinkValue('');
+    setLinkError(null);
     setShowLinkInput(false);
-  }, [evidenceLinkValue, onEvidenceLinkAdd]);
+  }, [evidenceLinkValue, onEvidenceLinkAdd, validateUrl]);
 
   const handleEvidenceLinkCancel = useCallback(() => {
     setShowLinkInput(false);
     setEvidenceLinkValue('');
+    setLinkError(null);
   }, []);
 
   return (
@@ -96,11 +128,11 @@ export function AnexosTab({
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold text-gray-900">Evidência de cumprimento</span>
           <span className="text-xs font-semibold text-gray-400">
-            {evidenceAnexos.length + evidenceLinksAnexos.length + (evidenceLinks.length > 0 ? evidenceLinks.length : mockEvidenceLinks.length)}
+            {evidenceAnexos.length + evidenceLinksAnexos.length}
           </span>
         </div>
 
-        {evidenceAnexos.length === 0 && evidenceLinksAnexos.length === 0 && evidenceLinks.length === 0 && mockEvidenceLinks.length === 0 ? (
+        {evidenceAnexos.length === 0 && evidenceLinksAnexos.length === 0 ? (
           <p className="text-sm text-gray-400">Ainda não há evidências anexadas.</p>
         ) : (
           <>
@@ -115,18 +147,35 @@ export function AnexosTab({
                     downloadingId={downloadingId}
                     tone="subtle"
                     dense
-                    dataUpload="2025-10-10T00:00:00.000Z"
+                    dataUpload={anexo.dtCriacao || null}
                   />
                 ))}
               </ul>
             )}
-
-            {(evidenceLinksAnexos.length > 0 || evidenceLinks.length > 0 || mockEvidenceLinks.length > 0) && (
+            <Button
+              type="button"
+              variant="link"
+              className="flex items-center gap-2 justify-start px-0 text-blue-600 hover:text-blue-700"
+              onClick={() => setShowAnexarEvidenciaModal(true)}
+            >
+              <Plus className="h-4 w-4" />
+              Anexar arquivo de evidência de cumprimento
+            </Button>
+            {evidenceLinksAnexos.length > 0 && (
               <div className="space-y-3">
                 <span className="text-xs font-semibold text-gray-500">Link da evidência de cumprimento</span>
                 <ul className="space-y-2">
                   {evidenceLinksAnexos.map((anexo) => {
                     const linkUrl = anexo.dsCaminho || anexo.nmArquivo;
+                    const responsavelMap: Record<string, string> = {
+                      'A': 'Analista',
+                      'G': 'Gestor',
+                      'D': 'Diretor',
+                      'R': 'Regulatório',
+                    };
+                    const responsavelNome = anexo.tpResponsavel 
+                      ? responsavelMap[String(anexo.tpResponsavel)] || String(anexo.tpResponsavel)
+                      : null;
                     return (
                       <ItemAnexoLink
                         key={anexo.idAnexo}
@@ -135,21 +184,11 @@ export function AnexosTab({
                           onEvidenceLinkRemove(link);
                         }}
                         dense
-                        dataUpload="2025-10-10T00:00:00.000Z"
-                        responsavel={anexo.tpResponsavel ? String(anexo.tpResponsavel) : null}
+                        dataUpload={anexo.dtCriacao || null}
+                        responsavel={responsavelNome}
                       />
                     );
                   })}
-                  {(evidenceLinks.length > 0 ? evidenceLinks : mockEvidenceLinks).map((item) => (
-                    <ItemAnexoLink 
-                      key={item.link}
-                      link={item.link} 
-                      onRemove={onEvidenceLinkRemove} 
-                      dense
-                      dataUpload={item.data}
-                      responsavel={item.responsavel}
-                    />
-                  ))}
                 </ul>
               </div>
             )}
@@ -157,32 +196,33 @@ export function AnexosTab({
         )}
 
         <div className="flex flex-col gap-2">
-          <Button
-            type="button"
-            variant="link"
-            className="flex items-center gap-2 justify-start px-0 text-blue-600 hover:text-blue-700"
-            onClick={() => toast.info('Fluxo de anexar arquivo de evidência de cumprimento em desenvolvimento.')}
-          >
-            <Plus className="h-4 w-4" />
-            Anexar arquivo de evidência de cumprimento
-          </Button>
-
           {showLinkInput ? (
             <div className="space-y-3 rounded-2xl border border-gray-200 bg-white px-4 py-4">
-              <div className="relative">
-                <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Insira a link do arquivo..."
-                  value={evidenceLinkValue}
-                  onChange={(event) => handleEvidenceLinkValueChange(event.target.value)}
-                  className="pl-10"
-                />
+              <div className="space-y-1">
+                <div className="relative">
+                  <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Insira o link do arquivo..."
+                    value={evidenceLinkValue}
+                    onChange={(event) => handleEvidenceLinkValueChange(event.target.value)}
+                    className={`pl-10 ${linkError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                  />
+                </div>
+                {linkError && (
+                  <p className="text-xs text-red-600 font-medium ml-1">
+                    {linkError}
+                  </p>
+                )}
               </div>
               <div className="flex justify-end gap-3">
                 <Button variant="ghost" onClick={handleEvidenceLinkCancel} className="text-gray-600">
                   Cancelar
                 </Button>
-                <Button onClick={handleEvidenceLinkSave} className="bg-blue-600 hover:bg-blue-700">
+                <Button 
+                  onClick={handleEvidenceLinkSave} 
+                  className="bg-blue-600 hover:bg-blue-700"
+                  disabled={!!linkError}
+                >
                   Salvar
                 </Button>
               </div>
@@ -219,12 +259,12 @@ export function AnexosTab({
                 downloadingId={downloadingId}
                 tone="subtle"
                 dense
-                dataUpload="2025-10-10T00:00:00.000Z"
+                dataUpload={anexo.dtCriacao || null}
               />
             ))}
           </ul>
         )}
-        <Button
+        { /*<Button
           type="button"
           variant="link"
           className="flex items-center gap-2 justify-start px-0 text-blue-600 hover:text-blue-700"
@@ -232,7 +272,7 @@ export function AnexosTab({
         >
           <Plus className="h-4 w-4" />
           Anexar arquivo de correspondência
-        </Button>
+        </Button> */}
       </div>
 
       <div className="space-y-4">
@@ -253,7 +293,7 @@ export function AnexosTab({
                 downloadingId={downloadingId}
                 tone="subtle"
                 dense
-                dataUpload="2025-10-10T00:00:00.000Z"
+                dataUpload={anexo.dtCriacao || null}
               />
             ))}
           </ul>
@@ -269,6 +309,20 @@ export function AnexosTab({
         <Plus className="h-4 w-4" />
         Anexar novo documento
       </Button>
+
+      <AnexoObrigacaoModal
+        open={showAnexarEvidenciaModal}
+        onClose={() => setShowAnexarEvidenciaModal(false)}
+        title="Anexar arquivo de evidência de cumprimento"
+        tpDocumento={TipoDocumentoAnexoEnum.E}
+        idObrigacao={idObrigacao}
+        idPerfil={idPerfil}
+        onSuccess={() => {
+          if (onRefreshAnexos) {
+            onRefreshAnexos();
+          }
+        }}
+      />
     </div>
   );
 }

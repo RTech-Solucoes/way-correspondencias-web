@@ -34,6 +34,8 @@ import { TipoResponse } from "@/api/tipos/types";
 import { ObrigacaoAcoesMenu } from "@/components/obrigacoes/ObrigacaoAcoesMenu";
 import { ImportObrigacoesModal } from "@/components/obrigacoes/ImportObrigacoesModal";
 import TimeProgress from "@/components/ui/time-progress";
+import obrigacaoClient from "@/api/obrigacao/client";
+import { toast } from "sonner";
 
 function ObrigacoesContent() {
   const {
@@ -51,6 +53,7 @@ function ObrigacoesContent() {
     setObrigacaoToDelete,
     filters,
     setFilters,
+    loadObrigacoes,
   } = useObrigacoes();
 
   const [areas, setAreas] = useState<AreaResponse[]>([]);
@@ -439,8 +442,20 @@ function ObrigacoesContent() {
                         onEncaminharTramitacao={(obrigacao) => {
                           console.log('Encaminhar para tramitação:', obrigacao.idSolicitacao);
                         }}
-                        onEnviarArea={(obrigacao) => {
-                          console.log('Enviar para área:', obrigacao.idSolicitacao);
+                        onEnviarArea={async (obrigacao) => {
+                          if (!obrigacao.idSolicitacao) {
+                            toast.error('ID da obrigação não encontrado.');
+                            return;
+                          }
+                          
+                          try {
+                            const response = await obrigacaoClient.atualizarFlEnviandoArea(obrigacao.idSolicitacao);
+                            toast.success(response.mensagem);
+                            await loadObrigacoes();
+                          } catch (error) {
+                            console.error('Erro ao enviar obrigação para área:', error);
+                            toast.error('Erro ao enviar obrigação para área. Tente novamente.');
+                          }
                         }}
                         onExcluir={handleDeleteObrigacao}
                       />

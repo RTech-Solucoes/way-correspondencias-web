@@ -39,7 +39,7 @@ export enum TipoObjetoAnexoEnum {
 export  enum TipoDocumentoAnexoEnum {
   C = 'C', // Comum
   E = 'E', // Evidência de cumprimento
-  O = 'O', // Outros anexos
+  A = 'A', // Auxiliar
   R = 'R', // Correspondência
   L = 'L', // Link
 }

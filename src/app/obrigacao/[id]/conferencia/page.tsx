@@ -22,6 +22,8 @@ import { ConferenciaStepAnexos } from '@/components/obrigacoes/conferencia/Confe
 import { ConferenciaStepVinculos } from '@/components/obrigacoes/conferencia/ConferenciaStepVinculos';
 import { ConferenciaSidebar } from '@/components/obrigacoes/conferencia/sidebarRigth/ConferenciaSidebar';
 import { useUserGestao } from '@/hooks/use-user-gestao';
+import { AnexoObrigacaoModal } from '@/components/obrigacoes/conferencia/AnexoObrigacaoModal';
+import { TipoDocumentoAnexoEnum } from '@/api/anexos/type';
 
 type TabKey = 'dados' | 'temas' | 'prazos' | 'anexos' | 'vinculos';
 const tabs: { key: TabKey; label: string }[] = [
@@ -35,17 +37,24 @@ const tabs: { key: TabKey; label: string }[] = [
 export default function ConferenciaObrigacaoPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { isAdminOrGestor } = useUserGestao();
+  const { isAdminOrGestor, idPerfil } = useUserGestao();
 
   const [activeTab, setActiveTab] = useState<TabKey>('dados');
   const [detalhe, setDetalhe] = useState<ObrigacaoDetalheResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState<number | null>(null);
+  const [showAnexarEvidenciaModal, setShowAnexarEvidenciaModal] = useState(false);
+
+  // Validação e parse do ID
+  const parsedId = useMemo(() => {
+    if (!id) return null;
+    const numId = Number(id);
+    return Number.isNaN(numId) || numId <= 0 ? null : numId;
+  }, [id]);
 
   useEffect(() => {
     const carregarDetalhe = async () => {
-      const parsedId = Number(id);
-      if (!id || Number.isNaN(parsedId)) {
+      if (!parsedId) {
         toast.error('Identificador da obrigação inválido.');
         router.push('/obrigacao');
         return;
@@ -65,7 +74,7 @@ export default function ConferenciaObrigacaoPage() {
     };
 
     carregarDetalhe();
-  }, [id, router]);
+  }, [parsedId, router]);
 
   const obrigacao = detalhe?.obrigacao;
   const anexos = useMemo(() => detalhe?.anexos ?? [], [detalhe]);
@@ -77,6 +86,19 @@ export default function ConferenciaObrigacaoPage() {
   const areasCondicionantes = useMemo(() => {
     return obrigacao?.areas?.filter((area) => area.tipoArea?.cdTipo === TipoEnum.CONDICIONANTE) ?? [];
   }, [obrigacao?.areas]);
+
+  const reloadDetalhe = useCallback(async () => {
+    if (!parsedId) {
+      return;
+    }
+    try {
+      const response = await obrigacaoClient.buscarDetalhePorId(parsedId);
+      setDetalhe(response);
+    } catch (error) {
+      console.error('Erro ao recarregar detalhes da obrigação:', error);
+      toast.error('Erro ao recarregar detalhes da obrigação.');
+    }
+  }, [parsedId]);
 
   const handleDownloadAnexo = useCallback(
     async (anexo: AnexoResponse) => {
@@ -270,7 +292,10 @@ export default function ConferenciaObrigacaoPage() {
         </div>
       </main>
       {detalhe && (
-        <ConferenciaSidebar detalhe={detalhe} />
+        <ConferenciaSidebar 
+          detalhe={detalhe} 
+          onRefreshAnexos={reloadDetalhe}
+        />
       )}
       <footer className="fixed bottom-0 left-0 right-0 z-11 border-t border-gray-200 bg-white px-8 py-4">
         <div className="ml-auto flex w-full max-w-6xl flex-wrap items-center justify-end gap-3">
@@ -306,7 +331,7 @@ export default function ConferenciaObrigacaoPage() {
               <Button
                 type="button"
                 className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800"
-                onClick={() => toast.info('Funcionalidade de anexar evidência de cumprimento em desenvolvimento.')}
+                onClick={() => setShowAnexarEvidenciaModal(true)}
               >
                 <Paperclip className="h-4 w-4" />
                 Anexar evidência de cumprimento
@@ -323,6 +348,21 @@ export default function ConferenciaObrigacaoPage() {
           )}
         </div>
       </footer>
+
+      {obrigacao?.idSolicitacao && (
+        <AnexoObrigacaoModal
+          open={showAnexarEvidenciaModal}
+          onClose={() => setShowAnexarEvidenciaModal(false)}
+          title="Anexar arquivo de evidência de cumprimento"
+          tpDocumento={TipoDocumentoAnexoEnum.E}
+          idObrigacao={obrigacao.idSolicitacao}
+          idPerfil={idPerfil ?? undefined}
+          onSuccess={async () => {
+            await reloadDetalhe();
+            toast.success('Evidência de cumprimento anexada com sucesso!');
+          }}
+        />
+      )}
     </div>
   );
 }
