@@ -15,7 +15,9 @@ import { toast } from 'sonner';
 import { ArrowLeft, ChevronRight, Loader2, Save } from 'lucide-react';
 import { TipoEnum, CategoriaEnum } from '@/api/tipos/types';
 import tiposClient from '@/api/tipos/client';
-import { AnexoResponse, ArquivoDTO, TipoObjetoAnexo, TipoResponsavelAnexo } from '@/api/anexos/type';
+import { AnexoResponse, ArquivoDTO, TipoObjetoAnexoEnum, TipoResponsavelAnexoEnum, TipoDocumentoAnexoEnum } from '@/api/anexos/type';
+import { computeTpResponsavel } from '@/api/perfis/types';
+import { useUserGestao } from '@/hooks/use-user-gestao';
 import anexosClient from '@/api/anexos/client';
 import { base64ToUint8Array, saveBlob } from '@/utils/utils';
 import Link from 'next/link';
@@ -44,23 +46,31 @@ const normalizeDate = (value?: string | null): string | null => {
   return value;
 };
 
-const fileToArquivoDto = (file: File): Promise<ArquivoDTO> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      const commaIndex = result.indexOf(',');
-      const content = commaIndex >= 0 ? result.substring(commaIndex + 1) : result;
-      resolve({
-        nomeArquivo: file.name,
-        tipoConteudo: file.type,
-        tpResponsavel: TipoResponsavelAnexo.A,
-        conteudoArquivo: content,
-      });
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
+const createFileToArquivoDto = (idPerfil: number | null) => {
+  return (file: File): Promise<ArquivoDTO> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        const commaIndex = result.indexOf(',');
+        const content = commaIndex >= 0 ? result.substring(commaIndex + 1) : result;
+        
+        const tpResponsavel = idPerfil 
+          ? computeTpResponsavel(idPerfil) 
+          : TipoResponsavelAnexoEnum.A;
+        
+        resolve({
+          nomeArquivo: file.name,
+          tipoConteudo: file.type,
+          tpResponsavel,
+          conteudoArquivo: content,
+          tpDocumento: TipoDocumentoAnexoEnum.C, 
+        });
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
 };
 
 const mapDetalheToFormData = (detalhe: ObrigacaoDetalheResponse): ObrigacaoFormData => {
@@ -99,6 +109,7 @@ const mapDetalheToFormData = (detalhe: ObrigacaoDetalheResponse): ObrigacaoFormD
 export default function EditarObrigacaoPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const { idPerfil } = useUserGestao();
 
   const [activeTab, setActiveTab] = useState<TabKey>('dados');
   const [formData, setFormData] = useState<ObrigacaoFormData | null>(null);
@@ -244,7 +255,7 @@ export default function EditarObrigacaoPage() {
 
   const handleDownloadAnexo = useCallback(async (anexo: AnexoResponse) => {
     try {
-      const arquivos = await anexosClient.download(anexo.idObjeto, TipoObjetoAnexo.O, anexo.nmArquivo);
+      const arquivos = await anexosClient.download(anexo.idObjeto, TipoObjetoAnexoEnum.O, anexo.nmArquivo);
       if (arquivos.length === 0) {
         toast.error('Não foi possível baixar o anexo.');
         return;
@@ -306,15 +317,15 @@ export default function EditarObrigacaoPage() {
             existingAnexos.map(async (anexo) => {
               const arquivos = await anexosClient.download(
                 anexo.idObjeto,
-                TipoObjetoAnexo.O,
+                TipoObjetoAnexoEnum.O,
                 anexo.nmArquivo,
               );
-              // Garantir que arquivos seja sempre um array
+
               const arquivosArray = Array.isArray(arquivos) ? arquivos : arquivos ? [arquivos] : [];
               return arquivosArray.map((arquivo) => ({
                 nomeArquivo: arquivo.nomeArquivo || anexo.nmArquivo,
                 tipoConteudo: arquivo.tipoConteudo || 'application/octet-stream',
-                tpResponsavel: arquivo.tpResponsavel ?? TipoResponsavelAnexo.A,
+                tpResponsavel: arquivo.tpResponsavel ?? TipoResponsavelAnexoEnum.A,
                 conteudoArquivo: arquivo.conteudoArquivo,
               }));
             }),
@@ -328,6 +339,7 @@ export default function EditarObrigacaoPage() {
         }
       }
 
+      const fileToArquivoDto = createFileToArquivoDto(idPerfil);
       const arquivosNovos: ArquivoDTO[] = novosAnexos.length > 0
         ? await Promise.all(novosAnexos.map(fileToArquivoDto))
         : [];
@@ -369,7 +381,7 @@ export default function EditarObrigacaoPage() {
     } finally {
       setSaving(false);
     }
-  }, [carregarDetalhes, existingAnexos, formData, novosAnexos, requiredStepsForTab, validateStep]);
+  }, [carregarDetalhes, existingAnexos, formData, novosAnexos, requiredStepsForTab, validateStep, idPerfil]);
 
   const renderTabContent = () => {
     if (!formData) {

@@ -3,8 +3,8 @@
 import { useMemo, useCallback } from 'react';
 import { toast } from 'sonner';
 import { SolicitacaoDetalheResponse } from '@/api/solicitacoes/types';
-import type { AnexoResponse, TipoObjetoAnexo } from '@/api/anexos/type';
-import { TipoResponsavelAnexo, ArquivoDTO } from '@/api/anexos/type';
+import type { AnexoResponse, TipoObjetoAnexoEnum } from '@/api/anexos/type';
+import { TipoResponsavelAnexoEnum, ArquivoDTO } from '@/api/anexos/type';
 import { anexosClient } from '@/api/anexos/client';
 import { base64ToUint8Array, saveBlob } from '@/utils/utils';
 import { DownloadIcon } from 'lucide-react';
@@ -14,8 +14,8 @@ type AnexoItemShape = {
   idAnexo: number;
   idObjeto: number;
   nmArquivo: string;
-  tpObjeto: TipoObjetoAnexo;
-  tpResponsavel?: TipoResponsavelAnexo;
+  tpObjeto: TipoObjetoAnexoEnum;
+  tpResponsavel?: TipoResponsavelAnexoEnum;
 };
 
 interface AnexoModalTramitacaoProps {
@@ -104,24 +104,24 @@ export default function AnexoModalTramitacao({
       idAnexo: a.idAnexo,
       idObjeto: (a as AnexoResponse).idObjeto,
       nmArquivo: a.nmArquivo,
-      tpObjeto: (((a as AnexoResponse).tpObjeto as unknown) as TipoObjetoAnexo),
-      tpResponsavel: (a as { tpResponsavel?: TipoResponsavelAnexo })?.tpResponsavel,
+      tpObjeto: (((a as AnexoResponse).tpObjeto as unknown) as TipoObjetoAnexoEnum),
+      tpResponsavel: (a as { tpResponsavel?: TipoResponsavelAnexoEnum })?.tpResponsavel,
     });
 
     const anexosAnalista: AnexoItemShape[] = anexosTramitacoes
-      .filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexo.A)
+      .filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexoEnum.A)
       .map(mapToItem);
 
     const anexosGerente: AnexoItemShape[] = anexosTramitacoes
-      .filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexo.G)
+      .filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexoEnum.G)
       .map(mapToItem);
 
     const anexosDiretor: AnexoItemShape[] = anexosTramitacoes
-      .filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexo.D)
+      .filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexoEnum.D)
       .map(mapToItem);
 
     const anexosRegulatorio: AnexoItemShape[] = anexosTramitacoes 
-      .filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexo.R)
+      .filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexoEnum.R)
       .map(mapToItem);
     
     const itensSolicitacao: AnexoItemShape[] = anexosSolic.map(mapToItem);

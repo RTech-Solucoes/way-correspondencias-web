@@ -48,7 +48,9 @@ export default function AnexoComponent({onAddAnexos, disabled = false}: AnexoPro
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
       'application/vnd.ms-excel': ['.xls'],
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
-      'image/*': ['.png', '.jpg', '.jpeg', '.gif']
+      'image/*': ['.png', '.jpg', '.jpeg', '.gif'],
+      'text/html': ['.html', '.htm'],
+      'text/plain': ['.txt']
     },
     disabled: disabled || !canInserirAnexo
   });
@@ -92,7 +94,7 @@ export default function AnexoComponent({onAddAnexos, disabled = false}: AnexoPro
                 Arraste e solte arquivos aqui, ou clique para selecionar
               </p>
               <p className="text-sm text-gray-400">
-                Suporta: PDF, DOC, DOCX, XLS, CSV, XLSX, PNG, JPG, JPEG, GIF
+                Suporta: PDF, DOC, DOCX, XLS, CSV, XLSX, PNG, JPG, JPEG, GIF, HTML, TXT
               </p>
             </>
           )}
@@ -135,7 +137,7 @@ export default function AnexoComponent({onAddAnexos, disabled = false}: AnexoPro
             onAddAnexos(null);
           }
         }}
-        accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.gif"
+        accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.gif,.html,.htm,.txt"
       />
     </div>
   );

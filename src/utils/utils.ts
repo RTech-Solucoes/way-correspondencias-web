@@ -1,7 +1,7 @@
 import {type ClassValue, clsx} from 'clsx';
 import {twMerge} from 'tailwind-merge';
 import {StatusAtivo} from "@/types/misc/types";
-import {ArquivoDTO, TipoResponsavelAnexo} from '@/api/anexos/type';
+import {ArquivoDTO, TipoResponsavelAnexoEnum} from '@/api/anexos/type';
 import { z } from "zod";
 import { cpf } from "cpf-cnpj-validator";
 import dayjs from "dayjs";
@@ -157,7 +157,7 @@ export function fileToBase64String(file: File): Promise<string> {
   });
 }
 
-export async function fileToArquivoDTO(file: File, tpResponsavel: TipoResponsavelAnexo): Promise<ArquivoDTO> {
+export async function fileToArquivoDTO(file: File, tpResponsavel: TipoResponsavelAnexoEnum): Promise<ArquivoDTO> {
   const conteudoArquivo = await fileToBase64String(file);
   return {
     nomeArquivo: file.name,

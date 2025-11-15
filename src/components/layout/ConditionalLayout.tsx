@@ -9,7 +9,7 @@ import {User} from "@/types/auth/types";
 import authClient from "@/api/auth/client";
 import responsaveisClient from "@/api/responsaveis/client";
 import anexosClient from "@/api/anexos/client";
-import { TipoObjetoAnexo } from "@/api/anexos/type";
+import { TipoObjetoAnexoEnum } from "@/api/anexos/type";
 
 interface ConditionalLayoutProps {
   children: ReactNode;
@@ -80,11 +80,11 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
 
 async function getResponsavelAvatar(idResponsavel: number): Promise<string | null> {
   try {
-    const anexos = await anexosClient.buscarPorIdObjetoETipoObjeto(idResponsavel, TipoObjetoAnexo.R);
+    const anexos = await anexosClient.buscarPorIdObjetoETipoObjeto(idResponsavel, TipoObjetoAnexoEnum.R);
     const byExt = anexos.find(a => /(\.jpg|jpeg|png)$/i.test(a.nmArquivo));
     const chosen = byExt || anexos[0];
     if (!chosen) return null;
-    const arquivos = await anexosClient.download(idResponsavel, TipoObjetoAnexo.R, chosen.nmArquivo);
+    const arquivos = await anexosClient.download(idResponsavel, TipoObjetoAnexoEnum.R, chosen.nmArquivo);
     const first = arquivos?.find(a => (a.tipoConteudo?.startsWith('image/') ?? /(\.jpg|jpeg|png)$/i.test(a.nomeArquivo || '')));
     if (!first?.conteudoArquivo) return null;
     const lower = (chosen.nmArquivo || '').toLowerCase();

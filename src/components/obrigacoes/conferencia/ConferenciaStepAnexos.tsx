@@ -1,7 +1,7 @@
 'use client';
 
-import type { AnexoResponse } from '@/api/anexos/type';
-import { AttachmentRow } from './AttachmentItems';
+import { TipoDocumentoAnexoEnum, type AnexoResponse } from '@/api/anexos/type';
+import { ItemAnexo } from './ItensAnexos';
 
 interface ConferenciaStepAnexosProps {
   anexos: AnexoResponse[];
@@ -14,6 +14,8 @@ export function ConferenciaStepAnexos({
   downloadingId,
   onDownloadAnexo,
 }: ConferenciaStepAnexosProps) {
+  const anexosFiltrados = anexos.filter((anexo) => anexo.tpDocumento === TipoDocumentoAnexoEnum.C);
+
   return (
     <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white">
       <div className="flex flex-wrap items-center justify-between gap-4 px-8 py-6">
@@ -22,19 +24,19 @@ export function ConferenciaStepAnexos({
           <p className="text-sm text-gray-500">Documentos e arquivos relacionados à obrigação.</p>
         </div>
         <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">
-          {anexos.length} {anexos.length === 1 ? 'arquivo' : 'arquivos'}
+          {anexosFiltrados.length} {anexosFiltrados.length === 1 ? 'arquivo' : 'arquivos'}
         </span>
       </div>
 
       <div className="px-8 pb-8">
-        {anexos.length === 0 ? (
+        {anexosFiltrados.length === 0 ? (
           <div className="py-8 text-center">
             <p className="text-sm text-gray-400">Nenhum anexo encontrado para esta obrigação.</p>
           </div>
         ) : (
           <ul className="space-y-2">
-            {anexos.map((anexo) => (
-              <AttachmentRow
+            {anexosFiltrados.map((anexo) => (
+              <ItemAnexo
                 key={anexo.idAnexo}
                 anexo={anexo}
                 onDownload={onDownloadAnexo}

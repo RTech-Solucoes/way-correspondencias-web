@@ -4,6 +4,7 @@ import { TemaResponse } from '../temas/types';
 import { StatusSolicitacaoResponse } from '../status-solicitacao/client';
 import { SolicitacaoResumoResponse } from '@/types/solicitacoes/types';
 import { ArquivoDTO, AnexoResponse } from '../anexos/type';
+import { SolicitacaoParecerResponse } from '../solicitacao-parecer/types';
 
 export interface ObrigacaoResumoResponse {
   idSolicitacao: number;
@@ -41,6 +42,7 @@ export interface ObrigacaoResponse extends BaseResponse {
   obrigacaoPrincipal?: ObrigacaoResumoResponse | null;
   obrigacaoRecusada?: ObrigacaoResumoResponse | null;
   correspondencia?: SolicitacaoResumoResponse | null;
+  solicitacaoParecer? : SolicitacaoParecerResponse[];
 }
 
 export interface ObrigacaoRequest {
@@ -91,4 +93,9 @@ export interface ObrigacaoFiltroRequest {
 
 export interface ObrigacoesRelacionadasResponse {
   obrigacoesCondicionadas: ObrigacaoResumoResponse[];
+}
+
+export interface LinkAnexoRequest {
+  dsCaminho: string;
+  tpResponsavel: string;
 }

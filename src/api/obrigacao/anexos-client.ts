@@ -1,5 +1,6 @@
 import { ArquivoDTO } from '../anexos/type';
 import ApiClient from '../client';
+import { LinkAnexoRequest } from './types';
 
 class ObrigacaoAnexosClient {
   private client: ApiClient;
@@ -18,6 +19,13 @@ class ObrigacaoAnexosClient {
   async deletar(idObrigacao: number, idAnexo: number): Promise<void> {
     return this.client.request<void>(`/obrigacoes/${idObrigacao}/anexos/${idAnexo}`, {
       method: 'DELETE',
+    });
+  }
+
+  async inserirLink(idObrigacao: number, request: LinkAnexoRequest): Promise<void> {
+    return this.client.request<void>(`/obrigacoes/${idObrigacao}/anexos/link`, {
+      method: 'POST',
+      body: JSON.stringify(request),
     });
   }
 }
