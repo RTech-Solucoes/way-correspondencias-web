@@ -22,6 +22,7 @@ import anexosClient from '@/api/anexos/client';
 import { base64ToUint8Array, saveBlob } from '@/utils/utils';
 import Link from 'next/link';
 import statusSolicitacaoClient, { StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 
 type TabKey = 'dados' | 'temas' | 'prazos' | 'anexos' | 'vinculos';
 
@@ -120,6 +121,8 @@ export default function EditarObrigacaoPage() {
   const [novosAnexos, setNovosAnexos] = useState<File[]>([]);
   const [idClassificacaoCondicionada, setIdClassificacaoCondicionada] = useState<number | null>(null);
   const [statusOptions, setStatusOptions] = useState<StatusSolicitacaoResponse[]>([]);
+  const [showDeleteAnexoDialog, setShowDeleteAnexoDialog] = useState(false);
+  const [anexoToDelete, setAnexoToDelete] = useState<AnexoResponse | null>(null);
 
   useEffect(() => {
     tiposClient.buscarPorCategorias([CategoriaEnum.OBRIG_CLASSIFICACAO])
@@ -273,16 +276,26 @@ export default function EditarObrigacaoPage() {
     }
   }, []);
 
-  const handleRemoveAnexo = useCallback(async (anexo: AnexoResponse) => {
+  const handleRemoveAnexoClick = useCallback((anexo: AnexoResponse) => {
+    setAnexoToDelete(anexo);
+    setShowDeleteAnexoDialog(true);
+  }, []);
+
+  const handleConfirmDeleteAnexo = useCallback(async () => {
+    if (!anexoToDelete) return;
+
     try {
-      await anexosClient.deletar(anexo.idAnexo);
-      setExistingAnexos((prev) => prev.filter((item) => item.idAnexo !== anexo.idAnexo));
+      await anexosClient.deletar(anexoToDelete.idAnexo);
       toast.success('Anexo removido com sucesso.');
+      // Recarrega os dados após a exclusão
+      await carregarDetalhes();
     } catch (error) {
       console.error('Erro ao remover anexo:', error);
       toast.error('Não foi possível remover o anexo.');
+    } finally {
+      setAnexoToDelete(null);
     }
-  }, []);
+  }, [anexoToDelete, carregarDetalhes]);
 
   const handleSave = useCallback(async () => {
     if (!formData?.idSolicitacao) {
@@ -420,7 +433,7 @@ export default function EditarObrigacaoPage() {
             onAnexosChange={setNovosAnexos}
             existingAnexos={existingAnexos}
             onDownloadExisting={handleDownloadAnexo}
-            onRemoveExisting={handleRemoveAnexo}
+            onRemoveExisting={handleRemoveAnexoClick}
             existingAnexosLoading={anexosLoading}
           />
         );
@@ -523,6 +536,22 @@ export default function EditarObrigacaoPage() {
           </Button>
         </div>
       </div>
+
+      <ConfirmationDialog
+        open={showDeleteAnexoDialog}
+        onOpenChange={(open) => {
+          setShowDeleteAnexoDialog(open);
+          if (!open) {
+            setAnexoToDelete(null);
+          }
+        }}
+        title="Excluir arquivo"
+        description="Deseja excluir arquivo?"
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        onConfirm={handleConfirmDeleteAnexo}
+        variant="destructive"
+      />
     </div>
   );
 }

@@ -37,6 +37,7 @@ export function AnexosTab({
   const [evidenceLinkValue, setEvidenceLinkValue] = useState('');
   const [linkError, setLinkError] = useState<string | null>(null);
   const [showAnexarEvidenciaModal, setShowAnexarEvidenciaModal] = useState(false);
+  const [showAnexarOutrosModal, setShowAnexarOutrosModal] = useState(false);
 
   // Evidência de cumprimento
   const evidenceAnexos = useMemo(() => {
@@ -132,6 +133,16 @@ export function AnexosTab({
           </span>
         </div>
 
+        <Button
+            type="button"
+            variant="link"
+            className="flex items-center gap-2 justify-start px-0 text-blue-600 hover:text-blue-700"
+            onClick={() => setShowAnexarEvidenciaModal(true)}
+          >
+            <Plus className="h-4 w-4" />
+            Anexar arquivo de evidência de cumprimento
+        </Button>
+        
         {evidenceAnexos.length === 0 && evidenceLinksAnexos.length === 0 ? (
           <p className="text-sm text-gray-400">Ainda não há evidências anexadas.</p>
         ) : (
@@ -148,34 +159,17 @@ export function AnexosTab({
                     tone="subtle"
                     dense
                     dataUpload={anexo.dtCriacao || null}
+                    responsavel={anexo.responsavel?.nmResponsavel || anexo.nmUsuario || null}
                   />
                 ))}
               </ul>
             )}
-            <Button
-              type="button"
-              variant="link"
-              className="flex items-center gap-2 justify-start px-0 text-blue-600 hover:text-blue-700"
-              onClick={() => setShowAnexarEvidenciaModal(true)}
-            >
-              <Plus className="h-4 w-4" />
-              Anexar arquivo de evidência de cumprimento
-            </Button>
             {evidenceLinksAnexos.length > 0 && (
               <div className="space-y-3">
                 <span className="text-xs font-semibold text-gray-500">Link da evidência de cumprimento</span>
                 <ul className="space-y-2">
                   {evidenceLinksAnexos.map((anexo) => {
                     const linkUrl = anexo.dsCaminho || anexo.nmArquivo;
-                    const responsavelMap: Record<string, string> = {
-                      'A': 'Analista',
-                      'G': 'Gestor',
-                      'D': 'Diretor',
-                      'R': 'Regulatório',
-                    };
-                    const responsavelNome = anexo.tpResponsavel 
-                      ? responsavelMap[String(anexo.tpResponsavel)] || String(anexo.tpResponsavel)
-                      : null;
                     return (
                       <ItemAnexoLink
                         key={anexo.idAnexo}
@@ -185,7 +179,8 @@ export function AnexosTab({
                         }}
                         dense
                         dataUpload={anexo.dtCriacao || null}
-                        responsavel={responsavelNome}
+                        responsavel={anexo.responsavel?.nmResponsavel || anexo.nmUsuario || null}
+                        anexo={anexo}
                       />
                     );
                   })}
@@ -260,19 +255,12 @@ export function AnexosTab({
                 tone="subtle"
                 dense
                 dataUpload={anexo.dtCriacao || null}
+                responsavel={anexo.responsavel?.nmResponsavel || anexo.nmUsuario || null}
               />
             ))}
           </ul>
         )}
-        { /*<Button
-          type="button"
-          variant="link"
-          className="flex items-center gap-2 justify-start px-0 text-blue-600 hover:text-blue-700"
-          onClick={() => toast.info('Fluxo de anexar arquivo de correspondência em desenvolvimento.')}
-        >
-          <Plus className="h-4 w-4" />
-          Anexar arquivo de correspondência
-        </Button> */}
+
       </div>
 
       <div className="space-y-4">
@@ -280,6 +268,17 @@ export function AnexosTab({
           <span className="text-sm font-semibold text-gray-900">Outros anexos</span>
           <span className="text-xs font-semibold text-gray-400">{outrosAnexos.length}</span>
         </div>
+
+        <Button
+          type="button"
+          variant="link"
+          className="flex items-center gap-2 justify-start px-0 text-blue-600 hover:text-blue-700"
+          onClick={() => setShowAnexarOutrosModal(true)}
+        >
+          <Plus className="h-4 w-4" />
+          Anexar outros anexos
+        </Button>
+
         {outrosAnexos.length === 0 ? (
           <p className="text-sm text-gray-400">Nenhum outro anexo encontrado.</p>
         ) : (
@@ -294,27 +293,32 @@ export function AnexosTab({
                 tone="subtle"
                 dense
                 dataUpload={anexo.dtCriacao || null}
+                responsavel={anexo.responsavel?.nmResponsavel || anexo.nmUsuario || null}
               />
             ))}
           </ul>
         )}
       </div>
 
-      <Button
-        type="button"
-        variant="link"
-        className="flex items-center justify-start gap-2 px-0 text-blue-600"
-        onClick={() => toast.info('Fluxo de anexar documento em desenvolvimento.')}
-      >
-        <Plus className="h-4 w-4" />
-        Anexar novo documento
-      </Button>
-
       <AnexoObrigacaoModal
         open={showAnexarEvidenciaModal}
         onClose={() => setShowAnexarEvidenciaModal(false)}
         title="Anexar arquivo de evidência de cumprimento"
         tpDocumento={TipoDocumentoAnexoEnum.E}
+        idObrigacao={idObrigacao}
+        idPerfil={idPerfil}
+        onSuccess={() => {
+          if (onRefreshAnexos) {
+            onRefreshAnexos();
+          }
+        }}
+      />
+
+      <AnexoObrigacaoModal
+        open={showAnexarOutrosModal}
+        onClose={() => setShowAnexarOutrosModal(false)}
+        title="Anexar outros anexos"
+        tpDocumento={TipoDocumentoAnexoEnum.A}
         idObrigacao={idObrigacao}
         idPerfil={idPerfil}
         onSuccess={() => {

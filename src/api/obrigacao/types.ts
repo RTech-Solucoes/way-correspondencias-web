@@ -34,11 +34,15 @@ export interface ObrigacaoResponse extends BaseResponse {
   dsProtocoloExterno?: string | null;
   dsTac?: string | null;
   
+  idObrigacaoReplicada?: number | null;
+  flImportadaExcel?: string | null;
+  flEnviandoArea?: string | null;
+  
   tipoClassificacao?: TipoResponse | null;
   tipoPeriodicidade?: TipoResponse | null;
   tipoCriticidade?: TipoResponse | null;
   tipoNatureza?: TipoResponse | null;
-  
+
   obrigacaoPrincipal?: ObrigacaoResumoResponse | null;
   obrigacaoRecusada?: ObrigacaoResumoResponse | null;
   correspondencia?: SolicitacaoResumoResponse | null;

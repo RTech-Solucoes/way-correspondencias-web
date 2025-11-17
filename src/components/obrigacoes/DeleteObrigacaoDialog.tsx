@@ -44,7 +44,7 @@ export function DeleteObrigacaoDialog() {
       open={showDeleteDialog}
       onOpenChange={handleClose}
       title="Excluir Obrigação"
-      description={`Tem certeza que deseja excluir a obrigação "${obrigacaoToDelete?.dsTarefa}"? Esta ação não pode ser desfeita.`}
+      description={`Tem certeza que deseja excluir esta obrigação?`}
       confirmText={loading ? 'Excluindo...' : 'Excluir'}
       cancelText="Cancelar"
       onConfirm={handleDelete}
