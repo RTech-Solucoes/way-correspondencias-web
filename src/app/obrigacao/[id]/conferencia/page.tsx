@@ -12,7 +12,7 @@ import { base64ToUint8Array, saveBlob } from '@/utils/utils';
 import { toast } from 'sonner';
 import { AnexoResponse, TipoObjetoAnexoEnum, ArquivoDTO } from '@/api/anexos/type';
 import anexosClient from '@/api/anexos/client';
-import { StatusObrigacao, statusObrigacaoLabels } from '@/api/status-obrigacao/types';
+import { StatusObrigacao, statusObrigacaoLabels, statusListObrigacao } from '@/api/status-obrigacao/types';
 import { TipoEnum } from '@/api/tipos/types';
 import { getObrigacaoStatusStyle } from '@/utils/obrigacoes/status';
 import { ConferenciaStepDados } from '@/components/obrigacoes/conferencia/ConferenciaStepDados';
@@ -24,6 +24,10 @@ import { ConferenciaSidebar } from '@/components/obrigacoes/conferencia/sidebarR
 import { useUserGestao } from '@/hooks/use-user-gestao';
 import { AnexoObrigacaoModal } from '@/components/obrigacoes/conferencia/AnexoObrigacaoModal';
 import { TipoDocumentoAnexoEnum } from '@/api/anexos/type';
+import tramitacoesClient from '@/api/tramitacoes/client';
+import { authClient } from '@/api/auth/client';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { perfilUtil } from '@/api/perfis/types';
 
 type TabKey = 'dados' | 'temas' | 'prazos' | 'anexos' | 'vinculos';
 const tabs: { key: TabKey; label: string }[] = [
@@ -44,8 +48,9 @@ export default function ConferenciaObrigacaoPage() {
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState<number | null>(null);
   const [showAnexarEvidenciaModal, setShowAnexarEvidenciaModal] = useState(false);
+  const [showSolicitarAjustesDialog, setShowSolicitarAjustesDialog] = useState(false);
+  const [showEnviarRegulatorioDialog, setShowEnviarRegulatorioDialog] = useState(false);
 
-  // Validação e parse do ID
   const parsedId = useMemo(() => {
     if (!id) return null;
     const numId = Number(id);
@@ -119,7 +124,6 @@ export default function ConferenciaObrigacaoPage() {
         
         const arquivos = await anexosClient.download(idObjeto, TipoObjetoAnexoEnum.O, anexo.nmArquivo);
         
-        // Garantir que arquivos seja sempre um array
         const arquivosArray: ArquivoDTO[] = Array.isArray(arquivos) 
           ? arquivos 
           : arquivos && typeof arquivos === 'object' && Object.keys(arquivos).length > 0
@@ -156,6 +160,97 @@ export default function ConferenciaObrigacaoPage() {
     },
     [obrigacao],
   );
+
+  const handleEnviarParaAnaliseClick = useCallback(() => {
+    setShowEnviarRegulatorioDialog(true);
+  }, []);
+
+  const isPerfilPermitidoEnviarReg = useMemo(() => {
+    return [perfilUtil.EXECUTOR_AVANCADO, perfilUtil.EXECUTOR, perfilUtil.EXECUTOR_RESTRITO].includes(idPerfil ?? 0);
+  }, [idPerfil]);
+
+  const confirmarEnviarParaAnalise = useCallback(async () => {
+    if (!obrigacao?.idSolicitacao || !obrigacao?.statusSolicitacao?.idStatusSolicitacao) {
+      toast.error('Dados da obrigação incompletos.');
+      return;
+    }
+    
+    const idResponsavelTecnico = authClient.getUserIdResponsavelFromToken();
+    if (!idResponsavelTecnico) {
+      toast.error('Usuário não autenticado.');
+      return;
+    }
+    
+    try {
+      await tramitacoesClient.tramitarViaFluxo({
+        idSolicitacao: obrigacao.idSolicitacao,
+        dsObservacao: 'Obrigacao enviada para análise do regulatório',
+      });
+      
+      await obrigacaoClient.atualizar(obrigacao.idSolicitacao, {
+        dsTarefa: obrigacao.dsTarefa,
+        idResponsavelTecnico: idResponsavelTecnico,
+      });
+      
+      await reloadDetalhe();
+      toast.success('Evidência de cumprimento enviada para análise do regulatório');
+    } catch (error) {
+        console.error('Erro ao enviar obrigação para análise do regulatório:', error);
+        toast.error('Erro ao enviar obrigação para análise do regulatório.');
+      }
+    },
+    [obrigacao?.idSolicitacao, obrigacao?.statusSolicitacao?.idStatusSolicitacao, obrigacao?.dsTarefa, reloadDetalhe],
+  );
+
+  const handleSolicitarAjustesClick = useCallback(() => {
+    setShowSolicitarAjustesDialog(true);
+  }, []);
+
+  const confirmarSolicitarAjustes = useCallback(async () => {
+    if (!obrigacao?.idSolicitacao) {
+      toast.error('Dados da obrigação incompletos.');
+      return;
+    }
+    
+    try {
+      await tramitacoesClient.tramitarViaFluxo({
+        idSolicitacao: obrigacao.idSolicitacao,
+        dsObservacao: 'Obrigação solicitada de ajustes',
+        flAprovado: 'N',
+      });
+      
+      await reloadDetalhe();
+      toast.success('Obrigação enviada para ajustes da área atribuída.');
+    } catch (error) {
+      console.error('Erro ao solicitar ajustes:', error);
+      toast.error('Erro ao solicitar ajustes.');
+    }
+  }, [obrigacao?.idSolicitacao, reloadDetalhe]);
+
+  const isStatusEmAndamento = useMemo(() => {
+    return obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.EM_ANDAMENTO.id;
+  }, [obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
+  const isStatusEmValidacaoRegulatorio = useMemo(() => {
+    return obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.EM_VALIDACAO_REGULATORIO.id;
+  }, [obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
+  const tooltipEnviarRegulatorio = useMemo(() => {
+    if (!isPerfilPermitidoEnviarReg) {
+      return 'Você não tem permissão para enviar para análise do regulatório.';
+    }
+    if (!isStatusEmAndamento) {
+      return 'Só é possível enviar para análise do regulatório quando o status for "Em Andamento".';
+    }
+    return '';
+  }, [isPerfilPermitidoEnviarReg, isStatusEmAndamento]);
+
+  const tooltipStatusValidacaoRegulatorio = useMemo(() => {
+    if (!isStatusEmValidacaoRegulatorio) {
+      return 'Só é possível realizar esta ação quando o status for "Em Validação (Regulatório)".';
+    }
+    return '';
+  }, [isStatusEmValidacaoRegulatorio]);
 
   if (loading) {
     return (
@@ -311,16 +406,20 @@ export default function ConferenciaObrigacaoPage() {
               </Button>
               <Button
                 type="button"
-                className="flex items-center gap-2 rounded-full bg-orange-500 px-6 py-3 text-sm font-semibold text-white hover:bg-orange-600"
-                onClick={() => toast.info('Solicitação de ajustes disponível em breve.')}
+                className="flex items-center gap-2 rounded-full bg-orange-500 px-6 py-3 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleSolicitarAjustesClick}
+                disabled={!isStatusEmValidacaoRegulatorio}
+                tooltip={tooltipStatusValidacaoRegulatorio}
               >
                 <MessageSquare className="h-4 w-4" />
                 Solicitar ajustes
               </Button>
               <Button
                 type="button"
-                className="flex items-center gap-2 rounded-full bg-blue-500 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-600"
+                className="flex items-center gap-2 rounded-full bg-blue-500 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={() => toast.success('Conferência aprovada!')}
+                disabled={!isStatusEmValidacaoRegulatorio}
+                tooltip={tooltipStatusValidacaoRegulatorio}
               >
                 <CheckCircle2 className="h-4 w-4" />
                 Aprovar conferência
@@ -338,8 +437,10 @@ export default function ConferenciaObrigacaoPage() {
               </Button>
               <Button
                 type="button"
-                className="flex items-center gap-2 rounded-full bg-blue-500 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-600"
-                onClick={() => toast.info('Funcionalidade de enviar para análise do regulatório em desenvolvimento.')}
+                className="flex items-center gap-2 rounded-full bg-blue-500 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleEnviarParaAnaliseClick}
+                disabled={!isStatusEmAndamento || !isPerfilPermitidoEnviarReg}
+                tooltip={tooltipEnviarRegulatorio}
               >
                 <CheckCircle2 className="h-4 w-4" />
                 Enviar para análise do regulatório
@@ -363,8 +464,28 @@ export default function ConferenciaObrigacaoPage() {
           }}
         />
       )}
+
+      <ConfirmationDialog
+        open={showSolicitarAjustesDialog}
+        onOpenChange={setShowSolicitarAjustesDialog}
+        title="Solicitar ajustes"
+        description="Tem certeza que deseja solicitar ajustes para esta obrigação?"
+        confirmText="Sim, solicitar ajustes"
+        cancelText="Cancelar"
+        onConfirm={confirmarSolicitarAjustes}
+        variant="default"
+      />
+
+      <ConfirmationDialog
+        open={showEnviarRegulatorioDialog}
+        onOpenChange={setShowEnviarRegulatorioDialog}
+        title="Enviar para análise do regulatório"
+        description="Tem certeza que deseja enviar esta obrigação para análise do regulatório?"
+        confirmText="Sim, enviar"
+        cancelText="Cancelar"
+        onConfirm={confirmarEnviarParaAnalise}
+        variant="default"
+      />
     </div>
   );
 }
-
-

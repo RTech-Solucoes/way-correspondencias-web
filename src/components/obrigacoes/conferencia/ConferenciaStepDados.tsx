@@ -107,8 +107,15 @@ export function ConferenciaStepDados({ obrigacao, statusLabel, statusStyle }: Co
             )
           }
         />
-        {/*
 
+        {obrigacao.responsavelTecnico && (
+        <ConferenciaInfoRow
+          label="Responsável Técnico"
+          border={false}
+            value={obrigacao.responsavelTecnico?.nmResponsavel || '-'}
+          />
+        )}
+        {/*
         <ConferenciaInfoRow
           label="Justificativa de atraso"
           border={false}

@@ -5,6 +5,8 @@ import { StatusSolicitacaoResponse } from '../status-solicitacao/client';
 import { SolicitacaoResumoResponse } from '@/types/solicitacoes/types';
 import { ArquivoDTO, AnexoResponse } from '../anexos/type';
 import { SolicitacaoParecerResponse } from '../solicitacao-parecer/types';
+import { TramitacaoResponse } from '../tramitacoes/types';
+import { ResponsavelResponse } from '../responsaveis/types';
 
 export interface ObrigacaoResumoResponse {
   idSolicitacao: number;
@@ -42,7 +44,8 @@ export interface ObrigacaoResponse extends BaseResponse {
   tipoPeriodicidade?: TipoResponse | null;
   tipoCriticidade?: TipoResponse | null;
   tipoNatureza?: TipoResponse | null;
-
+  responsavelTecnico?: ResponsavelResponse | null;
+  flAprovarConferencia?: string | null;
   obrigacaoPrincipal?: ObrigacaoResumoResponse | null;
   obrigacaoRecusada?: ObrigacaoResumoResponse | null;
   correspondencia?: SolicitacaoResumoResponse | null;
@@ -72,11 +75,14 @@ export interface ObrigacaoRequest {
   idObrigacaoRecusada?: number | null;
   dsTac?: string | null;
   arquivos?: ArquivoDTO[];
+  idResponsavelTecnico?: number | null;
 }
 
 export interface ObrigacaoDetalheResponse {
   obrigacao: ObrigacaoResponse;
   anexos: AnexoResponse[];
+  solicitacaoParecer: SolicitacaoParecerResponse[];
+  tramitacoes: TramitacaoResponse[];
 }
 
 export interface ObrigacaoFiltroRequest {

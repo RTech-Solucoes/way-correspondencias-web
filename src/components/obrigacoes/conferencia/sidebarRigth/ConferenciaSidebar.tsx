@@ -20,7 +20,10 @@ import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { TipoEnum } from '@/api/tipos/types';
 import obrigacaoAnexosClient from '@/api/obrigacao/anexos-client';
 import { useUserGestao } from '@/hooks/use-user-gestao';
-import { computeTpResponsavel } from '@/api/perfis/types';
+import { computeTpResponsavel, perfilUtil } from '@/api/perfis/types';
+import tramitacoesClient from '@/api/tramitacoes/client';
+import { TramitacaoResponse } from '@/api/tramitacoes/types';
+import { statusListObrigacao } from '@/api/status-obrigacao/types';
 
 interface ConferenciaSidebarProps {
   detalhe: ObrigacaoDetalheResponse;
@@ -37,11 +40,19 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
   const [registroTab, setRegistroTab] = useState<RegistroTabKey>(RegistroTabKey.ANEXOS);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const [comentarioTexto, setComentarioTexto] = useState('');
-  const [solicitacaoPareceres, setSolicitacaoPareceres] = useState<SolicitacaoParecerResponse[]>([]);
+  const [solicitacaoPareceres, setSolicitacaoPareceres] = useState<SolicitacaoParecerResponse[]>(
+    detalhe?.solicitacaoParecer || []
+  );
+  const [tramitacoes, setTramitacoes] = useState<TramitacaoResponse[]>(
+    detalhe?.tramitacoes || []
+  );
   const [responsaveis, setResponsaveis] = useState<ResponsavelResponse[]>([]);
   const [loadingComentarios, setLoadingComentarios] = useState(false);
   const [enviandoComentario, setEnviandoComentario] = useState(false);
   const [parecerReferencia, setParecerReferencia] = useState<number | null>(null);
+  const [tramitacaoReferencia, setTramitacaoReferencia] = useState<number | null>(null);
+  const [userResponsavel, setUserResponsavel] = useState<ResponsavelResponse | null>(null);
+  const [parecerTramitacaoMap, setParecerTramitacaoMap] = useState<Map<number, number>>(new Map());
 
   const areaAtribuida = useMemo(() => {
     return detalhe?.obrigacao?.areas?.find((area) => area.tipoArea?.cdTipo === TipoEnum.ATRIBUIDA);
@@ -66,24 +77,56 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
   const anexos = useMemo(() => detalhe.anexos || [], [detalhe.anexos]);
 
   useEffect(() => {
+    if (detalhe?.solicitacaoParecer) {
+      setSolicitacaoPareceres(detalhe.solicitacaoParecer);
+    }
+    if (detalhe?.tramitacoes) {
+      setTramitacoes(detalhe.tramitacoes);
+    }
+  }, [detalhe?.solicitacaoParecer, detalhe?.tramitacoes]);
+
+  useEffect(() => {
+    const carregarResponsaveis = async () => {
+      try {
+        const responsaveisResponse = await responsaveisClient.buscarPorFiltro({ size: 1000 });
+        const responsaveisAtivos = responsaveisResponse.content.filter(r => r.flAtivo === 'S');
+        setResponsaveis(responsaveisAtivos);
+      } catch (error) {
+        console.error('Erro ao carregar responsáveis:', error);
+      }
+    };
+
+    carregarResponsaveis();
+  }, []);
+
+  useEffect(() => {
     const carregarDados = async () => {
       if (!detalhe?.obrigacao?.idSolicitacao) {
         return;
       }
 
-      try {
+      const temDadosIniciais = (detalhe?.solicitacaoParecer?.length ?? 0) > 0 || 
+                               (detalhe?.tramitacoes?.length ?? 0) > 0;
+      
+      if (!temDadosIniciais) {
         setLoadingComentarios(true);
-        const [pareceres, responsaveisResponse] = await Promise.all([
+      }
+
+      try {
+        const [pareceres, tramitacoesResponse] = await Promise.all([
           solicitacaoParecerClient.buscarPorIdSolicitacao(detalhe.obrigacao.idSolicitacao),
-          responsaveisClient.buscarPorFiltro({ size: 1000 })
+          tramitacoesClient.listarPorSolicitacao(detalhe.obrigacao.idSolicitacao),
         ]);
         
         setSolicitacaoPareceres(pareceres || []);
-        const responsaveisAtivos = responsaveisResponse.content.filter(r => r.flAtivo === 'S');
-        setResponsaveis(responsaveisAtivos);
+        setTramitacoes(tramitacoesResponse || []);
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
-        toast.error('Erro ao carregar comentários.');
+        const temDadosIniciaisNoErro = (detalhe?.solicitacaoParecer?.length ?? 0) > 0 || 
+                                       (detalhe?.tramitacoes?.length ?? 0) > 0;
+        if (!temDadosIniciaisNoErro) {
+          toast.error('Erro ao carregar comentários.');
+        }
       } finally {
         setLoadingComentarios(false);
       }
@@ -92,10 +135,113 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
     carregarDados();
   }, [detalhe?.obrigacao?.idSolicitacao]);
 
-  const comentariosCount = solicitacaoPareceres.length;
+  useEffect(() => {
+    const carregarUserResponsavel = async () => {
+      try {
+        const idFromToken = authClient.getUserIdResponsavelFromToken();
+        
+        if (idFromToken) {
+          const responsavel = await responsaveisClient.buscarPorId(idFromToken);
+          setUserResponsavel(responsavel);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar responsável logado:', error);
+      }
+    };
+
+    carregarUserResponsavel();
+  }, []);
+
+  const comentariosUnificados = useMemo(() => {
+    const items: Array<{
+      tipo: 'parecer' | 'tramitacao';
+      data: string;
+      parecer?: SolicitacaoParecerResponse;
+      tramitacao?: TramitacaoResponse;
+    }> = [];
+
+    const textosPareceres = new Set(
+      solicitacaoPareceres.map(p => (p.dsDarecer || '').trim().toLowerCase())
+    );
+
+    solicitacaoPareceres.forEach(parecer => {
+      items.push({
+        tipo: 'parecer',
+        data: parecer.dtCriacao || '',
+        parecer,
+      });
+    });
+
+    tramitacoes.forEach(tramitacao => {
+      if (tramitacao.dsObservacao) {
+        const textoTramitacao = (tramitacao.dsObservacao || '').trim().toLowerCase();
+        
+        if (!textosPareceres.has(textoTramitacao)) {
+          const dataTramitacao = tramitacao.tramitacaoAcao?.[0]?.dtCriacao || 
+                                tramitacao.solicitacao?.dtCriacao || 
+                                '';
+          items.push({
+            tipo: 'tramitacao',
+            data: dataTramitacao,
+            tramitacao,
+          });
+        }
+      }
+    });
+
+    return items.sort((a, b) => {
+      const dataA = a.data ? new Date(a.data).getTime() : 0;
+      const dataB = b.data ? new Date(b.data).getTime() : 0;
+      if (isNaN(dataA) && isNaN(dataB)) return 0;
+      if (isNaN(dataA)) return 1;
+      if (isNaN(dataB)) return -1;
+      return dataB - dataA;
+    });
+  }, [solicitacaoPareceres, tramitacoes]);
+
+  const comentariosCount = comentariosUnificados.length;
   const anexosCount = anexos.filter((anexo) => anexo.tpDocumento !== TipoDocumentoAnexoEnum.C).length;
   
   const idResponsavelLogado = authClient.getUserIdResponsavelFromToken();
+
+  const podeResponderTramitacao = useMemo(() => {
+    if (!idResponsavelLogado || !userResponsavel) {
+      return true; 
+    }
+
+    const idAreaAtribuida = areaAtribuida?.idArea;
+    const userAreaIds = userResponsavel?.areas?.map(ra => ra.area.idArea) || [];
+    const isDaAreaAtribuida = idAreaAtribuida && userAreaIds.includes(idAreaAtribuida);
+
+    if (!isDaAreaAtribuida) {
+      return true; 
+    }
+
+    const tramitacoesComData = tramitacoes
+      .filter(t => t.dsObservacao)
+      .map(t => ({
+        tramitacao: t,
+        data: t.tramitacaoAcao?.[0]?.dtCriacao || t.solicitacao?.dtCriacao || '',
+      }))
+      .sort((a, b) => {
+        const dataA = a.data ? new Date(a.data).getTime() : 0;
+        const dataB = b.data ? new Date(b.data).getTime() : 0;
+        return dataB - dataA; 
+      });
+
+    if (tramitacoesComData.length === 0) {
+      return true;
+    }
+
+    const ultimaTramitacao = tramitacoesComData[0].tramitacao;
+    const responsavelUltimaTramitacao = ultimaTramitacao.tramitacaoAcao?.[0]?.responsavelArea?.responsavel;
+
+    if (responsavelUltimaTramitacao?.idResponsavel === idResponsavelLogado) {
+      return false;
+    }
+
+    return true;
+  }, [idResponsavelLogado, userResponsavel, areaAtribuida, tramitacoes]);
 
   const handleDeletarParecer = useCallback(async (idSolicitacaoParecer: number) => {
     try {
@@ -103,12 +249,14 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
       toast.success('Comentário removido com sucesso.');
       
       if (detalhe?.obrigacao?.idSolicitacao) {
-        const [pareceres, responsaveisResponse] = await Promise.all([
+        const [pareceres, tramitacoesResponse, responsaveisResponse] = await Promise.all([
           solicitacaoParecerClient.buscarPorIdSolicitacao(detalhe.obrigacao.idSolicitacao),
+          tramitacoesClient.listarPorSolicitacao(detalhe.obrigacao.idSolicitacao),
           responsaveisClient.buscarPorFiltro({ size: 5000 })
         ]);
         
         setSolicitacaoPareceres(pareceres || []);
+        setTramitacoes(tramitacoesResponse || []);
         const responsaveisAtivos = responsaveisResponse.content.filter(r => r.flAtivo === 'S');
         setResponsaveis(responsaveisAtivos);
       }
@@ -124,7 +272,6 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
         await anexosClient.deletar(anexo.idAnexo);
         toast.success('Anexo removido com sucesso.');
         
-        // Recarrega os anexos para atualizar a lista
         if (onRefreshAnexos) {
           await onRefreshAnexos();
         }
@@ -174,7 +321,6 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
         await obrigacaoAnexosClient.deletar(detalhe.obrigacao.idSolicitacao, anexoLink.idAnexo);
         toast.success('Link removido com sucesso.');
         
-        // Recarrega os anexos para atualizar a lista
         if (onRefreshAnexos) {
           await onRefreshAnexos();
         }
@@ -201,7 +347,6 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
 
       toast.success('Link adicionado com sucesso.');
       
-      // Recarrega os anexos para mostrar o link recém-adicionado
       if (onRefreshAnexos) {
         await onRefreshAnexos();
       }
@@ -215,6 +360,7 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
     const nomeResponsavel = parecer.responsavel?.nmResponsavel || 'Usuário';
     setComentarioTexto(`@${nomeResponsavel} `);
     setParecerReferencia(parecer.idSolicitacaoParecer);
+    setTramitacaoReferencia(null);
     
     setRegistroTab(RegistroTabKey.COMENTARIOS);
     
@@ -227,8 +373,40 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
     }, 200);
   }, []);
 
+  const handleResponderTramitacao = useCallback((tramitacao: TramitacaoResponse) => {
+    const responsavelTramitacao = tramitacao.tramitacaoAcao?.[0]?.responsavelArea?.responsavel;
+    const nomeResponsavel = responsavelTramitacao?.nmResponsavel || 'Usuário';
+    setComentarioTexto(`@${nomeResponsavel} `);
+    setTramitacaoReferencia(tramitacao.idTramitacao);
+    setParecerReferencia(null);
+    
+    setRegistroTab(RegistroTabKey.COMENTARIOS);
+    
+    setTimeout(() => {
+      const textarea = document.getElementById('comentario-textarea') as HTMLTextAreaElement;
+      if (textarea) {
+        textarea.focus();
+        textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+      }
+    }, 200);
+  }, []);
+
+  const statusPermitidoParaTramitar = useMemo(() => {
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao &&
+      [statusListObrigacao.NAO_INICIADO.id,
+        statusListObrigacao.PENDENTE.id,
+        statusListObrigacao.ATRASADA.id].includes(detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao);
+  }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
+  const isPerfilPermitidoParaTramitar = useMemo(() => {
+    return [perfilUtil.EXECUTOR_AVANCADO, perfilUtil.EXECUTOR, perfilUtil.EXECUTOR_RESTRITO].includes(idPerfil ?? 0);
+  }, [idPerfil]);
+
   const handleEnviarComentario = useCallback(async () => {
-    if (!comentarioTexto.trim()) {
+    const textarea = document.getElementById('comentario-textarea') as HTMLTextAreaElement;
+    const textoCompleto = textarea?.value || comentarioTexto;
+    
+    if (!textoCompleto.trim()) {
       toast.warning('Digite um comentário antes de enviar.');
       return;
     }
@@ -240,42 +418,122 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
 
     try {
       setEnviandoComentario(true);
-      const requestData: {
-        idSolicitacao: number;
-        idStatusSolicitacao: number;
-        dsDarecer: string;
-        idSolicitacaoParecerReferen?: number | null;
-      } = {
-        idSolicitacao: detalhe.obrigacao.idSolicitacao,
-        idStatusSolicitacao: detalhe.obrigacao.statusSolicitacao.idStatusSolicitacao,
-        dsDarecer: comentarioTexto.trim(),
-      };
 
-      if (parecerReferencia) {
-        requestData.idSolicitacaoParecerReferen = parecerReferencia;
+      const idAreaAtribuida = areaAtribuida?.idArea;
+      const userAreaIds = userResponsavel?.areas?.map(ra => ra.area.idArea) || [];
+      const isDaAreaAtribuida = idAreaAtribuida && userAreaIds.includes(idAreaAtribuida);
+
+      if (isDaAreaAtribuida) {
+        if (podeResponderTramitacao) {
+          const idStatusAtual = detalhe.obrigacao.statusSolicitacao.idStatusSolicitacao;
+          const tramitacaoExistente = tramitacoes.find(
+            t => t.solicitacao?.statusSolicitacao?.idStatusSolicitacao === idStatusAtual &&
+                 t.dsObservacao === textoCompleto.trim()
+          );
+
+          const podeCriarTramitacao = statusPermitidoParaTramitar && !tramitacaoExistente && isPerfilPermitidoParaTramitar;
+          
+          if (podeCriarTramitacao) {
+            const tramitacaoRequest = {
+              idSolicitacao: detalhe.obrigacao.idSolicitacao,
+              idAreaOrigem: areaAtribuida.idArea,
+              idAreaDestino: areaAtribuida.idArea,
+              dsObservacao: textoCompleto.trim(),
+              idResponsavel: userResponsavel?.idResponsavel,
+            };
+
+            await tramitacoesClient.tramitarViaFluxo(tramitacaoRequest);
+          }
+        }
+
+        const parecerRequest: {
+          idSolicitacao: number;
+          idStatusSolicitacao: number;
+          dsDarecer: string;
+          idSolicitacaoParecerReferen?: number | null;
+        } = {
+          idSolicitacao: detalhe.obrigacao.idSolicitacao,
+          idStatusSolicitacao: detalhe.obrigacao.statusSolicitacao.idStatusSolicitacao,
+          dsDarecer: textoCompleto.trim(),
+        };
+
+        if (parecerReferencia) {
+          parecerRequest.idSolicitacaoParecerReferen = parecerReferencia;
+        }
+
+        if (tramitacaoReferencia) {
+          const parecerCriado = await solicitacaoParecerClient.criar(parecerRequest);
+          setParecerTramitacaoMap(prev => {
+            const novoMap = new Map(prev);
+            novoMap.set(parecerCriado.idSolicitacaoParecer, tramitacaoReferencia);
+            return novoMap;
+          });
+        } else {
+          await solicitacaoParecerClient.criar(parecerRequest);
+        }
+
+        toast.success(podeResponderTramitacao 
+          ? 'Comentário de área atribuída salvo com sucesso.' 
+          : 'Parecer salvo com sucesso.');
+      } else {
+        const requestData: {
+          idSolicitacao: number;
+          idStatusSolicitacao: number;
+          dsDarecer: string;
+          idSolicitacaoParecerReferen?: number | null;
+        } = {
+          idSolicitacao: detalhe.obrigacao.idSolicitacao,
+          idStatusSolicitacao: detalhe.obrigacao.statusSolicitacao.idStatusSolicitacao,
+          dsDarecer: textoCompleto.trim(),
+        };
+
+        if (parecerReferencia) {
+          requestData.idSolicitacaoParecerReferen = parecerReferencia;
+        }
+
+        const parecerCriado = await solicitacaoParecerClient.criar(requestData);
+        
+        const idTramitacaoRef = tramitacaoReferencia;
+        if (idTramitacaoRef) {
+          setParecerTramitacaoMap(prev => {
+            const novoMap = new Map(prev);
+            novoMap.set(parecerCriado.idSolicitacaoParecer, idTramitacaoRef);
+            return novoMap;
+          });
+        }
+        
+        toast.success('Comentário salvo com sucesso.');
       }
 
-      await solicitacaoParecerClient.criar(requestData);
-
-      toast.success('Comentário enviado com sucesso.');
       setComentarioTexto('');
       setParecerReferencia(null);
+      setTramitacaoReferencia(null);
+      
+      if (textarea) {
+        textarea.value = '';
+      }
 
-      const [pareceres, responsaveisResponse] = await Promise.all([
+      const [pareceres, tramitacoesResponse, responsaveisResponse] = await Promise.all([
         solicitacaoParecerClient.buscarPorIdSolicitacao(detalhe.obrigacao.idSolicitacao),
+        tramitacoesClient.listarPorSolicitacao(detalhe.obrigacao.idSolicitacao),
         responsaveisClient.buscarPorFiltro({ size: 5000 })
       ]);
       
       setSolicitacaoPareceres(pareceres || []);
+      setTramitacoes(tramitacoesResponse || []);
       const responsaveisAtivos = responsaveisResponse.content.filter(r => r.flAtivo === 'S');
       setResponsaveis(responsaveisAtivos);
+
+      if (onRefreshAnexos) {
+        await onRefreshAnexos();
+      }
     } catch (error) {
       console.error('Erro ao enviar comentário:', error);
       toast.error('Erro ao enviar o comentário.');
     } finally {
       setEnviandoComentario(false);
     }
-  }, [comentarioTexto, parecerReferencia, detalhe?.obrigacao?.idSolicitacao, detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+  }, [comentarioTexto, parecerReferencia, tramitacaoReferencia, detalhe?.obrigacao?.idSolicitacao, detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao, areaAtribuida, userResponsavel, tramitacoes, podeResponderTramitacao, onRefreshAnexos, statusPermitidoParaTramitar]);
 
   return (
     <aside className="fixed right-0 top-[80px] bottom-[49px] z-10 flex w-full max-w-md flex-shrink-0 flex-col">
@@ -348,11 +606,15 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
             ) : (
               <ComentariosTab
                 solicitacaoPareceres={solicitacaoPareceres}
+                tramitacoes={tramitacoes}
+                comentariosUnificados={comentariosUnificados}
                 responsaveis={responsaveis}
                 loading={loadingComentarios}
                 idResponsavelLogado={idResponsavelLogado}
                 onDeletar={handleDeletarParecer}
                 onResponder={handleResponder}
+                onResponderTramitacao={handleResponderTramitacao}
+                parecerTramitacaoMap={parecerTramitacaoMap}
                 areaAtribuida={areaAtribuida}
               />
             )}
@@ -361,7 +623,17 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
           {registroTab === RegistroTabKey.COMENTARIOS && (
             <div className="bg-white px-6 py-4 border-t border-gray-100 shrink-0 mb-5">
               <label className="mb-2 block text-sm font-semibold text-gray-900">Escreva um comentário</label>
-              {parecerReferencia && (() => {
+              {tramitacaoReferencia && podeResponderTramitacao && (() => {
+                const tramitacaoReferenciada = tramitacoes.find(t => t.idTramitacao === tramitacaoReferencia);
+                const responsavelTramitacao = tramitacaoReferenciada?.tramitacaoAcao?.[0]?.responsavelArea?.responsavel;
+                const nomeResponsavel = responsavelTramitacao?.nmResponsavel || 'Usuário';
+                return (
+                  <div className="mb-2 text-xs text-blue-600">
+                    Respondendo a uma tramitação de <span className="text-blue-600 font-semibold">@{nomeResponsavel}</span>
+                  </div>
+                );
+              })()}
+              {parecerReferencia && !tramitacaoReferencia && podeResponderTramitacao && (() => {
                 const parecerReferenciado = solicitacaoPareceres.find(p => p.idSolicitacaoParecer === parecerReferencia);
                 const nomeResponsavel = parecerReferenciado?.responsavel?.nmResponsavel || 'Usuário';
                 return (
@@ -377,8 +649,13 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
                   value={comentarioTexto}
                   onChange={(e) => {
                     setComentarioTexto(e.target.value);
-                    if (!e.target.value.includes('@') && parecerReferencia) {
-                      setParecerReferencia(null);
+                    if (!e.target.value.includes('@')) {
+                      if (parecerReferencia) {
+                        setParecerReferencia(null);
+                      }
+                      if (tramitacaoReferencia) {
+                        setTramitacaoReferencia(null);
+                      }
                     }
                   }}
                   className="flex-1 resize-none border border-gray-200 rounded-2xl bg-white px-4 py-3 shadow-sm focus-visible:ring-0 focus-visible:border-blue-500 min-h-[80px] text-sm"

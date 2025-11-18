@@ -8,28 +8,45 @@ import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { AreaSolicitacao } from '@/api/solicitacoes/types';
 import { CardComentario } from './CardComentario';
+import { TramitacaoResponse } from '@/api/tramitacoes/types';
+import { CardTramitacao } from './CardTramitacao';
+
+interface ComentarioUnificado {
+  tipo: 'parecer' | 'tramitacao';
+  data: string;
+  parecer?: SolicitacaoParecerResponse;
+  tramitacao?: TramitacaoResponse;
+}
 
 interface ComentariosTabProps {
   solicitacaoPareceres: SolicitacaoParecerResponse[];
+  tramitacoes?: TramitacaoResponse[];
+  comentariosUnificados: ComentarioUnificado[];
   responsaveis?: ResponsavelResponse[];
   loading?: boolean;
   idResponsavelLogado?: number | null;
   onDeletar?: (idSolicitacaoParecer: number) => void;
   onResponder?: (parecer: SolicitacaoParecerResponse) => void;
+  onResponderTramitacao?: (tramitacao: TramitacaoResponse) => void;
+  parecerTramitacaoMap?: Map<number, number>;
   areaAtribuida?: AreaSolicitacao | null;
 }
 
 export function ComentariosTab({ 
-  solicitacaoPareceres, 
+  solicitacaoPareceres,
+  tramitacoes = [],
+  comentariosUnificados,
   responsaveis = [],
   loading = false, 
   idResponsavelLogado,
   onDeletar,
   onResponder,
+  onResponderTramitacao,
+  parecerTramitacaoMap = new Map(),
   areaAtribuida
 }: ComentariosTabProps) {
   const [parecerParaDeletar, setParecerParaDeletar] = useState<number | null>(null);
-  const comentariosCount = solicitacaoPareceres.length;
+  const comentariosCount = comentariosUnificados.length;
 
   const handleScrollToComment = (idSolicitacaoParecer: number) => {
     const element = document.getElementById(`comentario-${idSolicitacaoParecer}`);
@@ -76,13 +93,47 @@ export function ComentariosTab({
               solicitacaoPareceres.map(p => [p.idSolicitacaoParecer, p])
             );
             
-            return solicitacaoPareceres.map((parecer) => {
+            const tramitacoesMap = new Map(
+              tramitacoes.map(t => [t.idTramitacao, t])
+            );
+            
+            return comentariosUnificados.map((item, index) => {
+              if (item.tipo === 'tramitacao' && item.tramitacao) {
+                const tramitacao = item.tramitacao;
+                const dataFormatada = item.data 
+                  ? formatDateTimeBr(item.data) 
+                  : '';
+                
+                const responsavelTramitacao = tramitacao.tramitacaoAcao?.[0]?.responsavelArea?.responsavel;
+                const autor = responsavelTramitacao?.nmResponsavel || 'Usuário';
+                const area = tramitacao.areaDestino?.nmArea || tramitacao.areaOrigem?.nmArea || 'Regulatório';
+                
+                return (
+                  <CardTramitacao
+                    key={`tramitacao-${tramitacao.idTramitacao}-${index}`}
+                    tramitacao={tramitacao}
+                    dataFormatada={dataFormatada}
+                    autor={autor}
+                    area={area}
+                    onResponder={onResponderTramitacao}
+                  />
+                );
+              }
+              
+              const parecer = item.parecer!;
               const mensagem = parecer.dsDarecer || '';
               const parts: (string | { type: 'mention'; name: string; isValid: boolean })[] = [];
               
               let comentarioReferenciado: SolicitacaoParecerResponse | null = null;
+              let tramitacaoReferenciada: TramitacaoResponse | null = null;
               
-              if (parecer.solicitacaoParecerReferen) {
+              const idTramitacaoReferenciada = parecerTramitacaoMap.get(parecer.idSolicitacaoParecer);
+              if (idTramitacaoReferenciada) {
+                tramitacaoReferenciada = tramitacoesMap.get(idTramitacaoReferenciada) || null;
+              }
+              
+              if (!tramitacaoReferenciada) {
+                if (parecer.solicitacaoParecerReferen) {
                 if (Array.isArray(parecer.solicitacaoParecerReferen) && parecer.solicitacaoParecerReferen.length > 0) {
                   comentarioReferenciado = parecer.solicitacaoParecerReferen[0];
                 } 
@@ -94,8 +145,9 @@ export function ComentariosTab({
                 }
               }
               
-              if (!comentarioReferenciado && parecer.idSolicitacaoParecerReferen) {
-                comentarioReferenciado = pareceresMap.get(parecer.idSolicitacaoParecerReferen) || null;
+                if (!comentarioReferenciado && parecer.idSolicitacaoParecerReferen) {
+                  comentarioReferenciado = pareceresMap.get(parecer.idSolicitacaoParecerReferen) || null;
+                }
               }
               
               const processarMensagem = (texto: string) => {
@@ -208,6 +260,7 @@ export function ComentariosTab({
                   key={parecer.idSolicitacaoParecer}
                   parecer={parecer}
                   comentarioReferenciado={comentarioReferenciado}
+                  tramitacaoReferenciada={tramitacaoReferenciada}
                   parts={parts}
                   dataFormatada={dataFormatada}
                   autor={autor}
