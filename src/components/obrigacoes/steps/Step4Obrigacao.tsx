@@ -18,6 +18,7 @@ interface Step4ObrigacaoProps {
   onDownloadExisting?: (anexo: AnexoResponse) => void | Promise<void>;
   onRemoveExisting?: (anexo: AnexoResponse) => void | Promise<void>;
   existingAnexosLoading?: boolean;
+  disabled?: boolean;
 }
 
 export function Step4Obrigacao({
@@ -28,6 +29,7 @@ export function Step4Obrigacao({
   onDownloadExisting,
   onRemoveExisting,
   existingAnexosLoading,
+  disabled = false,
 }: Step4ObrigacaoProps) {
   const {canListarAnexo, canInserirAnexo} = usePermissoes();
 
@@ -81,7 +83,7 @@ export function Step4Obrigacao({
   return (
     <div className="space-y-6">
       <div className="flex flex-col space-y-4">
-        {canInserirAnexo && (
+        {canInserirAnexo && !disabled && (
           <AnexoComponent
             onAddAnexos={handleAddAnexos}
           />

@@ -123,6 +123,7 @@ export default function EditarObrigacaoPage() {
   const [statusOptions, setStatusOptions] = useState<StatusSolicitacaoResponse[]>([]);
   const [showDeleteAnexoDialog, setShowDeleteAnexoDialog] = useState(false);
   const [anexoToDelete, setAnexoToDelete] = useState<AnexoResponse | null>(null);
+  const [conferenciaAprovada, setConferenciaAprovada] = useState(false);
 
   useEffect(() => {
     tiposClient.buscarPorCategorias([CategoriaEnum.OBRIG_CLASSIFICACAO])
@@ -151,6 +152,11 @@ export default function EditarObrigacaoPage() {
       const detalhe = await obrigacaoClient.buscarDetalhePorId(parsedId);
       setFormData(mapDetalheToFormData(detalhe));
       setExistingAnexos(detalhe.anexos || []);
+      if (detalhe?.obrigacao?.flAprovarConferencia === 'S') {
+        setConferenciaAprovada(true);
+      } else {
+        setConferenciaAprovada(false);
+      }
     } catch (error) {
       console.error('Erro ao carregar detalhes da obrigação:', error);
       toast.error('Não foi possível carregar a obrigação.');
@@ -408,6 +414,7 @@ export default function EditarObrigacaoPage() {
             formData={formData}
             updateFormData={updateFormData}
             statusOptions={statusOptions}
+            disabled={conferenciaAprovada}
           />
         );
       case 'temas':
@@ -415,6 +422,7 @@ export default function EditarObrigacaoPage() {
           <Step2Obrigacao
             formData={formData}
             updateFormData={updateFormData}
+            disabled={conferenciaAprovada}
           />
         );
       case 'prazos':
@@ -422,6 +430,7 @@ export default function EditarObrigacaoPage() {
           <Step3Obrigacao
             formData={formData}
             updateFormData={updateFormData}
+            disabled={conferenciaAprovada}
           />
         );
       case 'anexos':
@@ -435,6 +444,7 @@ export default function EditarObrigacaoPage() {
             onDownloadExisting={handleDownloadAnexo}
             onRemoveExisting={handleRemoveAnexoClick}
             existingAnexosLoading={anexosLoading}
+            disabled={conferenciaAprovada}
           />
         );
       case 'vinculos':
@@ -442,6 +452,7 @@ export default function EditarObrigacaoPage() {
           <Step5Obrigacao
             formData={formData}
             updateFormData={updateFormData}
+            disabled={conferenciaAprovada}
           />
         );
       default:
@@ -528,8 +539,9 @@ export default function EditarObrigacaoPage() {
           </Button>
           <Button
             onClick={handleSave}
-            disabled={saving || !tabValido}
+            disabled={saving || !tabValido || conferenciaAprovada}
             className="flex items-center gap-2 px-6"
+            tooltip={conferenciaAprovada ? 'A conferência já foi aprovada. Não é possível editar a obrigação.' : ''}
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             {saving ? 'Salvando...' : 'Salvar alterações'}

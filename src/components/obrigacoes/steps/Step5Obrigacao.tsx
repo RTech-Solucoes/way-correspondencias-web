@@ -13,9 +13,10 @@ import { TipoEnum } from '@/api/tipos/types';
 interface Step5ObrigacaoProps {
   formData?: ObrigacaoFormData;
   updateFormData?: (data: Partial<ObrigacaoFormData>) => void;
+  disabled?: boolean;
 }
 
-export function Step5Obrigacao({ formData, updateFormData }: Step5ObrigacaoProps) {
+export function Step5Obrigacao({ formData, updateFormData, disabled = false }: Step5ObrigacaoProps) {
 
   const [solicitacoes, setSolicitacoes] = useState<SolicitacaoBuscaSimpleResponse[]>([]);
   const [buscaSolicitacao, setBuscaSolicitacao] = useState<string>('');
@@ -100,6 +101,7 @@ export function Step5Obrigacao({ formData, updateFormData }: Step5ObrigacaoProps
         <div className="flex flex-col space-y-4">
           <Label htmlFor="idSolicitacaoCorrespondencia">Vincular Correspondência</Label>
           <Select
+            disabled={disabled}
             value={formData?.idSolicitacaoCorrespondencia?.toString() || formData?.idSolicitacao?.toString() || 'none'}
             onValueChange={(value) => updateFormData?.({ 
               idSolicitacaoCorrespondencia: value === 'none' ? null : parseInt(value),
@@ -118,6 +120,7 @@ export function Step5Obrigacao({ formData, updateFormData }: Step5ObrigacaoProps
                   onKeyDown={(e) => e.stopPropagation()}
                   onClick={(e) => e.stopPropagation()}
                   onMouseDown={(e) => e.stopPropagation()}
+                  disabled={disabled}
                 />
               </div>
               <SelectItem value="none">
@@ -141,6 +144,7 @@ export function Step5Obrigacao({ formData, updateFormData }: Step5ObrigacaoProps
         <div className="flex flex-col space-y-4">
           <Label htmlFor="dsAntt">Agência Reguladora</Label>
           <Input
+            disabled={disabled}
             id="dsAntt"
             placeholder="Digite o ANTT"
             type="text"
@@ -154,6 +158,7 @@ export function Step5Obrigacao({ formData, updateFormData }: Step5ObrigacaoProps
         <div className="flex flex-col space-y-4">
           <Label htmlFor="dsTac">TAC</Label>
           <Input
+            disabled={disabled}
             id="dsTac"
             placeholder="Digite o TAC"
             type="text"
@@ -165,6 +170,7 @@ export function Step5Obrigacao({ formData, updateFormData }: Step5ObrigacaoProps
         <div className="flex flex-col space-y-4">
           <Label htmlFor="idObrigacaoRecusada">Obrigação recusada pelo Verificador ou ANTT</Label>
           <Select
+            disabled={disabled}
             value={formData?.idObrigacaoRecusada?.toString() || formData?.idObrigacaoContratualVinculo?.toString() || 'none'}
             onValueChange={(value) => updateFormData?.({ 
               idObrigacaoRecusada: value === 'none' ? null : parseInt(value),
@@ -183,6 +189,7 @@ export function Step5Obrigacao({ formData, updateFormData }: Step5ObrigacaoProps
                   onKeyDown={(e) => e.stopPropagation()}
                   onClick={(e) => e.stopPropagation()}
                   onMouseDown={(e) => e.stopPropagation()}
+                  disabled={disabled}
                 />
               </div>
               <SelectItem value="none">
@@ -212,6 +219,7 @@ export function Step5Obrigacao({ formData, updateFormData }: Step5ObrigacaoProps
           type="text"
           value={formData?.dsProtocoloExterno || ''}
           onChange={(e) => updateFormData?.({ dsProtocoloExterno: e.target.value })}
+          disabled={disabled}
         />
       </div>
     </div>

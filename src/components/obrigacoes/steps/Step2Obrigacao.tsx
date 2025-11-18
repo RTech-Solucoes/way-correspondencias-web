@@ -11,9 +11,10 @@ import temasClient from '@/api/temas/client';
 interface Step2ObrigacaoProps {
   formData: ObrigacaoFormData;
   updateFormData: (data: Partial<ObrigacaoFormData>) => void;
+  disabled?: boolean;
 }
 
-export function Step2Obrigacao({ formData, updateFormData }: Step2ObrigacaoProps) {
+export function Step2Obrigacao({ formData, updateFormData, disabled = false }: Step2ObrigacaoProps) {
   const [temas, setTemas] = useState<TemaResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [areasAtribuidas, setAreasAtribuidas] = useState<number[]>([]);
@@ -79,7 +80,7 @@ export function Step2Obrigacao({ formData, updateFormData }: Step2ObrigacaoProps
         <Select
           value={formData.idTema?.toString() || ''}
           onValueChange={(value) => updateFormData({ idTema: parseInt(value) })}
-          disabled={loading}
+          disabled={disabled || loading}
         >
           <SelectTrigger id="idTema">
             <SelectValue placeholder={loading ? 'Carregando...' : 'Selecione um tema'} />
@@ -127,7 +128,7 @@ export function Step2Obrigacao({ formData, updateFormData }: Step2ObrigacaoProps
         selectedAreaIds={getSelectedAreaIds()}
         onSelectionChange={handleAreasChange}
         label={tipoAreaSelecionado === 'atribuida' ? 'Selecione a Área Atribuída*' : 'Selecione as Áreas Condicionantes'}
-        disabled={loading}
+        disabled={disabled || loading}
         maxSelection={tipoAreaSelecionado === 'atribuida' ? 1 : undefined}
         excludedAreaIds={tipoAreaSelecionado === 'condicionante' && formData.idAreaAtribuida ? [formData.idAreaAtribuida] : []}
       />
