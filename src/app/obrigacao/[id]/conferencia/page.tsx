@@ -50,6 +50,8 @@ export default function ConferenciaObrigacaoPage() {
   const [showAnexarEvidenciaModal, setShowAnexarEvidenciaModal] = useState(false);
   const [showSolicitarAjustesDialog, setShowSolicitarAjustesDialog] = useState(false);
   const [showEnviarRegulatorioDialog, setShowEnviarRegulatorioDialog] = useState(false);
+  const [showAprovarConferenciaDialog, setShowAprovarConferenciaDialog] = useState(false);
+  const [conferenciaAprovada, setConferenciaAprovada] = useState(false);
 
   const parsedId = useMemo(() => {
     if (!id) return null;
@@ -69,6 +71,11 @@ export default function ConferenciaObrigacaoPage() {
         setLoading(true);
         const response = await obrigacaoClient.buscarDetalhePorId(parsedId);
         setDetalhe(response);
+        if (response?.obrigacao?.flAprovarConferencia === 'S') {
+          setConferenciaAprovada(true);
+        } else {
+          setConferenciaAprovada(false);
+        }
       } catch (error) {
         console.error('Erro ao carregar a obrigação:', error);
         toast.error('Não foi possível carregar a obrigação.');
@@ -99,6 +106,11 @@ export default function ConferenciaObrigacaoPage() {
     try {
       const response = await obrigacaoClient.buscarDetalhePorId(parsedId);
       setDetalhe(response);
+      if (response?.obrigacao?.flAprovarConferencia === 'S') {
+        setConferenciaAprovada(true);
+      } else {
+        setConferenciaAprovada(false);
+      }
     } catch (error) {
       console.error('Erro ao recarregar detalhes da obrigação:', error);
       toast.error('Erro ao recarregar detalhes da obrigação.');
@@ -184,7 +196,7 @@ export default function ConferenciaObrigacaoPage() {
     try {
       await tramitacoesClient.tramitarViaFluxo({
         idSolicitacao: obrigacao.idSolicitacao,
-        dsObservacao: 'Obrigacao enviada para análise do regulatório',
+        dsObservacao: 'Obrigacao enviada para Em Validação (Regulatório)',
       });
       
       await obrigacaoClient.atualizar(obrigacao.idSolicitacao, {
@@ -215,7 +227,7 @@ export default function ConferenciaObrigacaoPage() {
     try {
       await tramitacoesClient.tramitarViaFluxo({
         idSolicitacao: obrigacao.idSolicitacao,
-        dsObservacao: 'Obrigação solicitada de ajustes',
+        dsObservacao: 'Obrigação solicitada de ajustes. Volta para área atribuída',
         flAprovado: 'N',
       });
       
@@ -226,6 +238,31 @@ export default function ConferenciaObrigacaoPage() {
       toast.error('Erro ao solicitar ajustes.');
     }
   }, [obrigacao?.idSolicitacao, reloadDetalhe]);
+
+  const handleAprovarConferenciaClick = useCallback(() => {
+    setShowAprovarConferenciaDialog(true);
+  }, []);
+
+  const confirmarAprovarConferencia = useCallback(async () => {
+    if (!obrigacao?.idSolicitacao || !obrigacao?.dsTarefa) {
+      toast.error('Dados da obrigação incompletos.');
+      return;
+    }
+    
+    try {
+      await obrigacaoClient.atualizar(obrigacao.idSolicitacao, {
+        dsTarefa: obrigacao.dsTarefa,
+        flAprovarConferencia: 'S',
+      });
+      
+      setConferenciaAprovada(true);
+      await reloadDetalhe();
+      toast.success('Conferência aprovada com sucesso!');
+    } catch (error) {
+      console.error('Erro ao aprovar conferência:', error);
+      toast.error('Erro ao aprovar conferência.');
+    }
+  }, [obrigacao?.idSolicitacao, obrigacao?.dsTarefa, reloadDetalhe]);
 
   const isStatusEmAndamento = useMemo(() => {
     return obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.EM_ANDAMENTO.id;
@@ -246,11 +283,14 @@ export default function ConferenciaObrigacaoPage() {
   }, [isPerfilPermitidoEnviarReg, isStatusEmAndamento]);
 
   const tooltipStatusValidacaoRegulatorio = useMemo(() => {
+    if (conferenciaAprovada) {
+      return 'A conferência já foi aprovada.';
+    }
     if (!isStatusEmValidacaoRegulatorio) {
       return 'Só é possível realizar esta ação quando o status for "Em Validação (Regulatório)".';
     }
     return '';
-  }, [isStatusEmValidacaoRegulatorio]);
+  }, [isStatusEmValidacaoRegulatorio, conferenciaAprovada]);
 
   if (loading) {
     return (
@@ -408,7 +448,7 @@ export default function ConferenciaObrigacaoPage() {
                 type="button"
                 className="flex items-center gap-2 rounded-full bg-orange-500 px-6 py-3 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleSolicitarAjustesClick}
-                disabled={!isStatusEmValidacaoRegulatorio}
+                disabled={!isStatusEmValidacaoRegulatorio || conferenciaAprovada}
                 tooltip={tooltipStatusValidacaoRegulatorio}
               >
                 <MessageSquare className="h-4 w-4" />
@@ -417,8 +457,8 @@ export default function ConferenciaObrigacaoPage() {
               <Button
                 type="button"
                 className="flex items-center gap-2 rounded-full bg-blue-500 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={() => toast.success('Conferência aprovada!')}
-                disabled={!isStatusEmValidacaoRegulatorio}
+                onClick={handleAprovarConferenciaClick}
+                disabled={!isStatusEmValidacaoRegulatorio || conferenciaAprovada}
                 tooltip={tooltipStatusValidacaoRegulatorio}
               >
                 <CheckCircle2 className="h-4 w-4" />
@@ -484,6 +524,17 @@ export default function ConferenciaObrigacaoPage() {
         confirmText="Sim, enviar"
         cancelText="Cancelar"
         onConfirm={confirmarEnviarParaAnalise}
+        variant="default"
+      />
+
+      <ConfirmationDialog
+        open={showAprovarConferenciaDialog}
+        onOpenChange={setShowAprovarConferenciaDialog}
+        title="Aprovar conferência"
+        description="Tem certeza que deseja aprovar a conferência dessa obrigação?"
+        confirmText="Sim, aprovar"
+        cancelText="Não"
+        onConfirm={confirmarAprovarConferencia}
         variant="default"
       />
     </div>

@@ -9,6 +9,7 @@ import { ItemAnexo, ItemAnexoLink } from '../ItensAnexos';
 import type { AnexoResponse } from '@/api/anexos/type';
 import { TipoDocumentoAnexoEnum } from '@/api/anexos/type';
 import { AnexoObrigacaoModal } from '../AnexoObrigacaoModal';
+import { perfilUtil } from '@/api/perfis/types';
 
 interface AnexosTabProps {
   anexos: AnexoResponse[];
@@ -123,6 +124,17 @@ export function AnexosTab({
     setLinkError(null);
   }, []);
 
+  const podeAnexarEvidencia = useMemo(() => {
+    return [perfilUtil.EXECUTOR_AVANCADO, perfilUtil.EXECUTOR, perfilUtil.EXECUTOR_RESTRITO].includes(idPerfil ?? 0);
+  }, [idPerfil]);
+
+  const tooltipEvidencia = useMemo(() => {
+    if (!podeAnexarEvidencia) {
+      return 'Apenas Executor Avançado, Executor ou Executor Restrito podem anexar evidência de cumprimento.';
+    }
+    return '';
+  }, [podeAnexarEvidencia]);
+
   return (
     <div className="space-y-6">
       <div className="space-y-4">
@@ -136,8 +148,10 @@ export function AnexosTab({
         <Button
             type="button"
             variant="link"
-            className="flex items-center gap-2 justify-start px-0 text-blue-600 hover:text-blue-700"
+            className="flex items-center gap-2 justify-start px-0 text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={() => setShowAnexarEvidenciaModal(true)}
+            disabled={!podeAnexarEvidencia}
+            tooltip={tooltipEvidencia}
           >
             <Plus className="h-4 w-4" />
             Anexar arquivo de evidência de cumprimento
@@ -226,8 +240,10 @@ export function AnexosTab({
             <Button
               type="button"
               variant="link"
-              className="flex items-center gap-2 justify-start px-0 text-blue-600 hover:text-blue-700"
+              className="flex items-center gap-2 justify-start px-0 text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={handleToggleLinkInput}
+              disabled={!podeAnexarEvidencia}
+              tooltip={tooltipEvidencia}
             >
               <LinkIcon className="h-4 w-4" />
               Inserir link de evidência de cumprimento

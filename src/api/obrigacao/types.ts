@@ -54,7 +54,7 @@ export interface ObrigacaoResponse extends BaseResponse {
 
 export interface ObrigacaoRequest {
   idSolicitacao?: number | null;
-  dsTarefa: string;
+  dsTarefa?: string | null;
   idStatusSolicitacao?: number | null;
   idTipoClassificacao?: number | null;
   idTipoPeriodicidade?: number | null;
@@ -76,6 +76,7 @@ export interface ObrigacaoRequest {
   dsTac?: string | null;
   arquivos?: ArquivoDTO[];
   idResponsavelTecnico?: number | null;
+  flAprovarConferencia?: string | null;
 }
 
 export interface ObrigacaoDetalheResponse {

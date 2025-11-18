@@ -16,6 +16,7 @@ interface CardComentarioProps {
   onResponder?: (parecer: SolicitacaoParecerResponse) => void;
   onDeletar?: (idSolicitacaoParecer: number) => void;
   onScrollToComment?: (idSolicitacaoParecer: number) => void;
+  onScrollToTramitacao?: (idTramitacao: number) => void;
 }
 
 export function CardComentario({
@@ -30,10 +31,17 @@ export function CardComentario({
   onResponder,
   onDeletar,
   onScrollToComment,
+  onScrollToTramitacao,
 }: CardComentarioProps) {
   const handleClickComentarioReferenciado = () => {
     if (comentarioReferenciado && onScrollToComment) {
       onScrollToComment(comentarioReferenciado.idSolicitacaoParecer);
+    }
+  };
+
+  const handleClickTramitacaoReferenciada = () => {
+    if (tramitacaoReferenciada && onScrollToTramitacao) {
+      onScrollToTramitacao(tramitacaoReferenciada.idTramitacao);
     }
   };
 
@@ -43,10 +51,14 @@ export function CardComentario({
       className="rounded-2xl border border-gray-100 bg-white px-4 py-4 shadow-sm"
     >
       {tramitacaoReferenciada ? (
-        <div className="mb-3 border-l-4 border-blue-500 bg-blue-50 rounded-r-lg p-3 text-sm">
+        <div 
+          className="mb-3 border-l-4 border-purple-500 bg-gray-50 rounded-r-lg p-3 text-sm cursor-pointer hover:bg-gray-100 transition-colors"
+          onClick={handleClickTramitacaoReferenciada}
+          title="Clique para ver a tramitação original"
+        >
           <div className="flex items-center gap-2 mb-1">
-            <Briefcase className="h-3 w-3 text-blue-600" />
-            <span className="font-semibold text-blue-600 text-xs">
+            <Reply className="h-3 w-3 text-purple-600" />
+            <span className="font-semibold text-purple-600 text-xs">
               {tramitacaoReferenciada.tramitacaoAcao?.[0]?.responsavelArea?.responsavel?.nmResponsavel || 'Usuário'}
             </span>
           </div>

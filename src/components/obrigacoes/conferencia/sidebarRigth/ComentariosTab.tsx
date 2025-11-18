@@ -59,6 +59,17 @@ export function ComentariosTab({
     }
   };
 
+  const handleScrollToTramitacao = (idTramitacao: number) => {
+    const element = document.getElementById(`tramitacao-${idTramitacao}`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      element.classList.add('ring-2', 'ring-blue-500', 'ring-offset-2');
+      setTimeout(() => {
+        element.classList.remove('ring-2', 'ring-blue-500', 'ring-offset-2');
+      }, 2000);
+    }
+  };
+
   const handleConfirmarDeletar = () => {
     if (parecerParaDeletar && onDeletar) {
       onDeletar(parecerParaDeletar);
@@ -269,6 +280,7 @@ export function ComentariosTab({
                   onResponder={onResponder}
                   onDeletar={(id) => setParecerParaDeletar(id)}
                   onScrollToComment={handleScrollToComment}
+                  onScrollToTramitacao={handleScrollToTramitacao}
                 />
               );
             });
