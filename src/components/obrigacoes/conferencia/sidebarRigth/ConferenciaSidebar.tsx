@@ -76,6 +76,9 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
 
   const anexos = useMemo(() => detalhe.anexos || [], [detalhe.anexos]);
 
+  const isStatusEmAndamento = useMemo(() => {
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.EM_ANDAMENTO.id;
+  }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
   useEffect(() => {
     if (detalhe?.solicitacaoParecer) {
       setSolicitacaoPareceres(detalhe.solicitacaoParecer);
@@ -602,6 +605,7 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
                 idObrigacao={detalhe?.obrigacao?.idSolicitacao || 0}
                 idPerfil={idPerfil ?? undefined}
                 onRefreshAnexos={onRefreshAnexos}
+                isStatusEmAndamento={isStatusEmAndamento}
               />
             ) : (
               <ComentariosTab

@@ -21,6 +21,7 @@ interface AnexosTabProps {
   idObrigacao: number;
   idPerfil?: number;
   onRefreshAnexos?: () => void;
+  isStatusEmAndamento?: boolean;
 }
 
 export function AnexosTab({
@@ -33,6 +34,7 @@ export function AnexosTab({
   idObrigacao,
   idPerfil,
   onRefreshAnexos,
+  isStatusEmAndamento = false,
 }: AnexosTabProps) {
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [evidenceLinkValue, setEvidenceLinkValue] = useState('');
@@ -75,8 +77,36 @@ export function AnexosTab({
         : `https://${url}`;
       
       const urlObj = new URL(urlWithProtocol);
+      const hostname = urlObj.hostname;
       
-      return urlObj.hostname.length > 0 && urlObj.hostname.includes('.');
+      if (!hostname || hostname.length === 0) {
+        return false;
+      }
+      
+      if (/^\d+$/.test(hostname)) {
+        return false;
+      }
+      
+      if (!hostname.includes('.')) {
+        return false;
+      }
+      
+      const parts = hostname.split('.');
+      if (parts.length < 2) {
+        return false;
+      }
+      
+      const tld = parts[parts.length - 1];
+      if (!tld || tld.length < 2) {
+        return false;
+      }
+      
+      const domain = parts[0];
+      if (!domain || /^\d+$/.test(domain)) {
+        return false;
+      }
+      
+      return true;
     } catch {
       return false;
     }
@@ -129,11 +159,14 @@ export function AnexosTab({
   }, [idPerfil]);
 
   const tooltipEvidencia = useMemo(() => {
+    if (!isStatusEmAndamento) {
+      return 'Apenas é possível anexar evidência de cumprimento quando o status for "Em Andamento".';
+    }
     if (!podeAnexarEvidencia) {
       return 'Apenas Executor Avançado, Executor ou Executor Restrito podem anexar evidência de cumprimento.';
     }
     return '';
-  }, [podeAnexarEvidencia]);
+  }, [podeAnexarEvidencia, isStatusEmAndamento]);
 
   return (
     <div className="space-y-6">
@@ -150,7 +183,7 @@ export function AnexosTab({
             variant="link"
             className="flex items-center gap-2 justify-start px-0 text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={() => setShowAnexarEvidenciaModal(true)}
-            disabled={!podeAnexarEvidencia}
+            disabled={!podeAnexarEvidencia || !isStatusEmAndamento}
             tooltip={tooltipEvidencia}
           >
             <Plus className="h-4 w-4" />
@@ -215,6 +248,7 @@ export function AnexosTab({
                     value={evidenceLinkValue}
                     onChange={(event) => handleEvidenceLinkValueChange(event.target.value)}
                     className={`pl-10 ${linkError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                    disabled={!podeAnexarEvidencia || !isStatusEmAndamento}
                   />
                 </div>
                 {linkError && (
@@ -230,7 +264,7 @@ export function AnexosTab({
                 <Button 
                   onClick={handleEvidenceLinkSave} 
                   className="bg-blue-600 hover:bg-blue-700"
-                  disabled={!!linkError}
+                  disabled={!!linkError || !podeAnexarEvidencia || !isStatusEmAndamento}
                 >
                   Salvar
                 </Button>
@@ -242,7 +276,7 @@ export function AnexosTab({
               variant="link"
               className="flex items-center gap-2 justify-start px-0 text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={handleToggleLinkInput}
-              disabled={!podeAnexarEvidencia}
+              disabled={!podeAnexarEvidencia || !isStatusEmAndamento}
               tooltip={tooltipEvidencia}
             >
               <LinkIcon className="h-4 w-4" />

@@ -48,6 +48,7 @@ export default function ConferenciaObrigacaoPage() {
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState<number | null>(null);
   const [showAnexarEvidenciaModal, setShowAnexarEvidenciaModal] = useState(false);
+  const [showAnexarCorrespondenciaModal, setShowAnexarCorrespondenciaModal] = useState(false);
   const [showSolicitarAjustesDialog, setShowSolicitarAjustesDialog] = useState(false);
   const [showEnviarRegulatorioDialog, setShowEnviarRegulatorioDialog] = useState(false);
   const [showAprovarConferenciaDialog, setShowAprovarConferenciaDialog] = useState(false);
@@ -200,7 +201,6 @@ export default function ConferenciaObrigacaoPage() {
       });
       
       await obrigacaoClient.atualizar(obrigacao.idSolicitacao, {
-        dsTarefa: obrigacao.dsTarefa,
         idResponsavelTecnico: idResponsavelTecnico,
       });
       
@@ -272,6 +272,13 @@ export default function ConferenciaObrigacaoPage() {
     return obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.EM_VALIDACAO_REGULATORIO.id;
   }, [obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 
+  const temEvidenciaCumprimento = useMemo(() => {
+    return anexos.some(anexo => 
+      anexo.tpDocumento === TipoDocumentoAnexoEnum.E || 
+      anexo.tpDocumento === TipoDocumentoAnexoEnum.L
+    );
+  }, [anexos]);
+
   const tooltipEnviarRegulatorio = useMemo(() => {
     if (!isPerfilPermitidoEnviarReg) {
       return 'Você não tem permissão para enviar para análise do regulatório.';
@@ -279,8 +286,11 @@ export default function ConferenciaObrigacaoPage() {
     if (!isStatusEmAndamento) {
       return 'Só é possível enviar para análise do regulatório quando o status for "Em Andamento".';
     }
+    if (!temEvidenciaCumprimento) {
+      return 'É necessário anexar pelo menos uma evidência de cumprimento (arquivo ou link) antes de enviar para análise do regulatório.';
+    }
     return '';
-  }, [isPerfilPermitidoEnviarReg, isStatusEmAndamento]);
+  }, [isPerfilPermitidoEnviarReg, isStatusEmAndamento, temEvidenciaCumprimento]);
 
   const tooltipStatusValidacaoRegulatorio = useMemo(() => {
     if (conferenciaAprovada) {
@@ -291,6 +301,16 @@ export default function ConferenciaObrigacaoPage() {
     }
     return '';
   }, [isStatusEmValidacaoRegulatorio, conferenciaAprovada]);
+
+  const tooltipAnexarCorrespondencia = useMemo(() => {
+    if (!conferenciaAprovada) {
+      return 'É necessário aprovar a conferência antes de anexar correspondência.';
+    }
+    if (!isStatusEmValidacaoRegulatorio) {
+      return 'Apenas é possível anexar correspondência quando o status for "Em Validação (Regulatório)".';
+    }
+    return '';
+  }, [conferenciaAprovada, isStatusEmValidacaoRegulatorio]);
 
   if (loading) {
     return (
@@ -438,8 +458,10 @@ export default function ConferenciaObrigacaoPage() {
             <>
               <Button
                 type="button"
-                className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800"
-                onClick={() => toast.info('Funcionalidade de anexar correspondência em desenvolvimento.')}
+                className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => setShowAnexarCorrespondenciaModal(true)}
+                disabled={!isStatusEmValidacaoRegulatorio || !conferenciaAprovada}
+                tooltip={tooltipAnexarCorrespondencia}
               >
                 <Paperclip className="h-4 w-4" />
                 Anexar correspondência
@@ -469,8 +491,10 @@ export default function ConferenciaObrigacaoPage() {
             <>
               <Button
                 type="button"
-                className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800"
+                className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={() => setShowAnexarEvidenciaModal(true)}
+                disabled={!isStatusEmAndamento}
+                tooltip={!isStatusEmAndamento ? 'Apenas é possível anexar evidência de cumprimento quando o status for "Em Andamento".' : ''}
               >
                 <Paperclip className="h-4 w-4" />
                 Anexar evidência de cumprimento
@@ -479,7 +503,7 @@ export default function ConferenciaObrigacaoPage() {
                 type="button"
                 className="flex items-center gap-2 rounded-full bg-blue-500 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleEnviarParaAnaliseClick}
-                disabled={!isStatusEmAndamento || !isPerfilPermitidoEnviarReg}
+                disabled={!isStatusEmAndamento || !isPerfilPermitidoEnviarReg || !temEvidenciaCumprimento}
                 tooltip={tooltipEnviarRegulatorio}
               >
                 <CheckCircle2 className="h-4 w-4" />
@@ -491,18 +515,32 @@ export default function ConferenciaObrigacaoPage() {
       </footer>
 
       {obrigacao?.idSolicitacao && (
-        <AnexoObrigacaoModal
-          open={showAnexarEvidenciaModal}
-          onClose={() => setShowAnexarEvidenciaModal(false)}
-          title="Anexar arquivo de evidência de cumprimento"
-          tpDocumento={TipoDocumentoAnexoEnum.E}
-          idObrigacao={obrigacao.idSolicitacao}
-          idPerfil={idPerfil ?? undefined}
-          onSuccess={async () => {
-            await reloadDetalhe();
-            toast.success('Evidência de cumprimento anexada com sucesso!');
-          }}
-        />
+        <>
+          <AnexoObrigacaoModal
+            open={showAnexarEvidenciaModal}
+            onClose={() => setShowAnexarEvidenciaModal(false)}
+            title="Anexar arquivo de evidência de cumprimento"
+            tpDocumento={TipoDocumentoAnexoEnum.E}
+            idObrigacao={obrigacao.idSolicitacao}
+            idPerfil={idPerfil ?? undefined}
+            onSuccess={async () => {
+              await reloadDetalhe();
+              toast.success('Evidência de cumprimento anexada com sucesso!');
+            }}
+          />
+          <AnexoObrigacaoModal
+            open={showAnexarCorrespondenciaModal}
+            onClose={() => setShowAnexarCorrespondenciaModal(false)}
+            title="Anexar correspondência"
+            tpDocumento={TipoDocumentoAnexoEnum.R}
+            idObrigacao={obrigacao.idSolicitacao}
+            idPerfil={idPerfil ?? undefined}
+            onSuccess={async () => {
+              await reloadDetalhe();
+              toast.success('Correspondência anexada com sucesso!');
+            }}
+          />
+        </>
       )}
 
       <ConfirmationDialog

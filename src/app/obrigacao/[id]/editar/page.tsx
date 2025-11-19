@@ -190,10 +190,7 @@ export default function EditarObrigacaoPage() {
         const dataInicio = new Date(updated.dtInicio);
         const dataTermino = new Date(updated.dtTermino);
 
-        if (dataTermino <= dataInicio) {
-          toast.error('A data de término deve ser maior que a data de início.');
-          updated.dtTermino = prev.dtTermino;
-        } else {
+        if (dataTermino > dataInicio) {
           const diferencaEmMs = dataTermino.getTime() - dataInicio.getTime();
           const diferencaEmDias = Math.round(diferencaEmMs / (1000 * 60 * 60 * 24));
 
@@ -346,6 +343,7 @@ export default function EditarObrigacaoPage() {
                 tipoConteudo: arquivo.tipoConteudo || 'application/octet-stream',
                 tpResponsavel: arquivo.tpResponsavel ?? TipoResponsavelAnexoEnum.A,
                 conteudoArquivo: arquivo.conteudoArquivo,
+                tpDocumento: TipoDocumentoAnexoEnum.C,
               }));
             }),
           );
