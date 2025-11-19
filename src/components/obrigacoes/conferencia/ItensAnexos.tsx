@@ -4,9 +4,9 @@ import type { LucideIcon } from 'lucide-react';
 import { Download, ExternalLink, FileText, Loader2, Trash2, FileImage, File, FileCode } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { AnexoResponse } from '@/api/anexos/type';
-import { TipoResponsavelAnexoEnum } from '@/api/anexos/type';
 import { formatDate } from '@/utils/utils';
 import React from 'react';
+import { authClient } from '@/api/auth/client';
 
 interface FileAccent {
   Icon: LucideIcon | React.ComponentType<{ className?: string }>;
@@ -52,19 +52,6 @@ const HtmlIcon = ({ className }: { className?: string }) => (
     <path d="M10.5 12h3" />
   </svg>
 );
-
-const responsavelLabels: Record<string, string> = {
-  [TipoResponsavelAnexoEnum.A]: 'Analista',
-  [TipoResponsavelAnexoEnum.G]: 'Gestor',
-  [TipoResponsavelAnexoEnum.D]: 'Diretoria',
-  [TipoResponsavelAnexoEnum.R]: 'Regulatório',
-};
-
-const getResponsavelLabel = (value?: string | null) => {
-  if (!value) return 'Responsável não informado';
-  const key = value.toString().toUpperCase();
-  return responsavelLabels[key] ?? value;
-};
 
 const getFileAccent = (filename: string): FileAccent => {
   const ext = filename.split('.').pop()?.toLowerCase();
@@ -142,6 +129,7 @@ export interface ItemAnexoProps {
   tone?: 'default' | 'subtle';
   dense?: boolean;
   dataUpload?: string | null;
+  responsavel?: string | null;
 }
 
 export const ItemAnexo = ({
@@ -152,11 +140,15 @@ export const ItemAnexo = ({
   tone = 'default',
   dense = false,
   dataUpload,
+  responsavel,
 }: ItemAnexoProps) => {
   const { Icon, containerClass } = getFileAccent(anexo.nmArquivo);
-  const wrapperTone = tone === 'subtle' ? 'border-transparent bg-gray-50' : 'border-gray-100 bg-white';
-  const responsavelLabel = getResponsavelLabel(anexo.tpResponsavel);
+  const wrapperTone = tone === 'subtle' ? 'border-gray-100 bg-white' : 'border-gray-100 bg-white';
+  const responsavelNome = responsavel || anexo.responsavel?.nmResponsavel || anexo.nmUsuario || null;
   const dataFormatada = dataUpload ? formatDate(dataUpload) : null;
+  
+  const idResponsavelLogado = authClient.getUserIdResponsavelFromToken();
+  const podeExcluir = idResponsavelLogado && anexo.responsavel?.idResponsavel === idResponsavelLogado;
 
   return (
     <li
@@ -170,9 +162,9 @@ export const ItemAnexo = ({
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-gray-900">{anexo.nmArquivo}</p>
-          {dataFormatada && (
+          {dataFormatada && responsavelNome && (
             <p className="text-xs text-gray-500 mt-0.5">
-              {dataFormatada} via {responsavelLabel}.
+              {dataFormatada} - {responsavelNome}
             </p>
           )}
         </div>
@@ -192,7 +184,7 @@ export const ItemAnexo = ({
             <Download className="h-4 w-4" />
           )}
         </Button>
-        {onDelete && (
+        {onDelete && podeExcluir && (
           <Button
             type="button"
             variant="ghost"
@@ -214,6 +206,7 @@ export interface ItemAnexoLinkProps {
   dense?: boolean;
   dataUpload?: string | null;
   responsavel?: string | null;
+  anexo?: AnexoResponse;
 }
 
 export const ItemAnexoLink = ({ 
@@ -221,9 +214,13 @@ export const ItemAnexoLink = ({
   onRemove, 
   dense = false, 
   dataUpload, 
-  responsavel 
+  responsavel,
+  anexo
 }: ItemAnexoLinkProps) => {
   const dataFormatada = dataUpload ? formatDate(dataUpload) : null;
+  
+  const idResponsavelLogado = authClient.getUserIdResponsavelFromToken();
+  const podeExcluir = idResponsavelLogado && anexo?.responsavel?.idResponsavel === idResponsavelLogado;
   
   return (
     <li
@@ -239,7 +236,7 @@ export const ItemAnexoLink = ({
           <p className="truncate text-sm font-semibold text-gray-900">{link}</p>
           {dataFormatada && responsavel && (
             <p className="text-xs text-gray-500 mt-0.5">
-              {dataFormatada} via {responsavel}.
+              {dataFormatada} - {responsavel}
             </p>
           )}
         </div>
@@ -258,19 +255,20 @@ export const ItemAnexoLink = ({
         >
           <ExternalLink className="h-4 w-4" />
         </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="text-gray-400 hover:text-red-600"
-          onClick={() => onRemove(link)}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        {podeExcluir && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="text-gray-400 hover:text-red-600"
+            onClick={() => onRemove(link)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
       </div>
     </li>
   );
 };
 
 export type { AnexoResponse } from '@/api/anexos/type';
-

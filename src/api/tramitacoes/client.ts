@@ -49,6 +49,13 @@ class TramitacoesClient {
     });
   }
 
+  async tramitarViaFluxo(data: TramitacaoRequest): Promise<TramitacaoResponse> {
+    return this.client.request<TramitacaoResponse>(`/tramitar-via-fluxo`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   async buscarProximoStatusPorIdSolicitacaoEIdStatusSolicitacao(data: ProximoStatusRequest): Promise<number> {
     return this.client.request<number>(`/solicitacao/${data.idSolicitacao}/statusSolicitacao/${data.idStatusSolicitacao}/proximo-status`, {
       method: 'GET',

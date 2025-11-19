@@ -22,6 +22,7 @@ import anexosClient from '@/api/anexos/client';
 import { base64ToUint8Array, saveBlob } from '@/utils/utils';
 import Link from 'next/link';
 import statusSolicitacaoClient, { StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 
 type TabKey = 'dados' | 'temas' | 'prazos' | 'anexos' | 'vinculos';
 
@@ -120,6 +121,9 @@ export default function EditarObrigacaoPage() {
   const [novosAnexos, setNovosAnexos] = useState<File[]>([]);
   const [idClassificacaoCondicionada, setIdClassificacaoCondicionada] = useState<number | null>(null);
   const [statusOptions, setStatusOptions] = useState<StatusSolicitacaoResponse[]>([]);
+  const [showDeleteAnexoDialog, setShowDeleteAnexoDialog] = useState(false);
+  const [anexoToDelete, setAnexoToDelete] = useState<AnexoResponse | null>(null);
+  const [conferenciaAprovada, setConferenciaAprovada] = useState(false);
 
   useEffect(() => {
     tiposClient.buscarPorCategorias([CategoriaEnum.OBRIG_CLASSIFICACAO])
@@ -148,6 +152,11 @@ export default function EditarObrigacaoPage() {
       const detalhe = await obrigacaoClient.buscarDetalhePorId(parsedId);
       setFormData(mapDetalheToFormData(detalhe));
       setExistingAnexos(detalhe.anexos || []);
+      if (detalhe?.obrigacao?.flAprovarConferencia === 'S') {
+        setConferenciaAprovada(true);
+      } else {
+        setConferenciaAprovada(false);
+      }
     } catch (error) {
       console.error('Erro ao carregar detalhes da obrigação:', error);
       toast.error('Não foi possível carregar a obrigação.');
@@ -181,10 +190,7 @@ export default function EditarObrigacaoPage() {
         const dataInicio = new Date(updated.dtInicio);
         const dataTermino = new Date(updated.dtTermino);
 
-        if (dataTermino <= dataInicio) {
-          toast.error('A data de término deve ser maior que a data de início.');
-          updated.dtTermino = prev.dtTermino;
-        } else {
+        if (dataTermino > dataInicio) {
           const diferencaEmMs = dataTermino.getTime() - dataInicio.getTime();
           const diferencaEmDias = Math.round(diferencaEmMs / (1000 * 60 * 60 * 24));
 
@@ -273,16 +279,26 @@ export default function EditarObrigacaoPage() {
     }
   }, []);
 
-  const handleRemoveAnexo = useCallback(async (anexo: AnexoResponse) => {
+  const handleRemoveAnexoClick = useCallback((anexo: AnexoResponse) => {
+    setAnexoToDelete(anexo);
+    setShowDeleteAnexoDialog(true);
+  }, []);
+
+  const handleConfirmDeleteAnexo = useCallback(async () => {
+    if (!anexoToDelete) return;
+
     try {
-      await anexosClient.deletar(anexo.idAnexo);
-      setExistingAnexos((prev) => prev.filter((item) => item.idAnexo !== anexo.idAnexo));
+      await anexosClient.deletar(anexoToDelete.idAnexo);
       toast.success('Anexo removido com sucesso.');
+      // Recarrega os dados após a exclusão
+      await carregarDetalhes();
     } catch (error) {
       console.error('Erro ao remover anexo:', error);
       toast.error('Não foi possível remover o anexo.');
+    } finally {
+      setAnexoToDelete(null);
     }
-  }, []);
+  }, [anexoToDelete, carregarDetalhes]);
 
   const handleSave = useCallback(async () => {
     if (!formData?.idSolicitacao) {
@@ -327,6 +343,7 @@ export default function EditarObrigacaoPage() {
                 tipoConteudo: arquivo.tipoConteudo || 'application/octet-stream',
                 tpResponsavel: arquivo.tpResponsavel ?? TipoResponsavelAnexoEnum.A,
                 conteudoArquivo: arquivo.conteudoArquivo,
+                tpDocumento: TipoDocumentoAnexoEnum.C,
               }));
             }),
           );
@@ -346,6 +363,11 @@ export default function EditarObrigacaoPage() {
 
       const arquivos: ArquivoDTO[] = [...arquivosExistentes, ...arquivosNovos];
 
+      // Verificar se a classificação é Condicionada
+      const tipos = await tiposClient.buscarPorCategorias([CategoriaEnum.OBRIG_CLASSIFICACAO]);
+      const condicionada = tipos.find((tipo) => tipo.cdTipo === TipoEnum.CONDICIONADA);
+      const isCondicionada = formData.idTipoClassificacao === condicionada?.idTipo;
+
       const payload: ObrigacaoRequest = {
         idSolicitacao: formData.idSolicitacao,
         dsTarefa: formData.dsTarefa || '',
@@ -355,7 +377,7 @@ export default function EditarObrigacaoPage() {
         idTipoCriticidade: formData.idTipoCriticidade || null,
         idTipoNatureza: formData.idTipoNatureza || null,
         dsObservacao: formData.dsObservacao || null,
-        idObrigacaoPrincipal: formData.idObrigacaoPrincipal || null,
+        idObrigacaoPrincipal: isCondicionada ? (formData.idObrigacaoPrincipal || null) : null,
         idsAreasCondicionantes: formData.idsAreasCondicionantes || [],
         idAreaAtribuida: formData.idAreaAtribuida || null,
         idTema: formData.idTema || null,
@@ -395,6 +417,7 @@ export default function EditarObrigacaoPage() {
             formData={formData}
             updateFormData={updateFormData}
             statusOptions={statusOptions}
+            disabled={conferenciaAprovada}
           />
         );
       case 'temas':
@@ -402,6 +425,7 @@ export default function EditarObrigacaoPage() {
           <Step2Obrigacao
             formData={formData}
             updateFormData={updateFormData}
+            disabled={conferenciaAprovada}
           />
         );
       case 'prazos':
@@ -409,6 +433,7 @@ export default function EditarObrigacaoPage() {
           <Step3Obrigacao
             formData={formData}
             updateFormData={updateFormData}
+            disabled={conferenciaAprovada}
           />
         );
       case 'anexos':
@@ -420,8 +445,9 @@ export default function EditarObrigacaoPage() {
             onAnexosChange={setNovosAnexos}
             existingAnexos={existingAnexos}
             onDownloadExisting={handleDownloadAnexo}
-            onRemoveExisting={handleRemoveAnexo}
+            onRemoveExisting={handleRemoveAnexoClick}
             existingAnexosLoading={anexosLoading}
+            disabled={conferenciaAprovada}
           />
         );
       case 'vinculos':
@@ -429,6 +455,7 @@ export default function EditarObrigacaoPage() {
           <Step5Obrigacao
             formData={formData}
             updateFormData={updateFormData}
+            disabled={conferenciaAprovada}
           />
         );
       default:
@@ -515,14 +542,31 @@ export default function EditarObrigacaoPage() {
           </Button>
           <Button
             onClick={handleSave}
-            disabled={saving || !tabValido}
+            disabled={saving || !tabValido || conferenciaAprovada}
             className="flex items-center gap-2 px-6"
+            tooltip={conferenciaAprovada ? 'A conferência já foi aprovada. Não é possível editar a obrigação.' : ''}
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             {saving ? 'Salvando...' : 'Salvar alterações'}
           </Button>
         </div>
       </div>
+
+      <ConfirmationDialog
+        open={showDeleteAnexoDialog}
+        onOpenChange={(open) => {
+          setShowDeleteAnexoDialog(open);
+          if (!open) {
+            setAnexoToDelete(null);
+          }
+        }}
+        title="Excluir arquivo"
+        description="Deseja excluir arquivo?"
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        onConfirm={handleConfirmDeleteAnexo}
+        variant="destructive"
+      />
     </div>
   );
 }

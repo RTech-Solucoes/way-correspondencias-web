@@ -16,12 +16,14 @@ interface Step1ObrigacaoProps {
   formData: ObrigacaoFormData;
   updateFormData: (data: Partial<ObrigacaoFormData>) => void;
   statusOptions?: StatusSolicitacaoResponse[];
+  disabled?: boolean;
 }
 
 export function Step1Obrigacao({
   formData,
   updateFormData,
   statusOptions = [],
+  disabled = false,
 }: Step1ObrigacaoProps) {
 
     const [buscaObrigacao, setBuscaObrigacao] = useState<string>('');
@@ -121,7 +123,6 @@ export function Step1Obrigacao({
       const t = setTimeout(carregar, 1000);
       return () => { cancelado = true; clearTimeout(t); };
     }, [buscaObrigacao, isCondicionada]);
-    
     return (
       <div className="space-y-6 ">
         <div className="flex column gap-4">
@@ -135,6 +136,7 @@ export function Step1Obrigacao({
                     required
                     rows={4}
                     className="resize-none"
+                    disabled={disabled}
                 />
             </div>
         </div>
@@ -147,7 +149,7 @@ export function Step1Obrigacao({
                     onValueChange={(value) => {
                       updateFormData({ idStatusSolicitacao: parseInt(value, 10) });
                     }}
-                    disabled={true}
+                    disabled={disabled || true}
                 >
                   <SelectTrigger id="idStatusSolicitacao">
                     <SelectValue placeholder={loadingStatuses ? 'Carregando...' : 'Selecione'} />
@@ -171,7 +173,7 @@ export function Step1Obrigacao({
                             idTipoClassificacao: parseInt(value)
                         });
                     }}
-                    disabled={loadingTipos}
+                    disabled={disabled || loadingTipos}
                 >
                 <SelectTrigger id="idTipoClassificacao">
                 <SelectValue placeholder={loadingTipos ? 'Carregando...' : 'Selecione'} />
@@ -195,6 +197,7 @@ export function Step1Obrigacao({
                       onValueChange={(value) => updateFormData({ 
                           idObrigacaoPrincipal: value === 'none' ? null : parseInt(value)
                       })}
+                      disabled={disabled}
                     >
                       <SelectTrigger id="idObrigacaoPrincipal">
                         <SelectValue placeholder="Buscar e selecionar a obrigação principal" />
@@ -209,6 +212,7 @@ export function Step1Obrigacao({
                             onKeyDown={(e) => e.stopPropagation()}
                             onClick={(e) => e.stopPropagation()}
                             onMouseDown={(e) => e.stopPropagation()}
+                            disabled={disabled}
                           />
                             </div>
                         <SelectItem value="none">
@@ -240,7 +244,7 @@ export function Step1Obrigacao({
                             idTipoCriticidade: parseInt(value)
                         });
                     }}
-                    disabled={loadingTipos}
+                    disabled={disabled || loadingTipos}
                 >
                     <SelectTrigger id="idTipoCriticidade">
                         <SelectValue placeholder={loadingTipos ? 'Carregando...' : 'Selecione'} />
@@ -264,7 +268,7 @@ export function Step1Obrigacao({
                             idTipoNatureza: parseInt(value)
                         });
                     }}
-                    disabled={loadingTipos}
+                    disabled={disabled || loadingTipos}
                 >
                 <SelectTrigger id="idTipoNatureza">
                 <SelectValue placeholder={loadingTipos ? 'Carregando...' : 'Selecione'} />
@@ -289,6 +293,7 @@ export function Step1Obrigacao({
                 onChange={(e) => updateFormData({ dsObservacao: e.target.value })}
                 rows={6}
                 className="resize-none"
+                disabled={disabled}
             />
         </div>
     </div>

@@ -13,11 +13,12 @@ import { CalendarIcon, ArrowClockwiseIcon } from '@phosphor-icons/react';
 interface Step3ObrigacaoProps {
   formData: ObrigacaoFormData;
   updateFormData: (data: Partial<ObrigacaoFormData>) => void;
+  disabled?: boolean;
 }
 
 type TipoFrequencia = 'unica' | 'recorrente' | null;
 
-export function Step3Obrigacao({ formData, updateFormData }: Step3ObrigacaoProps) {
+export function Step3Obrigacao({ formData, updateFormData, disabled = false }: Step3ObrigacaoProps) {
 
   const [periodicidadesSelecionadas, setPeriodicidadesSelecionadas] = useState<TipoResponse[]>([]);
   const [tipoUnica, setTipoUnica] = useState<TipoResponse | null>(null);
@@ -115,12 +116,16 @@ export function Step3Obrigacao({ formData, updateFormData }: Step3ObrigacaoProps
         <Label>Qual será a frequência da obrigação?</Label>
         <div className="grid grid-cols-2 gap-4">
           <div
-            onClick={() => handleFrequenciaChange('unica')}
+            onClick={() => !disabled && handleFrequenciaChange('unica')}
             className={`
-              border-2 rounded-lg p-4 cursor-pointer transition-all
-              ${tipoFrequencia === 'unica' 
+              border-2 rounded-lg p-4 transition-all
+              ${disabled 
+                ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-50' 
+                : 'cursor-pointer border-gray-200 hover:border-gray-300'
+              }
+              ${!disabled && tipoFrequencia === 'unica' 
                 ? 'border-blue-500 bg-blue-50' 
-                : 'border-gray-200 hover:border-gray-300'
+                : ''
               }
             `}
           >
@@ -149,12 +154,16 @@ export function Step3Obrigacao({ formData, updateFormData }: Step3ObrigacaoProps
           </div>
 
           <div
-            onClick={() => handleFrequenciaChange('recorrente')}
+            onClick={() => !disabled && handleFrequenciaChange('recorrente')}
             className={`
-              border-2 rounded-lg p-4 cursor-pointer transition-all
-              ${tipoFrequencia === 'recorrente' 
+              border-2 rounded-lg p-4 transition-all
+              ${disabled 
+                ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-50' 
+                : 'cursor-pointer border-gray-200 hover:border-gray-300'
+              }
+              ${!disabled && tipoFrequencia === 'recorrente' 
                 ? 'border-blue-500 bg-blue-50' 
-                : 'border-gray-200 hover:border-gray-300'
+                : ''
               }
             `}
           >
@@ -208,7 +217,7 @@ export function Step3Obrigacao({ formData, updateFormData }: Step3ObrigacaoProps
                       idTipoPeriodicidade: parseInt(value)
                     });
                   }}
-                  disabled={loadingTipos}
+                  disabled={disabled || loadingTipos}
                 >
                   <SelectTrigger id="idTipoPeriodicidade">
                     <SelectValue placeholder={loadingTipos ? 'Carregando...' : 'Selecione'} />
@@ -232,6 +241,7 @@ export function Step3Obrigacao({ formData, updateFormData }: Step3ObrigacaoProps
                   type="date"
                   value={formData.dtInicio || ''}
                   onChange={(e) => updateFormData({ dtInicio: e.target.value })}
+                  disabled={disabled}
                 />
               </div>
 
@@ -243,6 +253,7 @@ export function Step3Obrigacao({ formData, updateFormData }: Step3ObrigacaoProps
                   value={formData.dtTermino || ''}
                   onChange={(e) => updateFormData({ dtTermino: e.target.value })}
                   className={erroDataTermino ? 'border-red-500' : ''}
+                  disabled={disabled}
                 />
                 {erroDataTermino && (
                   <p className="text-sm text-red-500 mt-1">{erroDataTermino}</p>
@@ -254,6 +265,7 @@ export function Step3Obrigacao({ formData, updateFormData }: Step3ObrigacaoProps
                 <Input
                   id="dtLimite"
                   type="date"
+                  disabled={disabled}
                   value={formData.dtLimite || ''}
                   onChange={(e) => updateFormData({ dtLimite: e.target.value })}
                   className={erroDataLimite ? 'border-red-500' : ''}

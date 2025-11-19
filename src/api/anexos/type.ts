@@ -1,4 +1,5 @@
 import { BaseResponse } from "../solicitacoes";
+import { ResponsavelResponse } from "../responsaveis/types";
 
 export type StatusAtivo = 'ATIVO' | 'INATIVO';
 
@@ -10,6 +11,8 @@ export interface AnexoResponse extends BaseResponse {
   tpDocumento?: TipoDocumentoAnexoEnum | string;
   dsCaminho: string;
   tpResponsavel: TipoResponsavelAnexoEnum | string;
+  nmUsuario?: string | null;
+  responsavel?: ResponsavelResponse | null;
   flAtivo: StatusAtivo;
 }
 

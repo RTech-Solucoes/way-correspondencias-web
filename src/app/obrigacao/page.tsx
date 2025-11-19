@@ -36,6 +36,8 @@ import { ImportObrigacoesModal } from "@/components/obrigacoes/ImportObrigacoesM
 import TimeProgress from "@/components/ui/time-progress";
 import obrigacaoClient from "@/api/obrigacao/client";
 import { toast } from "sonner";
+import { useUserGestao } from "@/hooks/use-user-gestao";
+import { perfilUtil } from "@/api/perfis/types";
 
 function ObrigacoesContent() {
   const {
@@ -62,6 +64,21 @@ function ObrigacoesContent() {
   const [periodicidades, setPeriodicidades] = useState<TipoResponse[]>([]);
   const [showImportModal, setShowImportModal] = useState(false);
   const router = useRouter();
+  const { idPerfil } = useUserGestao();
+
+  const isAdminOrGestor = useMemo(() => {
+    return idPerfil === perfilUtil.ADMINISTRADOR ||
+      idPerfil === perfilUtil.GESTOR_DO_SISTEMA ||
+      idPerfil === perfilUtil.VALIDADOR_ASSINANTE ||
+      idPerfil === perfilUtil.TECNICO_SUPORTE;
+  }, [idPerfil]);
+
+  function getProgressEndDate(obrigacao: ObrigacaoResponse) {
+    if (isAdminOrGestor) {
+      return obrigacao.dtLimite || null;
+    }
+    return obrigacao.dtTermino || null;
+  }
 
   useEffect(() => {
     const carregarDados = async () => {
@@ -321,14 +338,19 @@ function ObrigacoesContent() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>ID</TableHead>
+              <TableHead className="min-w-[150px]">ID</TableHead>
               <TableHead className="min-w-[250px]">Tarefa</TableHead>
               <TableHead>Tema</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Atribuído a</TableHead>
               <TableHead>Progresso</TableHead>
               <TableHead>Data de Término</TableHead>
-              <TableHead>Data Limite</TableHead>
+              {isAdminOrGestor && (
+                <TableHead>Data Limite</TableHead>
+              )}
+              {isAdminOrGestor && (
+                <TableHead className="min-w-[150px] text-center">Enviado para Áreas</TableHead>
+              )}
               <TableHead className="w-[100px] text-center sticky right-0 bg-white z-10 shadow-sm">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -348,7 +370,7 @@ function ObrigacoesContent() {
             ) : (
               obrigacoes.map((obrigacao) => (
                 <TableRow key={obrigacao.idSolicitacao}>
-                  <TableCell className="font-medium">{obrigacao.cdIdentificacao || '-'}</TableCell>
+                  <TableCell className="font-medium min-w-[150px]">{obrigacao.cdIdentificacao || '-'}</TableCell>
                   <TableCell className="min-w-[250px]">
                     <div className="line-clamp-4" title={obrigacao.dsTarefa || undefined}>
                       {obrigacao.dsTarefa || '-'}
@@ -382,31 +404,41 @@ function ObrigacoesContent() {
                     }
                   </TableCell>
                   <TableCell>
-                    {obrigacao.dtInicio && obrigacao.dtLimite ? (
-                      <TimeProgress
-                        start={
-                          obrigacao.dtInicio
-                            ? obrigacao.dtInicio.includes('T')
-                              ? obrigacao.dtInicio
-                              : `${obrigacao.dtInicio}T00:00:00`
-                            : null
-                        }
-                        end={
-                          obrigacao.dtLimite
-                            ? obrigacao.dtLimite.includes('T')
-                              ? obrigacao.dtLimite
-                              : `${obrigacao.dtLimite}T23:59:59`
-                            : null
-                        }
-                        finishedAt={obrigacao.dtConclusao}
-                        now={new Date().toISOString()}
-                        statusLabel={obrigacao.statusSolicitacao?.nmStatus}
-                      />
-                    ) : (
-                      <span className="text-gray-400 text-sm">
-                        Preencha corretamente as datas de início e limite para exibir o progresso
-                      </span>
-                    )}
+                    {(() => {
+                      const startDate = obrigacao.dtInicio;
+                      const endDate = getProgressEndDate(obrigacao);
+                      const hasRequiredDates = startDate && endDate;
+
+                      if (!hasRequiredDates) {
+                        return (
+                          <span className="text-gray-400 text-sm">
+                            Preencha corretamente as datas de início e fim para exibir o progresso
+                          </span>
+                        );
+                      }
+
+                      return (
+                        <TimeProgress
+                          start={
+                            startDate
+                              ? startDate.includes('T')
+                                ? startDate
+                                : `${startDate}T00:00:00`
+                              : null
+                          }
+                          end={
+                            endDate
+                              ? endDate.includes('T')
+                                ? endDate
+                                : `${endDate}T23:59:59`
+                              : null
+                          }
+                          finishedAt={obrigacao.dtConclusao}
+                          now={new Date().toISOString()}
+                          statusLabel={obrigacao.statusSolicitacao?.nmStatus}
+                        />
+                      );
+                    })()}
                   </TableCell>
                   <TableCell>
                     {obrigacao.dtTermino 
@@ -414,12 +446,19 @@ function ObrigacoesContent() {
                       : '-'
                     }
                   </TableCell>
-                  <TableCell>
-                    {obrigacao.dtLimite 
-                      ?  formatDateBr(obrigacao.dtLimite)
-                      : '-'
-                    }
-                  </TableCell>
+                  {isAdminOrGestor && (
+                    <TableCell>
+                      {obrigacao.dtLimite 
+                        ? formatDateBr(obrigacao.dtLimite)
+                        : '-'
+                      }
+                    </TableCell>
+                  )}
+                  {isAdminOrGestor && (
+                    <TableCell className="text-center">
+                      {obrigacao.flEnviandoArea === 'S' ? 'Sim' : 'Não'}
+                    </TableCell>
+                  )}
                   <TableCell className="text-center sticky right-0 bg-white z-10 shadow-sm">
                     <div className="flex items-center justify-center">
                       <ObrigacaoAcoesMenu

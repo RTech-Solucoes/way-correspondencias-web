@@ -28,6 +28,18 @@ const CONCLUIDO_STYLE: ObrigacaoStatusStyle = {
   textColor: '#ffffff',
 };
 
+const PENDENTE_STYLE: ObrigacaoStatusStyle = {
+  variant: 'destructive',
+  backgroundColor: '#dc2626',
+  textColor: '#ffffff',
+};
+
+const ATRASADA_STYLE: ObrigacaoStatusStyle = {
+  variant: 'destructive',
+  backgroundColor: '#dc2626',
+  textColor: '#ffffff',
+};
+
 export const getObrigacaoStatusStyle = (
   statusId?: string | number | null,
   statusName?: string | null,
@@ -45,6 +57,22 @@ export const getObrigacaoStatusStyle = (
     normalizedName.includes(StatusObrigacao.NAO_INICIADO)
   ) {
     return NAO_INICIADO_STYLE;
+  }
+
+  const pendenteStatus = statusObrigacaoList.find((s) => s.nmStatus === StatusObrigacao.PENDENTE);
+  if (
+    (parsedStatusId && pendenteStatus && parsedStatusId === pendenteStatus.id) ||
+    normalizedName.includes(StatusObrigacao.PENDENTE)
+  ) {
+    return PENDENTE_STYLE;
+  }
+
+  const atrasadaStatus = statusObrigacaoList.find((s) => s.nmStatus === StatusObrigacao.ATRASADA);
+  if (
+    (parsedStatusId && atrasadaStatus && parsedStatusId === atrasadaStatus.id) ||
+    normalizedName.includes(StatusObrigacao.ATRASADA)
+  ) {
+    return ATRASADA_STYLE;
   }
 
   const concluidoStatus = statusObrigacaoList.find((s) => s.nmStatus === StatusObrigacao.CONCLUIDO);

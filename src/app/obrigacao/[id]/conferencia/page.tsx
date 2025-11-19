@@ -12,7 +12,7 @@ import { base64ToUint8Array, saveBlob } from '@/utils/utils';
 import { toast } from 'sonner';
 import { AnexoResponse, TipoObjetoAnexoEnum, ArquivoDTO } from '@/api/anexos/type';
 import anexosClient from '@/api/anexos/client';
-import { StatusObrigacao, statusObrigacaoLabels } from '@/api/status-obrigacao/types';
+import { StatusObrigacao, statusObrigacaoLabels, statusListObrigacao } from '@/api/status-obrigacao/types';
 import { TipoEnum } from '@/api/tipos/types';
 import { getObrigacaoStatusStyle } from '@/utils/obrigacoes/status';
 import { ConferenciaStepDados } from '@/components/obrigacoes/conferencia/ConferenciaStepDados';
@@ -24,6 +24,10 @@ import { ConferenciaSidebar } from '@/components/obrigacoes/conferencia/sidebarR
 import { useUserGestao } from '@/hooks/use-user-gestao';
 import { AnexoObrigacaoModal } from '@/components/obrigacoes/conferencia/AnexoObrigacaoModal';
 import { TipoDocumentoAnexoEnum } from '@/api/anexos/type';
+import tramitacoesClient from '@/api/tramitacoes/client';
+import { authClient } from '@/api/auth/client';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { perfilUtil } from '@/api/perfis/types';
 
 type TabKey = 'dados' | 'temas' | 'prazos' | 'anexos' | 'vinculos';
 const tabs: { key: TabKey; label: string }[] = [
@@ -44,8 +48,12 @@ export default function ConferenciaObrigacaoPage() {
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState<number | null>(null);
   const [showAnexarEvidenciaModal, setShowAnexarEvidenciaModal] = useState(false);
+  const [showAnexarCorrespondenciaModal, setShowAnexarCorrespondenciaModal] = useState(false);
+  const [showSolicitarAjustesDialog, setShowSolicitarAjustesDialog] = useState(false);
+  const [showEnviarRegulatorioDialog, setShowEnviarRegulatorioDialog] = useState(false);
+  const [showAprovarConferenciaDialog, setShowAprovarConferenciaDialog] = useState(false);
+  const [conferenciaAprovada, setConferenciaAprovada] = useState(false);
 
-  // Validação e parse do ID
   const parsedId = useMemo(() => {
     if (!id) return null;
     const numId = Number(id);
@@ -64,6 +72,11 @@ export default function ConferenciaObrigacaoPage() {
         setLoading(true);
         const response = await obrigacaoClient.buscarDetalhePorId(parsedId);
         setDetalhe(response);
+        if (response?.obrigacao?.flAprovarConferencia === 'S') {
+          setConferenciaAprovada(true);
+        } else {
+          setConferenciaAprovada(false);
+        }
       } catch (error) {
         console.error('Erro ao carregar a obrigação:', error);
         toast.error('Não foi possível carregar a obrigação.');
@@ -94,6 +107,11 @@ export default function ConferenciaObrigacaoPage() {
     try {
       const response = await obrigacaoClient.buscarDetalhePorId(parsedId);
       setDetalhe(response);
+      if (response?.obrigacao?.flAprovarConferencia === 'S') {
+        setConferenciaAprovada(true);
+      } else {
+        setConferenciaAprovada(false);
+      }
     } catch (error) {
       console.error('Erro ao recarregar detalhes da obrigação:', error);
       toast.error('Erro ao recarregar detalhes da obrigação.');
@@ -119,7 +137,6 @@ export default function ConferenciaObrigacaoPage() {
         
         const arquivos = await anexosClient.download(idObjeto, TipoObjetoAnexoEnum.O, anexo.nmArquivo);
         
-        // Garantir que arquivos seja sempre um array
         const arquivosArray: ArquivoDTO[] = Array.isArray(arquivos) 
           ? arquivos 
           : arquivos && typeof arquivos === 'object' && Object.keys(arquivos).length > 0
@@ -156,6 +173,144 @@ export default function ConferenciaObrigacaoPage() {
     },
     [obrigacao],
   );
+
+  const handleEnviarParaAnaliseClick = useCallback(() => {
+    setShowEnviarRegulatorioDialog(true);
+  }, []);
+
+  const isPerfilPermitidoEnviarReg = useMemo(() => {
+    return [perfilUtil.EXECUTOR_AVANCADO, perfilUtil.EXECUTOR, perfilUtil.EXECUTOR_RESTRITO].includes(idPerfil ?? 0);
+  }, [idPerfil]);
+
+  const confirmarEnviarParaAnalise = useCallback(async () => {
+    if (!obrigacao?.idSolicitacao || !obrigacao?.statusSolicitacao?.idStatusSolicitacao) {
+      toast.error('Dados da obrigação incompletos.');
+      return;
+    }
+    
+    const idResponsavelTecnico = authClient.getUserIdResponsavelFromToken();
+    if (!idResponsavelTecnico) {
+      toast.error('Usuário não autenticado.');
+      return;
+    }
+    
+    try {
+      await tramitacoesClient.tramitarViaFluxo({
+        idSolicitacao: obrigacao.idSolicitacao,
+        dsObservacao: 'Obrigacao enviada para Em Validação (Regulatório)',
+      });
+      
+      await obrigacaoClient.atualizar(obrigacao.idSolicitacao, {
+        idResponsavelTecnico: idResponsavelTecnico,
+      });
+      
+      await reloadDetalhe();
+      toast.success('Evidência de cumprimento enviada para análise do regulatório');
+    } catch (error) {
+        console.error('Erro ao enviar obrigação para análise do regulatório:', error);
+        toast.error('Erro ao enviar obrigação para análise do regulatório.');
+      }
+    },
+    [obrigacao?.idSolicitacao, obrigacao?.statusSolicitacao?.idStatusSolicitacao, obrigacao?.dsTarefa, reloadDetalhe],
+  );
+
+  const handleSolicitarAjustesClick = useCallback(() => {
+    setShowSolicitarAjustesDialog(true);
+  }, []);
+
+  const confirmarSolicitarAjustes = useCallback(async () => {
+    if (!obrigacao?.idSolicitacao) {
+      toast.error('Dados da obrigação incompletos.');
+      return;
+    }
+    
+    try {
+      await tramitacoesClient.tramitarViaFluxo({
+        idSolicitacao: obrigacao.idSolicitacao,
+        dsObservacao: 'Obrigação solicitada de ajustes. Volta para área atribuída',
+        flAprovado: 'N',
+      });
+      
+      await reloadDetalhe();
+      toast.success('Obrigação enviada para ajustes da área atribuída.');
+    } catch (error) {
+      console.error('Erro ao solicitar ajustes:', error);
+      toast.error('Erro ao solicitar ajustes.');
+    }
+  }, [obrigacao?.idSolicitacao, reloadDetalhe]);
+
+  const handleAprovarConferenciaClick = useCallback(() => {
+    setShowAprovarConferenciaDialog(true);
+  }, []);
+
+  const confirmarAprovarConferencia = useCallback(async () => {
+    if (!obrigacao?.idSolicitacao || !obrigacao?.dsTarefa) {
+      toast.error('Dados da obrigação incompletos.');
+      return;
+    }
+    
+    try {
+      await obrigacaoClient.atualizar(obrigacao.idSolicitacao, {
+        dsTarefa: obrigacao.dsTarefa,
+        flAprovarConferencia: 'S',
+      });
+      
+      setConferenciaAprovada(true);
+      await reloadDetalhe();
+      toast.success('Conferência aprovada com sucesso!');
+    } catch (error) {
+      console.error('Erro ao aprovar conferência:', error);
+      toast.error('Erro ao aprovar conferência.');
+    }
+  }, [obrigacao?.idSolicitacao, obrigacao?.dsTarefa, reloadDetalhe]);
+
+  const isStatusEmAndamento = useMemo(() => {
+    return obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.EM_ANDAMENTO.id;
+  }, [obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
+  const isStatusEmValidacaoRegulatorio = useMemo(() => {
+    return obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.EM_VALIDACAO_REGULATORIO.id;
+  }, [obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
+  const temEvidenciaCumprimento = useMemo(() => {
+    return anexos.some(anexo => 
+      anexo.tpDocumento === TipoDocumentoAnexoEnum.E || 
+      anexo.tpDocumento === TipoDocumentoAnexoEnum.L
+    );
+  }, [anexos]);
+
+  const tooltipEnviarRegulatorio = useMemo(() => {
+    if (!isPerfilPermitidoEnviarReg) {
+      return 'Você não tem permissão para enviar para análise do regulatório.';
+    }
+    if (!isStatusEmAndamento) {
+      return 'Só é possível enviar para análise do regulatório quando o status for "Em Andamento".';
+    }
+    if (!temEvidenciaCumprimento) {
+      return 'É necessário anexar pelo menos uma evidência de cumprimento (arquivo ou link) antes de enviar para análise do regulatório.';
+    }
+    return '';
+  }, [isPerfilPermitidoEnviarReg, isStatusEmAndamento, temEvidenciaCumprimento]);
+
+  const tooltipStatusValidacaoRegulatorio = useMemo(() => {
+    if (conferenciaAprovada) {
+      return 'A conferência já foi aprovada.';
+    }
+    if (!isStatusEmValidacaoRegulatorio) {
+      return 'Só é possível realizar esta ação quando o status for "Em Validação (Regulatório)".';
+    }
+    return '';
+  }, [isStatusEmValidacaoRegulatorio, conferenciaAprovada]);
+
+  const tooltipAnexarCorrespondencia = useMemo(() => {
+    if (!conferenciaAprovada) {
+      return 'É necessário aprovar a conferência antes de anexar correspondência.';
+    }
+    if (!isStatusEmValidacaoRegulatorio) {
+      return 'Apenas é possível anexar correspondência quando o status for "Em Validação (Regulatório)".';
+    }
+    return '';
+  }, [conferenciaAprovada, isStatusEmValidacaoRegulatorio]);
 
   if (loading) {
     return (
@@ -303,24 +458,30 @@ export default function ConferenciaObrigacaoPage() {
             <>
               <Button
                 type="button"
-                className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800"
-                onClick={() => toast.info('Funcionalidade de anexar correspondência em desenvolvimento.')}
+                className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => setShowAnexarCorrespondenciaModal(true)}
+                disabled={!isStatusEmValidacaoRegulatorio || !conferenciaAprovada}
+                tooltip={tooltipAnexarCorrespondencia}
               >
                 <Paperclip className="h-4 w-4" />
                 Anexar correspondência
               </Button>
               <Button
                 type="button"
-                className="flex items-center gap-2 rounded-full bg-orange-500 px-6 py-3 text-sm font-semibold text-white hover:bg-orange-600"
-                onClick={() => toast.info('Solicitação de ajustes disponível em breve.')}
+                className="flex items-center gap-2 rounded-full bg-orange-500 px-6 py-3 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleSolicitarAjustesClick}
+                disabled={!isStatusEmValidacaoRegulatorio || conferenciaAprovada}
+                tooltip={tooltipStatusValidacaoRegulatorio}
               >
                 <MessageSquare className="h-4 w-4" />
                 Solicitar ajustes
               </Button>
               <Button
                 type="button"
-                className="flex items-center gap-2 rounded-full bg-blue-500 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-600"
-                onClick={() => toast.success('Conferência aprovada!')}
+                className="flex items-center gap-2 rounded-full bg-blue-500 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleAprovarConferenciaClick}
+                disabled={!isStatusEmValidacaoRegulatorio || conferenciaAprovada}
+                tooltip={tooltipStatusValidacaoRegulatorio}
               >
                 <CheckCircle2 className="h-4 w-4" />
                 Aprovar conferência
@@ -330,16 +491,20 @@ export default function ConferenciaObrigacaoPage() {
             <>
               <Button
                 type="button"
-                className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800"
+                className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={() => setShowAnexarEvidenciaModal(true)}
+                disabled={!isStatusEmAndamento}
+                tooltip={!isStatusEmAndamento ? 'Apenas é possível anexar evidência de cumprimento quando o status for "Em Andamento".' : ''}
               >
                 <Paperclip className="h-4 w-4" />
                 Anexar evidência de cumprimento
               </Button>
               <Button
                 type="button"
-                className="flex items-center gap-2 rounded-full bg-blue-500 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-600"
-                onClick={() => toast.info('Funcionalidade de enviar para análise do regulatório em desenvolvimento.')}
+                className="flex items-center gap-2 rounded-full bg-blue-500 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleEnviarParaAnaliseClick}
+                disabled={!isStatusEmAndamento || !isPerfilPermitidoEnviarReg || !temEvidenciaCumprimento}
+                tooltip={tooltipEnviarRegulatorio}
               >
                 <CheckCircle2 className="h-4 w-4" />
                 Enviar para análise do regulatório
@@ -350,21 +515,66 @@ export default function ConferenciaObrigacaoPage() {
       </footer>
 
       {obrigacao?.idSolicitacao && (
-        <AnexoObrigacaoModal
-          open={showAnexarEvidenciaModal}
-          onClose={() => setShowAnexarEvidenciaModal(false)}
-          title="Anexar arquivo de evidência de cumprimento"
-          tpDocumento={TipoDocumentoAnexoEnum.E}
-          idObrigacao={obrigacao.idSolicitacao}
-          idPerfil={idPerfil ?? undefined}
-          onSuccess={async () => {
-            await reloadDetalhe();
-            toast.success('Evidência de cumprimento anexada com sucesso!');
-          }}
-        />
+        <>
+          <AnexoObrigacaoModal
+            open={showAnexarEvidenciaModal}
+            onClose={() => setShowAnexarEvidenciaModal(false)}
+            title="Anexar arquivo de evidência de cumprimento"
+            tpDocumento={TipoDocumentoAnexoEnum.E}
+            idObrigacao={obrigacao.idSolicitacao}
+            idPerfil={idPerfil ?? undefined}
+            onSuccess={async () => {
+              await reloadDetalhe();
+              toast.success('Evidência de cumprimento anexada com sucesso!');
+            }}
+          />
+          <AnexoObrigacaoModal
+            open={showAnexarCorrespondenciaModal}
+            onClose={() => setShowAnexarCorrespondenciaModal(false)}
+            title="Anexar correspondência"
+            tpDocumento={TipoDocumentoAnexoEnum.R}
+            idObrigacao={obrigacao.idSolicitacao}
+            idPerfil={idPerfil ?? undefined}
+            onSuccess={async () => {
+              await reloadDetalhe();
+              toast.success('Correspondência anexada com sucesso!');
+            }}
+          />
+        </>
       )}
+
+      <ConfirmationDialog
+        open={showSolicitarAjustesDialog}
+        onOpenChange={setShowSolicitarAjustesDialog}
+        title="Solicitar ajustes"
+        description="Tem certeza que deseja solicitar ajustes para esta obrigação?"
+        confirmText="Sim, solicitar ajustes"
+        cancelText="Cancelar"
+        onConfirm={confirmarSolicitarAjustes}
+        variant="default"
+      />
+
+      <ConfirmationDialog
+        open={showEnviarRegulatorioDialog}
+        onOpenChange={setShowEnviarRegulatorioDialog}
+        title="Enviar para análise do regulatório"
+        description="Tem certeza que deseja enviar esta obrigação para análise do regulatório?"
+        confirmText="Sim, enviar"
+        cancelText="Cancelar"
+        onConfirm={confirmarEnviarParaAnalise}
+        variant="default"
+      />
+
+      <ConfirmationDialog
+        open={showAprovarConferenciaDialog}
+        onOpenChange={setShowAprovarConferenciaDialog}
+        title="Aprovar conferência"
+        description="Tem certeza que deseja aprovar a conferência dessa obrigação?"
+        confirmText="Sim, aprovar"
+        cancelText="Não"
+        onConfirm={confirmarAprovarConferencia}
+        variant="default"
+      />
     </div>
   );
 }
-
-
