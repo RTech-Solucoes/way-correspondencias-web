@@ -1,11 +1,13 @@
 'use client';
 
 import { Badge } from '@/components/ui/badge';
+import { ExternalLink } from 'lucide-react';
 import type { ObrigacaoDetalheResponse } from '@/api/obrigacao/types';
 import type { ReactNode } from 'react';
 import type { ObrigacaoStatusStyle } from '@/utils/obrigacoes/status';
 import { getCriticidadeBadgeClasses } from './utils';
 import { ConferenciaInfoRow } from './ConferenciaInfoRow';
+import { TipoEnum } from '@/api/tipos/types';
 
 interface ConferenciaStepDadosProps {
   obrigacao: ObrigacaoDetalheResponse['obrigacao'];
@@ -29,6 +31,23 @@ const InfoGridRow = ({ items, border = true }: { items: InfoGridItem[]; border?:
       </div>
     ))}
   </div>
+);
+
+const ObrigacaoCard = ({
+  cdIdentificacao,
+  onClick,
+}: {
+  cdIdentificacao: string;
+  onClick: () => void;
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="group flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600"
+  >
+    <span>{cdIdentificacao}</span>
+    <ExternalLink className="h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-100" />
+  </button>
 );
 
 export function ConferenciaStepDados({ obrigacao, statusLabel, statusStyle }: ConferenciaStepDadosProps) {
@@ -71,10 +90,35 @@ export function ConferenciaStepDados({ obrigacao, statusLabel, statusStyle }: Co
         />
         <InfoGridRow
           items={[
-            { label: 'Classificação', value: obrigacao.tipoClassificacao?.dsTipo || '-' },
-            { label: 'Natureza', value: obrigacao.tipoNatureza?.dsTipo || '-' },
+            { 
+              label: 'Classificação', 
+              value: obrigacao.tipoClassificacao?.dsTipo || '-'
+            },
+            { 
+              label: 'Natureza', 
+              value: obrigacao.tipoNatureza?.dsTipo || '-' 
+            },
           ]}
         />
+        {obrigacao.tipoClassificacao?.cdTipo === TipoEnum.CONDICIONADA && 
+         obrigacao.obrigacaoPrincipal?.cdIdentificacao && 
+         obrigacao.obrigacaoPrincipal?.idSolicitacao && (
+          <ConferenciaInfoRow
+            label="Obrigação Principal"
+            value={
+              <ObrigacaoCard
+                cdIdentificacao={obrigacao.obrigacaoPrincipal.cdIdentificacao}
+                onClick={() => {
+                  window.open(
+                    `/obrigacao/${obrigacao.obrigacaoPrincipal!.idSolicitacao}/conferencia`,
+                    '_blank',
+                    'noopener,noreferrer'
+                  );
+                }}
+              />
+            }
+          />
+        )}
         <InfoGridRow
           border={false}
           items={[

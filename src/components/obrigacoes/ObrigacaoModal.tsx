@@ -205,8 +205,11 @@ export function ObrigacaoModal() {
               );
             }
 
+            // Só enviar idObrigacaoPrincipal se a classificação for Condicionada
+            const isCondicionada = formData.idTipoClassificacao === idTipoClassificacaoCondicionada;
             const formDataComAnexos = {
               ...formData,
+              idObrigacaoPrincipal: isCondicionada ? (formData.idObrigacaoPrincipal || null) : null,
               arquivos: arquivosDTO.length > 0 ? arquivosDTO : undefined,
             };
 

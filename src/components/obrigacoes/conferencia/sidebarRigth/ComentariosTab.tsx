@@ -181,8 +181,8 @@ export function ComentariosTab({
                   
                   if (indiceArroba > posicao) {
                     parts.push(texto.substring(posicao, indiceArroba));
-                  }
-                  
+            }
+
                   let nomeEncontrado: string | null = null;
                   let nomeValido = false;
                   let nomeOriginal: string | null = null;

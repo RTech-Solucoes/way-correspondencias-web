@@ -363,6 +363,11 @@ export default function EditarObrigacaoPage() {
 
       const arquivos: ArquivoDTO[] = [...arquivosExistentes, ...arquivosNovos];
 
+      // Verificar se a classificação é Condicionada
+      const tipos = await tiposClient.buscarPorCategorias([CategoriaEnum.OBRIG_CLASSIFICACAO]);
+      const condicionada = tipos.find((tipo) => tipo.cdTipo === TipoEnum.CONDICIONADA);
+      const isCondicionada = formData.idTipoClassificacao === condicionada?.idTipo;
+
       const payload: ObrigacaoRequest = {
         idSolicitacao: formData.idSolicitacao,
         dsTarefa: formData.dsTarefa || '',
@@ -372,7 +377,7 @@ export default function EditarObrigacaoPage() {
         idTipoCriticidade: formData.idTipoCriticidade || null,
         idTipoNatureza: formData.idTipoNatureza || null,
         dsObservacao: formData.dsObservacao || null,
-        idObrigacaoPrincipal: formData.idObrigacaoPrincipal || null,
+        idObrigacaoPrincipal: isCondicionada ? (formData.idObrigacaoPrincipal || null) : null,
         idsAreasCondicionantes: formData.idsAreasCondicionantes || [],
         idAreaAtribuida: formData.idAreaAtribuida || null,
         idTema: formData.idTema || null,

@@ -123,7 +123,6 @@ export function Step1Obrigacao({
       const t = setTimeout(carregar, 1000);
       return () => { cancelado = true; clearTimeout(t); };
     }, [buscaObrigacao, isCondicionada]);
-    
     return (
       <div className="space-y-6 ">
         <div className="flex column gap-4">
