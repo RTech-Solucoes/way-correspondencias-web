@@ -63,6 +63,10 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
     return detalhe?.obrigacao?.areas?.find((area) => area.tipoArea?.cdTipo === TipoEnum.ATRIBUIDA);
   }, [detalhe?.obrigacao?.areas]);
 
+  const areasCondicionantes = useMemo(() => {
+    return detalhe?.obrigacao?.areas?.filter((area) => area.tipoArea?.cdTipo === TipoEnum.CONDICIONANTE) ?? [];
+  }, [detalhe?.obrigacao?.areas]);
+
   const responsavelInfo = useMemo(() => {
     const tpResponsavel = idPerfil ? computeTpResponsavel(idPerfil) : TipoResponsavelAnexoEnum.A;
     const responsavelMap: Record<TipoResponsavelAnexoEnum, string> = {
@@ -438,6 +442,37 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
     return [perfilUtil.EXECUTOR_AVANCADO, perfilUtil.EXECUTOR, perfilUtil.EXECUTOR_RESTRITO].includes(idPerfil ?? 0);
   }, [idPerfil]);
 
+  const podeEnviarComentario = useMemo(() => {
+    // Se for admin ou gestor (perfil 1, 2 ou 3), pode enviar
+    if (idPerfil === perfilUtil.ADMINISTRADOR ||
+      idPerfil === perfilUtil.GESTOR_DO_SISTEMA ||
+      idPerfil === perfilUtil.VALIDADOR_ASSINANTE) {
+      return true;
+    }
+
+    // Verifica se é da área atribuída
+    const idAreaAtribuida = areaAtribuida?.idArea;
+    const userAreaIds = userResponsavel?.areas?.map(ra => ra.area.idArea) || [];
+    const isDaAreaAtribuida = idAreaAtribuida && userAreaIds.includes(idAreaAtribuida);
+
+    if (isDaAreaAtribuida) {
+      return true;
+    }
+
+    // Verifica se é de alguma área condicionante
+    const idsAreasCondicionantes = areasCondicionantes.map(area => area.idArea);
+    const isDeAreaCondicionante = idsAreasCondicionantes.some(idArea => userAreaIds.includes(idArea));
+
+    return isDeAreaCondicionante;
+  }, [idPerfil, areaAtribuida?.idArea, userResponsavel?.areas, areasCondicionantes]);
+
+  const tooltipEnviarComentario = useMemo(() => {
+    if (!podeEnviarComentario) {
+      return 'Apenas usuários da área atribuída, áreas condicionantes ou administradores/gestores podem enviar comentários.';
+    }
+    return '';
+  }, [podeEnviarComentario]);
+
   const handleEnviarComentario = useCallback(async () => {
     const textarea = document.getElementById('comentario-textarea') as HTMLTextAreaElement;
     const textoCompleto = textarea?.value || comentarioTexto;
@@ -700,14 +735,15 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
                   }}
                   className="flex-1 resize-none border border-gray-200 rounded-2xl bg-white px-4 py-3 shadow-sm focus-visible:ring-0 focus-visible:border-blue-500 min-h-[80px] text-sm"
                   rows={4}
-                  disabled={enviandoComentario}
+                  disabled={enviandoComentario || !podeEnviarComentario}
                 />
                 <Button
                   type="button"
                   size="icon"
                   className="rounded-full bg-blue-500 text-white hover:bg-blue-600 shrink-0 h-10 w-10 disabled:opacity-50"
                   onClick={handleEnviarComentario}
-                  disabled={enviandoComentario || !comentarioTexto.trim()}
+                  disabled={enviandoComentario || !comentarioTexto.trim() || !podeEnviarComentario}
+                  tooltip={tooltipEnviarComentario}
                 >
                   <Send className="h-4 w-4" />
                 </Button>
