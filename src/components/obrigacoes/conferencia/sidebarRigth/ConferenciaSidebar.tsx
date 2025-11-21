@@ -24,6 +24,7 @@ import { computeTpResponsavel, perfilUtil } from '@/api/perfis/types';
 import tramitacoesClient from '@/api/tramitacoes/client';
 import { TramitacaoResponse } from '@/api/tramitacoes/types';
 import { statusListObrigacao } from '@/api/status-obrigacao/types';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 
 interface ConferenciaSidebarProps {
   detalhe: ObrigacaoDetalheResponse;
@@ -53,6 +54,10 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
   const [tramitacaoReferencia, setTramitacaoReferencia] = useState<number | null>(null);
   const [userResponsavel, setUserResponsavel] = useState<ResponsavelResponse | null>(null);
   const [parecerTramitacaoMap, setParecerTramitacaoMap] = useState<Map<number, number>>(new Map());
+  const [showDeleteAnexoDialog, setShowDeleteAnexoDialog] = useState(false);
+  const [anexoToDelete, setAnexoToDelete] = useState<AnexoResponse | null>(null);
+  const [showDeleteLinkDialog, setShowDeleteLinkDialog] = useState(false);
+  const [linkToDelete, setLinkToDelete] = useState<string | null>(null);
 
   const areaAtribuida = useMemo(() => {
     return detalhe?.obrigacao?.areas?.find((area) => area.tipoArea?.cdTipo === TipoEnum.ATRIBUIDA);
@@ -79,6 +84,19 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
   const isStatusEmAndamento = useMemo(() => {
     return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.EM_ANDAMENTO.id;
   }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
+  const isStatusAtrasada = useMemo(() => {
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.ATRASADA.id;
+  }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
+  const isStatusEmValidacaoRegulatorio = useMemo(() => {
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.EM_VALIDACAO_REGULATORIO.id;
+  }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
+  const isStatusPendente = useMemo(() => {
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.PENDENTE.id;
+  }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
   useEffect(() => {
     if (detalhe?.solicitacaoParecer) {
       setSolicitacaoPareceres(detalhe.solicitacaoParecer);
@@ -269,22 +287,28 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
     }
   }, [detalhe?.obrigacao?.idSolicitacao]);
 
-  const handleDeleteAnexo = useCallback(
-    async (anexo: AnexoResponse) => {
-      try {
-        await anexosClient.deletar(anexo.idAnexo);
-        toast.success('Anexo removido com sucesso.');
-        
-        if (onRefreshAnexos) {
-          await onRefreshAnexos();
-        }
-      } catch (error) {
-        console.error('Erro ao deletar anexo:', error);
-        toast.error('Erro ao deletar o anexo.');
+  const handleDeleteAnexoClick = useCallback((anexo: AnexoResponse) => {
+    setAnexoToDelete(anexo);
+    setShowDeleteAnexoDialog(true);
+  }, []);
+
+  const confirmDeleteAnexo = useCallback(async () => {
+    if (!anexoToDelete) return;
+
+    try {
+      await anexosClient.deletar(anexoToDelete.idAnexo);
+      toast.success('Anexo removido com sucesso.');
+      
+      if (onRefreshAnexos) {
+        await onRefreshAnexos();
       }
-    },
-    [onRefreshAnexos],
-  );
+    } catch (error) {
+      console.error('Erro ao deletar anexo:', error);
+      toast.error('Erro ao deletar o anexo.');
+    } finally {
+      setAnexoToDelete(null);
+    }
+  }, [anexoToDelete, onRefreshAnexos]);
 
   const handleDownloadAnexo = useCallback(
     async (anexo: AnexoResponse) => {
@@ -313,10 +337,17 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
     [],
   );
 
-  const handleEvidenceLinkRemove = useCallback(async (link: string) => {
+  const handleEvidenceLinkRemoveClick = useCallback((link: string) => {
+    setLinkToDelete(link);
+    setShowDeleteLinkDialog(true);
+  }, []);
+
+  const confirmDeleteLink = useCallback(async () => {
+    if (!linkToDelete) return;
+
     const anexoLink = anexos.find(
       (anexo) => anexo.tpDocumento === TipoDocumentoAnexoEnum.L && 
-                 (anexo.dsCaminho === link || anexo.nmArquivo === link)
+                 (anexo.dsCaminho === linkToDelete || anexo.nmArquivo === linkToDelete)
     );
 
     if (anexoLink && detalhe?.obrigacao?.idSolicitacao) {
@@ -334,7 +365,9 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
     } else {
       toast.error('Link não encontrado.');
     }
-  }, [anexos, detalhe?.obrigacao?.idSolicitacao, onRefreshAnexos]);
+    
+    setLinkToDelete(null);
+  }, [linkToDelete, anexos, detalhe?.obrigacao?.idSolicitacao, onRefreshAnexos]);
 
   const handleEvidenceLinkAdd = useCallback(async (link: string) => {
     if (!detalhe?.obrigacao?.idSolicitacao) {
@@ -397,8 +430,8 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
   const statusPermitidoParaTramitar = useMemo(() => {
     return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao &&
       [statusListObrigacao.NAO_INICIADO.id,
-        statusListObrigacao.PENDENTE.id,
-        statusListObrigacao.ATRASADA.id].includes(detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao);
+        statusListObrigacao.PENDENTE.id,  
+      ].includes(detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao);
   }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 
   const isPerfilPermitidoParaTramitar = useMemo(() => {
@@ -598,14 +631,17 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
               <AnexosTab
                 anexos={anexos}
                 downloadingId={downloadingId}
-                onDeleteAnexo={handleDeleteAnexo}
+                onDeleteAnexo={handleDeleteAnexoClick}
                 onDownloadAnexo={handleDownloadAnexo}
-                onEvidenceLinkRemove={handleEvidenceLinkRemove}
+                onEvidenceLinkRemove={handleEvidenceLinkRemoveClick}
                 onEvidenceLinkAdd={handleEvidenceLinkAdd}
                 idObrigacao={detalhe?.obrigacao?.idSolicitacao || 0}
                 idPerfil={idPerfil ?? undefined}
                 onRefreshAnexos={onRefreshAnexos}
                 isStatusEmAndamento={isStatusEmAndamento}
+                isStatusAtrasada={isStatusAtrasada}
+                isStatusEmValidacaoRegulatorio={isStatusEmValidacaoRegulatorio}
+                isStatusPendente={isStatusPendente}
               />
             ) : (
               <ComentariosTab
@@ -680,6 +716,38 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
           )}
         </div>
       </div>
+
+      <ConfirmationDialog
+        open={showDeleteAnexoDialog}
+        onOpenChange={(open) => {
+          setShowDeleteAnexoDialog(open);
+          if (!open) {
+            setAnexoToDelete(null);
+          }
+        }}
+        title="Excluir anexo"
+        description={`Tem certeza que deseja excluir o anexo "${anexoToDelete?.nmArquivo}"? Esta ação não pode ser desfeita.`}
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        onConfirm={confirmDeleteAnexo}
+        variant="destructive"
+      />
+
+      <ConfirmationDialog
+        open={showDeleteLinkDialog}
+        onOpenChange={(open) => {
+          setShowDeleteLinkDialog(open);
+          if (!open) {
+            setLinkToDelete(null);
+          }
+        }}
+        title="Excluir link"
+        description={`Tem certeza que deseja excluir o link "${linkToDelete}"? Esta ação não pode ser desfeita.`}
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        onConfirm={confirmDeleteLink}
+        variant="destructive"
+      />
     </aside>
   );
 }

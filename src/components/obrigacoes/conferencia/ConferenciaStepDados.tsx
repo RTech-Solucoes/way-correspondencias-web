@@ -8,6 +8,7 @@ import type { ObrigacaoStatusStyle } from '@/utils/obrigacoes/status';
 import { getCriticidadeBadgeClasses } from './utils';
 import { ConferenciaInfoRow } from './ConferenciaInfoRow';
 import { TipoEnum } from '@/api/tipos/types';
+import { formatDateBr, formatDateTime, formatDateTimeBr } from '@/utils/utils';
 
 interface ConferenciaStepDadosProps {
   obrigacao: ObrigacaoDetalheResponse['obrigacao'];
@@ -159,19 +160,32 @@ export function ConferenciaStepDados({ obrigacao, statusLabel, statusStyle }: Co
             value={obrigacao.responsavelTecnico?.nmResponsavel || '-'}
           />
         )}
-        {/*
+        {obrigacao.dsJustificativaAtraso && (
         <ConferenciaInfoRow
           label="Justificativa de atraso"
           border={false}
           value={
-            obrigacao.dsObservacao?.trim() ? (
-              <p className="text-sm leading-relaxed text-gray-700">{obrigacao.dsObservacao.trim()}</p>
-            ) : (
-              <span className="text-sm text-gray-400">Nenhuma justificativa registrada.</span>
-            )
+            <div className="space-y-3">
+              <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-wrap">
+                {obrigacao.dsJustificativaAtraso.trim()}
+              </p>
+              <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <span className="font-medium text-gray-600">
+                    {obrigacao.responsavelJustifAtraso?.nmResponsavel || 'Usuário não informado'}
+                  </span>
+                  {obrigacao.dtJustificativaAtraso && (
+                    <>
+                      <span className="text-gray-300">•</span>
+                      <span>{formatDateTimeBr(obrigacao.dtJustificativaAtraso)}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
           }
         />
-        */}
+        )}
       </div>
     </div>
   );
