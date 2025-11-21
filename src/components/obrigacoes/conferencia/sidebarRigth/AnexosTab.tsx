@@ -14,7 +14,7 @@ import { perfilUtil } from '@/api/perfis/types';
 interface AnexosTabProps {
   anexos: AnexoResponse[];
   downloadingId: number | null;
-  onDeleteAnexo: (anexo: AnexoResponse) => Promise<void>;
+  onDeleteAnexo: (anexo: AnexoResponse) => void | Promise<void>;
   onDownloadAnexo: (anexo: AnexoResponse) => Promise<void>;
   onEvidenceLinkRemove: (link: string) => void;
   onEvidenceLinkAdd?: (link: string) => void;
@@ -22,6 +22,9 @@ interface AnexosTabProps {
   idPerfil?: number;
   onRefreshAnexos?: () => void;
   isStatusEmAndamento?: boolean;
+  isStatusAtrasada?: boolean;
+  isStatusEmValidacaoRegulatorio?: boolean;
+  isStatusPendente?: boolean;
 }
 
 export function AnexosTab({
@@ -35,6 +38,9 @@ export function AnexosTab({
   idPerfil,
   onRefreshAnexos,
   isStatusEmAndamento = false,
+  isStatusAtrasada = false,
+  isStatusEmValidacaoRegulatorio = false,
+  isStatusPendente = false,
 }: AnexosTabProps) {
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [evidenceLinkValue, setEvidenceLinkValue] = useState('');
@@ -158,15 +164,46 @@ export function AnexosTab({
     return [perfilUtil.EXECUTOR_AVANCADO, perfilUtil.EXECUTOR, perfilUtil.EXECUTOR_RESTRITO].includes(idPerfil ?? 0);
   }, [idPerfil]);
 
+  const statusPermiteAnexarEvidencia = useMemo(() => {
+    return isStatusEmAndamento || isStatusAtrasada;
+  }, [isStatusEmAndamento, isStatusAtrasada]);
+
   const tooltipEvidencia = useMemo(() => {
-    if (!isStatusEmAndamento) {
-      return 'Apenas é possível anexar evidência de cumprimento quando o status for "Em Andamento".';
+    if (!statusPermiteAnexarEvidencia) {
+      return 'Apenas é possível anexar evidência de cumprimento quando o status for "Em Andamento" ou "Atrasada".';
     }
     if (!podeAnexarEvidencia) {
       return 'Apenas Executor Avançado, Executor ou Executor Restrito podem anexar evidência de cumprimento.';
     }
     return '';
-  }, [podeAnexarEvidencia, isStatusEmAndamento]);
+  }, [podeAnexarEvidencia, statusPermiteAnexarEvidencia]);
+
+  const podeExcluirAnexo = useCallback((anexo: AnexoResponse): boolean => {
+    if (anexo.tpDocumento === TipoDocumentoAnexoEnum.E || anexo.tpDocumento === TipoDocumentoAnexoEnum.L) {
+      return isStatusEmAndamento || isStatusAtrasada || isStatusPendente;
+    }
+    
+    if (anexo.tpDocumento === TipoDocumentoAnexoEnum.R) {
+      return isStatusEmValidacaoRegulatorio;
+    }
+    
+    if (anexo.tpDocumento === TipoDocumentoAnexoEnum.A) {
+      return isStatusEmAndamento || isStatusAtrasada;
+    }
+    
+    return false;
+  }, [isStatusEmAndamento, isStatusAtrasada, isStatusPendente, isStatusEmValidacaoRegulatorio]);
+
+  const statusPermiteAnexarOutros = useMemo(() => {
+    return isStatusEmAndamento || isStatusAtrasada;
+  }, [isStatusEmAndamento, isStatusAtrasada]);
+
+  const tooltipOutrosAnexos = useMemo(() => {
+    if (!statusPermiteAnexarOutros) {
+      return 'Apenas é possível anexar outros anexos quando o status for "Em Andamento" ou "Atrasada".';
+    }
+    return '';
+  }, [statusPermiteAnexarOutros]);
 
   return (
     <div className="space-y-6">
@@ -183,7 +220,7 @@ export function AnexosTab({
             variant="link"
             className="flex items-center gap-2 justify-start px-0 text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={() => setShowAnexarEvidenciaModal(true)}
-            disabled={!podeAnexarEvidencia || !isStatusEmAndamento}
+            disabled={!podeAnexarEvidencia || !statusPermiteAnexarEvidencia}
             tooltip={tooltipEvidencia}
           >
             <Plus className="h-4 w-4" />
@@ -201,7 +238,7 @@ export function AnexosTab({
                     key={anexo.idAnexo}
                     anexo={anexo}
                     onDownload={onDownloadAnexo}
-                    onDelete={onDeleteAnexo}
+                    onDelete={podeExcluirAnexo(anexo) ? onDeleteAnexo : undefined}
                     downloadingId={downloadingId}
                     tone="subtle"
                     dense
@@ -221,9 +258,9 @@ export function AnexosTab({
                       <ItemAnexoLink
                         key={anexo.idAnexo}
                         link={linkUrl}
-                        onRemove={(link) => {
+                        onRemove={podeExcluirAnexo(anexo) ? (link) => {
                           onEvidenceLinkRemove(link);
-                        }}
+                        } : undefined}
                         dense
                         dataUpload={anexo.dtCriacao || null}
                         responsavel={anexo.responsavel?.nmResponsavel || anexo.nmUsuario || null}
@@ -248,7 +285,7 @@ export function AnexosTab({
                     value={evidenceLinkValue}
                     onChange={(event) => handleEvidenceLinkValueChange(event.target.value)}
                     className={`pl-10 ${linkError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
-                    disabled={!podeAnexarEvidencia || !isStatusEmAndamento}
+                    disabled={!podeAnexarEvidencia || !statusPermiteAnexarEvidencia}
                   />
                 </div>
                 {linkError && (
@@ -264,7 +301,7 @@ export function AnexosTab({
                 <Button 
                   onClick={handleEvidenceLinkSave} 
                   className="bg-blue-600 hover:bg-blue-700"
-                  disabled={!!linkError || !podeAnexarEvidencia || !isStatusEmAndamento}
+                  disabled={!!linkError || !podeAnexarEvidencia || !statusPermiteAnexarEvidencia}
                 >
                   Salvar
                 </Button>
@@ -276,7 +313,7 @@ export function AnexosTab({
               variant="link"
               className="flex items-center gap-2 justify-start px-0 text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={handleToggleLinkInput}
-              disabled={!podeAnexarEvidencia || !isStatusEmAndamento}
+              disabled={!podeAnexarEvidencia || !statusPermiteAnexarEvidencia}
               tooltip={tooltipEvidencia}
             >
               <LinkIcon className="h-4 w-4" />
@@ -300,7 +337,7 @@ export function AnexosTab({
                 key={anexo.idAnexo}
                 anexo={anexo}
                 onDownload={onDownloadAnexo}
-                onDelete={onDeleteAnexo}
+                onDelete={podeExcluirAnexo(anexo) ? onDeleteAnexo : undefined}
                 downloadingId={downloadingId}
                 tone="subtle"
                 dense
@@ -322,8 +359,10 @@ export function AnexosTab({
         <Button
           type="button"
           variant="link"
-          className="flex items-center gap-2 justify-start px-0 text-blue-600 hover:text-blue-700"
+          className="flex items-center gap-2 justify-start px-0 text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={() => setShowAnexarOutrosModal(true)}
+          disabled={!statusPermiteAnexarOutros}
+          tooltip={tooltipOutrosAnexos}
         >
           <Plus className="h-4 w-4" />
           Anexar outros anexos
@@ -338,7 +377,7 @@ export function AnexosTab({
                 key={anexo.idAnexo}
                 anexo={anexo}
                 onDownload={onDownloadAnexo}
-                onDelete={onDeleteAnexo}
+                onDelete={podeExcluirAnexo(anexo) ? onDeleteAnexo : undefined}
                 downloadingId={downloadingId}
                 tone="subtle"
                 dense

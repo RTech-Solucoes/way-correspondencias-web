@@ -340,9 +340,9 @@ function ObrigacoesContent() {
             <TableRow>
               <TableHead className="min-w-[150px]">ID</TableHead>
               <TableHead className="min-w-[250px]">Tarefa</TableHead>
-              <TableHead>Tema</TableHead>
+              <TableHead className="min-w-[150px]">Tema</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Atribuído a</TableHead>
+              <TableHead className="min-w-[150px]">Atribuído a</TableHead>
               <TableHead>Progresso</TableHead>
               <TableHead>Data de Término</TableHead>
               {isAdminOrGestor && (
@@ -376,8 +376,8 @@ function ObrigacoesContent() {
                       {obrigacao.dsTarefa || '-'}
                     </div>
                   </TableCell>
-                  <TableCell>{obrigacao.tema?.nmTema || '-'}</TableCell>
-                  <TableCell>
+                  <TableCell className="min-w-[150px]">{obrigacao.tema?.nmTema || '-'}</TableCell>
+                  <TableCell className="min-w-[150px]">
                     {(() => {
                       const statusStyle = getObrigacaoStatusStyle(
                         obrigacao.statusSolicitacao?.idStatusSolicitacao?.toString(),

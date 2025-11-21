@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, CheckCircle2, ChevronRight, Loader2, MessageSquare, Paperclip } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ChevronRight, Clock, Loader2, MessageSquare, Paperclip } from 'lucide-react';
 import obrigacaoClient from '@/api/obrigacao/client';
 import { ObrigacaoDetalheResponse } from '@/api/obrigacao/types';
 import { Button } from '@/components/ui/button';
@@ -28,6 +28,9 @@ import tramitacoesClient from '@/api/tramitacoes/client';
 import { authClient } from '@/api/auth/client';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { perfilUtil } from '@/api/perfis/types';
+import { JustificarAtrasoModal } from '@/components/obrigacoes/conferencia/JustificarAtrasoModal';
+import { responsaveisClient } from '@/api/responsaveis/client';
+import { ResponsavelResponse } from '@/api/responsaveis/types';
 
 type TabKey = 'dados' | 'temas' | 'prazos' | 'anexos' | 'vinculos';
 const tabs: { key: TabKey; label: string }[] = [
@@ -52,7 +55,9 @@ export default function ConferenciaObrigacaoPage() {
   const [showSolicitarAjustesDialog, setShowSolicitarAjustesDialog] = useState(false);
   const [showEnviarRegulatorioDialog, setShowEnviarRegulatorioDialog] = useState(false);
   const [showAprovarConferenciaDialog, setShowAprovarConferenciaDialog] = useState(false);
+  const [showJustificarAtrasoModal, setShowJustificarAtrasoModal] = useState(false);
   const [conferenciaAprovada, setConferenciaAprovada] = useState(false);
+  const [userResponsavel, setUserResponsavel] = useState<ResponsavelResponse | null>(null);
 
   const parsedId = useMemo(() => {
     if (!id) return null;
@@ -88,6 +93,29 @@ export default function ConferenciaObrigacaoPage() {
 
     carregarDetalhe();
   }, [parsedId, router]);
+
+  useEffect(() => {
+    const carregarUserResponsavel = async () => {
+      try {
+        const idFromToken = authClient.getUserIdResponsavelFromToken();
+        const userName = authClient.getUserName();
+        
+        if (!(idFromToken || userName)) {
+          return;
+        }
+
+        const responsavel = idFromToken
+          ? await responsaveisClient.buscarPorId(idFromToken)
+          : await responsaveisClient.buscarPorNmUsuarioLogin(userName!);
+        
+        setUserResponsavel(responsavel);
+      } catch (error) {
+        console.error('Erro ao carregar responsável logado:', error);
+      }
+    };
+
+    carregarUserResponsavel();
+  }, []);
 
   const obrigacao = detalhe?.obrigacao;
   const anexos = useMemo(() => detalhe?.anexos ?? [], [detalhe]);
@@ -182,38 +210,6 @@ export default function ConferenciaObrigacaoPage() {
     return [perfilUtil.EXECUTOR_AVANCADO, perfilUtil.EXECUTOR, perfilUtil.EXECUTOR_RESTRITO].includes(idPerfil ?? 0);
   }, [idPerfil]);
 
-  const confirmarEnviarParaAnalise = useCallback(async () => {
-    if (!obrigacao?.idSolicitacao || !obrigacao?.statusSolicitacao?.idStatusSolicitacao) {
-      toast.error('Dados da obrigação incompletos.');
-      return;
-    }
-    
-    const idResponsavelTecnico = authClient.getUserIdResponsavelFromToken();
-    if (!idResponsavelTecnico) {
-      toast.error('Usuário não autenticado.');
-      return;
-    }
-    
-    try {
-      await tramitacoesClient.tramitarViaFluxo({
-        idSolicitacao: obrigacao.idSolicitacao,
-        dsObservacao: 'Obrigacao enviada para Em Validação (Regulatório)',
-      });
-      
-      await obrigacaoClient.atualizar(obrigacao.idSolicitacao, {
-        idResponsavelTecnico: idResponsavelTecnico,
-      });
-      
-      await reloadDetalhe();
-      toast.success('Evidência de cumprimento enviada para análise do regulatório');
-    } catch (error) {
-        console.error('Erro ao enviar obrigação para análise do regulatório:', error);
-        toast.error('Erro ao enviar obrigação para análise do regulatório.');
-      }
-    },
-    [obrigacao?.idSolicitacao, obrigacao?.statusSolicitacao?.idStatusSolicitacao, obrigacao?.dsTarefa, reloadDetalhe],
-  );
-
   const handleSolicitarAjustesClick = useCallback(() => {
     setShowSolicitarAjustesDialog(true);
   }, []);
@@ -264,12 +260,46 @@ export default function ConferenciaObrigacaoPage() {
     }
   }, [obrigacao?.idSolicitacao, obrigacao?.dsTarefa, reloadDetalhe]);
 
+  const confirmarJustificarAtraso = useCallback(async (justificativa: string) => {
+    if (!obrigacao?.idSolicitacao) {
+      toast.error('Dados da obrigação incompletos.');
+      return;
+    }
+
+    const idResponsavelJustifAtraso = authClient.getUserIdResponsavelFromToken();
+    if (!idResponsavelJustifAtraso) {
+      toast.error('Usuário não autenticado.');
+      return;
+    }
+
+    const dtJustificativaAtraso = new Date().toISOString();
+
+    try {
+      await obrigacaoClient.atualizar(obrigacao.idSolicitacao, {
+        idResponsavelJustifAtraso: idResponsavelJustifAtraso,
+        dsJustificativaAtraso: justificativa,
+        dtJustificativaAtraso: dtJustificativaAtraso,
+      });
+
+      await reloadDetalhe();
+      toast.success('Atraso justificado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao justificar atraso:', error);
+      toast.error('Erro ao justificar atraso.');
+      throw error;
+    }
+  }, [obrigacao?.idSolicitacao, reloadDetalhe]);
+
   const isStatusEmAndamento = useMemo(() => {
     return obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.EM_ANDAMENTO.id;
   }, [obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 
   const isStatusEmValidacaoRegulatorio = useMemo(() => {
     return obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.EM_VALIDACAO_REGULATORIO.id;
+  }, [obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
+  const isStatusAtrasada = useMemo(() => {
+    return obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.ATRASADA.id;
   }, [obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 
   const temEvidenciaCumprimento = useMemo(() => {
@@ -279,18 +309,79 @@ export default function ConferenciaObrigacaoPage() {
     );
   }, [anexos]);
 
+  const isStatusPermitidoEnviarReg = useMemo(() => {
+    return isStatusEmAndamento || isStatusAtrasada;
+  }, [isStatusEmAndamento, isStatusAtrasada]);
+
+  const temJustificativaAtraso = useMemo(() => {
+    return !!obrigacao?.dsJustificativaAtraso;
+  }, [obrigacao?.dsJustificativaAtraso]);
+
+  const confirmarEnviarParaAnalise = useCallback(async () => {
+    if (!obrigacao?.idSolicitacao || !obrigacao?.statusSolicitacao?.idStatusSolicitacao) {
+      toast.error('Dados da obrigação incompletos.');
+      return;
+    }
+    
+    const idResponsavelTecnico = authClient.getUserIdResponsavelFromToken();
+    if (!idResponsavelTecnico) {
+      toast.error('Usuário não autenticado.');
+      return;
+    }
+
+    if (isStatusAtrasada) {
+      if (!temJustificativaAtraso) {
+        toast.error('É necessário inserir a justificativa de atraso antes de enviar ao Regulatório.');
+        return;
+      }
+      if (!temEvidenciaCumprimento) {
+        toast.error('É necessário anexar a evidência de cumprimento antes de enviar ao Regulatório.');
+        return;
+      }
+    }
+    
+    try {
+      const observacaoTramitacao = isStatusAtrasada && obrigacao.dsJustificativaAtraso
+        ? 'Obrigação enviada ao Regulatório com atraso justificado'
+        : 'Obrigacao enviada para Em Validação (Regulatório)';
+
+      await tramitacoesClient.tramitarViaFluxo({
+        idSolicitacao: obrigacao.idSolicitacao,
+        dsObservacao: observacaoTramitacao,
+      });
+      
+      await obrigacaoClient.atualizar(obrigacao.idSolicitacao, {
+        idResponsavelTecnico: idResponsavelTecnico,
+      });
+      
+      await reloadDetalhe();
+      toast.success('Evidência de cumprimento enviada para análise do regulatório');
+    } catch (error) {
+        console.error('Erro ao enviar obrigação para análise do regulatório:', error);
+        toast.error('Erro ao enviar obrigação para análise do regulatório.');
+      }
+    },
+    [obrigacao?.idSolicitacao, obrigacao?.statusSolicitacao?.idStatusSolicitacao, obrigacao?.dsJustificativaAtraso, isStatusAtrasada, temEvidenciaCumprimento, temJustificativaAtraso, reloadDetalhe],
+  );
+
   const tooltipEnviarRegulatorio = useMemo(() => {
     if (!isPerfilPermitidoEnviarReg) {
       return 'Você não tem permissão para enviar para análise do regulatório.';
     }
-    if (!isStatusEmAndamento) {
-      return 'Só é possível enviar para análise do regulatório quando o status for "Em Andamento".';
+    if (isStatusAtrasada && !temJustificativaAtraso) {
+      return 'É necessário inserir a justificativa de atraso antes de enviar ao Regulatório.';
     }
     if (!temEvidenciaCumprimento) {
+      if (isStatusAtrasada) {
+        return 'É necessário anexar a evidência de cumprimento antes de enviar ao Regulatório.';
+      }
       return 'É necessário anexar pelo menos uma evidência de cumprimento (arquivo ou link) antes de enviar para análise do regulatório.';
     }
+    if (!isStatusPermitidoEnviarReg) {
+      return 'Só é possível enviar para análise do regulatório quando o status for "Em Andamento" ou "Atrasada".';
+    }
     return '';
-  }, [isPerfilPermitidoEnviarReg, isStatusEmAndamento, temEvidenciaCumprimento]);
+  }, [isPerfilPermitidoEnviarReg, isStatusPermitidoEnviarReg, temEvidenciaCumprimento, isStatusAtrasada, temJustificativaAtraso]);
 
   const tooltipStatusValidacaoRegulatorio = useMemo(() => {
     if (conferenciaAprovada) {
@@ -311,6 +402,27 @@ export default function ConferenciaObrigacaoPage() {
     }
     return '';
   }, [conferenciaAprovada, isStatusEmValidacaoRegulatorio]);
+
+  const isUsuarioDaAreaAtribuida = useMemo(() => {
+    if (!areaAtribuida?.idArea || !userResponsavel?.areas) {
+      return false;
+    }
+
+    const idAreaAtribuida = areaAtribuida.idArea;
+    const userAreaIds = userResponsavel.areas.map(ra => ra.area.idArea);
+    
+    return userAreaIds.includes(idAreaAtribuida);
+  }, [areaAtribuida?.idArea, userResponsavel?.areas]);
+
+  const tooltipJustificarAtraso = useMemo(() => {
+    if (!isStatusAtrasada) {
+      return '';
+    }
+    if (!isUsuarioDaAreaAtribuida) {
+      return 'Apenas usuários da área atribuída podem justificar o atraso desta obrigação.';
+    }
+    return '';
+  }, [isStatusAtrasada, isUsuarioDaAreaAtribuida]);
 
   if (loading) {
     return (
@@ -488,13 +600,25 @@ export default function ConferenciaObrigacaoPage() {
               </Button>
             </>
           ) : (
-            <>
+              <>
+                {isStatusAtrasada && (
+                <Button
+                  type="button"
+                  className="flex items-center gap-2 rounded-full bg-red-500 px-6 py-3 text-sm font-semibold text-white hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => setShowJustificarAtrasoModal(true)}
+                  disabled={!isUsuarioDaAreaAtribuida}
+                  tooltip={tooltipJustificarAtraso}
+                >
+                  <Clock className="h-4 w-4" />
+                  Inserir Justificativa de Atraso
+                </Button>
+                )}
               <Button
                 type="button"
                 className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={() => setShowAnexarEvidenciaModal(true)}
-                disabled={!isStatusEmAndamento}
-                tooltip={!isStatusEmAndamento ? 'Apenas é possível anexar evidência de cumprimento quando o status for "Em Andamento".' : ''}
+                disabled={!isStatusPermitidoEnviarReg}
+                tooltip={!isStatusPermitidoEnviarReg ? 'Apenas é possível anexar evidência de cumprimento quando o status for "Em Andamento" ou "Atrasada".' : ''}
               >
                 <Paperclip className="h-4 w-4" />
                 Anexar evidência de cumprimento
@@ -503,7 +627,7 @@ export default function ConferenciaObrigacaoPage() {
                 type="button"
                 className="flex items-center gap-2 rounded-full bg-blue-500 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleEnviarParaAnaliseClick}
-                disabled={!isStatusEmAndamento || !isPerfilPermitidoEnviarReg || !temEvidenciaCumprimento}
+                disabled={!isStatusPermitidoEnviarReg || !isPerfilPermitidoEnviarReg || !temEvidenciaCumprimento || (isStatusAtrasada && !temJustificativaAtraso)}
                 tooltip={tooltipEnviarRegulatorio}
               >
                 <CheckCircle2 className="h-4 w-4" />
@@ -574,6 +698,13 @@ export default function ConferenciaObrigacaoPage() {
         cancelText="Não"
         onConfirm={confirmarAprovarConferencia}
         variant="default"
+      />
+
+      <JustificarAtrasoModal
+        open={showJustificarAtrasoModal}
+        onClose={() => setShowJustificarAtrasoModal(false)}
+        onConfirm={confirmarJustificarAtraso}
+        justificativaExistente={obrigacao?.dsJustificativaAtraso}
       />
     </div>
   );

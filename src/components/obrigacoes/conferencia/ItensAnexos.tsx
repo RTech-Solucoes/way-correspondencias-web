@@ -202,7 +202,7 @@ export const ItemAnexo = ({
 
 export interface ItemAnexoLinkProps {
   link: string;
-  onRemove: (link: string) => void;
+  onRemove?: (link: string) => void;
   dense?: boolean;
   dataUpload?: string | null;
   responsavel?: string | null;
@@ -255,7 +255,7 @@ export const ItemAnexoLink = ({
         >
           <ExternalLink className="h-4 w-4" />
         </Button>
-        {podeExcluir && (
+        {podeExcluir && onRemove && (
           <Button
             type="button"
             variant="ghost"

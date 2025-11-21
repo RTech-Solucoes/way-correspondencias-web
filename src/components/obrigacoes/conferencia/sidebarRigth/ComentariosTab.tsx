@@ -117,7 +117,7 @@ export function ComentariosTab({
                 
                 const responsavelTramitacao = tramitacao.tramitacaoAcao?.[0]?.responsavelArea?.responsavel;
                 const autor = responsavelTramitacao?.nmResponsavel || 'Usuário';
-                const area = tramitacao.areaDestino?.nmArea || tramitacao.areaOrigem?.nmArea || 'Regulatório';
+                const area = tramitacao.areaOrigem?.nmArea || 'Regulatório';
                 
                 return (
                   <CardTramitacao

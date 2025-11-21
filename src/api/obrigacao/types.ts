@@ -50,6 +50,9 @@ export interface ObrigacaoResponse extends BaseResponse {
   obrigacaoRecusada?: ObrigacaoResumoResponse | null;
   correspondencia?: SolicitacaoResumoResponse | null;
   solicitacaoParecer? : SolicitacaoParecerResponse[];
+  responsavelJustifAtraso?: ResponsavelResponse | null;
+  dsJustificativaAtraso?: string | null;
+  dtJustificativaAtraso?: string | null;
 }
 
 export interface ObrigacaoRequest {
@@ -77,6 +80,9 @@ export interface ObrigacaoRequest {
   arquivos?: ArquivoDTO[];
   idResponsavelTecnico?: number | null;
   flAprovarConferencia?: string | null;
+  idResponsavelJustifAtraso?: number | null;
+  dsJustificativaAtraso?: string | null;
+  dtJustificativaAtraso?: string | null;
 }
 
 export interface ObrigacaoDetalheResponse {
