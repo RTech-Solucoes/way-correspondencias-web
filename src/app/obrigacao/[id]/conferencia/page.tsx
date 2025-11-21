@@ -206,9 +206,21 @@ export default function ConferenciaObrigacaoPage() {
     setShowEnviarRegulatorioDialog(true);
   }, []);
 
+  const isUsuarioDaAreaAtribuida = useMemo(() => {
+    if (!areaAtribuida?.idArea || !userResponsavel?.areas) {
+      return false;
+    }
+
+    const idAreaAtribuida = areaAtribuida.idArea;
+    const userAreaIds = userResponsavel.areas.map(ra => ra.area.idArea);
+    
+    return userAreaIds.includes(idAreaAtribuida);
+  }, [areaAtribuida?.idArea, userResponsavel?.areas]);
+
   const isPerfilPermitidoEnviarReg = useMemo(() => {
-    return [perfilUtil.EXECUTOR_AVANCADO, perfilUtil.EXECUTOR, perfilUtil.EXECUTOR_RESTRITO].includes(idPerfil ?? 0);
-  }, [idPerfil]);
+    const temPerfilPermitido = [perfilUtil.EXECUTOR_AVANCADO, perfilUtil.EXECUTOR, perfilUtil.EXECUTOR_RESTRITO].includes(idPerfil ?? 0);
+    return temPerfilPermitido && isUsuarioDaAreaAtribuida;
+  }, [idPerfil, isUsuarioDaAreaAtribuida]);
 
   const handleSolicitarAjustesClick = useCallback(() => {
     setShowSolicitarAjustesDialog(true);
@@ -366,6 +378,13 @@ export default function ConferenciaObrigacaoPage() {
 
   const tooltipEnviarRegulatorio = useMemo(() => {
     if (!isPerfilPermitidoEnviarReg) {
+      const temPerfilPermitido = [perfilUtil.EXECUTOR_AVANCADO, perfilUtil.EXECUTOR, perfilUtil.EXECUTOR_RESTRITO].includes(idPerfil ?? 0);
+      if (!temPerfilPermitido) {
+        return 'Apenas Executor Avançado, Executor ou Executor Restrito podem enviar para análise do regulatório.';
+      }
+      if (!isUsuarioDaAreaAtribuida) {
+        return 'Apenas usuários da área atribuída podem enviar para análise do regulatório.';
+      }
       return 'Você não tem permissão para enviar para análise do regulatório.';
     }
     if (isStatusAtrasada && !temJustificativaAtraso) {
@@ -381,7 +400,7 @@ export default function ConferenciaObrigacaoPage() {
       return 'Só é possível enviar para análise do regulatório quando o status for "Em Andamento" ou "Atrasada".';
     }
     return '';
-  }, [isPerfilPermitidoEnviarReg, isStatusPermitidoEnviarReg, temEvidenciaCumprimento, isStatusAtrasada, temJustificativaAtraso]);
+  }, [isPerfilPermitidoEnviarReg, isStatusPermitidoEnviarReg, temEvidenciaCumprimento, isStatusAtrasada, temJustificativaAtraso, idPerfil, isUsuarioDaAreaAtribuida]);
 
   const tooltipStatusValidacaoRegulatorio = useMemo(() => {
     if (conferenciaAprovada) {
@@ -402,17 +421,6 @@ export default function ConferenciaObrigacaoPage() {
     }
     return '';
   }, [conferenciaAprovada, isStatusEmValidacaoRegulatorio]);
-
-  const isUsuarioDaAreaAtribuida = useMemo(() => {
-    if (!areaAtribuida?.idArea || !userResponsavel?.areas) {
-      return false;
-    }
-
-    const idAreaAtribuida = areaAtribuida.idArea;
-    const userAreaIds = userResponsavel.areas.map(ra => ra.area.idArea);
-    
-    return userAreaIds.includes(idAreaAtribuida);
-  }, [areaAtribuida?.idArea, userResponsavel?.areas]);
 
   const tooltipJustificarAtraso = useMemo(() => {
     if (!isStatusAtrasada) {
