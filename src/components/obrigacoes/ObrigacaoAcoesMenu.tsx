@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,6 +18,10 @@ import {
 } from "@phosphor-icons/react";
 import { ObrigacaoResponse } from "@/api/obrigacao/types";
 import { BriefcaseIcon, FileTextIcon } from "lucide-react";
+import { StatusObrigacao, statusListObrigacao } from "@/api/status-obrigacao/types";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useUserGestao } from "@/hooks/use-user-gestao";
+import { perfilUtil } from "@/api/perfis/types";
 
 interface ObrigacaoAcoesMenuProps {
   obrigacao: ObrigacaoResponse;
@@ -37,6 +42,41 @@ export function ObrigacaoAcoesMenu({
   onEnviarArea,
   onExcluir,
 }: ObrigacaoAcoesMenuProps) {
+  const { idPerfil } = useUserGestao();
+  
+  const isStatusConcluido = obrigacao.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.CONCLUIDO.id ||
+    obrigacao.statusSolicitacao?.nmStatus === StatusObrigacao.CONCLUIDO;
+
+  const isStatusEmValidacao = useMemo(() => {
+    return obrigacao.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.EM_VALIDACAO_REGULATORIO.id ||
+      obrigacao.statusSolicitacao?.nmStatus === StatusObrigacao.EM_VALIDACAO_REGULATORIO;
+  }, [obrigacao.statusSolicitacao]);
+
+  const isAdminOrGestor = useMemo(() => {
+    return idPerfil === perfilUtil.ADMINISTRADOR ||
+      idPerfil === perfilUtil.GESTOR_DO_SISTEMA;
+  }, [idPerfil]);
+
+  const podeAnexarProtocolo = useMemo(() => {
+    return isAdminOrGestor && isStatusEmValidacao && !isStatusConcluido;
+  }, [isAdminOrGestor, isStatusEmValidacao, isStatusConcluido]);
+
+  const tooltipAnexarProtocolo = useMemo(() => {
+    if (isStatusConcluido) {
+      return 'Esta obrigação já está concluída. Não é possível anexar protocolo.';
+    }
+    if (!isStatusEmValidacao) {
+      return 'Apenas é possível anexar protocolo quando a obrigação estiver em "Em Validação (Regulatório)".';
+    }
+    if (!isAdminOrGestor) {
+      return 'Apenas administradores e gestores do sistema podem anexar protocolo.';
+    }
+    return '';
+  }, [isStatusConcluido, isStatusEmValidacao, isAdminOrGestor]);
+
+  const jaEnviadoParaArea = obrigacao.flEnviandoArea === 'S';
+  const conferenciaAprovada = obrigacao.flAprovarConferencia === 'S';
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -56,16 +96,50 @@ export function ObrigacaoAcoesMenu({
           </DropdownMenuItem>
         )}
         {onEditar && (
-          <DropdownMenuItem onClick={() => onEditar(obrigacao)}>
-            <PencilSimpleIcon className="mr-2 h-4 w-4" />
-            Editar
-          </DropdownMenuItem>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="w-full">
+                  <DropdownMenuItem 
+                    onClick={() => !conferenciaAprovada && onEditar(obrigacao)}
+                    disabled={conferenciaAprovada}
+                    className={conferenciaAprovada ? 'opacity-50 cursor-not-allowed' : ''}
+                  >
+                    <PencilSimpleIcon className="mr-2 h-4 w-4" />
+                    Editar
+                  </DropdownMenuItem>
+                </div>
+              </TooltipTrigger>
+              {conferenciaAprovada && (
+                <TooltipContent>
+                  <p>A conferência já foi aprovada. Não é possível editar a obrigação.</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
         )}
         {onAnexarProtocolo && (
-          <DropdownMenuItem onClick={() => onAnexarProtocolo(obrigacao)}>
-            <FileTextIcon className="mr-2 h-4 w-4" />
-            Anexar Protocolo
-          </DropdownMenuItem>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="w-full">
+                  <DropdownMenuItem 
+                    onClick={() => podeAnexarProtocolo && onAnexarProtocolo(obrigacao)}
+                    disabled={!podeAnexarProtocolo}
+                    className={!podeAnexarProtocolo ? 'opacity-50 cursor-not-allowed' : ''}
+                  >
+                    <FileTextIcon className="mr-2 h-4 w-4" />
+                    Anexar Protocolo
+                  </DropdownMenuItem>
+                </div>
+              </TooltipTrigger>
+              {!podeAnexarProtocolo && tooltipAnexarProtocolo && (
+                <TooltipContent>
+                  <p>{tooltipAnexarProtocolo}</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
         )}
         {onEncaminharTramitacao && (
           <DropdownMenuItem onClick={() => onEncaminharTramitacao(obrigacao)}>
@@ -74,10 +148,27 @@ export function ObrigacaoAcoesMenu({
           </DropdownMenuItem>
         )}
         {onEnviarArea && (
-          <DropdownMenuItem onClick={() => onEnviarArea(obrigacao)}>
-            <BriefcaseIcon className="mr-2 h-4 w-4" />
-            Enviar para área
-          </DropdownMenuItem>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="w-full">
+                  <DropdownMenuItem 
+                    onClick={() => !jaEnviadoParaArea && onEnviarArea(obrigacao)}
+                    disabled={jaEnviadoParaArea}
+                    className={jaEnviadoParaArea ? 'opacity-50 cursor-not-allowed' : ''}
+                  >
+                    <BriefcaseIcon className="mr-2 h-4 w-4" />
+                    Enviar para área
+                  </DropdownMenuItem>
+                </div>
+              </TooltipTrigger>
+              {jaEnviadoParaArea && (
+                <TooltipContent>
+                  <p>Obrigação já enviada para área</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
         )}
         {onExcluir && (
           <>

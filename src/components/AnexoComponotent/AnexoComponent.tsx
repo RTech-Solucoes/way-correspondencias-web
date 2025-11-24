@@ -77,7 +77,7 @@ export default function AnexoComponent({onAddAnexos, disabled = false}: AnexoPro
             ? 'border-blue-500 bg-blue-50 text-primary'
             : 'border-gray-300 hover:border-gray-400 text-gray-600'
         }`}
-      >
+      > 
         <input {...getInputProps()} />
         <div className="flex flex-col items-center space-y-2">
           <CloudArrowUpIcon

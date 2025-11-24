@@ -8,7 +8,7 @@ import type { ObrigacaoStatusStyle } from '@/utils/obrigacoes/status';
 import { getCriticidadeBadgeClasses } from './utils';
 import { ConferenciaInfoRow } from './ConferenciaInfoRow';
 import { TipoEnum } from '@/api/tipos/types';
-import { formatDateBr, formatDateTime, formatDateTimeBr } from '@/utils/utils';
+import { formatDateTimeBr } from '@/utils/utils';
 
 interface ConferenciaStepDadosProps {
   obrigacao: ObrigacaoDetalheResponse['obrigacao'];
@@ -185,6 +185,19 @@ export function ConferenciaStepDados({ obrigacao, statusLabel, statusStyle }: Co
             </div>
           }
         />
+        )}
+        <InfoGridRow
+          items={[
+            { label: 'Nº do SEI', value: obrigacao.nrSei || '-' },
+            { label: 'Nº do Processo', value: obrigacao.nrProcesso || '-' },
+          ]}
+        />
+        {obrigacao.dsObservacaoProtocolo && (
+          <ConferenciaInfoRow
+            label="Observações do Protocolo"
+            border={false}
+            value={obrigacao.dsObservacaoProtocolo}
+          />
         )}
       </div>
     </div>

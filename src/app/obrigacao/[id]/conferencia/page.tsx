@@ -3,12 +3,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, CheckCircle2, ChevronRight, Clock, Loader2, MessageSquare, Paperclip } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Loader2 } from 'lucide-react';
 import obrigacaoClient from '@/api/obrigacao/client';
 import { ObrigacaoDetalheResponse } from '@/api/obrigacao/types';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { base64ToUint8Array, saveBlob } from '@/utils/utils';
+import { base64ToUint8Array, saveBlob, formatDateISOWithoutTimezone } from '@/utils/utils';
 import { toast } from 'sonner';
 import { AnexoResponse, TipoObjetoAnexoEnum, ArquivoDTO } from '@/api/anexos/type';
 import anexosClient from '@/api/anexos/client';
@@ -23,6 +23,7 @@ import { ConferenciaStepVinculos } from '@/components/obrigacoes/conferencia/Con
 import { ConferenciaSidebar } from '@/components/obrigacoes/conferencia/sidebarRigth/ConferenciaSidebar';
 import { useUserGestao } from '@/hooks/use-user-gestao';
 import { AnexoObrigacaoModal } from '@/components/obrigacoes/conferencia/AnexoObrigacaoModal';
+import { ConferenciaFooter } from '@/components/obrigacoes/conferencia/ConferenciaFooter';
 import { TipoDocumentoAnexoEnum } from '@/api/anexos/type';
 import tramitacoesClient from '@/api/tramitacoes/client';
 import { authClient } from '@/api/auth/client';
@@ -278,18 +279,17 @@ export default function ConferenciaObrigacaoPage() {
       return;
     }
 
-    const idResponsavelJustifAtraso = authClient.getUserIdResponsavelFromToken();
-    if (!idResponsavelJustifAtraso) {
+    const idResponsavel = authClient.getUserIdResponsavelFromToken();
+    if (!idResponsavel) {
       toast.error('Usuário não autenticado.');
       return;
     }
 
-    const dtJustificativaAtraso = new Date().toISOString();
-
+    const dtJustificativaAtraso = formatDateISOWithoutTimezone();
+   
     try {
       await obrigacaoClient.atualizar(obrigacao.idSolicitacao, {
-        idResponsavelJustifAtraso: idResponsavelJustifAtraso,
-        idResponsavelTecnico: idResponsavelJustifAtraso,
+        idResponsavelJustifAtraso: idResponsavel,
         dsJustificativaAtraso: justificativa,
         dtJustificativaAtraso: dtJustificativaAtraso,
       });
@@ -573,79 +573,27 @@ export default function ConferenciaObrigacaoPage() {
           onRefreshAnexos={reloadDetalhe}
         />
       )}
-      <footer className="fixed bottom-0 left-0 right-0 z-11 border-t border-gray-200 bg-white px-8 py-4">
-        <div className="ml-auto flex w-full max-w-6xl flex-wrap items-center justify-end gap-3">
-          {isAdminOrGestor ? (
-            <>
-              <Button
-                type="button"
-                className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={() => setShowAnexarCorrespondenciaModal(true)}
-                disabled={!isStatusEmValidacaoRegulatorio || !conferenciaAprovada}
-                tooltip={tooltipAnexarCorrespondencia}
-              >
-                <Paperclip className="h-4 w-4" />
-                Anexar correspondência
-              </Button>
-              <Button
-                type="button"
-                className="flex items-center gap-2 rounded-full bg-orange-500 px-6 py-3 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={handleSolicitarAjustesClick}
-                disabled={!isStatusEmValidacaoRegulatorio || conferenciaAprovada}
-                tooltip={tooltipStatusValidacaoRegulatorio}
-              >
-                <MessageSquare className="h-4 w-4" />
-                Solicitar ajustes
-              </Button>
-              <Button
-                type="button"
-                className="flex items-center gap-2 rounded-full bg-blue-500 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={handleAprovarConferenciaClick}
-                disabled={!isStatusEmValidacaoRegulatorio || conferenciaAprovada}
-                tooltip={tooltipStatusValidacaoRegulatorio}
-              >
-                <CheckCircle2 className="h-4 w-4" />
-                Aprovar conferência
-              </Button>
-            </>
-          ) : (
-              <>
-                {isStatusAtrasada && (
-                <Button
-                  type="button"
-                  className="flex items-center gap-2 rounded-full bg-red-500 px-6 py-3 text-sm font-semibold text-white hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={() => setShowJustificarAtrasoModal(true)}
-                  disabled={!isUsuarioDaAreaAtribuida}
-                  tooltip={tooltipJustificarAtraso}
-                >
-                  <Clock className="h-4 w-4" />
-                  Inserir Justificativa de Atraso
-                </Button>
-                )}
-              <Button
-                type="button"
-                className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={() => setShowAnexarEvidenciaModal(true)}
-                disabled={!isStatusPermitidoEnviarReg}
-                tooltip={!isStatusPermitidoEnviarReg ? 'Apenas é possível anexar evidência de cumprimento quando o status for "Em Andamento" ou "Atrasada".' : ''}
-              >
-                <Paperclip className="h-4 w-4" />
-                Anexar evidência de cumprimento
-              </Button>
-              <Button
-                type="button"
-                className="flex items-center gap-2 rounded-full bg-blue-500 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={handleEnviarParaAnaliseClick}
-                disabled={!isStatusPermitidoEnviarReg || !isPerfilPermitidoEnviarReg || !temEvidenciaCumprimento || (isStatusAtrasada && !temJustificativaAtraso)}
-                tooltip={tooltipEnviarRegulatorio}
-              >
-                <CheckCircle2 className="h-4 w-4" />
-                Enviar para análise do regulatório
-              </Button>
-            </>
-          )}
-        </div>
-      </footer>
+      <ConferenciaFooter
+        isAdminOrGestor={isAdminOrGestor}
+        isStatusEmValidacaoRegulatorio={isStatusEmValidacaoRegulatorio}
+        conferenciaAprovada={conferenciaAprovada}
+        isStatusAtrasada={isStatusAtrasada}
+        isUsuarioDaAreaAtribuida={isUsuarioDaAreaAtribuida}
+        isStatusPermitidoEnviarReg={isStatusPermitidoEnviarReg}
+        isPerfilPermitidoEnviarReg={isPerfilPermitidoEnviarReg}
+        temEvidenciaCumprimento={temEvidenciaCumprimento}
+        temJustificativaAtraso={temJustificativaAtraso}
+        tooltipAnexarCorrespondencia={tooltipAnexarCorrespondencia}
+        tooltipStatusValidacaoRegulatorio={tooltipStatusValidacaoRegulatorio}
+        tooltipJustificarAtraso={tooltipJustificarAtraso}
+        tooltipEnviarRegulatorio={tooltipEnviarRegulatorio}
+        onAnexarCorrespondencia={() => setShowAnexarCorrespondenciaModal(true)}
+        onSolicitarAjustes={handleSolicitarAjustesClick}
+        onAprovarConferencia={handleAprovarConferenciaClick}
+        onJustificarAtraso={() => setShowJustificarAtrasoModal(true)}
+        onAnexarEvidencia={() => setShowAnexarEvidenciaModal(true)}
+        onEnviarParaAnalise={handleEnviarParaAnaliseClick}
+      />
 
       {obrigacao?.idSolicitacao && (
         <>

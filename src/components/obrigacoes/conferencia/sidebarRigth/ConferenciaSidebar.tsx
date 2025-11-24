@@ -158,7 +158,7 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
     };
 
     carregarDados();
-  }, [detalhe?.obrigacao?.idSolicitacao]);
+  }, [detalhe?.obrigacao?.idSolicitacao, onRefreshAnexos, detalhe?.solicitacaoParecer, detalhe?.tramitacoes]);
 
   useEffect(() => {
     const carregarUserResponsavel = async () => {

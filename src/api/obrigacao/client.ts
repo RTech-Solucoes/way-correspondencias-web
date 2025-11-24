@@ -105,7 +105,7 @@ export class ObrigacaoClient {
         });
     }
 
-    async buscarObrigacoesRelacionadas(id: number): Promise<ObrigacoesRelacionadasResponse> {
+    async buscarObrigacoesCondicionadas(id: number): Promise<ObrigacoesRelacionadasResponse> {
         return this.client.request<ObrigacoesRelacionadasResponse>(`/${id}/condicionadas`, {
             method: 'GET',
         });

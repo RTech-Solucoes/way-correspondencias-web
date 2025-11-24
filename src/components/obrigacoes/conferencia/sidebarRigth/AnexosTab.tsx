@@ -48,6 +48,11 @@ export function AnexosTab({
   const [showAnexarEvidenciaModal, setShowAnexarEvidenciaModal] = useState(false);
   const [showAnexarOutrosModal, setShowAnexarOutrosModal] = useState(false);
 
+  // Protocolo
+  const protocoloAnexos = useMemo(() => {
+    return anexos.filter((anexo) => anexo.tpDocumento === TipoDocumentoAnexoEnum.P);
+  }, [anexos]);
+
   // Evidência de cumprimento
   const evidenceAnexos = useMemo(() => {
     return anexos.filter((anexo) => anexo.tpDocumento === TipoDocumentoAnexoEnum.E);
@@ -207,6 +212,37 @@ export function AnexosTab({
 
   return (
     <div className="space-y-6">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-semibold text-gray-900">Protocolo</span>
+            <span className="text-xs font-semibold text-gray-400">
+              {protocoloAnexos.length}
+            </span>
+          </div>
+        <ul className="space-y-2">
+        {protocoloAnexos.length > 0 && (
+          <>
+            {protocoloAnexos.map((anexo) => (
+              <ItemAnexo
+                key={anexo.idAnexo}
+                anexo={anexo}
+                onDownload={onDownloadAnexo}
+                onDelete={podeExcluirAnexo(anexo) ? onDeleteAnexo : undefined}
+                downloadingId={downloadingId}
+                tone="subtle"
+                dense
+                dataUpload={anexo.dtCriacao || null}
+                responsavel={anexo.responsavel?.nmResponsavel || anexo.nmUsuario || null}
+              />
+            ))} 
+            </>
+          )}
+          {protocoloAnexos.length === 0 && (
+            <p className="text-sm text-gray-400">Nenhum protocolo anexado.</p>
+          )}
+          </ul>
+        </div>
+
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold text-gray-900">Evidência de cumprimento</span>
