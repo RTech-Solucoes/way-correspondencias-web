@@ -438,9 +438,6 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
       ].includes(detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao);
   }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 
-  const isPerfilPermitidoParaTramitar = useMemo(() => {
-    return [perfilUtil.EXECUTOR_AVANCADO, perfilUtil.EXECUTOR, perfilUtil.EXECUTOR_RESTRITO].includes(idPerfil ?? 0);
-  }, [idPerfil]);
 
   const podeEnviarComentario = useMemo(() => {
     // Se for admin ou gestor (perfil 1, 2 ou 3), pode enviar
@@ -502,7 +499,7 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
                  t.dsObservacao === textoCompleto.trim()
           );
 
-          const podeCriarTramitacao = statusPermitidoParaTramitar && !tramitacaoExistente && isPerfilPermitidoParaTramitar;
+          const podeCriarTramitacao = statusPermitidoParaTramitar && !tramitacaoExistente;
           
           if (podeCriarTramitacao) {
             const tramitacaoRequest = {
