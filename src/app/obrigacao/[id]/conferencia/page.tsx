@@ -289,6 +289,7 @@ export default function ConferenciaObrigacaoPage() {
     try {
       await obrigacaoClient.atualizar(obrigacao.idSolicitacao, {
         idResponsavelJustifAtraso: idResponsavelJustifAtraso,
+        idResponsavelTecnico: idResponsavelJustifAtraso,
         dsJustificativaAtraso: justificativa,
         dtJustificativaAtraso: dtJustificativaAtraso,
       });
