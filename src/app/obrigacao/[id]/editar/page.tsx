@@ -500,8 +500,16 @@ export default function EditarObrigacaoPage() {
             <ChevronRight className="h-3.5 w-3.5 text-black" />
             <span className="font-medium text-gray-700">{formData?.cdIdentificador?.toString() || 'Não identificado'}</span>
           </div>
-          <h1 className="text-2xl font-semibold text-gray-900">Editar obrigação</h1>
+            <h1 className="text-2xl font-semibold text-gray-900">Editar obrigação</h1>
         </div>
+
+        {conferenciaAprovada && (
+          <div className="mb-4 rounded-lg bg-yellow-50 border border-yellow-200 px-4 py-3 text-center">
+            <p className="text-sm text-yellow-800">
+              <strong>Atenção:</strong> A conferência já foi aprovada. Não é possível editar esta obrigação.
+            </p>
+          </div>
+        )}
 
         <div className="px-6">
           <div className="flex w-full items-center justify-between gap-2 rounded-full border border-gray-200 bg-white px-2 py-2 shadow-sm">

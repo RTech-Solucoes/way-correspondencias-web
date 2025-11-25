@@ -1,4 +1,4 @@
-import { BaseResponse, AreaSolicitacao } from '../solicitacoes/types';
+import { AreaSolicitacao, SolicitacaoResponse } from '../solicitacoes/types';
 import { TipoResponse } from '../tipos/types';
 import { TemaResponse } from '../temas/types';
 import { StatusSolicitacaoResponse } from '../status-solicitacao/client';
@@ -18,10 +18,9 @@ export interface ObrigacaoResumoResponse {
   statusSolicitacao: StatusSolicitacaoResponse;
 }
 
-export interface ObrigacaoResponse extends BaseResponse {
+export interface ObrigacaoResponse extends Omit<SolicitacaoResponse, 'tema'> {
   idSolicitacao: number;
   cdIdentificacao: string;
-  dsObservacao?: string | null;
   tema?: TemaResponse | null;
   statusSolicitacao: StatusSolicitacaoResponse;
   areas?: AreaSolicitacao[];
@@ -53,6 +52,8 @@ export interface ObrigacaoResponse extends BaseResponse {
   responsavelJustifAtraso?: ResponsavelResponse | null;
   dsJustificativaAtraso?: string | null;
   dtJustificativaAtraso?: string | null;
+  nrSei?: string | null;
+  dsObservacaoProtocolo?: string | null;
 }
 
 export interface ObrigacaoRequest {
@@ -83,6 +84,9 @@ export interface ObrigacaoRequest {
   idResponsavelJustifAtraso?: number | null;
   dsJustificativaAtraso?: string | null;
   dtJustificativaAtraso?: string | null;
+  nrSei?: string | null;
+  nrProcesso?: string | null;
+  dsObservacaoProtocolo?: string | null;
 }
 
 export interface ObrigacaoDetalheResponse {

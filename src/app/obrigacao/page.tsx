@@ -21,7 +21,7 @@ import { ObrigacaoResponse } from "@/api/obrigacao/types";
 import { FiltrosAplicados } from "@/components/ui/applied-filters";
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { statusObrigacaoList, statusObrigacaoLabels, StatusObrigacao } from "@/api/status-obrigacao/types";
+import { statusObrigacaoList, statusObrigacaoLabels, StatusObrigacao, statusListObrigacao } from "@/api/status-obrigacao/types";
 import { getObrigacaoStatusStyle } from "@/utils/obrigacoes/status";
 import areasClient from "@/api/areas/client";
 import temasClient from "@/api/temas/client";
@@ -33,11 +33,15 @@ import { TemaResponse } from "@/api/temas/types";
 import { TipoResponse } from "@/api/tipos/types";
 import { ObrigacaoAcoesMenu } from "@/components/obrigacoes/ObrigacaoAcoesMenu";
 import { ImportObrigacoesModal } from "@/components/obrigacoes/ImportObrigacoesModal";
+import { AnexarProtocoloModal } from "@/components/obrigacoes/AnexarProtocoloModal";
+import { ObrigacoesCondicionadasModal } from "@/components/obrigacoes/ObrigacoesCondicionadasModal";
 import TimeProgress from "@/components/ui/time-progress";
 import obrigacaoClient from "@/api/obrigacao/client";
 import { toast } from "sonner";
 import { useUserGestao } from "@/hooks/use-user-gestao";
 import { perfilUtil } from "@/api/perfis/types";
+import { ObrigacaoResumoResponse } from "@/api/obrigacao/types";
+import { usePermissoes } from "@/context/permissoes/PermissoesContext";
 
 function ObrigacoesContent() {
   const {
@@ -63,8 +67,13 @@ function ObrigacoesContent() {
   const [classificacoes, setClassificacoes] = useState<TipoResponse[]>([]);
   const [periodicidades, setPeriodicidades] = useState<TipoResponse[]>([]);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showAnexarProtocoloModal, setShowAnexarProtocoloModal] = useState(false);
+  const [showObrigacoesCondicionadasModal, setShowObrigacoesCondicionadasModal] = useState(false);
+  const [obrigacaoParaProtocolo, setObrigacaoParaProtocolo] = useState<ObrigacaoResponse | null>(null);
+  const [obrigacoesCondicionadas, setObrigacoesCondicionadas] = useState<ObrigacaoResumoResponse[]>([]);
   const router = useRouter();
   const { idPerfil } = useUserGestao();
+  const { canInserirObrigacao, canDeletarObrigacao, canConcluirObrigacao, canEnviarAreasObrigacao } = usePermissoes();
 
   const isAdminOrGestor = useMemo(() => {
     return idPerfil === perfilUtil.ADMINISTRADOR ||
@@ -245,6 +254,29 @@ function ObrigacoesContent() {
         open={showImportModal} 
         onClose={() => setShowImportModal(false)} 
       />
+      {obrigacaoParaProtocolo && (
+        <AnexarProtocoloModal
+          open={showAnexarProtocoloModal}
+          onClose={() => {
+            setShowAnexarProtocoloModal(false);
+            setObrigacaoParaProtocolo(null);
+          }}
+          idObrigacao={obrigacaoParaProtocolo.idSolicitacao}
+          idPerfil={idPerfil ?? undefined}
+          onSuccess={async () => {
+            await loadObrigacoes();
+          }}
+        />
+      )}
+      
+      <ObrigacoesCondicionadasModal
+        open={showObrigacoesCondicionadasModal}
+        onClose={() => {
+          setShowObrigacoesCondicionadasModal(false);
+          setObrigacoesCondicionadas([]);
+        }}
+        obrigacoesCondicionadas={obrigacoesCondicionadas}
+      />
       
       <div className="flex flex-col min-h-0 flex-1">
         <div className="flex items-center justify-between mb-6">
@@ -254,7 +286,9 @@ function ObrigacoesContent() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => {}}
+            onClick={() => loadObrigacoes()}
+            disabled={loading}
+            title="Atualizar lista"
           >
             <ArrowClockwiseIcon className="h-4 w-4 mr-1" />
           </Button>
@@ -306,22 +340,26 @@ function ObrigacoesContent() {
             Filtrar
           </Button>
 
-          <Button
-            variant="outline"
-            className="h-10 px-4"
-            onClick={() => setShowImportModal(true)}
-          >
-            <UploadIcon className="h-4 w-4 mr-2" />
-            Importar Obrigações
-          </Button>
+          {canInserirObrigacao && (
+            <Button
+              variant="outline"
+              className="h-10 px-4"
+              onClick={() => setShowImportModal(true)}
+            >
+              <UploadIcon className="h-4 w-4 mr-2" />
+              Importar Obrigações
+            </Button>
+          )}
 
-          <Button
-            className="h-10 px-4"
-            onClick={() => setShowObrigacaoModal(true)}
-          >
-            <PlusIcon className="h-4 w-4 mr-2" />
-            Criar Obrigação
-          </Button>
+          {canInserirObrigacao && (
+            <Button
+              className="h-10 px-4"
+              onClick={() => setShowObrigacaoModal(true)}
+            >
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Criar Obrigação
+            </Button>
+          )}
         </div>
       </div>
 
@@ -338,7 +376,7 @@ function ObrigacoesContent() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="min-w-[150px]">ID</TableHead>
+              <TableHead className="min-w-[200px]">Identificação</TableHead>
               <TableHead className="min-w-[250px]">Tarefa</TableHead>
               <TableHead className="min-w-[150px]">Tema</TableHead>
               <TableHead>Status</TableHead>
@@ -370,7 +408,7 @@ function ObrigacoesContent() {
             ) : (
               obrigacoes.map((obrigacao) => (
                 <TableRow key={obrigacao.idSolicitacao}>
-                  <TableCell className="font-medium min-w-[150px]">{obrigacao.cdIdentificacao || '-'}</TableCell>
+                  <TableCell className="font-medium min-w-[200px]">{obrigacao.cdIdentificacao || '-'}</TableCell>
                   <TableCell className="min-w-[250px]">
                     <div className="line-clamp-4" title={obrigacao.dsTarefa || undefined}>
                       {obrigacao.dsTarefa || '-'}
@@ -469,19 +507,44 @@ function ObrigacoesContent() {
                           }
                           router.push(`/obrigacao/${obrigacao.idSolicitacao}/conferencia`);
                         }}
-                        onEditar={(obrigacao) => {
+                        onEditar={canInserirObrigacao ? (obrigacao) => {
                           if (!obrigacao.idSolicitacao) {
                             return;
                           }
                           router.push(`/obrigacao/${obrigacao.idSolicitacao}/editar`);
-                        }}
-                        onAnexarProtocolo={(obrigacao) => {
-                          console.log('Anexar protocolo:', obrigacao.idSolicitacao);
-                        }}
-                        onEncaminharTramitacao={(obrigacao) => {
-                          console.log('Encaminhar para tramitação:', obrigacao.idSolicitacao);
-                        }}
-                        onEnviarArea={async (obrigacao) => {
+                        } : undefined}
+                        onAnexarProtocolo={ canConcluirObrigacao ? async (obrigacao) => {
+                          if (!obrigacao.idSolicitacao) {
+                            toast.error('ID da obrigação não encontrado.');
+                            return;
+                          }
+
+                          try {
+                            const response = await obrigacaoClient.buscarObrigacoesCondicionadas(obrigacao.idSolicitacao);
+                            const condicionadas = response.obrigacoesCondicionadas || [];
+
+                            const condicionadasPendentes = condicionadas.filter(
+                              (cond) =>
+                                cond.statusSolicitacao?.idStatusSolicitacao !== statusListObrigacao.CONCLUIDO.id &&
+                                cond.statusSolicitacao?.nmStatus !== StatusObrigacao.CONCLUIDO
+                            );
+
+                            if (condicionadasPendentes.length > 0) {
+                              setObrigacoesCondicionadas(condicionadasPendentes);
+                              setShowObrigacoesCondicionadasModal(true);
+                            } else {
+                              setObrigacaoParaProtocolo(obrigacao);
+                              setShowAnexarProtocoloModal(true);
+                            }
+                          } catch (error) {
+                            console.error('Erro ao verificar obrigações condicionadas:', error);
+                            toast.error('Erro ao verificar obrigações condicionadas. Tente novamente.');
+                          }
+                        } : undefined}
+                        // onEncaminharTramitacao={(obrigacao) => {
+                        //   console.log('Encaminhar para tramitação:', obrigacao.idSolicitacao);
+                        // }}
+                        onEnviarArea={canEnviarAreasObrigacao ? async (obrigacao) => {
                           if (!obrigacao.idSolicitacao) {
                             toast.error('ID da obrigação não encontrado.');
                             return;
@@ -495,8 +558,8 @@ function ObrigacoesContent() {
                             console.error('Erro ao enviar obrigação para área:', error);
                             toast.error('Erro ao enviar obrigação para área. Tente novamente.');
                           }
-                        }}
-                        onExcluir={handleDeleteObrigacao}
+                        } : undefined}
+                        onExcluir={canDeletarObrigacao ? handleDeleteObrigacao : undefined}
                       />
                     </div>
                   </TableCell>

@@ -25,6 +25,7 @@ interface AnexosTabProps {
   isStatusAtrasada?: boolean;
   isStatusEmValidacaoRegulatorio?: boolean;
   isStatusPendente?: boolean;
+  isStatusNaoIniciado?: boolean;
 }
 
 export function AnexosTab({
@@ -41,12 +42,18 @@ export function AnexosTab({
   isStatusAtrasada = false,
   isStatusEmValidacaoRegulatorio = false,
   isStatusPendente = false,
+  isStatusNaoIniciado = false
 }: AnexosTabProps) {
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [evidenceLinkValue, setEvidenceLinkValue] = useState('');
   const [linkError, setLinkError] = useState<string | null>(null);
   const [showAnexarEvidenciaModal, setShowAnexarEvidenciaModal] = useState(false);
   const [showAnexarOutrosModal, setShowAnexarOutrosModal] = useState(false);
+
+  // Protocolo
+  const protocoloAnexos = useMemo(() => {
+    return anexos.filter((anexo) => anexo.tpDocumento === TipoDocumentoAnexoEnum.P);
+  }, [anexos]);
 
   // Evidência de cumprimento
   const evidenceAnexos = useMemo(() => {
@@ -195,18 +202,50 @@ export function AnexosTab({
   }, [isStatusEmAndamento, isStatusAtrasada, isStatusPendente, isStatusEmValidacaoRegulatorio]);
 
   const statusPermiteAnexarOutros = useMemo(() => {
-    return isStatusEmAndamento || isStatusAtrasada;
-  }, [isStatusEmAndamento, isStatusAtrasada]);
+    return isStatusEmAndamento || isStatusAtrasada || isStatusNaoIniciado || isStatusAtrasada || isStatusEmValidacaoRegulatorio || isStatusPendente;
+  }, [isStatusEmAndamento, isStatusAtrasada, isStatusNaoIniciado, isStatusEmValidacaoRegulatorio, isStatusPendente]);
 
   const tooltipOutrosAnexos = useMemo(() => {
     if (!statusPermiteAnexarOutros) {
-      return 'Apenas é possível anexar outros anexos quando o status for "Em Andamento" ou "Atrasada".';
+      return 'Status não permitido para anexar outros anexos.';
     }
+    
     return '';
   }, [statusPermiteAnexarOutros]);
 
   return (
     <div className="space-y-6">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-semibold text-gray-900">Protocolo</span>
+            <span className="text-xs font-semibold text-gray-400">
+              {protocoloAnexos.length}
+            </span>
+          </div>
+        <ul className="space-y-2">
+        {protocoloAnexos.length > 0 && (
+          <>
+            {protocoloAnexos.map((anexo) => (
+              <ItemAnexo
+                key={anexo.idAnexo}
+                anexo={anexo}
+                onDownload={onDownloadAnexo}
+                onDelete={podeExcluirAnexo(anexo) ? onDeleteAnexo : undefined}
+                downloadingId={downloadingId}
+                tone="subtle"
+                dense
+                dataUpload={anexo.dtCriacao || null}
+                responsavel={anexo.responsavel?.nmResponsavel || anexo.nmUsuario || null}
+              />
+            ))} 
+            </>
+          )}
+          {protocoloAnexos.length === 0 && (
+            <p className="text-sm text-gray-400">Nenhum protocolo anexado.</p>
+          )}
+          </ul>
+        </div>
+
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold text-gray-900">Evidência de cumprimento</span>
@@ -350,7 +389,7 @@ export function AnexosTab({
 
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-4 mb-5">
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold text-gray-900">Outros anexos</span>
           <span className="text-xs font-semibold text-gray-400">{outrosAnexos.length}</span>

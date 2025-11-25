@@ -45,4 +45,5 @@ export  enum TipoDocumentoAnexoEnum {
   A = 'A', // Auxiliar
   R = 'R', // Correspondência
   L = 'L', // Link
+  P = 'P', // Protocolo
 }

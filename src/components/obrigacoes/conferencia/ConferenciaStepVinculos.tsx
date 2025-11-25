@@ -58,7 +58,7 @@ export function ConferenciaStepVinculos({ obrigacao }: ConferenciaStepVinculosPr
       }
 
       try {
-        const response = await obrigacaoClient.buscarObrigacoesRelacionadas(obrigacao.idSolicitacao);
+        const response = await obrigacaoClient.buscarObrigacoesCondicionadas(obrigacao.idSolicitacao);
         setObrigacoesCondicionadas(response.obrigacoesCondicionadas || []);
       } catch (error) {
         console.error('Erro ao carregar obrigações condicionadas:', error);
