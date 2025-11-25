@@ -101,6 +101,63 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
     return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.PENDENTE.id;
   }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 
+  const isStatusNaoIniciado = useMemo(() => {
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.NAO_INICIADO.id;
+  }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
+  const isStatusConcluido = useMemo(() => {
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.CONCLUIDO.id;
+  }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
+  const isStatusNaoAplicavelSuspensa = useMemo(() => {
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.NAO_APLICAVEL_SUSPENSA.id;
+  }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
+  const idAreaAtribuida = areaAtribuida?.idArea;
+  const userAreaIds = userResponsavel?.areas?.map(ra => ra.area.idArea) || [];
+  const isDaAreaAtribuida = idAreaAtribuida && userAreaIds.includes(idAreaAtribuida);
+
+  const isPerfilPermitidoPorStatus = useMemo(() => {
+    if (isStatusNaoIniciado) {
+      if (isDaAreaAtribuida && (
+        idPerfil === perfilUtil.EXECUTOR_AVANCADO || 
+        idPerfil === perfilUtil.EXECUTOR || 
+        idPerfil === perfilUtil.EXECUTOR_RESTRITO
+      )) {
+        return true;
+      }
+  
+      return false;
+    }
+
+    if (isStatusEmValidacaoRegulatorio) {
+      if (idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
+        idPerfil === perfilUtil.ADMINISTRADOR || 
+        idPerfil === perfilUtil.VALIDADOR_ASSINANTE) {
+        return true;
+      }
+      return false;
+    }
+
+    if (isStatusEmAndamento || isStatusPendente || isStatusAtrasada)  return true;
+
+
+    if (isStatusConcluido || isStatusNaoAplicavelSuspensa) return false;
+
+    return false;
+    
+  }, [
+    idPerfil, 
+    isStatusNaoIniciado, 
+    isStatusEmAndamento,
+    isStatusPendente,
+    isStatusAtrasada,
+    isStatusEmValidacaoRegulatorio,
+    isStatusConcluido, 
+    isStatusNaoAplicavelSuspensa, 
+    isDaAreaAtribuida
+  ]);
+
   useEffect(() => {
     if (detalhe?.solicitacaoParecer) {
       setSolicitacaoPareceres(detalhe.solicitacaoParecer);
@@ -234,10 +291,6 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
       return true; 
     }
 
-    const idAreaAtribuida = areaAtribuida?.idArea;
-    const userAreaIds = userResponsavel?.areas?.map(ra => ra.area.idArea) || [];
-    const isDaAreaAtribuida = idAreaAtribuida && userAreaIds.includes(idAreaAtribuida);
-
     if (!isDaAreaAtribuida) {
       return true; 
     }
@@ -266,7 +319,7 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
     }
 
     return true;
-  }, [idResponsavelLogado, userResponsavel, areaAtribuida, tramitacoes]);
+  }, [idResponsavelLogado, userResponsavel, isDaAreaAtribuida, tramitacoes]);
 
   const handleDeletarParecer = useCallback(async (idSolicitacaoParecer: number) => {
     try {
@@ -448,20 +501,17 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
     }
 
     // Verifica se é da área atribuída
-    const idAreaAtribuida = areaAtribuida?.idArea;
-    const userAreaIds = userResponsavel?.areas?.map(ra => ra.area.idArea) || [];
-    const isDaAreaAtribuida = idAreaAtribuida && userAreaIds.includes(idAreaAtribuida);
-
     if (isDaAreaAtribuida) {
       return true;
     }
 
     // Verifica se é de alguma área condicionante
+    const userAreaIds = userResponsavel?.areas?.map(ra => ra.area.idArea) || [];
     const idsAreasCondicionantes = areasCondicionantes.map(area => area.idArea);
     const isDeAreaCondicionante = idsAreasCondicionantes.some(idArea => userAreaIds.includes(idArea));
 
     return isDeAreaCondicionante;
-  }, [idPerfil, areaAtribuida?.idArea, userResponsavel?.areas, areasCondicionantes]);
+  }, [idPerfil, isDaAreaAtribuida, userResponsavel?.areas, areasCondicionantes]);
 
   const tooltipEnviarComentario = useMemo(() => {
     if (!podeEnviarComentario) {
@@ -469,6 +519,66 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
     }
     return '';
   }, [podeEnviarComentario]);
+
+  const tooltipPerfilPermitidoPorStatus = useMemo(() => {
+    if (isStatusNaoIniciado) {
+      if (!isDaAreaAtribuida) {
+        return 'Apenas usuários da área atribuída podem inserir comentários quando o status é "Não Iniciado".';
+      }
+      if (!(idPerfil === perfilUtil.EXECUTOR_AVANCADO || 
+            idPerfil === perfilUtil.EXECUTOR || 
+            idPerfil === perfilUtil.EXECUTOR_RESTRITO)) {
+        return 'Apenas Analista da Área ou Gerente da Área podem inserir comentários quando o status é "Não Iniciado".';
+      }
+      return 'Você não tem permissão para inserir comentários neste status.';
+    }
+
+    if (isStatusEmValidacaoRegulatorio) {
+      if (!(idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
+            idPerfil === perfilUtil.ADMINISTRADOR || 
+            idPerfil === perfilUtil.VALIDADOR_ASSINANTE)) {
+        return 'Apenas Regulátorio ou Diretoria podem inserir comentários quando o status é "Em Validação (Regulatório)".';
+      }
+      return 'Você não tem permissão para inserir comentários neste status.';
+    }
+
+    if (isStatusConcluido) {
+      return 'Não é possível inserir comentários em obrigações concluídas. Apenas visualização permitida.';
+    }
+
+    if (isStatusNaoAplicavelSuspensa) {
+      return 'Não é possível inserir comentários em obrigações não aplicáveis/suspensas. Apenas visualização permitida.';
+    }
+
+    return 'Você não tem permissão para inserir comentários neste status.';
+  }, [
+    isStatusNaoIniciado,
+    isStatusEmValidacaoRegulatorio,
+    isStatusConcluido,
+    isStatusNaoAplicavelSuspensa,
+    isDaAreaAtribuida,
+    idPerfil
+  ]);
+
+  const tooltipFinalEnviarComentario = useMemo(() => {
+    if (enviandoComentario) {
+      return 'Enviando comentário...';
+    }
+    
+    if (!comentarioTexto.trim()) {
+      return 'Digite um comentário antes de enviar.';
+    }
+
+    if (!podeEnviarComentario) {
+      return tooltipEnviarComentario;
+    }
+
+    if (!isPerfilPermitidoPorStatus) {
+      return tooltipPerfilPermitidoPorStatus;
+    }
+
+    return '';
+  }, [enviandoComentario, comentarioTexto, podeEnviarComentario, isPerfilPermitidoPorStatus, tooltipEnviarComentario, tooltipPerfilPermitidoPorStatus]);
 
   const handleEnviarComentario = useCallback(async () => {
     const textarea = document.getElementById('comentario-textarea') as HTMLTextAreaElement;
@@ -674,6 +784,7 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
                 isStatusAtrasada={isStatusAtrasada}
                 isStatusEmValidacaoRegulatorio={isStatusEmValidacaoRegulatorio}
                 isStatusPendente={isStatusPendente}
+                isStatusNaoIniciado={isStatusNaoIniciado}
               />
             ) : (
               <ComentariosTab
@@ -739,8 +850,8 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
                   size="icon"
                   className="rounded-full bg-blue-500 text-white hover:bg-blue-600 shrink-0 h-10 w-10 disabled:opacity-50"
                   onClick={handleEnviarComentario}
-                  disabled={enviandoComentario || !comentarioTexto.trim() || !podeEnviarComentario}
-                  tooltip={tooltipEnviarComentario}
+                  disabled={enviandoComentario || !comentarioTexto.trim() || !podeEnviarComentario || !isPerfilPermitidoPorStatus}
+                  tooltip={tooltipFinalEnviarComentario}
                 >
                   <Send className="h-4 w-4" />
                 </Button>
@@ -784,4 +895,3 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
     </aside>
   );
 }
-

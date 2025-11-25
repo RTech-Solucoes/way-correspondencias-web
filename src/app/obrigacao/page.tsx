@@ -41,6 +41,7 @@ import { toast } from "sonner";
 import { useUserGestao } from "@/hooks/use-user-gestao";
 import { perfilUtil } from "@/api/perfis/types";
 import { ObrigacaoResumoResponse } from "@/api/obrigacao/types";
+import { usePermissoes } from "@/context/permissoes/PermissoesContext";
 
 function ObrigacoesContent() {
   const {
@@ -72,6 +73,7 @@ function ObrigacoesContent() {
   const [obrigacoesCondicionadas, setObrigacoesCondicionadas] = useState<ObrigacaoResumoResponse[]>([]);
   const router = useRouter();
   const { idPerfil } = useUserGestao();
+  const { canInserirObrigacao, canDeletarObrigacao, canConcluirObrigacao, canEnviarAreasObrigacao } = usePermissoes();
 
   const isAdminOrGestor = useMemo(() => {
     return idPerfil === perfilUtil.ADMINISTRADOR ||
@@ -284,7 +286,9 @@ function ObrigacoesContent() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => {}}
+            onClick={() => loadObrigacoes()}
+            disabled={loading}
+            title="Atualizar lista"
           >
             <ArrowClockwiseIcon className="h-4 w-4 mr-1" />
           </Button>
@@ -336,22 +340,26 @@ function ObrigacoesContent() {
             Filtrar
           </Button>
 
-          <Button
-            variant="outline"
-            className="h-10 px-4"
-            onClick={() => setShowImportModal(true)}
-          >
-            <UploadIcon className="h-4 w-4 mr-2" />
-            Importar Obrigações
-          </Button>
+          {canInserirObrigacao && (
+            <Button
+              variant="outline"
+              className="h-10 px-4"
+              onClick={() => setShowImportModal(true)}
+            >
+              <UploadIcon className="h-4 w-4 mr-2" />
+              Importar Obrigações
+            </Button>
+          )}
 
-          <Button
-            className="h-10 px-4"
-            onClick={() => setShowObrigacaoModal(true)}
-          >
-            <PlusIcon className="h-4 w-4 mr-2" />
-            Criar Obrigação
-          </Button>
+          {canInserirObrigacao && (
+            <Button
+              className="h-10 px-4"
+              onClick={() => setShowObrigacaoModal(true)}
+            >
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Criar Obrigação
+            </Button>
+          )}
         </div>
       </div>
 
@@ -499,13 +507,13 @@ function ObrigacoesContent() {
                           }
                           router.push(`/obrigacao/${obrigacao.idSolicitacao}/conferencia`);
                         }}
-                        onEditar={(obrigacao) => {
+                        onEditar={canInserirObrigacao ? (obrigacao) => {
                           if (!obrigacao.idSolicitacao) {
                             return;
                           }
                           router.push(`/obrigacao/${obrigacao.idSolicitacao}/editar`);
-                        }}
-                        onAnexarProtocolo={async (obrigacao) => {
+                        } : undefined}
+                        onAnexarProtocolo={ canConcluirObrigacao ? async (obrigacao) => {
                           if (!obrigacao.idSolicitacao) {
                             toast.error('ID da obrigação não encontrado.');
                             return;
@@ -532,11 +540,11 @@ function ObrigacoesContent() {
                             console.error('Erro ao verificar obrigações condicionadas:', error);
                             toast.error('Erro ao verificar obrigações condicionadas. Tente novamente.');
                           }
-                        }}
-                        onEncaminharTramitacao={(obrigacao) => {
-                          console.log('Encaminhar para tramitação:', obrigacao.idSolicitacao);
-                        }}
-                        onEnviarArea={async (obrigacao) => {
+                        } : undefined}
+                        // onEncaminharTramitacao={(obrigacao) => {
+                        //   console.log('Encaminhar para tramitação:', obrigacao.idSolicitacao);
+                        // }}
+                        onEnviarArea={canEnviarAreasObrigacao ? async (obrigacao) => {
                           if (!obrigacao.idSolicitacao) {
                             toast.error('ID da obrigação não encontrado.');
                             return;
@@ -550,8 +558,8 @@ function ObrigacoesContent() {
                             console.error('Erro ao enviar obrigação para área:', error);
                             toast.error('Erro ao enviar obrigação para área. Tente novamente.');
                           }
-                        }}
-                        onExcluir={handleDeleteObrigacao}
+                        } : undefined}
+                        onExcluir={canDeletarObrigacao ? handleDeleteObrigacao : undefined}
                       />
                     </div>
                   </TableCell>

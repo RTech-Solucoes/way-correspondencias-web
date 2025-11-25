@@ -25,6 +25,7 @@ interface AnexosTabProps {
   isStatusAtrasada?: boolean;
   isStatusEmValidacaoRegulatorio?: boolean;
   isStatusPendente?: boolean;
+  isStatusNaoIniciado?: boolean;
 }
 
 export function AnexosTab({
@@ -41,6 +42,7 @@ export function AnexosTab({
   isStatusAtrasada = false,
   isStatusEmValidacaoRegulatorio = false,
   isStatusPendente = false,
+  isStatusNaoIniciado = false
 }: AnexosTabProps) {
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [evidenceLinkValue, setEvidenceLinkValue] = useState('');
@@ -200,13 +202,14 @@ export function AnexosTab({
   }, [isStatusEmAndamento, isStatusAtrasada, isStatusPendente, isStatusEmValidacaoRegulatorio]);
 
   const statusPermiteAnexarOutros = useMemo(() => {
-    return isStatusEmAndamento || isStatusAtrasada;
-  }, [isStatusEmAndamento, isStatusAtrasada]);
+    return isStatusEmAndamento || isStatusAtrasada || isStatusNaoIniciado || isStatusAtrasada || isStatusEmValidacaoRegulatorio || isStatusPendente;
+  }, [isStatusEmAndamento, isStatusAtrasada, isStatusNaoIniciado, isStatusEmValidacaoRegulatorio, isStatusPendente]);
 
   const tooltipOutrosAnexos = useMemo(() => {
     if (!statusPermiteAnexarOutros) {
-      return 'Apenas é possível anexar outros anexos quando o status for "Em Andamento" ou "Atrasada".';
+      return 'Status não permitido para anexar outros anexos.';
     }
+    
     return '';
   }, [statusPermiteAnexarOutros]);
 
@@ -386,7 +389,7 @@ export function AnexosTab({
 
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-4 mb-5">
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold text-gray-900">Outros anexos</span>
           <span className="text-xs font-semibold text-gray-400">{outrosAnexos.length}</span>

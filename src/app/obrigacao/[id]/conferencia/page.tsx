@@ -32,6 +32,7 @@ import { perfilUtil } from '@/api/perfis/types';
 import { JustificarAtrasoModal } from '@/components/obrigacoes/conferencia/JustificarAtrasoModal';
 import { responsaveisClient } from '@/api/responsaveis/client';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
+import { usePermissoes } from '@/context/permissoes/PermissoesContext';
 
 type TabKey = 'dados' | 'temas' | 'prazos' | 'anexos' | 'vinculos';
 const tabs: { key: TabKey; label: string }[] = [
@@ -46,6 +47,10 @@ export default function ConferenciaObrigacaoPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { isAdminOrGestor, idPerfil } = useUserGestao();
+  const { 
+    canAprovarConferenciaObrigacao, 
+    canSolicitarAjustesObrigacao, 
+  } = usePermissoes();
 
   const [activeTab, setActiveTab] = useState<TabKey>('dados');
   const [detalhe, setDetalhe] = useState<ObrigacaoDetalheResponse | null>(null);
@@ -593,6 +598,8 @@ export default function ConferenciaObrigacaoPage() {
         onJustificarAtraso={() => setShowJustificarAtrasoModal(true)}
         onAnexarEvidencia={() => setShowAnexarEvidenciaModal(true)}
         onEnviarParaAnalise={handleEnviarParaAnaliseClick}
+        canAprovarConferencia={canAprovarConferenciaObrigacao}
+        canSolicitarAjustes={canSolicitarAjustesObrigacao}
       />
 
       {obrigacao?.idSolicitacao && (

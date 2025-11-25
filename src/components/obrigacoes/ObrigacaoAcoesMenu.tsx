@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -22,6 +22,9 @@ import { StatusObrigacao, statusListObrigacao } from "@/api/status-obrigacao/typ
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useUserGestao } from "@/hooks/use-user-gestao";
 import { perfilUtil } from "@/api/perfis/types";
+import { usePermissoes } from "@/context/permissoes/PermissoesContext";
+import anexosClient from "@/api/anexos/client";
+import { TipoDocumentoAnexoEnum, TipoObjetoAnexoEnum } from "@/api/anexos/type";
 
 interface ObrigacaoAcoesMenuProps {
   obrigacao: ObrigacaoResponse;
@@ -31,6 +34,7 @@ interface ObrigacaoAcoesMenuProps {
   onEncaminharTramitacao?: (obrigacao: ObrigacaoResponse) => void;
   onEnviarArea?: (obrigacao: ObrigacaoResponse) => void;
   onExcluir?: (obrigacao: ObrigacaoResponse) => void;
+  canVisualizarObrigacao?: boolean;
 }
 
 export function ObrigacaoAcoesMenu({
@@ -41,8 +45,18 @@ export function ObrigacaoAcoesMenu({
   onEncaminharTramitacao,
   onEnviarArea,
   onExcluir,
+  canVisualizarObrigacao: canVisualizarObrigacaoProp,
 }: ObrigacaoAcoesMenuProps) {
   const { idPerfil } = useUserGestao();
+  const { 
+    canInserirObrigacao, 
+    canDeletarObrigacao, 
+    canConcluirObrigacao, 
+    canEnviarAreasObrigacao,
+    canVisualizarObrigacao: canVisualizarObrigacaoPermissao 
+  } = usePermissoes();
+  
+  const canVisualizarObrigacao = canVisualizarObrigacaoProp ?? canVisualizarObrigacaoPermissao;
   
   const isStatusConcluido = obrigacao.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.CONCLUIDO.id ||
     obrigacao.statusSolicitacao?.nmStatus === StatusObrigacao.CONCLUIDO;
@@ -57,9 +71,23 @@ export function ObrigacaoAcoesMenu({
       idPerfil === perfilUtil.GESTOR_DO_SISTEMA;
   }, [idPerfil]);
 
+  const [isExisteAnexoCorrespondencia, setIsExisteAnexoCorrespondencia] = useState<boolean>(false);
+
+  useEffect(() => {
+    const verificarAnexoCorrespondencia = async () => {
+      const anexos = await anexosClient.buscarPorIdObjetoETipoObjeto(
+        obrigacao.idSolicitacao,
+        TipoObjetoAnexoEnum.O
+      );
+      const existe = anexos.some(anexo => anexo.tpDocumento === TipoDocumentoAnexoEnum.R);
+      setIsExisteAnexoCorrespondencia(existe);
+    };
+    verificarAnexoCorrespondencia();
+  }, [obrigacao.idSolicitacao]);
+
   const podeAnexarProtocolo = useMemo(() => {
-    return isAdminOrGestor && isStatusEmValidacao && !isStatusConcluido;
-  }, [isAdminOrGestor, isStatusEmValidacao, isStatusConcluido]);
+    return isAdminOrGestor && isStatusEmValidacao && !isStatusConcluido && isExisteAnexoCorrespondencia;
+  }, [isAdminOrGestor, isStatusEmValidacao, isStatusConcluido, isExisteAnexoCorrespondencia]);
 
   const tooltipAnexarProtocolo = useMemo(() => {
     if (isStatusConcluido) {
@@ -68,11 +96,16 @@ export function ObrigacaoAcoesMenu({
     if (!isStatusEmValidacao) {
       return 'Apenas é possível anexar protocolo quando a obrigação estiver em "Em Validação (Regulatório)".';
     }
+
+    if (!isExisteAnexoCorrespondencia) {
+      return 'Apenas é possível anexar protocolo quando houver anexo de correspondência.';
+    }
+
     if (!isAdminOrGestor) {
       return 'Apenas administradores e gestores do sistema podem anexar protocolo.';
     }
     return '';
-  }, [isStatusConcluido, isStatusEmValidacao, isAdminOrGestor]);
+  }, [isStatusConcluido, isStatusEmValidacao, isAdminOrGestor, isExisteAnexoCorrespondencia]);
 
   const jaEnviadoParaArea = obrigacao.flEnviandoArea === 'S';
   const conferenciaAprovada = obrigacao.flAprovarConferencia === 'S';
@@ -89,13 +122,13 @@ export function ObrigacaoAcoesMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        {onVisualizar && (
+        {onVisualizar && canVisualizarObrigacao && (
           <DropdownMenuItem onClick={() => onVisualizar(obrigacao)}>
             <EyeIcon className="mr-2 h-4 w-4" />
             Visualizar
           </DropdownMenuItem>
         )}
-        {onEditar && (
+        {onEditar && canInserirObrigacao && (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -118,7 +151,7 @@ export function ObrigacaoAcoesMenu({
             </Tooltip>
           </TooltipProvider>
         )}
-        {onAnexarProtocolo && (
+        {onAnexarProtocolo && canConcluirObrigacao && (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -147,7 +180,7 @@ export function ObrigacaoAcoesMenu({
             Encaminhar para tramitação
           </DropdownMenuItem>
         )}
-        {onEnviarArea && (
+        {onEnviarArea && canEnviarAreasObrigacao && (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -170,7 +203,7 @@ export function ObrigacaoAcoesMenu({
             </Tooltip>
           </TooltipProvider>
         )}
-        {onExcluir && (
+        {onExcluir && canDeletarObrigacao && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuItem 

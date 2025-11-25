@@ -17,6 +17,8 @@ interface ConferenciaFooterProps {
   tooltipStatusValidacaoRegulatorio: string;
   tooltipJustificarAtraso: string;
   tooltipEnviarRegulatorio: string;
+  canAprovarConferencia?: boolean | null;
+  canSolicitarAjustes?: boolean | null;
   onAnexarCorrespondencia: () => void;
   onSolicitarAjustes: () => void;
   onAprovarConferencia: () => void;
@@ -39,6 +41,8 @@ export function ConferenciaFooter({
   tooltipStatusValidacaoRegulatorio,
   tooltipJustificarAtraso,
   tooltipEnviarRegulatorio,
+  canAprovarConferencia = true,
+  canSolicitarAjustes = true,
   onAnexarCorrespondencia,
   onSolicitarAjustes,
   onAprovarConferencia,
@@ -61,26 +65,30 @@ export function ConferenciaFooter({
               <Paperclip className="h-4 w-4" />
               Anexar correspondência
             </Button>
-            <Button
-              type="button"
-              className="flex items-center gap-2 rounded-full bg-orange-500 px-6 py-3 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={onSolicitarAjustes}
-              disabled={!isStatusEmValidacaoRegulatorio || conferenciaAprovada}
-              tooltip={tooltipStatusValidacaoRegulatorio}
-            >
-              <MessageSquare className="h-4 w-4" />
-              Solicitar ajustes
-            </Button>
-            <Button
-              type="button"
-              className="flex items-center gap-2 rounded-full bg-blue-500 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={onAprovarConferencia}
-              disabled={!isStatusEmValidacaoRegulatorio || conferenciaAprovada}
-              tooltip={tooltipStatusValidacaoRegulatorio}
-            >
-              <CheckCircle2 className="h-4 w-4" />
-              Aprovar conferência
-            </Button>
+            {canSolicitarAjustes && (
+              <Button
+                type="button"
+                className="flex items-center gap-2 rounded-full bg-orange-500 px-6 py-3 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={onSolicitarAjustes}
+                disabled={!isStatusEmValidacaoRegulatorio || conferenciaAprovada}
+                tooltip={tooltipStatusValidacaoRegulatorio}
+              >
+                <MessageSquare className="h-4 w-4" />
+                Solicitar ajustes
+              </Button>
+            )}
+            {canAprovarConferencia && (
+              <Button
+                type="button"
+                className="flex items-center gap-2 rounded-full bg-blue-500 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={onAprovarConferencia}
+                disabled={!isStatusEmValidacaoRegulatorio || conferenciaAprovada}
+                tooltip={tooltipStatusValidacaoRegulatorio}
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                Aprovar conferência
+              </Button>
+            )}
           </>
         ) : (
           <>
