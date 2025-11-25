@@ -127,7 +127,7 @@ export function AnexarProtocoloModal({
         obrigacaoAnexosClient.upload(idObrigacao, arquivosDTO),
         tramitacoesClient.tramitarViaFluxo({
           idSolicitacao: idObrigacao,
-          dsObservacao: 'Protocolo anexado, obrigação Concluida',
+          dsObservacao: 'Protocolo anexado, obrigação Concluida.',
           idResponsavel: idResponsavel || undefined,
           flAprovado: 'S',
           arquivos: arquivosDTO,

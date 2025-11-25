@@ -26,6 +26,7 @@ interface AnexosTabProps {
   isStatusEmValidacaoRegulatorio?: boolean;
   isStatusPendente?: boolean;
   isStatusNaoIniciado?: boolean;
+  isStatusConcluido?: boolean;
 }
 
 export function AnexosTab({
@@ -42,7 +43,8 @@ export function AnexosTab({
   isStatusAtrasada = false,
   isStatusEmValidacaoRegulatorio = false,
   isStatusPendente = false,
-  isStatusNaoIniciado = false
+  isStatusNaoIniciado = false,
+  isStatusConcluido = false
 }: AnexosTabProps) {
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [evidenceLinkValue, setEvidenceLinkValue] = useState('');
@@ -202,16 +204,26 @@ export function AnexosTab({
   }, [isStatusEmAndamento, isStatusAtrasada, isStatusPendente, isStatusEmValidacaoRegulatorio]);
 
   const statusPermiteAnexarOutros = useMemo(() => {
-    return isStatusEmAndamento || isStatusAtrasada || isStatusNaoIniciado || isStatusAtrasada || isStatusEmValidacaoRegulatorio || isStatusPendente;
-  }, [isStatusEmAndamento, isStatusAtrasada, isStatusNaoIniciado, isStatusEmValidacaoRegulatorio, isStatusPendente]);
+    // Permitir para Gestor, Admin e Diretoria quando status é Concluído
+    if (isStatusConcluido) {
+      return idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
+             idPerfil === perfilUtil.ADMINISTRADOR || 
+             idPerfil === perfilUtil.VALIDADOR_ASSINANTE;
+    }
+    
+    return isStatusEmAndamento || isStatusAtrasada || isStatusNaoIniciado || isStatusEmValidacaoRegulatorio || isStatusPendente;
+  }, [isStatusEmAndamento, isStatusAtrasada, isStatusNaoIniciado, isStatusEmValidacaoRegulatorio, isStatusPendente, isStatusConcluido, idPerfil]);
 
   const tooltipOutrosAnexos = useMemo(() => {
     if (!statusPermiteAnexarOutros) {
+      if (isStatusConcluido) {
+        return 'Apenas Gestor do Sistema, Administrador ou Diretoria podem anexar outros anexos quando o status é "Concluído".';
+      }
       return 'Status não permitido para anexar outros anexos.';
     }
     
     return '';
-  }, [statusPermiteAnexarOutros]);
+  }, [statusPermiteAnexarOutros, isStatusConcluido]);
 
   return (
     <div className="space-y-6">

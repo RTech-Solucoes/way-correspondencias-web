@@ -361,7 +361,7 @@ export default function ConferenciaObrigacaoPage() {
     try {
       const observacaoTramitacao = isStatusAtrasada && obrigacao.dsJustificativaAtraso
         ? 'Obrigação enviada ao Regulatório com atraso justificado'
-        : 'Obrigacao enviada para Em Validação (Regulatório)';
+        : 'Obrigacao enviada para Em Validação (Regulatório).';
 
       await tramitacoesClient.tramitarViaFluxo({
         idSolicitacao: obrigacao.idSolicitacao,

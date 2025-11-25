@@ -29,7 +29,6 @@ export interface ObrigacaoResponse extends Omit<SolicitacaoResponse, 'tema'> {
   dtInicio?: string | null;
   dtTermino?: string | null;
   dtLimite?: string | null;
-  dtConclusao?: string | null;
   nrDuracaoDias?: number | null;
   dsAntt?: string | null;
   dsProtocoloExterno?: string | null;

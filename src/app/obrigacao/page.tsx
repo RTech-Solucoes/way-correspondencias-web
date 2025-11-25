@@ -10,6 +10,7 @@ import {
   FunnelSimpleIcon,
   XIcon,
   UploadIcon,
+  ArrowsDownUpIcon,
 } from "@phosphor-icons/react";
 import { ObrigacoesProvider, useObrigacoes } from "@/context/obrigacoes/ObrigacoesContext";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -40,8 +41,9 @@ import obrigacaoClient from "@/api/obrigacao/client";
 import { toast } from "sonner";
 import { useUserGestao } from "@/hooks/use-user-gestao";
 import { perfilUtil } from "@/api/perfis/types";
-import { ObrigacaoResumoResponse } from "@/api/obrigacao/types";
+import { ObrigacaoResumoResponse, ObrigacaoFiltroRequest } from "@/api/obrigacao/types";
 import { usePermissoes } from "@/context/permissoes/PermissoesContext";
+import ExportObrigacaoMenu from "@/components/obrigacoes/relatorios/ExportObrigacaoMenu";
 
 function ObrigacoesContent() {
   const {
@@ -59,6 +61,9 @@ function ObrigacoesContent() {
     setObrigacaoToDelete,
     filters,
     setFilters,
+    sortField,
+    sortDirection,
+    handleSort,
     loadObrigacoes,
   } = useObrigacoes();
 
@@ -88,6 +93,30 @@ function ObrigacoesContent() {
     }
     return obrigacao.dtTermino || null;
   }
+
+  const getStatusText = (statusCode: string): string | null => {
+    if (!statusCode) return null;
+    const status = statusObrigacaoList.find(s => s.id.toString() === statusCode);
+    if (status) {
+      return statusObrigacaoLabels[status.nmStatus as StatusObrigacao] || status.nmStatus;
+    }
+    return null;
+  };
+
+  const filterParamsForExport = useMemo((): Omit<ObrigacaoFiltroRequest, 'page' | 'size' | 'sort'> => {
+    return {
+      filtro: searchQuery || null,
+      idStatusSolicitacao: filters.idStatusObrigacao ? parseInt(filters.idStatusObrigacao) : null,
+      idAreaAtribuida: filters.idAreaAtribuida ? parseInt(filters.idAreaAtribuida) : null,
+      dtLimiteInicio: filters.dtLimiteInicio || null,
+      dtLimiteFim: filters.dtLimiteFim || null,
+      dtInicioInicio: filters.dtInicioInicio || null,
+      dtInicioFim: filters.dtInicioFim || null,
+      idTema: filters.idTema ? parseInt(filters.idTema) : null,
+      idTipoClassificacao: filters.idTipoClassificacao ? parseInt(filters.idTipoClassificacao) : null,
+      idTipoPeriodicidade: filters.idTipoPeriodicidade ? parseInt(filters.idTipoPeriodicidade) : null,
+    };
+  }, [searchQuery, filters]);
 
   useEffect(() => {
     const carregarDados = async () => {
@@ -340,6 +369,12 @@ function ObrigacoesContent() {
             Filtrar
           </Button>
 
+          <ExportObrigacaoMenu
+            filterParams={filterParamsForExport}
+            getStatusText={getStatusText}
+            isAdminOrGestor={isAdminOrGestor}
+          />
+            
           {canInserirObrigacao && (
             <Button
               variant="outline"
@@ -376,15 +411,55 @@ function ObrigacoesContent() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="min-w-[200px]">Identificação</TableHead>
+              <TableHead 
+                className="min-w-[200px] cursor-pointer"
+                onClick={() => handleSort('cdIdentificacao')}
+              >
+                <div className="flex items-center">
+                  Identificação
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
+                </div>
+              </TableHead>
               <TableHead className="min-w-[250px]">Tarefa</TableHead>
               <TableHead className="min-w-[150px]">Tema</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="min-w-[150px]">Atribuído a</TableHead>
+              <TableHead 
+                className="cursor-pointer"
+                onClick={() => handleSort('statusSolicitacao.nmStatus')}
+              >
+                <div className="flex items-center">
+                  Status
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
+                </div>
+              </TableHead>
+              <TableHead 
+                className="min-w-[150px] cursor-pointer"
+                onClick={() => handleSort('areas')}
+              >
+                <div className="flex items-center">
+                  Atribuído a
+                  <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
+                </div>
+              </TableHead>
               <TableHead>Progresso</TableHead>
-              <TableHead>Data de Término</TableHead>
+              <TableHead 
+                className="cursor-pointer whitespace-nowrap"
+                onClick={() => handleSort('dtTermino')}
+              >
+                <div className="flex items-center">
+                  <span className="whitespace-nowrap">Data de Término</span>
+                  <ArrowsDownUpIcon className="ml-1 h-4 w-4 flex-shrink-0" />
+                </div>
+              </TableHead>
               {isAdminOrGestor && (
-                <TableHead>Data Limite</TableHead>
+                <TableHead 
+                  className="cursor-pointer whitespace-nowrap"
+                  onClick={() => handleSort('dtLimite')}
+                >
+                  <div className="flex items-center">
+                    <span className="whitespace-nowrap">Data Limite</span>
+                    <ArrowsDownUpIcon className="ml-1 h-4 w-4 flex-shrink-0" />
+                  </div>
+                </TableHead>
               )}
               {isAdminOrGestor && (
                 <TableHead className="min-w-[150px] text-center">Enviado para Áreas</TableHead>
@@ -471,7 +546,7 @@ function ObrigacoesContent() {
                                 : `${endDate}T23:59:59`
                               : null
                           }
-                          finishedAt={obrigacao.dtConclusao}
+                          finishedAt={obrigacao.dtConclusaoTramitacao}
                           now={new Date().toISOString()}
                           statusLabel={obrigacao.statusSolicitacao?.nmStatus}
                         />

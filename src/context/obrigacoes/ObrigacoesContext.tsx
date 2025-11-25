@@ -47,6 +47,9 @@ export interface ObrigacoesContextProps {
   setTotalElements: Dispatch<SetStateAction<number>>;
   filters: FiltersState;
   setFilters: Dispatch<SetStateAction<FiltersState>>;
+  sortField: string | null;
+  sortDirection: 'asc' | 'desc';
+  handleSort: (field: string) => void;
   loadObrigacoes: () => Promise<void>;
 }
 
@@ -64,6 +67,8 @@ export function ObrigacoesProvider({children}: { children: ReactNode }) {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
+  const [sortField, setSortField] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [filters, setFilters] = useState<FiltersState>({
     titulo: '',
     responsavel: '',
@@ -82,6 +87,16 @@ export function ObrigacoesProvider({children}: { children: ReactNode }) {
     idTipoPeriodicidade: '',
   });
 
+  const handleSort = useCallback((field: string) => {
+    let newSortDirection: 'asc' | 'desc' = 'asc';
+    if (sortField === field && sortDirection === 'asc') {
+      newSortDirection = 'desc';
+    }
+    setSortField(field);
+    setSortDirection(newSortDirection);
+    setCurrentPage(0);
+  }, [sortField, sortDirection]);
+
   const loadObrigacoes = useCallback(async () => {
     setLoading(true);
     try {
@@ -98,6 +113,7 @@ export function ObrigacoesProvider({children}: { children: ReactNode }) {
         idTipoPeriodicidade: filters.idTipoPeriodicidade ? parseInt(filters.idTipoPeriodicidade) : null,
         page: currentPage,
         size: 8,
+        sort: sortField ? `${sortField},${sortDirection === 'desc' ? 'desc' : 'asc'}` : undefined,
       };
 
       const response = await obrigacaoClient.buscarLista(filtro);
@@ -112,7 +128,7 @@ export function ObrigacoesProvider({children}: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [filters, currentPage, searchQuery]);
+  }, [filters, currentPage, searchQuery, sortField, sortDirection]);
 
   useEffect(() => {
     loadObrigacoes();
@@ -145,6 +161,9 @@ export function ObrigacoesProvider({children}: { children: ReactNode }) {
         setTotalElements,
         filters,
         setFilters,
+        sortField,
+        sortDirection,
+        handleSort,
         loadObrigacoes,
       }}
     >

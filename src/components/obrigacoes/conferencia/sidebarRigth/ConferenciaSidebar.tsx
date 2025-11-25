@@ -141,8 +141,17 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
 
     if (isStatusEmAndamento || isStatusPendente || isStatusAtrasada)  return true;
 
+    // Permitir para Gestor, Admin e Diretoria quando status é Concluído
+    if (isStatusConcluido) {
+      if (idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
+        idPerfil === perfilUtil.ADMINISTRADOR || 
+        idPerfil === perfilUtil.VALIDADOR_ASSINANTE) {
+        return true;
+      }
+      return false;
+    }
 
-    if (isStatusConcluido || isStatusNaoAplicavelSuspensa) return false;
+    if (isStatusNaoAplicavelSuspensa) return false;
 
     return false;
     
@@ -543,6 +552,11 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
     }
 
     if (isStatusConcluido) {
+      if (idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
+        idPerfil === perfilUtil.ADMINISTRADOR || 
+        idPerfil === perfilUtil.VALIDADOR_ASSINANTE) {
+        return '';
+      }
       return 'Não é possível inserir comentários em obrigações concluídas. Apenas visualização permitida.';
     }
 
@@ -785,6 +799,7 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
                 isStatusEmValidacaoRegulatorio={isStatusEmValidacaoRegulatorio}
                 isStatusPendente={isStatusPendente}
                 isStatusNaoIniciado={isStatusNaoIniciado}
+                isStatusConcluido={isStatusConcluido}
               />
             ) : (
               <ComentariosTab
