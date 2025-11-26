@@ -7,13 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useObrigacoes } from '@/context/obrigacoes/ObrigacoesContext';
 import { useState, useEffect } from 'react';
-import { statusObrigacaoList, statusObrigacaoLabels, StatusObrigacao } from '@/api/status-obrigacao/types';
 import areasClient from '@/api/areas/client';
 import temasClient from '@/api/temas/client';
 import tiposClient from '@/api/tipos/client';
 import { AreaResponse } from '@/api/areas/types';
 import { TemaResponse } from '@/api/temas/types';
-import { TipoResponse, CategoriaEnum } from '@/api/tipos/types';
+import { TipoResponse, CategoriaEnum, TipoEnum } from '@/api/tipos/types';
+import statusSolicitacaoClient, { StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
 
 interface FilterState {
   idStatusObrigacao: string;
@@ -47,6 +47,7 @@ export function FilterModalObrigacao() {
   const [classificacoes, setClassificacoes] = useState<TipoResponse[]>([]);
   const [periodicidades, setPeriodicidades] = useState<TipoResponse[]>([]);
   const [loading, setLoading] = useState(false);
+  const [statuses, setStatuses] = useState<StatusSolicitacaoResponse[]>([]);
 
   useEffect(() => {
     if (showFilterModal) {
@@ -68,10 +69,11 @@ export function FilterModalObrigacao() {
     const carregarDados = async () => {
       setLoading(true);
       try {
-        const [areasResponse, temasResponse, tiposResponse] = await Promise.all([
+        const [areasResponse, temasResponse, tiposResponse, statusesResponse] = await Promise.all([
           areasClient.buscarPorFiltro({ size: 1000 }),
           temasClient.buscarPorFiltro({ size: 1000 }),
-          tiposClient.buscarPorCategorias([CategoriaEnum.OBRIG_CLASSIFICACAO, CategoriaEnum.OBRIG_PERIODICIDADE])
+          tiposClient.buscarPorCategorias([CategoriaEnum.OBRIG_CLASSIFICACAO, CategoriaEnum.OBRIG_PERIODICIDADE]),
+          statusSolicitacaoClient.listarTodos(CategoriaEnum.CLASSIFICACAO_STATUS_SOLICITACAO, [TipoEnum.TODOS, TipoEnum.OBRIGACAO]),
         ]);
 
         setAreas(areasResponse.content || []);
@@ -79,7 +81,7 @@ export function FilterModalObrigacao() {
         
         const classif = tiposResponse.filter(t => t.nmCategoria === CategoriaEnum.OBRIG_CLASSIFICACAO);
         const periodic = tiposResponse.filter(t => t.nmCategoria === CategoriaEnum.OBRIG_PERIODICIDADE);
-        
+        setStatuses(statusesResponse || []);
         setClassificacoes(classif);
         setPeriodicidades(periodic);
       } catch (error) {
@@ -145,9 +147,9 @@ export function FilterModalObrigacao() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
-                {statusObrigacaoList.map((status) => (
-                  <SelectItem key={status.id} value={status.id.toString()}>
-                    {statusObrigacaoLabels[status.nmStatus as StatusObrigacao]}
+                {statuses.map((status) => (
+                  <SelectItem key={status.idStatusSolicitacao} value={status.idStatusSolicitacao.toString()}>
+                    {status.nmStatus}
                   </SelectItem>
                 ))}
               </SelectContent>

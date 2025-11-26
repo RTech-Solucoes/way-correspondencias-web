@@ -94,6 +94,7 @@ export interface TramitacaoAcao {
 
 export interface TramitacaoResponse {
   idTramitacao: number;
+  nrNivel?: number;
   solicitacao: Solicitacao;
   areaOrigem: Area;
   areaDestino: Area;
