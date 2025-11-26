@@ -1,18 +1,26 @@
 import {Button} from "@/components/ui/button";
 import {ArrowClockwiseIcon} from "@phosphor-icons/react";
+import { TipoEnum } from "@/api/tipos/types";
 
 interface IDashboardHeader {
   lastUpdated: Date | null;
   refreshData: () => void;
+  tipoFluxo?: TipoEnum;
 }
 
 export default function DashboardHeader(props: IDashboardHeader) {
+  const isObrigacao = props.tipoFluxo === TipoEnum.OBRIGACAO;
+  const title = isObrigacao ? "Dashboard - Obrigações" : "Dashboard - Correspondências";
+  const description = isObrigacao 
+    ? "Visão geral das obrigações e métricas importantes"
+    : "Visão geral das correspondências e métricas importantes";
+
   return (
     <div className="flex items-center justify-between">
       <div>
-        <h1 className="text-xl font-semibold mb-4 text-gray-900">Dashboard - Correspondências</h1>
+        <h1 className="text-xl font-semibold mb-4 text-gray-900">{title}</h1>
         <p className="text-gray-500 mt-1">
-          Visão geral das correspondências e métricas importantes
+          {description}
         </p>
       </div>
       <div className="flex items-center space-x-2">
