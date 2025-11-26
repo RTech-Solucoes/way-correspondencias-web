@@ -30,6 +30,12 @@ class StatusSolicitacaoClient {
       method: 'GET',
     });
   }
+
+  async buscarPorId(id: number): Promise<StatusSolicitacaoResponse> {
+      return this.client.request<StatusSolicitacaoResponse>(`/${id}`, {
+        method: 'GET',
+      });
+  }
 }
 
 export const statusSolicitacaoClient = new StatusSolicitacaoClient();

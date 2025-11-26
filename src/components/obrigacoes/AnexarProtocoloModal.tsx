@@ -14,9 +14,9 @@ import { computeTpResponsavel } from '@/api/perfis/types';
 import obrigacaoAnexosClient from '@/api/obrigacao/anexos-client';
 import obrigacaoClient from '@/api/obrigacao/client';
 import { ObrigacaoRequest } from '@/api/obrigacao/types';
-import tramitacoesClient from '@/api/tramitacoes/client';
-import { authClient } from '@/api/auth/client';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import tramitacoesClient from '@/api/tramitacoes/client';
+import authClient from '@/api/auth/client';
 
 interface AnexarProtocoloModalProps {
   open: boolean;
@@ -103,44 +103,30 @@ export function AnexarProtocoloModal({
         })
       );
 
-      const updateData: Partial<ObrigacaoRequest> = {};
-
       const numeroSEITrimmed = numeroSEI.trim();
       const numeroProcessoTrimmed = numeroProcesso.trim();
       const observacoesTrimmed = observacoes.trim();
 
-      if (numeroSEITrimmed) {
-        updateData.nrSei = numeroSEITrimmed;
-      }
-
-      if (numeroProcessoTrimmed) {
-        updateData.nrProcesso = numeroProcessoTrimmed;
-      }
-
-      if (observacoesTrimmed) {
-        updateData.dsObservacaoProtocolo = observacoesTrimmed;
-      }
-
       const idResponsavel = authClient.getUserIdResponsavelFromToken();
 
-      const promises: Promise<unknown>[] = [
+      const updateData: ObrigacaoRequest = {
+        nrSei: numeroSEITrimmed || null,
+        nrProcesso: numeroProcessoTrimmed || null,
+        dsObservacaoProtocolo: observacoesTrimmed || null,
+      };
+
+      await Promise.all([
         obrigacaoAnexosClient.upload(idObrigacao, arquivosDTO),
+        obrigacaoClient.atualizar(idObrigacao, updateData),
         tramitacoesClient.tramitarViaFluxo({
           idSolicitacao: idObrigacao,
           dsObservacao: 'Protocolo anexado, obrigação Concluida.',
           idResponsavel: idResponsavel || undefined,
           flAprovado: 'S',
-          arquivos: arquivosDTO,
         }),
-      ];
-
-      if (Object.keys(updateData).length > 0) {
-        promises.push(obrigacaoClient.atualizar(idObrigacao, updateData));
-      }
-
-      await Promise.all(promises);
+      ]);
       
-      toast.success('Protocolo anexado e obrigação concluída com sucesso!');
+      toast.success('Protocolo anexado com sucesso!');
       setArquivos([]);
       setObservacoes('');
       setNumeroProcesso('');

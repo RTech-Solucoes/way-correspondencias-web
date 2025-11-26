@@ -25,6 +25,7 @@ import tramitacoesClient from '@/api/tramitacoes/client';
 import { TramitacaoResponse } from '@/api/tramitacoes/types';
 import { statusListObrigacao } from '@/api/status-obrigacao/types';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import ExportHistoricoObrigacaoPdf from '@/components/obrigacoes/relatorios/ExportHistoricoObrigacaoPdf';
 
 interface ConferenciaSidebarProps {
   detalhe: ObrigacaoDetalheResponse;
@@ -58,6 +59,7 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
   const [anexoToDelete, setAnexoToDelete] = useState<AnexoResponse | null>(null);
   const [showDeleteLinkDialog, setShowDeleteLinkDialog] = useState(false);
   const [linkToDelete, setLinkToDelete] = useState<string | null>(null);
+  const [exportingPdf, setExportingPdf] = useState(false);
 
   const areaAtribuida = useMemo(() => {
     return detalhe?.obrigacao?.areas?.find((area) => area.tipoArea?.cdTipo === TipoEnum.ATRIBUIDA);
@@ -116,6 +118,24 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
   const idAreaAtribuida = areaAtribuida?.idArea;
   const userAreaIds = userResponsavel?.areas?.map(ra => ra.area.idArea) || [];
   const isDaAreaAtribuida = idAreaAtribuida && userAreaIds.includes(idAreaAtribuida);
+  
+  const idsAreasCondicionantes = areasCondicionantes.map(area => area.idArea);
+  const isDeAreaCondicionante = idsAreasCondicionantes.some(idArea => userAreaIds.includes(idArea));
+  
+  const podeGerarRelatorio = useMemo(() => {
+    if (idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
+        idPerfil === perfilUtil.ADMINISTRADOR || 
+        idPerfil === perfilUtil.VALIDADOR_ASSINANTE) {
+      return true;
+    }
+    
+    if (idPerfil === perfilUtil.EXECUTOR_AVANCADO || 
+        idPerfil === perfilUtil.EXECUTOR) {
+      return isDaAreaAtribuida || isDeAreaCondicionante;
+    }
+    
+    return false;
+  }, [idPerfil, isDaAreaAtribuida, isDeAreaCondicionante]);
 
   const isPerfilPermitidoPorStatus = useMemo(() => {
     if (isStatusNaoIniciado) {
@@ -141,7 +161,6 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
 
     if (isStatusEmAndamento || isStatusPendente || isStatusAtrasada)  return true;
 
-    // Permitir para Gestor, Admin e Diretoria quando status é Concluído
     if (isStatusConcluido) {
       if (idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
         idPerfil === perfilUtil.ADMINISTRADOR || 
@@ -211,6 +230,15 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
         
         setSolicitacaoPareceres(pareceres || []);
         setTramitacoes(tramitacoesResponse || []);
+        
+        // Reconstruir parecerTramitacaoMap a partir dos dados carregados
+        const novoMap = new Map<number, number>();
+        pareceres?.forEach(parecer => {
+          if (parecer.idTramitacao) {
+            novoMap.set(parecer.idSolicitacaoParecer, parecer.idTramitacao);
+          }
+        });
+        setParecerTramitacaoMap(novoMap);
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
         const temDadosIniciaisNoErro = (detalhe?.solicitacaoParecer?.length ?? 0) > 0 || 
@@ -643,6 +671,7 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
           idStatusSolicitacao: number;
           dsDarecer: string;
           idSolicitacaoParecerReferen?: number | null;
+          idTramitacao?: number | null;
         } = {
           idSolicitacao: detalhe.obrigacao.idSolicitacao,
           idStatusSolicitacao: detalhe.obrigacao.statusSolicitacao.idStatusSolicitacao,
@@ -654,15 +683,10 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
         }
 
         if (tramitacaoReferencia) {
-          const parecerCriado = await solicitacaoParecerClient.criar(parecerRequest);
-          setParecerTramitacaoMap(prev => {
-            const novoMap = new Map(prev);
-            novoMap.set(parecerCriado.idSolicitacaoParecer, tramitacaoReferencia);
-            return novoMap;
-          });
-        } else {
-          await solicitacaoParecerClient.criar(parecerRequest);
+          parecerRequest.idTramitacao = tramitacaoReferencia;
         }
+
+        await solicitacaoParecerClient.criar(parecerRequest);
 
         toast.success(podeResponderTramitacao 
           ? 'Comentário de área atribuída salvo com sucesso.' 
@@ -673,6 +697,7 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
           idStatusSolicitacao: number;
           dsDarecer: string;
           idSolicitacaoParecerReferen?: number | null;
+          idTramitacao?: number | null;
         } = {
           idSolicitacao: detalhe.obrigacao.idSolicitacao,
           idStatusSolicitacao: detalhe.obrigacao.statusSolicitacao.idStatusSolicitacao,
@@ -683,16 +708,11 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
           requestData.idSolicitacaoParecerReferen = parecerReferencia;
         }
 
-        const parecerCriado = await solicitacaoParecerClient.criar(requestData);
-        
-        const idTramitacaoRef = tramitacaoReferencia;
-        if (idTramitacaoRef) {
-          setParecerTramitacaoMap(prev => {
-            const novoMap = new Map(prev);
-            novoMap.set(parecerCriado.idSolicitacaoParecer, idTramitacaoRef);
-            return novoMap;
-          });
+        if (tramitacaoReferencia) {
+          requestData.idTramitacao = tramitacaoReferencia;
         }
+
+        await solicitacaoParecerClient.criar(requestData);
         
         toast.success('Comentário salvo com sucesso.');
       }
@@ -734,16 +754,21 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
           <div>
             <h2 className="text-lg font-semibold text-gray-900">Registros</h2>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2 rounded-full border-gray-200 bg-white hover:bg-gray-50"
-            onClick={() => toast.info('Exportação disponível em breve.')}
-          >
-            <CloudDownload className="h-4 w-4" />
-            Exportar
-          </Button>
+          <div>
+            {podeGerarRelatorio && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2 rounded-full border-gray-200 bg-white hover:bg-gray-50"
+                onClick={() => setExportingPdf(true)}
+                disabled={exportingPdf}
+              >
+                <CloudDownload className="h-4 w-4" />
+                Exportar
+              </Button>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-1 flex-col min-h-0">
@@ -907,6 +932,13 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
         onConfirm={confirmDeleteLink}
         variant="destructive"
       />
+
+      {exportingPdf && (
+        <ExportHistoricoObrigacaoPdf
+          detalhe={detalhe}
+          onDone={() => setExportingPdf(false)}
+        />
+      )}
     </aside>
   );
 }
