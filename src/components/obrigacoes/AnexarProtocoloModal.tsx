@@ -117,7 +117,7 @@ export function AnexarProtocoloModal({
         obrigacaoClient.atualizarProtocolo(idObrigacao, protocoloData),
         tramitacoesClient.tramitarViaFluxo({
           idSolicitacao: idObrigacao,
-          dsObservacao: 'Obrigacao anexada com protocolo. Concluida com sucesso.',
+          dsObservacao: 'Obrigação anexada com protocolo. Concluida com sucesso.',
           flAprovado: 'S',
         }),
       ]);
