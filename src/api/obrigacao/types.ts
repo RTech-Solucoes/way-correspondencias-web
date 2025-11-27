@@ -119,3 +119,9 @@ export interface LinkAnexoRequest {
   dsCaminho: string;
   tpResponsavel: string;
 }
+
+export interface ObrigacaoProtocoloRequest {
+  nrProcesso?: string | null;
+  nrSei?: string | null;
+  dsObservacaoProtocolo?: string | null;
+}

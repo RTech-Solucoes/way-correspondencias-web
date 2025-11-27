@@ -4,6 +4,7 @@ import DeadlinesCalendar from './DeadlinesCalendar/DeadlinesCalendar';
 import NextDeadlines from './NextDeadlines/NextDeadlines';
 import RecentActivity from './RecentActivity/RecentActivity';
 import TasksStatusBoard from './TasksStatusBoard/TasksStatusBoard';
+import { TipoEnum } from '@/api/tipos/types';
 
 export default function DashboardViewComponent() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -23,6 +24,7 @@ export default function DashboardViewComponent() {
       <DashboardHeader
         lastUpdated={lastUpdated}
         refreshData={refreshData}
+        tipoFluxo={TipoEnum.CORRESPONDENCIA}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">

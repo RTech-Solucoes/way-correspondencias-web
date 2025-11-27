@@ -1,6 +1,14 @@
 import { SolicitacaoResumoResponse } from "@/types/solicitacoes/types";
 import ApiClient from "../client";
 import { DashboardListSummary, DashboardOverview, ICalendar, ICalendarYear, IRecentActivity, PaginatedResponse, SolicitacaoPrazo } from "./type";
+import { buildQueryParams } from "@/utils/utils";
+
+interface OverviewParams {
+    cdTipoFluxo?: string;
+    nmCategoriaFluxo?: string;
+    cdTipoStatus?: string[];
+    nmCategoriaStatus?: string;
+}
 
 class DashboardClient {
     private client: ApiClient;
@@ -9,8 +17,18 @@ class DashboardClient {
         this.client = new ApiClient('/dashboard');
     }
 
-    async getOverview(): Promise<DashboardOverview[]> {
-        return this.client.request<DashboardOverview[]>(`/overview`, {
+    async getOverview(params?: OverviewParams): Promise<DashboardOverview[]> {
+        const queryParams = params ? buildQueryParams(params, ['cdTipoFluxo', 'nmCategoriaFluxo', 'nmCategoriaStatus'] as const) : new URLSearchParams();
+        
+        // Tratar arrays manualmente (cdTipoStatus)
+        if (params?.cdTipoStatus && params.cdTipoStatus.length > 0) {
+            params.cdTipoStatus.forEach(tipo => {
+                queryParams.append('cdTipoStatus', tipo);
+            });
+        }
+        
+        const qs = queryParams.toString();
+        return this.client.request<DashboardOverview[]>(`/overview${qs ? `?${qs}` : ''}`, {
             method: 'GET',
         });
     }

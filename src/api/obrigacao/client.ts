@@ -5,6 +5,7 @@ import ApiClient from '../client';
 import {
     ObrigacaoDetalheResponse,
     ObrigacaoFiltroRequest,
+    ObrigacaoProtocoloRequest,
     ObrigacaoRequest,
     ObrigacaoResponse,
     ObrigacoesRelacionadasResponse,
@@ -114,6 +115,13 @@ export class ObrigacaoClient {
     async atualizarFlEnviandoArea(id: number): Promise<{ mensagem: string; flEnviandoArea: string }> {
         return this.client.request<{ mensagem: string; flEnviandoArea: string }>(`/${id}/enviando-area`, {
             method: 'PUT',
+        });
+    }
+
+    async atualizarProtocolo(id: number, data: ObrigacaoProtocoloRequest): Promise<ObrigacaoResponse> {
+        return this.client.request<ObrigacaoResponse>(`/${id}/protocolo`, {
+            method: 'PUT',
+            body: JSON.stringify(data),
         });
     }
 

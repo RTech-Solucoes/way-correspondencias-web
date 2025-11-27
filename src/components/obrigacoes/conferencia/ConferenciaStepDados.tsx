@@ -192,13 +192,11 @@ export function ConferenciaStepDados({ obrigacao, statusLabel, statusStyle }: Co
             { label: 'Nº do Processo', value: obrigacao.nrProcesso || '-' },
           ]}
         />
-        {obrigacao.dsObservacaoProtocolo && (
           <ConferenciaInfoRow
             label="Observações do Protocolo"
             border={false}
             value={obrigacao.dsObservacaoProtocolo}
           />
-        )}
       </div>
     </div>
   );
