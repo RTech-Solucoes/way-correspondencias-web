@@ -13,10 +13,9 @@ import { ArquivoDTO, TipoResponsavelAnexoEnum, TipoDocumentoAnexoEnum } from '@/
 import { computeTpResponsavel } from '@/api/perfis/types';
 import obrigacaoAnexosClient from '@/api/obrigacao/anexos-client';
 import obrigacaoClient from '@/api/obrigacao/client';
-import { ObrigacaoRequest } from '@/api/obrigacao/types';
+import { ObrigacaoProtocoloRequest } from '@/api/obrigacao/types';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import tramitacoesClient from '@/api/tramitacoes/client';
-import authClient from '@/api/auth/client';
 
 interface AnexarProtocoloModalProps {
   open: boolean;
@@ -107,9 +106,7 @@ export function AnexarProtocoloModal({
       const numeroProcessoTrimmed = numeroProcesso.trim();
       const observacoesTrimmed = observacoes.trim();
 
-      const idResponsavel = authClient.getUserIdResponsavelFromToken();
-
-      const updateData: ObrigacaoRequest = {
+      const protocoloData: ObrigacaoProtocoloRequest = {
         nrSei: numeroSEITrimmed || null,
         nrProcesso: numeroProcessoTrimmed || null,
         dsObservacaoProtocolo: observacoesTrimmed || null,
@@ -117,11 +114,10 @@ export function AnexarProtocoloModal({
 
       await Promise.all([
         obrigacaoAnexosClient.upload(idObrigacao, arquivosDTO),
-        obrigacaoClient.atualizar(idObrigacao, updateData),
+        obrigacaoClient.atualizarProtocolo(idObrigacao, protocoloData),
         tramitacoesClient.tramitarViaFluxo({
           idSolicitacao: idObrigacao,
-          dsObservacao: 'Protocolo anexado, obrigação Concluida.',
-          idResponsavel: idResponsavel || undefined,
+          dsObservacao: 'Obrigacao anexada com protocolo. Concluida com sucesso.',
           flAprovado: 'S',
         }),
       ]);

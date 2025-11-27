@@ -169,10 +169,10 @@ export default function TasksStatusBoard({
               </div>
               <div className="h-2 bg-gray-100 w-full rounded-full overflow-hidden">
                 <div
-                  className={`h-full ${getStatusColor(item.nmStatus)}`}
+                  className={`h-full ${item.qtStatus === 0 ? 'bg-gray-200' : getStatusColor(item.nmStatus)}`}
                   style={{ 
                     width: `${item.qtPercentual}%`,
-                    ...getStatusColorStyle(item.nmStatus)
+                    ...(item.qtStatus === 0 ? {} : getStatusColorStyle(item.nmStatus))
                   }}
                 ></div>
               </div>

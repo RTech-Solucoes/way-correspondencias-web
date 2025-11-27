@@ -33,6 +33,7 @@ import { JustificarAtrasoModal } from '@/components/obrigacoes/conferencia/Justi
 import { responsaveisClient } from '@/api/responsaveis/client';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
+import { solicitacaoParecerClient } from '@/api/solicitacao-parecer/client';
 
 type TabKey = 'dados' | 'temas' | 'prazos' | 'anexos' | 'vinculos';
 const tabs: { key: TabKey; label: string }[] = [
@@ -263,11 +264,23 @@ export default function ConferenciaObrigacaoPage() {
       return;
     }
     
+    if (!obrigacao?.statusSolicitacao?.idStatusSolicitacao) {
+      toast.error('Status da obrigação não encontrado.');
+      return;
+    }
+    
     try {
-      await obrigacaoClient.atualizar(obrigacao.idSolicitacao, {
-        dsTarefa: obrigacao.dsTarefa,
-        flAprovarConferencia: 'S',
-      });
+      await Promise.all([
+        obrigacaoClient.atualizar(obrigacao.idSolicitacao, {
+          flAprovarConferencia: 'S',
+        }),
+        
+        solicitacaoParecerClient.criar({
+          idSolicitacao: obrigacao.idSolicitacao,
+          idStatusSolicitacao: obrigacao.statusSolicitacao.idStatusSolicitacao,
+          dsDarecer: 'Obrigação aprovada na conferência.',
+        }),
+      ]);
       
       setConferenciaAprovada(true);
       await reloadDetalhe();
@@ -276,7 +289,7 @@ export default function ConferenciaObrigacaoPage() {
       console.error('Erro ao aprovar conferência:', error);
       toast.error('Erro ao aprovar conferência.');
     }
-  }, [obrigacao?.idSolicitacao, obrigacao?.dsTarefa, reloadDetalhe]);
+  }, [obrigacao?.idSolicitacao, obrigacao?.dsTarefa, obrigacao?.statusSolicitacao?.idStatusSolicitacao, reloadDetalhe]);
 
   const confirmarJustificarAtraso = useCallback(async (justificativa: string) => {
     if (!obrigacao?.idSolicitacao) {
