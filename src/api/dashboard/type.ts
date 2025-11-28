@@ -88,3 +88,8 @@ export interface ICalendarYear {
     mes: string;
     qtde: number;
 }
+
+export interface SolicitacaoCountResponse {
+    quantidadeCorrespondencias: number;
+    quantidadeObrigacoes: number;
+}

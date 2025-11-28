@@ -27,6 +27,7 @@ interface AnexosTabProps {
   isStatusPendente?: boolean;
   isStatusNaoIniciado?: boolean;
   isStatusConcluido?: boolean;
+  isDaAreaAtribuida?: boolean;
 }
 
 export function AnexosTab({
@@ -44,7 +45,8 @@ export function AnexosTab({
   isStatusEmValidacaoRegulatorio = false,
   isStatusPendente = false,
   isStatusNaoIniciado = false,
-  isStatusConcluido = false
+  isStatusConcluido = false,
+  isDaAreaAtribuida = false
 }: AnexosTabProps) {
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [evidenceLinkValue, setEvidenceLinkValue] = useState('');
@@ -170,25 +172,34 @@ export function AnexosTab({
   }, []);
 
   const podeAnexarEvidencia = useMemo(() => {
-    return [perfilUtil.EXECUTOR_AVANCADO, perfilUtil.EXECUTOR, perfilUtil.EXECUTOR_RESTRITO].includes(idPerfil ?? 0);
-  }, [idPerfil]);
+    return isDaAreaAtribuida;
+  }, [isDaAreaAtribuida]);
 
   const statusPermiteAnexarEvidencia = useMemo(() => {
+    if (isStatusNaoIniciado && isDaAreaAtribuida) {
+      return true;
+    }
     return isStatusEmAndamento || isStatusAtrasada;
-  }, [isStatusEmAndamento, isStatusAtrasada]);
+  }, [isStatusEmAndamento, isStatusAtrasada, isStatusNaoIniciado, isDaAreaAtribuida]);
 
   const tooltipEvidencia = useMemo(() => {
     if (!statusPermiteAnexarEvidencia) {
+      if (isStatusNaoIniciado && !isDaAreaAtribuida) {
+        return 'Apenas usuários da área atribuída podem anexar evidência de cumprimento quando o status é "Não Iniciado".';
+      }
       return 'Apenas é possível anexar evidência de cumprimento quando o status for "Em Andamento" ou "Atrasada".';
     }
     if (!podeAnexarEvidencia) {
-      return 'Apenas Executor Avançado, Executor ou Executor Restrito podem anexar evidência de cumprimento.';
+      return 'Apenas usuários da área atribuída podem anexar evidência de cumprimento.';
     }
     return '';
-  }, [podeAnexarEvidencia, statusPermiteAnexarEvidencia]);
+  }, [podeAnexarEvidencia, statusPermiteAnexarEvidencia, isStatusNaoIniciado, isDaAreaAtribuida]);
 
   const podeExcluirAnexo = useCallback((anexo: AnexoResponse): boolean => {
     if (anexo.tpDocumento === TipoDocumentoAnexoEnum.E || anexo.tpDocumento === TipoDocumentoAnexoEnum.L) {
+      if (isStatusNaoIniciado && isDaAreaAtribuida) {
+        return true;
+      }
       return isStatusEmAndamento || isStatusAtrasada || isStatusPendente;
     }
     
@@ -201,7 +212,7 @@ export function AnexosTab({
     }
     
     return false;
-  }, [isStatusEmAndamento, isStatusAtrasada, isStatusPendente, isStatusEmValidacaoRegulatorio]);
+  }, [isStatusEmAndamento, isStatusAtrasada, isStatusPendente, isStatusEmValidacaoRegulatorio, isStatusNaoIniciado, isDaAreaAtribuida]);
 
   const statusPermiteAnexarOutros = useMemo(() => {
     // Permitir para Gestor, Admin e Diretoria quando status é Concluído
