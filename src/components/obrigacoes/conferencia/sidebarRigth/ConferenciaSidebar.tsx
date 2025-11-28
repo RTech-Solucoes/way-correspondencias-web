@@ -526,6 +526,10 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
 
 
   const podeEnviarComentario = useMemo(() => {
+
+    if (idPerfil === perfilUtil.VALIDADOR_ASSINANTE && isDaAreaAtribuida) return true;
+    if (idPerfil === perfilUtil.TECNICO_SUPORTE && isDaAreaAtribuida) return true;
+
     // Se for admin ou gestor (perfil 1, 2 ou 3), pode enviar
     if (idPerfil === perfilUtil.ADMINISTRADOR ||
       idPerfil === perfilUtil.GESTOR_DO_SISTEMA ||
@@ -538,9 +542,6 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
       return true;
     }
     
-    if (idPerfil === perfilUtil.VALIDADOR_ASSINANTE && isDaAreaAtribuida) return true;
-    if (idPerfil === perfilUtil.TECNICO_SUPORTE && isDaAreaAtribuida) return true;
-
     // Verifica se é de alguma área condicionante
     const userAreaIds = userResponsavel?.areas?.map(ra => ra.area.idArea) || [];
     const idsAreasCondicionantes = areasCondicionantes.map(area => area.idArea);
