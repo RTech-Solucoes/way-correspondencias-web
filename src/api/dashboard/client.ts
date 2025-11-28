@@ -1,6 +1,6 @@
 import { SolicitacaoResumoResponse } from "@/types/solicitacoes/types";
 import ApiClient from "../client";
-import { DashboardListSummary, DashboardOverview, ICalendar, ICalendarYear, IRecentActivity, PaginatedResponse, SolicitacaoPrazo } from "./type";
+import { DashboardListSummary, DashboardOverview, ICalendar, ICalendarYear, IRecentActivity, PaginatedResponse, SolicitacaoCountResponse, SolicitacaoPrazo } from "./type";
 import { buildQueryParams } from "@/utils/utils";
 
 interface OverviewParams {
@@ -75,8 +75,8 @@ class DashboardClient {
         });
     }
 
-    async getSolicitacoesPendentesCount(): Promise<number> {
-        return this.client.request<number>(`/solicitacoes-pendentes/count`, {
+    async getSolicitacoesPendentesCount(): Promise<SolicitacaoCountResponse> {
+        return this.client.request<SolicitacaoCountResponse>(`/solicitacoes-pendentes/count`, {
             method: "GET",
         });
     }

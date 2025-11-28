@@ -139,11 +139,7 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
 
   const isPerfilPermitidoPorStatus = useMemo(() => {
     if (isStatusNaoIniciado) {
-      if (isDaAreaAtribuida && (
-        idPerfil === perfilUtil.EXECUTOR_AVANCADO || 
-        idPerfil === perfilUtil.EXECUTOR || 
-        idPerfil === perfilUtil.EXECUTOR_RESTRITO
-      )) {
+      if (isDaAreaAtribuida) {
         return true;
       }
   
@@ -530,6 +526,10 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
 
 
   const podeEnviarComentario = useMemo(() => {
+
+    if (idPerfil === perfilUtil.VALIDADOR_ASSINANTE && isDaAreaAtribuida) return true;
+    if (idPerfil === perfilUtil.TECNICO_SUPORTE && isDaAreaAtribuida) return true;
+
     // Se for admin ou gestor (perfil 1, 2 ou 3), pode enviar
     if (idPerfil === perfilUtil.ADMINISTRADOR ||
       idPerfil === perfilUtil.GESTOR_DO_SISTEMA ||
@@ -541,7 +541,7 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
     if (isDaAreaAtribuida) {
       return true;
     }
-
+    
     // Verifica se é de alguma área condicionante
     const userAreaIds = userResponsavel?.areas?.map(ra => ra.area.idArea) || [];
     const idsAreasCondicionantes = areasCondicionantes.map(area => area.idArea);
@@ -562,12 +562,7 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
       if (!isDaAreaAtribuida) {
         return 'Apenas usuários da área atribuída podem inserir comentários quando o status é "Não Iniciado".';
       }
-      if (!(idPerfil === perfilUtil.EXECUTOR_AVANCADO || 
-            idPerfil === perfilUtil.EXECUTOR || 
-            idPerfil === perfilUtil.EXECUTOR_RESTRITO)) {
-        return 'Apenas Analista da Área ou Gerente da Área podem inserir comentários quando o status é "Não Iniciado".';
-      }
-      return 'Você não tem permissão para inserir comentários neste status.';
+      return '';
     }
 
     if (isStatusEmValidacaoRegulatorio) {
@@ -825,6 +820,7 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
                 isStatusPendente={isStatusPendente}
                 isStatusNaoIniciado={isStatusNaoIniciado}
                 isStatusConcluido={isStatusConcluido}
+                isDaAreaAtribuida={!!isDaAreaAtribuida}
               />
             ) : (
               <ComentariosTab

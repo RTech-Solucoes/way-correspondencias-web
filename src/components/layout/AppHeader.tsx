@@ -7,6 +7,7 @@ import {User as UserType} from '@/types/auth/types';
 import authClient from '@/api/auth/client';
 import { BellIcon } from '@phosphor-icons/react';
 import dashboardClient from '@/api/dashboard/client';
+import { SolicitacaoCountResponse } from '@/api/dashboard/type';
 import { useQuery } from '@tanstack/react-query';
 
 interface AppHeaderProps {
@@ -34,7 +35,7 @@ export function AppHeader({
     authClient.logout();
   };
 
-const [pendenteCountState] = useState<number>(0);
+const [pendenteCountState] = useState<SolicitacaoCountResponse>({ quantidadeCorrespondencias: 0, quantidadeObrigacoes: 0 });
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement | null>(null);
 
@@ -56,7 +57,7 @@ const [pendenteCountState] = useState<number>(0);
     };
   }, [isPanelOpen]);
 
-const { data: pendenteCountData } = useQuery<number>({
+const { data: pendenteCountData } = useQuery<SolicitacaoCountResponse>({
   queryKey: ['solicitacoesPendentesCount'],
   queryFn: () => dashboardClient.getSolicitacoesPendentesCount(),
   staleTime: 0,
@@ -68,7 +69,8 @@ const { data: pendenteCountData } = useQuery<number>({
   
 const layoutClient = process.env.NEXT_PUBLIC_LAYOUT_CLIENT || "way262";
 
-const qtdSolicitacaoPendente = pendenteCountData ?? pendenteCountState;
+  const countData = pendenteCountData ?? pendenteCountState;
+  const qtdSolicitacaoPendente = countData.quantidadeCorrespondencias + countData.quantidadeObrigacoes;
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm">
@@ -100,7 +102,21 @@ const qtdSolicitacaoPendente = pendenteCountData ?? pendenteCountState;
             </button>
             {isPanelOpen && (
               <div className="absolute right-0 top-full mt-2 w-max max-w-xs rounded-md border border-gray-200 bg-white shadow-md px-3 py-2 text-sm text-gray-700">
-                {`Você possui ${qtdSolicitacaoPendente} novas solicitações para responder.`}
+                <div className="space-y-1">
+                  {countData.quantidadeCorrespondencias > 0 && (
+                    <div>
+                      Você possui {countData.quantidadeCorrespondencias} {countData.quantidadeCorrespondencias === 1 ? 'solicitação pendente' : 'solicitações pendentes'}
+                    </div>
+                  )}
+                  {countData.quantidadeObrigacoes > 0 && (
+                    <div>
+                      Você possui {countData.quantidadeObrigacoes} {countData.quantidadeObrigacoes === 1 ? 'obrigação pendente' : 'obrigações pendentes'}
+                    </div>
+                  )}
+                  {qtdSolicitacaoPendente === 0 && (
+                    <div>Nenhuma solicitação pendente</div>
+                  )}
+                </div>
               </div>
             )}
           </div>
