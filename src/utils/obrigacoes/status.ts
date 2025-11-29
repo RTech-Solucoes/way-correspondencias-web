@@ -40,6 +40,12 @@ const ATRASADA_STYLE: ObrigacaoStatusStyle = {
   textColor: '#ffffff',
 };
 
+const NAO_APLICAVEL_SUSPENSA_STYLE: ObrigacaoStatusStyle = {
+  variant: 'secondary',
+  backgroundColor: '#ea580c',
+  textColor: '#ffffff',
+};
+
 export const getObrigacaoStatusStyle = (
   statusId?: string | number | null,
   statusName?: string | null,
@@ -81,6 +87,17 @@ export const getObrigacaoStatusStyle = (
     normalizedName.includes(StatusObrigacao.CONCLUIDO)
   ) {
     return CONCLUIDO_STYLE;
+  }
+
+  const naoAplicavelSuspensaStatus = statusObrigacaoList.find((s) => s.nmStatus === StatusObrigacao.NAO_APLICAVEL_SUSPENSA);
+  if (
+    (parsedStatusId && naoAplicavelSuspensaStatus && parsedStatusId === naoAplicavelSuspensaStatus.id) ||
+    normalizedName.includes(StatusObrigacao.NAO_APLICAVEL_SUSPENSA) ||
+    normalizedName.includes('NÃO APLICÁVEL') ||
+    normalizedName.includes('NAO APLICAVEL') ||
+    normalizedName.includes('SUSPENSA')
+  ) {
+    return NAO_APLICAVEL_SUSPENSA_STYLE;
   }
 
   return DEFAULT_STYLE;

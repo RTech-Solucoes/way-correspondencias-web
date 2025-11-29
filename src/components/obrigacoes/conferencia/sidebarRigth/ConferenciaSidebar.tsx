@@ -166,7 +166,14 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
       return false;
     }
 
-    if (isStatusNaoAplicavelSuspensa) return false;
+    if (isStatusNaoAplicavelSuspensa) {
+      if (idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
+        idPerfil === perfilUtil.ADMINISTRADOR || 
+        idPerfil === perfilUtil.VALIDADOR_ASSINANTE) {
+        return true;
+      }
+      return false;
+    }
 
     return false;
     
@@ -584,7 +591,12 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
     }
 
     if (isStatusNaoAplicavelSuspensa) {
-      return 'Não é possível inserir comentários em obrigações não aplicáveis/suspensas. Apenas visualização permitida.';
+      if (idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
+        idPerfil === perfilUtil.ADMINISTRADOR || 
+        idPerfil === perfilUtil.VALIDADOR_ASSINANTE) {
+        return '';
+      }
+      return 'Não é possível inserir comentários em obrigações não aplicáveis/suspensas. Apenas Gestor do Sistema, Administrador ou Diretoria podem inserir comentários.';
     }
 
     return 'Você não tem permissão para inserir comentários neste status.';
@@ -820,6 +832,7 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
                 isStatusPendente={isStatusPendente}
                 isStatusNaoIniciado={isStatusNaoIniciado}
                 isStatusConcluido={isStatusConcluido}
+                isStatusNaoAplicavelSuspensa={isStatusNaoAplicavelSuspensa}
                 isDaAreaAtribuida={!!isDaAreaAtribuida}
               />
             ) : (

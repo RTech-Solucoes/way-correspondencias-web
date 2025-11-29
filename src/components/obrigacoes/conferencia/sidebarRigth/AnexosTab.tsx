@@ -27,6 +27,7 @@ interface AnexosTabProps {
   isStatusPendente?: boolean;
   isStatusNaoIniciado?: boolean;
   isStatusConcluido?: boolean;
+  isStatusNaoAplicavelSuspensa?: boolean;
   isDaAreaAtribuida?: boolean;
 }
 
@@ -46,6 +47,7 @@ export function AnexosTab({
   isStatusPendente = false,
   isStatusNaoIniciado = false,
   isStatusConcluido = false,
+  isStatusNaoAplicavelSuspensa = false,
   isDaAreaAtribuida = false
 }: AnexosTabProps) {
   const [showLinkInput, setShowLinkInput] = useState(false);
@@ -215,26 +217,34 @@ export function AnexosTab({
   }, [isStatusEmAndamento, isStatusAtrasada, isStatusPendente, isStatusEmValidacaoRegulatorio, isStatusNaoIniciado, isDaAreaAtribuida]);
 
   const statusPermiteAnexarOutros = useMemo(() => {
-    // Permitir para Gestor, Admin e Diretoria quando status é Concluído
     if (isStatusConcluido) {
       return idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
              idPerfil === perfilUtil.ADMINISTRADOR || 
              idPerfil === perfilUtil.VALIDADOR_ASSINANTE;
     }
     
+    if (isStatusNaoAplicavelSuspensa) {
+      return idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
+             idPerfil === perfilUtil.ADMINISTRADOR || 
+             idPerfil === perfilUtil.VALIDADOR_ASSINANTE;
+    }
+    
     return isStatusEmAndamento || isStatusAtrasada || isStatusNaoIniciado || isStatusEmValidacaoRegulatorio || isStatusPendente;
-  }, [isStatusEmAndamento, isStatusAtrasada, isStatusNaoIniciado, isStatusEmValidacaoRegulatorio, isStatusPendente, isStatusConcluido, idPerfil]);
+  }, [isStatusEmAndamento, isStatusAtrasada, isStatusNaoIniciado, isStatusEmValidacaoRegulatorio, isStatusPendente, isStatusConcluido, isStatusNaoAplicavelSuspensa, idPerfil]);
 
   const tooltipOutrosAnexos = useMemo(() => {
     if (!statusPermiteAnexarOutros) {
       if (isStatusConcluido) {
         return 'Apenas Gestor do Sistema, Administrador ou Diretoria podem anexar outros anexos quando o status é "Concluído".';
       }
+      if (isStatusNaoAplicavelSuspensa) {
+        return 'Apenas Gestor do Sistema, Administrador ou Diretoria podem anexar outros anexos quando o status é "Não Aplicável/Suspensa".';
+      }
       return 'Status não permitido para anexar outros anexos.';
     }
     
     return '';
-  }, [statusPermiteAnexarOutros, isStatusConcluido]);
+  }, [statusPermiteAnexarOutros, isStatusConcluido, isStatusNaoAplicavelSuspensa]);
 
   return (
     <div className="space-y-6">

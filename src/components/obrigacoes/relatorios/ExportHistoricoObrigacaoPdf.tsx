@@ -519,7 +519,7 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
           })();
         })()}
 
-        {obrigacao.dsJustificativaAtraso && (
+        {obrigacao.dsJustificativaAtraso && obrigacao.dsJustificativaAtraso.trim() !== '' && (
           <>
             <Text style={[styles.sectionTitle, { marginTop: 12 }]}>Justificativa de Atraso</Text>
             <View style={styles.justificativaBlock} wrap={false}>
@@ -537,6 +537,26 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
               </Text>
               <Text style={styles.small}>
                 <Text style={styles.smallBold}>Status:</Text> Atrasada
+              </Text>
+            </View>
+          </>
+        )}
+
+        {obrigacao.dsRespNaoAplicavelSusp && obrigacao.dsRespNaoAplicavelSusp.trim() !== '' && (
+          <>
+            <Text style={[styles.sectionTitle, { marginTop: 12 }]}>Justificativa de Não Aplicabilidade/Suspensão</Text>
+            <View style={styles.justificativaBlock} wrap={false}>
+              <Text style={styles.small}>
+                <Text style={styles.smallBold}>Comentário:</Text>
+              </Text>
+              <Text style={[styles.small, { marginTop: 4, marginBottom: 6 }]}>
+                {obrigacao.dsRespNaoAplicavelSusp}
+              </Text>
+              <Text style={styles.small}>
+                <Text style={styles.smallBold}>Responsável:</Text> {obrigacao.responsavelNaoAplicavelSusp?.nmResponsavel || '—'}
+              </Text>
+              <Text style={styles.small}>
+                <Text style={styles.smallBold}>Data/hora:</Text> {obrigacao.dtRespNaoAplicavelSusp ? formatDateTimeBr(obrigacao.dtRespNaoAplicavelSusp) : '—'}
               </Text>
             </View>
           </>

@@ -53,6 +53,9 @@ export interface ObrigacaoResponse extends Omit<SolicitacaoResponse, 'tema'> {
   dtJustificativaAtraso?: string | null;
   nrSei?: string | null;
   dsObservacaoProtocolo?: string | null;
+  dtRespNaoAplicavelSusp?: string | null;
+  dsRespNaoAplicavelSusp?: string | null;
+  responsavelNaoAplicavelSusp?: ResponsavelResponse | null;
 }
 
 export interface ObrigacaoRequest {
@@ -86,6 +89,9 @@ export interface ObrigacaoRequest {
   nrSei?: string | null;
   nrProcesso?: string | null;
   dsObservacaoProtocolo?: string | null;
+  dtRespNaoAplicavelSusp?: string | null;
+  dsRespNaoAplicavelSusp?: string | null;
+  responsavelNaoAplicavelSusp?: ResponsavelResponse | null;
 }
 
 export interface ObrigacaoDetalheResponse {

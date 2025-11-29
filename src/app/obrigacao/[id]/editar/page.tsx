@@ -23,6 +23,7 @@ import { base64ToUint8Array, saveBlob } from '@/utils/utils';
 import Link from 'next/link';
 import statusSolicitacaoClient, { StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { statusListObrigacao } from '@/api/status-obrigacao/types';
 
 type TabKey = 'dados' | 'temas' | 'prazos' | 'anexos' | 'vinculos';
 
@@ -123,7 +124,7 @@ export default function EditarObrigacaoPage() {
   const [statusOptions, setStatusOptions] = useState<StatusSolicitacaoResponse[]>([]);
   const [showDeleteAnexoDialog, setShowDeleteAnexoDialog] = useState(false);
   const [anexoToDelete, setAnexoToDelete] = useState<AnexoResponse | null>(null);
-  const [conferenciaAprovada, setConferenciaAprovada] = useState(false);
+  const [isNaoPermitidoEditar, setIsNaoPermitidoEditar] = useState(false);
 
   useEffect(() => {
     tiposClient.buscarPorCategorias([CategoriaEnum.OBRIG_CLASSIFICACAO])
@@ -152,10 +153,10 @@ export default function EditarObrigacaoPage() {
       const detalhe = await obrigacaoClient.buscarDetalhePorId(parsedId);
       setFormData(mapDetalheToFormData(detalhe));
       setExistingAnexos(detalhe.anexos || []);
-      if (detalhe?.obrigacao?.flAprovarConferencia === 'S') {
-        setConferenciaAprovada(true);
+      if (detalhe?.obrigacao?.flAprovarConferencia === 'S' || detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.NAO_APLICAVEL_SUSPENSA.id) {
+        setIsNaoPermitidoEditar(true);
       } else {
-        setConferenciaAprovada(false);
+        setIsNaoPermitidoEditar(false);
       }
     } catch (error) {
       console.error('Erro ao carregar detalhes da obrigação:', error);
@@ -417,7 +418,7 @@ export default function EditarObrigacaoPage() {
             formData={formData}
             updateFormData={updateFormData}
             statusOptions={statusOptions}
-            disabled={conferenciaAprovada}
+            disabled={isNaoPermitidoEditar}
           />
         );
       case 'temas':
@@ -425,7 +426,7 @@ export default function EditarObrigacaoPage() {
           <Step2Obrigacao
             formData={formData}
             updateFormData={updateFormData}
-            disabled={conferenciaAprovada}
+            disabled={isNaoPermitidoEditar}
           />
         );
       case 'prazos':
@@ -433,7 +434,7 @@ export default function EditarObrigacaoPage() {
           <Step3Obrigacao
             formData={formData}
             updateFormData={updateFormData}
-            disabled={conferenciaAprovada}
+            disabled={isNaoPermitidoEditar}
           />
         );
       case 'anexos':
@@ -447,7 +448,7 @@ export default function EditarObrigacaoPage() {
             onDownloadExisting={handleDownloadAnexo}
             onRemoveExisting={handleRemoveAnexoClick}
             existingAnexosLoading={anexosLoading}
-            disabled={conferenciaAprovada}
+            disabled={isNaoPermitidoEditar}
           />
         );
       case 'vinculos':
@@ -455,7 +456,7 @@ export default function EditarObrigacaoPage() {
           <Step5Obrigacao
             formData={formData}
             updateFormData={updateFormData}
-            disabled={conferenciaAprovada}
+            disabled={isNaoPermitidoEditar}
           />
         );
       default:
@@ -503,10 +504,10 @@ export default function EditarObrigacaoPage() {
             <h1 className="text-2xl font-semibold text-gray-900">Editar obrigação</h1>
         </div>
 
-        {conferenciaAprovada && (
+        {isNaoPermitidoEditar && (
           <div className="mb-4 rounded-lg bg-yellow-50 border border-yellow-200 px-4 py-3 text-center">
             <p className="text-sm text-yellow-800">
-              <strong>Atenção:</strong> A conferência já foi aprovada. Não é possível editar esta obrigação.
+              <strong>Atenção:</strong> Não é possível editar esta obrigação.
             </p>
           </div>
         )}
@@ -550,9 +551,9 @@ export default function EditarObrigacaoPage() {
           </Button>
           <Button
             onClick={handleSave}
-            disabled={saving || !tabValido || conferenciaAprovada}
+            disabled={saving || !tabValido || isNaoPermitidoEditar}
             className="flex items-center gap-2 px-6"
-            tooltip={conferenciaAprovada ? 'A conferência já foi aprovada. Não é possível editar a obrigação.' : ''}
+            tooltip={isNaoPermitidoEditar ? 'A conferência já foi aprovada. Não é possível editar a obrigação.' : ''}
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             {saving ? 'Salvando...' : 'Salvar alterações'}
