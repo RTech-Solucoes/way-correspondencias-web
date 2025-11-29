@@ -125,6 +125,13 @@ export class ObrigacaoClient {
         });
     }
 
+    async atualizarStatusNaoAplicavelSusp(idObrigacao: number, dsRespNaoAplicavelSusp: string): Promise<{ mensagem: string; status: string }> {
+        const params = new URLSearchParams();
+        params.append('dsRespNaoAplicavelSusp', dsRespNaoAplicavelSusp);
+        return this.client.request<{ mensagem: string; status: string }>(`/${idObrigacao}/atualizar-status-nao-aplicavel-suspenso?${params.toString()}`, {
+            method: 'PUT',
+        });
+    }
 }
 
 const obrigacaoClient = new ObrigacaoClient();

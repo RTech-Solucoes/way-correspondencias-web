@@ -17,7 +17,7 @@ import {
   PaperPlaneRightIcon,
 } from "@phosphor-icons/react";
 import { ObrigacaoResponse } from "@/api/obrigacao/types";
-import { BriefcaseIcon, FileTextIcon } from "lucide-react";
+import { BriefcaseIcon, FileTextIcon, BanIcon } from "lucide-react";
 import { StatusObrigacao, statusListObrigacao } from "@/api/status-obrigacao/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useUserGestao } from "@/hooks/use-user-gestao";
@@ -33,6 +33,7 @@ interface ObrigacaoAcoesMenuProps {
   onAnexarProtocolo?: (obrigacao: ObrigacaoResponse) => void;
   onEncaminharTramitacao?: (obrigacao: ObrigacaoResponse) => void;
   onEnviarArea?: (obrigacao: ObrigacaoResponse) => void;
+  onNaoAplicavelSuspenso?: (obrigacao: ObrigacaoResponse) => void;
   onExcluir?: (obrigacao: ObrigacaoResponse) => void;
   canVisualizarObrigacao?: boolean;
 }
@@ -44,6 +45,7 @@ export function ObrigacaoAcoesMenu({
   onAnexarProtocolo,
   onEncaminharTramitacao,
   onEnviarArea,
+  onNaoAplicavelSuspenso,
   onExcluir,
   canVisualizarObrigacao: canVisualizarObrigacaoProp,
 }: ObrigacaoAcoesMenuProps) {
@@ -53,6 +55,7 @@ export function ObrigacaoAcoesMenu({
     canDeletarObrigacao, 
     canConcluirObrigacao, 
     canEnviarAreasObrigacao,
+    canNaoAplicavelSuspensaObrigacao,
     canVisualizarObrigacao: canVisualizarObrigacaoPermissao 
   } = usePermissoes();
   
@@ -60,6 +63,11 @@ export function ObrigacaoAcoesMenu({
   
   const isStatusConcluido = obrigacao.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.CONCLUIDO.id ||
     obrigacao.statusSolicitacao?.nmStatus === StatusObrigacao.CONCLUIDO;
+
+  const isStatusNaoAplicavelSuspenso = useMemo(() => {
+    return obrigacao.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.NAO_APLICAVEL_SUSPENSA.id ||
+      obrigacao.statusSolicitacao?.nmStatus === StatusObrigacao.NAO_APLICAVEL_SUSPENSA;
+  }, [obrigacao.statusSolicitacao]);
 
   const isStatusEmValidacao = useMemo(() => {
     return obrigacao.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.EM_VALIDACAO_REGULATORIO.id ||
@@ -109,6 +117,7 @@ export function ObrigacaoAcoesMenu({
 
   const jaEnviadoParaArea = obrigacao.flEnviandoArea === 'S';
   const conferenciaAprovada = obrigacao.flAprovarConferencia === 'S';
+  const isNaoPermitidoEditar = conferenciaAprovada || isStatusNaoAplicavelSuspenso;
 
   return (
     <DropdownMenu>
@@ -134,18 +143,22 @@ export function ObrigacaoAcoesMenu({
               <TooltipTrigger asChild>
                 <div className="w-full">
                   <DropdownMenuItem 
-                    onClick={() => !conferenciaAprovada && onEditar(obrigacao)}
-                    disabled={conferenciaAprovada}
-                    className={conferenciaAprovada ? 'opacity-50 cursor-not-allowed' : ''}
+                    onClick={() => !isNaoPermitidoEditar && onEditar(obrigacao)}
+                    disabled={isNaoPermitidoEditar}
+                    className={isNaoPermitidoEditar ? 'opacity-50 cursor-not-allowed' : ''}
                   >
                     <PencilSimpleIcon className="mr-2 h-4 w-4" />
                     Editar
                   </DropdownMenuItem>
                 </div>
               </TooltipTrigger>
-              {conferenciaAprovada && (
+              {isNaoPermitidoEditar && (
                 <TooltipContent>
-                  <p>A conferência já foi aprovada. Não é possível editar a obrigação.</p>
+                  <p>
+                    {isStatusNaoAplicavelSuspenso 
+                      ? 'Esta obrigação está com status não aplicável/suspenso.' 
+                      : 'A conferência já foi aprovada. Não é possível editar a obrigação.'}
+                  </p>
                 </TooltipContent>
               )}
             </Tooltip>
@@ -198,6 +211,33 @@ export function ObrigacaoAcoesMenu({
               {jaEnviadoParaArea && (
                 <TooltipContent>
                   <p>Obrigação já enviada para área</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+        )}
+        {onNaoAplicavelSuspenso && canNaoAplicavelSuspensaObrigacao && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="w-full">
+                  <DropdownMenuItem 
+                    onClick={() => !isStatusNaoAplicavelSuspenso && !isStatusConcluido && onNaoAplicavelSuspenso(obrigacao)}
+                    disabled={isStatusNaoAplicavelSuspenso || isStatusConcluido}
+                    className={isStatusNaoAplicavelSuspenso || isStatusConcluido ? 'opacity-50 cursor-not-allowed' : ''}
+                  >
+                    <BanIcon className="mr-2 h-4 w-4" />
+                    Não Aplicável/Suspenso
+                  </DropdownMenuItem>
+                </div>
+              </TooltipTrigger>
+              {(isStatusNaoAplicavelSuspenso || isStatusConcluido) && (
+                <TooltipContent>
+                  <p>
+                    {isStatusNaoAplicavelSuspenso 
+                      ? 'Esta obrigação já está com status não aplicável/suspenso.' 
+                      : 'Não é possível alterar o status de uma obrigação concluída.'}
+                  </p>
                 </TooltipContent>
               )}
             </Tooltip>

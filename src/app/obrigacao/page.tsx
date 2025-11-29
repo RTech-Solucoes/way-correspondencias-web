@@ -36,6 +36,7 @@ import { ObrigacaoAcoesMenu } from "@/components/obrigacoes/ObrigacaoAcoesMenu";
 import { ImportObrigacoesModal } from "@/components/obrigacoes/ImportObrigacoesModal";
 import { AnexarProtocoloModal } from "@/components/obrigacoes/AnexarProtocoloModal";
 import { ObrigacoesCondicionadasModal } from "@/components/obrigacoes/ObrigacoesCondicionadasModal";
+import { NaoAplicavelSuspensoModal } from "@/components/obrigacoes/conferencia/NaoAplicavelSuspensoModal";
 import TimeProgress from "@/components/ui/time-progress";
 import obrigacaoClient from "@/api/obrigacao/client";
 import { toast } from "sonner";
@@ -76,9 +77,11 @@ function ObrigacoesContent() {
   const [showObrigacoesCondicionadasModal, setShowObrigacoesCondicionadasModal] = useState(false);
   const [obrigacaoParaProtocolo, setObrigacaoParaProtocolo] = useState<ObrigacaoResponse | null>(null);
   const [obrigacoesCondicionadas, setObrigacoesCondicionadas] = useState<ObrigacaoResumoResponse[]>([]);
+  const [showNaoAplicavelSuspensoModal, setShowNaoAplicavelSuspensoModal] = useState(false);
+  const [obrigacaoParaNaoAplicavelSuspenso, setObrigacaoParaNaoAplicavelSuspenso] = useState<ObrigacaoResponse | null>(null);
   const router = useRouter();
   const { idPerfil } = useUserGestao();
-  const { canInserirObrigacao, canDeletarObrigacao, canConcluirObrigacao, canEnviarAreasObrigacao } = usePermissoes();
+  const { canInserirObrigacao, canDeletarObrigacao, canConcluirObrigacao, canEnviarAreasObrigacao, canNaoAplicavelSuspensaObrigacao } = usePermissoes();
 
   const isAdminOrGestor = useMemo(() => {
     return idPerfil === perfilUtil.ADMINISTRADOR ||
@@ -274,6 +277,33 @@ function ObrigacoesContent() {
     setShowDeleteDialog(true);
   };
 
+  const handleNaoAplicavelSuspenso = (obrigacao: ObrigacaoResponse) => {
+    setObrigacaoParaNaoAplicavelSuspenso(obrigacao);
+    setShowNaoAplicavelSuspensoModal(true);
+  };
+
+  const handleConfirmNaoAplicavelSuspenso = async (justificativa: string) => {
+    if (!obrigacaoParaNaoAplicavelSuspenso?.idSolicitacao) {
+      toast.error('ID da obrigação não encontrado.');
+      return;
+    }
+
+    try {
+      const response = await obrigacaoClient.atualizarStatusNaoAplicavelSusp(
+        obrigacaoParaNaoAplicavelSuspenso.idSolicitacao,
+        justificativa
+      );
+      toast.success(response.mensagem);
+      await loadObrigacoes();
+      setShowNaoAplicavelSuspensoModal(false);
+      setObrigacaoParaNaoAplicavelSuspenso(null);
+    } catch (error) {
+      console.error('Erro ao atualizar status:', error);
+      toast.error('Erro ao atualizar status. Tente novamente.');
+      throw error;
+    }
+  };
+
   return (
     <>
       <ObrigacaoModal />
@@ -306,6 +336,18 @@ function ObrigacoesContent() {
         }}
         obrigacoesCondicionadas={obrigacoesCondicionadas}
       />
+
+      {obrigacaoParaNaoAplicavelSuspenso && (
+        <NaoAplicavelSuspensoModal
+          open={showNaoAplicavelSuspensoModal}
+          onClose={() => {
+            setShowNaoAplicavelSuspensoModal(false);
+            setObrigacaoParaNaoAplicavelSuspenso(null);
+          }}
+          onConfirm={handleConfirmNaoAplicavelSuspenso}
+          justificativaExistente={obrigacaoParaNaoAplicavelSuspenso.dsRespNaoAplicavelSusp || null}
+        />
+      )}
       
       <div className="flex flex-col min-h-0 flex-1">
         <div className="flex items-center justify-between mb-6">
@@ -634,6 +676,7 @@ function ObrigacoesContent() {
                             toast.error('Erro ao enviar obrigação para área. Tente novamente.');
                           }
                         } : undefined}
+                        onNaoAplicavelSuspenso={canNaoAplicavelSuspensaObrigacao ? handleNaoAplicavelSuspenso : undefined}
                         onExcluir={canDeletarObrigacao ? handleDeleteObrigacao : undefined}
                       />
                     </div>

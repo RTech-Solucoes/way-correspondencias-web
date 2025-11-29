@@ -31,7 +31,7 @@ export const statusObrigacaoList: StatusObrigacaoResponse[] = [
     { id: 15, nmStatus: StatusObrigacao.EM_VALIDACAO_REGULATORIO },
     { id: 16, nmStatus: StatusObrigacao.ATRASADA },
     { id: 9, nmStatus: StatusObrigacao.CONCLUIDO },
-    { id: 18, nmStatus: StatusObrigacao.NAO_APLICAVEL_SUSPENSA },
+    { id: 17, nmStatus: StatusObrigacao.NAO_APLICAVEL_SUSPENSA },
 ];
 
 export const statusListObrigacao: Record<StatusObrigacao, StatusObrigacaoResponse> = {

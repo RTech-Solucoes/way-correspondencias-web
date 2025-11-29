@@ -196,7 +196,34 @@ export function ConferenciaStepDados({ obrigacao, statusLabel, statusStyle }: Co
             label="Observações do Protocolo"
             border={false}
             value={obrigacao.dsObservacaoProtocolo}
+        />
+        
+        {obrigacao.dsRespNaoAplicavelSusp && (
+          <ConferenciaInfoRow
+            label="Justificativa de não aplicabilidade/suspensão"
+            border={false}
+            value={
+              <div className="space-y-3 ml-5">
+                <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-wrap">
+                  {obrigacao.dsRespNaoAplicavelSusp}
+                </p>
+                <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <span className="font-medium text-gray-600">
+                      {obrigacao.responsavelNaoAplicavelSusp?.nmResponsavel || 'Usuário não informado'}
+                    </span>
+                    {obrigacao.dtRespNaoAplicavelSusp && (
+                      <>
+                        <span className="text-gray-300">•</span>
+                        <span>{formatDateTimeBr(obrigacao.dtRespNaoAplicavelSusp)}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            }
           />
+        )}
       </div>
     </div>
   );
