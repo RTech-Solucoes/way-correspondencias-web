@@ -1918,7 +1918,7 @@ export default function SolicitacaoModal({
                 tooltip={!canEditSolicitacao ? 'Esta solicitação não pode ser editada no status atual.' : ''}
               >
                 {solicitacao && <ArrowArcRightIcon className={"w-4 h-4 mr-1"} />}
-                {loading ? 'Salvando...' : solicitacao ? 'Encaminhar para Analista do Regulatório' : 'Criar Solicitação'}
+                {loading ? 'Salvando...' : solicitacao ? 'Encaminhar para Gerente do Regulatório' : 'Criar Solicitação'}
               </Button>
             </>
           )}

@@ -72,7 +72,23 @@ export default function LoginPage() {
 
         if (token) {
           const decoded = jwtDecode<TokenPayload>(token);
-          setPermissoes(decoded.permissoes)
+          setPermissoes(decoded.permissoes);
+          
+          // Validar se o usuário tem concessionárias associadas
+          const idsConcessionarias = authClient.getIdsConcessionariasFromToken();
+          
+          if (!idsConcessionarias || idsConcessionarias.length === 0) {
+            // Remover token e limpar dados
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('tokenType');
+            localStorage.removeItem('userName');
+            localStorage.removeItem('permissoes-storage');
+            sessionStorage.removeItem('permissoes-storage');
+            
+            toast.error("Seu usuário não possui concessionárias associadas. Entre em contato com o administrador do sistema.");
+            setIsLoading(false);
+            return;
+          }
         }
 
         toast.success("Login Realizado com Sucesso.")

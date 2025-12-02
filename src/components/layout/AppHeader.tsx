@@ -1,13 +1,17 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
-import ProfileButton from './ProfileButton';
-import {User as UserType} from '@/types/auth/types';
 import authClient from '@/api/auth/client';
-import { BellIcon } from '@phosphor-icons/react';
 import dashboardClient from '@/api/dashboard/client';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useConcessionaria } from '@/context/concessionaria/ConcessionariaContext';
+import { User as UserType } from '@/types/auth/types';
+import { BellIcon } from '@phosphor-icons/react';
 import { useQuery } from '@tanstack/react-query';
+import Image from 'next/image';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+
+import ProfileButton from './ProfileButton';
+
 
 interface AppHeaderProps {
   userName?: string;
@@ -22,6 +26,8 @@ export function AppHeader({
   userAvatar,
   perfil
 }: AppHeaderProps) {
+  const { concessionariaSelecionada, concessionarias, loading: loadingConcessionaria, setConcessionariaSelecionada } = useConcessionaria();
+  
   const user: UserType = {
     name: userName,
     username: userLogin,
@@ -73,7 +79,7 @@ const qtdSolicitacaoPendente = pendenteCountData ?? pendenteCountState;
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm">
       <div className="flex items-center justify-between h-[82px] px-6">
-        <div className="flex items-center">
+        <div className="flex items-center gap-6">
           <Image
             src={`/images/${layoutClient}-logo.png`}
             alt="Logo"
@@ -81,6 +87,48 @@ const qtdSolicitacaoPendente = pendenteCountData ?? pendenteCountState;
             height={40}
             className="h-8 w-auto"
           />
+          {!loadingConcessionaria && concessionarias.length > 0 && (
+            <>
+              {concessionarias.length > 1 ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Concessionária:</span>
+                  <Select
+                    value={concessionariaSelecionada?.idConcessionaria.toString() || ''}
+                    onValueChange={(value) => {
+                      const concessionaria = concessionarias.find(c => c.idConcessionaria.toString() === value);
+                      if (concessionaria && concessionaria.idConcessionaria !== concessionariaSelecionada?.idConcessionaria) {
+                        setConcessionariaSelecionada(concessionaria);
+                        window.location.reload();
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="w-[150px] h-9 border-gray-300 bg-white hover:bg-gray-50 shadow-sm">
+                      <SelectValue placeholder="Selecione a concessionária" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {concessionarias.map((concessionaria) => (
+                        <SelectItem 
+                          key={concessionaria.idConcessionaria} 
+                          value={concessionaria.idConcessionaria.toString()}
+                        >
+                          {concessionaria.nmConcessionaria}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                concessionariaSelecionada && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Concessionária:</span>
+                    <div className="flex items-center h-9 px-3 py-2 rounded-md border border-gray-300 bg-white shadow-sm">
+                      <span className="text-sm text-gray-900 font-semibold">{concessionariaSelecionada.nmConcessionaria}</span>
+                    </div>
+                  </div>
+                )
+              )}
+            </>
+          )}
         </div>
 
         <div className="flex items-center">

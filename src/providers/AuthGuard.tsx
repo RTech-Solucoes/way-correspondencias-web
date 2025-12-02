@@ -7,6 +7,8 @@ import {Quantum as Loading} from 'ldrs/react'
 import 'ldrs/react/Quantum.css'
 import {PUBLIC_ROUTES} from "@/constants/pages";
 import {usePermittedRoutes} from "@/hooks/use-permitted-routes";
+import authClient from "@/api/auth/client";
+import { toast } from 'sonner';
 
 export default function AuthGuard({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -21,6 +23,26 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
       const authToken = localStorage.getItem('authToken');
 
       if (authToken) {
+        // Validar se o usuário tem concessionárias associadas (apenas para rotas protegidas)
+        if (!isPublicRoute) {
+          const idsConcessionarias = authClient.getIdsConcessionariasFromToken();
+          
+          if (!idsConcessionarias || idsConcessionarias.length === 0) {
+            // Remover token e limpar dados
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('tokenType');
+            localStorage.removeItem('userName');
+            localStorage.removeItem('permissoes-storage');
+            localStorage.removeItem('concessionaria-selecionada');
+            sessionStorage.removeItem('permissoes-storage');
+            
+            toast.error("Seu usuário não possui concessionárias associadas. Entre em contato com o administrador do sistema.");
+            router.push('/');
+            setIsLoading(false);
+            return;
+          }
+        }
+        
         if (isPublicRoute) {
           if (permittedRoutes.length > 0) {
             router.push(permittedRoutes[0]);
