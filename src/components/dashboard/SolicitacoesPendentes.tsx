@@ -11,11 +11,10 @@ export default function SolicitacoesPendentes({ refreshTrigger }: SolicitacoesPe
   const { data: items = [], isLoading: loading } = useQuery<SolicitacaoResumoResponse[]>({
     queryKey: ['solicitacoesPendentes', refreshTrigger],
     queryFn: () => dashboardClient.getSolicitacoesPendentes(),
-    staleTime: 0,
-    refetchInterval: 1_000,
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
-    refetchOnMount: 'always',
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: true, 
   });
 
   const getAreasLabel = (s: SolicitacaoResumoResponse): string => {

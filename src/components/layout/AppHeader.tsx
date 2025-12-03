@@ -5,7 +5,7 @@ import dashboardClient from '@/api/dashboard/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useConcessionaria } from '@/context/concessionaria/ConcessionariaContext';
 import { User as UserType } from '@/types/auth/types';
-import { BellIcon } from '@phosphor-icons/react';
+import { BellIcon, BuildingIcon, RoadHorizonIcon } from '@phosphor-icons/react';
 import { useQuery } from '@tanstack/react-query';
 import Image from 'next/image';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -90,8 +90,11 @@ const qtdSolicitacaoPendente = pendenteCountData ?? pendenteCountState;
           {!loadingConcessionaria && concessionarias.length > 0 && (
             <>
               {concessionarias.length > 1 ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Concessionária:</span>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <BuildingIcon className="h-5 w-5 text-[#276EEB]" weight="fill" />
+                    <span className="text-sm font-semibold text-gray-700 whitespace-nowrap">Concessionária:</span>
+                  </div>
                   <Select
                     value={concessionariaSelecionada?.idConcessionaria.toString() || ''}
                     onValueChange={(value) => {
@@ -102,16 +105,32 @@ const qtdSolicitacaoPendente = pendenteCountData ?? pendenteCountState;
                       }
                     }}
                   >
-                    <SelectTrigger className="w-[150px] h-9 border-gray-300 bg-white hover:bg-gray-50 shadow-sm">
-                      <SelectValue placeholder="Selecione a concessionária" />
+                    <SelectTrigger className="w-[200px] h-10 border-2 border-[#276EEB]/20 bg-gradient-to-r from-blue-50 to-white hover:border-[#276EEB]/40 hover:bg-gradient-to-r hover:from-blue-100 hover:to-blue-50 shadow-md transition-all duration-200 focus:ring-2 focus:ring-[#276EEB]/30 focus:border-[#276EEB]">
+                      {concessionariaSelecionada ? (
+                        <div className="flex items-center gap-2 flex-1">
+                          <RoadHorizonIcon className="h-4 w-4 text-[#276EEB] flex-shrink-0" weight="fill" />
+                          <span className="text-sm text-[#276EEB] font-medium">{concessionariaSelecionada.nmConcessionaria}</span>
+                        </div>
+                      ) : (
+                        <>
+                          <RoadHorizonIcon className="h-4 w-4 text-[#276EEB] mr-2 flex-shrink-0" weight="fill" />
+                          <SelectValue placeholder="Selecione a concessionária" className="flex-1" />
+                        </>
+                      )}
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="min-w-[200px]">
                       {concessionarias.map((concessionaria) => (
                         <SelectItem 
                           key={concessionaria.idConcessionaria} 
                           value={concessionaria.idConcessionaria.toString()}
+                          className="cursor-pointer hover:bg-blue-50 focus:bg-blue-50"
                         >
-                          {concessionaria.nmConcessionaria}
+                          <div className="flex items-center gap-2">
+                            <RoadHorizonIcon className="h-4 w-4 text-[#276EEB]" weight={concessionaria.idConcessionaria === concessionariaSelecionada?.idConcessionaria ? "fill" : "regular"} />
+                            <span className={concessionaria.idConcessionaria === concessionariaSelecionada?.idConcessionaria ? "font-semibold text-[#276EEB]" : ""}>
+                              {concessionaria.nmConcessionaria}
+                            </span>
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -119,10 +138,14 @@ const qtdSolicitacaoPendente = pendenteCountData ?? pendenteCountState;
                 </div>
               ) : (
                 concessionariaSelecionada && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Concessionária:</span>
-                    <div className="flex items-center h-9 px-3 py-2 rounded-md border border-gray-300 bg-white shadow-sm">
-                      <span className="text-sm text-gray-900 font-semibold">{concessionariaSelecionada.nmConcessionaria}</span>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <BuildingIcon className="h-5 w-5 text-[#276EEB]" weight="fill" />
+                      <span className="text-sm font-semibold text-gray-700 whitespace-nowrap">Concessionária:</span>
+                    </div>
+                    <div className="flex items-center gap-2 h-10 px-4 py-2 rounded-lg border-2 border-[#276EEB]/20 bg-gradient-to-r from-blue-50 to-white shadow-md">
+                      <RoadHorizonIcon className="h-4 w-4 text-[#276EEB]" weight="fill" />
+                      <span className="text-sm text-[#276EEB] font-semibold">{concessionariaSelecionada.nmConcessionaria}</span>
                     </div>
                   </div>
                 )

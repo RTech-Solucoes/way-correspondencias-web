@@ -58,12 +58,10 @@ export function ConcessionariaProvider({ children }: { children: ReactNode }) {
       try {
         setLoading(true);
         
-        // Buscar concessionárias do responsável logado
         let concessionariasDoResponsavel: ConcessionariaResponse[] = [];
         try {
           concessionariasDoResponsavel = await concessionariaClient.buscarPorIdResponsavel();
         } catch (error) {
-          // Se der 401, usuário não está autenticado, não fazer nada
           const apiError = error as { status?: number };
           if (apiError?.status === 401) {
             setConcessionarias([]);
