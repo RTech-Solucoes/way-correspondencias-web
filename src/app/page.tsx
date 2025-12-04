@@ -1,6 +1,7 @@
 'use client';
 
 import authClient from "@/api/auth/client";
+import concessionariaClient from "@/api/concessionaria/client";
 import { Button } from '@/components/ui/button';
 import { TextField } from '@/components/ui/text-field';
 import { PAGES_DEF } from "@/constants/pages";
@@ -13,6 +14,7 @@ import { toast } from 'sonner';
 
 import { jwtDecode } from "jwt-decode";
 import { useSetPermissoes } from "@/stores/permissoes-store";
+import { getLayoutClient, getLabelTitle, getLogoPath, getBackgroundLoginPath, getNomeSistema } from "@/lib/layout/layout-client";
 
 interface TokenPayload {
   sub: string;
@@ -30,14 +32,11 @@ export default function LoginPage() {
 
   const router = useRouter();
 
-  const layoutClient = process.env.NEXT_PUBLIC_LAYOUT_CLIENT || "way262";
-  let labelTitle = "";
-  
-  if (layoutClient === "way262") {
-    labelTitle = "Way 262";
-  } else if (layoutClient === "mvp") {
-    labelTitle = "RTech";
-  }
+  const layoutClient = getLayoutClient();
+  const labelTitle = getLabelTitle(layoutClient);
+  const nomeSistema = getNomeSistema(layoutClient);
+  const logoPath = getLogoPath(layoutClient);
+  const backgroundPath = getBackgroundLoginPath(layoutClient);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -89,6 +88,37 @@ export default function LoginPage() {
             setIsLoading(false);
             return;
           }
+
+          // Verificar se realmente existem concessionárias disponíveis para o responsável
+          try {
+            const concessionariasDoResponsavel = await concessionariaClient.buscarPorIdResponsavelLogado();
+            
+            if (!concessionariasDoResponsavel || concessionariasDoResponsavel.length === 0) {
+              // Remover token e limpar dados
+              localStorage.removeItem('authToken');
+              localStorage.removeItem('tokenType');
+              localStorage.removeItem('userName');
+              localStorage.removeItem('permissoes-storage');
+              sessionStorage.removeItem('permissoes-storage');
+              
+              toast.error("Você foi deslogado pois não possui concessionária associada ao seu usuário. Entre em contato com o administrador do sistema.");
+              setIsLoading(false);
+              return;
+            }
+          } catch {
+            // Se der erro ao buscar, verificar se tem IDs no token como fallback
+            if (idsConcessionarias.length === 0) {
+              localStorage.removeItem('authToken');
+              localStorage.removeItem('tokenType');
+              localStorage.removeItem('userName');
+              localStorage.removeItem('permissoes-storage');
+              sessionStorage.removeItem('permissoes-storage');
+              
+              toast.error("Você foi deslogado pois não possui concessionária associada ao seu usuário. Entre em contato com o administrador do sistema.");
+              setIsLoading(false);
+              return;
+            }
+          }
         }
 
         toast.success("Login Realizado com Sucesso.")
@@ -116,7 +146,7 @@ export default function LoginPage() {
       <form onSubmit={handleSubmit} className="flex flex-col w-[45%] max-md:w-full gap-12 p-8 max-[1024px]:p-2 rounded-4xl max-[1460px]:w-[40%] min-[1440px]:max-w-[30%] justify-center mb-32">
         <div>
           <Image
-            src={`/images/${layoutClient}-logo.png`}
+            src={logoPath}
             alt="Logo"
             width={400}
             height={221}
@@ -126,7 +156,7 @@ export default function LoginPage() {
 
         <div className="flex flex-col justify-center items-center gap-8 w-full ">
           <div className="flex gap-6 items-center">
-            <h2 className="text-[#101A2D] font-semibold text-2xl text-center">Software Regulatório <span className="text-[#276EEB]">{labelTitle}</span></h2>
+            <h2 className="text-[#101A2D] font-semibold text-2xl text-center">{nomeSistema} <span className="text-[#276EEB]">{labelTitle}</span></h2>
           </div>
 
           <div className="flex flex-col gap-6 w-full">
@@ -178,7 +208,7 @@ export default function LoginPage() {
 
       <div className="relative w-[55%] h-[90vh] m-auto rounded-4xl overflow-hidden max-[1460px]:w-[60%] hidden md:block">
         <Image
-          src={`/images/${layoutClient}-background-login.png`}
+          src={backgroundPath}
           alt="Rodovia"
           fill
           className="object-center"

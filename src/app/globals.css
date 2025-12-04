@@ -246,3 +246,31 @@ button, input[type="file"] {
 .email-content a:hover {
   color: #1d4ed8;
 }
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.loading-overlay-backdrop {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.loading-overlay-content {
+  animation: slideUp 0.3s ease-out;
+}

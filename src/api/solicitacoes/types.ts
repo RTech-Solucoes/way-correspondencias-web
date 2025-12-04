@@ -11,6 +11,7 @@ export interface AreaSolicitacao {
   cdArea?: string | null;
   dsArea?: string | null;
   flAtivo: string;
+  idConcessionaria?: number;
 }
 
 export interface AreaTema {
@@ -22,6 +23,7 @@ export interface AreaTema {
   tpPrazo: string;
   flAtivo: string;
   areas?: AreaSolicitacao[];
+  idConcessionaria?: number;
 }
 
 export interface Email {
@@ -32,6 +34,7 @@ export interface Email {
   dsCorpo: string;
   dtRecebimento: string;
   flAtivo: string;
+  idConcessionaria?: number;
 }
 
 export interface StatusSolicitacao {
@@ -56,6 +59,7 @@ export interface SolicitacaoResponse extends BaseResponse {
   idTema?: number;
   idResponsavel?: number;
   idAreaInicial?: number;
+  idConcessionaria?: number;
   statusCodigo?: number;
   flStatus?: string;
   cdIdentificacao?: string;

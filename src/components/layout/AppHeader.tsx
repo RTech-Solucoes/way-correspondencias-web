@@ -8,9 +8,11 @@ import { User as UserType } from '@/types/auth/types';
 import { BellIcon, BuildingIcon, RoadHorizonIcon } from '@phosphor-icons/react';
 import { useQuery } from '@tanstack/react-query';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import ProfileButton from './ProfileButton';
+import { getLayoutClient, getLogoPath } from '@/lib/layout/layout-client';
 
 
 interface AppHeaderProps {
@@ -26,6 +28,7 @@ export function AppHeader({
   userAvatar,
   perfil
 }: AppHeaderProps) {
+  const router = useRouter();
   const { concessionariaSelecionada, concessionarias, loading: loadingConcessionaria, setConcessionariaSelecionada } = useConcessionaria();
   
   const user: UserType = {
@@ -38,6 +41,7 @@ export function AppHeader({
 
   const handleLogout = () => {
     authClient.logout();
+    router.push('/');
   };
 
 const [pendenteCountState] = useState<number>(0);
@@ -72,7 +76,8 @@ const { data: pendenteCountData } = useQuery<number>({
   refetchOnMount: 'always',
 });
   
-const layoutClient = process.env.NEXT_PUBLIC_LAYOUT_CLIENT || "way262";
+const layoutClient = getLayoutClient();
+const logoPath = getLogoPath(layoutClient);
 
 const qtdSolicitacaoPendente = pendenteCountData ?? pendenteCountState;
 
@@ -81,7 +86,7 @@ const qtdSolicitacaoPendente = pendenteCountData ?? pendenteCountState;
       <div className="flex items-center justify-between h-[82px] px-6">
         <div className="flex items-center gap-6">
           <Image
-            src={`/images/${layoutClient}-logo.png`}
+            src={logoPath}
             alt="Logo"
             width={120}
             height={40}

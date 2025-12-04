@@ -1,10 +1,10 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { authClient } from '@/api/auth/client';
 import concessionariaClient from '@/api/concessionaria/client';
 import { ConcessionariaResponse } from '@/api/concessionaria/types';
-import { responsaveisClient } from '@/api/responsaveis/client';
 
 interface ConcessionariaContextProps {
   concessionariaSelecionada: ConcessionariaResponse | null;
@@ -19,6 +19,7 @@ const ConcessionariaContext = createContext<ConcessionariaContextProps>({} as Co
 const STORAGE_KEY = 'concessionaria-selecionada';
 
 export function ConcessionariaProvider({ children }: { children: ReactNode }) {
+  const router = useRouter();
   const [concessionariaSelecionada, setConcessionariaSelecionadaState] = useState<ConcessionariaResponse | null>(null);
   const [concessionarias, setConcessionarias] = useState<ConcessionariaResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,7 +61,7 @@ export function ConcessionariaProvider({ children }: { children: ReactNode }) {
         
         let concessionariasDoResponsavel: ConcessionariaResponse[] = [];
         try {
-          concessionariasDoResponsavel = await concessionariaClient.buscarPorIdResponsavel();
+          concessionariasDoResponsavel = await concessionariaClient.buscarPorIdResponsavelLogado();
         } catch (error) {
           const apiError = error as { status?: number };
           if (apiError?.status === 401) {
@@ -84,12 +85,15 @@ export function ConcessionariaProvider({ children }: { children: ReactNode }) {
           setConcessionarias([]);
           setConcessionariaSelecionadaState(null);
           setLoading(false);
+          // Se não houver concessionárias, deslogar e redirecionar
+          // O toast já foi mostrado na página de login, então não mostrar aqui para evitar duplicação
+          authClient.logout();
+          router.push('/');
           return;
         }
 
         setConcessionarias(concessionariasDoResponsavel);
 
-        // Verificar se há uma concessionária salva no localStorage
         const idSalvo = localStorage.getItem(STORAGE_KEY);
         if (idSalvo) {
           const concessionariaSalva = concessionariasDoResponsavel.find(
@@ -147,7 +151,7 @@ export function ConcessionariaProvider({ children }: { children: ReactNode }) {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('authTokenRemoved', handleAuthTokenRemoved);
     };
-  }, [setConcessionariaSelecionada]);
+  }, [setConcessionariaSelecionada, router]);
 
   return (
     <ConcessionariaContext.Provider

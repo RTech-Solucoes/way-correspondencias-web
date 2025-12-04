@@ -7,6 +7,7 @@ import {TextField} from '@/components/ui/text-field';
 import {Label} from '@/components/ui/label';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
 import {MultiSelectAreas} from '@/components/ui/multi-select-areas';
+import {MultiSelectConcessionarias} from '@/components/ui/multi-select-concessionarias';
 import {ResponsavelRequest, ResponsavelResponse} from '@/api/responsaveis/types';
 import {responsaveisClient} from '@/api/responsaveis/client';
 import {PerfilResponse} from '@/api/perfis/types';
@@ -17,6 +18,8 @@ import {z} from 'zod';
 import { responsavelAnexosClient } from '@/api/responsaveis/anexos-client';
 import { ArquivoDTO, TipoObjetoAnexo } from '@/api/anexos/type';
 import anexosClient from '@/api/anexos/client';
+import { useConcessionaria } from '@/context/concessionaria/ConcessionariaContext';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 
 interface ResponsavelModalProps {
   responsavel: ResponsavelResponse | null;
@@ -34,9 +37,11 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
     nrCpf: '',
     dtNascimento: '',
     nmCargo: '',
-    idsAreas: []
+    idsAreas: [],
+    idsConcessionarias: []
   });
   const [selectedAreaIds, setSelectedAreaIds] = useState<number[]>([]);
+  const [selectedConcessionariaIds, setSelectedConcessionariaIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
   const [perfis, setPerfis] = useState<PerfilResponse[]>([]);
   const [loadingPerfis, setLoadingPerfis] = useState(false);
@@ -47,6 +52,10 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
   const [existingPhoto, setExistingPhoto] = useState<{ idAnexo: number; nmArquivo: string } | null>(null);
   const [photoBusy, setPhotoBusy] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [showConcessionariaWarning, setShowConcessionariaWarning] = useState(false);
+  const [pendingSubmit, setPendingSubmit] = useState<(() => void) | null>(null);
+  
+  const { concessionariaSelecionada } = useConcessionaria();
 
   const buscarPerfis = useCallback(async () => {
     try {
@@ -65,6 +74,14 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
 
   const carregarDadosResponsavel = useCallback(() => {
     if (responsavel) {
+      let concessionariaIds = responsavel.concessionarias 
+        ? responsavel.concessionarias.map(c => c.idConcessionaria) 
+        : [];
+      
+      if (concessionariaIds.length === 0 && concessionariaSelecionada?.idConcessionaria) {
+        concessionariaIds = [concessionariaSelecionada.idConcessionaria];
+      }
+
       const formDataResponsavel = {
         idPerfil: responsavel.idPerfil,
         nmUsuarioLogin: responsavel.nmUsuarioLogin,
@@ -73,7 +90,8 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
         nrCpf: responsavel.nrCpf || '',
         dtNascimento: responsavel.dtNascimento || '',
         nmCargo: responsavel.nmCargo || '',
-        idsAreas: responsavel.areas ? responsavel.areas.map(responsavelArea => responsavelArea.area.idArea) : []
+        idsAreas: responsavel.areas ? responsavel.areas.map(responsavelArea => responsavelArea.area.idArea) : [],
+        idsConcessionarias: concessionariaIds
       };
 
       setFormData(formDataResponsavel);
@@ -83,8 +101,9 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
       } else {
         setSelectedAreaIds([]);
       }
+      setSelectedConcessionariaIds(concessionariaIds);
     }
-  }, [responsavel]);
+  }, [responsavel, concessionariaSelecionada]);
 
   const loadExistingPhoto = useCallback(async () => {
     if (!responsavel) return;
@@ -135,6 +154,10 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
     if (responsavel) {
       carregarDadosResponsavel();
     } else {
+      const concessionariaIds = concessionariaSelecionada?.idConcessionaria 
+        ? [concessionariaSelecionada.idConcessionaria] 
+        : [];
+      
       setFormData({
         idPerfil: 0,
         nmUsuarioLogin: '',
@@ -143,9 +166,11 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
         nrCpf: '',
         dtNascimento: '',
         nmCargo: '',
-        idsAreas: []
+        idsAreas: [],
+        idsConcessionarias: concessionariaIds
       });
       setSelectedAreaIds([]);
+      setSelectedConcessionariaIds(concessionariaIds);
       setSelectedPhotoFile(null);
       setPhotoPreview(null);
       setExistingPhotoPreview(null);
@@ -158,7 +183,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
         responsavel ? loadExistingPhoto() : Promise.resolve(),
       ]);
     })();
-  }, [open, responsavel, buscarPerfis, carregarDadosResponsavel, loadExistingPhoto]);
+  }, [open, responsavel, buscarPerfis, carregarDadosResponsavel, loadExistingPhoto, concessionariaSelecionada]);
 
   const validateField = (name: string, value: string) => {
     const newErrors = { ...errors };
@@ -228,6 +253,22 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
     }));
   }, []);
 
+  const handleConcessionariasSelectionChange = useCallback((selectedIds: number[]) => {
+    setSelectedConcessionariaIds(selectedIds);
+    setFormData(prev => ({
+      ...prev,
+      idsConcessionarias: selectedIds
+    }));
+    // Limpar erro de validação quando uma concessionária for selecionada
+    if (selectedIds.length > 0 && errors.idsConcessionarias) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.idsConcessionarias;
+        return newErrors;
+      });
+    }
+  }, [errors.idsConcessionarias]);
+
   const responsavelSchema = z.object({
     nmResponsavel: formValidator.name,
     nmUsuarioLogin: formValidator.username,
@@ -238,20 +279,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
     idsAreas: z.array(z.number()).optional().default([]),
   });
 
-  const handleSubmit = async () => {
-    const result = responsavelSchema.safeParse(formData);
-
-    if (!result.success) {
-      const fieldErrors: Record<string, string> = {};
-      result.error.issues.forEach((issue) => {
-        const path = issue.path[0] as string;
-        fieldErrors[path] = issue.message;
-      });
-      setErrors(fieldErrors);
-      toast.error('Por favor, corrija os erros no formulário');
-      return;
-    }
-
+  const performSubmit = async () => {
     try {
       setLoading(true);
 
@@ -263,13 +291,13 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
         nrCpf: formData.nrCpf.trim(),
         dtNascimento: formData.dtNascimento,
         nmCargo: formData.nmCargo.trim(),
-        idsAreas: selectedAreaIds.length > 0 ? selectedAreaIds : []
+        idsAreas: selectedAreaIds.length > 0 ? selectedAreaIds : [],
+        idsConcessionarias: selectedConcessionariaIds.length > 0 ? selectedConcessionariaIds : []
       };
 
       if (responsavel) {
-        const updated = await responsaveisClient.atualizar(responsavel.idResponsavel, responsavelRequest);
+        await responsaveisClient.atualizar(responsavel.idResponsavel, responsavelRequest);
         if (selectedPhotoFile) {
-          // Replace existing photo if any, then upload new
           try {
             if (existingPhoto) {
               await responsavelAnexosClient.deletar(responsavel.idResponsavel, existingPhoto.idAnexo);
@@ -294,6 +322,62 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
       toast.error(responsavel ? "Erro ao atualizar responsável" : "Erro ao criar responsável");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    const result = responsavelSchema.safeParse(formData);
+
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+      result.error.issues.forEach((issue) => {
+        const path = issue.path[0] as string;
+        fieldErrors[path] = issue.message;
+      });
+      setErrors(fieldErrors);
+      toast.error('Por favor, corrija os erros no formulário');
+      return;
+    }
+
+    // Validar se pelo menos uma concessionária foi selecionada
+    if (selectedConcessionariaIds.length === 0) {
+      setErrors(prev => ({ ...prev, idsConcessionarias: 'Selecione pelo menos uma concessionária' }));
+      toast.error('É obrigatório selecionar pelo menos uma concessionária');
+      return;
+    }
+
+    // Limpar erro de concessionárias se houver seleção
+    if (errors.idsConcessionarias) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.idsConcessionarias;
+        return newErrors;
+      });
+    }
+
+    // Verificar se as concessionárias selecionadas incluem a concessionária atualmente selecionada
+    const concessionariaAtualId = concessionariaSelecionada?.idConcessionaria;
+    const temConcessionariasSelecionadas = selectedConcessionariaIds.length > 0;
+    const incluiConcessionariaAtual = concessionariaAtualId 
+      ? selectedConcessionariaIds.includes(concessionariaAtualId)
+      : false;
+
+    // Se há concessionárias selecionadas mas não inclui a atual, mostrar aviso
+    if (temConcessionariasSelecionadas && concessionariaAtualId && !incluiConcessionariaAtual) {
+      setPendingSubmit(() => performSubmit);
+      setShowConcessionariaWarning(true);
+      return;
+    }
+
+    // Caso contrário, salvar diretamente
+    await performSubmit();
+  };
+
+  const handleConfirmConcessionariaWarning = async () => {
+    setShowConcessionariaWarning(false);
+    if (pendingSubmit) {
+      await pendingSubmit();
+      setPendingSubmit(null);
     }
   };
 
@@ -481,6 +565,18 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
             disabled={false}
           />
 
+          <div>
+            <MultiSelectConcessionarias
+              selectedConcessionariaIds={selectedConcessionariaIds}
+              onSelectionChange={handleConcessionariasSelectionChange}
+              label="Concessionárias"
+              disabled={false}
+            />
+            {errors.idsConcessionarias && (
+              <p className="text-sm text-red-500 mt-1">{errors.idsConcessionarias}</p>
+            )}
+          </div>
+
         </form>
         <DialogFooter className="flex gap-2">
           <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
@@ -488,13 +584,24 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={loading || !isFormValid()}
+            disabled={loading || !isFormValid() || selectedConcessionariaIds.length === 0}
             className="disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Salvando...' : responsavel ? 'Salvar Alterações' : 'Criar Responsável'}
           </Button>
         </DialogFooter>
       </DialogContent>
+      
+      <ConfirmationDialog
+        open={showConcessionariaWarning}
+        onOpenChange={setShowConcessionariaWarning}
+        title="Atenção: Concessionária Diferente"
+        description={`Você está cadastrando este responsável para concessionária(s) diferente(s) da que está selecionada no momento (${concessionariaSelecionada?.nmConcessionaria || 'N/A'}). Tem certeza que deseja continuar?`}
+        confirmText="Sim, continuar"
+        cancelText="Cancelar"
+        onConfirm={handleConfirmConcessionariaWarning}
+        variant="default"
+      />
     </Dialog>
   );
 }

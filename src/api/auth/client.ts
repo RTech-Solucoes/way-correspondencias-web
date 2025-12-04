@@ -44,7 +44,6 @@ class AuthClient {
       window.dispatchEvent(new CustomEvent('authTokenRemoved'));
     }
     
-    window.location.href = '/';
   }
 
   isAuthenticated(): boolean {

@@ -14,7 +14,7 @@ class ConcessionariaClient {
     });
   }
 
-  async buscarPorIdResponsavel(): Promise<ConcessionariaResponse[]> {
+  async buscarPorIdResponsavelLogado(): Promise<ConcessionariaResponse[]> {
     return this.client.request<ConcessionariaResponse[]>('/responsavel', {
       method: 'GET',
       skipConcessionariaParam: true
