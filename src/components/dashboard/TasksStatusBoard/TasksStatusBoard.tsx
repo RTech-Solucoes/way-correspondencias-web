@@ -148,10 +148,15 @@ export default function TasksStatusBoard({
     return renderIcon(statusName);
   };
 
+  const totalSolicitacoes = useMemo(() => {
+    if (visionGeral.length === 0) return 0;
+    return visionGeral.reduce((sum, item) => sum + item.qtStatus, 0);
+  }, [visionGeral]);
+
   return (
     <Card className="flex flex-col h-full">
       <CardHeader
-        title={title}
+        title={title + (totalSolicitacoes > 0 ? ' (' + totalSolicitacoes + ')' : '')}
         description={description}
       />
       <CardContent>
