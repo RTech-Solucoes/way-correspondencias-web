@@ -7,6 +7,8 @@ import { formatDateTime, formatDateTimeBrCompactExport, formatMinutosEmDiasHoras
 import { SolicitacaoResumoResponse } from '@/types/solicitacoes/types';
 import { perfilUtil } from '@/api/perfis/types';
 import { statusList } from '@/api/status-solicitacao/types';
+import { toast } from 'sonner';
+import { getLayoutClient, getLabelTitle, getLogoPath } from '@/lib/layout/layout-client';
 
 interface ExportHistoricoPdfProps {
   solicitacao: SolicitacaoResumoResponse;
@@ -65,21 +67,16 @@ const getParecerLabel = (idPerfil?: number | null) => {
   };
     
 const nowStr = useMemo(() => new Date().toLocaleString('pt-BR'), []);
-  const layoutClient = process.env.NEXT_PUBLIC_LAYOUT_CLIENT || "way262";
-  let labelTitle = "";
-  
-  if (layoutClient === "way262") {
-    labelTitle = "Way 262";
-  } else if (layoutClient === "mvp") {
-    labelTitle = "RTech";
-  }
+  const layoutClient = getLayoutClient();
+  const labelTitle = getLabelTitle(layoutClient);
+  const logoPath = getLogoPath(layoutClient);
 
 return (
     <Document>
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
           {/* eslint-disable-next-line jsx-a11y/alt-text */}
-          <Image src={`/images/${layoutClient}-logo.png`} style={styles.logo} />
+          <Image src={logoPath} style={styles.logo} />
           <View style={styles.titleWrap}>
             <Text style={[styles.title, { fontWeight: 800 }]}>Histórico de Respostas</Text>
             <Text style={styles.subtitle}>Data de exportação: {nowStr}</Text>
@@ -186,6 +183,9 @@ export default function ExportHistoricoPdf({ solicitacao, historico, onDone }: E
         a.remove();
         URL.revokeObjectURL(url);
         downloadedRef.current = true;
+        toast.success('PDF exportado com sucesso');
+      } catch {
+        toast.error('Erro ao exportar PDF');
       } finally {
         onDone?.();
       }

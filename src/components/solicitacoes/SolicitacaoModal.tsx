@@ -131,7 +131,19 @@ export default function SolicitacaoModal({
       router.refresh();
     } catch (err) {
       console.error(err);
-      toast.error('Erro ao encaminhar solicitação');
+      let errorMessage = 'Erro ao encaminhar solicitação';
+      
+      if (err instanceof Error) {
+        if (err.message) {
+          errorMessage = err.message;
+        }
+        else if ((err as { payload?: { message?: string; error?: string } }).payload) {
+          const payload = (err as { payload?: { message?: string; error?: string } }).payload;
+          errorMessage = payload?.message || payload?.error || errorMessage;
+        }
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
       setShowConfirmSend(false);
@@ -804,7 +816,19 @@ export default function SolicitacaoModal({
       
     } catch (err) {
       console.error(err);
-      toast.error(solicitacao || createdSolicitacao ? 'Erro ao encaminhar solicitação' : 'Erro ao criar solicitação');
+      let errorMessage = solicitacao || createdSolicitacao ? 'Erro ao encaminhar solicitação' : 'Erro ao criar solicitação';
+      
+      if (err instanceof Error) {
+        if (err.message) {
+          errorMessage = err.message;
+        }
+        else if ((err as { payload?: { message?: string; error?: string } }).payload) {
+          const payload = (err as { payload?: { message?: string; error?: string } }).payload;
+          errorMessage = payload?.message || payload?.error || errorMessage;
+        }
+      }
+      
+      toast.error(errorMessage);
     } finally {
 
     }
@@ -1918,7 +1942,7 @@ export default function SolicitacaoModal({
                 tooltip={!canEditSolicitacao ? 'Esta solicitação não pode ser editada no status atual.' : ''}
               >
                 {solicitacao && <ArrowArcRightIcon className={"w-4 h-4 mr-1"} />}
-                {loading ? 'Salvando...' : solicitacao ? 'Encaminhar para Analista do Regulatório' : 'Criar Solicitação'}
+                {loading ? 'Salvando...' : solicitacao ? 'Encaminhar para Gerente do Regulatório' : 'Criar Solicitação'}
               </Button>
             </>
           )}

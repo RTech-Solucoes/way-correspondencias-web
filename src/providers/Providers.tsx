@@ -10,6 +10,7 @@ import {TemasProvider} from '@/context/temas/TemasContext';
 import {ApiProvider} from "@/providers/ApiProvider";
 import IconProvider from "@/providers/IconProvider";
 import {PermissoesProvider} from "@/context/permissoes/PermissoesContext";
+import {ConcessionariaProvider} from "@/context/concessionaria/ConcessionariaContext";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,19 +30,21 @@ export default function Providers({children}: ProvidersProps) {
     <QueryClientProvider client={queryClient}>
       <ApiProvider>
         <PermissoesProvider>
-          <AreasProvider>
-            <EmailProvider>
-              <ResponsaveisProvider>
-                <SolicitacoesProvider>
-                  <TemasProvider>
-                    <IconProvider>
-                      {children}
-                    </IconProvider>
-                  </TemasProvider>
-                </SolicitacoesProvider>
-              </ResponsaveisProvider>
-            </EmailProvider>
-          </AreasProvider>
+          <ConcessionariaProvider>
+            <AreasProvider>
+              <EmailProvider>
+                <ResponsaveisProvider>
+                  <SolicitacoesProvider>
+                    <TemasProvider>
+                      <IconProvider>
+                        {children}
+                      </IconProvider>
+                    </TemasProvider>
+                  </SolicitacoesProvider>
+                </ResponsaveisProvider>
+              </EmailProvider>
+            </AreasProvider>
+          </ConcessionariaProvider>
         </PermissoesProvider>
       </ApiProvider>
     </QueryClientProvider>

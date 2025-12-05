@@ -9,6 +9,7 @@ export interface TemaResponse {
   tpPrazo: string;
   flAtivo: StatusAtivo;
   areas: AreaResponse[];
+  idConcessionaria?: number;
 }
 
 export interface TemaRequest {

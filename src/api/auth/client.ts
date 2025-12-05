@@ -19,6 +19,13 @@ class AuthClient {
       localStorage.setItem('authToken', response.accessToken);
       localStorage.setItem('tokenType', response.tokenType);
       localStorage.setItem('userName', data.username);
+      
+      // Disparar evento customizado para notificar que o token foi salvo (mesma aba)
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('authTokenSaved', {
+          detail: { token: response.accessToken }
+        }));
+      }
     }
 
     return response;
@@ -29,8 +36,14 @@ class AuthClient {
     localStorage.removeItem('tokenType');
     localStorage.removeItem('userName');
     localStorage.removeItem('permissoes-storage');
+    localStorage.removeItem('concessionaria-selecionada');
     sessionStorage.removeItem('permissoes-storage');
-    window.location.href = '/';
+    
+    // Disparar evento customizado para notificar que o token foi removido (mesma aba)
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('authTokenRemoved'));
+    }
+    
   }
 
   isAuthenticated(): boolean {
@@ -60,6 +73,33 @@ class AuthClient {
       return null;
     } catch {
       return null;
+    }
+  }
+
+  getIdsConcessionariasFromToken(): number[] {
+    try {
+      const token = this.getToken();
+      if (!token) return [];
+      const payload = jwtDecode<Record<string, unknown>>(token);
+
+      const raw = payload['idsConcessionarias'] as unknown;
+      if (Array.isArray(raw)) {
+        return raw.filter((id): id is number => typeof id === 'number');
+      }
+      if (typeof raw === 'string') {
+        try {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            return parsed.filter((id): id is number => typeof id === 'number');
+          }
+        } catch {
+          // Se não for JSON válido, tenta separar por vírgula
+          return raw.split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id));
+        }
+      }
+      return [];
+    } catch {
+      return [];
     }
   }
 }
