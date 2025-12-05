@@ -251,7 +251,14 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
       ...prev,
       idsAreas: selectedIds
     }));
-  }, []);
+    if (selectedIds.length > 0 && errors.idsAreas) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.idsAreas;
+        return newErrors;
+      });
+    }
+  }, [errors.idsAreas]);
 
   const handleConcessionariasSelectionChange = useCallback((selectedIds: number[]) => {
     setSelectedConcessionariaIds(selectedIds);
@@ -276,7 +283,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
     nrCpf: formValidator.cpf,
     dtNascimento: formValidator.birthDate,
     idPerfil: formValidator.id,
-    idsAreas: z.array(z.number()).optional().default([]),
+    idsAreas: z.array(z.number()).min(1, 'Selecione pelo menos uma área'),
   });
 
   const performSubmit = async () => {
@@ -339,14 +346,23 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
       return;
     }
 
-    // Validar se pelo menos uma concessionária foi selecionada
-    if (selectedConcessionariaIds.length === 0) {
-      setErrors(prev => ({ ...prev, idsConcessionarias: 'Selecione pelo menos uma concessionária' }));
-      toast.error('É obrigatório selecionar pelo menos uma concessionária');
+    if (selectedAreaIds.length === 0) {
+      setErrors(prev => ({ ...prev, idsAreas: 'Selecione pelo menos uma área' }));
       return;
     }
 
-    // Limpar erro de concessionárias se houver seleção
+    if (selectedConcessionariaIds.length === 0) {
+      setErrors(prev => ({ ...prev, idsConcessionarias: 'Selecione pelo menos uma concessionária' }));
+      return;
+    }
+
+    if (errors.idsAreas) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.idsAreas;
+        return newErrors;
+      });
+    }
     if (errors.idsConcessionarias) {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -558,12 +574,17 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
             </div>
           </div>
 
-          <MultiSelectAreas
-            selectedAreaIds={selectedAreaIds}
-            onSelectionChange={handleAreasSelectionChange}
-            label="Áreas"
-            disabled={false}
-          />
+          <div>
+            <MultiSelectAreas
+              selectedAreaIds={selectedAreaIds}
+              onSelectionChange={handleAreasSelectionChange}
+              label="Áreas *"
+              disabled={false}
+            />
+            {errors.idsAreas && (
+              <p className="text-sm text-red-500 mt-1">{errors.idsAreas}</p>
+            )}
+          </div>
 
           <div>
             <MultiSelectConcessionarias
@@ -584,7 +605,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={loading || !isFormValid() || selectedConcessionariaIds.length === 0}
+            disabled={loading || !isFormValid() || selectedAreaIds.length === 0 || selectedConcessionariaIds.length === 0}
             className="disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Salvando...' : responsavel ? 'Salvar Alterações' : 'Criar Responsável'}
