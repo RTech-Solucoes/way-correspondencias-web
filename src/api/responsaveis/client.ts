@@ -1,6 +1,7 @@
 import { buildQueryParams } from "@/utils/utils";
 import ApiClient from "../client";
 import { ResponsavelResponse, ResponsavelRequest, PagedResponse, ResponsavelFilterParams } from "./types";
+import { ConcessionariaResponse } from "../concessionaria/types";
 
 class ResponsaveisClient {
   private client: ApiClient;

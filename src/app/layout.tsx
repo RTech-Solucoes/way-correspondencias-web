@@ -6,6 +6,7 @@ import Providers from "@/providers/Providers";
 import AuthGuard from "@/providers/AuthGuard";
 import ConditionalLayout from "@/components/layout/ConditionalLayout";
 import {Toaster} from "sonner";
+import { getLayoutClient, getLabelTitle, getFaviconPath, getNomeSistema } from "@/lib/layout/layout-client";
 
 const defaultFont = DefaultFont({
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
@@ -13,22 +14,18 @@ const defaultFont = DefaultFont({
   variable: '--font-default'
 });
 
-const layoutClient = process.env.NEXT_PUBLIC_LAYOUT_CLIENT || "way262";
-let labelTitle = "";
-  
-  if (layoutClient === "way262") {
-    labelTitle = "Way 262";
-  } else if (layoutClient === "mvp") {
-    labelTitle = "RTech";
-  }
+const layoutClient = getLayoutClient();
+const labelTitle = getLabelTitle(layoutClient);
+const nomeSistema = getNomeSistema(layoutClient);
+const faviconPath = getFaviconPath(layoutClient);
 
 export const metadata: Metadata = {
-  title: `${labelTitle} - Software Regulatório`,
-  description: `Software Regulatório de tramitações ${labelTitle}`,
+  title: `${labelTitle} - ${nomeSistema}`,
+  description: `${nomeSistema} de tramitações ${labelTitle}`,
   icons: {
-    icon: `/images/${layoutClient}-favicon.png`,
-    shortcut: `/images/${layoutClient}-favicon.png`,
-    apple: `/images/${layoutClient}-favicon.png`,
+    icon: faviconPath,
+    shortcut: faviconPath,
+    apple: faviconPath,
   },
 };
 

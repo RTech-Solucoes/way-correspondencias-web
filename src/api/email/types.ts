@@ -14,6 +14,7 @@ export interface EmailResponse {
   dsCorpo: string;
   dtRecebimento: string;
   flAtivo: StatusAtivo;
+  idConcessionaria?: number;
 }
 
 export interface PagedResponse<T> {

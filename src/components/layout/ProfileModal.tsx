@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Button } from '@/components/ui/button';
 import { TextField } from '@/components/ui/text-field';
 import { MultiSelectAreas } from '@/components/ui/multi-select-areas';
+import { MultiSelectConcessionarias } from '@/components/ui/multi-select-concessionarias';
 import { ResponsavelRequest, ResponsavelResponse } from '@/api/responsaveis/types';
 import { responsaveisClient } from '@/api/responsaveis/client';
 import { PerfilResponse } from '@/api/perfis/types';
@@ -16,6 +17,8 @@ import authClient from '@/api/auth/client';
 import anexosClient from '@/api/anexos/client';
 import { TipoObjetoAnexoEnum, ArquivoDTO } from '@/api/anexos/type';
 import { responsavelAnexosClient } from '@/api/responsaveis/anexos-client';
+import { useConcessionaria } from '@/context/concessionaria/ConcessionariaContext';
+import concessionariaClient from '@/api/concessionaria/client';
 
 interface ProfileModalProps {
   user: User | null;
@@ -34,9 +37,11 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
     nrCpf: '',
     dtNascimento: '',
     idsAreas: [],
-    nmCargo: ''
+    nmCargo: '',
+    idsConcessionarias: []
   });
   const [selectedAreaIds, setSelectedAreaIds] = useState<number[]>([]);
+  const [selectedConcessionariaIds, setSelectedConcessionariaIds] = useState<number[]>([]);
   const [loadingData, setLoadingData] = useState(false);
   const [perfis, setPerfis] = useState<PerfilResponse[]>([]);
   const [loadingPerfis, setLoadingPerfis] = useState(false);
@@ -48,6 +53,8 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
   const [photoBusy, setPhotoBusy] = useState(false);
   const [savingData, setSavingData] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  
+  const { concessionariaSelecionada, concessionariaChangeKey } = useConcessionaria();
 
   const getPerfil = (): string => {
     return perfis?.filter(perfil => perfil.idPerfil === formData.idPerfil)?.[0]?.nmPerfil ||
@@ -138,6 +145,7 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
         dtNascimento: formData.dtNascimento,
         nmCargo: formData.nmCargo,
         idsAreas: formData.idsAreas,
+        idsConcessionarias: selectedConcessionariaIds.length > 0 ? selectedConcessionariaIds : []
       };
 
       await responsaveisClient.atualizar(idResponsavel, updateData);
@@ -196,8 +204,19 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
 
     try {
       setLoadingData(true);
-      const responsavelData = await responsaveisClient.buscarPorId(idResponsavel);
+      const [responsavelData, concessionariasResponsavel] = await Promise.all([
+        responsaveisClient.buscarPorId(idResponsavel),
+        concessionariaClient.buscarPorIdResponsavelLogado()
+      ]);
+      
       setResponsavel(responsavelData);
+
+      // Usar concessionárias do endpoint específico ou do response do responsável
+      const concessionariaIds = concessionariasResponsavel && concessionariasResponsavel.length > 0
+        ? concessionariasResponsavel.map(c => c.idConcessionaria)
+        : (responsavelData.concessionarias 
+            ? responsavelData.concessionarias.map(c => c.idConcessionaria) 
+            : []);
 
       const formDataResponsavel = {
         idPerfil: responsavelData.idPerfil,
@@ -207,7 +226,8 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
         nrCpf: responsavelData.nrCpf || '',
         dtNascimento: responsavelData.dtNascimento || '',
         nmCargo: responsavelData.nmCargo || '',
-        idsAreas: responsavelData.areas ? responsavelData.areas.map(responsavelArea => responsavelArea.area.idArea) : []
+        idsAreas: responsavelData.areas ? responsavelData.areas.map(responsavelArea => responsavelArea.area.idArea) : [],
+        idsConcessionarias: concessionariaIds
       };
 
       setFormData(formDataResponsavel);
@@ -217,6 +237,8 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
       } else {
         setSelectedAreaIds([]);
       }
+
+      setSelectedConcessionariaIds(concessionariaIds);
     } catch (error) {
       console.error('Erro ao carregar dados do responsável:', error);
       toast.error("Erro ao carregar dados do usuário");
@@ -275,6 +297,31 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
       })();
     }
   }, [open, buscarPerfis, buscarDadosResponsavel, loadExistingPhoto]);
+
+  // Atualizar concessionárias quando a concessionária no header mudar
+  useEffect(() => {
+    if (open && concessionariaChangeKey > 0) {
+      const atualizarConcessionarias = async () => {
+        try {
+          const concessionariasResponsavel = await concessionariaClient.buscarPorIdResponsavelLogado();
+          if (concessionariasResponsavel && Array.isArray(concessionariasResponsavel) && concessionariasResponsavel.length > 0) {
+            const concessionariaIds = concessionariasResponsavel.map(c => c.idConcessionaria).filter(id => id !== undefined);
+            if (concessionariaIds.length > 0) {
+              setSelectedConcessionariaIds(concessionariaIds);
+              setFormData(prev => ({
+                ...prev,
+                idsConcessionarias: concessionariaIds
+              }));
+            }
+          }
+        } catch (error) {
+          console.error('Erro ao atualizar concessionárias:', error);
+          // Não mostra erro ao usuário, apenas loga
+        }
+      };
+      atualizarConcessionarias();
+    }
+  }, [open, concessionariaChangeKey]);
 
   if (loadingData) {
     return (
@@ -483,6 +530,19 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
             onSelectionChange={() => {}}
             label="Áreas"
             disabled
+          />
+
+          <MultiSelectConcessionarias
+            selectedConcessionariaIds={selectedConcessionariaIds}
+            onSelectionChange={(selectedIds) => {
+              setSelectedConcessionariaIds(selectedIds);
+              setFormData(prev => ({
+                ...prev,
+                idsConcessionarias: selectedIds
+              }));
+            }}
+            label="Concessionárias"
+            disabled={true}
           />
 
         </form>

@@ -12,6 +12,7 @@ import { CloudArrowDownIcon } from '@phosphor-icons/react';
 import ExportSolicitacoesExcel from '@/components/solicitacoes/ExportSolicitacoesExcel';
 import ExportSolicitacoesPdf from '@/components/solicitacoes/ExportSolicitacoesPdf';
 import { SolicitacaoFilterParams } from '@/api/solicitacoes/types';
+import LoadingOverlay from '@/components/ui/loading-overlay';
 
 type ExportSolicitacaoMenuProps = {
   filterParams: Omit<SolicitacaoFilterParams, 'page' | 'size'>;
@@ -22,6 +23,8 @@ type ExportSolicitacaoMenuProps = {
 export default function ExportSolicitacaoMenu({ filterParams, getStatusText, className }: ExportSolicitacaoMenuProps) {
   const [runExcel, setRunExcel] = useState(false);
   const [runPdf, setRunPdf] = useState(false);
+
+  const isLoading = runExcel || runPdf;
 
   const excelRunner = useMemo(() => (
     runExcel ? (
@@ -47,20 +50,27 @@ export default function ExportSolicitacaoMenu({ filterParams, getStatusText, cla
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="secondary" className={`h-10 px-4 ${className || ''}`}>
+          <Button variant="secondary" className={`h-10 px-4 ${className || ''}`} disabled={isLoading}>
             <CloudArrowDownIcon className="h-4 w-4 mr-2" />
             Exportar
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
-          <DropdownMenuItem onClick={() => setRunExcel(true)}>
+          <DropdownMenuItem onClick={() => setRunExcel(true)} disabled={isLoading}>
             Exportar em Excel
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setRunPdf(true)}>
+          <DropdownMenuItem onClick={() => setRunPdf(true)} disabled={isLoading}>
             Exportar em PDF
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {isLoading && (
+        <LoadingOverlay
+          title={runPdf ? 'Gerando PDF...' : 'Gerando Excel...'}
+          subtitle="Aguarde enquanto o relatório é processado"
+        />
+      )}
 
       {excelRunner}
       {pdfRunner}

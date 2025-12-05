@@ -2,7 +2,7 @@
 
 import React, {memo, useCallback, useEffect, useState} from 'react';
 import {EnvelopeSimpleIcon, PaperclipIcon, SpinnerIcon} from '@phosphor-icons/react';
-import {cn} from '@/utils/utils';
+import {cn, formatDateTimeBr} from '@/utils/utils';
 import {toast} from 'sonner';
 import {emailClient} from '@/api/email/client';
 import {EmailResponse} from '@/api/email/types';
@@ -82,7 +82,7 @@ const EmailItem = memo<{
             {email.dsDestinatario || email.dsRemetente || ''}
           </span>
           <span className="text-xs text-gray-500 whitespace-nowrap">
-            {formatDate(email.dtRecebimento) || ''}
+            {formatDateTimeBr(email.dtRecebimento) || ''}
           </span>
         </div>
       </div>
