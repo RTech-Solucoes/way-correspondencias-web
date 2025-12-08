@@ -110,6 +110,13 @@ export default function SolicitacaoModal({
   const [confirmSendToast, setConfirmSendToast] = useState<string>('');
   const [prazosSolicitacaoPorStatus, setPrazosSolicitacaoPorStatus] = useState<SolicitacaoPrazoResponse[]>([]);
   const [userResponsavelIdPerfil, setUserResponsavelIdPerfil] = useState<number>(0);
+  const [isNewSolicitacao, setIsNewSolicitacao] = useState<boolean>(false);
+  const [pendingCreateData, setPendingCreateData] = useState<{
+    solicitacoesPrazos: unknown[];
+    solicitacoesAssinantes: unknown[];
+    arquivos: unknown[];
+    cdIdentificacao: string | undefined;
+  } | null>(null);
   
   const canEditSolicitacao = useMemo(() => {
     if (!solicitacao) return true; 
@@ -121,10 +128,36 @@ export default function SolicitacaoModal({
   }, [solicitacao]);
 
   const handleConfirmSend = useCallback(async () => {
-    if (!confirmSendId) return;
     try {
       setLoading(true);
-      await solicitacoesClient.etapaStatus(confirmSendId);
+      
+      let idToSend = confirmSendId;
+      
+      // Se for nova solicitação, cria primeiro
+      if (isNewSolicitacao && pendingCreateData) {
+        const created = await solicitacoesClient.criar({
+          idTema: formData.idTema,
+          ...(pendingCreateData.cdIdentificacao && { cdIdentificacao: pendingCreateData.cdIdentificacao }),
+          dsAssunto: formData.dsAssunto?.trim(),
+          dsSolicitacao: formData.dsSolicitacao?.trim(),
+          dsObservacao: formData.dsObservacao?.trim(),
+          nrOficio: formData.nrOficio?.trim(),
+          nrProcesso: formData.nrProcesso?.trim(),
+          flExcepcional: formData.flExcepcional === 'S' ? 'S' : 'N',
+          flAnaliseGerenteDiretor: formData.flAnaliseGerenteDiretor,
+          flExigeCienciaGerenteRegul: formData.flExigeCienciaGerenteRegul,
+          solicitacoesPrazos: pendingCreateData.solicitacoesPrazos as [],
+          idsAreas: formData.idsAreas,
+          solicitacoesAssinantes: pendingCreateData.solicitacoesAssinantes as [],
+          arquivos: pendingCreateData.arquivos as []
+        });
+        idToSend = created.idSolicitacao;
+      }
+      
+      if (!idToSend) return;
+      
+      // Encaminha a solicitação
+      await solicitacoesClient.etapaStatus(idToSend);
       toast.success(confirmSendToast || 'Solicitação enviada com sucesso!');
       onSave();
       onClose();
@@ -149,8 +182,10 @@ export default function SolicitacaoModal({
       setShowConfirmSend(false);
       setConfirmSendId(null);
       setConfirmSendToast('');
+      setIsNewSolicitacao(false);
+      setPendingCreateData(null);
     }
-  }, [confirmSendId, confirmSendToast, onClose, onSave, router]);
+  }, [confirmSendId, confirmSendToast, onClose, onSave, router, isNewSolicitacao, pendingCreateData, formData]);
 
   
   useEffect(() => {
@@ -688,7 +723,7 @@ export default function SolicitacaoModal({
     e.preventDefault();
     try {
       setLoading(true);
-      let id = solicitacao?.idSolicitacao || createdSolicitacao?.idSolicitacao;
+      const id = solicitacao?.idSolicitacao || createdSolicitacao?.idSolicitacao;
 
       if (createdSolicitacao?.idSolicitacao) {
         if (!canEditSolicitacao) { toast.message('Esta solicitação não pode ser editada no status atual.'); setLoading(false); return; }
@@ -718,22 +753,59 @@ export default function SolicitacaoModal({
           return;
         }
 
-        const created = await solicitacoesClient.criar({
-          idTema: formData.idTema,
-          cdIdentificacao: formData.cdIdentificacao?.trim(),
-          dsAssunto: formData.dsAssunto?.trim(),
-          dsSolicitacao: formData.dsSolicitacao?.trim(),
-          dsObservacao: formData.dsObservacao?.trim(),
-          nrOficio: formData.nrOficio?.trim(),
-          nrProcesso: formData.nrProcesso?.trim(),
-          flExcepcional: formData.flExcepcional === 'S' ? 'S' : 'N',
-          flAnaliseGerenteDiretor: formData.flAnaliseGerenteDiretor,
-          flExigeCienciaGerenteRegul: formData.flExigeCienciaGerenteRegul,
-        });
-        id = created.idSolicitacao;
+        const cdIdentificacao = formData.cdIdentificacao?.trim();
+        
+        const solicitacoesPrazos = statusPrazos
+          .filter(p => p.nrPrazoInterno && p.nrPrazoInterno > 0 && p.idStatusSolicitacao)
+          .map(p => ({
+            idStatusSolicitacao: p.idStatusSolicitacao!,
+            idTema: formData.idTema,
+            nrPrazoInterno: p.nrPrazoInterno,
+            nrPrazoExterno: p.nrPrazoExterno,
+            tpPrazo: formData.tpPrazo || undefined,
+            flExcepcional: formData.flExcepcional === 'S' ? 'S' : 'N'
+          }));
+        
+        if (id === undefined || solicitacao?.idSolicitacao === undefined) {
+
+          const solicitacoesAssinantes = (formData.idsResponsaveisAssinates || []).map(idResp => ({
+            idStatusSolicitacao: statusListType.EM_ASSINATURA_DIRETORIA.id,
+            idResponsavel: idResp
+          }));
+
+          const arquivos = await Promise.all(
+            anexos.map(async (file) => {
+              const base64 = await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result as string);
+                reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
+                reader.readAsDataURL(file);
+              });
+
+              return {
+                nomeArquivo: file.name.trim(),
+                conteudoArquivo: base64.split(',')[1],
+                tipoArquivo: file.type || 'application/octet-stream',
+                tpResponsavel: computeTpResponsavel(userResponsavelIdPerfil)
+              };
+            })
+          );
+          
+          setPendingCreateData({
+            solicitacoesPrazos,
+            solicitacoesAssinantes,
+            arquivos,
+            cdIdentificacao
+          });
+          setIsNewSolicitacao(true);
+          setConfirmSendToast('Solicitação criada e encaminhada com sucesso!');
+          setShowConfirmSend(true);
+          setLoading(false);
+          return;
+        }        
 
         await solicitacoesClient.etapaIdentificacao(id, {
-          cdIdentificacao: formData.cdIdentificacao?.trim(),
+          ...(cdIdentificacao && { cdIdentificacao }),
           dsAssunto: formData.dsAssunto?.trim(),
           dsObservacao: formData.dsObservacao?.trim(),
           nrOficio: formData.nrOficio?.trim(),
