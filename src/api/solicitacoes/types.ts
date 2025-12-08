@@ -1,5 +1,5 @@
 import { SolicitacaoResumoResponse } from "@/types/solicitacoes/types";
-import { AnexoResponse } from "../anexos/type";
+import { AnexoResponse, ArquivoDTO } from "../anexos/type";
 import { AreaResponse } from "../areas/types";
 import { ResponsavelResponse } from "../responsaveis/types";
 import { SolicitacaoParecerResponse } from "../solicitacao-parecer/types";
@@ -89,6 +89,21 @@ export interface SolicitacaoResponse extends BaseResponse {
   flExigeCienciaGerenteRegul?: string;
 }
 
+export interface SolicitacaoPrazoItemRequest {
+  idStatusSolicitacao: number;
+  idTema?: number;
+  nrPrazoInterno?: number;
+  nrPrazoExterno?: number;
+  tpPrazo?: string;
+  flExcepcional?: string;
+}
+
+export interface SolicitacaoAssinanteItemRequest {
+  idSolicitacao?: number;
+  idStatusSolicitacao: number;
+  idResponsavel: number;
+}
+
 export interface SolicitacaoRequest {
   idEmail?: number;
   idTema?: number;
@@ -108,9 +123,12 @@ export interface SolicitacaoRequest {
   flExcepcional?: string;
   flAnaliseGerenteDiretor?: string;
   idsResponsaveisAssinates?: number[];
+  solicitacoesAssinantes?: SolicitacaoAssinanteItemRequest[];
   flExigeCienciaGerenteRegul?: string;
   flAprovacaoGerenteRegul?: string;
   dsObservacaoGerenteRegul?: string;
+  solicitacoesPrazos?: SolicitacaoPrazoItemRequest[];
+  arquivos?: ArquivoDTO[];
 }
 
 export interface SolicitacaoTemaRequest {
@@ -165,13 +183,6 @@ export interface SolicitacaoFilterParams {
   page?: number;
   size?: number;
   sort?: string;
-}
-
-export interface SolicitacaoPrazoItemRequest {
-  idStatusSolicitacao: number;
-  nrPrazoInterno?: number;
-  tpPrazo?: string;
-  flExcepcional?: string;
 }
 
 export interface SolicitacaoEtapaPrazoRequest {

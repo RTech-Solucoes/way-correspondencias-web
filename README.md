@@ -354,6 +354,65 @@ docker build -t way-correspondencias-web .
 docker run -p 3000:3000 way-correspondencias-web
 ```
 
+## 🔄 CI/CD Pipeline
+
+### Ativar Pipeline com Variáveis de Ambiente
+
+Para ativar a pipeline de CI/CD, é necessário configurar as variáveis de ambiente no sistema de pipeline (GitHub Actions, GitLab CI, Azure DevOps, etc.).
+
+#### Variáveis de Ambiente Obrigatórias
+
+Configure as seguintes variáveis de ambiente na pipeline:
+
+```bash
+# URL da API backend (produção/staging)
+NEXT_PUBLIC_API_URL=https://api.exemplo.com/api
+
+# Layout do cliente (way ou mvp)
+NEXT_PUBLIC_LAYOUT_CLIENT=way
+
+# Variáveis adicionais (se necessário)
+NODE_ENV=production
+```
+
+#### Passos para Ativar a Pipeline
+
+1. **Acesse as configurações da Pipeline**
+   - No GitHub Actions: Settings → Secrets and variables → Actions
+   - No GitLab CI: Settings → CI/CD → Variables
+   - No Azure DevOps: Pipelines → Library → Variable groups
+
+2. **Adicione as variáveis de ambiente**
+   - Adicione cada variável como uma variável secreta ou de ambiente
+   - Certifique-se de que os valores estão corretos para o ambiente de destino
+
+3. **Atualize o arquivo de pipeline** (se necessário)
+   - Verifique se o arquivo `.github/workflows/*.yml` ou similar está configurado
+   - Garanta que as variáveis estão sendo passadas corretamente para o build
+
+4. **Execute a Pipeline**
+   - Faça push para a branch configurada (geralmente `main` ou `master`)
+   - Ou dispare manualmente a pipeline através da interface
+
+#### Exemplo de Configuração no GitHub Actions
+
+```yaml
+env:
+  NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+  NEXT_PUBLIC_LAYOUT_CLIENT: ${{ secrets.NEXT_PUBLIC_LAYOUT_CLIENT }}
+  NODE_ENV: production
+```
+
+#### Verificação
+
+Após configurar as variáveis:
+1. Execute a pipeline
+2. Verifique os logs do build
+3. Confirme que as variáveis estão sendo carregadas corretamente
+4. Valide o deploy em ambiente de staging/produção
+
+> **Importante:** Nunca commite valores de produção diretamente no código. Sempre use variáveis de ambiente ou secrets do sistema de CI/CD.
+
 ## 📝 Convenções de Código
 
 ### TypeScript
