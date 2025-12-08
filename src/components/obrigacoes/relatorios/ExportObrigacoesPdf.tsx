@@ -7,6 +7,8 @@ import obrigacaoClient, { PaginatedResponse } from '@/api/obrigacao/client';
 import { ObrigacaoFiltroRequest, ObrigacaoResponse } from '@/api/obrigacao/types';
 import { formatDateBr, formatDateTimeBr, formatDateTimeBrCompactExport } from '@/utils/utils';
 import { TipoEnum } from '@/api/tipos/types';
+import LoadingOverlay from '@/components/ui/loading-overlay';
+import { getLayoutClient, getLabelTitle, getLogoPath } from '@/lib/layout/layout-client';
 
 // Função auxiliar para buscar o comentário mais recente de uma obrigação
 async function buscarComentarioMaisRecente(idSolicitacao: number): Promise<string> {
@@ -100,25 +102,21 @@ const styles = StyleSheet.create({
 	c14: { width: '5%' }, // Enviado para Áreas (admin)
 });
 
-const layoutClient = process.env.NEXT_PUBLIC_LAYOUT_CLIENT || "way262";
-let labelTitle = "";
-  
-	if (layoutClient === "way262") {
-		labelTitle = "Way 262";
-	} else if (layoutClient === "mvp") {
-		labelTitle = "RTech";
-	}
-  
 function ObrigacoesPdfDoc({ data, getStatusText, isAdminOrGestor, comentariosMap }: { data: ObrigacaoResponse[]; getStatusText: (code: string) => string | null; isAdminOrGestor: boolean; comentariosMap: Map<number, string> }) {
 	const nowStr = useMemo(() => new Date().toLocaleString('pt-BR'), []);
+	const layoutClient = getLayoutClient();
+	const labelTitle = getLabelTitle(layoutClient);
+	const logoPath = getLogoPath(layoutClient);
+	
 	return (
 		<Document>
 			<Page size="A4" orientation="landscape" style={styles.page}>
 				<View style={styles.header}>
 					{/* eslint-disable-next-line jsx-a11y/alt-text */}
-					<Image src={`/images/${layoutClient}-logo.png`} style={styles.logo} />
+					<Image src={logoPath} style={styles.logo} />
 					<View>
 						<Text style={styles.title}>Relatório de Obrigações Contratuais</Text>
+						<Text style={styles.subtitle}>{labelTitle}</Text>
 						<Text style={styles.subtitle}>Data de exportação: {nowStr}</Text>
 						<Text style={styles.subtitle}>Total de registros: {data.length}</Text>
 					</View>
@@ -193,11 +191,13 @@ export default function ExportObrigacoesPdf({ filterParams, getStatusText, isAdm
 	const [data, setData] = useState<ObrigacaoResponse[] | null>(null);
 	const [comentariosMap, setComentariosMap] = useState<Map<number, string>>(new Map());
 	const [fileName, setFileName] = useState('');
+	const [exporting, setExporting] = useState(false);
 	const startedRef = useRef(false);
 	const downloadedRef = useRef(false);
 
 	const loadData = useCallback(async () => {
 		try {
+			setExporting(true);
 			const response = await obrigacaoClient.buscarLista({
 				...filterParams,
 				page: 0,
@@ -223,6 +223,7 @@ export default function ExportObrigacoesPdf({ filterParams, getStatusText, isAdm
 			setFileName(`obrigacoes_export_${formatDateTimeBrCompactExport()}.pdf`);
 		} catch {
 			toast.error('Erro ao preparar PDF');
+			setExporting(false);
 			onDone?.();
 		}
 	}, [filterParams, onDone]);
@@ -253,14 +254,20 @@ export default function ExportObrigacoesPdf({ filterParams, getStatusText, isAdm
 				URL.revokeObjectURL(url);
 				toast.success('PDF exportado com sucesso');
 				downloadedRef.current = true;
+				setExporting(false);
 				onDone?.();
 			} catch {
 				toast.error('Erro ao exportar PDF');
+				setExporting(false);
 				onDone?.();
 			}
 		}
 		generate();
 	}, [doc, fileName, onDone]);
+
+	if (exporting) {
+		return <LoadingOverlay title="Exportando PDF..." subtitle="Aguarde enquanto os dados são processados e o arquivo é gerado" />;
+	}
 
 	return null;
 }

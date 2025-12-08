@@ -10,6 +10,8 @@ import { TramitacaoResponse } from '@/api/tramitacoes/types';
 import { SolicitacaoParecerResponse } from '@/api/solicitacao-parecer/types';
 import { AnexoResponse } from '@/api/anexos/type';
 import statusSolicitacaoClient from '@/api/status-solicitacao/client';
+import LoadingOverlay from '@/components/ui/loading-overlay';
+import { getLayoutClient, getLabelTitle, getLogoPath } from '@/lib/layout/layout-client';
 
 interface ExportHistoricoObrigacaoPdfProps {
   detalhe: ObrigacaoDetalheResponse;
@@ -60,14 +62,9 @@ interface HistoricoItem {
 
 function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDetalheResponse; statusMap: Map<number, string> }) {
   const nowStr = useMemo(() => new Date().toLocaleString('pt-BR'), []);
-  const layoutClient = process.env.NEXT_PUBLIC_LAYOUT_CLIENT || "way262";
-  let labelTitle = "";
-  
-  if (layoutClient === "way262") {
-    labelTitle = "Way 262";
-  } else if (layoutClient === "mvp") {
-    labelTitle = "RTech";
-  }
+  const layoutClient = getLayoutClient();
+  const labelTitle = getLabelTitle(layoutClient);
+  const logoPath = getLogoPath(layoutClient);
 
   const obrigacao = detalhe.obrigacao;
   const areaAtribuida = obrigacao.areas?.find((area) => area.tipoArea?.cdTipo === TipoEnum.ATRIBUIDA);
@@ -101,11 +98,6 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
     const items: HistoricoItem[] = [];
 
     detalhe.tramitacoes?.forEach(tramitacao => {
-      // Regra: tramitações de nível 1 não aparecem (são criadas automaticamente no parecer)
-      const tramitacaoComNivel = tramitacao as TramitacaoResponse & { nrNivel?: number };
-      if (tramitacaoComNivel.nrNivel === 1) {
-        return;
-      }
       
       const dataTramitacao = tramitacao.tramitacaoAcao?.[0]?.dtCriacao || 
                              tramitacao.solicitacao?.dtCriacao || 
@@ -204,9 +196,10 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
           {/* eslint-disable-next-line jsx-a11y/alt-text */}
-          <Image src={`/images/${layoutClient}-logo.png`} style={styles.logo} />
+          <Image src={logoPath} style={styles.logo} />
           <View style={styles.titleWrap}>
             <Text style={[styles.title, { fontWeight: 800 }]}>Histórico da Obrigação</Text>
+            <Text style={styles.subtitle}>{labelTitle}</Text>
             <Text style={styles.subtitle}>Data de exportação: {nowStr}</Text>
           </View>
         </View>
@@ -656,6 +649,7 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
 export default function ExportHistoricoObrigacaoPdf({ detalhe, onDone }: ExportHistoricoObrigacaoPdfProps) {
   const [statusMap, setStatusMap] = useState<Map<number, string>>(new Map());
   const [loadingStatus, setLoadingStatus] = useState(true);
+  const [exporting, setExporting] = useState(false);
 
   // Busca status pelo idStatusSolicitacao de cada parecer/tramitação para exibir o status correto no momento da criação
   useEffect(() => {
@@ -726,6 +720,7 @@ export default function ExportHistoricoObrigacaoPdf({ detalhe, onDone }: ExportH
     async function generate() {
       if (startedRef.current || downloadedRef.current || loadingStatus || !doc) return;
       startedRef.current = true;
+      setExporting(true);
       try {
         const blob = await pdf(doc).toBlob();
         const url = URL.createObjectURL(blob);
@@ -738,14 +733,20 @@ export default function ExportHistoricoObrigacaoPdf({ detalhe, onDone }: ExportH
         a.remove();
         URL.revokeObjectURL(url);
         downloadedRef.current = true;
+        setExporting(false);
         onDone?.();
       } catch (error) {
         console.error('Erro ao gerar PDF:', error);
+        setExporting(false);
         onDone?.();
       }
     }
     generate();
   }, [doc, detalhe.obrigacao.idSolicitacao, detalhe.obrigacao.cdIdentificacao, onDone, loadingStatus]);
+
+  if (exporting || loadingStatus) {
+    return <LoadingOverlay title="Gerando PDF..." subtitle="Aguarde enquanto o relatório é processado" />;
+  }
 
   return null;
 }

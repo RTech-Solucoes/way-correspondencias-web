@@ -12,6 +12,7 @@ import { CloudArrowDownIcon } from '@phosphor-icons/react';
 import ExportObrigacoesExcel from '@/components/obrigacoes/relatorios/ExportObrigacoesExcel';
 import ExportObrigacoesPdf from '@/components/obrigacoes/relatorios/ExportObrigacoesPdf';
 import { ObrigacaoFiltroRequest } from '@/api/obrigacao/types';
+import LoadingOverlay from '@/components/ui/loading-overlay';
 
 type ExportObrigacaoMenuProps = {
   filterParams: Omit<ObrigacaoFiltroRequest, 'page' | 'size' | 'sort'>;
@@ -67,6 +68,13 @@ export default function ExportObrigacaoMenu({ filterParams, getStatusText, isAdm
 
       {excelRunner}
       {pdfRunner}
+      
+      {(runExcel || runPdf) && (
+        <LoadingOverlay 
+          title={runExcel ? "Exportando Excel..." : "Exportando PDF..."} 
+          subtitle="Aguarde enquanto os dados são processados e o arquivo é gerado" 
+        />
+      )}
     </>
   );
 }

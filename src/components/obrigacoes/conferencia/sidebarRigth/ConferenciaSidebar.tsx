@@ -671,6 +671,7 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
 
             await tramitacoesClient.tramitarViaFluxo(tramitacaoRequest);
           }
+          return;
         }
 
         const parecerRequest: {

@@ -6,6 +6,8 @@ import { ObrigacaoFiltroRequest, ObrigacaoResponse } from '@/api/obrigacao/types
 import obrigacaoClient, { PaginatedResponse } from '@/api/obrigacao/client';
 import { formatDateTimeBrCompactExport, formatDateBr, formatDateTimeBr } from '@/utils/utils';
 import { TipoEnum } from '@/api/tipos/types';
+import LoadingOverlay from '@/components/ui/loading-overlay';
+import { getLayoutClient, getLabelTitle } from '@/lib/layout/layout-client';
 
 // Função auxiliar para buscar o comentário mais recente de uma obrigação
 async function buscarComentarioMaisRecente(idSolicitacao: number): Promise<string> {
@@ -72,7 +74,7 @@ type ExportObrigacoesExcelProps = {
 };
 
 export default function ExportObrigacoesExcel({ filterParams, getStatusText, isAdminOrGestor, onDone }: ExportObrigacoesExcelProps) {
-  const [, setExporting] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const startedRef = useRef(false);
 
   const exportarExcel = useCallback(async () => {
@@ -207,6 +209,10 @@ export default function ExportObrigacoesExcel({ filterParams, getStatusText, isA
     startedRef.current = true;
     exportarExcel();
   }, [exportarExcel]);
+
+  if (exporting) {
+    return <LoadingOverlay title="Exportando Excel..." subtitle="Aguarde enquanto os dados são processados e o arquivo é gerado" />;
+  }
 
   return null;
 }
