@@ -275,9 +275,54 @@ export function getCurrentWeek() {
             dayName: weeks[i],
             date: day.getDate(),
             month: day.getMonth() + 1,
+            year: day.getFullYear(),
             fullDate: day,
             isToday: day.toDateString() === today.toDateString()
         });
     }
     return weekDays;
+}
+
+export function getStatusColorCalendarObrigacao(status: string) {
+    return statusConfig[status]?.calendarColor ?? "bg-blue-100 text-blue-900";
+}
+
+export function getAllStatusLegendObrigacoes() {
+    return [
+        {
+            label: statusObrigacaoLabels[StatusObrigacao.NAO_INICIADO],
+            bgColor: statusConfig[statusObrigacaoLabels[StatusObrigacao.NAO_INICIADO]]?.bgColor || "#eab308",
+            textColor: statusConfig[statusObrigacaoLabels[StatusObrigacao.NAO_INICIADO]]?.textColor || "#ca8a04",
+        },
+        {
+            label: statusObrigacaoLabels[StatusObrigacao.PENDENTE],
+            bgColor: statusConfig[statusObrigacaoLabels[StatusObrigacao.PENDENTE]]?.bgColor || "#f97316",
+            textColor: statusConfig[statusObrigacaoLabels[StatusObrigacao.PENDENTE]]?.textColor || "#ea580c",
+        },
+        {
+            label: statusObrigacaoLabels[StatusObrigacao.EM_ANDAMENTO],
+            bgColor: statusConfig[statusObrigacaoLabels[StatusObrigacao.EM_ANDAMENTO]]?.bgColor || "#6366f1",
+            textColor: statusConfig[statusObrigacaoLabels[StatusObrigacao.EM_ANDAMENTO]]?.textColor || "#4f46e5",
+        },
+        {
+            label: statusObrigacaoLabels[StatusObrigacao.EM_VALIDACAO_REGULATORIO],
+            bgColor: statusConfig[statusObrigacaoLabels[StatusObrigacao.EM_VALIDACAO_REGULATORIO]]?.bgColor || "#14b8a6",
+            textColor: statusConfig[statusObrigacaoLabels[StatusObrigacao.EM_VALIDACAO_REGULATORIO]]?.textColor || "#0d9488",
+        },
+        {
+            label: statusObrigacaoLabels[StatusObrigacao.ATRASADA],
+            bgColor: statusConfig[statusObrigacaoLabels[StatusObrigacao.ATRASADA]]?.bgColor || "#e11d48",
+            textColor: statusConfig[statusObrigacaoLabels[StatusObrigacao.ATRASADA]]?.textColor || "#be123c",
+        },
+        {
+            label: statusObrigacaoLabels[StatusObrigacao.CONCLUIDO],
+            bgColor: statusConfig[statusObrigacaoLabels[StatusObrigacao.CONCLUIDO]]?.bgColor || "#22c55e",
+            textColor: statusConfig[statusObrigacaoLabels[StatusObrigacao.CONCLUIDO]]?.textColor || "#16a34a",
+        },
+        {
+            label: statusObrigacaoLabels[StatusObrigacao.NAO_APLICAVEL_SUSPENSA],
+            bgColor: statusConfig[statusObrigacaoLabels[StatusObrigacao.NAO_APLICAVEL_SUSPENSA]]?.bgColor || "#64748b",
+            textColor: statusConfig[statusObrigacaoLabels[StatusObrigacao.NAO_APLICAVEL_SUSPENSA]]?.textColor || "#475569",
+        },
+    ];
 }

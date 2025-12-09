@@ -9,6 +9,8 @@ import {
     ObrigacaoRequest,
     ObrigacaoResponse,
     ObrigacoesRelacionadasResponse,
+    ObrigacaoCalendarioResponse,
+    ObrigacaoCalendarioMesCountResponse,
 } from './types';
 
 export interface PaginatedResponse<T> {
@@ -70,6 +72,8 @@ export class ObrigacaoClient {
 
         const allowedKeys = [
             'filtro',
+            'idSolicitacao',
+            'idObrigacao',
             'page',
             'size',
             'sort',
@@ -130,6 +134,26 @@ export class ObrigacaoClient {
         params.append('dsRespNaoAplicavelSusp', dsRespNaoAplicavelSusp);
         return this.client.request<{ mensagem: string; status: string }>(`/${idObrigacao}/atualizar-status-nao-aplicavel-suspenso?${params.toString()}`, {
             method: 'PUT',
+        });
+    }
+
+    async buscarCalendarioObrigacoes(dataInicio?: string, dataFim?: string): Promise<ObrigacaoCalendarioResponse[]> {
+        const params = new URLSearchParams();
+        if (dataInicio) {
+            params.append('dataInicio', dataInicio);
+        }
+        if (dataFim) {
+            params.append('dataFim', dataFim);
+        }
+        const queryString = params.toString();
+        return this.client.request<ObrigacaoCalendarioResponse[]>(`/calendario${queryString ? `?${queryString}` : ''}`, {
+            method: 'GET',
+        });
+    }
+
+    async contarObrigacoesPorMesNoAno(ano: number): Promise<ObrigacaoCalendarioMesCountResponse[]> {
+        return this.client.request<ObrigacaoCalendarioMesCountResponse[]>(`/calendario/contar-por-mes?ano=${ano}`, {
+            method: 'GET',
         });
     }
 }

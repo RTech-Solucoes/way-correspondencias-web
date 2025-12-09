@@ -2,6 +2,7 @@ import { SolicitacaoResumoResponse } from "@/types/solicitacoes/types";
 import ApiClient from "../client";
 import { DashboardListSummary, DashboardOverview, ICalendar, ICalendarYear, IRecentActivity, PaginatedResponse, SolicitacaoCountResponse, SolicitacaoPrazo } from "./type";
 import { buildQueryParams } from "@/utils/utils";
+import { ObrigacaoCalendarioResponse, ObrigacaoCalendarioMesCountResponse } from "../obrigacao/types";
 
 interface OverviewParams {
     cdTipoFluxo?: string;
@@ -78,6 +79,22 @@ class DashboardClient {
     async getSolicitacoesPendentesCount(): Promise<SolicitacaoCountResponse> {
         return this.client.request<SolicitacaoCountResponse>(`/solicitacoes-pendentes/count`, {
             method: "GET",
+        });
+    }
+
+    async buscarCalendarioObrigacoes(dataInicio?: string, dataFim?: string): Promise<ObrigacaoCalendarioResponse[]> {
+        
+        const allowedKeys = ['dataInicio', 'dataFim'] as const;
+
+        const qs = buildQueryParams({ dataInicio, dataFim }, allowedKeys).toString();
+        return this.client.request<ObrigacaoCalendarioResponse[]>(`/obrigacoes-calendario${qs ? `?${qs}` : ''}`, {
+            method: 'GET',
+        });
+    }
+
+    async contarObrigacoesPorMesNoAno(ano: number): Promise<ObrigacaoCalendarioMesCountResponse[]> {
+        return this.client.request<ObrigacaoCalendarioMesCountResponse[]>(`/obrigacoes-calendario/contar-por-mes?ano=${ano}`, {
+            method: 'GET',
         });
     }
 

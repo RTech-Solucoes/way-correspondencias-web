@@ -103,6 +103,8 @@ export interface ObrigacaoDetalheResponse {
 
 export interface ObrigacaoFiltroRequest {
   filtro?: string | null;
+  idSolicitacao?: number | null;
+  idObrigacao?: number | null;
   idStatusSolicitacao?: number | null;
   idAreaAtribuida?: number | null;
   dtLimiteInicio?: string | null;
@@ -130,4 +132,15 @@ export interface ObrigacaoProtocoloRequest {
   nrProcesso?: string | null;
   nrSei?: string | null;
   dsObservacaoProtocolo?: string | null;
+}
+
+export interface ObrigacaoCalendarioResponse {
+  idObrigacao: number;
+  cdIdentificacao: string;
+  dtLimite: string;
+}
+
+export interface ObrigacaoCalendarioMesCountResponse {
+  mes: number;
+  quantidade: number;
 }

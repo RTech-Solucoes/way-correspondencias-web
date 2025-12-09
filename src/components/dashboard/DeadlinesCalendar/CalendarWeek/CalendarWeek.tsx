@@ -1,14 +1,33 @@
-import { ICalendar } from "@/api/dashboard/type";
-import { getCurrentWeek, getStatusColorCalendar } from "../../functions";
+import { getCurrentWeek } from "../../functions";
 import { useRouter } from "next/navigation";
 
-interface ICalendarWeekProps {
-  calendarByWeek: ICalendar[];
+// Tipo genérico para itens do calendário semanal
+export interface CalendarWeekItem {
+  id: number;
+  cdIdentificacao: string;
+  data: string; // Data no formato YYYY-MM-DD ou ISO
+  status?: string;
+  showTime?: boolean;
 }
 
-export default function CalendarWeek(props: ICalendarWeekProps) {
+export interface CalendarWeekConfig {
+  items: CalendarWeekItem[];
+  getItemRoute: (item: CalendarWeekItem) => string;
+  getItemStyle: (item: CalendarWeekItem) => string;
+}
+
+interface CalendarWeekProps {
+  config: CalendarWeekConfig;
+}
+
+export default function CalendarWeek({ config }: CalendarWeekProps) {
   const router = useRouter();
   const currentWeek = getCurrentWeek();
+
+  const parseItemDate = (item: CalendarWeekItem): Date => {
+    const dateStr = item.data.includes('T') ? item.data : item.data + 'T00:00:00';
+    return new Date(dateStr);
+  };
 
   return (
     <div className="space-y-2">
@@ -28,38 +47,38 @@ export default function CalendarWeek(props: ICalendarWeekProps) {
       </div>
       <div className="grid grid-cols-7 gap-1">
         {currentWeek.map((dayInfo) => {
-          const dayObligations = props.calendarByWeek.filter(obligation => {
-            const obligationDate = new Date(obligation.dtFim);
-            return obligationDate.getDate() === dayInfo.date &&
-              obligationDate.getMonth() + 1 === dayInfo.month;
+          const dayItems = config.items.filter(item => {
+            const itemDate = parseItemDate(item);
+            return itemDate.getDate() === dayInfo.date &&
+              itemDate.getMonth() + 1 === dayInfo.month &&
+              itemDate.getFullYear() === dayInfo.year;
           });
 
           return (
             <div
               key={dayInfo.dayName}
-              className="bg-white border border-gray-200 rounded-b-lg p-2 overflow-y-auto"
+              className="bg-white border border-gray-200 rounded-b-lg p-2 overflow-y-auto min-h-[80px]"
             >
-              {dayObligations?.length === 0 ? (
+              {dayItems.length === 0 ? (
                 <div className="text-xs text-gray-400 h-full flex items-center justify-center">
                   Sem Prazos
                 </div>
               ) : (
-                dayObligations.map((obligation) => {
-                  const obligationDate = new Date(obligation.dtFim);
-                  const time = obligationDate.toLocaleTimeString('pt-BR', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  });
+                dayItems.map((item) => {
+                  const itemDate = parseItemDate(item);
+                  const time = item.showTime && item.data.includes('T')
+                    ? itemDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                    : null;
 
                   return (
                     <div
-                      key={obligation.idSolicitacaoPrazo}
-                      className={`mb-2 p-2 rounded text-xs cursor-pointer hover:opacity-80 transition-opacity ${getStatusColorCalendar(obligation.nmStatus)}`}
-                      onClick={() => router.push(`/solicitacoes?idSolicitacao=${obligation.idSolicitacao}`)}
+                      key={item.id}
+                      className={`mb-2 p-2 rounded text-xs cursor-pointer hover:opacity-80 transition-opacity ${config.getItemStyle(item)}`}
+                      onClick={() => router.push(config.getItemRoute(item))}
                     >
-                      <div className="font-medium">{time}</div>
-                      <div className="truncate">{obligation.cdIdentificacao}</div>
-                      <div className="truncate text-xs opacity-75 mt-1">{obligation.nmStatus}</div>
+                      {time && <div className="font-medium">{time}</div>}
+                      <div className="truncate font-medium">{item.cdIdentificacao}</div>
+                      {item.status && <div className="truncate text-xs opacity-75 mt-1">{item.status}</div>}
                     </div>
                   );
                 })

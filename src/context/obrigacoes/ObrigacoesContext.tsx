@@ -1,6 +1,6 @@
 'use client'
 
-import {createContext, Dispatch, ReactNode, SetStateAction, useContext, useState, useCallback, useEffect} from "react";
+import {createContext, Dispatch, ReactNode, SetStateAction, useContext, useState, useCallback} from "react";
 import { ObrigacaoResponse, ObrigacaoFiltroRequest} from '@/api/obrigacao/types';
 import obrigacaoClient from '@/api/obrigacao/client';
 
@@ -20,6 +20,7 @@ interface FiltersState {
   idTema: string;
   idTipoClassificacao: string;
   idTipoPeriodicidade: string;
+  idObrigacao: string;
 }
 
 export interface ObrigacoesContextProps {
@@ -50,7 +51,7 @@ export interface ObrigacoesContextProps {
   sortField: string | null;
   sortDirection: 'asc' | 'desc';
   handleSort: (field: string) => void;
-  loadObrigacoes: () => Promise<void>;
+  loadObrigacoes: (idObrigacao?: number) => Promise<void>;
 }
 
 const ObrigacoesContext = createContext<ObrigacoesContextProps | undefined>(undefined);
@@ -85,6 +86,7 @@ export function ObrigacoesProvider({children}: { children: ReactNode }) {
     idTema: '',
     idTipoClassificacao: '',
     idTipoPeriodicidade: '',
+    idObrigacao: '',
   });
 
   const handleSort = useCallback((field: string) => {
@@ -97,11 +99,12 @@ export function ObrigacoesProvider({children}: { children: ReactNode }) {
     setCurrentPage(0);
   }, [sortField, sortDirection]);
 
-  const loadObrigacoes = useCallback(async () => {
+  const loadObrigacoes = useCallback(async (idObrigacaoParam?: number) => {
     setLoading(true);
     try {
       const filtro: ObrigacaoFiltroRequest = {
         filtro: searchQuery || null,
+        idObrigacao: idObrigacaoParam || null,
         idStatusSolicitacao: filters.idStatusObrigacao ? parseInt(filters.idStatusObrigacao) : null,
         idAreaAtribuida: filters.idAreaAtribuida ? parseInt(filters.idAreaAtribuida) : null,
         dtLimiteInicio: filters.dtLimiteInicio || null,
@@ -129,10 +132,6 @@ export function ObrigacoesProvider({children}: { children: ReactNode }) {
       setLoading(false);
     }
   }, [filters, currentPage, searchQuery, sortField, sortDirection]);
-
-  useEffect(() => {
-    loadObrigacoes();
-  }, [loadObrigacoes]);
 
   return (
     <ObrigacoesContext.Provider

@@ -20,8 +20,8 @@ import { FilterModalObrigacao } from "@/components/obrigacoes/FilterModalObrigac
 import { DeleteObrigacaoDialog } from "@/components/obrigacoes/DeleteObrigacaoDialog";
 import { ObrigacaoResponse } from "@/api/obrigacao/types";
 import { FiltrosAplicados } from "@/components/ui/applied-filters";
-import { useState, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { statusObrigacaoList, statusObrigacaoLabels, StatusObrigacao, statusListObrigacao } from "@/api/status-obrigacao/types";
 import { getObrigacaoStatusStyle } from "@/utils/obrigacoes/status";
 import areasClient from "@/api/areas/client";
@@ -80,8 +80,30 @@ function ObrigacoesContent() {
   const [showNaoAplicavelSuspensoModal, setShowNaoAplicavelSuspensoModal] = useState(false);
   const [obrigacaoParaNaoAplicavelSuspenso, setObrigacaoParaNaoAplicavelSuspenso] = useState<ObrigacaoResponse | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { idPerfil } = useUserGestao();
   const { canInserirObrigacao, canDeletarObrigacao, canConcluirObrigacao, canEnviarAreasObrigacao, canNaoAplicavelSuspensaObrigacao } = usePermissoes();
+
+  const idObrigacaoFromUrl = useMemo(() => {
+    const param = searchParams.get('idObrigacao');
+    return param ? Number(param) : undefined;
+  }, [searchParams]);
+
+  const isInitialMount = useRef(true);
+  const prevIdObrigacao = useRef(idObrigacaoFromUrl);
+
+  useEffect(() => {
+    if (prevIdObrigacao.current !== idObrigacaoFromUrl) {
+      prevIdObrigacao.current = idObrigacaoFromUrl;
+      if (!isInitialMount.current) {
+        setCurrentPage(0);
+        return;
+      }
+    }
+
+    loadObrigacoes(idObrigacaoFromUrl);
+    isInitialMount.current = false;
+  }, [idObrigacaoFromUrl, filters, currentPage, searchQuery]); // eslint-disable-line react-hooks/exhaustive-deps 
 
   const isAdminOrGestor = useMemo(() => {
     return idPerfil === perfilUtil.ADMINISTRADOR ||
