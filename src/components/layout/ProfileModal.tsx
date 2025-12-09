@@ -288,6 +288,25 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
   useEffect(() => {
     if (open) {
       setErrors({});
+      setResponsavel(null);
+      setFormData({
+        idPerfil: 0,
+        nmUsuarioLogin: '',
+        nmResponsavel: '',
+        dsEmail: '',
+        nrCpf: '',
+        dtNascimento: '',
+        idsAreas: [],
+        nmCargo: '',
+        idsConcessionarias: []
+      });
+      setSelectedAreaIds([]);
+      setSelectedConcessionariaIds([]);
+      setSelectedPhotoFile(null);
+      setPhotoPreview(null);
+      setExistingPhotoPreview(null);
+      setExistingPhoto(null);
+
       (async () => {
         await Promise.all([
           buscarPerfis(),
@@ -295,6 +314,13 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
           loadExistingPhoto(),
         ]);
       })();
+    } else {
+      // Limpar estados ao fechar o modal
+      setErrors({});
+      setResponsavel(null);
+      setSelectedPhotoFile(null);
+      setPhotoPreview(null);
+      setExistingPhotoPreview(null);
     }
   }, [open, buscarPerfis, buscarDadosResponsavel, loadExistingPhoto]);
 
@@ -322,6 +348,20 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
       atualizarConcessionarias();
     }
   }, [open, concessionariaChangeKey]);
+
+  // Fechar modal e limpar dados quando o usuário fizer logout
+  useEffect(() => {
+    const handleAuthTokenRemoved = () => {
+      console.log('[ProfileModal] Token removido - fechando modal e limpando dados');
+      onClose();
+    };
+
+    window.addEventListener('authTokenRemoved', handleAuthTokenRemoved);
+
+    return () => {
+      window.removeEventListener('authTokenRemoved', handleAuthTokenRemoved);
+    };
+  }, [onClose]);
 
   if (loadingData) {
     return (
