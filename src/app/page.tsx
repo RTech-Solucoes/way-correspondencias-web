@@ -9,7 +9,7 @@ import { cn } from '@/utils/utils';
 import { LockIcon, UserIcon } from '@phosphor-icons/react';
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useState } from 'react';
 import { toast } from 'sonner';
 
 import { jwtDecode } from "jwt-decode";
@@ -121,7 +121,9 @@ export default function LoginPage() {
           }
         }
 
-        toast.success("Login Realizado com Sucesso.")
+        await new Promise(resolve => setTimeout(resolve, 400));
+        toast.success("Login Realizado com Sucesso.");
+        
         router.push(PAGES_DEF[0].path);
         setUsername('');
         setPassword('');
@@ -132,14 +134,6 @@ export default function LoginPage() {
       }
     }
   };
-
-  useEffect(() => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('tokenType');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('permissoes-storage');
-    sessionStorage.removeItem('permissoes-storage');
-  }, []);
 
   return (
     <div className="flex flex-row justify-center min-h-screen overflow-hidden gap-16 max-[1024px]:gap-0 px-12">

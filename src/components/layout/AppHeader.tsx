@@ -67,15 +67,18 @@ const [pendenteCountState] = useState<SolicitacaoCountResponse>({ quantidadeCorr
     };
   }, [isPanelOpen]);
 
-const { data: pendenteCountData } = useQuery<SolicitacaoCountResponse>({
-  queryKey: ['solicitacoesPendentesCount'],
-  queryFn: () => dashboardClient.getSolicitacoesPendentesCount(),
-  staleTime: 0,
-  refetchInterval: 10_000,
-  refetchOnWindowFocus: true,
-  refetchOnReconnect: true,
-  refetchOnMount: 'always',
-});
+  const idConcessionaria = concessionariaSelecionada?.idConcessionaria;
+
+  const { data: pendenteCountData } = useQuery<SolicitacaoCountResponse>({
+    queryKey: ['solicitacoesPendentesCount', idConcessionaria],
+    queryFn: () => dashboardClient.getSolicitacoesPendentesCount(),
+    enabled: !!idConcessionaria,
+    staleTime: 0,
+    refetchInterval: 10_000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchOnMount: 'always',
+  });
   
 const layoutClient = getLayoutClient();
 const logoPath = getLogoPath(layoutClient);

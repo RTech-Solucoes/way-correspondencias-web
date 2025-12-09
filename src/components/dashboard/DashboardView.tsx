@@ -5,19 +5,36 @@ import NextDeadlines from './NextDeadlines/NextDeadlines';
 import RecentActivity from './RecentActivity/RecentActivity';
 import TasksStatusBoard from './TasksStatusBoard/TasksStatusBoard';
 import { TipoEnum } from '@/api/tipos/types';
+import { useConcessionaria } from '@/context/concessionaria/ConcessionariaContext';
+import { Quantum as Loading } from 'ldrs/react';
 
 export default function DashboardViewComponent() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const { concessionariaSelecionada, loading } = useConcessionaria();
 
   useEffect(() => {
-    refreshData();
-  }, []);
+    if (concessionariaSelecionada) {
+      refreshData();
+    }
+  }, [concessionariaSelecionada]);
 
   const refreshData = () => {
     setLastUpdated(new Date());
     setRefreshTrigger(prev => prev + 1);
   };
+
+  if (loading || !concessionariaSelecionada) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Loading
+          size="80"
+          speed="1.5"
+          color="#155dfc"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

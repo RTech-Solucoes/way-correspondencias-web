@@ -1,3 +1,5 @@
+let isHandlingUnauthorized = false;
+
 export default class ApiClient {
   private readonly module: string;
 
@@ -54,27 +56,36 @@ export default class ApiClient {
   }
 
   private handleUnauthorized(): void {
+    if (isHandlingUnauthorized) {
+      return;
+    }
+    
+    isHandlingUnauthorized = true;
+
     localStorage.removeItem('authToken');
     localStorage.removeItem('tokenType');
     localStorage.removeItem('user');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('permissoes-storage');
+    localStorage.removeItem('concessionaria-selecionada');
+    sessionStorage.removeItem('permissoes-storage');
 
-    // Disparar evento customizado para notificar que o token foi removido (mesma aba)
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('authTokenRemoved'));
     }
 
-    import('sonner').then(({ toast }) => {
-      toast.error('Seu token expirou, faça login novamente');
-    });
-
-    if (typeof window !== 'undefined') {
-      const currentPath = window.location.pathname;
-      const publicRoutes = ['/'];
-
-      if (!publicRoutes.includes(currentPath)) {
-        window.location.href = '/';
-      }
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+    const isLoginPage = currentPath === '/';
+    
+    if (!isLoginPage) {
+      import('sonner').then(({ toast }) => {
+        toast.error('Seu token expirou, faça login novamente');
+      });
     }
+
+    setTimeout(() => {
+      isHandlingUnauthorized = false;
+    }, 1000);
   }
 
   public async request<T>(
