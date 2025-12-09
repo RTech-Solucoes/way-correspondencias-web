@@ -20,6 +20,7 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
 
@@ -32,8 +33,9 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
       }
 
       setLoading(true);
+      
       const idFromToken = authClient.getUserIdResponsavelFromToken();
-      const userName = authClient.getUserName();
+      const userName = authClient.getUserName();      
       if (!(idFromToken || userName)) {
         setUser(null);
         setLoading(false);
@@ -52,6 +54,7 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
             return await getResponsavelAvatar(id);
           })()
         ]);
+                
         setUser({
           idResponsavel: responsavel.idResponsavel,
           name: responsavel.nmResponsavel,
@@ -61,7 +64,7 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
           avatar: avatar || "/images/avatar.svg"
         });
       } catch (error) {
-        console.error('Erro ao buscar dados do usuário:', error);
+        console.error('[ConditionalLayout] Erro ao buscar dados do usuário:', error);
         setUser(null);
       } finally {
         setLoading(false);
@@ -69,17 +72,16 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
     };
 
     loadUserData();
+  }, [isPublicRoute, refreshKey]);
 
+  useEffect(() => {
     const handleAuthTokenRemoved = () => {
-      console.log('[ConditionalLayout] Token removido - limpando dados do usuário');
       setUser(null);
+      setRefreshKey(0);
     };
 
     const handleAuthTokenSaved = () => {
-      console.log('[ConditionalLayout] Token salvo - recarregando dados do usuário');
-      setTimeout(() => {
-        loadUserData();
-      }, 100);
+      setRefreshKey(prev => prev + 1);
     };
 
     window.addEventListener('authTokenRemoved', handleAuthTokenRemoved);
@@ -89,7 +91,7 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
       window.removeEventListener('authTokenRemoved', handleAuthTokenRemoved);
       window.removeEventListener('authTokenSaved', handleAuthTokenSaved);
     };
-  }, [isPublicRoute]);
+  }, []);
 
   if (isPublicRoute) {
     return (
