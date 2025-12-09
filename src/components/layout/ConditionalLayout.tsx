@@ -10,6 +10,7 @@ import authClient from "@/api/auth/client";
 import responsaveisClient from "@/api/responsaveis/client";
 import anexosClient from "@/api/anexos/client";
 import { TipoObjetoAnexo } from "@/api/anexos/type";
+import LoadingOverlay from '../ui/loading-overlay';
 
 interface ConditionalLayoutProps {
   children: ReactNode;
@@ -17,7 +18,8 @@ interface ConditionalLayoutProps {
 
 export default function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const pathname = usePathname();
-  const [user, setUser] = useState<User | null>(null);  
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
 
@@ -25,13 +27,16 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
     const loadUserData = async () => {
       if (isPublicRoute) {
         setUser(null);
+        setLoading(false);
         return;
       }
 
+      setLoading(true);
       const idFromToken = authClient.getUserIdResponsavelFromToken();
       const userName = authClient.getUserName();
       if (!(idFromToken || userName)) {
         setUser(null);
+        setLoading(false);
         return;
       }
 
@@ -58,6 +63,8 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
       } catch (error) {
         console.error('Erro ao buscar dados do usuário:', error);
         setUser(null);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -70,7 +77,9 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
 
     const handleAuthTokenSaved = () => {
       console.log('[ConditionalLayout] Token salvo - recarregando dados do usuário');
-      loadUserData();
+      setTimeout(() => {
+        loadUserData();
+      }, 100);
     };
 
     window.addEventListener('authTokenRemoved', handleAuthTokenRemoved);
@@ -87,6 +96,15 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
       <main className="flex flex-col min-h-screen bg-gray-50">
         {children}
       </main>
+    );
+  }
+
+  if (loading) {
+    return (
+      <LoadingOverlay
+        title="Carregando dados do usuário"
+        subtitle="Aguarde enquanto o processo é concluído"
+      />
     );
   }
 
