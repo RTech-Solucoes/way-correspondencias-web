@@ -153,8 +153,8 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
       onSave?.();
       onClose();
     } catch (error) {
-      console.error('Erro ao salvar dados:', error);
-      toast.error('Erro ao salvar dados');
+      const errorMessage = (error as Error)?.message || (responsavel ? "Erro ao atualizar responsável" : "Erro ao criar responsável");
+      toast.error(errorMessage);
     } finally {
       setSavingData(false);
     }

@@ -1031,7 +1031,7 @@ export default function SolicitacaoModal({
           value={formData.dsAssunto}
           onChange={handleInputChange}
           rows={4}
-          disabled={true}
+          disabled={!canEditSolicitacao}
         />
       </div>
 
@@ -1055,7 +1055,7 @@ export default function SolicitacaoModal({
           value={formData.dsSolicitacao}
           onChange={handleInputChange}
           rows={getRows(formData.dsSolicitacao)}
-          disabled={true}
+          disabled={!canEditSolicitacao}
         />
       </div>
     </div>
