@@ -8,6 +8,7 @@ import { capitalizeWords, getStatusColorVision, renderIcon, getStatusBgColor } f
 import PaginationTasksStatus from "./PaginationTasksStatus";
 import { statusList } from "@/api/status-solicitacao/types";
 import SolicitacoesPendentes from "../SolicitacoesPendentes";
+import ObrigacoesPendentes from "../obrigacao/ObrigacoesPendentes";
 import { CategoriaEnum, TipoEnum } from "@/api/tipos/types";
 import { getObrigacaoStatusStyle } from "@/utils/obrigacoes/status";
 
@@ -193,9 +194,15 @@ export default function TasksStatusBoard({
 
         {showPendentes && (
           <div className="mt-6">
-            <SolicitacoesPendentes
-              refreshTrigger={refreshTrigger}
-            />
+            {cdTipoFluxo === TipoEnum.OBRIGACAO ? (
+              <ObrigacoesPendentes
+                refreshTrigger={refreshTrigger}
+              />
+            ) : (
+              <SolicitacoesPendentes
+                refreshTrigger={refreshTrigger}
+              />
+            )}
           </div>
         )}
         

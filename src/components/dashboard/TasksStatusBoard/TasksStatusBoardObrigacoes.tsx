@@ -13,7 +13,7 @@ export default function TasksStatusBoardObrigacoes({ refreshTrigger }: TasksStat
       cdTipoStatus={[TipoEnum.TODOS, TipoEnum.OBRIGACAO]}
       title="Visão Geral de Obrigações"
       description="Status de todas as obrigações contratuais"
-      showPendentes={false}
+      showPendentes={true}
       showRecent={true}
     />
   );

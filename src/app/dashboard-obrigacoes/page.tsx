@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import DashboardHeader from '@/components/dashboard/DashboardHeader/DashboardHeader';
 import TasksStatusBoardObrigacoes from '@/components/dashboard/TasksStatusBoard/TasksStatusBoardObrigacoes';
-import DeadlinesCalendarObrigacoes from '@/components/obrigacoes/calendario/DeadlinesCalendarObrigacoes';
+import DeadlinesCalendarObrigacoes from '@/components/dashboard/obrigacao/calendario/DeadlinesCalendarObrigacoes';
+import ObrigacoesPendentes from '@/components/dashboard/obrigacao/ObrigacoesPendentes';
 import { TipoEnum } from '@/api/tipos/types';
 
 export default function DashboardObrigacoesPage() {

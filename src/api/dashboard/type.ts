@@ -93,3 +93,24 @@ export interface SolicitacaoCountResponse {
     quantidadeCorrespondencias: number;
     quantidadeObrigacoes: number;
 }
+
+export interface SolicitacaoAreaDTO {
+    idArea: number;
+    nmArea: string;
+    tipoArea?: {
+        idTipo: number;
+        nmCategoria: string;
+        cdTipo: string;
+        dsTipo: string;
+        flAtivo: string;
+    } | null;
+}
+
+export interface ObrigacaoPendenteResponse {
+    idSolicitacao: number;
+    cdIdentificacao: string;
+    nmStatus: string;
+    tarefa: string;
+    nmTema: string;
+    areas: SolicitacaoAreaDTO[];
+}

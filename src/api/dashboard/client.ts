@@ -1,6 +1,6 @@
 import { SolicitacaoResumoResponse } from "@/types/solicitacoes/types";
 import ApiClient from "../client";
-import { DashboardListSummary, DashboardOverview, ICalendar, ICalendarYear, IRecentActivity, PaginatedResponse, SolicitacaoCountResponse, SolicitacaoPrazo } from "./type";
+import { DashboardListSummary, DashboardOverview, ICalendar, ICalendarYear, IRecentActivity, ObrigacaoPendenteResponse, PaginatedResponse, SolicitacaoCountResponse, SolicitacaoPrazo } from "./type";
 import { buildQueryParams } from "@/utils/utils";
 import { ObrigacaoCalendarioResponse, ObrigacaoCalendarioMesCountResponse } from "../obrigacao/types";
 
@@ -72,6 +72,12 @@ class DashboardClient {
 
     async getSolicitacoesPendentes(): Promise<SolicitacaoResumoResponse[]> {
         return this.client.request<SolicitacaoResumoResponse[]>(`/solicitacoes-pendentes`, {
+            method: "GET",
+        });
+    }
+
+    async getObrigacoesPendentes(): Promise<ObrigacaoPendenteResponse[]> {
+        return this.client.request<ObrigacaoPendenteResponse[]>(`/obrigacoes-pendentes`, {
             method: "GET",
         });
     }
