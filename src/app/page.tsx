@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { jwtDecode } from "jwt-decode";
 import { useSetPermissoes } from "@/stores/permissoes-store";
 import { getLayoutClient, getLabelTitle, getLogoPath, getBackgroundLoginPath, getNomeSistema } from "@/lib/layout/layout-client";
+import { clearQueryCache } from "@/providers/Providers";
 
 interface TokenPayload {
   sub: string;
@@ -62,6 +63,8 @@ export default function LoginPage() {
     if (!hasErrors) {
       setIsLoading(true);
       try {
+        clearQueryCache();
+
         await authClient.login({
           username: username,
           password: password
@@ -121,7 +124,9 @@ export default function LoginPage() {
           }
         }
 
-        toast.success("Login Realizado com Sucesso.")
+        toast.success("Login Realizado com Sucesso.");
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
         router.push(PAGES_DEF[0].path);
         setUsername('');
         setPassword('');
@@ -134,11 +139,10 @@ export default function LoginPage() {
   };
 
   useEffect(() => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('tokenType');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('permissoes-storage');
-    sessionStorage.removeItem('permissoes-storage');
+    const authToken = localStorage.getItem('authToken');
+    if (!authToken) {
+      clearQueryCache();
+    }
   }, []);
 
   return (

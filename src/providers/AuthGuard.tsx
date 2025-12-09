@@ -74,10 +74,16 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
       }
     };
 
+    const handleAuthTokenRemoved = () => {
+      checkAuth();
+    };
+
     window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('authTokenRemoved', handleAuthTokenRemoved);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('authTokenRemoved', handleAuthTokenRemoved);
     };
   }, [pathname, router, isPublicRoute, permittedRoutes]);
 
