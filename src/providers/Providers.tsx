@@ -48,10 +48,23 @@ export default function Providers({children}: ProvidersProps) {
       clearQueryCache();
     };
 
+    const handleAuthTokenSaved = () => {
+      clearQueryCache();
+    };
+
+    const handleConcessionariaChanged = () => {
+      console.log('[Providers] Concessionária mudou - limpando cache do React Query');
+      clearQueryCache();
+    };
+
     window.addEventListener('authTokenRemoved', handleAuthTokenRemoved);
+    window.addEventListener('authTokenSaved', handleAuthTokenSaved);
+    window.addEventListener('concessionariaChanged', handleConcessionariaChanged);
 
     return () => {
       window.removeEventListener('authTokenRemoved', handleAuthTokenRemoved);
+      window.removeEventListener('authTokenSaved', handleAuthTokenSaved);
+      window.removeEventListener('concessionariaChanged', handleConcessionariaChanged);
     };
   }, []);
 

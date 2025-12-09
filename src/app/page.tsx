@@ -9,13 +9,12 @@ import { cn } from '@/utils/utils';
 import { LockIcon, UserIcon } from '@phosphor-icons/react';
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useState } from 'react';
 import { toast } from 'sonner';
 
 import { jwtDecode } from "jwt-decode";
 import { useSetPermissoes } from "@/stores/permissoes-store";
 import { getLayoutClient, getLabelTitle, getLogoPath, getBackgroundLoginPath, getNomeSistema } from "@/lib/layout/layout-client";
-import { clearQueryCache } from "@/providers/Providers";
 
 interface TokenPayload {
   sub: string;
@@ -63,8 +62,6 @@ export default function LoginPage() {
     if (!hasErrors) {
       setIsLoading(true);
       try {
-        clearQueryCache();
-
         await authClient.login({
           username: username,
           password: password
@@ -124,8 +121,8 @@ export default function LoginPage() {
           }
         }
 
+        await new Promise(resolve => setTimeout(resolve, 400));
         toast.success("Login Realizado com Sucesso.");
-        await new Promise(resolve => setTimeout(resolve, 300));
         
         router.push(PAGES_DEF[0].path);
         setUsername('');
@@ -137,13 +134,6 @@ export default function LoginPage() {
       }
     }
   };
-
-  useEffect(() => {
-    const authToken = localStorage.getItem('authToken');
-    if (!authToken) {
-      clearQueryCache();
-    }
-  }, []);
 
   return (
     <div className="flex flex-row justify-center min-h-screen overflow-hidden gap-16 max-[1024px]:gap-0 px-12">
