@@ -114,3 +114,12 @@ export interface ObrigacaoPendenteResponse {
     nmTema: string;
     areas: SolicitacaoAreaDTO[];
 }
+
+export interface ObrigacaoRecentActivityDTO {
+    nmResponsavel: string;
+    dsAssunto: string;
+    cdIdentificacao: string;
+    dtCriacao: string;
+    dsParecer?: string;
+    tipoAtividade: 'TRAMITACAO' | 'PARECER';
+}

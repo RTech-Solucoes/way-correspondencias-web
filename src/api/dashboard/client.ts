@@ -1,6 +1,6 @@
 import { SolicitacaoResumoResponse } from "@/types/solicitacoes/types";
 import ApiClient from "../client";
-import { DashboardListSummary, DashboardOverview, ICalendar, ICalendarYear, IRecentActivity, ObrigacaoPendenteResponse, PaginatedResponse, SolicitacaoCountResponse, SolicitacaoPrazo } from "./type";
+import { DashboardListSummary, DashboardOverview, ICalendar, ICalendarYear, IRecentActivity, ObrigacaoPendenteResponse, ObrigacaoRecentActivityDTO, PaginatedResponse, SolicitacaoCountResponse, SolicitacaoPrazo } from "./type";
 import { buildQueryParams } from "@/utils/utils";
 import { ObrigacaoCalendarioResponse, ObrigacaoCalendarioMesCountResponse } from "../obrigacao/types";
 
@@ -102,6 +102,13 @@ class DashboardClient {
         return this.client.request<ObrigacaoCalendarioMesCountResponse[]>(`/obrigacoes-calendario/contar-por-mes?ano=${ano}`, {
             method: 'GET',
         });
+    }
+
+    async getObrigacoesRecentActivity(page: number, size: number): Promise<PaginatedResponse<ObrigacaoRecentActivityDTO>> {
+        return this.client.request<PaginatedResponse<ObrigacaoRecentActivityDTO>>(
+            `/obrigacoes-recent-activity?page=${page}&size=${size}`,
+            { method: 'GET' }
+        );
     }
 
 }
