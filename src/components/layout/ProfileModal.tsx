@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Button } from '@/components/ui/button';
 import { TextField } from '@/components/ui/text-field';
 import { MultiSelectAreas } from '@/components/ui/multi-select-areas';
+import { MultiSelectConcessionarias } from '@/components/ui/multi-select-concessionarias';
 import { ResponsavelRequest, ResponsavelResponse } from '@/api/responsaveis/types';
 import { responsaveisClient } from '@/api/responsaveis/client';
 import { PerfilResponse } from '@/api/perfis/types';
@@ -16,6 +17,9 @@ import authClient from '@/api/auth/client';
 import anexosClient from '@/api/anexos/client';
 import { TipoObjetoAnexo, ArquivoDTO } from '@/api/anexos/type';
 import { responsavelAnexosClient } from '@/api/responsaveis/anexos-client';
+import { useConcessionaria } from '@/context/concessionaria/ConcessionariaContext';
+import concessionariaClient from '@/api/concessionaria/client';
+import LoadingOverlay from '@/components/ui/loading-overlay';
 
 interface ProfileModalProps {
   user: User | null;
@@ -34,9 +38,11 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
     nrCpf: '',
     dtNascimento: '',
     idsAreas: [],
-    nmCargo: ''
+    nmCargo: '',
+    idsConcessionarias: []
   });
   const [selectedAreaIds, setSelectedAreaIds] = useState<number[]>([]);
+  const [selectedConcessionariaIds, setSelectedConcessionariaIds] = useState<number[]>([]);
   const [loadingData, setLoadingData] = useState(false);
   const [perfis, setPerfis] = useState<PerfilResponse[]>([]);
   const [loadingPerfis, setLoadingPerfis] = useState(false);
@@ -48,6 +54,8 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
   const [photoBusy, setPhotoBusy] = useState(false);
   const [savingData, setSavingData] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  
+  const { concessionariaChangeKey } = useConcessionaria();
 
   const getPerfil = (): string => {
     return perfis?.filter(perfil => perfil.idPerfil === formData.idPerfil)?.[0]?.nmPerfil ||
@@ -138,6 +146,7 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
         dtNascimento: formData.dtNascimento,
         nmCargo: formData.nmCargo,
         idsAreas: formData.idsAreas,
+        idsConcessionarias: selectedConcessionariaIds.length > 0 ? selectedConcessionariaIds : []
       };
 
       await responsaveisClient.atualizar(idResponsavel, updateData);
@@ -145,8 +154,8 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
       onSave?.();
       onClose();
     } catch (error) {
-      console.error('Erro ao salvar dados:', error);
-      toast.error('Erro ao salvar dados');
+      const errorMessage = (error as Error)?.message || (responsavel ? "Erro ao atualizar responsável" : "Erro ao criar responsável");
+      toast.error(errorMessage);
     } finally {
       setSavingData(false);
     }
@@ -196,8 +205,19 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
 
     try {
       setLoadingData(true);
-      const responsavelData = await responsaveisClient.buscarPorId(idResponsavel);
+      const [responsavelData, concessionariasResponsavel] = await Promise.all([
+        responsaveisClient.buscarPorId(idResponsavel),
+        concessionariaClient.buscarPorIdResponsavelLogado()
+      ]);
+      
       setResponsavel(responsavelData);
+
+      // Usar concessionárias do endpoint específico ou do response do responsável
+      const concessionariaIds = concessionariasResponsavel && concessionariasResponsavel.length > 0
+        ? concessionariasResponsavel.map(c => c.idConcessionaria)
+        : (responsavelData.concessionarias 
+            ? responsavelData.concessionarias.map(c => c.idConcessionaria) 
+            : []);
 
       const formDataResponsavel = {
         idPerfil: responsavelData.idPerfil,
@@ -207,7 +227,8 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
         nrCpf: responsavelData.nrCpf || '',
         dtNascimento: responsavelData.dtNascimento || '',
         nmCargo: responsavelData.nmCargo || '',
-        idsAreas: responsavelData.areas ? responsavelData.areas.map(responsavelArea => responsavelArea.area.idArea) : []
+        idsAreas: responsavelData.areas ? responsavelData.areas.map(responsavelArea => responsavelArea.area.idArea) : [],
+        idsConcessionarias: concessionariaIds
       };
 
       setFormData(formDataResponsavel);
@@ -217,6 +238,8 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
       } else {
         setSelectedAreaIds([]);
       }
+
+      setSelectedConcessionariaIds(concessionariaIds);
     } catch (error) {
       console.error('Erro ao carregar dados do responsável:', error);
       toast.error("Erro ao carregar dados do usuário");
@@ -266,6 +289,25 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
   useEffect(() => {
     if (open) {
       setErrors({});
+      setResponsavel(null);
+      setFormData({
+        idPerfil: 0,
+        nmUsuarioLogin: '',
+        nmResponsavel: '',
+        dsEmail: '',
+        nrCpf: '',
+        dtNascimento: '',
+        idsAreas: [],
+        nmCargo: '',
+        idsConcessionarias: []
+      });
+      setSelectedAreaIds([]);
+      setSelectedConcessionariaIds([]);
+      setSelectedPhotoFile(null);
+      setPhotoPreview(null);
+      setExistingPhotoPreview(null);
+      setExistingPhoto(null);
+
       (async () => {
         await Promise.all([
           buscarPerfis(),
@@ -273,26 +315,72 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
           loadExistingPhoto(),
         ]);
       })();
+    } else {
+      // Limpar estados ao fechar o modal
+      setErrors({});
+      setResponsavel(null);
+      setSelectedPhotoFile(null);
+      setPhotoPreview(null);
+      setExistingPhotoPreview(null);
     }
   }, [open, buscarPerfis, buscarDadosResponsavel, loadExistingPhoto]);
 
+  // Atualizar concessionárias quando a concessionária no header mudar
+  useEffect(() => {
+    if (open && concessionariaChangeKey > 0) {
+      const atualizarConcessionarias = async () => {
+        try {
+          const concessionariasResponsavel = await concessionariaClient.buscarPorIdResponsavelLogado();
+          if (concessionariasResponsavel && Array.isArray(concessionariasResponsavel) && concessionariasResponsavel.length > 0) {
+            const concessionariaIds = concessionariasResponsavel.map(c => c.idConcessionaria).filter(id => id !== undefined);
+            if (concessionariaIds.length > 0) {
+              setSelectedConcessionariaIds(concessionariaIds);
+              setFormData(prev => ({
+                ...prev,
+                idsConcessionarias: concessionariaIds
+              }));
+            }
+          }
+        } catch (error) {
+          console.error('Erro ao atualizar concessionárias:', error);
+          // Não mostra erro ao usuário, apenas loga
+        }
+      };
+      atualizarConcessionarias();
+    }
+  }, [open, concessionariaChangeKey]);
+
+  // Fechar modal e limpar dados quando o usuário fizer logout
+  useEffect(() => {
+    const handleAuthTokenRemoved = () => {
+      console.log('[ProfileModal] Token removido - fechando modal e limpando dados');
+      onClose();
+    };
+
+    window.addEventListener('authTokenRemoved', handleAuthTokenRemoved);
+
+    return () => {
+      window.removeEventListener('authTokenRemoved', handleAuthTokenRemoved);
+    };
+  }, [onClose]);
+
   if (loadingData) {
     return (
-      <Dialog open={open} onOpenChange={(newOpen) => !newOpen && onClose()}>
-        <DialogContent className="h-full flex flex-col">
-          <DialogHeader className="pb-6 flex-shrink-0">
-            <DialogTitle className="text-xl font-semibold">
-              Minha Conta
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-              <p className="mt-2 text-gray-600">Carregando dados...</p>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <>
+        <Dialog open={open} onOpenChange={(newOpen) => !newOpen && onClose()}>
+          <DialogContent className="h-full flex flex-col opacity-0">
+            <DialogHeader className="pb-6 flex-shrink-0">
+              <DialogTitle className="text-xl font-semibold">
+                Minha Conta
+              </DialogTitle>
+            </DialogHeader>
+          </DialogContent>
+        </Dialog>
+        <LoadingOverlay
+          title="Carregando dados do perfil"
+          subtitle="Buscando informações da sua conta..."
+        />
+      </>
     );
   }
 
@@ -483,6 +571,19 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
             onSelectionChange={() => {}}
             label="Áreas"
             disabled
+          />
+
+          <MultiSelectConcessionarias
+            selectedConcessionariaIds={selectedConcessionariaIds}
+            onSelectionChange={(selectedIds) => {
+              setSelectedConcessionariaIds(selectedIds);
+              setFormData(prev => ({
+                ...prev,
+                idsConcessionarias: selectedIds
+              }));
+            }}
+            label="Concessionárias"
+            disabled={true}
           />
 
         </form>

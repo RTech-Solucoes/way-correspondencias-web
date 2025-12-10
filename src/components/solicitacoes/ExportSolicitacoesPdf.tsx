@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { solicitacoesClient } from '@/api/solicitacoes/client';
 import { PagedResponse, SolicitacaoFilterParams, SolicitacaoResponse } from '@/api/solicitacoes/types';
 import { formatDateTimeBr, formatDateTimeBrCompactExport } from '@/utils/utils';
+import { getLayoutClient, getLabelTitle, getLogoPath } from '@/lib/layout/layout-client';
 
 type ExportSolicitacoesPdfProps = {
 	filterParams: Omit<SolicitacaoFilterParams, 'page' | 'size' | 'sort'>;
@@ -19,42 +20,38 @@ const styles = StyleSheet.create({
 	subtitle: { fontSize: 9, marginBottom: 10 },
 	header: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
 	logo: { width: 80, marginRight: 12 },
-	table: { width: 'auto', borderStyle: 'solid', borderWidth: 1, borderRightWidth: 0, borderBottomWidth: 0 },
-	row: { flexDirection: 'row' },
-	cell: { borderStyle: 'solid', borderWidth: 1, borderLeftWidth: 0, borderTopWidth: 0, padding: 4 },
+	table: { width: '100%', borderStyle: 'solid', borderWidth: 1, borderRightWidth: 0, borderBottomWidth: 0 },
+	row: { flexDirection: 'row', width: '100%', flexWrap: 'nowrap' },
+	cell: { borderStyle: 'solid', borderWidth: 1, borderLeftWidth: 0, borderTopWidth: 0, padding: 4, flexShrink: 0 },
+	cellLast: { borderRightWidth: 1 },
 	head: { fontWeight: 700, backgroundColor: '#f2f2f2' },
 	footer: { position: 'absolute', left: 24, right: 24, bottom: 12, fontSize: 9, color: '#555', flexDirection: 'row', justifyContent: 'space-between' },
 	// colunas da tabela
-	c1: { width: '10%' }, // Identificação
-	c2: { width: '18%' }, // Assunto
+	c1: { width: '14%', fontSize: 8, padding: 3 }, // Identificação
+	c2: { width: '19%' }, // Assunto
 	c3: { width: '10%' }, // Áreas
 	c4: { width: '8%' }, // Tema
 	c5: { width: '8%' }, // Status
 	c6: { width: '8%' }, // Aprovação Gerente do Regulatório
-	c7: { width: '7%' }, // Data Início Solicitação
-	c8: { width: '7%' }, // Data Início Primeira Tramitação
-	c9: { width: '7%' }, // Data Prazo Limite Tramitação
-	c10: { width: '7%' }, // Data Conclusão Tramitação
-	c11: { width: '7%' }, // Atendido dentro do prazo
+	c7: { width: '6.5%', fontSize: 8 }, // Data Início Solicitação
+	c8: { width: '6.5%', fontSize: 8 }, // Data Início Primeira Tramitação
+	c9: { width: '6.5%', fontSize: 8 }, // Data Prazo Limite Tramitação
+	c10: { width: '6.5%', fontSize: 8 }, // Data Conclusão Tramitação
+	c11: { width: '6.5%' }, // Atendido dentro do prazo
 });
-
-const layoutClient = process.env.NEXT_PUBLIC_LAYOUT_CLIENT || "way262";
-let labelTitle = "";
-  
-	if (layoutClient === "way262") {
-		labelTitle = "Way 262";
-	} else if (layoutClient === "mvp") {
-		labelTitle = "RTech";
-	}
   
 function SolicitacoesPdfDoc({ data, getStatusText }: { data: SolicitacaoResponse[]; getStatusText: (code: string) => string | null }) {
 	const nowStr = useMemo(() => new Date().toLocaleString('pt-BR'), []);
+	const layoutClient = getLayoutClient();
+	const labelTitle = getLabelTitle(layoutClient);
+	const logoPath = getLogoPath(layoutClient);
+	
 	return (
 		<Document>
 			<Page size="A4" orientation="landscape" style={styles.page}>
 				<View style={styles.header}>
 					{/* eslint-disable-next-line jsx-a11y/alt-text */}
-					<Image src={`/images/${layoutClient}-logo.png`} style={styles.logo} />
+					<Image src={logoPath} style={styles.logo} />
 					<View>
 						<Text style={styles.title}>Relatório de Solicitações</Text>
 						<Text style={styles.subtitle}>Data de exportação: {nowStr}</Text>
@@ -73,7 +70,7 @@ function SolicitacoesPdfDoc({ data, getStatusText }: { data: SolicitacaoResponse
 						<Text style={[styles.cell, styles.c8]}>Data Início Primeira Tramitação</Text>
 						<Text style={[styles.cell, styles.c9]}>Data Prazo Limite Tramitação</Text>
 						<Text style={[styles.cell, styles.c10]}>Data Conclusão Tramitação</Text>
-						<Text style={[styles.cell, styles.c11]}>Atendido dentro do prazo</Text>
+						<Text style={[styles.cell, styles.cellLast, styles.c11]}>Atendido dentro do prazo</Text>
 					</View>
 
 					{data.map((s, idx) => {
@@ -96,7 +93,7 @@ function SolicitacoesPdfDoc({ data, getStatusText }: { data: SolicitacaoResponse
 						
 						return (
 							<View key={idx} style={styles.row}>
-								<Text style={[styles.cell, styles.c1]}>{s.cdIdentificacao || ''}</Text>
+								<Text style={[styles.cell, styles.c1]} wrap={false}>{s.cdIdentificacao || ''}</Text>
 								<Text style={[styles.cell, styles.c2]}>{s.dsAssunto || ''}</Text>
 								<Text style={[styles.cell, styles.c3]}>{areasNomes}</Text>
 								<Text style={[styles.cell, styles.c4]}>{tema}</Text>
@@ -106,7 +103,7 @@ function SolicitacoesPdfDoc({ data, getStatusText }: { data: SolicitacaoResponse
 								<Text style={[styles.cell, styles.c8]}>{formatDateTimeBr(s.dtPrimeiraTramitacao)}</Text>
 								<Text style={[styles.cell, styles.c9]}>{formatDateTimeBr(s.dtPrazoLimite)}</Text>
 								<Text style={[styles.cell, styles.c10]}>{formatDateTimeBr(s.dtConclusaoTramitacao)}</Text>
-								<Text style={[styles.cell, styles.c11]}>{atendidoDentroDoPrazo}</Text>
+								<Text style={[styles.cell, styles.cellLast, styles.c11]}>{atendidoDentroDoPrazo}</Text>
 							</View>
 						);
 					})}

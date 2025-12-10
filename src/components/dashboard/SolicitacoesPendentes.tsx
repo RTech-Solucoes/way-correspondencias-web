@@ -2,20 +2,24 @@ import { useQuery } from '@tanstack/react-query';
 import dashboardClient from '@/api/dashboard/client';
 import { SolicitacaoResumoResponse } from '@/types/solicitacoes/types';
 import Link from 'next/link';
+import { useConcessionaria } from '@/context/concessionaria/ConcessionariaContext';
 
 interface SolicitacoesPendentesProps {
   refreshTrigger?: number;
 }
 
 export default function SolicitacoesPendentes({ refreshTrigger }: SolicitacoesPendentesProps) {
+  const { concessionariaSelecionada } = useConcessionaria();
+  const idConcessionaria = concessionariaSelecionada?.idConcessionaria;
+
   const { data: items = [], isLoading: loading } = useQuery<SolicitacaoResumoResponse[]>({
-    queryKey: ['solicitacoesPendentes', refreshTrigger],
+    queryKey: ['solicitacoesPendentes', idConcessionaria, refreshTrigger],
     queryFn: () => dashboardClient.getSolicitacoesPendentes(),
-    staleTime: 0,
-    refetchInterval: 1_000,
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
-    refetchOnMount: 'always',
+    enabled: !!idConcessionaria,
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: true, 
   });
 
   const getAreasLabel = (s: SolicitacaoResumoResponse): string => {

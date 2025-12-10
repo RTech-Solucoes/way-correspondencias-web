@@ -1,3 +1,5 @@
+let isHandlingUnauthorized = false;
+
 export default class ApiClient {
   private readonly module: string;
 
@@ -19,41 +21,101 @@ export default class ApiClient {
     return {};
   }
 
+  private getIdConcessionaria(): number | null {
+    try {
+      const idSalvo = localStorage.getItem('concessionaria-selecionada');
+      if (idSalvo) {
+        const id = parseInt(idSalvo, 10);
+        return isNaN(id) ? null : id;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  private addConcessionariaToUrl(url: string): string {
+    const idConcessionaria = this.getIdConcessionaria();
+    if (!idConcessionaria) {
+      return url;
+    }
+
+    try {
+      const urlObj = new URL(url);
+      if (!urlObj.searchParams.has('idConcessionaria')) {
+        urlObj.searchParams.append('idConcessionaria', idConcessionaria.toString());
+      }
+      return urlObj.toString();
+    } catch {
+      const separator = url.includes('?') ? '&' : '?';
+      if (!url.includes('idConcessionaria=')) {
+        return `${url}${separator}idConcessionaria=${idConcessionaria}`;
+      }
+      return url;
+    }
+  }
+
   private handleUnauthorized(): void {
+    if (isHandlingUnauthorized) {
+      return;
+    }
+    
+    isHandlingUnauthorized = true;
+
     localStorage.removeItem('authToken');
     localStorage.removeItem('tokenType');
     localStorage.removeItem('user');
-
-    import('sonner').then(({ toast }) => {
-      toast.error('Seu token expirou, faça login novamente');
-    });
+    localStorage.removeItem('userName');
+    localStorage.removeItem('permissoes-storage');
+    localStorage.removeItem('concessionaria-selecionada');
+    sessionStorage.removeItem('permissoes-storage');
 
     if (typeof window !== 'undefined') {
-      const currentPath = window.location.pathname;
-      const publicRoutes = ['/'];
-
-      if (!publicRoutes.includes(currentPath)) {
-        window.location.href = '/';
-      }
+      window.dispatchEvent(new CustomEvent('authTokenRemoved'));
     }
+
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+    const isLoginPage = currentPath === '/';
+    
+    if (!isLoginPage) {
+      import('sonner').then(({ toast }) => {
+        toast.error('Seu token expirou, faça login novamente');
+      });
+    }
+
+    setTimeout(() => {
+      isHandlingUnauthorized = false;
+    }, 1000);
   }
 
   public async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit & { skipConcessionariaParam?: boolean } = {}
   ): Promise<T> {
     const baseUrl = process.env.NEXT_PUBLIC_API_URL;
-    const url = `${baseUrl}${this.module}${endpoint}`;
+    let url = `${baseUrl}${this.module}${endpoint}`;
+    
+    // Extrair skipConcessionariaParam e remover do options antes de usar
+    const skipConcessionariaParam = options.skipConcessionariaParam ?? false;
+    const { skipConcessionariaParam: _skipParam, ...fetchOptions } = options;
+    
+    // Adicionar idConcessionaria como query parameter (a menos que seja explicitamente suprimido)
+    if (!skipConcessionariaParam) {
+      url = this.addConcessionariaToUrl(url);
+    }
+    
+    // Suprimir warning do linter
+    void _skipParam;
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...this.getAuthHeaders() as Record<string, string>,
-      ...(options.headers as Record<string, string> | undefined)
+      ...(fetchOptions.headers as Record<string, string> | undefined)
     };
-
+    
     const config: RequestInit = {
       headers,
-      ...options,
+      ...fetchOptions,
     };
 
     if (config.body instanceof FormData) {

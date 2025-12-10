@@ -90,7 +90,7 @@ class SolicitacoesClient {
 
   async etapaStatus(id: number, idStatusSolicitacao?: number) {
     const qs = idStatusSolicitacao ? `?idStatusSolicitacao=${idStatusSolicitacao}` : '';
-    return this.client.request<void>(`/encaminhar/${id}/etapa05${qs}`, { method: 'PUT' });
+    return this.client.request<void>(`/encaminhar/${id}/etapa06${qs}`, { method: 'PUT' });
   }
 
   async buscarAnexos(idSolicitacao: number): Promise<AnexoResponse[]> {

@@ -8,6 +8,7 @@ import HistoricoTramitacaoBaseModal, { HistoricoBaseItem } from './HistoricoTram
 import tramitacoesClient from '@/api/tramitacoes/client';
 import ExportHistoricoPdf from './ExportHistoricoPdf';
 import { SolicitacaoResumoComHistoricoResponse } from '@/api/solicitacoes/types';
+import LoadingOverlay from '@/components/ui/loading-overlay';
 
 interface HistoricoRespostasModalProps {
   idSolicitacao: number | null;
@@ -87,7 +88,8 @@ export default function HistoricoRespostasModal({
             size="sm"
             variant="outline"
             className="mr-5 flex items-center gap-2"
-            onClick={() => setExporting(true)}>
+            onClick={() => setExporting(true)}
+            disabled={exporting}>
             <FilePdfIcon className="h-4 w-4" />
             Exportar PDF
           </Button>
@@ -98,11 +100,17 @@ export default function HistoricoRespostasModal({
         items={items}
       />
       {exporting && solicitacaoResumo && (
-        <ExportHistoricoPdf
-          solicitacao={solicitacaoResumo}
-          historico={historico}
-          onDone={() => setExporting(false)}
-        />
+        <>
+          <ExportHistoricoPdf
+            solicitacao={solicitacaoResumo}
+            historico={historico}
+            onDone={() => setExporting(false)}
+          />
+          <LoadingOverlay
+            title="Gerando PDF..."
+            subtitle="Aguarde enquanto o relatório é processado"
+          />
+        </>
       )}
     </>
   );

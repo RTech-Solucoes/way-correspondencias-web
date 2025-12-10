@@ -1,7 +1,7 @@
 'use client';
 
 import { ArquivoDTO, TipoResponsavelAnexo } from '@/api/anexos/type';
-import { areaUtil } from '@/api/areas/types';
+import { CdAreaEnum } from '@/api/areas/types';
 import authClient from '@/api/auth/client';
 import { computeTpResponsavel, perfilUtil } from '@/api/perfis/types';
 import { responsaveisClient } from '@/api/responsaveis/client';
@@ -31,6 +31,7 @@ import { HistoricoRespostasModalButton } from './HistoricoRespostasModal';
 import InformaçaoStatusEmAnaliseGerReg from './InformaçaoStatusEmAnaliseGerReg';
 
 import type { AnexoResponse } from '@/api/anexos/type';
+import areasClient from '@/api/areas/client';
 
 
 type DetalhesSolicitacaoModalProps = {
@@ -92,6 +93,7 @@ export default function DetalhesSolicitacaoModal({
   const [responsaveis, setResponsaveis] = useState<ResponsavelResponse[]>([]);
   const [statusListPrazos, setStatusListPrazos] = useState<StatusSolicitacaoResponse[]>([]);
   const [prazosSolicitacaoPorStatus, setPrazosSolicitacaoPorStatus] = useState<SolicitacaoPrazoResponse[]>([]);
+  const [areaDiretoria, setAreaDiretoria] = useState<number | null>(null);
   
  // solicitacao!.statusSolicitacao!.nmStatus = statusList.EM_ANALISE_GERENTE_REGULATORIO.label;
   const sol = solicitacao ?? null;
@@ -472,6 +474,19 @@ export default function DetalhesSolicitacaoModal({
   })();
 
   useEffect(() => {
+    const loadAreaDiretoria = async () => {
+      try {
+        const area = await areasClient.buscarPorCdArea(CdAreaEnum.DIRETORIA);
+        setAreaDiretoria(area.idArea);
+      } catch (error) {
+        console.error('Erro ao carregar área diretoria:', error);
+        setAreaDiretoria(null);
+      }
+    };
+    loadAreaDiretoria();
+  }, []);
+
+  useEffect(() => {
     const loadIdProximoStatusAnaliseRegulatoria = async () => {
       if (!sol?.solicitacao?.idSolicitacao || !sol?.statusSolicitacao?.idStatusSolicitacao) {
         setIdProximoStatusAnaliseRegulatoria(null);
@@ -627,7 +642,7 @@ export default function DetalhesSolicitacaoModal({
       const isRolePermitido = (
         userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR ||
         userResponsavel?.idPerfil === perfilUtil.VALIDADOR_ASSINANTE ||
-        userResponsavel?.areas?.some(a => a?.area?.idArea === areaUtil.DIRETORIA) 
+        userResponsavel?.areas?.some(a => a?.area?.idArea === areaDiretoria) 
       );
 
       return isRolePermitido && isAssinanteAutorizado && !isDiretorJaAprovou;
