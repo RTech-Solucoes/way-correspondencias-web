@@ -6,6 +6,10 @@ import { authClient } from '@/api/auth/client';
 import concessionariaClient from '@/api/concessionaria/client';
 import { ConcessionariaResponse } from '@/api/concessionaria/types';
 
+// Constantes de configuração
+const STORAGE_KEY = 'concessionaria-selecionada';
+const AUTH_TOKEN_SAVED_DELAY = 400; // ms
+
 interface ConcessionariaContextProps {
   concessionariaSelecionada: ConcessionariaResponse | null;
   concessionarias: ConcessionariaResponse[];
@@ -15,8 +19,6 @@ interface ConcessionariaContextProps {
 }
 
 const ConcessionariaContext = createContext<ConcessionariaContextProps>({} as ConcessionariaContextProps);
-
-const STORAGE_KEY = 'concessionaria-selecionada';
 
 export function ConcessionariaProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -47,17 +49,21 @@ export function ConcessionariaProvider({ children }: { children: ReactNode }) {
   }, [concessionariaSelecionada?.idConcessionaria]);
 
   useEffect(() => {
+    let isMounted = true;
+    
     const carregarConcessionarias = async () => {
       // Verificar se o usuário está autenticado antes de buscar concessionárias
       if (!authClient.isAuthenticated()) {
-        setConcessionarias([]);
-        setConcessionariaSelecionadaState(null);
-        setLoading(false);
+        if (isMounted) {
+          setConcessionarias([]);
+          setConcessionariaSelecionadaState(null);
+          setLoading(false);
+        }
         return;
       }
 
       try {
-        setLoading(true);
+        if (isMounted) setLoading(true);
         
         let concessionariasDoResponsavel: ConcessionariaResponse[] = [];
         try {
@@ -65,28 +71,41 @@ export function ConcessionariaProvider({ children }: { children: ReactNode }) {
         } catch (error) {
           const apiError = error as { status?: number };
           if (apiError?.status === 401) {
-            setConcessionarias([]);
-            setConcessionariaSelecionadaState(null);
-            setLoading(false);
+            if (isMounted) {
+              setConcessionarias([]);
+              setConcessionariaSelecionadaState(null);
+              setLoading(false);
+            }
             return;
           }
           console.error('Erro ao buscar concessionárias do responsável:', error);
           // Fallback: usar concessionárias do token se o endpoint falhar
-          const idsConcessionarias = authClient.getIdsConcessionariasFromToken();
-          if (idsConcessionarias.length > 0) {
-            const todasConcessionarias = await concessionariaClient.buscarTodas();
-            concessionariasDoResponsavel = todasConcessionarias.filter(
-              c => idsConcessionarias.includes(c.idConcessionaria)
-            );
+          try {
+            const idsConcessionarias = authClient.getIdsConcessionariasFromToken();
+            if (idsConcessionarias.length > 0) {
+              const todasConcessionarias = await concessionariaClient.buscarTodas();
+              concessionariasDoResponsavel = todasConcessionarias.filter(
+                c => idsConcessionarias.includes(c.idConcessionaria)
+              );
+            }
+          } catch (fallbackError) {
+            console.error('Erro no fallback de concessionárias:', fallbackError);
+            if (isMounted) {
+              setConcessionarias([]);
+              setConcessionariaSelecionadaState(null);
+              setLoading(false);
+            }
+            return;
           }
         }
+        
+        if (!isMounted) return;
         
         if (concessionariasDoResponsavel.length === 0) {
           setConcessionarias([]);
           setConcessionariaSelecionadaState(null);
           setLoading(false);
           // Se não houver concessionárias, deslogar e redirecionar
-          // O toast já foi mostrado na página de login, então não mostrar aqui para evitar duplicação
           authClient.logout();
           router.push('/');
           return;
@@ -114,22 +133,34 @@ export function ConcessionariaProvider({ children }: { children: ReactNode }) {
         }
       } catch (error) {
         console.error('Erro ao carregar concessionárias:', error);
-        setConcessionarias([]);
-        setConcessionariaSelecionadaState(null);
+        if (isMounted) {
+          setConcessionarias([]);
+          setConcessionariaSelecionadaState(null);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     carregarConcessionarias();
 
-    // Listener para quando o token for salvo na mesma aba (após login)
+    // Listener para quando o token for salvo (após login)
     const handleAuthTokenSaved = () => {
-      carregarConcessionarias();
+      if (!isMounted) return;
+      
+      console.log('[ConcessionariaContext] Token salvo, recarregando concessionárias...');
+      setConcessionarias([]);
+      setConcessionariaSelecionadaState(null);
+      setLoading(true);
+      
+      setTimeout(() => {
+        if (isMounted) carregarConcessionarias();
+      }, AUTH_TOKEN_SAVED_DELAY);
     };
 
     // Listener para quando o token for salvo em outra aba
     const handleStorageChange = (e: StorageEvent) => {
+      if (!isMounted) return;
       if (e.key === 'authToken' && e.newValue) {
         carregarConcessionarias();
       }
@@ -137,8 +168,12 @@ export function ConcessionariaProvider({ children }: { children: ReactNode }) {
 
     // Listener para quando o token for removido (logout)
     const handleAuthTokenRemoved = () => {
+      if (!isMounted) return;
+      
+      console.log('[ConcessionariaContext] Token removido, limpando dados...');
       setConcessionarias([]);
       setConcessionariaSelecionadaState(null);
+      localStorage.removeItem(STORAGE_KEY);
       setLoading(false);
     };
 
@@ -147,6 +182,7 @@ export function ConcessionariaProvider({ children }: { children: ReactNode }) {
     window.addEventListener('authTokenRemoved', handleAuthTokenRemoved);
 
     return () => {
+      isMounted = false;
       window.removeEventListener('authTokenSaved', handleAuthTokenSaved);
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('authTokenRemoved', handleAuthTokenRemoved);

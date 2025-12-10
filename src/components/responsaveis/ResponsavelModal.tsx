@@ -325,8 +325,9 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
 
       onSave();
       onClose();
-    } catch {
-      toast.error(responsavel ? "Erro ao atualizar responsável" : "Erro ao criar responsável");
+    } catch (error) {
+      const errorMessage = (error as Error)?.message || (responsavel ? "Erro ao atualizar responsável" : "Erro ao criar responsável");
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

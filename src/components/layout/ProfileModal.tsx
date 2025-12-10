@@ -19,6 +19,7 @@ import { TipoObjetoAnexoEnum, ArquivoDTO } from '@/api/anexos/type';
 import { responsavelAnexosClient } from '@/api/responsaveis/anexos-client';
 import { useConcessionaria } from '@/context/concessionaria/ConcessionariaContext';
 import concessionariaClient from '@/api/concessionaria/client';
+import LoadingOverlay from '@/components/ui/loading-overlay';
 
 interface ProfileModalProps {
   user: User | null;
@@ -54,7 +55,7 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
   const [savingData, setSavingData] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   
-  const { concessionariaSelecionada, concessionariaChangeKey } = useConcessionaria();
+  const { concessionariaChangeKey } = useConcessionaria();
 
   const getPerfil = (): string => {
     return perfis?.filter(perfil => perfil.idPerfil === formData.idPerfil)?.[0]?.nmPerfil ||
@@ -153,8 +154,8 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
       onSave?.();
       onClose();
     } catch (error) {
-      console.error('Erro ao salvar dados:', error);
-      toast.error('Erro ao salvar dados');
+      const errorMessage = (error as Error)?.message || (responsavel ? "Erro ao atualizar responsável" : "Erro ao criar responsável");
+      toast.error(errorMessage);
     } finally {
       setSavingData(false);
     }
@@ -288,6 +289,25 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
   useEffect(() => {
     if (open) {
       setErrors({});
+      setResponsavel(null);
+      setFormData({
+        idPerfil: 0,
+        nmUsuarioLogin: '',
+        nmResponsavel: '',
+        dsEmail: '',
+        nrCpf: '',
+        dtNascimento: '',
+        idsAreas: [],
+        nmCargo: '',
+        idsConcessionarias: []
+      });
+      setSelectedAreaIds([]);
+      setSelectedConcessionariaIds([]);
+      setSelectedPhotoFile(null);
+      setPhotoPreview(null);
+      setExistingPhotoPreview(null);
+      setExistingPhoto(null);
+
       (async () => {
         await Promise.all([
           buscarPerfis(),
@@ -295,6 +315,13 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
           loadExistingPhoto(),
         ]);
       })();
+    } else {
+      // Limpar estados ao fechar o modal
+      setErrors({});
+      setResponsavel(null);
+      setSelectedPhotoFile(null);
+      setPhotoPreview(null);
+      setExistingPhotoPreview(null);
     }
   }, [open, buscarPerfis, buscarDadosResponsavel, loadExistingPhoto]);
 
@@ -323,23 +350,37 @@ export default function ProfileModal({ user, open, onClose, onSave }: ProfileMod
     }
   }, [open, concessionariaChangeKey]);
 
+  // Fechar modal e limpar dados quando o usuário fizer logout
+  useEffect(() => {
+    const handleAuthTokenRemoved = () => {
+      console.log('[ProfileModal] Token removido - fechando modal e limpando dados');
+      onClose();
+    };
+
+    window.addEventListener('authTokenRemoved', handleAuthTokenRemoved);
+
+    return () => {
+      window.removeEventListener('authTokenRemoved', handleAuthTokenRemoved);
+    };
+  }, [onClose]);
+
   if (loadingData) {
     return (
-      <Dialog open={open} onOpenChange={(newOpen) => !newOpen && onClose()}>
-        <DialogContent className="h-full flex flex-col">
-          <DialogHeader className="pb-6 flex-shrink-0">
-            <DialogTitle className="text-xl font-semibold">
-              Minha Conta
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-              <p className="mt-2 text-gray-600">Carregando dados...</p>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <>
+        <Dialog open={open} onOpenChange={(newOpen) => !newOpen && onClose()}>
+          <DialogContent className="h-full flex flex-col opacity-0">
+            <DialogHeader className="pb-6 flex-shrink-0">
+              <DialogTitle className="text-xl font-semibold">
+                Minha Conta
+              </DialogTitle>
+            </DialogHeader>
+          </DialogContent>
+        </Dialog>
+        <LoadingOverlay
+          title="Carregando dados do perfil"
+          subtitle="Buscando informações da sua conta..."
+        />
+      </>
     );
   }
 
