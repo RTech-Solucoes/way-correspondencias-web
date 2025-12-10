@@ -4,6 +4,7 @@ import { ObrigacaoPendenteResponse } from '@/api/dashboard/type';
 import Link from 'next/link';
 import { useConcessionaria } from '@/context/concessionaria/ConcessionariaContext';
 import { TipoEnum } from '@/api/tipos/types';
+import { Card } from '@nextui-org/react';
 
 interface ObrigacoesPendentesProps {
   refreshTrigger?: number;

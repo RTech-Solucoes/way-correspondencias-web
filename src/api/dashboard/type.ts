@@ -116,10 +116,26 @@ export interface ObrigacaoPendenteResponse {
 }
 
 export interface ObrigacaoRecentActivityDTO {
+    idSolicitacao: number;
     nmResponsavel: string;
     dsAssunto: string;
     cdIdentificacao: string;
     dtCriacao: string;
     dsParecer?: string;
     tipoAtividade: 'TRAMITACAO' | 'PARECER';
+}
+
+export interface ObrigacaoAreaTemaDTO {
+    idSolicitacao: number;
+    areas: SolicitacaoAreaDTO[];
+    nmTema: string;
+    dtCriacao: string;
+}
+
+export interface ObrigacaoPrazoResponse {
+    quantidadeDentroPrazo: number;
+    quantidadeForaPrazo: number;
+    percentualDentroPrazo: number;
+    percentualForaPrazo: number;
+    total: number;
 }

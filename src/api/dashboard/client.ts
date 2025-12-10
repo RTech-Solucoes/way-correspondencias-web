@@ -1,6 +1,6 @@
 import { SolicitacaoResumoResponse } from "@/types/solicitacoes/types";
 import ApiClient from "../client";
-import { DashboardListSummary, DashboardOverview, ICalendar, ICalendarYear, IRecentActivity, ObrigacaoPendenteResponse, ObrigacaoRecentActivityDTO, PaginatedResponse, SolicitacaoCountResponse, SolicitacaoPrazo } from "./type";
+import { DashboardListSummary, DashboardOverview, ICalendar, ICalendarYear, IRecentActivity, ObrigacaoAreaTemaDTO, ObrigacaoPendenteResponse, ObrigacaoPrazoResponse, ObrigacaoRecentActivityDTO, PaginatedResponse, SolicitacaoCountResponse, SolicitacaoPrazo } from "./type";
 import { buildQueryParams } from "@/utils/utils";
 import { ObrigacaoCalendarioResponse, ObrigacaoCalendarioMesCountResponse } from "../obrigacao/types";
 
@@ -29,43 +29,43 @@ class DashboardClient {
         }
         
         const qs = queryParams.toString();
-        return this.client.request<DashboardOverview[]>(`/overview${qs ? `?${qs}` : ''}`, {
+        return this.client.request<DashboardOverview[]>(`/visao-geral${qs ? `?${qs}` : ''}`, {
             method: 'GET',
         });
     }
 
     async getRecentOverview(page: number, size: number): Promise<PaginatedResponse<DashboardListSummary>> {
-        return this.client.request<PaginatedResponse<DashboardListSummary>>(`/list-summary?page=${page}&size=${size}`, {
+        return this.client.request<PaginatedResponse<DashboardListSummary>>(`/listar-resumo?page=${page}&size=${size}`, {
             method: "GET",
         });
     }
 
     async getRecentDeadline(page: number, size: number): Promise<PaginatedResponse<SolicitacaoPrazo>> {
-        return this.client.request<PaginatedResponse<SolicitacaoPrazo>>(`/recent-deadline?page=${page}&size=${size}`, {
+        return this.client.request<PaginatedResponse<SolicitacaoPrazo>>(`/prazos-recentes?page=${page}&size=${size}`, {
             method: "GET",
         });
     }
 
     async getRecentActivity(page: number, size: number): Promise<PaginatedResponse<IRecentActivity>> {
-        return this.client.request<PaginatedResponse<IRecentActivity>>(`/recent-activity?page=${page}&size=${size}`, {
+        return this.client.request<PaginatedResponse<IRecentActivity>>(`/atividade-recente?page=${page}&size=${size}`, {
             method: "GET",
         });
     }
 
     async getCalendarByWeek(): Promise<ICalendar[]> {
-        return this.client.request<ICalendar[]>(`/list-by-week`, {
+        return this.client.request<ICalendar[]>(`/listar-por-semana`, {
             method: "GET",
         });
     }
 
     async getCalendarByMonth(mes: number, ano: number): Promise<ICalendar[]> {
-        return this.client.request<ICalendar[]>(`/list-by-mouth?mes=${mes}&ano=${ano}`, {
+        return this.client.request<ICalendar[]>(`/listar-por-mes?mes=${mes}&ano=${ano}`, {
             method: "GET",
         });
     }
 
     async getCalendarByYear(ano: number): Promise<ICalendarYear[]> {
-        return this.client.request<ICalendarYear[]>(`/list-by-month-in-year?ano=${ano}`, {
+        return this.client.request<ICalendarYear[]>(`/listar-meses-do-ano?ano=${ano}`, {
             method: "GET",
         });
     }
@@ -106,7 +106,21 @@ class DashboardClient {
 
     async getObrigacoesRecentActivity(page: number, size: number): Promise<PaginatedResponse<ObrigacaoRecentActivityDTO>> {
         return this.client.request<PaginatedResponse<ObrigacaoRecentActivityDTO>>(
-            `/obrigacoes-recent-activity?page=${page}&size=${size}`,
+            `/obrigacoes-atividade-recente?page=${page}&size=${size}`,
+            { method: 'GET' }
+        );
+    }
+
+    async getObrigacoesListSummary(page: number, size: number): Promise<PaginatedResponse<ObrigacaoAreaTemaDTO>> {
+        return this.client.request<PaginatedResponse<ObrigacaoAreaTemaDTO>>(
+            `/obrigacoes-recentes?page=${page}&size=${size}`,
+            { method: 'GET' }
+        );
+    }
+
+    async getObrigacoesPorPrazo(): Promise<ObrigacaoPrazoResponse> {
+        return this.client.request<ObrigacaoPrazoResponse>(
+            `/obrigacoes-prazo`,
             { method: 'GET' }
         );
     }

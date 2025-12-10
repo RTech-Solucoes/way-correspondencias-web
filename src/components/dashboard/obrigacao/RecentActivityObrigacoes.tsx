@@ -7,8 +7,9 @@ import dashboardClient from "@/api/dashboard/client";
 import { ObrigacaoRecentActivityDTO } from "@/api/dashboard/type";
 import CardHeader from "../card-header";
 import PaginationRecentActivity from "../RecentActivity/PaginationRecentActivity";
-import { formatDistanceToNow } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { formatDateTimeBr } from "@/utils/utils";
+import Link from "next/link";
+import { Info } from "lucide-react";
 
 interface RecentActivityObrigacoesProps {
   refreshTrigger?: number;
@@ -32,19 +33,6 @@ const getActivityIcon = (tipoAtividade: string) => {
       </svg>
     </div>
   );
-};
-
-const getActivityLabel = (tipoAtividade: string) => {
-  return tipoAtividade === 'TRAMITACAO' ? 'Tramitação' : 'Parecer';
-};
-
-const formatTempoDecorrido = (dtCriacao: string): string => {
-  try {
-    const date = new Date(dtCriacao);
-    return formatDistanceToNow(date, { addSuffix: true, locale: ptBR });
-  } catch {
-    return 'Data inválida';
-  }
 };
 
 export default function RecentActivityObrigacoes({ refreshTrigger }: RecentActivityObrigacoesProps) {
@@ -93,55 +81,53 @@ export default function RecentActivityObrigacoes({ refreshTrigger }: RecentActiv
       </div>
 
       <CardContent className="flex-1">
-        <div className="space-y-3">
+        <div className="space-y-2">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <div className="text-sm text-gray-500">Carregando atividades...</div>
             </div>
           ) : listActivity.length === 0 ? (
-            <div className="text-sm text-gray-500 py-4 text-center">
-              Nenhuma atividade recente encontrada.
-            </div>
+            <div className="text-sm text-gray-500">Nenhuma atividade recente encontrada.</div>
           ) : (
             listActivity.map((activity, index) => (
               <div 
                 key={`activity-${index}-${activity.cdIdentificacao}`} 
-                className="flex items-start space-x-3 bg-gray-50 hover:bg-gray-100 rounded-lg p-4 transition-colors"
+                className="flex items-start space-x-3 bg-gray-100 rounded-lg p-4 hover:bg-gray-200 transition-colors"
               >
                 {getActivityIcon(activity.tipoAtividade)}
                 
-                <div className="flex-1 min-w-0">
+                <div className="w-full flex flex-col gap-0.5">
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-semibold text-gray-900 text-sm">
-                          {activity.nmResponsavel}
-                        </span>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                          {getActivityLabel(activity.tipoAtividade)}
-                        </span>
-                      </div>
-                      
-                      <p className="text-sm text-gray-600 mb-1 line-clamp-2">
-                        {activity.dsAssunto}
-                      </p>
-                      
-                      {activity.dsParecer && activity.tipoAtividade === 'PARECER' && (
-                        <p className="text-xs text-gray-500 italic line-clamp-1 mt-1">
-                          "{activity.dsParecer}"
-                        </p>
-                      )}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-bold text-base text-gray-900">
+                        {activity.nmResponsavel}
+                      </span>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                        <Link href={`/obrigacao/${activity.idSolicitacao}/conferencia`}>
+                            <Info className="w-4 h-4" />
+                        </Link>
+                      </span>
                     </div>
                     
                     <div className="flex flex-col items-end gap-1 flex-shrink-0">
                       <span className="text-xs font-medium text-gray-900">
                         {activity.cdIdentificacao}
                       </span>
-                      <span className="text-xs text-gray-500">
-                        {formatTempoDecorrido(activity.dtCriacao)}
+                      <span className="text-xs text-gray-600">
+                        {formatDateTimeBr(activity.dtCriacao)}
                       </span>
                     </div>
                   </div>
+                  
+                  <p className="text-sm text-gray-600 line-clamp-2">
+                    {activity.dsAssunto}
+                  </p>
+                  
+                  {activity.dsParecer && activity.tipoAtividade === 'PARECER' && (
+                    <p className="text-xs text-gray-500 italic line-clamp-2 mt-1">
+                      &quot;{activity.dsParecer}&quot;
+                    </p>
+                  )}
                 </div>
               </div>
             ))

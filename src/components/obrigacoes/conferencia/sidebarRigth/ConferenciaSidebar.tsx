@@ -30,6 +30,7 @@ import ExportHistoricoObrigacaoPdf from '@/components/obrigacoes/relatorios/Expo
 interface ConferenciaSidebarProps {
   detalhe: ObrigacaoDetalheResponse;
   onRefreshAnexos?: () => void;
+  podeEnviarComentarioPorPerfilEArea?: boolean;
 }
 
 enum RegistroTabKey {
@@ -37,7 +38,7 @@ enum RegistroTabKey {
   COMENTARIOS = 'comentarios',
 }
 
-export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSidebarProps) {
+export function ConferenciaSidebar({ detalhe, onRefreshAnexos, podeEnviarComentarioPorPerfilEArea = false }: ConferenciaSidebarProps) {
   const { idPerfil } = useUserGestao();
   const [registroTab, setRegistroTab] = useState<RegistroTabKey>(RegistroTabKey.ANEXOS);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
@@ -212,6 +213,33 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
     carregarResponsaveis();
   }, []);
 
+  const reloadDados = useCallback(async () => {
+    if (!detalhe?.obrigacao?.idSolicitacao) {
+      return;
+    }
+
+    try {
+      const [pareceres, tramitacoesResponse] = await Promise.all([
+        solicitacaoParecerClient.buscarPorIdSolicitacao(detalhe.obrigacao.idSolicitacao),
+        tramitacoesClient.listarPorSolicitacao(detalhe.obrigacao.idSolicitacao),
+      ]);
+      
+      setSolicitacaoPareceres(pareceres || []);
+      setTramitacoes(tramitacoesResponse || []);
+      
+      const novoMap = new Map<number, number>();
+      pareceres?.forEach(parecer => {
+        if (parecer.idTramitacao) {
+          novoMap.set(parecer.idSolicitacaoParecer, parecer.idTramitacao);
+        }
+      });
+      setParecerTramitacaoMap(novoMap);
+    } catch (error) {
+      console.error('Erro ao recarregar dados:', error);
+      toast.error('Erro ao recarregar comentários.');
+    }
+  }, [detalhe?.obrigacao?.idSolicitacao]);
+
   useEffect(() => {
     const carregarDados = async () => {
       if (!detalhe?.obrigacao?.idSolicitacao) {
@@ -245,7 +273,7 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
         const temDadosIniciaisNoErro = (detalhe?.solicitacaoParecer?.length ?? 0) > 0 || 
-                                       (detalhe?.tramitacoes?.length ?? 0) > 0;
+                                     (detalhe?.tramitacoes?.length ?? 0) > 0;
         if (!temDadosIniciaisNoErro) {
           toast.error('Erro ao carregar comentários.');
         }
@@ -533,14 +561,14 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
 
 
   const podeEnviarComentario = useMemo(() => {
+    // Validação da página: perfil 7 (TI) da área de TI ou perfil 3 (Diretoria) da área de Diretoria
+    if (podeEnviarComentarioPorPerfilEArea) {
+      return true;
+    }
 
-    if (idPerfil === perfilUtil.VALIDADOR_ASSINANTE && isDaAreaAtribuida) return true;
-    if (idPerfil === perfilUtil.TECNICO_SUPORTE && isDaAreaAtribuida) return true;
-
-    // Se for admin ou gestor (perfil 1, 2 ou 3), pode enviar
+    // Se for admin ou gestor (perfil 1 ou 2), pode enviar
     if (idPerfil === perfilUtil.ADMINISTRADOR ||
-      idPerfil === perfilUtil.GESTOR_DO_SISTEMA ||
-      idPerfil === perfilUtil.VALIDADOR_ASSINANTE) {
+      idPerfil === perfilUtil.GESTOR_DO_SISTEMA) {
       return true;
     }
 
@@ -555,7 +583,7 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
     const isDeAreaCondicionante = idsAreasCondicionantes.some(idArea => userAreaIds.includes(idArea));
 
     return isDeAreaCondicionante;
-  }, [idPerfil, isDaAreaAtribuida, userResponsavel?.areas, areasCondicionantes]);
+  }, [idPerfil, isDaAreaAtribuida, podeEnviarComentarioPorPerfilEArea, userResponsavel?.areas, areasCondicionantes]);
 
   const tooltipEnviarComentario = useMemo(() => {
     if (!podeEnviarComentario) {
@@ -663,14 +691,18 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
           if (podeCriarTramitacao) {
             const tramitacaoRequest = {
               idSolicitacao: detalhe.obrigacao.idSolicitacao,
-              idAreaOrigem: areaAtribuida.idArea,
-              idAreaDestino: areaAtribuida.idArea,
               dsObservacao: textoCompleto.trim(),
               idResponsavel: userResponsavel?.idResponsavel,
             };
 
             await tramitacoesClient.tramitarViaFluxo(tramitacaoRequest);
+            
+            await reloadDados();
+            if (onRefreshAnexos) {
+              await onRefreshAnexos();
+            }
           }
+          toast.success('Comentário de área atribuída salvo com sucesso.');
           return;
         }
 
@@ -696,9 +728,14 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
 
         await solicitacaoParecerClient.criar(parecerRequest);
 
+        await reloadDados();
+        if (onRefreshAnexos) {
+          await onRefreshAnexos();
+        }
+
         toast.success(podeResponderTramitacao 
           ? 'Comentário de área atribuída salvo com sucesso.' 
-          : 'Parecer salvo com sucesso.');
+          : 'Comentário salvo com sucesso.');
       } else {
         const requestData: {
           idSolicitacao: number;
@@ -722,6 +759,12 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
 
         await solicitacaoParecerClient.criar(requestData);
         
+        // Recarregar dados imediatamente após criar parecer
+        await reloadDados();
+        if (onRefreshAnexos) {
+          await onRefreshAnexos();
+        }
+        
         toast.success('Comentário salvo com sucesso.');
       }
 
@@ -732,28 +775,13 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos }: ConferenciaSide
       if (textarea) {
         textarea.value = '';
       }
-
-      const [pareceres, tramitacoesResponse, responsaveisResponse] = await Promise.all([
-        solicitacaoParecerClient.buscarPorIdSolicitacao(detalhe.obrigacao.idSolicitacao),
-        tramitacoesClient.listarPorSolicitacao(detalhe.obrigacao.idSolicitacao),
-        responsaveisClient.buscarPorFiltro({ size: 5000 })
-      ]);
-      
-      setSolicitacaoPareceres(pareceres || []);
-      setTramitacoes(tramitacoesResponse || []);
-      const responsaveisAtivos = responsaveisResponse.content.filter(r => r.flAtivo === 'S');
-      setResponsaveis(responsaveisAtivos);
-
-      if (onRefreshAnexos) {
-        await onRefreshAnexos();
-      }
     } catch (error) {
       console.error('Erro ao enviar comentário:', error);
       toast.error('Erro ao enviar o comentário.');
     } finally {
       setEnviandoComentario(false);
     }
-  }, [comentarioTexto, parecerReferencia, tramitacaoReferencia, detalhe?.obrigacao?.idSolicitacao, detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao, areaAtribuida, userResponsavel, tramitacoes, podeResponderTramitacao, onRefreshAnexos, statusPermitidoParaTramitar]);
+  }, [comentarioTexto, parecerReferencia, tramitacaoReferencia, detalhe?.obrigacao?.idSolicitacao, detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao, areaAtribuida, userResponsavel, tramitacoes, podeResponderTramitacao, onRefreshAnexos, statusPermitidoParaTramitar, reloadDados]);
 
   return (
     <aside className="fixed right-0 top-[80px] bottom-[49px] z-10 flex w-full max-w-md flex-shrink-0 flex-col">

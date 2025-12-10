@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import DashboardHeader from '@/components/dashboard/DashboardHeader/DashboardHeader';
-import TasksStatusBoardObrigacoes from '@/components/dashboard/TasksStatusBoard/TasksStatusBoardObrigacoes';
+import TasksStatusBoard from '@/components/dashboard/TasksStatusBoard/TasksStatusBoard';
 import DeadlinesCalendarObrigacoes from '@/components/dashboard/obrigacao/calendario/DeadlinesCalendarObrigacoes';
-import ObrigacoesPendentes from '@/components/dashboard/obrigacao/ObrigacoesPendentes';
 import { TipoEnum } from '@/api/tipos/types';
+import { RecentActivityObrigacoes, ObrigacoesPrazoMetrics } from '@/components/dashboard/obrigacao';
 
 export default function DashboardObrigacoesPage() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -28,13 +28,26 @@ export default function DashboardObrigacoesPage() {
         tipoFluxo={TipoEnum.OBRIGACAO}
       />
 
-      <div className="flex flex-col gap-6">
-        <div className="w-full">
-          <TasksStatusBoardObrigacoes refreshTrigger={refreshTrigger} />
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="lg:col-span-3 h-full">
+          <TasksStatusBoard
+            refreshTrigger={refreshTrigger}
+            cdTipoFluxo={TipoEnum.OBRIGACAO}
+            cdTipoStatus={[TipoEnum.TODOS, TipoEnum.OBRIGACAO]}
+            title="Visão Geral de Obrigações"
+            description="Status de todas as obrigações contratuais"
+            showPendentes={true}
+            showRecent={true}
+          />
         </div>
-        <div className="w-full">
-          <DeadlinesCalendarObrigacoes refreshTrigger={refreshTrigger} />
+        <div className="lg:col-span-2 h-full">
+          <RecentActivityObrigacoes refreshTrigger={refreshTrigger} />
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <ObrigacoesPrazoMetrics refreshTrigger={refreshTrigger} />
+        <DeadlinesCalendarObrigacoes refreshTrigger={refreshTrigger} />
       </div>
     </div>
   );
