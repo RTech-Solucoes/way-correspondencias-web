@@ -32,9 +32,9 @@ export function AppHeader({
   const { concessionariaSelecionada, concessionarias, loading: loadingConcessionaria, setConcessionariaSelecionada } = useConcessionaria();
   
   const user: UserType = {
-    name: userName,
-    username: userLogin,
-    email: userLogin,
+    name: userName || "Usuário",
+    username: userLogin || "user@email.com",
+    email: userLogin || "user@email.com",
     avatar: userAvatar || '/images/avatar.svg',
     perfil: perfil || ''
   };
