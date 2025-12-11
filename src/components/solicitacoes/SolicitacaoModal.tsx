@@ -155,9 +155,7 @@ export default function SolicitacaoModal({
       }
       
       if (!idToSend) return;
-      
-      // Encaminha a solicitação
-      await solicitacoesClient.etapaStatus(idToSend);
+
       toast.success(confirmSendToast || 'Solicitação enviada com sucesso!');
       onSave();
       onClose();
