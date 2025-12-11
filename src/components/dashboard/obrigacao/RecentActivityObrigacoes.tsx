@@ -15,8 +15,8 @@ interface RecentActivityObrigacoesProps {
   refreshTrigger?: number;
 }
 
-const getActivityIcon = (tipoAtividade: string) => {
-  if (tipoAtividade === 'TRAMITACAO') {
+const getActivityIcon = (tpAtividade: string) => {
+  if (tpAtividade === 'TRAMITACAO') {
     return (
       <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
         <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -92,17 +92,17 @@ export default function RecentActivityObrigacoes({ refreshTrigger }: RecentActiv
             listActivity.map((activity, index) => (
               <div 
                 key={`activity-${index}-${activity.cdIdentificacao}`} 
-                className="flex items-start space-x-3 bg-gray-100 rounded-lg p-4 hover:bg-gray-200 transition-colors"
+                className="flex items-start space-x-3 bg-gray-100 rounded-lg p-4 hover:bg-gray-200 transition-colors overflow-hidden"
               >
-                {getActivityIcon(activity.tipoAtividade)}
+                {getActivityIcon(activity.tpAtividade)}
                 
-                <div className="w-full flex flex-col gap-0.5">
+                <div className="flex-1 min-w-0 flex flex-col gap-0.5">
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-bold text-base text-gray-900">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <span className="font-bold text-base text-gray-900 truncate">
                         {activity.nmResponsavel}
                       </span>
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 flex-shrink-0">
                         <Link href={`/obrigacao/${activity.idSolicitacao}/conferencia`}>
                             <Info className="w-4 h-4" />
                         </Link>
@@ -110,21 +110,21 @@ export default function RecentActivityObrigacoes({ refreshTrigger }: RecentActiv
                     </div>
                     
                     <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                      <span className="text-xs font-medium text-gray-900">
+                      <span className="text-xs font-medium text-gray-900 break-all text-right max-w-[120px]">
                         {activity.cdIdentificacao}
                       </span>
-                      <span className="text-xs text-gray-600">
+                      <span className="text-xs text-gray-600 whitespace-nowrap">
                         {formatDateTimeBr(activity.dtCriacao)}
                       </span>
                     </div>
                   </div>
                   
-                  <p className="text-sm text-gray-600 line-clamp-2">
+                  <p className="text-sm text-gray-600 line-clamp-2 break-words overflow-hidden">
                     {activity.dsAssunto}
                   </p>
                   
-                  {activity.dsParecer && activity.tipoAtividade === 'PARECER' && (
-                    <p className="text-xs text-gray-500 italic line-clamp-2 mt-1">
+                  {activity.dsParecer && activity.tpAtividade === 'PARECER' && (
+                    <p className="text-xs text-gray-500 italic line-clamp-2 mt-1 break-words overflow-hidden">
                       &quot;{activity.dsParecer}&quot;
                     </p>
                   )}

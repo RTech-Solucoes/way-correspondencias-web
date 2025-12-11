@@ -104,7 +104,7 @@ export default function TasksStatusBoard({
       } else if (cdTipoFluxo === TipoEnum.OBRIGACAO) {
         try {
           setLoading(true);
-          const response = await dashboardClient.getObrigacoesListSummary(currentPage, 20);
+          const response = await dashboardClient.getObrigacoesListSummary(currentPage, 4);
           setListSummary(response.content);
           setTotalPages(response.totalPages);
           setTotalElements(response.totalElements);
@@ -232,7 +232,7 @@ export default function TasksStatusBoard({
       </CardContent>
 
       <CardFooter className="border-t pt-4 mt-auto">
-        {totalPages > 1 ? (
+        {showRecent && cdTipoFluxo === TipoEnum.OBRIGACAO && totalPages > 1 ? (
           <PaginationTasksStatus
             currentPage={currentPage}
             totalPages={totalPages}

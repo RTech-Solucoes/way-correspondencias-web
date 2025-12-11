@@ -1,6 +1,6 @@
 import { SolicitacaoResumoResponse } from "@/types/solicitacoes/types";
 import ApiClient from "../client";
-import { DashboardListSummary, DashboardOverview, ICalendar, ICalendarYear, IRecentActivity, ObrigacaoAreaTemaDTO, ObrigacaoPendenteResponse, ObrigacaoPrazoResponse, ObrigacaoRecentActivityDTO, PaginatedResponse, SolicitacaoCountResponse, SolicitacaoPrazo } from "./type";
+import { DashboardListSummary, DashboardOverview, ICalendar, ICalendarYear, IRecentActivity, ObrigacaoAreaTemaDTO, ObrigacaoPendenteResponse, ObrigacaoPrazoResponse, ObrigacaoRecentActivityDTO, ObrigacaoTempoMedioResponse, PaginatedResponse, SolicitacaoCountResponse, SolicitacaoPrazo } from "./type";
 import { buildQueryParams } from "@/utils/utils";
 import { ObrigacaoCalendarioResponse, ObrigacaoCalendarioMesCountResponse } from "../obrigacao/types";
 
@@ -121,6 +121,13 @@ class DashboardClient {
     async getObrigacoesPorPrazo(): Promise<ObrigacaoPrazoResponse> {
         return this.client.request<ObrigacaoPrazoResponse>(
             `/obrigacoes-prazo`,
+            { method: 'GET' }
+        );
+    }
+
+    async getObrigacoesTempoMedio(): Promise<ObrigacaoTempoMedioResponse> {
+        return this.client.request<ObrigacaoTempoMedioResponse>(
+            `/obrigacoes-tempo-medio`,
             { method: 'GET' }
         );
     }

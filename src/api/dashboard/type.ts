@@ -122,7 +122,7 @@ export interface ObrigacaoRecentActivityDTO {
     cdIdentificacao: string;
     dtCriacao: string;
     dsParecer?: string;
-    tipoAtividade: 'TRAMITACAO' | 'PARECER';
+    tpAtividade: 'TRAMITACAO' | 'PARECER';
 }
 
 export interface ObrigacaoAreaTemaDTO {
@@ -138,4 +138,9 @@ export interface ObrigacaoPrazoResponse {
     percentualDentroPrazo: number;
     percentualForaPrazo: number;
     total: number;
+}
+
+export interface ObrigacaoTempoMedioResponse {
+    tempoMedioMinutos: number;
+    quantidadeObrigacoes: number;
 }
