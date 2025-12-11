@@ -489,7 +489,6 @@ export default function SolicitacaoModal({
               flExcepcional: formData.flExcepcional || 'N'
             }));
 
-
           await solicitacoesClient.etapaPrazo(solicitacao.idSolicitacao, {
             idTema: formData.idTema,
             nrPrazoInterno: formData.nrPrazo,
