@@ -152,10 +152,12 @@ export default function SolicitacaoModal({
           arquivos: pendingCreateData.arquivos as []
         });
         idToSend = created.idSolicitacao;
+      } else if (!isNewSolicitacao && idToSend) {
+        await solicitacoesClient.etapaStatus(idToSend);
       }
       
       if (!idToSend) return;
-
+      
       toast.success(confirmSendToast || 'Solicitação enviada com sucesso!');
       onSave();
       onClose();
