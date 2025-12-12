@@ -63,8 +63,8 @@ export default function LoginPage() {
       setIsLoading(true);
       try {
         await authClient.login({
-          username: username,
-          password: password
+          username: username.trim(),
+          password: password.trim()
         });
 
         const token = localStorage.getItem("authToken");
