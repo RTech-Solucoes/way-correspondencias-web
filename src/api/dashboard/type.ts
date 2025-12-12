@@ -144,3 +144,11 @@ export interface ObrigacaoTempoMedioResponse {
     tempoMedioMinutos: number;
     quantidadeObrigacoes: number;
 }
+
+export interface AreaRankingDTO {
+    idArea: number;
+    cdArea: string;
+    nmArea: string;
+    totalObrigacoes: number;
+    posicaoRanking: number;
+}

@@ -5,7 +5,7 @@ import DashboardHeader from '@/components/dashboard/DashboardHeader/DashboardHea
 import TasksStatusBoard from '@/components/dashboard/TasksStatusBoard/TasksStatusBoard';
 import DeadlinesCalendarObrigacoes from '@/components/dashboard/obrigacao/calendario/DeadlinesCalendarObrigacoes';
 import { TipoEnum } from '@/api/tipos/types';
-import { RecentActivityObrigacoes, ObrigacoesPrazoMetrics } from '@/components/dashboard/obrigacao';
+import { RecentActivityObrigacoes, ObrigacoesPrazoMetrics, ObrigacoesRankingAreas } from '@/components/dashboard/obrigacao';
 
 export default function DashboardObrigacoesPage() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -48,6 +48,10 @@ export default function DashboardObrigacoesPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <ObrigacoesPrazoMetrics refreshTrigger={refreshTrigger} />
         <DeadlinesCalendarObrigacoes refreshTrigger={refreshTrigger} />
+      </div>
+
+      <div className="w-full">
+        <ObrigacoesRankingAreas refreshTrigger={refreshTrigger} />
       </div>
     </div>
   );

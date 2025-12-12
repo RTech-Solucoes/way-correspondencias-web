@@ -34,8 +34,6 @@ import { responsaveisClient } from '@/api/responsaveis/client';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
 import { solicitacaoParecerClient } from '@/api/solicitacao-parecer/client';
-import areasClient from '@/api/areas/client';
-import { CdAreaEnum } from '@/api/areas/types';
 
 type TabKey = 'dados' | 'temas' | 'prazos' | 'anexos' | 'vinculos';
 const tabs: { key: TabKey; label: string }[] = [
@@ -226,44 +224,11 @@ export default function ConferenciaObrigacaoPage() {
     return userAreaIds.includes(idAreaAtribuida);
   }, [areaAtribuida?.idArea, userResponsavel?.areas]);
 
-  const [isDaAreaTI, setIsDaAreaTI] = useState(false);
-  const [isDaAreaDiretoria, setIsDaAreaDiretoria] = useState(false);
-
-  useEffect(() => {
-    const verificarAreas = async () => {
-      if (!userResponsavel?.areas) {
-        return;
-      }
-
-      try {
-        const [areaTI, areaDiretoria] = await Promise.all([
-          areasClient.buscarPorCdArea(CdAreaEnum.TECNOLOGIA_DA_INFORMACAO),
-          areasClient.buscarPorCdArea(CdAreaEnum.DIRETORIA),
-        ]);
-
-        const idAreaTI = areaTI?.idArea;
-        const idAreaDiretoria = areaDiretoria?.idArea;
-        const userAreaIds = userResponsavel.areas.map(ra => ra.area.idArea);
-
-        setIsDaAreaTI(idAreaTI ? userAreaIds.includes(idAreaTI) : false);
-        setIsDaAreaDiretoria(idAreaDiretoria ? userAreaIds.includes(idAreaDiretoria) : false);
-      } catch (error) {
-        console.error('Erro ao verificar áreas:', error);
-      }
-    };
-
-    verificarAreas();
-  }, [userResponsavel?.areas]);
 
   const isPerfilPermitidoEnviarReg = useMemo(() => {
     const temPerfilPermitido = [perfilUtil.EXECUTOR_AVANCADO, perfilUtil.EXECUTOR, perfilUtil.EXECUTOR_RESTRITO].includes(idPerfil ?? 0);
-
-    if (idPerfil === perfilUtil.TECNICO_SUPORTE && isDaAreaTI) return true;
-
-    if (idPerfil === perfilUtil.VALIDADOR_ASSINANTE && isDaAreaDiretoria) return true;
-
     return temPerfilPermitido && isUsuarioDaAreaAtribuida;
-  }, [idPerfil, isUsuarioDaAreaAtribuida, isDaAreaTI, isDaAreaDiretoria]);
+  }, [idPerfil, isUsuarioDaAreaAtribuida]);
 
   const handleSolicitarAjustesClick = useCallback(() => {
     setShowSolicitarAjustesDialog(true);
@@ -434,19 +399,9 @@ export default function ConferenciaObrigacaoPage() {
   const tooltipEnviarRegulatorio = useMemo(() => {
     if (!isPerfilPermitidoEnviarReg) {
       const temPerfilPermitido = [perfilUtil.EXECUTOR_AVANCADO, perfilUtil.EXECUTOR, perfilUtil.EXECUTOR_RESTRITO].includes(idPerfil ?? 0);
-      const isPerfil7TI = idPerfil === perfilUtil.TECNICO_SUPORTE && isDaAreaTI;
-      const isPerfil3Diretoria = idPerfil === perfilUtil.VALIDADOR_ASSINANTE && isDaAreaDiretoria;
-      
-      if (idPerfil === perfilUtil.TECNICO_SUPORTE && !isDaAreaTI) {
-        return 'Apenas usuários da área de TI com perfil Técnico de Suporte podem enviar para análise do regulatório.';
-      }
 
-      if (idPerfil === perfilUtil.VALIDADOR_ASSINANTE && !isDaAreaDiretoria) {
-        return 'Apenas usuários da área de Diretoria com perfil Validador Assinante podem enviar para análise do regulatório.';
-      }
-      
-      if (!temPerfilPermitido && !isPerfil7TI && !isPerfil3Diretoria) {
-        return 'Apenas Executor Avançado, Executor, Executor Restrito, Técnico de Suporte (área TI) ou Validador Assinante (área Diretoria) podem enviar para análise do regulatório.';
+      if (!temPerfilPermitido) {
+        return 'Apenas Executor Avançado, Executor, Executor Restrito podem enviar para análise do regulatório.';
       }
       if (!isUsuarioDaAreaAtribuida) {
         return 'Apenas usuários da área atribuída podem enviar para análise do regulatório.';
@@ -466,7 +421,7 @@ export default function ConferenciaObrigacaoPage() {
       return 'Só é possível enviar para análise do regulatório quando o status for "Em Andamento" ou "Atrasada".';
     }
     return '';
-  }, [isPerfilPermitidoEnviarReg, isStatusPermitidoEnviarReg, temEvidenciaCumprimento, isStatusAtrasada, temJustificativaAtraso, idPerfil, isUsuarioDaAreaAtribuida, isDaAreaTI, isDaAreaDiretoria]);
+  }, [isPerfilPermitidoEnviarReg, isStatusPermitidoEnviarReg, temEvidenciaCumprimento, isStatusAtrasada, temJustificativaAtraso, idPerfil, isUsuarioDaAreaAtribuida]);
 
   const tooltipStatusValidacaoRegulatorio = useMemo(() => {
     if (conferenciaAprovada) {

@@ -1,6 +1,6 @@
 import { SolicitacaoResumoResponse } from "@/types/solicitacoes/types";
 import ApiClient from "../client";
-import { DashboardListSummary, DashboardOverview, ICalendar, ICalendarYear, IRecentActivity, ObrigacaoAreaTemaDTO, ObrigacaoPendenteResponse, ObrigacaoPrazoResponse, ObrigacaoRecentActivityDTO, ObrigacaoTempoMedioResponse, PaginatedResponse, SolicitacaoCountResponse, SolicitacaoPrazo } from "./type";
+import { AreaRankingDTO, DashboardListSummary, DashboardOverview, ICalendar, ICalendarYear, IRecentActivity, ObrigacaoAreaTemaDTO, ObrigacaoPendenteResponse, ObrigacaoPrazoResponse, ObrigacaoRecentActivityDTO, ObrigacaoTempoMedioResponse, PaginatedResponse, SolicitacaoCountResponse, SolicitacaoPrazo } from "./type";
 import { buildQueryParams } from "@/utils/utils";
 import { ObrigacaoCalendarioResponse, ObrigacaoCalendarioMesCountResponse } from "../obrigacao/types";
 
@@ -128,6 +128,20 @@ class DashboardClient {
     async getObrigacoesTempoMedio(): Promise<ObrigacaoTempoMedioResponse> {
         return this.client.request<ObrigacaoTempoMedioResponse>(
             `/obrigacoes-tempo-medio`,
+            { method: 'GET' }
+        );
+    }
+
+    async buscarRankingAreas(idsStatus?: number[]): Promise<AreaRankingDTO[]> {
+        const queryParams = new URLSearchParams();
+        if (idsStatus && idsStatus.length > 0) {
+            idsStatus.forEach(id => {
+                queryParams.append('idsStatus', id.toString());
+            });
+        }
+        const qs = queryParams.toString();
+        return this.client.request<AreaRankingDTO[]>(
+            `/ranking-areas${qs ? `?${qs}` : ''}`,
             { method: 'GET' }
         );
     }

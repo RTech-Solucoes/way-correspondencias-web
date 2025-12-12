@@ -67,7 +67,7 @@ export default function ObrigacoesPendentes({ refreshTrigger }: ObrigacoesPenden
                               className={
                                 isAtribuida 
                                   ? "bg-blue-100 text-blue-800 font-semibold px-2 py-0.5 rounded"
-                                  : "text-gray-600"
+                                  : "text-gray-900 font-semibold"
                               }
                             >
                               {isAtribuida ? '' : '• '}{area.nmArea}
