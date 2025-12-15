@@ -1,7 +1,7 @@
 import {type ClassValue, clsx} from 'clsx';
 import {twMerge} from 'tailwind-merge';
 import {StatusAtivo} from "@/types/misc/types";
-import {ArquivoDTO, TipoResponsavelAnexo} from '@/api/anexos/type';
+import {ArquivoDTO, TipoResponsavelAnexoEnum} from '@/api/anexos/type';
 import { z } from "zod";
 import { cpf } from "cpf-cnpj-validator";
 import dayjs from "dayjs";
@@ -157,7 +157,7 @@ export function fileToBase64String(file: File): Promise<string> {
   });
 }
 
-export async function fileToArquivoDTO(file: File, tpResponsavel: TipoResponsavelAnexo): Promise<ArquivoDTO> {
+export async function fileToArquivoDTO(file: File, tpResponsavel: TipoResponsavelAnexoEnum): Promise<ArquivoDTO> {
   const conteudoArquivo = await fileToBase64String(file);
   return {
     nomeArquivo: file.name,
@@ -395,4 +395,15 @@ export function formatDateTimeBrCompactExport(): string {
   const mi = String(d.getMinutes()).padStart(2, '0');
   const ss = String(d.getSeconds()).padStart(2, '0');
   return `${dd}-${mm}-${yyyy}_${hh}-${mi}-${ss}`;
+}
+
+export function formatDateISOWithoutTimezone(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
 }

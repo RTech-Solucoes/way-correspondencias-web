@@ -5,5 +5,13 @@ export interface PageDef {
   path: string;
   label: string;
   icon: Icon;
-  permission?: Permissoes
+  permission?: Permissoes;
+  module: string;
+}
+
+export interface ModuleDef {
+  id: string;
+  label: string;
+  icon: Icon;
+  description?: string;
 }

@@ -1,25 +1,46 @@
 import dashboardClient from "@/api/dashboard/client";
-import { DashboardListSummary, DashboardOverview } from "@/api/dashboard/type";
+import { DashboardListSummary, DashboardOverview, ObrigacaoAreaTemaDTO } from "@/api/dashboard/type";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { toast } from "sonner";
 import CardHeader from "../card-header";
-import { capitalizeWords, getStatusColorVision, renderIcon } from "../functions";
+import { capitalizeWords, getStatusColorVision, renderIcon, getStatusBgColor } from "../functions";
 import PaginationTasksStatus from "./PaginationTasksStatus";
 import { statusList } from "@/api/status-solicitacao/types";
 import SolicitacoesPendentes from "../SolicitacoesPendentes";
+import ObrigacoesPendentes from "../obrigacao/ObrigacoesPendentes";
+import { CategoriaEnum, TipoEnum } from "@/api/tipos/types";
+import { getObrigacaoStatusStyle } from "@/utils/obrigacoes/status";
+import RecentSummary from "./RecentSummary";
 
 interface TasksStatusBoardProps {
   refreshTrigger?: number;
+  cdTipoFluxo?: TipoEnum;
+  cdTipoStatus?: TipoEnum[];
+  title?: string;
+  description?: string;
+  showPendentes?: boolean;
+  showRecent?: boolean;
 }
 
-export default function TasksStatusBoard({ refreshTrigger }: TasksStatusBoardProps) {
+export default function TasksStatusBoard({ 
+  refreshTrigger,
+  cdTipoFluxo = TipoEnum.CORRESPONDENCIA,
+  cdTipoStatus = [TipoEnum.TODOS, TipoEnum.CORRESPONDENCIA],
+  title = "Visão Geral de Solicitações",
+  description = "Status de todas as solicitações contratuais",
+  showPendentes = true,
+  showRecent = true,
+}: TasksStatusBoardProps) {
   const [visionGeral, setVisionGeral] = useState<DashboardOverview[]>([]);
-  const [listSummary, setListSummary] = useState<DashboardListSummary[]>([]);
+  const [listSummary, setListSummary] = useState<(DashboardListSummary | ObrigacaoAreaTemaDTO)[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading] = useState(false);
+
+  // Serializar cdTipoStatus para usar como dependência estável
+  const cdTipoStatusKey = useMemo(() => cdTipoStatus.join(','), [cdTipoStatus]);
 
   const sortVisionGeral = (data: DashboardOverview[]) => {
     const statusOrder = [
@@ -50,7 +71,13 @@ export default function TasksStatusBoard({ refreshTrigger }: TasksStatusBoardPro
   useEffect(() => {
     const getOverview = async () => {
       try {
-        const data = await dashboardClient.getOverview();
+        const data = await dashboardClient.getOverview({
+          cdTipoFluxo,
+          nmCategoriaFluxo: CategoriaEnum.FLUXO,
+          nmCategoriaStatus: CategoriaEnum.CLASSIFICACAO_STATUS_SOLICITACAO,
+          cdTipoStatus,
+        });
+
         const sortedData = sortVisionGeral(data);
         setVisionGeral(sortedData);
       } catch (error) {
@@ -60,41 +87,102 @@ export default function TasksStatusBoard({ refreshTrigger }: TasksStatusBoardPro
     };
 
     const getRecentOverview = async () => {
-      try {
-        setLoading(true);
-        const response = await dashboardClient.getRecentOverview(currentPage, 4);
-        setListSummary(response.content);
-        setTotalPages(response.totalPages);
-        setTotalElements(response.totalElements);
-      } catch (error) {
-        console.error("Erro ao buscar overview:", error);
-        toast.error("Não foi possível carregar os dados do dashboard.");
-      } finally {
-        setLoading(false);
+
+      if (cdTipoFluxo === TipoEnum.CORRESPONDENCIA) {
+        try {
+          setLoading(true);
+          const response = await dashboardClient.getRecentOverview(currentPage, 4);
+          setListSummary(response.content);
+          setTotalPages(response.totalPages);
+          setTotalElements(response.totalElements);
+        } catch (error) {
+          console.error("Erro ao buscar overview:", error);
+          toast.error("Não foi possível carregar os dados do dashboard.");
+        } finally {
+          setLoading(false);
+        }
+      } else if (cdTipoFluxo === TipoEnum.OBRIGACAO) {
+        try {
+          setLoading(true);
+          const response = await dashboardClient.getObrigacoesListSummary(currentPage, 4);
+          setListSummary(response.content);
+          setTotalPages(response.totalPages);
+          setTotalElements(response.totalElements);
+        } catch (error) {
+          console.error("Erro ao buscar overview de obrigações:", error);
+          toast.error("Não foi possível carregar os dados do dashboard.");
+        } finally {
+          setLoading(false);
+        }
       }
     };
-
     getRecentOverview();
     getOverview();
-  }, [refreshTrigger, currentPage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshTrigger, currentPage, cdTipoFluxo, cdTipoStatusKey]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
+  const getStatusColor = (statusName: string): string => {
+    return getStatusColorVision(statusName);
+  };
+
+  const getStatusColorStyle = (statusName: string): React.CSSProperties => {
+    if (cdTipoFluxo === TipoEnum.OBRIGACAO) {
+      const normalizedStatus = statusName.toUpperCase().trim();
+      const isStatusEspecificoObrigacao = 
+        normalizedStatus.includes('NÃO INICIADO') ||
+        normalizedStatus.includes('NAO_INICIADO') ||
+        normalizedStatus.includes('PENDENTE') ||
+        normalizedStatus.includes('EM ANDAMENTO') ||
+        normalizedStatus.includes('EM_ANDAMENTO') ||
+        (normalizedStatus.includes('EM VALIDAÇÃO') && normalizedStatus.includes('REGULATÓRIO')) ||
+        (normalizedStatus.includes('EM_VALIDACAO') && normalizedStatus.includes('REGULATORIO')) ||
+        normalizedStatus.includes('ATRASADA') ||
+        normalizedStatus.includes('NÃO APLICÁVEL') ||
+        normalizedStatus.includes('NAO_APLICAVEL') ||
+        normalizedStatus.includes('SUSPENSA');
+      
+      if (isStatusEspecificoObrigacao) {
+        const statusStyle = getObrigacaoStatusStyle(null, statusName);
+        return { backgroundColor: statusStyle.backgroundColor };
+      }
+      
+      const bgColor = getStatusBgColor(statusName);
+      if (bgColor && bgColor !== "#6b7280") {
+        return { backgroundColor: bgColor };
+      }
+      
+      const statusStyle = getObrigacaoStatusStyle(null, statusName);
+      return { backgroundColor: statusStyle.backgroundColor };
+    }
+    return {};
+  };
+
+  const getStatusIcon = (statusName: string) => {
+    return renderIcon(statusName);
+  };
+
+  const totalSolicitacoes = useMemo(() => {
+    if (visionGeral.length === 0) return 0;
+    return visionGeral.reduce((sum, item) => sum + item.qtStatus, 0);
+  }, [visionGeral]);
+
   return (
     <Card className="flex flex-col h-full">
       <CardHeader
-        title="Visão Geral de Solicitações"
-        description="Status de todas as solicitações contratuais"
+        title={title + (totalSolicitacoes > 0 ? ' (' + totalSolicitacoes + ')' : '')}
+        description={description}
       />
-      <CardContent>
+      <CardContent className="flex-1 flex flex-col min-h-0">
         <div className="grid grid-cols-2 gap-6">
           {visionGeral.map((item) => (
             <div key={item.nmStatus} className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center">
-                  {renderIcon(item.nmStatus)}
+                  {getStatusIcon(item.nmStatus)}
                   <span>{capitalizeWords(item.nmStatus)}</span>
                 </div>
                 <span className="font-medium">
@@ -103,8 +191,11 @@ export default function TasksStatusBoard({ refreshTrigger }: TasksStatusBoardPro
               </div>
               <div className="h-2 bg-gray-100 w-full rounded-full overflow-hidden">
                 <div
-                  className={`h-full ${getStatusColorVision(item.nmStatus)}`}
-                  style={{ width: `${item.qtPercentual}%` }}
+                  className={`h-full ${item.qtStatus === 0 ? 'bg-gray-200' : getStatusColor(item.nmStatus)}`}
+                  style={{ 
+                    width: `${item.qtPercentual}%`,
+                    ...(item.qtStatus === 0 ? {} : getStatusColorStyle(item.nmStatus))
+                  }}
                 ></div>
               </div>
             </div>
@@ -117,42 +208,31 @@ export default function TasksStatusBoard({ refreshTrigger }: TasksStatusBoardPro
           )}
         </div>
 
-        <div className="mt-6">
-          <SolicitacoesPendentes
-            refreshTrigger={refreshTrigger}
-          />
-        </div>
-        
-        <div className="mt-6">
-          <h4 className="text-2xl font-semibold leading-none tracking-tight mb-6">
-            Solicitações Recentes
-          </h4>
-          <div className="space-y-3">
-            {loading ? (
-              <div className="flex items-center justify-center py-4">
-                <div className="text-sm text-gray-500">Carregando obrigações...</div>
-              </div>
-            ) : listSummary.length === 0 ? (
-              <div className="text-sm text-gray-500">Nenhuma tarefa foi realizada recentemente.</div>
+        {showPendentes && (
+          <div className="mt-6">
+            {cdTipoFluxo === TipoEnum.OBRIGACAO ? (
+              <ObrigacoesPendentes
+                refreshTrigger={refreshTrigger}
+              />
             ) : (
-              listSummary.map((task, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-100 rounded-lg">
-                  <div className="flex items-center justify-between space-x-3 w-full">
-                    <div>
-                      <div className="font-medium text-sm">{task.nmArea}</div>
-                      <div className="text-xs text-gray-500">{task.nmTema}</div>
-                    </div>
-                    <div className="text-xs text-gray-500">{task.dtCriacaoFormatada}</div>
-                  </div>
-                </div>
-              ))
+              <SolicitacoesPendentes
+                refreshTrigger={refreshTrigger}
+              />
             )}
           </div>
-        </div>
+        )}
+        
+        {showRecent && (
+          <RecentSummary 
+            listSummary={listSummary} 
+            loading={loading} 
+            cdTipoFluxo={cdTipoFluxo}
+          />
+        )}
       </CardContent>
 
       <CardFooter className="border-t pt-4 mt-auto">
-        {totalPages > 1 ? (
+        {showRecent && cdTipoFluxo === TipoEnum.OBRIGACAO && totalPages > 1 ? (
           <PaginationTasksStatus
             currentPage={currentPage}
             totalPages={totalPages}

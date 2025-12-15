@@ -10,9 +10,11 @@ import {
   PagedResponse,
   SolicitacaoDetalheResponse,
   SolicitacaoFilterParams,
+  SolicitacaoBuscaSimpleResponse,
 } from './types';
 import { solicitacaoAnexosClient } from './anexos-client';
 import { AnexoResponse, ArquivoDTO } from '../anexos/type';
+import { TipoEnum } from '../tipos/types';
 
 class SolicitacoesClient {
 
@@ -113,6 +115,31 @@ class SolicitacoesClient {
     return this.client.request<SolicitacaoDetalheResponse>(`/detalhe/${id}`, {
       method: 'GET',
     });
+  }
+
+  async buscarSimplesPorFiltro(
+    filtro?: string,
+    cdTipoFluxo?: TipoEnum,
+    cdTipoClassificacao?: TipoEnum
+  ): Promise<SolicitacaoBuscaSimpleResponse[]> {
+    const params = {
+      filtro,
+      cdTipoFluxo,
+      cdTipoClassificacao,
+    };
+    
+    const allowedKeys = [
+      'filtro',
+      'cdTipoFluxo',
+      'cdTipoClassificacao',
+    ] as const;
+
+    const qs = buildQueryParams(params, allowedKeys).toString();
+    
+    return this.client.request<SolicitacaoBuscaSimpleResponse[]>(
+      `/simples${qs ? `?${qs}` : ''}`,
+      { method: 'GET' }
+    );
   }
 }
 

@@ -1,22 +1,40 @@
 import { weeks } from "@/components/dashboard/MockDados";
 import { useEffect, useState, useLayoutEffect } from "react";
 import FilterCalendarMonth from "./FilterCalendarMonth";
-import { ICalendar } from "@/api/dashboard/type";
-import dashboardClient from "@/api/dashboard/client";
-import { getStatusColorCalendar } from "../../functions";
 import { useRouter } from "next/navigation";
 
-export default function CalendarMonth() {
+// Tipo genérico para itens do calendário mensal
+export interface CalendarMonthItem {
+  id: number;
+  cdIdentificacao: string;
+  data: string; // Data no formato YYYY-MM-DD ou ISO
+  status?: string;
+  showTime?: boolean;
+}
+
+export interface CalendarMonthConfig {
+  fetchData: (dataInicio: string, dataFim: string) => Promise<CalendarMonthItem[]>;
+  getItemRoute: (item: CalendarMonthItem) => string;
+  getItemStyle: (item: CalendarMonthItem) => string;
+  tooltipTitle: string;
+  refreshTrigger?: number;
+}
+
+interface CalendarMonthProps {
+  config: CalendarMonthConfig;
+}
+
+export default function CalendarMonth({ config }: CalendarMonthProps) {
   const router = useRouter();
   const [tooltip, setTooltip] = useState<{
     visible: boolean;
     x: number;
     y: number;
-    items: ICalendar[];
+    items: CalendarMonthItem[];
   }>({ visible: false, x: 0, y: 0, items: [] });
   const [tooltipHoverTimeout, setTooltipHoverTimeout] = useState<NodeJS.Timeout | null>(null);
 
-  const showTooltip = (e: React.MouseEvent, items: ICalendar[]) => {
+  const showTooltip = (e: React.MouseEvent, items: CalendarMonthItem[]) => {
     if (tooltipHoverTimeout) {
       clearTimeout(tooltipHoverTimeout);
       setTooltipHoverTimeout(null);
@@ -64,15 +82,30 @@ export default function CalendarMonth() {
   }, [tooltipHoverTimeout]);
 
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [calendarByMonth, setCalendarByMonth] = useState<ICalendar[]>([]);
+  const [calendarByMonth, setCalendarByMonth] = useState<CalendarMonthItem[]>([]);
 
   useEffect(() => {
     const getCalendarByMonth = async () => {
-      const data = await dashboardClient.getCalendarByMonth(currentDate.getMonth() + 1, currentDate.getFullYear());
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      
+      const formatDate = (date: Date) => {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      };
+      
+      const dataInicio = formatDate(firstDay);
+      const dataFim = formatDate(lastDay);
+      
+      const data = await config.fetchData(dataInicio, dataFim);
       setCalendarByMonth(data);
     };
     getCalendarByMonth();
-  }, [currentDate]);
+  }, [currentDate, config, config.refreshTrigger]);
 
   const navigateMonth = (direction: 'prev' | 'next') => {
     const newDate = new Date(currentDate);
@@ -125,6 +158,24 @@ export default function CalendarMonth() {
     });
   }
 
+  const parseItemDate = (item: CalendarMonthItem): Date => {
+    // Se a data já tem 'T', é ISO, senão adiciona T00:00:00
+    const dateStr = item.data.includes('T') ? item.data : item.data + 'T00:00:00';
+    return new Date(dateStr);
+  };
+
+  const formatItemDisplay = (item: CalendarMonthItem): { primary: string; secondary: string } => {
+    const itemDate = parseItemDate(item);
+    
+    if (item.showTime && item.data.includes('T')) {
+      const time = itemDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      return { primary: time, secondary: item.cdIdentificacao };
+    }
+    
+    const date = itemDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    return { primary: item.cdIdentificacao, secondary: date };
+  };
+
   return (
     <div className="space-y-4">
       <FilterCalendarMonth month={month + 1} year={year} navigateMonth={navigateMonth} />
@@ -138,20 +189,20 @@ export default function CalendarMonth() {
       </div>
       <div className="grid grid-cols-7 gap-1">
         {days.map((dayInfo, index) => {
-          const dayObligations = calendarByMonth.filter(obligation => {
-            const obligationDate = new Date(obligation.dtFim);
-            return obligationDate.getDate() === dayInfo.date.getDate() &&
-              obligationDate.getMonth() === dayInfo.date.getMonth() &&
-              obligationDate.getFullYear() === dayInfo.date.getFullYear();
+          const dayItems = calendarByMonth.filter(item => {
+            const itemDate = parseItemDate(item);
+            return itemDate.getDate() === dayInfo.date.getDate() &&
+              itemDate.getMonth() === dayInfo.date.getMonth() &&
+              itemDate.getFullYear() === dayInfo.date.getFullYear();
           });
 
           return (
             <div
               key={index}
-              className={`p-2 rounded-lg border text-xs flex flex-col transition-all duration-200 ${dayInfo.isCurrentMonth
+              className={`p-2 rounded-lg border text-xs flex flex-col transition-all duration-200 min-h-[80px] ${dayInfo.isCurrentMonth
                 ? dayInfo.isToday
                   ? 'bg-blue-50 border-blue-300 shadow-md'
-                  : 'bg-white border-gray-200 hover:bg-gray-50'
+                  : 'bg-white border-gray-200 hover:bg-gray-50 hover:shadow-sm'
                 : 'bg-gray-50 border-gray-200 text-gray-400'
                 }`}
             >
@@ -162,47 +213,38 @@ export default function CalendarMonth() {
               </div>
 
               <div className="overflow-y-auto flex-1 space-y-1">
-                {dayObligations.length === 0 ? (
+                {dayItems.length === 0 ? (
                   <div className="text-xs text-gray-400 text-center py-1">
                     -
                   </div>
                 ) : (
-                  dayObligations.slice(0, 2).map((obligation) => {
-                    const obligationDate = new Date(obligation.dtFim);
-                    const time = obligationDate.toLocaleTimeString('pt-BR', {
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    });
+                  dayItems.slice(0, 2).map((item) => {
+                    const display = formatItemDisplay(item);
 
                     return (
                       <div
-                        key={obligation.idSolicitacaoPrazo}
-                        className={`p-1 rounded text-xs truncate cursor-pointer hover:opacity-80 transition-opacity ${getStatusColorCalendar(obligation.nmStatus)}`}
-                        title={`${obligation.cdIdentificacao} - ${time}`}
-                        onClick={() => router.push(`/solicitacoes?idSolicitacao=${obligation.idSolicitacao}`)}
+                        key={item.id}
+                        className={`p-1.5 rounded text-xs cursor-pointer hover:opacity-90 transition-all border hover:shadow-sm ${config.getItemStyle(item)}`}
+                        title={`${item.cdIdentificacao}`}
+                        onClick={() => router.push(config.getItemRoute(item))}
                       >
-                        <div className="font-medium text-xs">{time}</div>
-                        <div className="truncate">{obligation.cdIdentificacao}</div>
-                        <div className="truncate text-xs opacity-75 mt-1">
-                          {obligation.nmStatus}
-                        </div>
+                        <div className="truncate font-semibold text-xs leading-tight">{display.primary}</div>
+                        <div className="text-[10px] opacity-70 mt-0.5">{display.secondary}</div>
+                        {item.status && (
+                          <div className="truncate text-[10px] opacity-75 mt-0.5">{item.status}</div>
+                        )}
                       </div>
                     );
                   })
                 )}
 
-                {dayObligations.length > 2 && (
+                {dayItems.length > 2 && (
                   <div
-                    className="text-xs text-gray-500 text-center py-1 cursor-pointer"
-                    onMouseEnter={(e) =>
-                      showTooltip(
-                        e,
-                        dayObligations.slice(2)
-                      )
-                    }
+                    className="text-xs text-gray-500 text-center py-1 cursor-pointer hover:text-gray-700"
+                    onMouseEnter={(e) => showTooltip(e, dayItems.slice(2))}
                     onMouseLeave={hideTooltip}
                   >
-                    +{dayObligations.length - 2} mais
+                    +{dayItems.length - 2} mais
                   </div>
                 )}
               </div>
@@ -222,28 +264,22 @@ export default function CalendarMonth() {
           onMouseLeave={hideTooltip}
         >
           <div className="font-semibold text-sm mb-2 text-gray-700">
-            Outras Solicitações:
+            {config.tooltipTitle}
           </div>
-          {tooltip.items.map((obligation) => {
-            const obligationDate = new Date(obligation.dtFim);
-            const time = obligationDate.toLocaleTimeString("pt-BR", {
-              hour: "2-digit",
-              minute: "2-digit",
-            });
+          {tooltip.items.map((item) => {
+            const display = formatItemDisplay(item);
 
             return (
               <div
-                key={obligation.idSolicitacaoPrazo}
-                className={`p-1 mb-1 rounded text-xs cursor-pointer hover:opacity-80 transition-opacity ${getStatusColorCalendar(
-                  obligation.nmStatus
-                )}`}
-                onClick={() => router.push(`/solicitacoes?idSolicitacao=${obligation.idSolicitacao}`)}
+                key={item.id}
+                className={`p-2 mb-1.5 rounded text-xs cursor-pointer hover:opacity-90 transition-all border hover:shadow-sm ${config.getItemStyle(item)}`}
+                onClick={() => router.push(config.getItemRoute(item))}
               >
-                <div className="font-medium">{time}</div>
-                <div>{obligation.cdIdentificacao}</div>
-                <div className="text-xs opacity-75 mt-1">
-                  {obligation.nmStatus}
-                </div>
+                <div className="font-semibold">{display.primary}</div>
+                <div className="text-[10px] opacity-75 mt-0.5">{display.secondary}</div>
+                {item.status && (
+                  <div className="text-[10px] opacity-75 mt-0.5">{item.status}</div>
+                )}
               </div>
             );
           })}

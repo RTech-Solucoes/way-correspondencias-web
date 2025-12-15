@@ -3,10 +3,8 @@
 import {useEffect, useState} from 'react';
 import {Label} from '@/components/ui/label';
 import {Badge} from '@/components/ui/badge';
-import {AreaExecutorAvancadoResponse, AreaResponse} from '@/api/areas/types';
-import {ResponsavelResponse} from '@/api/responsaveis/types';
+import {AreaExecutorAvancadoResponse} from '@/api/areas/types';
 import {areasClient} from '@/api/areas/client';
-import {responsaveisClient} from '@/api/responsaveis/client';
 import {cn} from '@/utils/utils';
 import {CheckIcon} from '@phosphor-icons/react';
 
@@ -16,6 +14,8 @@ interface MultiSelectAreasProps {
   label?: string;
   className?: string;
   disabled?: boolean;
+  maxSelection?: number;
+  excludedAreaIds?: number[]; 
 }
 
 export function MultiSelectAreas({
@@ -23,7 +23,9 @@ export function MultiSelectAreas({
   onSelectionChange,
   label = "Áreas",
   className,
-  disabled
+  disabled,
+  maxSelection,
+  excludedAreaIds = []
 }: MultiSelectAreasProps) {
   const [areaExecutorAvancado, setAreaExecutorAvancado] = useState<AreaExecutorAvancadoResponse[]>([]);
   const [loading, setLoading] = useState(false);
@@ -55,6 +57,12 @@ export function MultiSelectAreas({
     if (isSelected) {
       onSelectionChange(selectedAreaIds.filter(id => id !== areaId));
     } else {
+      if (maxSelection && selectedAreaIds.length >= maxSelection) {
+        if (maxSelection === 1) {
+          onSelectionChange([areaId]);
+        }
+        return;
+      }
       onSelectionChange([...selectedAreaIds, areaId]);
     }
   };
@@ -76,7 +84,9 @@ export function MultiSelectAreas({
           className={cn("mt-2 grid grid-cols-1 md:grid-cols-3 gap-3 overflow-y-auto", disabled && "pointer-events-none")}
           aria-disabled={disabled || undefined}
         >
-          {areaExecutorAvancado.map((area, index) => {
+          {areaExecutorAvancado
+            .filter((area) => !excludedAreaIds.includes(area.idArea))
+            .map((area) => {
             const isChecked = selectedAreaIds.includes(area.idArea);
             return (
               <div

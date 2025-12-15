@@ -9,7 +9,7 @@ import {User} from "@/types/auth/types";
 import authClient from "@/api/auth/client";
 import responsaveisClient from "@/api/responsaveis/client";
 import anexosClient from "@/api/anexos/client";
-import { TipoObjetoAnexo } from "@/api/anexos/type";
+import { TipoObjetoAnexoEnum } from "@/api/anexos/type";
 
 const CONCESSIONARIA_CHECK_INTERVAL = 100; // ms
 const CONCESSIONARIA_TIMEOUT = 3000; // ms
@@ -42,12 +42,12 @@ const createTimeout = (ms: number): Promise<void> => {
 
 const getResponsavelAvatar = async (idResponsavel: number): Promise<string | null> => {
   try {
-    const anexos = await anexosClient.buscarPorIdObjetoETipoObjeto(idResponsavel, TipoObjetoAnexo.R);
+    const anexos = await anexosClient.buscarPorIdObjetoETipoObjeto(idResponsavel, TipoObjetoAnexoEnum.R);
     const byExt = anexos.find(a => /(\.jpg|jpeg|png)$/i.test(a.nmArquivo));
     const chosen = byExt || anexos[0];
     if (!chosen) return null;
     
-    const arquivos = await anexosClient.download(idResponsavel, TipoObjetoAnexo.R, chosen.nmArquivo);
+    const arquivos = await anexosClient.download(idResponsavel, TipoObjetoAnexoEnum.R, chosen.nmArquivo);
     const first = arquivos?.find(a => (a.tipoConteudo?.startsWith('image/') ?? /(\.jpg|jpeg|png)$/i.test(a.nomeArquivo || '')));
     if (!first?.conteudoArquivo) return null;
     
@@ -212,3 +212,4 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
     </SidebarProvider>
   );
 }
+

@@ -1,7 +1,7 @@
 'use client';
 
 import { anexosClient } from '@/api/anexos/client';
-import { AnexoResponse, TipoObjetoAnexo } from '@/api/anexos/type';
+import { AnexoResponse, TipoObjetoAnexoEnum } from '@/api/anexos/type';
 import { areasClient } from '@/api/areas/client';
 import { AreaResponse } from '@/api/areas/types';
 import authClient from '@/api/auth/client';
@@ -38,6 +38,7 @@ import { toast } from 'sonner';
 import AnexoComponent from '../AnexoComponotent/AnexoComponent';
 import AnexoList from '../AnexoComponotent/AnexoList/AnexoList';
 import { MultiSelectAssinantes } from '../ui/multi-select-assinates';
+import { CategoriaEnum, TipoEnum } from '@/api/tipos/types';
 
 interface AnexoListItem {
   idAnexo?: number;
@@ -701,7 +702,7 @@ export default function SolicitacaoModal({
         return;
       }
 
-      const arquivos = await anexosClient.download(anexo.idObjeto, TipoObjetoAnexo.E, anexo.nmArquivo);
+      const arquivos = await anexosClient.download(anexo.idObjeto, TipoObjetoAnexoEnum.E, anexo.nmArquivo);
 
       if (arquivos.length > 0) {
         arquivos.forEach((arquivo) => {
@@ -1776,7 +1777,7 @@ export default function SolicitacaoModal({
   useEffect(() => {
     const loadStatusList = async () => {
       try {
-        const status = await statusSolicitacaoClient.listarTodos();
+        const status = await statusSolicitacaoClient.listarTodos(CategoriaEnum.CLASSIFICACAO_STATUS_SOLICITACAO, [TipoEnum.TODOS, TipoEnum.CORRESPONDENCIA]);
         setStatusList(status);
       } catch (error) {
         console.error('Erro ao carregar lista de status:', error);
@@ -1799,7 +1800,7 @@ export default function SolicitacaoModal({
         try {
           const anexosE = await anexosClient.buscarPorIdObjetoETipoObjeto(
             solicitacao.idSolicitacao,
-            TipoObjetoAnexo.E
+            TipoObjetoAnexoEnum.E
           );
           setAnexosTypeE(anexosE);
         } catch (error) {

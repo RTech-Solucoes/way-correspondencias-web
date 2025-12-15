@@ -43,14 +43,13 @@ import FilterModal from '@/components/solicitacoes/FilterModal';
 import { statusSolicitacaoClient } from '@/api/status-solicitacao/client';
 import { FiltrosAplicados } from '@/components/ui/applied-filters';
 import anexosClient from '@/api/anexos/client';
-import {AnexoResponse, TipoObjetoAnexo, ArquivoDTO} from '@/api/anexos/type';
+import {AnexoResponse, TipoObjetoAnexoEnum, ArquivoDTO} from '@/api/anexos/type';
 import {
   AreaSolicitacao,
   PagedResponse,
   SolicitacaoDetalheResponse,
   SolicitacaoResponse
 } from '@/api/solicitacoes/types';
-import {useTramitacoesMutation} from '@/hooks/use-tramitacoes';
 import tramitacoesClient from '@/api/tramitacoes/client';
 import {usePermissoes} from "@/context/permissoes/PermissoesContext";
 import LoadingRows from "@/components/solicitacoes/LoadingRows";
@@ -58,6 +57,7 @@ import { statusList } from '@/api/status-solicitacao/types';
 import { formatDateBr } from '@/utils/utils';
 import { useSearchParams } from 'next/navigation';
 import TimeProgress from '@/components/ui/time-progress';
+import { CategoriaEnum, TipoEnum } from '@/api/tipos/types';
 
 export default function SolicitacoesPage() {
   return (
@@ -116,7 +116,6 @@ function SolicitacoesPageContent() {
     handleSort,
   } = useSolicitacoes();
 
-  const tramitacoesMutation = useTramitacoesMutation();
   const {canInserirSolicitacao, canAtualizarSolicitacao, canDeletarSolicitacao} = usePermissoes()
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
@@ -240,7 +239,7 @@ function SolicitacoesPageContent() {
 
   useEffect(() => {
     loadSolicitacoes();
-    statusSolicitacaoClient.listarTodos().then(setStatuses).catch(() => {});
+    statusSolicitacaoClient.listarTodos(CategoriaEnum.CLASSIFICACAO_STATUS_SOLICITACAO, [TipoEnum.TODOS, TipoEnum.CORRESPONDENCIA]).then(setStatuses).catch(() => {});
     loadResponsaveis();
     loadTemas();
     loadAreas();
@@ -430,7 +429,7 @@ function SolicitacoesPageContent() {
     try {
       const detalhes = await solicitacoesClient.buscarDetalhesPorId(s.idSolicitacao);
       setDetalhesSolicitacao(detalhes);
-      const anexos = await anexosClient.buscarPorIdObjetoETipoObjeto(s.idSolicitacao, TipoObjetoAnexo.S);
+      const anexos = await anexosClient.buscarPorIdObjetoETipoObjeto(s.idSolicitacao, TipoObjetoAnexoEnum.S);
       setDetalhesAnexos(anexos || []);
     } catch {
       toast.error('Erro ao carregar os detalhes da solicitação');
@@ -677,9 +676,9 @@ function SolicitacoesPageContent() {
                     <StickyTableCell>{solicitacao.nmTema || solicitacao?.tema?.nmTema || '-'}</StickyTableCell>
                     <StickyTableCell className="min-w-[220px]">
                       <TimeProgress
-                        dtPrimeiraTramitacao={solicitacao.dtPrimeiraTramitacao}
-                        dtPrazoLimite={solicitacao.dtPrazoLimite}
-                        dataConclusaoTramitacao={solicitacao.dtConclusaoTramitacao}
+                        start={solicitacao.dtPrimeiraTramitacao}
+                        end={solicitacao.dtPrazoLimite}
+                        finishedAt={solicitacao.dtConclusaoTramitacao}
                         now={new Date().toISOString()}
                         statusLabel={solicitacao.statusSolicitacao?.nmStatus}
                       />

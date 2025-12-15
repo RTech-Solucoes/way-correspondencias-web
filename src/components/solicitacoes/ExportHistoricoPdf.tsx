@@ -1,7 +1,7 @@
 'use client';
 
 import { Document, Image, Page, StyleSheet, Text, View, pdf, Svg, Polyline } from '@react-pdf/renderer';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { HistoricoRespostaItemResponse, TipoHistoricoResposta } from '@/api/solicitacoes/types';
 import { formatDateTime, formatDateTimeBrCompactExport, formatMinutosEmDiasHorasMinutos } from '@/utils/utils';
 import { SolicitacaoResumoResponse } from '@/types/solicitacoes/types';
@@ -9,6 +9,7 @@ import { perfilUtil } from '@/api/perfis/types';
 import { statusList } from '@/api/status-solicitacao/types';
 import { toast } from 'sonner';
 import { getLayoutClient, getLabelTitle, getLogoPath } from '@/lib/layout/layout-client';
+import LoadingOverlay from '@/components/ui/loading-overlay';
 
 interface ExportHistoricoPdfProps {
   solicitacao: SolicitacaoResumoResponse;
@@ -79,6 +80,7 @@ return (
           <Image src={logoPath} style={styles.logo} />
           <View style={styles.titleWrap}>
             <Text style={[styles.title, { fontWeight: 800 }]}>Histórico de Respostas</Text>
+            <Text style={styles.subtitle}>{labelTitle}</Text>
             <Text style={styles.subtitle}>Data de exportação: {nowStr}</Text>
             <Text style={styles.subtitle}>Total de Respostas: {historico.length}</Text>
           </View>
@@ -165,6 +167,7 @@ export default function ExportHistoricoPdf({ solicitacao, historico, onDone }: E
     <HistoricoPdfDoc solicitacao={solicitacao} historico={historico} />
   ), [solicitacao, historico]);
 
+  const [exporting, setExporting] = useState(false);
   const startedRef = useRef(false);
   const downloadedRef = useRef(false);
 
@@ -172,6 +175,7 @@ export default function ExportHistoricoPdf({ solicitacao, historico, onDone }: E
     async function generate() {
       if (startedRef.current || downloadedRef.current) return;
       startedRef.current = true;
+      setExporting(true);
       try {
         const blob = await pdf(doc).toBlob();
         const url = URL.createObjectURL(blob);
@@ -187,11 +191,16 @@ export default function ExportHistoricoPdf({ solicitacao, historico, onDone }: E
       } catch {
         toast.error('Erro ao exportar PDF');
       } finally {
+        setExporting(false);
         onDone?.();
       }
     }
     generate();
   }, [doc, solicitacao.idSolicitacao, solicitacao.dtCriacao, onDone]);
+
+  if (exporting) {
+    return <LoadingOverlay title="Gerando PDF..." subtitle="Aguarde enquanto o relatório é processado" />;
+  }
 
   return null;
 }

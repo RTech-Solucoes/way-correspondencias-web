@@ -7,6 +7,7 @@ import {EmailProvider} from '@/context/email/EmailContext';
 import {ResponsaveisProvider} from '@/context/responsaveis/ResponsaveisContext';
 import {SolicitacoesProvider} from '@/context/solicitacoes/SolicitacoesContext';
 import {TemasProvider} from '@/context/temas/TemasContext';
+import {ObrigacoesProvider} from '@/context/obrigacoes/ObrigacoesContext';
 import {ApiProvider} from "@/providers/ApiProvider";
 import IconProvider from "@/providers/IconProvider";
 import {PermissoesProvider} from "@/context/permissoes/PermissoesContext";
@@ -71,6 +72,7 @@ export default function Providers({children}: ProvidersProps) {
   const providers = [
     IconProvider,
     TemasProvider,
+    ObrigacoesProvider,
     SolicitacoesProvider,
     ResponsaveisProvider,
     EmailProvider,

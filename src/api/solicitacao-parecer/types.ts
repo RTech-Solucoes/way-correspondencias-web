@@ -5,6 +5,8 @@ export interface SolicitacaoParecerRequest {
   idSolicitacao: number;
   idStatusSolicitacao: number;
   dsDarecer: string;
+  idSolicitacaoParecerReferen?: number | null;
+  idTramitacao?: number | null;
 }
 
 export interface SolicitacaoParecerResponse extends BaseResponse {
@@ -14,6 +16,9 @@ export interface SolicitacaoParecerResponse extends BaseResponse {
   dsDarecer: string;
   nrNivel: number;
   responsavel: ResponsavelResponse;
+  idSolicitacaoParecerReferen?: number | null;
+  solicitacaoParecerReferen?: SolicitacaoParecerResponse[];
+  idTramitacao?: number | null;
 }
 
 

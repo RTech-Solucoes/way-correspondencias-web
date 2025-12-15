@@ -1,12 +1,9 @@
-import { mockUsersEmail } from "@/components/dashboard/MockDados";
-import CardHeader from "../card-header";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@radix-ui/react-avatar";
-import { useEffect, useState } from "react";
 import dashboardClient from "@/api/dashboard/client";
-import { toast } from "sonner";
 import { IRecentActivity } from "@/api/dashboard/type";
+import { Card, CardContent } from "@/components/ui/card";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import CardHeader from "../card-header";
 import PaginationRecentActivity from "./PaginationRecentActivity";
 
 interface RecentActivityProps {

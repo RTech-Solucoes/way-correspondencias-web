@@ -53,30 +53,35 @@ export default function SolicitacoesPendentes({ refreshTrigger }: SolicitacoesPe
         ) : items.length === 0 ? (
           <div className="text-sm text-gray-500">Nenhuma solicitação pendente.</div>
         ) : (
-          <div className="divide-y  divide-gray-200 max-h-160 overflow-y-auto pr-1">
-            {items.map((s) => (
-              <div key={s.idSolicitacao} className="py-4">
-                <div className="flex justify-between items-start">
-                  <div className="font-medium text-gray-900">
-                    {s.dsAssunto || 'Sem assunto informado'}
+          <div className="max-h-[260px] overflow-y-auto pr-1">
+            {items.map((s, index) => (
+              <div key={s.idSolicitacao}>
+                <div className="py-4">
+                  <div className="flex justify-between items-start">
+                    <div className="font-medium text-gray-900">
+                      {s.dsAssunto || 'Sem assunto informado'}
+                    </div>
+                    <Link
+                      className="text-blue-600 ml-2 text-sm font-semibold hover:underline"
+                      href={`/solicitacoes?idSolicitacao=${s.idSolicitacao}`}
+                    >
+                      Verificar
+                    </Link>
                   </div>
-                  <Link
-                    className="text-blue-600 ml-2 text-sm font-semibold hover:underline"
-                    href={`/solicitacoes?idSolicitacao=${s.idSolicitacao}`}
-                  >
-                    Verificar
-                  </Link>
+                  <div className="mt-1 text-xs text-gray-600 flex flex-wrap gap-x-2 gap-y-1">
+                    <span>{s.cdIdentificacao || '-'}</span>
+                    {(() => { const label = getAreasLabel(s); return label ? <span>• {label}</span> : null; })()}
+                    {s.nmTema ? (
+                      <span>• {s.nmTema}</span>
+                    ) : null}
+                    {s.nmStatus ? (
+                      <span className="text-red-600 font-medium">• {s.nmStatus}</span>
+                    ) : null}
+                  </div>
                 </div>
-                <div className="mt-1 text-xs text-gray-600 flex flex-wrap gap-x-2 gap-y-1">
-                  <span>{s.cdIdentificacao || '-'}</span>
-                  {(() => { const label = getAreasLabel(s); return label ? <span>• {label}</span> : null; })()}
-                  {s.nmTema ? (
-                    <span>• {s.nmTema}</span>
-                  ) : null}
-                  {s.nmStatus ? (
-                    <span className="text-red-600 font-medium">• {s.nmStatus}</span>
-                  ) : null}
-                </div>
+                {index < items.length - 1 && (
+                  <div className="border-t border-gray-200"></div>
+                )}
               </div>
             ))}
           </div>

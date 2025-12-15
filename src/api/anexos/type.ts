@@ -1,33 +1,49 @@
+import { BaseResponse } from "../solicitacoes";
+import { ResponsavelResponse } from "../responsaveis/types";
 
 export type StatusAtivo = 'ATIVO' | 'INATIVO';
 
-export interface AnexoResponse {
+export interface AnexoResponse extends BaseResponse {
   idAnexo: number;
   idObjeto: number;
   tpObjeto: string;
   nmArquivo: string;
+  tpDocumento?: TipoDocumentoAnexoEnum | string;
   dsCaminho: string;
-  tpResponsavel: TipoResponsavelAnexo | string;
+  tpResponsavel: TipoResponsavelAnexoEnum | string;
+  nmUsuario?: string | null;
+  responsavel?: ResponsavelResponse | null;
   flAtivo: StatusAtivo;
 }
 
 export type ArquivoDTO = {
   nomeArquivo?: string;
   tipoConteudo?: string | null;
-  tpResponsavel?: TipoResponsavelAnexo | null;
+  tpResponsavel?: TipoResponsavelAnexoEnum | null;
   conteudoArquivo: string;
+  tpDocumento?: TipoDocumentoAnexoEnum | string;
 };
 
-export enum TipoResponsavelAnexo {
+export enum TipoResponsavelAnexoEnum {
   A = "A", // Analista
   G = "G", // Gestor
   D = "D", // Diretor
   R = "R" // Regulatório
 }
 
-export enum TipoObjetoAnexo {
-  E = "E",
-  T = "T",
-  S = "S",
-  R = "R"
+export enum TipoObjetoAnexoEnum {
+  E = "E", // Email
+  T = "T", // Tramitacao
+  S = "S", // Solicitacao
+  R = "R", // Responsavel
+  O = "O", // Obrigacao Contratual
+}
+
+export  enum TipoDocumentoAnexoEnum {
+  C = 'C', // Comum
+  E = 'E', // Evidência de cumprimento
+  A = 'A', // Auxiliar
+  R = 'R', // Correspondência
+  L = 'L', // Link
+  P = 'P', // Protocolo
 }
