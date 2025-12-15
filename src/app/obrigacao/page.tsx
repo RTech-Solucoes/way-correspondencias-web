@@ -20,7 +20,7 @@ import { FilterModalObrigacao } from "@/components/obrigacoes/FilterModalObrigac
 import { DeleteObrigacaoDialog } from "@/components/obrigacoes/DeleteObrigacaoDialog";
 import { ObrigacaoResponse } from "@/api/obrigacao/types";
 import { FiltrosAplicados } from "@/components/ui/applied-filters";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { statusObrigacaoList, statusObrigacaoLabels, StatusObrigacao, statusListObrigacao } from "@/api/status-obrigacao/types";
 import { getObrigacaoStatusStyle } from "@/utils/obrigacoes/status";
@@ -730,10 +730,22 @@ function ObrigacoesContent() {
   );
 }
 
-export default function ObrigacoesPage() {
+function ObrigacoesPageContent() {
   return (
     <ObrigacoesProvider>
       <ObrigacoesContent />
     </ObrigacoesProvider>
+  );
+}
+
+export default function ObrigacoesPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-gray-500">Carregando...</div>
+      </div>
+    }>
+      <ObrigacoesPageContent />
+    </Suspense>
   );
 }
