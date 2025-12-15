@@ -37,6 +37,7 @@ import { ImportObrigacoesModal } from "@/components/obrigacoes/ImportObrigacoesM
 import { AnexarProtocoloModal } from "@/components/obrigacoes/AnexarProtocoloModal";
 import { ObrigacoesCondicionadasModal } from "@/components/obrigacoes/ObrigacoesCondicionadasModal";
 import { NaoAplicavelSuspensoModal } from "@/components/obrigacoes/conferencia/NaoAplicavelSuspensoModal";
+import { TramitacaoObrigacaoModal } from "@/components/obrigacoes/tramitacao";
 import TimeProgress from "@/components/ui/time-progress";
 import obrigacaoClient from "@/api/obrigacao/client";
 import { toast } from "sonner";
@@ -79,6 +80,8 @@ function ObrigacoesContent() {
   const [obrigacoesCondicionadas, setObrigacoesCondicionadas] = useState<ObrigacaoResumoResponse[]>([]);
   const [showNaoAplicavelSuspensoModal, setShowNaoAplicavelSuspensoModal] = useState(false);
   const [obrigacaoParaNaoAplicavelSuspenso, setObrigacaoParaNaoAplicavelSuspenso] = useState<ObrigacaoResponse | null>(null);
+  const [showTramitacaoModal, setShowTramitacaoModal] = useState(false);
+  const [obrigacaoParaTramitacao, setObrigacaoParaTramitacao] = useState<ObrigacaoResponse | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { idPerfil } = useUserGestao();
@@ -370,6 +373,17 @@ function ObrigacoesContent() {
           justificativaExistente={obrigacaoParaNaoAplicavelSuspenso.dsRespNaoAplicavelSusp || null}
         />
       )}
+
+      <TramitacaoObrigacaoModal
+        open={showTramitacaoModal}
+        onClose={() => {
+          setShowTramitacaoModal(false);
+          setObrigacaoParaTramitacao(null);
+        }}
+        onConfirm={() => {
+          loadObrigacoes();
+        }}
+      />
       
       <div className="flex flex-col min-h-0 flex-1">
         <div className="flex items-center justify-between mb-6">
@@ -680,9 +694,10 @@ function ObrigacoesContent() {
                             toast.error('Erro ao verificar obrigações condicionadas. Tente novamente.');
                           }
                         } : undefined}
-                        // onEncaminharTramitacao={(obrigacao) => {
-                        //   console.log('Encaminhar para tramitação:', obrigacao.idSolicitacao);
-                        // }}
+                        onEncaminharTramitacao={(obrigacao) => {
+                          setObrigacaoParaTramitacao(obrigacao);
+                          setShowTramitacaoModal(true);
+                        }}
                         onEnviarArea={canEnviarAreasObrigacao ? async (obrigacao) => {
                           if (!obrigacao.idSolicitacao) {
                             toast.error('ID da obrigação não encontrado.');
