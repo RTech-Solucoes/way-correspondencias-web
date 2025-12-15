@@ -15,7 +15,7 @@ import {
 import { ObrigacoesProvider, useObrigacoes } from "@/context/obrigacoes/ObrigacoesContext";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ObrigacaoModal } from "@/components/obrigacoes/ObrigacaoModal";
+import { ObrigacaoModal } from "@/components/obrigacoes/criar/ObrigacaoModal";
 import { FilterModalObrigacao } from "@/components/obrigacoes/FilterModalObrigacao";
 import { DeleteObrigacaoDialog } from "@/components/obrigacoes/DeleteObrigacaoDialog";
 import { ObrigacaoResponse } from "@/api/obrigacao/types";

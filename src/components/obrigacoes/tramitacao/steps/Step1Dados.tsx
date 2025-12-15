@@ -14,6 +14,20 @@ interface Step1DadosProps {
 export function Step1Dados({ formData, updateFormData }: Step1DadosProps) {
   return (
     <div className="space-y-6">
+
+      <div className="grid grid-cols-1 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="cdIdentificacao">Identificação*</Label>
+          <Input
+            id="cdIdentificacao"
+            value={formData.cdIdentificacao || ''}
+            onChange={(e) => updateFormData({ cdIdentificacao: e.target.value })}
+            placeholder="0000"
+            disabled={true}
+          />
+        </div>
+      </div>
+
       <div className="space-y-2">
         <Label htmlFor="dsTarefa">Tarefa*</Label>
         <Textarea
@@ -24,28 +38,6 @@ export function Step1Dados({ formData, updateFormData }: Step1DadosProps) {
           rows={4}
           className="resize-none"
         />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="cdIdentificacao">Identificação*</Label>
-          <Input
-            id="cdIdentificacao"
-            value={formData.cdIdentificacao || ''}
-            onChange={(e) => updateFormData({ cdIdentificacao: e.target.value })}
-            placeholder="0000"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="cdItem">Tema*</Label>
-          <Input
-            id="cdItem"
-            value={formData.cdItem || ''}
-            onChange={(e) => updateFormData({ cdItem: e.target.value })}
-            placeholder="3.4.2.8 - PER"
-          />
-        </div>
       </div>
 
       <div className="space-y-2">
@@ -105,18 +97,7 @@ export function Step1Dados({ formData, updateFormData }: Step1DadosProps) {
           </div>
         </div>
       </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="dsAssunto">Assunto*</Label>
-        <Textarea
-          id="dsAssunto"
-          value={formData.dsAssunto || ''}
-          onChange={(e) => updateFormData({ dsAssunto: e.target.value })}
-          rows={4}
-          className="resize-none"
-        />
-      </div>
-
+    
       <div className="space-y-2">
         <Label htmlFor="dsObservacao">Observações*</Label>
         <Textarea
@@ -130,4 +111,3 @@ export function Step1Dados({ formData, updateFormData }: Step1DadosProps) {
     </div>
   );
 }
-

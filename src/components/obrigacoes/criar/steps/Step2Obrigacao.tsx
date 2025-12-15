@@ -7,10 +7,11 @@ import { ObrigacaoFormData } from '../ObrigacaoModal';
 import { TemaResponse } from '@/api/temas/types';
 import { MultiSelectAreas } from '@/components/ui/multi-select-areas';
 import temasClient from '@/api/temas/client';
+import { TramitacaoFormData } from '../../tramitacao';
 
 interface Step2ObrigacaoProps {
   formData: ObrigacaoFormData;
-  updateFormData: (data: Partial<ObrigacaoFormData>) => void;
+  updateFormData: (data: Partial<ObrigacaoFormData | TramitacaoFormData>) => void;
   disabled?: boolean;
 }
 

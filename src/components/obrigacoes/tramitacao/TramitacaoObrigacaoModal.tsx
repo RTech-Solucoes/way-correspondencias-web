@@ -6,11 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Stepper } from '@/components/ui/stepper';
 import { CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react';
 import { Step1Dados } from './steps/Step1Dados';
-import { Step2TemasAreas } from './steps/Step2TemasAreas';
 import { Step3Prazos } from './steps/Step3Prazos';
-import { Step4Assinantes } from './steps/Step4Assinantes';
-import { Step5Anexos } from './steps/Step5Anexos';
 import { Step6Resumo } from './steps/Step6Resumo';
+import { Step2Obrigacao, Step4Obrigacao } from '../criar';
+import { ObrigacaoFormData } from '../criar/ObrigacaoModal';
+import { MultiSelectAssinantes } from '@/components/ui/multi-select-assinates';
 
 export interface TramitacaoFormData {
   dsTarefa?: string;
@@ -66,7 +66,6 @@ export function TramitacaoObrigacaoModal({ open, onClose, onConfirm }: Tramitaca
   useEffect(() => {
     if (open) {
       setCurrentStep(1);
-      // Aqui você pode carregar dados da obrigação se necessário
     }
   }, [open]);
 
@@ -121,15 +120,50 @@ export function TramitacaoObrigacaoModal({ open, onClose, onConfirm }: Tramitaca
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
-        return <Step1Dados formData={formData} updateFormData={updateFormData} />;
+        return (
+          <Step1Dados
+            formData={formData}
+            updateFormData={updateFormData}
+          />
+        );
       case 2:
-        return <Step2TemasAreas formData={formData} updateFormData={updateFormData} />;
+        return (
+          <Step2Obrigacao
+            formData={{
+              idTema: formData.idTema ?? null,
+              idAreaAtribuida: formData.idsAreas?.[0] ?? null,
+              idsAreasCondicionantes: formData.idsAreas?.slice(1) ?? [],
+            } as ObrigacaoFormData}
+            updateFormData={(data) => updateFormData({ ...formData, ...data } as Partial<TramitacaoFormData>)}
+            disabled={true}
+          />
+        );
       case 3:
-        return <Step3Prazos formData={formData} updateFormData={updateFormData} />;
-      case 4:
-        return <Step4Assinantes formData={formData} updateFormData={updateFormData} />;
+        return (
+          <Step3Prazos
+            formData={formData}
+            updateFormData={updateFormData}
+          />
+        );
+      case 4: 
+        return (
+          <MultiSelectAssinantes
+          selectedResponsavelIds={formData.idsAssinantes || []}
+          onSelectionChange={
+            (idsAssinantes) => updateFormData({ idsAssinantes } as Partial<TramitacaoFormData>)
+          }
+          label="Selecione os validadores em 'Em Assinatura Diretoria' *"
+          />
+        );
       case 5:
-        return <Step5Anexos formData={formData} updateFormData={updateFormData} />;
+        return (
+          <Step4Obrigacao
+            formData={formData}
+            updateFormData={(data) => updateFormData({ ...formData, ...data } as Partial<TramitacaoFormData>)}
+            anexos={formData.anexos || []}
+            onAnexosChange={(anexos) => updateFormData({ ...formData, anexos } as Partial<TramitacaoFormData>)}
+          />
+        );
       case 6:
         return <Step6Resumo formData={formData} />;
       default:
@@ -187,4 +221,3 @@ export function TramitacaoObrigacaoModal({ open, onClose, onConfirm }: Tramitaca
     </Dialog>
   );
 }
-

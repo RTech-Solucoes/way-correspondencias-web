@@ -1,4 +1,4 @@
-import { ObrigacaoFormData } from '@/components/obrigacoes/ObrigacaoModal';
+import { ObrigacaoFormData } from '@/components/obrigacoes/criar/ObrigacaoModal';
 import { buildQueryParams } from '@/utils/utils';
 
 import ApiClient from '../client';

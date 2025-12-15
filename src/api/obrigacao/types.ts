@@ -1,4 +1,4 @@
-import { AreaSolicitacao, SolicitacaoResponse } from '../solicitacoes/types';
+import { AreaSolicitacao, SolicitacaoAssinanteResponse, SolicitacaoPrazoResponse, SolicitacaoResponse } from '../solicitacoes/types';
 import { TipoResponse } from '../tipos/types';
 import { TemaResponse } from '../temas/types';
 import { StatusSolicitacaoResponse } from '../status-solicitacao/client';
@@ -56,6 +56,8 @@ export interface ObrigacaoResponse extends Omit<SolicitacaoResponse, 'tema'> {
   dtRespNaoAplicavelSusp?: string | null;
   dsRespNaoAplicavelSusp?: string | null;
   responsavelNaoAplicavelSusp?: ResponsavelResponse | null;
+  solicitacaoPrazos: SolicitacaoPrazoResponse[];
+  solicitacoesAssinantes: SolicitacaoAssinanteResponse[];
 }
 
 export interface ObrigacaoRequest {
