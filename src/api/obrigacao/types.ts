@@ -101,6 +101,8 @@ export interface ObrigacaoDetalheResponse {
   anexos: AnexoResponse[];
   solicitacaoParecer: SolicitacaoParecerResponse[];
   tramitacoes: TramitacaoResponse[];
+  solicitacoesAssinantes?: SolicitacaoAssinanteResponse[];
+  solicitacaoPrazos?: SolicitacaoPrazoResponse[];
 }
 
 export interface ObrigacaoFiltroRequest {
@@ -145,4 +147,11 @@ export interface ObrigacaoCalendarioResponse {
 export interface ObrigacaoCalendarioMesCountResponse {
   mes: number;
   quantidade: number;
+}
+
+export interface ObrigacaoStep1Request {
+  dsTarefa: string;
+  flAnaliseGerenteDiretor: string;
+  flExigeCienciaGerenteRegul: string;
+  dsObservacao?: string;
 }

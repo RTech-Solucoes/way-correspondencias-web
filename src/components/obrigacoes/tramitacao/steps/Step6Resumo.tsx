@@ -37,10 +37,7 @@ const getManifestacaoLabel = (value?: string) => {
 export function Step6Resumo({ formData }: Step6ResumoProps) {
   return (
     <div className="space-y-6">
-      <div className="bg-gray-50 rounded-lg p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Resumo dos dados</h3>
 
-      </div>
     </div>
   );
 }

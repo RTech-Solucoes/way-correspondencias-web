@@ -30,7 +30,7 @@ export interface StatusSolicitacaoPrazoTema {
 export interface StatusSolicPrazoTemaForUI {
   idStatusSolicPrazoTema: number;
   idStatusSolicitacao: number;
-  idTema: number;
+  idTema?: number | null;
   nrPrazoInterno: number;
   nrPrazoExterno: number;
   flAtivo: string;

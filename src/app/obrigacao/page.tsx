@@ -383,6 +383,7 @@ function ObrigacoesContent() {
         onConfirm={() => {
           loadObrigacoes();
         }}
+        obrigacaoId={obrigacaoParaTramitacao?.idSolicitacao || null}
       />
       
       <div className="flex flex-col min-h-0 flex-1">
