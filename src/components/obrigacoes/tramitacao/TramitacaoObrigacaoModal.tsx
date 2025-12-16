@@ -457,7 +457,7 @@ export function TramitacaoObrigacaoModal({ open, onClose, onConfirm, obrigacaoId
           />
         );
       case 6:
-        return <Step6Resumo formData={formData} />;
+        return <Step6Resumo formData={formData} obrigacaoId={obrigacaoId} />;
       default:
         return null;
     }
