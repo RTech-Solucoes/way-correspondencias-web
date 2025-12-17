@@ -64,7 +64,6 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos, podeEnviarComenta
   const [linkToDelete, setLinkToDelete] = useState<string | null>(null);
   const [exportingPdf, setExportingPdf] = useState(false);
 
-  // Expõe função para obter o texto do comentário
   useEffect(() => {
     if (onGetComentarioTexto) {
       onGetComentarioTexto(() => {
@@ -274,7 +273,6 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos, podeEnviarComenta
         setSolicitacaoPareceres(pareceres || []);
         setTramitacoes(tramitacoesResponse || []);
         
-        // Reconstruir parecerTramitacaoMap a partir dos dados carregados
         const novoMap = new Map<number, number>();
         pareceres?.forEach(parecer => {
           if (parecer.idTramitacao) {
@@ -573,23 +571,19 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos, podeEnviarComenta
 
 
   const podeEnviarComentario = useMemo(() => {
-    // Validação da página: perfil 7 (TI) da área de TI ou perfil 3 (Diretoria) da área de Diretoria
     if (podeEnviarComentarioPorPerfilEArea) {
       return true;
     }
 
-    // Se for admin ou gestor (perfil 1 ou 2), pode enviar
     if (idPerfil === perfilUtil.ADMINISTRADOR ||
       idPerfil === perfilUtil.GESTOR_DO_SISTEMA) {
       return true;
     }
 
-    // Verifica se é da área atribuída
     if (isDaAreaAtribuida) {
       return true;
     }
     
-    // Verifica se é de alguma área condicionante
     const userAreaIds = userResponsavel?.areas?.map(ra => ra.area.idArea) || [];
     const idsAreasCondicionantes = areasCondicionantes.map(area => area.idArea);
     const isDeAreaCondicionante = idsAreasCondicionantes.some(idArea => userAreaIds.includes(idArea));
