@@ -16,6 +16,7 @@ import { CategoriaEnum, TipoEnum } from '@/api/tipos/types';
 interface Step3PrazosProps {
   formData: TramitacaoFormData;
   updateFormData: (data: Partial<TramitacaoFormData>) => void;
+  disabled?: boolean;
 }
 
 function horasParaDias(horas: number): number {
@@ -44,7 +45,7 @@ const DEFAULT_PRAZOS_POR_STATUS: { [key: number]: number } = {
   [statusListType.EM_ASSINATURA_DIRETORIA.id]: 48,
 };
 
-export function Step3Prazos({ formData, updateFormData }: Step3PrazosProps) {
+export function Step3Prazos({ formData, updateFormData, disabled = false }: Step3PrazosProps) {
   const [statusList, setStatusList] = useState<StatusSolicitacaoResponse[]>([]);
   const hasInitialized = useRef(false);
 
@@ -181,6 +182,7 @@ export function Step3Prazos({ formData, updateFormData }: Step3PrazosProps) {
                 id="prazoExcepcional"
                 checked={prazoExcepcional}
                 onCheckedChange={handlePrazoExcepcionalChange}
+                disabled={disabled}
               />
               <Label htmlFor="prazoExcepcional" className="text-sm font-medium text-blue-600">
                 Prazo Excepcional
@@ -224,6 +226,7 @@ export function Step3Prazos({ formData, updateFormData }: Step3PrazosProps) {
                             updateLocalPrazo(status.codigo, valorParaSalvar);
                           }}
                           className="w-8 h-8 p-0 flex items-center justify-center"
+                          disabled={disabled}
                         >
                           -
                         </Button>
@@ -238,7 +241,7 @@ export function Step3Prazos({ formData, updateFormData }: Step3PrazosProps) {
                             }
                           }}
                           placeholder="0"
-                          isDisabled={false}
+                          isDisabled={disabled}
                           className="flex-1"
                           classNames={{
                             input: 'text-center',
@@ -262,6 +265,7 @@ export function Step3Prazos({ formData, updateFormData }: Step3PrazosProps) {
                             updateLocalPrazo(status.codigo, valorParaSalvar);
                           }}
                           className="w-8 h-8 p-0 flex items-center justify-center"
+                          disabled={disabled}
                         >
                           +
                         </Button>

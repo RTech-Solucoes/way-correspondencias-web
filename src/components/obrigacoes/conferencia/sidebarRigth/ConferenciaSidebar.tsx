@@ -31,6 +31,8 @@ interface ConferenciaSidebarProps {
   detalhe: ObrigacaoDetalheResponse;
   onRefreshAnexos?: () => void;
   podeEnviarComentarioPorPerfilEArea?: boolean;
+  isStatusDesabilitadoParaTramitacao?: boolean;
+  onGetComentarioTexto?: (getter: () => string) => void;
 }
 
 enum RegistroTabKey {
@@ -38,7 +40,7 @@ enum RegistroTabKey {
   COMENTARIOS = 'comentarios',
 }
 
-export function ConferenciaSidebar({ detalhe, onRefreshAnexos, podeEnviarComentarioPorPerfilEArea = false }: ConferenciaSidebarProps) {
+export function ConferenciaSidebar({ detalhe, onRefreshAnexos, podeEnviarComentarioPorPerfilEArea = false, isStatusDesabilitadoParaTramitacao = false, onGetComentarioTexto }: ConferenciaSidebarProps) {
   const { idPerfil } = useUserGestao();
   const [registroTab, setRegistroTab] = useState<RegistroTabKey>(RegistroTabKey.ANEXOS);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
@@ -61,6 +63,16 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos, podeEnviarComenta
   const [showDeleteLinkDialog, setShowDeleteLinkDialog] = useState(false);
   const [linkToDelete, setLinkToDelete] = useState<string | null>(null);
   const [exportingPdf, setExportingPdf] = useState(false);
+
+  // Expõe função para obter o texto do comentário
+  useEffect(() => {
+    if (onGetComentarioTexto) {
+      onGetComentarioTexto(() => {
+        const textarea = document.getElementById('comentario-textarea') as HTMLTextAreaElement;
+        return textarea?.value || comentarioTexto;
+      });
+    }
+  }, [onGetComentarioTexto, comentarioTexto]);
 
   const areaAtribuida = useMemo(() => {
     return detalhe?.obrigacao?.areas?.find((area) => area.tipoArea?.cdTipo === TipoEnum.ATRIBUIDA);
@@ -923,16 +935,18 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos, podeEnviarComenta
                   rows={4}
                   disabled={enviandoComentario || !podeEnviarComentario}
                 />
-                <Button
-                  type="button"
-                  size="icon"
-                  className="rounded-full bg-blue-500 text-white hover:bg-blue-600 shrink-0 h-10 w-10 disabled:opacity-50"
-                  onClick={handleEnviarComentario}
-                  disabled={enviandoComentario || !comentarioTexto.trim() || !podeEnviarComentario || !isPerfilPermitidoPorStatus}
-                  tooltip={tooltipFinalEnviarComentario}
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
+                {isStatusDesabilitadoParaTramitacao || isStatusEmValidacaoRegulatorio && (
+                  <Button
+                    type="button"
+                    size="icon"
+                    className="rounded-full bg-blue-500 text-white hover:bg-blue-600 shrink-0 h-10 w-10 disabled:opacity-50"
+                    onClick={handleEnviarComentario}
+                    disabled={enviandoComentario || !comentarioTexto.trim() || !podeEnviarComentario || !isPerfilPermitidoPorStatus}
+                    tooltip={tooltipFinalEnviarComentario}
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             </div>
           )}

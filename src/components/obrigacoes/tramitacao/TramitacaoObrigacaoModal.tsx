@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Stepper } from '@/components/ui/stepper';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { ArrowArcRightIcon, CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react';
 import { Step1Dados } from './steps/Step1Dados';
 import { Step3Prazos } from './steps/Step3Prazos';
@@ -21,6 +22,7 @@ import solicitacoesClient from '@/api/solicitacoes/client';
 import solicitacaoAssinanteClient from '@/api/solicitacao-assinante/client';
 import obrigacaoAnexosClient from '@/api/obrigacao/anexos-client';
 import { statusList as statusListType } from '@/api/status-solicitacao/types';
+import tramitacoesClient from '@/api/tramitacoes/client';
 
 export interface TramitacaoFormData {
   dsTarefa?: string;
@@ -63,6 +65,8 @@ export function TramitacaoObrigacaoModal({ open, onClose, onConfirm, obrigacaoId
   const [currentStep, setCurrentStep] = useState(1);
   const [existingAnexos, setExistingAnexos] = useState<AnexoResponse[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showConfirmSend, setShowConfirmSend] = useState(false);
+  const [isPreAnalise, setIsPreAnalise] = useState(false);
   const [formData, setFormData] = useState<TramitacaoFormData>({
     dsTarefa: '',
     cdIdentificacao: '',
@@ -90,6 +94,9 @@ export function TramitacaoObrigacaoModal({ open, onClose, onConfirm, obrigacaoId
     try {
       const detalhe = await obrigacaoClient.buscarDetalhePorId(obrigacaoId);
       const obrigacao = detalhe.obrigacao;
+
+      const isPreAnaliseStatus = obrigacao.statusSolicitacao?.idStatusSolicitacao === statusListType.PRE_ANALISE.id;
+      setIsPreAnalise(!isPreAnaliseStatus);
 
       const mappedData: Partial<TramitacaoFormData> = {
         dsTarefa: obrigacao.dsTarefa || '',
@@ -175,36 +182,51 @@ export function TramitacaoObrigacaoModal({ open, onClose, onConfirm, obrigacaoId
       return;
     }
 
+    if (isPreAnalise) {
+      if (currentStep < steps.length) {
+        setCurrentStep(currentStep + 1);
+      }
+      return;
+    }
+
     setLoading(true);
     try {
       if (currentStep === 1) {
-        await obrigacaoClient.atualizarStep1(obrigacaoId, {
-          dsTarefa: formData.dsTarefa || '',
-          flAnaliseGerenteDiretor: formData.flAnaliseGerenteDiretor || '',
-          flExigeCienciaGerenteRegul: formData.flExigeCienciaGerenteRegul || '',
-          dsObservacao: formData.dsObservacao || '',
-        });
+        try {
+          await obrigacaoClient.atualizarStep1(obrigacaoId, {
+            dsTarefa: formData.dsTarefa || '',
+            flAnaliseGerenteDiretor: formData.flAnaliseGerenteDiretor || '',
+            flExigeCienciaGerenteRegul: formData.flExigeCienciaGerenteRegul || '',
+            dsObservacao: formData.dsObservacao || '',
+          });
+        } catch (error) {
+          console.error('Erro ao salvar step 1:', error);
+        }
         setCurrentStep(currentStep + 1);
       } else if (currentStep === 2) {
         setCurrentStep(currentStep + 1);
       } else if (currentStep === 3) {
-        const solicitacoesPrazos = (formData.statusPrazos || [])
-          .filter(p => p.nrPrazoInterno && p.nrPrazoInterno > 0 && p.idStatusSolicitacao)
-          .map(p => ({
-            idStatusSolicitacao: p.idStatusSolicitacao!,
-            idTema: formData.idTema || undefined,
-            nrPrazoInterno: p.nrPrazoInterno,
-            nrPrazoExterno: p.nrPrazoExterno || 0,
-            tpPrazo: formData.tpPrazo || undefined,
-            flExcepcional: formData.flExcepcional || 'N',
-          }));
+        try {
+          const solicitacoesPrazos = (formData.statusPrazos || [])
+            .filter(p => p.nrPrazoInterno && p.nrPrazoInterno > 0 && p.idStatusSolicitacao)
+            .map(p => ({
+              idStatusSolicitacao: p.idStatusSolicitacao!,
+              idTema: formData.idTema || undefined,
+              nrPrazoInterno: p.nrPrazoInterno,
+              nrPrazoExterno: p.nrPrazoExterno || 0,
+              tpPrazo: formData.tpPrazo || undefined,
+              flExcepcional: formData.flExcepcional || 'N',
+            }));
 
-        await solicitacoesClient.etapaPrazo(obrigacaoId, {
-          idTema: formData.idTema || undefined,
-          nrPrazoInterno: formData.nrPrazo || undefined,
-          flExcepcional: formData.flExcepcional || 'N',
-          solicitacoesPrazos,
-        });
+          await solicitacoesClient.etapaPrazo(obrigacaoId, {
+            idTema: formData.idTema || undefined,
+            nrPrazoInterno: formData.nrPrazo || undefined,
+            flExcepcional: formData.flExcepcional || 'N',
+            solicitacoesPrazos,
+          });
+        } catch (error) {
+          console.error('Erro ao salvar step 3:', error);
+        }
 
         try {
           const detalhe = await obrigacaoClient.buscarDetalhePorId(obrigacaoId);
@@ -230,14 +252,18 @@ export function TramitacaoObrigacaoModal({ open, onClose, onConfirm, obrigacaoId
 
         setCurrentStep(currentStep + 1);
       } else if (currentStep === 4) {
-        if (formData.idsAssinantes && formData.idsAssinantes.length > 0) {
-          await solicitacaoAssinanteClient.criar(
-            formData.idsAssinantes.map(id => ({
-              idSolicitacao: obrigacaoId,
-              idStatusSolicitacao: statusListType.EM_ASSINATURA_DIRETORIA.id,
-              idResponsavel: id,
-            }))
-          );
+        try {
+          if (formData.idsAssinantes && formData.idsAssinantes.length > 0) {
+            await solicitacaoAssinanteClient.criar(
+              formData.idsAssinantes.map(id => ({
+                idSolicitacao: obrigacaoId,
+                idStatusSolicitacao: statusListType.EM_ASSINATURA_DIRETORIA.id,
+                idResponsavel: id,
+              }))
+            );
+          }
+        } catch (error) {
+          console.error('Erro ao salvar step 4:', error);
         }
         setCurrentStep(currentStep + 1);
       } else if (currentStep === 5) {
@@ -319,15 +345,41 @@ export function TramitacaoObrigacaoModal({ open, onClose, onConfirm, obrigacaoId
   };
 
   const handleConfirm = () => {
-    if (onConfirm) {
-      onConfirm(formData);
+    setShowConfirmSend(true);
+  };
+
+  const handleConfirmSend = async () => {
+    if (!obrigacaoId) {
+      toast.error('ID da obrigação não encontrado.');
+      return;
     }
-    handleClose();
+
+    try {
+      setLoading(true);
+      
+      await tramitacoesClient.tramitarViaFluxo({
+        idSolicitacao: obrigacaoId,
+        dsObservacao: 'Obrigação encaminhada para o Gerente do Regulatório.',
+      });
+      toast.success('Obrigação encaminhada para o Gerente do Regulatório com sucesso!');
+      
+      if (onConfirm) {
+        onConfirm(formData);
+      }
+      handleClose();
+    } catch (error) {
+      console.error('Erro ao encaminhar obrigação:', error);
+      toast.error('Erro ao encaminhar obrigação. Tente novamente.');
+    } finally {
+      setLoading(false);
+      setShowConfirmSend(false);
+    }
   };
 
   const handleClose = () => {
     setCurrentStep(1);
     setExistingAnexos([]);
+    setIsPreAnalise(false);
     setFormData({
       dsTarefa: '',
       cdIdentificacao: '',
@@ -394,6 +446,10 @@ export function TramitacaoObrigacaoModal({ open, onClose, onConfirm, obrigacaoId
   };
 
   const isStepValid = (step: number): boolean => {
+    if (isPreAnalise) {
+      return true;
+    }
+    
     switch (step) {
       case 1:
         return !!(
@@ -408,6 +464,7 @@ export function TramitacaoObrigacaoModal({ open, onClose, onConfirm, obrigacaoId
         return true;
     }
   };
+
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
@@ -415,6 +472,7 @@ export function TramitacaoObrigacaoModal({ open, onClose, onConfirm, obrigacaoId
           <Step1Dados
             formData={formData}
             updateFormData={updateFormData}
+            disabled={isPreAnalise}
           />
         );
       case 2:
@@ -434,6 +492,7 @@ export function TramitacaoObrigacaoModal({ open, onClose, onConfirm, obrigacaoId
           <Step3Prazos
             formData={formData}
             updateFormData={updateFormData}
+            disabled={isPreAnalise}
           />
         );
       case 4: 
@@ -442,6 +501,7 @@ export function TramitacaoObrigacaoModal({ open, onClose, onConfirm, obrigacaoId
           selectedResponsavelIds={formData.idsAssinantes || []}
           onSelectionChange={(idsAssinantes) => updateFormData({ idsAssinantes } as Partial<TramitacaoFormData>)}
           label="Selecione os validadores em 'Em Assinatura Diretoria' *"
+          disabled={isPreAnalise}
           />
         );
       case 5:
@@ -454,6 +514,7 @@ export function TramitacaoObrigacaoModal({ open, onClose, onConfirm, obrigacaoId
             existingAnexos={existingAnexos}
             onDownloadExisting={handleDownloadExisting}
             onRemoveExisting={handleRemoveExisting}
+            disabled={isPreAnalise}
           />
         );
       case 6:
@@ -500,14 +561,18 @@ export function TramitacaoObrigacaoModal({ open, onClose, onConfirm, obrigacaoId
             {currentStep < steps.length ? (
               <Button 
                 onClick={handleNext} 
-                disabled={loading || !isStepValid(currentStep)} 
+                disabled={loading || (!isPreAnalise && !isStepValid(currentStep))} 
                 className="flex items-center gap-2"
               >
                 <CaretRightIcon className="h-4 w-4" />
                 {loading ? 'Salvando...' : 'Próxima etapa'}
               </Button>
             ) : (
-              <Button onClick={handleConfirm} className="flex items-center gap-2">
+                <Button
+                  onClick={handleConfirm}
+                  disabled={isPreAnalise}
+                  tooltip={isPreAnalise ? 'Só é possível encaminhar para o Gerente do Regulatório quando o status for "Pré-análise".' : undefined}
+                  className="flex items-center gap-2">
                 <ArrowArcRightIcon className={"w-4 h-4 mr-1"} />
                 Encaminhar para o Gerente do Regulatório
               </Button>
@@ -515,6 +580,16 @@ export function TramitacaoObrigacaoModal({ open, onClose, onConfirm, obrigacaoId
           </div>
         </div>
       </DialogContent>
+
+      <ConfirmationDialog
+        open={showConfirmSend}
+        onOpenChange={setShowConfirmSend}
+        title="Confirmar envio"
+        description="Deseja encaminhar para o Gerente do Regulatório?"
+        confirmText="Sim"
+        cancelText="Voltar"
+        onConfirm={handleConfirmSend}
+      />
     </Dialog>
   );
 }

@@ -41,6 +41,9 @@ import { TramitacaoObrigacaoModal } from "@/components/obrigacoes/tramitacao";
 import TimeProgress from "@/components/ui/time-progress";
 import obrigacaoClient from "@/api/obrigacao/client";
 import { toast } from "sonner";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import tramitacoesClient from "@/api/tramitacoes/client";
+import { FlAprovadoTramitacaoEnum } from "@/api/tramitacoes/types";
 import { useUserGestao } from "@/hooks/use-user-gestao";
 import { perfilUtil } from "@/api/perfis/types";
 import { ObrigacaoResumoResponse, ObrigacaoFiltroRequest } from "@/api/obrigacao/types";
@@ -82,6 +85,8 @@ function ObrigacoesContent() {
   const [obrigacaoParaNaoAplicavelSuspenso, setObrigacaoParaNaoAplicavelSuspenso] = useState<ObrigacaoResponse | null>(null);
   const [showTramitacaoModal, setShowTramitacaoModal] = useState(false);
   const [obrigacaoParaTramitacao, setObrigacaoParaTramitacao] = useState<ObrigacaoResponse | null>(null);
+  const [showConfirmTramitacao, setShowConfirmTramitacao] = useState(false);
+  const [obrigacaoParaConfirmarTramitacao, setObrigacaoParaConfirmarTramitacao] = useState<ObrigacaoResponse | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { idPerfil } = useUserGestao();
@@ -384,6 +389,41 @@ function ObrigacoesContent() {
           loadObrigacoes();
         }}
         obrigacaoId={obrigacaoParaTramitacao?.idSolicitacao || null}
+      />
+
+      <ConfirmationDialog
+        open={showConfirmTramitacao}
+        onOpenChange={setShowConfirmTramitacao}
+        title="Confirmar tramitação"
+        description="Deseja realmente enviar esta obrigação para tramitação?"
+        confirmText="Sim, enviar"
+        cancelText="Cancelar"
+        onConfirm={async () => {
+          if (!obrigacaoParaConfirmarTramitacao?.idSolicitacao) {
+            toast.error('ID da obrigação não encontrado.');
+            return;
+          }
+
+          try {
+            await tramitacoesClient.tramitarViaFluxo({
+              idSolicitacao: obrigacaoParaConfirmarTramitacao.idSolicitacao,
+              dsObservacao: 'Obrigação enviada para tramitação.',
+              flAprovado: FlAprovadoTramitacaoEnum.R,
+            });
+            
+            toast.success('Obrigação enviada para tramitação com sucesso!');
+            
+            setObrigacaoParaTramitacao(obrigacaoParaConfirmarTramitacao);
+            setShowConfirmTramitacao(false);
+            setShowTramitacaoModal(true);
+            setObrigacaoParaConfirmarTramitacao(null);
+            
+            await loadObrigacoes();
+          } catch (error) {
+            console.error('Erro ao enviar obrigação para tramitação:', error);
+            toast.error('Erro ao enviar obrigação para tramitação. Tente novamente.');
+          }
+        }}
       />
       
       <div className="flex flex-col min-h-0 flex-1">
@@ -696,8 +736,14 @@ function ObrigacoesContent() {
                           }
                         } : undefined}
                         onEncaminharTramitacao={(obrigacao) => {
-                          setObrigacaoParaTramitacao(obrigacao);
-                          setShowTramitacaoModal(true);
+                          const isEmValidacao = obrigacao.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.EM_VALIDACAO_REGULATORIO.id;                          
+                          if (isEmValidacao) {
+                            setObrigacaoParaConfirmarTramitacao(obrigacao);
+                            setShowConfirmTramitacao(true);
+                          } else {
+                            setObrigacaoParaTramitacao(obrigacao);
+                            setShowTramitacaoModal(true);
+                          }
                         }}
                         onEnviarArea={canEnviarAreasObrigacao ? async (obrigacao) => {
                           if (!obrigacao.idSolicitacao) {

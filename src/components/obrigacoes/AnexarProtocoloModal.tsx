@@ -16,6 +16,7 @@ import obrigacaoClient from '@/api/obrigacao/client';
 import { ObrigacaoProtocoloRequest } from '@/api/obrigacao/types';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import tramitacoesClient from '@/api/tramitacoes/client';
+import { FlAprovadoTramitacaoEnum } from '@/api/tramitacoes/types';
 
 interface AnexarProtocoloModalProps {
   open: boolean;
@@ -118,7 +119,7 @@ export function AnexarProtocoloModal({
         tramitacoesClient.tramitarViaFluxo({
           idSolicitacao: idObrigacao,
           dsObservacao: 'Obrigação anexada com protocolo. Concluida com sucesso.',
-          flAprovado: 'S',
+          flAprovado: FlAprovadoTramitacaoEnum.S,
         }),
       ]);
       

@@ -9,9 +9,10 @@ import { TramitacaoFormData } from '../TramitacaoObrigacaoModal';
 interface Step1DadosProps {
   formData: TramitacaoFormData;
   updateFormData: (data: Partial<TramitacaoFormData>) => void;
+  disabled?: boolean;
 }
 
-export function Step1Dados({ formData, updateFormData }: Step1DadosProps) {
+export function Step1Dados({ formData, updateFormData, disabled = false }: Step1DadosProps) {
   return (
     <div className="space-y-6">
 
@@ -37,6 +38,7 @@ export function Step1Dados({ formData, updateFormData }: Step1DadosProps) {
           onChange={(e) => updateFormData({ dsTarefa: e.target.value })}
           rows={4}
           className="resize-none"
+          disabled={disabled}
         />
       </div>
 
@@ -49,6 +51,7 @@ export function Step1Dados({ formData, updateFormData }: Step1DadosProps) {
             <Checkbox
               checked={(formData.flAnaliseGerenteDiretor || '').toUpperCase() === 'G'}
               onCheckedChange={() => updateFormData({ flAnaliseGerenteDiretor: 'G' })}
+              disabled={disabled}
             />
             <Label className="text-sm font-light cursor-pointer">Gerente</Label>
           </div>
@@ -56,6 +59,7 @@ export function Step1Dados({ formData, updateFormData }: Step1DadosProps) {
             <Checkbox
               checked={(formData.flAnaliseGerenteDiretor || '').toUpperCase() === 'D'}
               onCheckedChange={() => updateFormData({ flAnaliseGerenteDiretor: 'D' })}
+              disabled={disabled}
             />
             <Label className="text-sm font-light cursor-pointer">Diretor</Label>
           </div>
@@ -63,6 +67,7 @@ export function Step1Dados({ formData, updateFormData }: Step1DadosProps) {
             <Checkbox
               checked={(formData.flAnaliseGerenteDiretor || '').toUpperCase() === 'A'}
               onCheckedChange={() => updateFormData({ flAnaliseGerenteDiretor: 'A' })}
+              disabled={disabled}
             />
             <Label className="text-sm font-light cursor-pointer">Ambos</Label>
           </div>
@@ -70,6 +75,7 @@ export function Step1Dados({ formData, updateFormData }: Step1DadosProps) {
             <Checkbox
               checked={(formData.flAnaliseGerenteDiretor || '').toUpperCase() === 'N'}
               onCheckedChange={() => updateFormData({ flAnaliseGerenteDiretor: 'N' })}
+              disabled={disabled}
             />
             <Label className="text-sm font-light cursor-pointer">Não necessita</Label>
           </div>
@@ -85,6 +91,7 @@ export function Step1Dados({ formData, updateFormData }: Step1DadosProps) {
             <Checkbox
               checked={(formData.flExigeCienciaGerenteRegul || '').toUpperCase() === 'S'}
               onCheckedChange={() => updateFormData({ flExigeCienciaGerenteRegul: 'S' })}
+              disabled={disabled}
             />
             <Label className="text-sm font-light cursor-pointer">Sim</Label>
           </div>
@@ -92,6 +99,7 @@ export function Step1Dados({ formData, updateFormData }: Step1DadosProps) {
             <Checkbox
               checked={(formData.flExigeCienciaGerenteRegul || '').toUpperCase() === 'N'}
               onCheckedChange={() => updateFormData({ flExigeCienciaGerenteRegul: 'N' })}
+              disabled={disabled}
             />
             <Label className="text-sm font-light cursor-pointer">Não, apenas ciência</Label>
           </div>
@@ -106,6 +114,7 @@ export function Step1Dados({ formData, updateFormData }: Step1DadosProps) {
           onChange={(e) => updateFormData({ dsObservacao: e.target.value })}
           rows={4}
           className="resize-none"
+          disabled={disabled}
         />
       </div>
     </div>

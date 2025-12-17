@@ -35,7 +35,6 @@ interface ObrigacaoAcoesMenuProps {
   onEnviarArea?: (obrigacao: ObrigacaoResponse) => void;
   onNaoAplicavelSuspenso?: (obrigacao: ObrigacaoResponse) => void;
   onExcluir?: (obrigacao: ObrigacaoResponse) => void;
-  canVisualizarObrigacao?: boolean;
 }
 
 export function ObrigacaoAcoesMenu({
@@ -47,19 +46,19 @@ export function ObrigacaoAcoesMenu({
   onEnviarArea,
   onNaoAplicavelSuspenso,
   onExcluir,
-  canVisualizarObrigacao: canVisualizarObrigacaoProp,
 }: ObrigacaoAcoesMenuProps) {
   const { idPerfil } = useUserGestao();
+
   const { 
     canInserirObrigacao, 
     canDeletarObrigacao, 
     canConcluirObrigacao, 
     canEnviarAreasObrigacao,
     canNaoAplicavelSuspensaObrigacao,
-    canVisualizarObrigacao: canVisualizarObrigacaoPermissao 
+    canVisualizarObrigacao,
+    canTramitarObrigacao
   } = usePermissoes();
   
-  const canVisualizarObrigacao = canVisualizarObrigacaoProp ?? canVisualizarObrigacaoPermissao;
   
   const isStatusConcluido = obrigacao.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.CONCLUIDO.id ||
     obrigacao.statusSolicitacao?.nmStatus === StatusObrigacao.CONCLUIDO;
@@ -73,6 +72,40 @@ export function ObrigacaoAcoesMenu({
     return obrigacao.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.EM_VALIDACAO_REGULATORIO.id ||
       obrigacao.statusSolicitacao?.nmStatus === StatusObrigacao.EM_VALIDACAO_REGULATORIO;
   }, [obrigacao.statusSolicitacao]);
+
+  const isStatusDesabilitadoTramitacao = useMemo(() => {
+    const idStatus = obrigacao.statusSolicitacao?.idStatusSolicitacao;
+    
+    return (
+      idStatus === statusListObrigacao.NAO_INICIADO.id ||
+      idStatus === statusListObrigacao.PENDENTE.id ||
+      idStatus === statusListObrigacao.EM_ANDAMENTO.id ||
+      idStatus === statusListObrigacao.ATRASADA.id ||
+      idStatus === statusListObrigacao.NAO_APLICAVEL_SUSPENSA.id
+    );
+  }, [obrigacao.statusSolicitacao]);
+
+  const conferenciaAprovada = useMemo(() => {
+    return obrigacao.flAprovarConferencia === 'S';
+  }, [obrigacao.flAprovarConferencia]);
+
+  const podeTramitar = useMemo(() => {
+    return canTramitarObrigacao && !isStatusDesabilitadoTramitacao && conferenciaAprovada;
+  }, [canTramitarObrigacao, isStatusDesabilitadoTramitacao, conferenciaAprovada]);
+
+  const tooltipOpçãoEnviarTramitacao = useMemo(() => {
+    if (!canTramitarObrigacao) {
+      return 'Você não tem permissão para encaminhar obrigações para tramitação.';
+    }
+    if (!conferenciaAprovada) {
+      return 'A conferência não foi aprovada. Não é possível encaminhar para tramitação.';
+    }
+    if (isStatusDesabilitadoTramitacao) {
+      const statusLabel = obrigacao.statusSolicitacao?.nmStatus || 'este status';
+      return `Não é possível encaminhar para tramitação quando a obrigação está com status "${statusLabel}".`;
+    }
+    return '';
+  }, [canTramitarObrigacao, conferenciaAprovada, isStatusDesabilitadoTramitacao, obrigacao.statusSolicitacao?.nmStatus]);
 
   const isAdminOrGestor = useMemo(() => {
     return idPerfil === perfilUtil.ADMINISTRADOR ||
@@ -116,7 +149,6 @@ export function ObrigacaoAcoesMenu({
   }, [isStatusConcluido, isStatusEmValidacao, isAdminOrGestor, isExisteAnexoCorrespondencia]);
 
   const jaEnviadoParaArea = obrigacao.flEnviandoArea === 'S';
-  const conferenciaAprovada = obrigacao.flAprovarConferencia === 'S';
   const isNaoPermitidoEditar = conferenciaAprovada || isStatusNaoAplicavelSuspenso;
 
   return (
@@ -187,11 +219,28 @@ export function ObrigacaoAcoesMenu({
             </Tooltip>
           </TooltipProvider>
         )}
-        {onEncaminharTramitacao && (
-          <DropdownMenuItem onClick={() => onEncaminharTramitacao(obrigacao)}>
-            <PaperPlaneRightIcon className="mr-2 h-4 w-4" />
-            Encaminhar para tramitação
-          </DropdownMenuItem>
+        {onEncaminharTramitacao && canVisualizarObrigacao && canTramitarObrigacao && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="w-full">
+                  <DropdownMenuItem 
+                    onClick={() => podeTramitar && onEncaminharTramitacao(obrigacao)}
+                    disabled={!podeTramitar}
+                    className={!podeTramitar ? 'opacity-50 cursor-not-allowed' : ''}
+                  >
+                    <PaperPlaneRightIcon className="mr-2 h-4 w-4" />
+                    Encaminhar para tramitação
+                  </DropdownMenuItem>
+                </div>
+              </TooltipTrigger>
+              {!podeTramitar && tooltipOpçãoEnviarTramitacao && (
+                <TooltipContent>
+                  <p>{tooltipOpçãoEnviarTramitacao}</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
         )}
         {onEnviarArea && canEnviarAreasObrigacao && (
           <TooltipProvider>

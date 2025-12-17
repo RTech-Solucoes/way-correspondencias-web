@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, ChevronRight, Loader2 } from 'lucide-react';
@@ -26,6 +26,7 @@ import { AnexoObrigacaoModal } from '@/components/obrigacoes/conferencia/AnexoOb
 import { ConferenciaFooter } from '@/components/obrigacoes/conferencia/ConferenciaFooter';
 import { TipoDocumentoAnexoEnum } from '@/api/anexos/type';
 import tramitacoesClient from '@/api/tramitacoes/client';
+import { FlAprovadoTramitacaoEnum } from '@/api/tramitacoes/types';
 import { authClient } from '@/api/auth/client';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { perfilUtil } from '@/api/perfis/types';
@@ -34,6 +35,7 @@ import { responsaveisClient } from '@/api/responsaveis/client';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
 import { solicitacaoParecerClient } from '@/api/solicitacao-parecer/client';
+import { statusList } from '@/api/status-solicitacao/types';
 
 type TabKey = 'dados' | 'temas' | 'prazos' | 'anexos' | 'vinculos';
 const tabs: { key: TabKey; label: string }[] = [
@@ -63,8 +65,8 @@ export default function ConferenciaObrigacaoPage() {
   const [showEnviarRegulatorioDialog, setShowEnviarRegulatorioDialog] = useState(false);
   const [showAprovarConferenciaDialog, setShowAprovarConferenciaDialog] = useState(false);
   const [showJustificarAtrasoModal, setShowJustificarAtrasoModal] = useState(false);
-  const [conferenciaAprovada, setConferenciaAprovada] = useState(false);
   const [userResponsavel, setUserResponsavel] = useState<ResponsavelResponse | null>(null);
+  const getComentarioTextoRef = useRef<(() => string) | null>(null);
 
   const parsedId = useMemo(() => {
     if (!id) return null;
@@ -84,11 +86,6 @@ export default function ConferenciaObrigacaoPage() {
         setLoading(true);
         const response = await obrigacaoClient.buscarDetalhePorId(parsedId);
         setDetalhe(response);
-        if (response?.obrigacao?.flAprovarConferencia === 'S') {
-          setConferenciaAprovada(true);
-        } else {
-          setConferenciaAprovada(false);
-        }
       } catch (error) {
         console.error('Erro ao carregar a obrigação:', error);
         toast.error('Não foi possível carregar a obrigação.');
@@ -139,15 +136,10 @@ export default function ConferenciaObrigacaoPage() {
     if (!parsedId) {
       return;
     }
-    try {
-      const response = await obrigacaoClient.buscarDetalhePorId(parsedId);
-      setDetalhe(response);
-      if (response?.obrigacao?.flAprovarConferencia === 'S') {
-        setConferenciaAprovada(true);
-      } else {
-        setConferenciaAprovada(false);
-      }
-    } catch (error) {
+      try {
+        const response = await obrigacaoClient.buscarDetalhePorId(parsedId);
+        setDetalhe(response);
+      } catch (error) {
       console.error('Erro ao recarregar detalhes da obrigação:', error);
       toast.error('Erro ao recarregar detalhes da obrigação.');
     }
@@ -244,7 +236,7 @@ export default function ConferenciaObrigacaoPage() {
       await tramitacoesClient.tramitarViaFluxo({
         idSolicitacao: obrigacao.idSolicitacao,
         dsObservacao: 'Obrigação solicitada de ajustes. Volta para área atribuída',
-        flAprovado: 'N',
+        flAprovado: FlAprovadoTramitacaoEnum.N,
       });
       
       await reloadDetalhe();
@@ -255,9 +247,51 @@ export default function ConferenciaObrigacaoPage() {
     }
   }, [obrigacao?.idSolicitacao, reloadDetalhe]);
 
+  const handleAprovarReprovarTramitacao = useCallback(async (flAprovado: FlAprovadoTramitacaoEnum) => {
+    if (!obrigacao?.idSolicitacao) {
+      toast.error('Dados da obrigação incompletos.');
+      return;
+    }
+
+    const comentarioTexto = getComentarioTextoRef.current?.() || '';
+    const textoTrimmed = comentarioTexto.trim();
+
+    if (!textoTrimmed) {
+      toast.error('É necessário escrever um comentário antes de enviar.');
+      return;
+    }
+
+    try {
+      await tramitacoesClient.tramitarViaFluxo({
+        idSolicitacao: obrigacao.idSolicitacao,
+        dsObservacao: textoTrimmed,
+        flAprovado,
+      });
+      
+      await reloadDetalhe();
+      toast.success(
+        flAprovado === FlAprovadoTramitacaoEnum.S 
+          ? 'Obrigação aprovada com sucesso!'
+          : 'Obrigação reprovada com sucesso!'
+      );
+    } catch (error) {
+      console.error('Erro ao tramitar:', error);
+      toast.error('Erro ao processar tramitação.');
+    }
+  }, [obrigacao?.idSolicitacao, reloadDetalhe]);
+
+  const isStatusBtnFlAprovar = useMemo(() => {
+    return obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.EM_ANALISE_GERENTE_REGULATORIO.id ||
+           obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.EM_APROVACAO.id;
+  }, [obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
   const handleAprovarConferenciaClick = useCallback(() => {
-    setShowAprovarConferenciaDialog(true);
-  }, []);
+    if (isStatusBtnFlAprovar) {
+      handleAprovarReprovarTramitacao(FlAprovadoTramitacaoEnum.S);
+    } else {
+      setShowAprovarConferenciaDialog(true);
+    }
+  }, [isStatusBtnFlAprovar, handleAprovarReprovarTramitacao]);
 
   const confirmarAprovarConferencia = useCallback(async () => {
     if (!obrigacao?.idSolicitacao || !obrigacao?.dsTarefa) {
@@ -283,7 +317,6 @@ export default function ConferenciaObrigacaoPage() {
         }),
       ]);
       
-      setConferenciaAprovada(true);
       await reloadDetalhe();
       toast.success('Conferência aprovada com sucesso!');
     } catch (error) {
@@ -322,14 +355,6 @@ export default function ConferenciaObrigacaoPage() {
     }
   }, [obrigacao?.idSolicitacao, reloadDetalhe]);
 
-  const isStatusEmAndamento = useMemo(() => {
-    return obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.EM_ANDAMENTO.id;
-  }, [obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
-
-  const isStatusEmValidacaoRegulatorio = useMemo(() => {
-    return obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.EM_VALIDACAO_REGULATORIO.id;
-  }, [obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
-
   const isStatusAtrasada = useMemo(() => {
     return obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.ATRASADA.id;
   }, [obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
@@ -340,10 +365,6 @@ export default function ConferenciaObrigacaoPage() {
       anexo.tpDocumento === TipoDocumentoAnexoEnum.L
     );
   }, [anexos]);
-
-  const isStatusPermitidoEnviarReg = useMemo(() => {
-    return isStatusEmAndamento || isStatusAtrasada;
-  }, [isStatusEmAndamento, isStatusAtrasada]);
 
   const temJustificativaAtraso = useMemo(() => {
     return !!obrigacao?.dsJustificativaAtraso;
@@ -375,7 +396,7 @@ export default function ConferenciaObrigacaoPage() {
     try {
       const observacaoTramitacao = isStatusAtrasada && obrigacao.dsJustificativaAtraso
         ? 'Obrigação enviada ao Regulatório com atraso justificado'
-        : 'Obrigacao enviada para Em Validação (Regulatório).';
+        : 'Obrigação enviada para Em Validação (Regulatório).';
 
       await tramitacoesClient.tramitarViaFluxo({
         idSolicitacao: obrigacao.idSolicitacao,
@@ -396,62 +417,45 @@ export default function ConferenciaObrigacaoPage() {
     [obrigacao?.idSolicitacao, obrigacao?.statusSolicitacao?.idStatusSolicitacao, obrigacao?.dsJustificativaAtraso, isStatusAtrasada, temEvidenciaCumprimento, temJustificativaAtraso, reloadDetalhe],
   );
 
-  const tooltipEnviarRegulatorio = useMemo(() => {
-    if (!isPerfilPermitidoEnviarReg) {
-      const temPerfilPermitido = [perfilUtil.EXECUTOR_AVANCADO, perfilUtil.EXECUTOR, perfilUtil.EXECUTOR_RESTRITO].includes(idPerfil ?? 0);
+  const isStatusDesabilitadoParaTramitacao = useMemo(() => {
+    const idStatus = obrigacao?.statusSolicitacao?.idStatusSolicitacao ?? 0;
+    
+    return (
+      idStatus === statusListObrigacao.NAO_INICIADO.id ||
+      idStatus === statusListObrigacao.PENDENTE.id ||
+      idStatus === statusListObrigacao.EM_ANDAMENTO.id ||
+      idStatus === statusListObrigacao.ATRASADA.id ||
+      idStatus === statusListObrigacao.NAO_APLICAVEL_SUSPENSA.id
+    );
+  }, [obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 
-      if (!temPerfilPermitido) {
-        return 'Apenas Executor Avançado, Executor, Executor Restrito podem enviar para análise do regulatório.';
-      }
-      if (!isUsuarioDaAreaAtribuida) {
-        return 'Apenas usuários da área atribuída podem enviar para análise do regulatório.';
-      }
-      return 'Você não tem permissão para enviar para análise do regulatório.';
+  const handleEnviarParaTramitacaoClick = useCallback(async () => {
+    if (!obrigacao?.idSolicitacao) {
+      toast.error('Dados da obrigação incompletos.');
+      return;
     }
-    if (isStatusAtrasada && !temJustificativaAtraso) {
-      return 'É necessário inserir a justificativa de atraso antes de enviar ao Regulatório.';
-    }
-    if (!temEvidenciaCumprimento) {
-      if (isStatusAtrasada) {
-        return 'É necessário anexar a evidência de cumprimento antes de enviar ao Regulatório.';
-      }
-      return 'É necessário anexar pelo menos uma evidência de cumprimento (arquivo ou link) antes de enviar para análise do regulatório.';
-    }
-    if (!isStatusPermitidoEnviarReg) {
-      return 'Só é possível enviar para análise do regulatório quando o status for "Em Andamento" ou "Atrasada".';
-    }
-    return '';
-  }, [isPerfilPermitidoEnviarReg, isStatusPermitidoEnviarReg, temEvidenciaCumprimento, isStatusAtrasada, temJustificativaAtraso, idPerfil, isUsuarioDaAreaAtribuida]);
 
-  const tooltipStatusValidacaoRegulatorio = useMemo(() => {
-    if (conferenciaAprovada) {
-      return 'A conferência já foi aprovada.';
-    }
-    if (!isStatusEmValidacaoRegulatorio) {
-      return 'Só é possível realizar esta ação quando o status for "Em Validação (Regulatório)".';
-    }
-    return '';
-  }, [isStatusEmValidacaoRegulatorio, conferenciaAprovada]);
+    const comentarioTexto = getComentarioTextoRef.current?.() || '';
+    const textoTrimmed = comentarioTexto.trim();
 
-  const tooltipAnexarCorrespondencia = useMemo(() => {
-    if (!conferenciaAprovada) {
-      return 'É necessário aprovar a conferência antes de anexar correspondência.';
+    if (!textoTrimmed) {
+      toast.error('É necessário escrever um comentário antes de enviar.');
+      return;
     }
-    if (!isStatusEmValidacaoRegulatorio) {
-      return 'Apenas é possível anexar correspondência quando o status for "Em Validação (Regulatório)".';
-    }
-    return '';
-  }, [conferenciaAprovada, isStatusEmValidacaoRegulatorio]);
 
-  const tooltipJustificarAtraso = useMemo(() => {
-    if (!isStatusAtrasada) {
-      return '';
+    try {
+      await tramitacoesClient.tramitarViaFluxo({
+        idSolicitacao: obrigacao.idSolicitacao,
+        dsObservacao: textoTrimmed,
+      });
+      
+      await reloadDetalhe();
+      toast.success('Obrigação enviada para tramitação com sucesso!');
+    } catch (error) {
+      console.error('Erro ao enviar para tramitação:', error);
+      toast.error('Erro ao enviar para tramitação.');
     }
-    if (!isUsuarioDaAreaAtribuida) {
-      return 'Apenas usuários da área atribuída podem justificar o atraso desta obrigação.';
-    }
-    return '';
-  }, [isStatusAtrasada, isUsuarioDaAreaAtribuida]);
+  }, [obrigacao?.idSolicitacao, reloadDetalhe]);
 
   if (loading) {
     return (
@@ -592,30 +596,32 @@ export default function ConferenciaObrigacaoPage() {
           detalhe={detalhe} 
           onRefreshAnexos={reloadDetalhe}
           podeEnviarComentarioPorPerfilEArea={isPerfilPermitidoEnviarReg}
+          isStatusDesabilitadoParaTramitacao={isStatusDesabilitadoParaTramitacao}
+          onGetComentarioTexto={(getter) => {
+            getComentarioTextoRef.current = getter;
+          }}
         />
       )}
+    
       <ConferenciaFooter
+        statusSolicitacao={obrigacao?.statusSolicitacao}
         isAdminOrGestor={isAdminOrGestor}
-        isStatusEmValidacaoRegulatorio={isStatusEmValidacaoRegulatorio}
-        conferenciaAprovada={conferenciaAprovada}
-        isStatusAtrasada={isStatusAtrasada}
+        flAprovarConferencia={obrigacao?.flAprovarConferencia}
         isUsuarioDaAreaAtribuida={isUsuarioDaAreaAtribuida}
-        isStatusPermitidoEnviarReg={isStatusPermitidoEnviarReg}
-        isPerfilPermitidoEnviarReg={isPerfilPermitidoEnviarReg}
-        temEvidenciaCumprimento={temEvidenciaCumprimento}
-        temJustificativaAtraso={temJustificativaAtraso}
-        tooltipAnexarCorrespondencia={tooltipAnexarCorrespondencia}
-        tooltipStatusValidacaoRegulatorio={tooltipStatusValidacaoRegulatorio}
-        tooltipJustificarAtraso={tooltipJustificarAtraso}
-        tooltipEnviarRegulatorio={tooltipEnviarRegulatorio}
+        idPerfil={idPerfil}
+        anexos={anexos}
+        dsJustificativaAtraso={obrigacao?.dsJustificativaAtraso}
+        canAprovarConferencia={canAprovarConferenciaObrigacao}
+        canSolicitarAjustes={canSolicitarAjustesObrigacao}
         onAnexarCorrespondencia={() => setShowAnexarCorrespondenciaModal(true)}
         onSolicitarAjustes={handleSolicitarAjustesClick}
         onAprovarConferencia={handleAprovarConferenciaClick}
+        onReprovarConferencia={() => handleAprovarReprovarTramitacao(FlAprovadoTramitacaoEnum.N)}
         onJustificarAtraso={() => setShowJustificarAtrasoModal(true)}
         onAnexarEvidencia={() => setShowAnexarEvidenciaModal(true)}
         onEnviarParaAnalise={handleEnviarParaAnaliseClick}
-        canAprovarConferencia={canAprovarConferenciaObrigacao}
-        canSolicitarAjustes={canSolicitarAjustesObrigacao}
+        onEnviarParaTramitacao={handleEnviarParaTramitacaoClick}
+        isStatusDesabilitadoParaTramitacao={isStatusDesabilitadoParaTramitacao}
       />
 
       {obrigacao?.idSolicitacao && (

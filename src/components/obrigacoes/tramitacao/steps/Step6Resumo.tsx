@@ -7,14 +7,14 @@ import obrigacaoClient from '@/api/obrigacao/client';
 import areasClient from '@/api/areas/client';
 import responsaveisClient from '@/api/responsaveis/client';
 import { ObrigacaoResponse } from '@/api/obrigacao/types';
-import { AreaSolicitacao } from '@/api/solicitacoes/types';
+import { AreaSolicitacao, SolicitacaoAssinanteResponse, SolicitacaoPrazoResponse } from '@/api/solicitacoes/types';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { STATUS_LIST } from '@/api/status-solicitacao/types';
 import { AnexoResponse, TipoDocumentoAnexoEnum, TipoObjetoAnexoEnum } from '@/api/anexos/type';
 import { TipoEnum } from '@/api/tipos/types';
 import AnexoList from '@/components/AnexoComponotent/AnexoList/AnexoList';
 import anexosClient from '@/api/anexos/client';
-import { base64ToUint8Array, saveBlob } from '@/utils/utils';
+import { base64ToUint8Array, saveBlob, hoursToDaysAndHours } from '@/utils/utils';
 
 interface Step6ResumoProps {
   formData: TramitacaoFormData;
@@ -51,13 +51,6 @@ function horasParaDias(horas: number): number {
   return Math.floor(horas / 24);
 }
 
-const removerPrefixoArea = (nome: string): string => {
-  return nome
-    .replace(/^Área de\s+/i, '')
-    .replace(/^Área\s+/i, '')
-    .trim();
-};
-
 export function Step6Resumo({ formData, obrigacaoId }: Step6ResumoProps) {
   const [obrigacaoDetalhe, setObrigacaoDetalhe] = useState<ObrigacaoResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -65,6 +58,8 @@ export function Step6Resumo({ formData, obrigacaoId }: Step6ResumoProps) {
   const [areasCondicionantesInfo, setAreasCondicionantesInfo] = useState<Record<number, { responsavelNome: string; cargoNome: string }>>({});
   const [responsaveisInfo, setResponsaveisInfo] = useState<Record<number, ResponsavelResponse>>({});
   const [anexos, setAnexos] = useState<AnexoResponse[]>([]);
+  const [assinantesDetalhe, setAssinantesDetalhe] = useState<SolicitacaoAssinanteResponse[]>([]);
+  const [statusPrazosDetalhe, setStatusPrazosDetalhe] = useState<SolicitacaoPrazoResponse[]>([]);
 
   const carregarInfosResponsaveis = async (areas: AreaSolicitacao[]) => {
     try {
@@ -119,8 +114,12 @@ export function Step6Resumo({ formData, obrigacaoId }: Step6ResumoProps) {
           await carregarInfosResponsaveis(detalhe.obrigacao.areas);
         }
 
-        if (detalhe.solicitacoesAssinantes && detalhe.solicitacoesAssinantes.length > 0) {
-          const responsaveisIds = detalhe.solicitacoesAssinantes.map(a => a.idResponsavel);
+        const assinantesParaCarregar = detalhe.obrigacao.solicitacoesAssinantes || detalhe.solicitacoesAssinantes || [];
+
+        setAssinantesDetalhe(assinantesParaCarregar);
+        
+        if (assinantesParaCarregar.length > 0) {
+          const responsaveisIds = assinantesParaCarregar.map(a => a.idResponsavel);
           const responsaveisPromises = responsaveisIds.map(id => 
             responsaveisClient.buscarPorId(id).catch(() => null)
           );
@@ -133,6 +132,9 @@ export function Step6Resumo({ formData, obrigacaoId }: Step6ResumoProps) {
           });
           setResponsaveisInfo(responsaveisMap);
         }
+
+        const prazosParaCarregar = detalhe.obrigacao.solicitacaoPrazos || detalhe.solicitacaoPrazos || [];
+        setStatusPrazosDetalhe(prazosParaCarregar);
       } catch (error) {
         console.error('Erro ao carregar detalhe da obrigação:', error);
       } finally {
@@ -150,13 +152,14 @@ export function Step6Resumo({ formData, obrigacaoId }: Step6ResumoProps) {
 
   const areaAtribuida = obrigacaoDetalhe?.areas?.find((a: AreaSolicitacao) => a.tipoArea?.cdTipo === TipoEnum.ATRIBUIDA);
   const areasCondicionantes = obrigacaoDetalhe?.areas?.filter((a: AreaSolicitacao) => a.tipoArea?.cdTipo === TipoEnum.CONDICIONANTE) || [];
-  const assinantes = obrigacaoDetalhe?.solicitacoesAssinantes || [];
-  const statusPrazos = obrigacaoDetalhe?.solicitacaoPrazos || [];
+  const assinantes = obrigacaoDetalhe?.solicitacoesAssinantes || assinantesDetalhe || [];
+  const statusPrazos = obrigacaoDetalhe?.solicitacaoPrazos || statusPrazosDetalhe || [];
   const prazoExcepcional = obrigacaoDetalhe?.flExcepcional === 'S';
 
-  const prazoPrincipalDias = formData.nrPrazo 
-    ? horasParaDias(formData.nrPrazo)
-    : 0;
+  const currentPrazoTotal = statusPrazos.reduce((acc, curr) => acc + (curr.nrPrazoInterno || 0), 0);
+  const prazoPrincipalDias = currentPrazoTotal > 0 
+    ? (prazoExcepcional ? currentPrazoTotal : horasParaDias(currentPrazoTotal))
+    : (formData.nrPrazo ? horasParaDias(formData.nrPrazo) : 0);
 
   const handleDownloadAnexoBackend = async (anexo: { idObjeto?: number; nmArquivo?: string }) => {
     try {
@@ -221,7 +224,7 @@ export function Step6Resumo({ formData, obrigacaoId }: Step6ResumoProps) {
             <div className="flex items-center justify-between p-3 bg-white border rounded-lg shadow-sm">
               <div className="flex flex-col">
                 <span className="font-medium text-gray-900">
-                  {removerPrefixoArea(areaAtribuida.nmArea || areaAtribuida.dsArea || '').toUpperCase()}
+                  {(areaAtribuida.nmArea).toUpperCase()}
                 </span>
                 {areaAtribuida.cdArea && (
                   <span className="text-xs text-gray-500">{areaAtribuida.cdArea}</span>
@@ -252,7 +255,7 @@ export function Step6Resumo({ formData, obrigacaoId }: Step6ResumoProps) {
                 <div key={index} className="flex items-center justify-between p-3 bg-white border rounded-lg shadow-sm">
                   <div className="flex flex-col">
                     <span className="font-medium text-gray-900">
-                      {removerPrefixoArea(area.nmArea || area.dsArea || '').toUpperCase()}
+                      {(area.nmArea || area.dsArea || '').toUpperCase()}
                     </span>
                     {area.cdArea && (
                       <span className="text-xs text-gray-500">{area.cdArea}</span>
@@ -281,9 +284,41 @@ export function Step6Resumo({ formData, obrigacaoId }: Step6ResumoProps) {
       <div className="border-t pt-4">
         <Label className="text-sm font-semibold text-gray-700">Validadores e assinantes</Label>
         <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm mt-2">
-          <div className="space-y-3">
-            
-          </div>
+          {assinantes && assinantes.length > 0 ? (
+            <div className="space-y-3">
+              {assinantes.map((assinante, index) => {
+                const responsavel = responsaveisInfo[assinante.idResponsavel];
+                const key = assinante.idSolicitacaoAssinantem || `assinante-${assinante.idResponsavel}-${index}`;
+                return responsavel ? (
+                  <div key={key} className="flex items-center justify-between p-3 bg-white border rounded-lg shadow-sm">
+                    <div className="flex flex-col">
+                      <span className="font-medium text-gray-900">{responsavel.nmResponsavel}</span>
+                      <span className="text-xs text-gray-500">{responsavel.nmPerfil}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-sm font-medium text-blue-600">
+                        {responsavel.nmCargo || 'Sem cargo'}
+                      </span>
+                      {responsavel.dsEmail && (
+                        <div className="text-xs text-gray-500">
+                          {responsavel.dsEmail}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div key={key} className="flex items-center justify-between p-3 bg-white border rounded-lg shadow-sm">
+                    <div className="flex flex-col">
+                      <span className="font-medium text-gray-900">Carregando...</span>
+                      <span className="text-xs text-gray-500">ID: {assinante.idResponsavel}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-gray-500">Nenhum validador/assinante selecionado</p>
+          )}
         </div>
       </div>
 
@@ -291,8 +326,19 @@ export function Step6Resumo({ formData, obrigacaoId }: Step6ResumoProps) {
         <div className="grid grid-cols-3 gap-4">
           <div>
             <Label className="text-sm font-semibold text-gray-700">Prazo principal</Label>
-            <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm mt-2">
-              {prazoPrincipalDias > 0 ? `${prazoPrincipalDias} dias` : 'Não informado'}
+            <div className="p-3 bg-gray-50 border border-yellow-200 rounded-lg text-sm mt-2">
+              {currentPrazoTotal > 0 ? (
+                <>
+                  {prazoExcepcional ? `${currentPrazoTotal} horas` : hoursToDaysAndHours(currentPrazoTotal)}
+                  {prazoExcepcional && (
+                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                      Excepcional
+                    </span>
+                  )}
+                </>
+              ) : (
+                prazoPrincipalDias > 0 ? `${prazoPrincipalDias} dias` : 'Não informado'
+              )}
             </div>
           </div>
           <div>
@@ -319,14 +365,14 @@ export function Step6Resumo({ formData, obrigacaoId }: Step6ResumoProps) {
                 .filter(prazo => prazo.nrPrazoInterno && prazo.nrPrazoInterno > 0)
                 .map((prazo) => {
                   const statusLabel = getStatusLabel(prazo.idStatusSolicitacao || 0);
-                  const dias = prazoExcepcional 
-                    ? prazo.nrPrazoInterno || 0
-                    : horasParaDias(prazo.nrPrazoInterno || 0);
+                  const horas = prazo.nrPrazoInterno || 0;
                   
                   return (
                     <div key={prazo.idSolicitacaoPrazo} className="flex justify-between items-center p-2 bg-white border rounded-lg">
                       <span className="font-medium text-gray-900">{statusLabel}</span>
-                      <span className="text-gray-600">{dias} dias</span>
+                      <span className="text-gray-600">
+                        {prazoExcepcional ? `${horas} horas` : hoursToDaysAndHours(horas)}
+                      </span>
                     </div>
                   );
                 })
@@ -339,7 +385,6 @@ export function Step6Resumo({ formData, obrigacaoId }: Step6ResumoProps) {
 
       <div className="border-t pt-4">
         <Label className="text-sm font-semibold text-gray-700">Anexos ({anexos.length})</Label>
-
         <AnexoList anexos={anexos.map(a => ({
           idAnexo: a.idAnexo,
           idObjeto: a.idObjeto,
@@ -347,13 +392,10 @@ export function Step6Resumo({ formData, obrigacaoId }: Step6ResumoProps) {
           nmArquivo: a.nmArquivo,
           dsCaminho: a.dsCaminho,
           tpObjeto: a.tpObjeto,
-          size: 0
         }))}
           onDownload={handleDownloadAnexoBackend}
         />
-
       </div>
     </div>
   );
 }
-

@@ -92,7 +92,7 @@ export function Step4Obrigacao({
         {canListarAnexo && anexos.length > 0 && (
           <div>
             <Label className="text-sm font-medium mb-2 block">Anexos adicionados:</Label>
-            <AnexoList anexos={anexos} onRemove={handleRemoveAnexo} />
+            <AnexoList anexos={anexos} onRemove={disabled ? undefined : handleRemoveAnexo} />
           </div>
         )}
 
@@ -110,7 +110,7 @@ export function Step4Obrigacao({
               <AnexoList
                 anexos={backendAnexos}
                 onDownload={onDownloadExisting ? (anexo) => handleDownloadExisting(anexo) : undefined}
-                onRemove={onRemoveExisting ? (index) => handleRemoveExisting(index) : undefined}
+                onRemove={disabled || !onRemoveExisting ? undefined : (index) => handleRemoveExisting(index)}
               />
             ) : (
               <div className="text-sm text-gray-500">Nenhum anexo cadastrado.</div>

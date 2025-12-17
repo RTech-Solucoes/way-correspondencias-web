@@ -33,6 +33,7 @@ import InformaçaoStatusEmAnaliseGerReg from './InformaçaoStatusEmAnaliseGerReg
 import type { AnexoResponse } from '@/api/anexos/type';
 import { CategoriaEnum, TipoEnum } from '@/api/tipos/types';
 import areasClient from '@/api/areas/client';
+import { FlAprovadoTramitacaoEnum } from '@/api/tramitacoes/types';
 
 
 type DetalhesSolicitacaoModalProps = {
@@ -42,7 +43,7 @@ type DetalhesSolicitacaoModalProps = {
   anexos?: AnexoResponse[];
   onHistoricoRespostas?(): void;
   onAbrirEmailOriginal?(): void;
-  onEnviarDevolutiva?(mensagem: string, arquivos: ArquivoDTO[], flAprovado?: 'S' | 'N'): Promise<void> | void;
+  onEnviarDevolutiva?(mensagem: string, arquivos: ArquivoDTO[], flAprovado?: FlAprovadoTramitacaoEnum): Promise<void> | void;
   statusLabel?: string;
 };
 
@@ -395,7 +396,7 @@ export default function DetalhesSolicitacaoModal({
             )
           : [];
 
-        await onEnviarDevolutiva(resposta.trim(), arquivosDTO, flAprovado || undefined);
+        await onEnviarDevolutiva(resposta.trim(), arquivosDTO, flAprovado as FlAprovadoTramitacaoEnum | undefined);
 
         toast.success('Resposta enviada com sucesso!');
         setResposta('');
