@@ -21,6 +21,7 @@ import { ConferenciaStepPrazos } from '@/components/obrigacoes/conferencia/Confe
 import { ConferenciaStepAnexos } from '@/components/obrigacoes/conferencia/ConferenciaStepAnexos';
 import { ConferenciaStepVinculos } from '@/components/obrigacoes/conferencia/ConferenciaStepVinculos';
 import { ConferenciaSidebar } from '@/components/obrigacoes/conferencia/sidebarRigth/ConferenciaSidebar';
+import { PrazoStatusPill } from '@/components/obrigacoes/conferencia/PrazoStatusPill';
 import { useUserGestao } from '@/hooks/use-user-gestao';
 import { AnexoObrigacaoModal } from '@/components/obrigacoes/conferencia/AnexoObrigacaoModal';
 import { ConferenciaFooter } from '@/components/obrigacoes/conferencia/ConferenciaFooter';
@@ -218,7 +219,6 @@ export default function ConferenciaObrigacaoPage() {
     
     return userAreaIds.includes(idAreaAtribuida);
   }, [areaAtribuida?.idArea, userResponsavel?.areas]);
-
 
   const isPerfilPermitidoEnviarReg = useMemo(() => {
     const temPerfilPermitido = [perfilUtil.EXECUTOR_AVANCADO, perfilUtil.EXECUTOR, perfilUtil.EXECUTOR_RESTRITO].includes(idPerfil ?? 0);
@@ -520,11 +520,15 @@ export default function ConferenciaObrigacaoPage() {
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-semibold text-gray-900">Conferência de obrigação</h1>
+                <h1 className="text-2xl font-semibold text-gray-900">Conferência da Obrigação</h1>
                 <p className="text-sm text-gray-500">
                   Visualize os dados completos, anexos e vínculos relacionados à obrigação selecionada.
                 </p>
               </div>
+              <PrazoStatusPill 
+                idStatusAtual={obrigacao?.statusSolicitacao?.idStatusSolicitacao}
+                prazos={detalhe?.solicitacaoPrazos}
+              />
             </div>
           </div>
 
