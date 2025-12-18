@@ -99,13 +99,10 @@ export function AnexosTab({
   // Documentos de Tramitação
   const tramitacaoAnexos = useMemo(() => {
     const anexosPrincipais = (anexos || []).filter((anexo) => 
-      anexo.tpObjeto === TipoObjetoAnexoEnum.T || 
-      anexo.tpDocumento === TipoDocumentoAnexoEnum.C
-    );
+      anexo.tpObjeto === TipoObjetoAnexoEnum.T );
 
     const anexosDasTramitacoes = (tramitacoes || []).flatMap(t => t.anexos || []);
 
-    // 3. Combinar e remover duplicados por ID para evitar repetição na lista
     const todosAnexos = [...anexosPrincipais, ...anexosDasTramitacoes];
     const uniqueAnexos = Array.from(new Map(todosAnexos.map(a => [a.idAnexo, a])).values());
 

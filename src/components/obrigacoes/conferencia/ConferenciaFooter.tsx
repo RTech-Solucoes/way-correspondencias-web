@@ -65,7 +65,6 @@ export function ConferenciaFooter({
   onEnviarParaAnalise,
   onEnviarParaTramitacao,
   isStatusDesabilitadoParaTramitacao,
-  arquivosTramitacaoPendentes = [],
 }: ConferenciaFooterProps) {
 
   const idStatusSolicitacao = statusSolicitacao?.idStatusSolicitacao ?? 0;
