@@ -19,7 +19,7 @@ export function ConferenciaStepPrazos({ obrigacao }: ConferenciaStepPrazosProps)
         <ConferenciaInfoRow label="Data de início" value={normalizeDate(obrigacao.dtInicio)} />
         <ConferenciaInfoRow label="Data de término" value={normalizeDate(obrigacao.dtTermino)} />
         <ConferenciaInfoRow label="Data limite" value={normalizeDate(obrigacao.dtLimite)} />
-        <ConferenciaInfoRow label="Data de conclusão" value={normalizeDate(obrigacao.dtConclusao)} />
+        <ConferenciaInfoRow label="Data de conclusão" value={normalizeDate(obrigacao.dtConclusaoTramitacao)} />
         <ConferenciaInfoRow
           label="Duração"
           border={false}
