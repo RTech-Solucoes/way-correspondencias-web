@@ -103,6 +103,7 @@ export interface TramitacaoResponse {
   dsObservacao?: string;
   flAprovado?: FlAprovadoTramitacaoEnum | string;
   tramitacaoRef?: TramitacaoResponse;
+  idTramitacaoRef?: number;
 }
 
 export interface TramitacaoRequest {

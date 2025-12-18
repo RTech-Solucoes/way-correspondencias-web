@@ -22,6 +22,7 @@ import obrigacaoAnexosClient from '@/api/obrigacao/anexos-client';
 import { useUserGestao } from '@/hooks/use-user-gestao';
 import { computeTpResponsavel, perfilUtil } from '@/api/perfis/types';
 import tramitacoesClient from '@/api/tramitacoes/client';
+import { TramitacaoRequest, FlAprovadoTramitacaoEnum } from '@/api/tramitacoes/types';
 import { TramitacaoResponse as SolTramitacaoResponse, TramitacaoComAnexosResponse } from '@/api/solicitacoes/types';
 import { statusListObrigacao } from '@/api/status-obrigacao/types';
 import { statusList } from '@/api/status-solicitacao/types';
@@ -34,7 +35,12 @@ interface ConferenciaSidebarProps {
   onRefreshAnexos?: () => void;
   podeEnviarComentarioPorPerfilEArea?: boolean;
   isStatusDesabilitadoParaTramitacao?: boolean;
-  onRegisterComentarioActions?: (actions: { get: () => string; reset: () => void }) => void;
+  onRegisterComentarioActions?: (actions: { 
+    get: () => string; 
+    reset: () => void;
+    getTramitacaoRef: () => number | null;
+    getParecerRef: () => number | null;
+  }) => void;
   arquivosTramitacaoPendentes?: ArquivoDTO[];
   onAddArquivosTramitacao?: (files: ArquivoDTO[]) => void;
   onRemoveArquivoTramitacao?: (index: number) => void;
@@ -95,10 +101,12 @@ export function ConferenciaSidebar({
           if (textarea) {
             textarea.value = '';
           }
-        }
+        },
+        getTramitacaoRef: () => tramitacaoReferencia,
+        getParecerRef: () => parecerReferencia,
       });
     }
-  }, [onRegisterComentarioActions, comentarioTexto]);
+  }, [onRegisterComentarioActions, comentarioTexto, tramitacaoReferencia, parecerReferencia]);
 
   const areaAtribuida = useMemo(() => {
     return detalhe?.obrigacao?.areas?.find((area) => area.tipoArea?.cdTipo === TipoEnum.ATRIBUIDA);
@@ -744,11 +752,12 @@ export function ConferenciaSidebar({
           const podeCriarTramitacao = statusPermitidoParaTramitar && !tramitacaoExistente;
           
           if (podeCriarTramitacao) {
-            const tramitacaoRequest = {
+            const tramitacaoRequest: TramitacaoRequest = {
               idSolicitacao: detalhe.obrigacao.idSolicitacao,
               dsObservacao: textoCompleto.trim(),
               idResponsavel: userResponsavel?.idResponsavel,
               arquivos: arquivosTramitacaoPendentes,
+              idTramitacaoRef: tramitacaoReferencia ?? undefined,
             };
 
             await tramitacoesClient.tramitarViaFluxo(tramitacaoRequest);

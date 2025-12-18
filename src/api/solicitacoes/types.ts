@@ -221,6 +221,7 @@ export interface TramitacaoResponse extends BaseResponse {
   areaOrigem: AreaSolicitacao;
   areaDestino: AreaSolicitacao;
   tramitacaoRef?: TramitacaoResponse;
+  idTramitacaoRef?: number;
 }
 
 export interface TramitacaoComAnexosResponse {

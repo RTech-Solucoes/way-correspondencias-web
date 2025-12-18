@@ -117,15 +117,71 @@ export function ComentariosTab({
                 const responsavelTramitacao = tramitacao.tramitacaoAcao?.[0]?.responsavelArea?.responsavel;
                 const autor = responsavelTramitacao?.nmResponsavel || 'Usuário';
                 const area = tramitacao.areaOrigem?.nmArea || 'Regulatório';
+                const tramitacaoReferenciada = tramitacao.tramitacaoRef || (tramitacao.idTramitacaoRef ? tramitacoesMap.get(tramitacao.idTramitacaoRef) : null);
                 
+                const partsTramitacao: (string | { type: 'mention'; name: string; isValid: boolean })[] = [];
+                const processarMensagemTramitacao = (texto: string) => {
+                  if (!texto) {
+                    partsTramitacao.push('');
+                    return;
+                  }
+                  
+                  let posicao = 0;
+                  while (posicao < texto.length) {
+                    const indiceArroba = texto.indexOf('@', posicao);
+                    if (indiceArroba === -1) {
+                      if (posicao < texto.length) partsTramitacao.push(texto.substring(posicao));
+                      break;
+                    }
+                    if (indiceArroba > posicao) partsTramitacao.push(texto.substring(posicao, indiceArroba));
+
+                    let nomeEncontrado: string | null = null;
+                    let nomeValido = false;
+                    let nomeOriginal: string | null = null;
+                    const textoRestante = texto.substring(indiceArroba + 1);
+                    const nomesOrdenados = Array.from(nomesResponsaveisMap.entries()).sort((a, b) => b[0].length - a[0].length);
+                    
+                    for (const [nomeLower, nomeOriginalMap] of nomesOrdenados) {
+                      const textoRestanteLower = textoRestante.toLowerCase();
+                      if (textoRestanteLower.startsWith(nomeLower)) {
+                        const proximoChar = textoRestanteLower[nomeLower.length];
+                        if (!proximoChar || proximoChar === ' ' || proximoChar === '\n' || proximoChar === '\t') {
+                          nomeEncontrado = nomeLower;
+                          nomeValido = true;
+                          nomeOriginal = nomeOriginalMap;
+                          posicao = indiceArroba + 1 + nomeLower.length;
+                          break;
+                        }
+                      }
+                    }
+                    
+                    if (nomeEncontrado && nomeValido && nomeOriginal) {
+                      partsTramitacao.push({ type: 'mention', name: nomeOriginal, isValid: true });
+                    } else {
+                      const proximoEspaco = textoRestante.indexOf(' ');
+                      if (proximoEspaco === -1) {
+                        partsTramitacao.push({ type: 'mention', name: textoRestante, isValid: false });
+                        posicao = texto.length;
+                      } else {
+                        partsTramitacao.push({ type: 'mention', name: textoRestante.substring(0, proximoEspaco), isValid: false });
+                        posicao = indiceArroba + 1 + proximoEspaco;
+                      }
+                    }
+                  }
+                };
+                processarMensagemTramitacao(tramitacao.dsObservacao || '');
+
                 return (
                   <CardTramitacao
                     key={`tramitacao-${tramitacao.idTramitacao}-${index}`}
                     tramitacao={tramitacao}
+                    tramitacaoReferenciada={tramitacaoReferenciada}
+                    parts={partsTramitacao}
                     dataFormatada={dataFormatada}
                     autor={autor}
                     area={area}
                     onResponder={onResponderTramitacao}
+                    onScrollToTramitacao={handleScrollToTramitacao}
                   />
                 );
               }
@@ -135,26 +191,26 @@ export function ComentariosTab({
               const parts: (string | { type: 'mention'; name: string; isValid: boolean })[] = [];
               
               let comentarioReferenciado: SolicitacaoParecerResponse | null = null;
-              let tramitacaoReferenciada: TramitacaoResponse | null = null;
+              let tramitacaoReferenciada: SolTramitacaoResponse | null = null;
               
-              const idTramitacaoReferenciada = parecerTramitacaoMap.get(parecer.idSolicitacaoParecer);
+              const idTramitacaoReferenciada = parecer.idTramitacao || parecerTramitacaoMap.get(parecer.idSolicitacaoParecer);
               if (idTramitacaoReferenciada) {
                 tramitacaoReferenciada = tramitacoesMap.get(idTramitacaoReferenciada) || null;
               }
               
               if (!tramitacaoReferenciada) {
                 if (parecer.solicitacaoParecerReferen) {
-                if (Array.isArray(parecer.solicitacaoParecerReferen) && parecer.solicitacaoParecerReferen.length > 0) {
-                  comentarioReferenciado = parecer.solicitacaoParecerReferen[0];
-                } 
-                else if (!Array.isArray(parecer.solicitacaoParecerReferen)) {
-                  const refObj = parecer.solicitacaoParecerReferen as unknown as SolicitacaoParecerResponse;
-                  if (refObj && 'idSolicitacaoParecer' in refObj && refObj.idSolicitacaoParecer) {
-                    comentarioReferenciado = refObj;
+                  if (Array.isArray(parecer.solicitacaoParecerReferen) && parecer.solicitacaoParecerReferen.length > 0) {
+                    comentarioReferenciado = parecer.solicitacaoParecerReferen[0];
+                  } 
+                  else if (!Array.isArray(parecer.solicitacaoParecerReferen)) {
+                    const refObj = parecer.solicitacaoParecerReferen as unknown as SolicitacaoParecerResponse;
+                    if (refObj && 'idSolicitacaoParecer' in refObj && refObj.idSolicitacaoParecer) {
+                      comentarioReferenciado = refObj;
+                    }
                   }
                 }
-              }
-              
+                
                 if (!comentarioReferenciado && parecer.idSolicitacaoParecerReferen) {
                   comentarioReferenciado = pareceresMap.get(parecer.idSolicitacaoParecerReferen) || null;
                 }

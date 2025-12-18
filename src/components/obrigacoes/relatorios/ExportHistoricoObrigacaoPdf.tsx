@@ -45,6 +45,7 @@ const styles = StyleSheet.create({
   anexoItem: { padding: 8, backgroundColor: '#f0f9ff', borderRadius: 4, marginTop: 6, borderLeftColor: '#0ea5e9', borderLeftWidth: 2 },
   justificativaBlock: { padding: 10, backgroundColor: '#fef3c7', borderRadius: 6, marginTop: 8, borderLeftColor: '#f59e0b', borderLeftWidth: 3 },
   referenciaBlock: { padding: 8, backgroundColor: '#f3f4f6', borderRadius: 4, marginBottom: 8, borderLeftColor: '#9333ea', borderLeftWidth: 3 },
+  referenciaBlockBlue: { padding: 8, backgroundColor: '#f0f9ff', borderRadius: 4, marginBottom: 8, borderLeftColor: '#2563eb', borderLeftWidth: 3 },
   mentionText: { color: '#9333ea', fontWeight: 600 },
   linkText: { color: '#2563eb', textDecoration: 'underline' },
   infoNote: { fontSize: 7.5, color: '#6b7280', fontStyle: 'italic', marginTop: 4 },
@@ -399,18 +400,48 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
               const responsavelTramitacao = tramitacao.tramitacaoAcao?.[0]?.responsavelArea?.responsavel;
               const dataFormatada = item.data ? formatDateTimeBr(item.data) : '—';
               const areaTramitacao = tramitacao.areaOrigem?.nmArea || 'Regulatório';
+              const tramitacaoReferenciada = tramitacao.tramitacaoRef || (tramitacao.idTramitacaoRef ? (tramitacoesMap.get(tramitacao.idTramitacaoRef) || null) : null);
+              const parts = processarMensagem(tramitacao.dsObservacao || '');
               
               return (
                 <View key={`tramitacao-${tramitacao.idTramitacao}-${index}`} style={styles.item} wrap={false}>
+                  {tramitacaoReferenciada && (
+                    <View style={styles.referenciaBlockBlue} wrap={false}>
+                      <Text style={[styles.small, { color: '#2563eb', fontWeight: 700, marginBottom: 2 }]}>
+                        {tramitacaoReferenciada.tramitacaoAcao?.[0]?.responsavelArea?.responsavel?.nmResponsavel || 'Usuário'}
+                      </Text>
+                      <Text style={styles.small}>
+                        {tramitacaoReferenciada.dsObservacao || 'Tramitação referenciada'}
+                      </Text>
+                    </View>
+                  )}
+
                   <View style={styles.itemHeader}>
                     <Text style={styles.pill}>{areaTramitacao.toUpperCase()}</Text>
                     <Text style={styles.small}>{dataFormatada}</Text>
                   </View>
-                  {tramitacao.dsObservacao && tramitacao.dsObservacao.trim() !== '' && (
-                    <Text style={[styles.small, { marginTop: 4, marginBottom: 4 }]}>
-                      {tramitacao.dsObservacao}
-                    </Text>
-                  )}
+                  
+                  <Text style={[styles.small, { marginTop: 4, marginBottom: 4 }]}>
+                    {parts.map((part, idx) => {
+                      if (typeof part === 'object' && 'type' in part && part.type === 'mention') {
+                        if (part.isValid) {
+                          return (
+                            <Text key={idx} style={styles.mentionText}>
+                              @{part.name}
+                            </Text>
+                          );
+                        } else {
+                          return (
+                            <Text key={idx}>
+                              @{part.name}
+                            </Text>
+                          );
+                        }
+                      }
+                      return <Text key={idx}>{String(part)}</Text>;
+                    })}
+                  </Text>
+
                   <View style={{ marginTop: 4 }}>
                     <Text style={styles.small}>
                       <Text style={styles.smallBold}>Responsável:</Text> {responsavelTramitacao?.nmResponsavel || '—'}

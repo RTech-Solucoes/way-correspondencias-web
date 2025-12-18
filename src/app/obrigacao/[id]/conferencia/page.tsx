@@ -27,7 +27,7 @@ import { AnexoObrigacaoModal } from '@/components/obrigacoes/conferencia/AnexoOb
 import { ConferenciaFooter } from '@/components/obrigacoes/conferencia/ConferenciaFooter';
 import { TipoDocumentoAnexoEnum } from '@/api/anexos/type';
 import tramitacoesClient from '@/api/tramitacoes/client';
-import { FlAprovadoTramitacaoEnum } from '@/api/tramitacoes/types';
+import { FlAprovadoTramitacaoEnum, TramitacaoRequest } from '@/api/tramitacoes/types';
 import { authClient } from '@/api/auth/client';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { perfilUtil } from '@/api/perfis/types';
@@ -73,7 +73,12 @@ export default function ConferenciaObrigacaoPage() {
   const [loading, setLoading] = useState(false);
   const [userResponsavel, setUserResponsavel] = useState<ResponsavelResponse | null>(null);
   const [arquivosTramitacaoPendentes, setArquivosTramitacaoPendentes] = useState<ArquivoDTO[]>([]);
-  const comentarioActionsRef = useRef<{ get: () => string; reset: () => void } | null>(null);
+  const comentarioActionsRef = useRef<{ 
+    get: () => string; 
+    reset: () => void;
+    getTramitacaoRef: () => number | null;
+    getParecerRef: () => number | null;
+  } | null>(null);
 
   const parsedId = useMemo(() => {
     if (!id) return null;
@@ -274,14 +279,19 @@ export default function ConferenciaObrigacaoPage() {
       return;
     }
 
+    const idTramitacaoRef = comentarioActionsRef.current?.getTramitacaoRef?.() ?? undefined;
+
     setLoading(true);
     try {
-      await tramitacoesClient.tramitarViaFluxo({
+      const tramitacaoRequest: TramitacaoRequest = {
         idSolicitacao: obrigacao.idSolicitacao,
         dsObservacao: textoTrimmed,
         flAprovado,
         arquivos: arquivosTramitacaoPendentes,
-      });
+        idTramitacaoRef,
+      };
+
+      await tramitacoesClient.tramitarViaFluxo(tramitacaoRequest);
       
       setArquivosTramitacaoPendentes([]);
       comentarioActionsRef.current?.reset();
@@ -431,11 +441,16 @@ export default function ConferenciaObrigacaoPage() {
         ? 'Obrigação enviada ao Regulatório com atraso justificado'
         : 'Obrigação enviada para Em Validação (Regulatório).';
 
-      await tramitacoesClient.tramitarViaFluxo({
+      const idTramitacaoRef = comentarioActionsRef.current?.getTramitacaoRef?.() ?? undefined;
+
+      const tramitacaoRequest: TramitacaoRequest = {
         idSolicitacao: obrigacao.idSolicitacao,
         dsObservacao: observacaoTramitacao,
         arquivos: arquivosTramitacaoPendentes,
-      });
+        idTramitacaoRef,
+      };
+
+      await tramitacoesClient.tramitarViaFluxo(tramitacaoRequest);
       
       setArquivosTramitacaoPendentes([]);
       comentarioActionsRef.current?.reset();
@@ -485,6 +500,8 @@ export default function ConferenciaObrigacaoPage() {
       return;
     }
 
+    const idTramitacaoRef = comentarioActionsRef.current?.getTramitacaoRef?.() ?? undefined;
+
     setLoading(true);
     try {
       let flAprovado = undefined;
@@ -502,12 +519,15 @@ export default function ConferenciaObrigacaoPage() {
         }
       }
 
-      await tramitacoesClient.tramitarViaFluxo({
+      const tramitacaoRequest: TramitacaoRequest = {
         idSolicitacao: obrigacao.idSolicitacao,
         dsObservacao: textoTrimmed,
         flAprovado,
         arquivos: arquivosTramitacaoPendentes,
-      });
+        idTramitacaoRef,
+      };
+
+      await tramitacoesClient.tramitarViaFluxo(tramitacaoRequest);
       
       setArquivosTramitacaoPendentes([]);
       comentarioActionsRef.current?.reset();
