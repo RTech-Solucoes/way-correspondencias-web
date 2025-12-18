@@ -49,6 +49,8 @@ export function ObrigacaoAcoesMenu({
 }: ObrigacaoAcoesMenuProps) {
   const { idPerfil } = useUserGestao();
 
+  const [isExisteAnexoCorrespondencia, setIsExisteAnexoCorrespondencia] = useState<boolean>(false);
+
   const { 
     canInserirObrigacao, 
     canDeletarObrigacao, 
@@ -90,8 +92,8 @@ export function ObrigacaoAcoesMenu({
   }, [obrigacao.flAprovarConferencia]);
 
   const podeTramitar = useMemo(() => {
-    return canTramitarObrigacao && !isStatusDesabilitadoTramitacao && conferenciaAprovada;
-  }, [canTramitarObrigacao, isStatusDesabilitadoTramitacao, conferenciaAprovada]);
+    return canTramitarObrigacao && !isStatusDesabilitadoTramitacao && conferenciaAprovada && isExisteAnexoCorrespondencia;
+  }, [canTramitarObrigacao, isStatusDesabilitadoTramitacao, conferenciaAprovada, isExisteAnexoCorrespondencia]);
 
   const tooltipOpçãoEnviarTramitacao = useMemo(() => {
     if (!canTramitarObrigacao) {
@@ -104,15 +106,16 @@ export function ObrigacaoAcoesMenu({
       const statusLabel = obrigacao.statusSolicitacao?.nmStatus || 'este status';
       return `Não é possível encaminhar para tramitação quando a obrigação está com status "${statusLabel}".`;
     }
+    if (!isExisteAnexoCorrespondencia) {
+      return 'É necessário anexar a correspondência antes de encaminhar para tramitação.';
+    }
     return '';
-  }, [canTramitarObrigacao, conferenciaAprovada, isStatusDesabilitadoTramitacao, obrigacao.statusSolicitacao?.nmStatus]);
+  }, [canTramitarObrigacao, conferenciaAprovada, isStatusDesabilitadoTramitacao, obrigacao.statusSolicitacao?.nmStatus, isExisteAnexoCorrespondencia]);
 
   const isAdminOrGestor = useMemo(() => {
     return idPerfil === perfilUtil.ADMINISTRADOR ||
       idPerfil === perfilUtil.GESTOR_DO_SISTEMA;
   }, [idPerfil]);
-
-  const [isExisteAnexoCorrespondencia, setIsExisteAnexoCorrespondencia] = useState<boolean>(false);
 
   useEffect(() => {
     const verificarAnexoCorrespondencia = async () => {

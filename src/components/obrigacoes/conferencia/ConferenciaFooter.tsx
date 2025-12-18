@@ -2,6 +2,8 @@
 
 import { CheckCircle2, Clock, MessageSquare, Paperclip, X, CheckSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
 import { statusListObrigacao } from '@/api/status-obrigacao/types';
 import { TipoDocumentoAnexoEnum } from '@/api/anexos/type';
@@ -9,6 +11,8 @@ import { AnexoResponse } from '@/api/anexos/type';
 import { perfilUtil } from '@/api/perfis/types';
 import { useMemo } from 'react';
 import { statusList } from '@/api/status-solicitacao/types';
+import { TramitacaoResponse } from '@/api/tramitacoes/types';
+import { ResponsavelResponse } from '@/api/responsaveis/types';
 
 interface ConferenciaFooterProps {
   statusSolicitacao?: StatusSolicitacaoResponse | null;
@@ -16,10 +20,15 @@ interface ConferenciaFooterProps {
   flAprovarConferencia?: string | null;
   isUsuarioDaAreaAtribuida: boolean;
   idPerfil?: number | null;
+  userResponsavel?: ResponsavelResponse | null;
+  tramitacoes?: TramitacaoResponse[];
   anexos?: AnexoResponse[];
   dsJustificativaAtraso?: string | null;
   canAprovarConferencia?: boolean | null;
   canSolicitarAjustes?: boolean | null;
+  flExigeCienciaGerenteRegul?: string | null;
+  isCienciaChecked?: boolean;
+  onCienciaCheckedChange?: (checked: boolean) => void;
   onAnexarCorrespondencia: () => void;
   onSolicitarAjustes: () => void;
   onAprovarConferencia: () => void;
@@ -37,10 +46,15 @@ export function ConferenciaFooter({
   flAprovarConferencia,
   isUsuarioDaAreaAtribuida,
   idPerfil,
+  userResponsavel,
+  tramitacoes = [],
   anexos = [],
   dsJustificativaAtraso,
   canAprovarConferencia = true,
   canSolicitarAjustes = true,
+  flExigeCienciaGerenteRegul,
+  isCienciaChecked = false,
+  onCienciaCheckedChange,
   onAnexarCorrespondencia,
   onSolicitarAjustes,
   onAprovarConferencia,
@@ -161,20 +175,47 @@ export function ConferenciaFooter({
            (!isStatusAtrasada || temJustificativaAtraso);
   }, [isStatusPermitidoEnviarReg, isPerfilPermitidoEnviarReg, temEvidenciaCumprimento, isStatusAtrasada, temJustificativaAtraso]);
 
-  const isStatusBtnFlAprovar = useMemo(() => {
-    return statusSolicitacao?.idStatusSolicitacao === statusList.EM_ANALISE_GERENTE_REGULATORIO.id ||
-           statusSolicitacao?.idStatusSolicitacao === statusList.EM_APROVACAO.id;
-  }, [statusSolicitacao?.idStatusSolicitacao]);
+  const isStatusEmAnaliseGerenteRegulatorio = useMemo(() => {
+    return idStatusSolicitacao === statusList.EM_ANALISE_GERENTE_REGULATORIO.id;
+  }, [idStatusSolicitacao]);
 
+  const isStatusBtnFlAprovar = useMemo(() => {
+    return (isStatusEmAnaliseGerenteRegulatorio && flExigeCienciaGerenteRegul === 'S') ||
+           statusSolicitacao?.idStatusSolicitacao === statusList.EM_APROVACAO.id;
+  }, [isStatusEmAnaliseGerenteRegulatorio, flExigeCienciaGerenteRegul, statusSolicitacao?.idStatusSolicitacao]);
+
+
+  
   const isPerfilPermitidoEnviarTramitacaoPorStatus = useMemo(() => {
 
-    if (idStatusSolicitacao === statusList.EM_ANALISE_GERENTE_REGULATORIO.id){
-      if (idPerfil === perfilUtil.ADMINISTRADOR) return true;
+    const nrNivelUltimaTramitacao = tramitacoes[0]?.nrNivel;
+
+    const tramitacaoExecutada = tramitacoes?.filter(t =>
+      t?.nrNivel === nrNivelUltimaTramitacao &&
+      t?.solicitacao?.statusSolicitacao?.idStatusSolicitacao === idStatusSolicitacao &&
+      t?.tramitacaoAcao?.some(ta =>
+        ta?.responsavelArea?.responsavel?.idResponsavel === userResponsavel?.idResponsavel &&
+        ta.flAcao === 'T'));
+
+    const isAreaRespondeu = tramitacoes?.filter(t =>
+      t?.nrNivel === nrNivelUltimaTramitacao &&
+      idStatusSolicitacao !== statusList.EM_ASSINATURA_DIRETORIA.id &&
+      t?.solicitacao?.statusSolicitacao?.idStatusSolicitacao === idStatusSolicitacao &&
+      userResponsavel?.areas?.some(a => a?.area?.idArea === t?.areaOrigem?.idArea)
+    );
+    
+    if (isStatusEmAnaliseGerenteRegulatorio) {
+      if (idPerfil === perfilUtil.ADMINISTRADOR) {
+        return flExigeCienciaGerenteRegul === 'S' || !!isCienciaChecked;
+      }
     }
+
+    if (tramitacaoExecutada != null && tramitacaoExecutada?.length > 0) return false;
+    if (isAreaRespondeu != null && isAreaRespondeu?.length > 0) return false;
 
     return false;
 
-  }, [idPerfil, idStatusSolicitacao]);
+  }, [idPerfil, idStatusSolicitacao, flExigeCienciaGerenteRegul, isCienciaChecked, tramitacoes, userResponsavel, isStatusEmAnaliseGerenteRegulatorio]);
 
   const tooltipPerfilPermitidoEnviarTramitacaoPorStatus = useMemo(() => {
 
@@ -183,16 +224,21 @@ export function ConferenciaFooter({
     }
 
     if (idStatusSolicitacao === statusList.EM_ANALISE_GERENTE_REGULATORIO.id) {
-      if (idPerfil === perfilUtil.ADMINISTRADOR) {
-        return 'Apenas o Administrador pode aprovar ou reprovar';
+      if (idPerfil !== perfilUtil.ADMINISTRADOR) {
+        return 'Apenas o Administrador pode realizar esta ação';
+      }
+      if (flExigeCienciaGerenteRegul === 'N' && !isCienciaChecked) {
+        return 'É necessário declarar ciência para prosseguir';
       }
     }
       return '';
-  }, [idStatusSolicitacao, idPerfil]);
+  }, [idStatusSolicitacao, idPerfil, flExigeCienciaGerenteRegul, isCienciaChecked]);
+
 
   const textoBtnEnviarParaTramitacaoPorStatus = useMemo(() => {
-    const textosPorStatus: Record<number, string> = {
+    const textosPorStatus= {
       [statusList.PRE_ANALISE.id]: 'Enviar para Gerente do Regulatório',
+      [statusList.EM_ANALISE_GERENTE_REGULATORIO.id]: 'Encaminhar para Gerente da Área',
     };
     
     return textosPorStatus[idStatusSolicitacao] ?? 'Enviar para Tramitação';
@@ -305,6 +351,24 @@ export function ConferenciaFooter({
           </>
         )}
 
+        {isStatusEmAnaliseGerenteRegulatorio && flExigeCienciaGerenteRegul === 'N' && (
+          <div>
+            <div className="flex items-center gap-3 bg-blue-50/50 px-5 py-2.5 rounded-full border border-blue-100 shadow-sm transition-all hover:bg-blue-50">
+              <Checkbox
+                id="ciencia-checkbox"
+                checked={isCienciaChecked}
+                onCheckedChange={(checked) => onCienciaCheckedChange?.(!!checked)}
+                className="h-5 w-5 border-blue-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+              />
+              <Label
+                htmlFor="ciencia-checkbox"
+                className="text-sm font-semibold text-blue-900 cursor-pointer whitespace-nowrap select-none"
+              >
+                Declaro estar ciente da solicitação e de seu conteúdo
+              </Label>
+            </div>
+          </div>
+        )}
         {!isStatusBtnFlAprovar && !isStatusDesabilitadoParaTramitacao && !isStatusEmValidacaoRegulatorio && (
           <Button
             type="button"

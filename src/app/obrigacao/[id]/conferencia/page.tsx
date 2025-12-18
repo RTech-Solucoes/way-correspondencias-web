@@ -64,7 +64,10 @@ export default function ConferenciaObrigacaoPage() {
   const [showSolicitarAjustesDialog, setShowSolicitarAjustesDialog] = useState(false);
   const [showEnviarRegulatorioDialog, setShowEnviarRegulatorioDialog] = useState(false);
   const [showAprovarConferenciaDialog, setShowAprovarConferenciaDialog] = useState(false);
+  const [showConfirmarAprovarTramitacaoDialog, setShowConfirmarAprovarTramitacaoDialog] = useState(false);
+  const [showConfirmarReprovarTramitacaoDialog, setShowConfirmarReprovarTramitacaoDialog] = useState(false);
   const [showJustificarAtrasoModal, setShowJustificarAtrasoModal] = useState(false);
+  const [isCienciaChecked, setIsCienciaChecked] = useState(false);
   const [userResponsavel, setUserResponsavel] = useState<ResponsavelResponse | null>(null);
   const getComentarioTextoRef = useRef<(() => string) | null>(null);
 
@@ -287,11 +290,15 @@ export default function ConferenciaObrigacaoPage() {
 
   const handleAprovarConferenciaClick = useCallback(() => {
     if (isStatusBtnFlAprovar) {
-      handleAprovarReprovarTramitacao(FlAprovadoTramitacaoEnum.S);
+      setShowConfirmarAprovarTramitacaoDialog(true);
     } else {
       setShowAprovarConferenciaDialog(true);
     }
-  }, [isStatusBtnFlAprovar, handleAprovarReprovarTramitacao]);
+  }, [isStatusBtnFlAprovar]);
+
+  const handleReprovarConferenciaClick = useCallback(() => {
+    setShowConfirmarReprovarTramitacaoDialog(true);
+  }, []);
 
   const confirmarAprovarConferencia = useCallback(async () => {
     if (!obrigacao?.idSolicitacao || !obrigacao?.dsTarefa) {
@@ -444,9 +451,14 @@ export default function ConferenciaObrigacaoPage() {
     }
 
     try {
+      const flAprovado = (obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.EM_ANALISE_GERENTE_REGULATORIO.id)
+        ? FlAprovadoTramitacaoEnum.S
+        : undefined;
+
       await tramitacoesClient.tramitarViaFluxo({
         idSolicitacao: obrigacao.idSolicitacao,
         dsObservacao: textoTrimmed,
+        flAprovado,
       });
       
       await reloadDetalhe();
@@ -455,7 +467,7 @@ export default function ConferenciaObrigacaoPage() {
       console.error('Erro ao enviar para tramitação:', error);
       toast.error('Erro ao enviar para tramitação.');
     }
-  }, [obrigacao?.idSolicitacao, reloadDetalhe]);
+  }, [obrigacao?.idSolicitacao, reloadDetalhe, obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 
   if (loading) {
     return (
@@ -609,14 +621,19 @@ export default function ConferenciaObrigacaoPage() {
         flAprovarConferencia={obrigacao?.flAprovarConferencia}
         isUsuarioDaAreaAtribuida={isUsuarioDaAreaAtribuida}
         idPerfil={idPerfil}
+        userResponsavel={userResponsavel}
+        tramitacoes={detalhe?.tramitacoes}
         anexos={anexos}
         dsJustificativaAtraso={obrigacao?.dsJustificativaAtraso}
         canAprovarConferencia={canAprovarConferenciaObrigacao}
         canSolicitarAjustes={canSolicitarAjustesObrigacao}
+        flExigeCienciaGerenteRegul={obrigacao?.flExigeCienciaGerenteRegul}
+        isCienciaChecked={isCienciaChecked}
+        onCienciaCheckedChange={setIsCienciaChecked}
         onAnexarCorrespondencia={() => setShowAnexarCorrespondenciaModal(true)}
         onSolicitarAjustes={handleSolicitarAjustesClick}
         onAprovarConferencia={handleAprovarConferenciaClick}
-        onReprovarConferencia={() => handleAprovarReprovarTramitacao(FlAprovadoTramitacaoEnum.N)}
+        onReprovarConferencia={handleReprovarConferenciaClick}
         onJustificarAtraso={() => setShowJustificarAtrasoModal(true)}
         onAnexarEvidencia={() => setShowAnexarEvidenciaModal(true)}
         onEnviarParaAnalise={handleEnviarParaAnaliseClick}
@@ -684,6 +701,28 @@ export default function ConferenciaObrigacaoPage() {
         cancelText="Não"
         onConfirm={confirmarAprovarConferencia}
         variant="default"
+      />
+
+      <ConfirmationDialog
+        open={showConfirmarAprovarTramitacaoDialog}
+        onOpenChange={setShowConfirmarAprovarTramitacaoDialog}
+        title="Aprovar obrigação"
+        description="Tem certeza que deseja aprovar esta obrigação?"
+        confirmText="Sim, aprovar"
+        cancelText="Cancelar"
+        onConfirm={() => handleAprovarReprovarTramitacao(FlAprovadoTramitacaoEnum.S)}
+        variant="default"
+      />
+
+      <ConfirmationDialog
+        open={showConfirmarReprovarTramitacaoDialog}
+        onOpenChange={setShowConfirmarReprovarTramitacaoDialog}
+        title="Reprovar obrigação"
+        description="Tem certeza que deseja reprovar esta obrigação?"
+        confirmText="Sim, reprovar"
+        cancelText="Cancelar"
+        onConfirm={() => handleAprovarReprovarTramitacao(FlAprovadoTramitacaoEnum.N)}
+        variant="destructive"
       />
 
       <JustificarAtrasoModal

@@ -929,7 +929,7 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos, podeEnviarComenta
                   rows={4}
                   disabled={enviandoComentario || !podeEnviarComentario}
                 />
-                {isStatusDesabilitadoParaTramitacao || isStatusEmValidacaoRegulatorio && (
+                {isStatusDesabilitadoParaTramitacao || isStatusEmValidacaoRegulatorio || isStatusConcluido && (
                   <Button
                     type="button"
                     size="icon"
