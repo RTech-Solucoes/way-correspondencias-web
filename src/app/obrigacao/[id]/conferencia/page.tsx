@@ -37,6 +37,7 @@ import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
 import { solicitacaoParecerClient } from '@/api/solicitacao-parecer/client';
 import { statusList } from '@/api/status-solicitacao/types';
+import LoadingOverlay from '@/components/ui/loading-overlay';
 
 type TabKey = 'dados' | 'temas' | 'prazos' | 'anexos' | 'vinculos';
 const tabs: { key: TabKey; label: string }[] = [
@@ -58,7 +59,7 @@ export default function ConferenciaObrigacaoPage() {
 
   const [activeTab, setActiveTab] = useState<TabKey>('dados');
   const [detalhe, setDetalhe] = useState<ObrigacaoDetalheResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [pageLoading, setPageLoading] = useState(true);
   const [downloading, setDownloading] = useState<number | null>(null);
   const [showAnexarEvidenciaModal, setShowAnexarEvidenciaModal] = useState(false);
   const [showAnexarCorrespondenciaModal, setShowAnexarCorrespondenciaModal] = useState(false);
@@ -69,6 +70,7 @@ export default function ConferenciaObrigacaoPage() {
   const [showConfirmarReprovarTramitacaoDialog, setShowConfirmarReprovarTramitacaoDialog] = useState(false);
   const [showJustificarAtrasoModal, setShowJustificarAtrasoModal] = useState(false);
   const [isCienciaChecked, setIsCienciaChecked] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [userResponsavel, setUserResponsavel] = useState<ResponsavelResponse | null>(null);
   const [arquivosTramitacaoPendentes, setArquivosTramitacaoPendentes] = useState<ArquivoDTO[]>([]);
   const getComentarioTextoRef = useRef<(() => string) | null>(null);
@@ -88,7 +90,7 @@ export default function ConferenciaObrigacaoPage() {
       }
 
       try {
-        setLoading(true);
+        setPageLoading(true);
         const response = await obrigacaoClient.buscarDetalhePorId(parsedId);
         setDetalhe(response);
       } catch (error) {
@@ -96,7 +98,7 @@ export default function ConferenciaObrigacaoPage() {
         toast.error('Não foi possível carregar a obrigação.');
         router.push('/obrigacao');
       } finally {
-        setLoading(false);
+        setPageLoading(false);
       }
     };
 
@@ -237,6 +239,7 @@ export default function ConferenciaObrigacaoPage() {
       return;
     }
     
+    setLoading(true);
     try {
       await tramitacoesClient.tramitarViaFluxo({
         idSolicitacao: obrigacao.idSolicitacao,
@@ -251,6 +254,8 @@ export default function ConferenciaObrigacaoPage() {
     } catch (error) {
       console.error('Erro ao solicitar ajustes:', error);
       toast.error('Erro ao solicitar ajustes.');
+    } finally {
+      setLoading(false);
     }
   }, [obrigacao?.idSolicitacao, reloadDetalhe, arquivosTramitacaoPendentes]);
 
@@ -268,6 +273,7 @@ export default function ConferenciaObrigacaoPage() {
       return;
     }
 
+    setLoading(true);
     try {
       await tramitacoesClient.tramitarViaFluxo({
         idSolicitacao: obrigacao.idSolicitacao,
@@ -286,6 +292,8 @@ export default function ConferenciaObrigacaoPage() {
     } catch (error) {
       console.error('Erro ao tramitar:', error);
       toast.error('Erro ao processar tramitação.');
+    } finally {
+      setLoading(false);
     }
   }, [obrigacao?.idSolicitacao, reloadDetalhe, arquivosTramitacaoPendentes]);
 
@@ -317,6 +325,7 @@ export default function ConferenciaObrigacaoPage() {
       return;
     }
     
+    setLoading(true);
     try {
       await Promise.all([
         obrigacaoClient.atualizar(obrigacao.idSolicitacao, {
@@ -337,6 +346,8 @@ export default function ConferenciaObrigacaoPage() {
     } catch (error) {
       console.error('Erro ao aprovar conferência:', error);
       toast.error('Erro ao aprovar conferência.');
+    } finally {
+      setLoading(false);
     }
   }, [obrigacao?.idSolicitacao, obrigacao?.dsTarefa, obrigacao?.statusSolicitacao?.idStatusSolicitacao, reloadDetalhe, arquivosTramitacaoPendentes]);
 
@@ -354,6 +365,7 @@ export default function ConferenciaObrigacaoPage() {
 
     const dtJustificativaAtraso = formatDateISOWithoutTimezone();
    
+    setLoading(true);
     try {
       await obrigacaoClient.atualizar(obrigacao.idSolicitacao, {
         idResponsavelJustifAtraso: idResponsavel,
@@ -367,6 +379,8 @@ export default function ConferenciaObrigacaoPage() {
       console.error('Erro ao justificar atraso:', error);
       toast.error('Erro ao justificar atraso.');
       throw error;
+    } finally {
+      setLoading(false);
     }
   }, [obrigacao?.idSolicitacao, reloadDetalhe]);
 
@@ -408,6 +422,7 @@ export default function ConferenciaObrigacaoPage() {
       }
     }
     
+    setLoading(true);
     try {
       const observacaoTramitacao = isStatusAtrasada && obrigacao.dsJustificativaAtraso
         ? 'Obrigação enviada ao Regulatório com atraso justificado'
@@ -429,6 +444,8 @@ export default function ConferenciaObrigacaoPage() {
     } catch (error) {
         console.error('Erro ao enviar obrigação para análise do regulatório:', error);
         toast.error('Erro ao enviar obrigação para análise do regulatório.');
+      } finally {
+        setLoading(false);
       }
     },
     [obrigacao?.idSolicitacao, obrigacao?.statusSolicitacao?.idStatusSolicitacao, obrigacao?.dsJustificativaAtraso, isStatusAtrasada, temEvidenciaCumprimento, temJustificativaAtraso, reloadDetalhe, arquivosTramitacaoPendentes],
@@ -464,6 +481,7 @@ export default function ConferenciaObrigacaoPage() {
       return;
     }
 
+    setLoading(true);
     try {
       const flAprovado = (obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.EM_ANALISE_GERENTE_REGULATORIO.id)
         ? FlAprovadoTramitacaoEnum.S
@@ -482,10 +500,12 @@ export default function ConferenciaObrigacaoPage() {
     } catch (error) {
       console.error('Erro ao enviar para tramitação:', error);
       toast.error('Erro ao enviar para tramitação.');
+    } finally {
+      setLoading(false);
     }
   }, [obrigacao?.idSolicitacao, reloadDetalhe, obrigacao?.statusSolicitacao?.idStatusSolicitacao, arquivosTramitacaoPendentes]);
 
-  if (loading) {
+  if (pageLoading) {
     return (
       <div className="flex h-full items-center justify-center py-24">
         <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
@@ -762,6 +782,13 @@ export default function ConferenciaObrigacaoPage() {
         onConfirm={confirmarJustificarAtraso}
         justificativaExistente={obrigacao?.dsJustificativaAtraso}
       />
+
+      {loading && (
+        <LoadingOverlay 
+          title="Processando..." 
+          subtitle="Aguarde enquanto o processo é concluído." 
+        />
+      )}
     </div>
   );
 }

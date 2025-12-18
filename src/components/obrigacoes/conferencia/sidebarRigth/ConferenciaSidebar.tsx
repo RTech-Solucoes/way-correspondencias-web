@@ -27,6 +27,7 @@ import { statusListObrigacao } from '@/api/status-obrigacao/types';
 import { statusList } from '@/api/status-solicitacao/types';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import ExportHistoricoObrigacaoPdf from '@/components/obrigacoes/relatorios/ExportHistoricoObrigacaoPdf';
+import LoadingOverlay from '@/components/ui/loading-overlay';
 
 interface ConferenciaSidebarProps {
   detalhe: ObrigacaoDetalheResponse;
@@ -68,7 +69,7 @@ export function ConferenciaSidebar({
   );
   const [responsaveis, setResponsaveis] = useState<ResponsavelResponse[]>([]);
   const [loadingComentarios, setLoadingComentarios] = useState(false);
-  const [enviandoComentario, setEnviandoComentario] = useState(false);
+  const [loadingAction, setLoadingAction] = useState(false);
   const [parecerReferencia, setParecerReferencia] = useState<number | null>(null);
   const [tramitacaoReferencia, setTramitacaoReferencia] = useState<number | null>(null);
   const [userResponsavel, setUserResponsavel] = useState<ResponsavelResponse | null>(null);
@@ -458,6 +459,7 @@ export function ConferenciaSidebar({
   const confirmDeleteAnexo = useCallback(async () => {
     if (!anexoToDelete) return;
 
+    setLoadingAction(true);
     try {
       await anexosClient.deletar(anexoToDelete.idAnexo);
       toast.success('Anexo removido com sucesso.');
@@ -469,6 +471,7 @@ export function ConferenciaSidebar({
       console.error('Erro ao deletar anexo:', error);
       toast.error('Erro ao deletar o anexo.');
     } finally {
+      setLoadingAction(false);
       setAnexoToDelete(null);
     }
   }, [anexoToDelete, onRefreshAnexos]);
@@ -515,6 +518,7 @@ export function ConferenciaSidebar({
     );
 
     if (anexoLink && detalhe?.obrigacao?.idSolicitacao) {
+      setLoadingAction(true);
       try {
         await obrigacaoAnexosClient.deletar(detalhe.obrigacao.idSolicitacao, anexoLink.idAnexo);
         toast.success('Link removido com sucesso.');
@@ -525,6 +529,8 @@ export function ConferenciaSidebar({
       } catch (error) {
         console.error('Erro ao deletar link:', error);
         toast.error('Erro ao remover o link.');
+      } finally {
+        setLoadingAction(false);
       }
     } else {
       toast.error('Link não encontrado.');
@@ -539,6 +545,7 @@ export function ConferenciaSidebar({
       return;
     }
 
+    setLoadingAction(true);
     try {
       await obrigacaoAnexosClient.inserirLink(detalhe.obrigacao.idSolicitacao, {
         dsCaminho: link,
@@ -553,6 +560,8 @@ export function ConferenciaSidebar({
     } catch (error) {
       console.error('Erro ao adicionar link:', error);
       toast.error('Erro ao adicionar link. Tente novamente.');
+    } finally {
+      setLoadingAction(false);
     }
   }, [detalhe?.obrigacao?.idSolicitacao, responsavelInfo, onRefreshAnexos]);
 
@@ -673,7 +682,7 @@ export function ConferenciaSidebar({
   ]);
 
   const tooltipFinalEnviarComentario = useMemo(() => {
-    if (enviandoComentario) {
+    if (loadingAction) {
       return 'Enviando comentário...';
     }
     
@@ -690,7 +699,7 @@ export function ConferenciaSidebar({
     }
 
     return '';
-  }, [enviandoComentario, comentarioTexto, podeEnviarComentario, isPerfilPermitidoPorStatus, tooltipEnviarComentario, tooltipPerfilPermitidoPorStatus]);
+  }, [loadingAction, comentarioTexto, podeEnviarComentario, isPerfilPermitidoPorStatus, tooltipEnviarComentario, tooltipPerfilPermitidoPorStatus]);
 
   const handleEnviarComentario = useCallback(async () => {
     const textarea = document.getElementById('comentario-textarea') as HTMLTextAreaElement;
@@ -707,7 +716,7 @@ export function ConferenciaSidebar({
     }
 
     try {
-      setEnviandoComentario(true);
+      setLoadingAction(true);
 
       const idAreaAtribuida = areaAtribuida?.idArea;
       const userAreaIds = userResponsavel?.areas?.map(ra => ra.area.idArea) || [];
@@ -821,7 +830,7 @@ export function ConferenciaSidebar({
       console.error('Erro ao enviar comentário:', error);
       toast.error('Erro ao enviar o comentário.');
     } finally {
-      setEnviandoComentario(false);
+      setLoadingAction(false);
     }
   }, [comentarioTexto, parecerReferencia, tramitacaoReferencia, detalhe?.obrigacao?.idSolicitacao, detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao, areaAtribuida, userResponsavel, tramitacoes, podeResponderTramitacao, onRefreshAnexos, statusPermitidoParaTramitar, reloadDados, arquivosTramitacaoPendentes, onClearArquivosTramitacao]);
 
@@ -969,7 +978,7 @@ export function ConferenciaSidebar({
                   }}
                   className="flex-1 resize-none border border-gray-200 rounded-2xl bg-white px-4 py-3 shadow-sm focus-visible:ring-0 focus-visible:border-blue-500 min-h-[80px] text-sm"
                   rows={4}
-                  disabled={enviandoComentario || !podeEnviarComentario}
+                  disabled={loadingAction || !podeEnviarComentario}
                 />
                 {isStatusDesabilitadoParaTramitacao || isStatusEmValidacaoRegulatorio || isStatusConcluido && (
                   <Button
@@ -977,7 +986,7 @@ export function ConferenciaSidebar({
                     size="icon"
                     className="rounded-full bg-blue-500 text-white hover:bg-blue-600 shrink-0 h-10 w-10 disabled:opacity-50"
                     onClick={handleEnviarComentario}
-                    disabled={enviandoComentario || !comentarioTexto.trim() || !podeEnviarComentario || !isPerfilPermitidoPorStatus}
+                    disabled={loadingAction || !comentarioTexto.trim() || !podeEnviarComentario || !isPerfilPermitidoPorStatus}
                     tooltip={tooltipFinalEnviarComentario}
                   >
                     <Send className="h-4 w-4" />
@@ -1025,6 +1034,13 @@ export function ConferenciaSidebar({
         <ExportHistoricoObrigacaoPdf
           detalhe={detalhe}
           onDone={() => setExportingPdf(false)}
+        />
+      )}
+
+      {loadingAction && (
+        <LoadingOverlay 
+          title="Processando..." 
+          subtitle="Aguarde enquanto os dados são enviados e o fluxo é atualizado." 
         />
       )}
     </aside>
