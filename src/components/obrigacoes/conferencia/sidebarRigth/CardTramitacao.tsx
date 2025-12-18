@@ -1,15 +1,15 @@
 'use client';
 
 import { Briefcase, Reply } from 'lucide-react';
-import { TramitacaoResponse } from '@/api/tramitacoes/types';
+import { TramitacaoResponse as SolTramitacaoResponse } from '@/api/solicitacoes/types';
 import { Button } from '@/components/ui/button';
 
 interface CardTramitacaoProps {
-  tramitacao: TramitacaoResponse;
+  tramitacao: SolTramitacaoResponse;
   dataFormatada: string;
   autor: string;
   area: string;
-  onResponder?: (tramitacao: TramitacaoResponse) => void;
+  onResponder?: (tramitacao: SolTramitacaoResponse) => void;
 }
 
 export function CardTramitacao({

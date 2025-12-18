@@ -6,13 +6,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
 import { statusListObrigacao } from '@/api/status-obrigacao/types';
-import { TipoDocumentoAnexoEnum } from '@/api/anexos/type';
+import { TipoDocumentoAnexoEnum, ArquivoDTO } from '@/api/anexos/type';
 import { AnexoResponse } from '@/api/anexos/type';
 import { perfilUtil } from '@/api/perfis/types';
 import { useMemo } from 'react';
 import { statusList } from '@/api/status-solicitacao/types';
-import { TramitacaoResponse } from '@/api/tramitacoes/types';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
+import { TramitacaoComAnexosResponse } from '@/api/solicitacoes/types';
 
 interface ConferenciaFooterProps {
   statusSolicitacao?: StatusSolicitacaoResponse | null;
@@ -21,7 +21,7 @@ interface ConferenciaFooterProps {
   isUsuarioDaAreaAtribuida: boolean;
   idPerfil?: number | null;
   userResponsavel?: ResponsavelResponse | null;
-  tramitacoes?: TramitacaoResponse[];
+  tramitacoes?: TramitacaoComAnexosResponse[];
   anexos?: AnexoResponse[];
   dsJustificativaAtraso?: string | null;
   canAprovarConferencia?: boolean | null;
@@ -38,6 +38,7 @@ interface ConferenciaFooterProps {
   onEnviarParaAnalise: () => void;
   onEnviarParaTramitacao: () => void;
   isStatusDesabilitadoParaTramitacao: boolean;
+  arquivosTramitacaoPendentes?: ArquivoDTO[];
 }
 
 export function ConferenciaFooter({
@@ -64,6 +65,7 @@ export function ConferenciaFooter({
   onEnviarParaAnalise,
   onEnviarParaTramitacao,
   isStatusDesabilitadoParaTramitacao,
+  arquivosTramitacaoPendentes = [],
 }: ConferenciaFooterProps) {
 
   const idStatusSolicitacao = statusSolicitacao?.idStatusSolicitacao ?? 0;
@@ -188,20 +190,20 @@ export function ConferenciaFooter({
   
   const isPerfilPermitidoEnviarTramitacaoPorStatus = useMemo(() => {
 
-    const nrNivelUltimaTramitacao = tramitacoes[0]?.nrNivel;
+    const nrNivelUltimaTramitacao = tramitacoes[0]?.tramitacao?.nrNivel;
 
     const tramitacaoExecutada = tramitacoes?.filter(t =>
-      t?.nrNivel === nrNivelUltimaTramitacao &&
-      t?.solicitacao?.statusSolicitacao?.idStatusSolicitacao === idStatusSolicitacao &&
-      t?.tramitacaoAcao?.some(ta =>
+      t?.tramitacao?.nrNivel === nrNivelUltimaTramitacao &&
+      t?.tramitacao?.solicitacao?.statusSolicitacao?.idStatusSolicitacao === idStatusSolicitacao &&
+      t?.tramitacao?.tramitacaoAcao?.some(ta =>
         ta?.responsavelArea?.responsavel?.idResponsavel === userResponsavel?.idResponsavel &&
         ta.flAcao === 'T'));
 
     const isAreaRespondeu = tramitacoes?.filter(t =>
-      t?.nrNivel === nrNivelUltimaTramitacao &&
+      t?.tramitacao?.nrNivel === nrNivelUltimaTramitacao &&
       idStatusSolicitacao !== statusList.EM_ASSINATURA_DIRETORIA.id &&
-      t?.solicitacao?.statusSolicitacao?.idStatusSolicitacao === idStatusSolicitacao &&
-      userResponsavel?.areas?.some(a => a?.area?.idArea === t?.areaOrigem?.idArea)
+      t?.tramitacao?.solicitacao?.statusSolicitacao?.idStatusSolicitacao === idStatusSolicitacao &&
+      userResponsavel?.areas?.some(a => a?.area?.idArea === t?.tramitacao?.areaOrigem?.idArea)
     );
     
     if (isStatusEmAnaliseGerenteRegulatorio) {
@@ -213,6 +215,9 @@ export function ConferenciaFooter({
     if (tramitacaoExecutada != null && tramitacaoExecutada?.length > 0) return false;
     if (isAreaRespondeu != null && isAreaRespondeu?.length > 0) return false;
 
+    if (idStatusSolicitacao === statusList.EM_APROVACAO.id) {
+      return true;
+    }
     return false;
 
   }, [idPerfil, idStatusSolicitacao, flExigeCienciaGerenteRegul, isCienciaChecked, tramitacoes, userResponsavel, isStatusEmAnaliseGerenteRegulatorio]);

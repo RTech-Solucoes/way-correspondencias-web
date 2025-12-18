@@ -1,11 +1,10 @@
-import { AreaSolicitacao, SolicitacaoAssinanteResponse, SolicitacaoPrazoResponse, SolicitacaoResponse } from '../solicitacoes/types';
+import { AreaSolicitacao, SolicitacaoAssinanteResponse, SolicitacaoPrazoResponse, SolicitacaoResponse, TramitacaoComAnexosResponse } from '../solicitacoes/types';
 import { TipoResponse } from '../tipos/types';
 import { TemaResponse } from '../temas/types';
 import { StatusSolicitacaoResponse } from '../status-solicitacao/client';
 import { SolicitacaoResumoResponse } from '@/types/solicitacoes/types';
 import { ArquivoDTO, AnexoResponse } from '../anexos/type';
 import { SolicitacaoParecerResponse } from '../solicitacao-parecer/types';
-import { TramitacaoResponse } from '../tramitacoes/types';
 import { ResponsavelResponse } from '../responsaveis/types';
 
 export interface ObrigacaoResumoResponse {
@@ -100,7 +99,7 @@ export interface ObrigacaoDetalheResponse {
   obrigacao: ObrigacaoResponse;
   anexos: AnexoResponse[];
   solicitacaoParecer: SolicitacaoParecerResponse[];
-  tramitacoes: TramitacaoResponse[];
+  tramitacoes: TramitacaoComAnexosResponse[];
   solicitacoesAssinantes?: SolicitacaoAssinanteResponse[];
   solicitacaoPrazos?: SolicitacaoPrazoResponse[];
 }

@@ -6,7 +6,7 @@ import { formatDateTimeBrCompactExport, formatDateBr, formatDateTimeBr } from '@
 import { ObrigacaoDetalheResponse } from '@/api/obrigacao/types';
 import { TipoEnum } from '@/api/tipos/types';
 import { TipoDocumentoAnexoEnum } from '@/api/anexos/type';
-import { TramitacaoResponse } from '@/api/tramitacoes/types';
+import { TramitacaoResponse as SolTramitacaoResponse } from '@/api/solicitacoes/types';
 import { SolicitacaoParecerResponse } from '@/api/solicitacao-parecer/types';
 import { AnexoResponse } from '@/api/anexos/type';
 import statusSolicitacaoClient from '@/api/status-solicitacao/client';
@@ -55,7 +55,8 @@ const styles = StyleSheet.create({
 interface HistoricoItem {
   tipo: 'tramitacao' | 'parecer' | 'anexo';
   data: string;
-  tramitacao?: TramitacaoResponse;
+  tramitacao?: SolTramitacaoResponse;
+  anexosTramitacao?: AnexoResponse[];
   parecer?: SolicitacaoParecerResponse;
   anexo?: AnexoResponse;
 }
@@ -97,8 +98,8 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
   const historicoItems: HistoricoItem[] = useMemo(() => {
     const items: HistoricoItem[] = [];
 
-    detalhe.tramitacoes?.forEach(tramitacao => {
-      
+    detalhe.tramitacoes?.forEach(t => {
+      const { tramitacao, anexos } = t;
       const dataTramitacao = tramitacao.tramitacaoAcao?.[0]?.dtCriacao || 
                              tramitacao.solicitacao?.dtCriacao || 
                              '';
@@ -107,6 +108,7 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
           tipo: 'tramitacao',
           data: dataTramitacao,
           tramitacao,
+          anexosTramitacao: anexos,
         });
       }
     });
@@ -153,32 +155,43 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
       [TipoDocumentoAnexoEnum.E]: [],
       [TipoDocumentoAnexoEnum.R]: [],
       [TipoDocumentoAnexoEnum.A]: [],
+      ["T" as string]: [],
     };
 
     detalhe.anexos?.forEach(anexo => {
       if (!anexo || !anexo.tpDocumento) return;
       
-      if (anexo.tpDocumento !== TipoDocumentoAnexoEnum.C) {
-        const tipo = anexo.tpDocumento as TipoDocumentoAnexoEnum;
-        
-        if (tipo === TipoDocumentoAnexoEnum.E || tipo === TipoDocumentoAnexoEnum.L) {
-          grupos[TipoDocumentoAnexoEnum.E].push(anexo);
-        } else if (grupos[tipo]) {
-          grupos[tipo].push(anexo);
-        }
+      const tipo = anexo.tpDocumento as TipoDocumentoAnexoEnum;
+      
+      if (tipo === TipoDocumentoAnexoEnum.E || tipo === TipoDocumentoAnexoEnum.L) {
+        grupos[TipoDocumentoAnexoEnum.E].push(anexo);
+      } else if (grupos[tipo]) {
+        grupos[tipo].push(anexo);
       }
     });
 
-    return grupos;
-  }, [detalhe.anexos]);
+    // Adicionar anexos das tramitações ao grupo de tramitação (T)
+    detalhe.tramitacoes?.forEach(t => {
+      t.anexos?.forEach(anexo => {
+        if (!anexo) return;
+        // Evitar duplicados se o anexo já estiver na lista principal
+        if (!grupos["T" as string].some(a => a.idAnexo === anexo.idAnexo)) {
+          grupos["T" as string].push(anexo);
+        }
+      });
+    });
 
-  const getNomeTipoDocumento = (tipo: TipoDocumentoAnexoEnum): string => {
-    const nomes: Partial<Record<TipoDocumentoAnexoEnum, string>> = {
+    return grupos;
+  }, [detalhe.anexos, detalhe.tramitacoes]);
+
+  const getNomeTipoDocumento = (tipo: string): string => {
+    const nomes: Partial<Record<string, string>> = {
       [TipoDocumentoAnexoEnum.P]: 'Protocolo',
       [TipoDocumentoAnexoEnum.E]: 'Evidência de Cumprimento',
       [TipoDocumentoAnexoEnum.A]: 'Outros Arquivos',
       [TipoDocumentoAnexoEnum.R]: 'Correspondência',
       [TipoDocumentoAnexoEnum.L]: 'Link',
+      ["T" as string]: 'Tramitação',
     };
     return nomes[tipo] || 'Documento';
   };
@@ -290,7 +303,7 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
           );
           
           const tramitacoesMap = new Map(
-            detalhe.tramitacoes?.map(t => [t.idTramitacao, t]) || []
+            detalhe.tramitacoes?.map(t => [t.tramitacao.idTramitacao, t.tramitacao])
           );
                     
           // Mapa para identificar menções @username nos comentários
@@ -302,7 +315,7 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
             }
           });
           detalhe.tramitacoes?.forEach(t => {
-            const responsavel = t.tramitacaoAcao?.[0]?.responsavelArea?.responsavel;
+            const responsavel = t.tramitacao.tramitacaoAcao?.[0]?.responsavelArea?.responsavel;
             if (responsavel?.nmResponsavel) {
               const nomeLower = responsavel.nmResponsavel.trim().toLowerCase();
               nomesResponsaveisMap.set(nomeLower, responsavel.nmResponsavel.trim());
@@ -404,7 +417,7 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
                     </Text>
                     <Text style={styles.small}>
                       <Text style={styles.smallBold}>Status:</Text> {(() => {
-                        const tramitacaoComStatus = tramitacao as TramitacaoResponse & { idStatusSolicitacao?: number };
+                        const tramitacaoComStatus = tramitacao as SolTramitacaoResponse & { idStatusSolicitacao?: number };
                         const idStatus = tramitacaoComStatus.idStatusSolicitacao || tramitacao.solicitacao?.statusSolicitacao?.idStatusSolicitacao;
                         return idStatus ? (statusMap.get(idStatus) || tramitacao.solicitacao?.statusSolicitacao?.nmStatus || '—') : (tramitacao.solicitacao?.statusSolicitacao?.nmStatus || '—');
                       })()}
@@ -421,7 +434,7 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
               
               // Regra: priorizar referência de tramitação sobre referência de comentário
               let comentarioReferenciado: SolicitacaoParecerResponse | null = null;
-              let tramitacaoReferenciada: TramitacaoResponse | null = null;
+              let tramitacaoReferenciada: SolTramitacaoResponse | null = null;
               
               if (parecer.idTramitacao) {
                 tramitacaoReferenciada = tramitacoesMap.get(parecer.idTramitacao) || null;
@@ -557,11 +570,12 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
 
         <Text style={[styles.sectionTitle, { marginTop: 12 }]}>Anexos</Text>
         {(() => {
-          // Ordem de exibição: Protocolo > Evidência de Cumprimento > Correspondência > Outros Arquivos
+          // Ordem de exibição: Protocolo > Evidência de Cumprimento > Correspondência > Tramitação > Outros Arquivos
           const ordemTipos = [
             TipoDocumentoAnexoEnum.P,
             TipoDocumentoAnexoEnum.E,
             TipoDocumentoAnexoEnum.R,
+            "T" as string,
             TipoDocumentoAnexoEnum.A,
           ];
 
@@ -582,6 +596,8 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
                       ? 'Não há protocolos registrados.'
                       : tipo === TipoDocumentoAnexoEnum.R
                       ? 'Não há correspondências registradas.'
+                      : tipo === "T" as string
+                      ? 'Não há anexos de tramitação registrados.'
                       : 'Não há arquivos registrados.'}
                   </Text>
                 ) : (
@@ -665,10 +681,11 @@ export default function ExportHistoricoObrigacaoPdf({ detalhe, onDone }: ExportH
         });
 
         detalhe.tramitacoes?.forEach(t => {
-          if (t.solicitacao?.statusSolicitacao?.idStatusSolicitacao) {
-            idsStatusUnicos.add(t.solicitacao.statusSolicitacao.idStatusSolicitacao);
+          const { tramitacao } = t;
+          if (tramitacao.solicitacao?.statusSolicitacao?.idStatusSolicitacao) {
+            idsStatusUnicos.add(tramitacao.solicitacao.statusSolicitacao.idStatusSolicitacao);
           }
-          const tramitacaoComStatus = t as TramitacaoResponse & { idStatusSolicitacao?: number };
+          const tramitacaoComStatus = tramitacao as SolTramitacaoResponse & { idStatusSolicitacao?: number };
           if (tramitacaoComStatus.idStatusSolicitacao) {
             idsStatusUnicos.add(tramitacaoComStatus.idStatusSolicitacao);
           }

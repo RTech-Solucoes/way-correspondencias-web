@@ -2,12 +2,12 @@
 
 import { Reply, Trash2, Briefcase } from 'lucide-react';
 import { SolicitacaoParecerResponse } from '@/api/solicitacao-parecer/types';
-import { TramitacaoResponse } from '@/api/tramitacoes/types';
+import { TramitacaoResponse as SolTramitacaoResponse } from '@/api/solicitacoes/types';
 
 interface CardComentarioProps {
   parecer: SolicitacaoParecerResponse;
   comentarioReferenciado: SolicitacaoParecerResponse | null;
-  tramitacaoReferenciada?: TramitacaoResponse | null;
+  tramitacaoReferenciada?: SolTramitacaoResponse | null;
   parts: (string | { type: 'mention'; name: string; isValid: boolean })[];
   dataFormatada: string;
   autor: string;

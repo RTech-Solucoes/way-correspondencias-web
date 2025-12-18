@@ -262,7 +262,8 @@ export default function EditarObrigacaoPage() {
 
   const handleDownloadAnexo = useCallback(async (anexo: AnexoResponse) => {
     try {
-      const arquivos = await anexosClient.download(anexo.idObjeto, TipoObjetoAnexoEnum.O, anexo.nmArquivo);
+      const tpObjeto = (anexo.tpObjeto as TipoObjetoAnexoEnum) || TipoObjetoAnexoEnum.O;
+      const arquivos = await anexosClient.download(anexo.idObjeto, tpObjeto, anexo.nmArquivo);
       if (arquivos.length === 0) {
         toast.error('Não foi possível baixar o anexo.');
         return;

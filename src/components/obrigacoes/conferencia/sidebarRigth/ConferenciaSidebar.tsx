@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import anexosClient from '@/api/anexos/client';
 import { base64ToUint8Array, cn, saveBlob } from '@/utils/utils';
 import type { ObrigacaoDetalheResponse } from '@/api/obrigacao/types';
-import type { AnexoResponse } from '@/api/anexos/type';
+import type { AnexoResponse, ArquivoDTO } from '@/api/anexos/type';
 import { TipoObjetoAnexoEnum, TipoResponsavelAnexoEnum, TipoDocumentoAnexoEnum } from '@/api/anexos/type';
 import { AnexosTab } from './AnexosTab';
 import { ComentariosTab } from './ComentariosTab';
@@ -22,8 +22,9 @@ import obrigacaoAnexosClient from '@/api/obrigacao/anexos-client';
 import { useUserGestao } from '@/hooks/use-user-gestao';
 import { computeTpResponsavel, perfilUtil } from '@/api/perfis/types';
 import tramitacoesClient from '@/api/tramitacoes/client';
-import { TramitacaoResponse } from '@/api/tramitacoes/types';
+import { TramitacaoResponse as SolTramitacaoResponse, TramitacaoComAnexosResponse } from '@/api/solicitacoes/types';
 import { statusListObrigacao } from '@/api/status-obrigacao/types';
+import { statusList } from '@/api/status-solicitacao/types';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import ExportHistoricoObrigacaoPdf from '@/components/obrigacoes/relatorios/ExportHistoricoObrigacaoPdf';
 
@@ -33,6 +34,10 @@ interface ConferenciaSidebarProps {
   podeEnviarComentarioPorPerfilEArea?: boolean;
   isStatusDesabilitadoParaTramitacao?: boolean;
   onGetComentarioTexto?: (getter: () => string) => void;
+  arquivosTramitacaoPendentes?: ArquivoDTO[];
+  onAddArquivosTramitacao?: (files: ArquivoDTO[]) => void;
+  onRemoveArquivoTramitacao?: (index: number) => void;
+  onClearArquivosTramitacao?: () => void;
 }
 
 enum RegistroTabKey {
@@ -40,7 +45,17 @@ enum RegistroTabKey {
   COMENTARIOS = 'comentarios',
 }
 
-export function ConferenciaSidebar({ detalhe, onRefreshAnexos, podeEnviarComentarioPorPerfilEArea = false, isStatusDesabilitadoParaTramitacao = false, onGetComentarioTexto }: ConferenciaSidebarProps) {
+export function ConferenciaSidebar({ 
+  detalhe, 
+  onRefreshAnexos, 
+  podeEnviarComentarioPorPerfilEArea = false, 
+  isStatusDesabilitadoParaTramitacao = false, 
+  onGetComentarioTexto,
+  arquivosTramitacaoPendentes = [],
+  onAddArquivosTramitacao,
+  onRemoveArquivoTramitacao,
+  onClearArquivosTramitacao,
+}: ConferenciaSidebarProps) {
   const { idPerfil } = useUserGestao();
   const [registroTab, setRegistroTab] = useState<RegistroTabKey>(RegistroTabKey.ANEXOS);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
@@ -48,7 +63,7 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos, podeEnviarComenta
   const [solicitacaoPareceres, setSolicitacaoPareceres] = useState<SolicitacaoParecerResponse[]>(
     detalhe?.solicitacaoParecer || []
   );
-  const [tramitacoes, setTramitacoes] = useState<TramitacaoResponse[]>(
+  const [tramitacoes, setTramitacoes] = useState<TramitacaoComAnexosResponse[]>(
     detalhe?.tramitacoes || []
   );
   const [responsaveis, setResponsaveis] = useState<ResponsavelResponse[]>([]);
@@ -125,6 +140,10 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos, podeEnviarComenta
 
   const isStatusNaoAplicavelSuspensa = useMemo(() => {
     return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.NAO_APLICAVEL_SUSPENSA.id;
+  }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
+  const isStatusPreAnalise = useMemo(() => {
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.PRE_ANALISE.id;
   }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 
   const idAreaAtribuida = areaAtribuida?.idArea;
@@ -230,13 +249,9 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos, podeEnviarComenta
     }
 
     try {
-      const [pareceres, tramitacoesResponse] = await Promise.all([
-        solicitacaoParecerClient.buscarPorIdSolicitacao(detalhe.obrigacao.idSolicitacao),
-        tramitacoesClient.listarPorSolicitacao(detalhe.obrigacao.idSolicitacao),
-      ]);
+      const pareceres = await solicitacaoParecerClient.buscarPorIdSolicitacao(detalhe.obrigacao.idSolicitacao);
       
       setSolicitacaoPareceres(pareceres || []);
-      setTramitacoes(tramitacoesResponse || []);
       
       const novoMap = new Map<number, number>();
       pareceres?.forEach(parecer => {
@@ -265,13 +280,13 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos, podeEnviarComenta
       }
 
       try {
-        const [pareceres, tramitacoesResponse] = await Promise.all([
+        const [pareceres, responsaveisResponse] = await Promise.all([
           solicitacaoParecerClient.buscarPorIdSolicitacao(detalhe.obrigacao.idSolicitacao),
-          tramitacoesClient.listarPorSolicitacao(detalhe.obrigacao.idSolicitacao),
+          responsaveisClient.buscarPorFiltro({ size: 5000 })
         ]);
         
         setSolicitacaoPareceres(pareceres || []);
-        setTramitacoes(tramitacoesResponse || []);
+        setResponsaveis(responsaveisResponse.content.filter(r => r.flAtivo === 'S'));
         
         const novoMap = new Map<number, number>();
         pareceres?.forEach(parecer => {
@@ -317,7 +332,7 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos, podeEnviarComenta
       tipo: 'parecer' | 'tramitacao';
       data: string;
       parecer?: SolicitacaoParecerResponse;
-      tramitacao?: TramitacaoResponse;
+      tramitacao?: SolTramitacaoResponse;
     }> = [];
 
     const textosPareceres = new Set(
@@ -332,18 +347,19 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos, podeEnviarComenta
       });
     });
 
-    tramitacoes.forEach(tramitacao => {
+    tramitacoes.forEach(t => {
+      const tramitacao = t.tramitacao;
       if (tramitacao.dsObservacao) {
         const textoTramitacao = (tramitacao.dsObservacao || '').trim().toLowerCase();
         
         if (!textosPareceres.has(textoTramitacao)) {
-          const dataTramitacao = tramitacao.tramitacaoAcao?.[0]?.dtCriacao || 
-                                tramitacao.solicitacao?.dtCriacao || 
+          const dataTramitacao = (tramitacao as unknown as SolTramitacaoResponse).tramitacaoAcao?.[0]?.dtCriacao || 
+                                (tramitacao as unknown as SolTramitacaoResponse).solicitacao?.dtCriacao || 
                                 '';
           items.push({
             tipo: 'tramitacao',
             data: dataTramitacao,
-            tramitacao,
+            tramitacao: tramitacao as unknown as SolTramitacaoResponse,
           });
         }
       }
@@ -360,7 +376,19 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos, podeEnviarComenta
   }, [solicitacaoPareceres, tramitacoes]);
 
   const comentariosCount = comentariosUnificados.length;
-  const anexosCount = anexos.filter((anexo) => anexo.tpDocumento !== TipoDocumentoAnexoEnum.C).length;
+  const anexosCount = useMemo(() => {
+    // Anexos da obrigação
+    const anexosPrincipais = anexos.filter(a => a.tpDocumento !== TipoDocumentoAnexoEnum.C);
+    
+    // Anexos de tramitações
+    const anexosDasTramitacoes = (tramitacoes || []).flatMap(t => t.anexos || []);
+    
+    // Combinar e remover duplicados
+    const todosAnexos = [...anexosPrincipais, ...anexosDasTramitacoes];
+    const uniqueIds = new Set(todosAnexos.map(a => a.idAnexo));
+    
+    return uniqueIds.size;
+  }, [anexos, tramitacoes]);
   
   const idResponsavelLogado = authClient.getUserIdResponsavelFromToken();
 
@@ -374,10 +402,10 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos, podeEnviarComenta
     }
 
     const tramitacoesComData = tramitacoes
-      .filter(t => t.dsObservacao)
+      .filter(t => t.tramitacao.dsObservacao)
       .map(t => ({
-        tramitacao: t,
-        data: t.tramitacaoAcao?.[0]?.dtCriacao || t.solicitacao?.dtCriacao || '',
+        tramitacao: t.tramitacao,
+        data: t.tramitacao.tramitacaoAcao?.[0]?.dtCriacao || t.tramitacao.solicitacao?.dtCriacao || '',
       }))
       .sort((a, b) => {
         const dataA = a.data ? new Date(a.data).getTime() : 0;
@@ -407,7 +435,7 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos, podeEnviarComenta
       if (detalhe?.obrigacao?.idSolicitacao) {
         const [pareceres, tramitacoesResponse, responsaveisResponse] = await Promise.all([
           solicitacaoParecerClient.buscarPorIdSolicitacao(detalhe.obrigacao.idSolicitacao),
-          tramitacoesClient.listarPorSolicitacao(detalhe.obrigacao.idSolicitacao),
+          tramitacoesClient.listarPorSolicitacao(detalhe.obrigacao.idSolicitacao) as unknown as Promise<TramitacaoComAnexosResponse[]>,
           responsaveisClient.buscarPorFiltro({ size: 5000 })
         ]);
         
@@ -449,7 +477,8 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos, podeEnviarComenta
     async (anexo: AnexoResponse) => {
       try {
         setDownloadingId(anexo.idAnexo);
-        const arquivos = await anexosClient.download(anexo.idObjeto, TipoObjetoAnexoEnum.O, anexo.nmArquivo);
+        const tpObjeto = (anexo.tpObjeto as TipoObjetoAnexoEnum) || TipoObjetoAnexoEnum.O;
+        const arquivos = await anexosClient.download(anexo.idObjeto, tpObjeto, anexo.nmArquivo);
 
         if (!arquivos || arquivos.length === 0) {
           toast.error('Não foi possível baixar o anexo.');
@@ -544,7 +573,7 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos, podeEnviarComenta
     }, 200);
   }, []);
 
-  const handleResponderTramitacao = useCallback((tramitacao: TramitacaoResponse) => {
+  const handleResponderTramitacao = useCallback((tramitacao: SolTramitacaoResponse) => {
     const responsavelTramitacao = tramitacao.tramitacaoAcao?.[0]?.responsavelArea?.responsavel;
     const nomeResponsavel = responsavelTramitacao?.nmResponsavel || 'Usuário';
     setComentarioTexto(`@${nomeResponsavel} `);
@@ -688,8 +717,8 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos, podeEnviarComenta
         if (podeResponderTramitacao) {
           const idStatusAtual = detalhe.obrigacao.statusSolicitacao.idStatusSolicitacao;
           const tramitacaoExistente = tramitacoes.find(
-            t => t.solicitacao?.statusSolicitacao?.idStatusSolicitacao === idStatusAtual &&
-                 t.dsObservacao === textoCompleto.trim()
+            t => t.tramitacao?.solicitacao?.statusSolicitacao?.idStatusSolicitacao === idStatusAtual &&
+                 t.tramitacao?.dsObservacao === textoCompleto.trim()
           );
 
           const podeCriarTramitacao = statusPermitidoParaTramitar && !tramitacaoExistente;
@@ -699,9 +728,11 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos, podeEnviarComenta
               idSolicitacao: detalhe.obrigacao.idSolicitacao,
               dsObservacao: textoCompleto.trim(),
               idResponsavel: userResponsavel?.idResponsavel,
+              arquivos: arquivosTramitacaoPendentes,
             };
 
             await tramitacoesClient.tramitarViaFluxo(tramitacaoRequest);
+            onClearArquivosTramitacao?.();
             
             await reloadDados();
             if (onRefreshAnexos) {
@@ -718,10 +749,12 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos, podeEnviarComenta
           dsDarecer: string;
           idSolicitacaoParecerReferen?: number | null;
           idTramitacao?: number | null;
+          arquivos?: ArquivoDTO[];
         } = {
           idSolicitacao: detalhe.obrigacao.idSolicitacao,
           idStatusSolicitacao: detalhe.obrigacao.statusSolicitacao.idStatusSolicitacao,
           dsDarecer: textoCompleto.trim(),
+          arquivos: arquivosTramitacaoPendentes,
         };
 
         if (parecerReferencia) {
@@ -733,6 +766,7 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos, podeEnviarComenta
         }
 
         await solicitacaoParecerClient.criar(parecerRequest);
+        onClearArquivosTramitacao?.();
 
         await reloadDados();
         if (onRefreshAnexos) {
@@ -749,10 +783,12 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos, podeEnviarComenta
           dsDarecer: string;
           idSolicitacaoParecerReferen?: number | null;
           idTramitacao?: number | null;
+          arquivos?: ArquivoDTO[];
         } = {
           idSolicitacao: detalhe.obrigacao.idSolicitacao,
           idStatusSolicitacao: detalhe.obrigacao.statusSolicitacao.idStatusSolicitacao,
           dsDarecer: textoCompleto.trim(),
+          arquivos: arquivosTramitacaoPendentes,
         };
 
         if (parecerReferencia) {
@@ -764,8 +800,8 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos, podeEnviarComenta
         }
 
         await solicitacaoParecerClient.criar(requestData);
-        
-        // Recarregar dados imediatamente após criar parecer
+        onClearArquivosTramitacao?.();
+
         await reloadDados();
         if (onRefreshAnexos) {
           await onRefreshAnexos();
@@ -787,7 +823,7 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos, podeEnviarComenta
     } finally {
       setEnviandoComentario(false);
     }
-  }, [comentarioTexto, parecerReferencia, tramitacaoReferencia, detalhe?.obrigacao?.idSolicitacao, detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao, areaAtribuida, userResponsavel, tramitacoes, podeResponderTramitacao, onRefreshAnexos, statusPermitidoParaTramitar, reloadDados]);
+  }, [comentarioTexto, parecerReferencia, tramitacaoReferencia, detalhe?.obrigacao?.idSolicitacao, detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao, areaAtribuida, userResponsavel, tramitacoes, podeResponderTramitacao, onRefreshAnexos, statusPermitidoParaTramitar, reloadDados, arquivosTramitacaoPendentes, onClearArquivosTramitacao]);
 
   return (
     <aside className="fixed right-0 top-[80px] bottom-[49px] z-10 flex w-full max-w-md flex-shrink-0 flex-col">
@@ -853,6 +889,7 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos, podeEnviarComenta
             {registroTab === RegistroTabKey.ANEXOS ? (
               <AnexosTab
                 anexos={anexos}
+                tramitacoes={tramitacoes}
                 downloadingId={downloadingId}
                 onDeleteAnexo={handleDeleteAnexoClick}
                 onDownloadAnexo={handleDownloadAnexo}
@@ -868,7 +905,12 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos, podeEnviarComenta
                 isStatusNaoIniciado={isStatusNaoIniciado}
                 isStatusConcluido={isStatusConcluido}
                 isStatusNaoAplicavelSuspensa={isStatusNaoAplicavelSuspensa}
+                isStatusPreAnalise={isStatusPreAnalise}
                 isDaAreaAtribuida={!!isDaAreaAtribuida}
+                isStatusDesabilitadoParaTramitacao={isStatusDesabilitadoParaTramitacao}
+                arquivosTramitacaoPendentes={arquivosTramitacaoPendentes}
+                onAddArquivosTramitacao={onAddArquivosTramitacao}
+                onRemoveArquivoTramitacao={onRemoveArquivoTramitacao}
               />
             ) : (
               <ComentariosTab
@@ -891,8 +933,8 @@ export function ConferenciaSidebar({ detalhe, onRefreshAnexos, podeEnviarComenta
             <div className="bg-white px-6 py-4 border-t border-gray-100 shrink-0 mb-5">
               <label className="mb-2 block text-sm font-semibold text-gray-900">Escreva um comentário</label>
               {tramitacaoReferencia && podeResponderTramitacao && (() => {
-                const tramitacaoReferenciada = tramitacoes.find(t => t.idTramitacao === tramitacaoReferencia);
-                const responsavelTramitacao = tramitacaoReferenciada?.tramitacaoAcao?.[0]?.responsavelArea?.responsavel;
+                const tramitacaoReferenciada = tramitacoes.find(t => t.tramitacao.idTramitacao === tramitacaoReferencia);
+                const responsavelTramitacao = tramitacaoReferenciada?.tramitacao.tramitacaoAcao?.[0]?.responsavelArea?.responsavel;
                 const nomeResponsavel = responsavelTramitacao?.nmResponsavel || 'Usuário';
                 return (
                   <div className="mb-2 text-xs text-blue-600">

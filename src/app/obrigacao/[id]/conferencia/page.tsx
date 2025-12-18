@@ -70,6 +70,7 @@ export default function ConferenciaObrigacaoPage() {
   const [showJustificarAtrasoModal, setShowJustificarAtrasoModal] = useState(false);
   const [isCienciaChecked, setIsCienciaChecked] = useState(false);
   const [userResponsavel, setUserResponsavel] = useState<ResponsavelResponse | null>(null);
+  const [arquivosTramitacaoPendentes, setArquivosTramitacaoPendentes] = useState<ArquivoDTO[]>([]);
   const getComentarioTextoRef = useRef<(() => string) | null>(null);
 
   const parsedId = useMemo(() => {
@@ -165,8 +166,9 @@ export default function ConferenciaObrigacaoPage() {
         }
         
         const idObjeto = anexo.idObjeto || obrigacao.idSolicitacao;
+        const tpObjeto = (anexo.tpObjeto as TipoObjetoAnexoEnum) || TipoObjetoAnexoEnum.O;
         
-        const arquivos = await anexosClient.download(idObjeto, TipoObjetoAnexoEnum.O, anexo.nmArquivo);
+        const arquivos = await anexosClient.download(idObjeto, tpObjeto, anexo.nmArquivo);
         
         const arquivosArray: ArquivoDTO[] = Array.isArray(arquivos) 
           ? arquivos 
@@ -240,15 +242,17 @@ export default function ConferenciaObrigacaoPage() {
         idSolicitacao: obrigacao.idSolicitacao,
         dsObservacao: 'Obrigação solicitada de ajustes. Volta para área atribuída',
         flAprovado: FlAprovadoTramitacaoEnum.N,
+        arquivos: arquivosTramitacaoPendentes,
       });
       
+      setArquivosTramitacaoPendentes([]);
       await reloadDetalhe();
       toast.success('Obrigação enviada para ajustes da área atribuída.');
     } catch (error) {
       console.error('Erro ao solicitar ajustes:', error);
       toast.error('Erro ao solicitar ajustes.');
     }
-  }, [obrigacao?.idSolicitacao, reloadDetalhe]);
+  }, [obrigacao?.idSolicitacao, reloadDetalhe, arquivosTramitacaoPendentes]);
 
   const handleAprovarReprovarTramitacao = useCallback(async (flAprovado: FlAprovadoTramitacaoEnum) => {
     if (!obrigacao?.idSolicitacao) {
@@ -269,8 +273,10 @@ export default function ConferenciaObrigacaoPage() {
         idSolicitacao: obrigacao.idSolicitacao,
         dsObservacao: textoTrimmed,
         flAprovado,
+        arquivos: arquivosTramitacaoPendentes,
       });
       
+      setArquivosTramitacaoPendentes([]);
       await reloadDetalhe();
       toast.success(
         flAprovado === FlAprovadoTramitacaoEnum.S 
@@ -281,7 +287,7 @@ export default function ConferenciaObrigacaoPage() {
       console.error('Erro ao tramitar:', error);
       toast.error('Erro ao processar tramitação.');
     }
-  }, [obrigacao?.idSolicitacao, reloadDetalhe]);
+  }, [obrigacao?.idSolicitacao, reloadDetalhe, arquivosTramitacaoPendentes]);
 
   const isStatusBtnFlAprovar = useMemo(() => {
     return obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.EM_ANALISE_GERENTE_REGULATORIO.id ||
@@ -321,16 +327,18 @@ export default function ConferenciaObrigacaoPage() {
           idSolicitacao: obrigacao.idSolicitacao,
           idStatusSolicitacao: obrigacao.statusSolicitacao.idStatusSolicitacao,
           dsDarecer: 'Obrigação aprovada na conferência.',
+          arquivos: arquivosTramitacaoPendentes,
         }),
       ]);
       
+      setArquivosTramitacaoPendentes([]);
       await reloadDetalhe();
       toast.success('Conferência aprovada com sucesso!');
     } catch (error) {
       console.error('Erro ao aprovar conferência:', error);
       toast.error('Erro ao aprovar conferência.');
     }
-  }, [obrigacao?.idSolicitacao, obrigacao?.dsTarefa, obrigacao?.statusSolicitacao?.idStatusSolicitacao, reloadDetalhe]);
+  }, [obrigacao?.idSolicitacao, obrigacao?.dsTarefa, obrigacao?.statusSolicitacao?.idStatusSolicitacao, reloadDetalhe, arquivosTramitacaoPendentes]);
 
   const confirmarJustificarAtraso = useCallback(async (justificativa: string) => {
     if (!obrigacao?.idSolicitacao) {
@@ -408,8 +416,10 @@ export default function ConferenciaObrigacaoPage() {
       await tramitacoesClient.tramitarViaFluxo({
         idSolicitacao: obrigacao.idSolicitacao,
         dsObservacao: observacaoTramitacao,
+        arquivos: arquivosTramitacaoPendentes,
       });
       
+      setArquivosTramitacaoPendentes([]);
       await obrigacaoClient.atualizar(obrigacao.idSolicitacao, {
         idResponsavelTecnico: idResponsavelTecnico,
       });
@@ -421,8 +431,12 @@ export default function ConferenciaObrigacaoPage() {
         toast.error('Erro ao enviar obrigação para análise do regulatório.');
       }
     },
-    [obrigacao?.idSolicitacao, obrigacao?.statusSolicitacao?.idStatusSolicitacao, obrigacao?.dsJustificativaAtraso, isStatusAtrasada, temEvidenciaCumprimento, temJustificativaAtraso, reloadDetalhe],
+    [obrigacao?.idSolicitacao, obrigacao?.statusSolicitacao?.idStatusSolicitacao, obrigacao?.dsJustificativaAtraso, isStatusAtrasada, temEvidenciaCumprimento, temJustificativaAtraso, reloadDetalhe, arquivosTramitacaoPendentes],
   );
+
+  const isStatusConcluido = useMemo(() => {
+    return obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.CONCLUIDO.id;
+  }, [obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 
   const isStatusDesabilitadoParaTramitacao = useMemo(() => {
     const idStatus = obrigacao?.statusSolicitacao?.idStatusSolicitacao ?? 0;
@@ -459,15 +473,17 @@ export default function ConferenciaObrigacaoPage() {
         idSolicitacao: obrigacao.idSolicitacao,
         dsObservacao: textoTrimmed,
         flAprovado,
+        arquivos: arquivosTramitacaoPendentes,
       });
       
+      setArquivosTramitacaoPendentes([]);
       await reloadDetalhe();
       toast.success('Obrigação enviada para tramitação com sucesso!');
     } catch (error) {
       console.error('Erro ao enviar para tramitação:', error);
       toast.error('Erro ao enviar para tramitação.');
     }
-  }, [obrigacao?.idSolicitacao, reloadDetalhe, obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+  }, [obrigacao?.idSolicitacao, reloadDetalhe, obrigacao?.statusSolicitacao?.idStatusSolicitacao, arquivosTramitacaoPendentes]);
 
   if (loading) {
     return (
@@ -594,8 +610,14 @@ export default function ConferenciaObrigacaoPage() {
                 <TabsContent value="anexos" className="p-0">
                   <ConferenciaStepAnexos
                     anexos={anexos}
+                    tramitacoes={detalhe?.tramitacoes}
                     downloadingId={downloading}
                     onDownloadAnexo={handleDownloadAnexo}
+                    idObrigacao={obrigacao?.idSolicitacao}
+                    idPerfil={idPerfil ?? undefined}
+                    onRefreshAnexos={reloadDetalhe}
+                    isStatusDesabilitadoParaTramitacao={isStatusDesabilitadoParaTramitacao}
+                    isStatusConcluido={isStatusConcluido}
                   />
                 </TabsContent>
 
@@ -616,6 +638,10 @@ export default function ConferenciaObrigacaoPage() {
           onGetComentarioTexto={(getter) => {
             getComentarioTextoRef.current = getter;
           }}
+          arquivosTramitacaoPendentes={arquivosTramitacaoPendentes}
+          onAddArquivosTramitacao={(files) => setArquivosTramitacaoPendentes(prev => [...prev, ...files])}
+          onRemoveArquivoTramitacao={(index) => setArquivosTramitacaoPendentes(prev => prev.filter((_, i) => i !== index))}
+          onClearArquivosTramitacao={() => setArquivosTramitacaoPendentes([])}
         />
       )}
     
@@ -643,6 +669,7 @@ export default function ConferenciaObrigacaoPage() {
         onEnviarParaAnalise={handleEnviarParaAnaliseClick}
         onEnviarParaTramitacao={handleEnviarParaTramitacaoClick}
         isStatusDesabilitadoParaTramitacao={isStatusDesabilitadoParaTramitacao}
+        arquivosTramitacaoPendentes={arquivosTramitacaoPendentes}
       />
 
       {obrigacao?.idSolicitacao && (

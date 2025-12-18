@@ -3,16 +3,18 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Link as LinkIcon } from 'lucide-react';
+import { Plus, Link as LinkIcon, FileText, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ItemAnexo, ItemAnexoLink } from '../ItensAnexos';
-import type { AnexoResponse } from '@/api/anexos/type';
-import { TipoDocumentoAnexoEnum } from '@/api/anexos/type';
+import type { AnexoResponse, ArquivoDTO } from '@/api/anexos/type';
+import { TipoDocumentoAnexoEnum, TipoObjetoAnexoEnum } from '@/api/anexos/type';
 import { AnexoObrigacaoModal } from '../AnexoObrigacaoModal';
 import { perfilUtil } from '@/api/perfis/types';
+import { TramitacaoComAnexosResponse } from '@/api/solicitacoes/types';
 
 interface AnexosTabProps {
   anexos: AnexoResponse[];
+  tramitacoes?: TramitacaoComAnexosResponse[];
   downloadingId: number | null;
   onDeleteAnexo: (anexo: AnexoResponse) => void | Promise<void>;
   onDownloadAnexo: (anexo: AnexoResponse) => Promise<void>;
@@ -28,11 +30,17 @@ interface AnexosTabProps {
   isStatusNaoIniciado?: boolean;
   isStatusConcluido?: boolean;
   isStatusNaoAplicavelSuspensa?: boolean;
+  isStatusPreAnalise?: boolean;
   isDaAreaAtribuida?: boolean;
+  isStatusDesabilitadoParaTramitacao?: boolean;
+  arquivosTramitacaoPendentes?: ArquivoDTO[];
+  onAddArquivosTramitacao?: (files: ArquivoDTO[]) => void;
+  onRemoveArquivoTramitacao?: (index: number) => void;
 }
 
 export function AnexosTab({
   anexos,
+  tramitacoes = [],
   downloadingId,
   onDeleteAnexo,
   onDownloadAnexo,
@@ -48,13 +56,19 @@ export function AnexosTab({
   isStatusNaoIniciado = false,
   isStatusConcluido = false,
   isStatusNaoAplicavelSuspensa = false,
-  isDaAreaAtribuida = false
+  isStatusPreAnalise = false,
+  isDaAreaAtribuida = false,
+  isStatusDesabilitadoParaTramitacao = false,
+  arquivosTramitacaoPendentes = [],
+  onAddArquivosTramitacao,
+  onRemoveArquivoTramitacao,
 }: AnexosTabProps) {
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [evidenceLinkValue, setEvidenceLinkValue] = useState('');
   const [linkError, setLinkError] = useState<string | null>(null);
   const [showAnexarEvidenciaModal, setShowAnexarEvidenciaModal] = useState(false);
   const [showAnexarOutrosModal, setShowAnexarOutrosModal] = useState(false);
+  const [showAnexarTramitacaoModal, setShowAnexarTramitacaoModal] = useState(false);
 
   // Protocolo
   const protocoloAnexos = useMemo(() => {
@@ -80,6 +94,23 @@ export function AnexosTab({
   const outrosAnexos = useMemo(() => {
     return anexos.filter((anexo) => anexo.tpDocumento === TipoDocumentoAnexoEnum.A);
   }, [anexos]);
+
+
+  // Documentos de Tramitação
+  const tramitacaoAnexos = useMemo(() => {
+    const anexosPrincipais = (anexos || []).filter((anexo) => 
+      anexo.tpObjeto === TipoObjetoAnexoEnum.T || 
+      anexo.tpDocumento === TipoDocumentoAnexoEnum.C
+    );
+
+    const anexosDasTramitacoes = (tramitacoes || []).flatMap(t => t.anexos || []);
+
+    // 3. Combinar e remover duplicados por ID para evitar repetição na lista
+    const todosAnexos = [...anexosPrincipais, ...anexosDasTramitacoes];
+    const uniqueAnexos = Array.from(new Map(todosAnexos.map(a => [a.idAnexo, a])).values());
+
+    return uniqueAnexos;
+  }, [anexos, tramitacoes]);
 
   const handleToggleLinkInput = useCallback(() => {
     setShowLinkInput(true);
@@ -247,7 +278,7 @@ export function AnexosTab({
   }, [statusPermiteAnexarOutros, isStatusConcluido, isStatusNaoAplicavelSuspensa]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 mb-5">
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold text-gray-900">Protocolo</span>
@@ -419,9 +450,9 @@ export function AnexosTab({
             ))}
           </ul>
         )}
-
       </div>
 
+    
       <div className="space-y-4 mb-5">
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold text-gray-900">Outros anexos</span>
@@ -460,6 +491,75 @@ export function AnexosTab({
           </ul>
         )}
       </div>
+      {!isStatusDesabilitadoParaTramitacao && !isStatusEmValidacaoRegulatorio && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-semibold text-gray-900">Tramitação</span>
+            <span className="text-xs font-semibold text-gray-400">{tramitacaoAnexos.length}</span>
+          </div>
+
+          <Button
+            type="button"
+            variant="link"
+            className="flex items-center gap-2 justify-start px-0 text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={() => setShowAnexarTramitacaoModal(true)}
+            disabled={isStatusConcluido || isStatusPreAnalise}
+            tooltip="Apenas é possível selecionar anexos da tramitação durante o andamento da tramitação."
+          >
+            <Plus className="h-4 w-4" />
+            Selecionar anexos da tramitação
+          </Button>
+
+          {tramitacaoAnexos.length === 0 ? (
+            <p className="text-sm text-gray-400">Nenhum documento de tramitação anexado.</p>
+          ) : (
+            <ul className="space-y-2">
+              {tramitacaoAnexos.map((anexo) => (
+                <ItemAnexo
+                  key={anexo.idAnexo}
+                  anexo={anexo}
+                  onDownload={onDownloadAnexo}
+                  onDelete={podeExcluirAnexo(anexo) ? onDeleteAnexo : undefined}
+                  downloadingId={downloadingId}
+                  tone="subtle"
+                  dense
+                  dataUpload={anexo.dtCriacao || null}
+                  responsavel={anexo.responsavel?.nmResponsavel || anexo.nmUsuario || null}
+                />
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {arquivosTramitacaoPendentes.length > 0 && (
+        <div className="space-y-4 border-t border-gray-100 pt-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-semibold text-blue-700">Novos anexos a enviar</span>
+            <span className="text-xs font-semibold text-blue-400">{arquivosTramitacaoPendentes.length}</span>
+          </div>
+          <ul className="space-y-2">
+            {arquivosTramitacaoPendentes.map((arquivo, idx) => (
+              <li key={idx} className="flex items-center justify-between gap-3 rounded-xl bg-blue-50 px-3 py-2 text-sm">
+                <div className="flex items-center gap-2 overflow-hidden">
+                  <FileText className="h-4 w-4 shrink-0 text-blue-500" />
+                  <span className="truncate text-blue-900 font-medium">{arquivo.nomeArquivo}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onRemoveArquivoTramitacao?.(idx)}
+                  className="text-blue-400 hover:text-red-500 transition-colors"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </li>
+            ))}
+          </ul>
+          <p className="text-[10px] text-blue-500 italic">
+            * Estes arquivos serão anexados ao enviar tramitação.
+          </p>
+        </div>
+      )}
 
       <AnexoObrigacaoModal
         open={showAnexarEvidenciaModal}
@@ -482,6 +582,22 @@ export function AnexosTab({
         tpDocumento={TipoDocumentoAnexoEnum.A}
         idObrigacao={idObrigacao}
         idPerfil={idPerfil}
+        onSuccess={() => {
+          if (onRefreshAnexos) {
+            onRefreshAnexos();
+          }
+        }}
+      />
+
+      <AnexoObrigacaoModal
+        open={showAnexarTramitacaoModal}
+        onClose={() => setShowAnexarTramitacaoModal(false)}
+        title="Selecionar documentos de tramitação"
+        tpDocumento={TipoDocumentoAnexoEnum.C}
+        idObrigacao={idObrigacao}
+        idPerfil={idPerfil}
+        isTramitacao={true}
+        onFilesSelected={onAddArquivosTramitacao}
         onSuccess={() => {
           if (onRefreshAnexos) {
             onRefreshAnexos();

@@ -10,6 +10,8 @@ import { toast } from 'sonner';
 import { ArquivoDTO, TipoResponsavelAnexoEnum, TipoDocumentoAnexoEnum } from '@/api/anexos/type';
 import { computeTpResponsavel } from '@/api/perfis/types';
 import obrigacaoAnexosClient from '@/api/obrigacao/anexos-client';
+import tramitacoesClient from '@/api/tramitacoes/client';
+import { authClient } from '@/api/auth/client';
 
 interface AnexoObrigacaoModalProps {
   open: boolean;
@@ -19,6 +21,8 @@ interface AnexoObrigacaoModalProps {
   idObrigacao: number;
   idPerfil?: number;
   onSuccess?: () => void;
+  onFilesSelected?: (files: ArquivoDTO[]) => void;
+  isTramitacao?: boolean;
 }
 
 export function AnexoObrigacaoModal({
@@ -29,6 +33,8 @@ export function AnexoObrigacaoModal({
   idObrigacao,
   idPerfil,
   onSuccess,
+  onFilesSelected,
+  isTramitacao = false,
 }: AnexoObrigacaoModalProps) {
   const [arquivos, setArquivos] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -62,6 +68,8 @@ export function AnexoObrigacaoModal({
         ? computeTpResponsavel(idPerfil) 
         : TipoResponsavelAnexoEnum.A;
 
+      const idUsuarioLogado = authClient.getUserIdResponsavelFromToken();
+
       const arquivosDTO: ArquivoDTO[] = await Promise.all(
         arquivos.map(async (file) => {
           const base64 = await new Promise<string>((resolve, reject) => {
@@ -81,11 +89,23 @@ export function AnexoObrigacaoModal({
             tpResponsavel,
             conteudoArquivo: base64,
             tpDocumento,
+            idResponsavel: idUsuarioLogado || undefined,
           };
         })
       );
 
-      await obrigacaoAnexosClient.upload(idObrigacao, arquivosDTO);
+      if (onFilesSelected) {
+        onFilesSelected(arquivosDTO);
+        setArquivos([]);
+        onClose();
+        return;
+      }
+
+      if (isTramitacao) {
+        await tramitacoesClient.uploadAnexos(idObrigacao, arquivosDTO);
+      } else {
+        await obrigacaoAnexosClient.upload(idObrigacao, arquivosDTO);
+      }
       
       toast.success('Arquivos anexados com sucesso!');
       setArquivos([]);
@@ -99,7 +119,7 @@ export function AnexoObrigacaoModal({
     } finally {
       setUploading(false);
     }
-  }, [arquivos, idObrigacao, tpDocumento, idPerfil, onClose, onSuccess]);
+  }, [arquivos, idObrigacao, tpDocumento, idPerfil, onClose, onSuccess, isTramitacao, onFilesSelected]);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>

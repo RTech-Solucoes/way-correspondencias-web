@@ -6,28 +6,27 @@ import { SolicitacaoParecerResponse } from '@/api/solicitacao-parecer/types';
 import { formatDateTimeBr } from '@/utils/utils';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
-import { AreaSolicitacao } from '@/api/solicitacoes/types';
+import { AreaSolicitacao, TramitacaoComAnexosResponse, TramitacaoResponse as SolTramitacaoResponse } from '@/api/solicitacoes/types';
 import { CardComentario } from './CardComentario';
-import { TramitacaoResponse } from '@/api/tramitacoes/types';
 import { CardTramitacao } from './CardTramitacao';
 
 interface ComentarioUnificado {
   tipo: 'parecer' | 'tramitacao';
   data: string;
   parecer?: SolicitacaoParecerResponse;
-  tramitacao?: TramitacaoResponse;
+  tramitacao?: SolTramitacaoResponse;
 }
 
 interface ComentariosTabProps {
   solicitacaoPareceres: SolicitacaoParecerResponse[];
-  tramitacoes?: TramitacaoResponse[];
+  tramitacoes?: TramitacaoComAnexosResponse[];
   comentariosUnificados: ComentarioUnificado[];
   responsaveis?: ResponsavelResponse[];
   loading?: boolean;
   idResponsavelLogado?: number | null;
   onDeletar?: (idSolicitacaoParecer: number) => void;
   onResponder?: (parecer: SolicitacaoParecerResponse) => void;
-  onResponderTramitacao?: (tramitacao: TramitacaoResponse) => void;
+  onResponderTramitacao?: (tramitacao: SolTramitacaoResponse) => void;
   parecerTramitacaoMap?: Map<number, number>;
   areaAtribuida?: AreaSolicitacao | null;
 }
@@ -105,7 +104,7 @@ export function ComentariosTab({
             );
             
             const tramitacoesMap = new Map(
-              tramitacoes.map(t => [t.idTramitacao, t])
+              tramitacoes.map(t => [t.tramitacao.idTramitacao, t.tramitacao])
             );
             
             return comentariosUnificados.map((item, index) => {

@@ -1,3 +1,4 @@
+import { ArquivoDTO } from "../anexos/type";
 import { ResponsavelResponse } from "../responsaveis/types";
 import { BaseResponse } from "../solicitacoes";
 
@@ -7,6 +8,7 @@ export interface SolicitacaoParecerRequest {
   dsDarecer: string;
   idSolicitacaoParecerReferen?: number | null;
   idTramitacao?: number | null;
+  arquivos?: ArquivoDTO[];
 }
 
 export interface SolicitacaoParecerResponse extends BaseResponse {
