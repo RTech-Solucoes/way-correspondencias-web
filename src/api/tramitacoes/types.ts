@@ -102,6 +102,7 @@ export interface TramitacaoResponse {
   flAtivo: string;
   dsObservacao?: string;
   flAprovado?: FlAprovadoTramitacaoEnum | string;
+  tramitacaoRef?: TramitacaoResponse;
 }
 
 export interface TramitacaoRequest {
@@ -113,6 +114,7 @@ export interface TramitacaoRequest {
   flAcao?: string;
   arquivos?: ArquivoDTO[];
   flAprovado?: FlAprovadoTramitacaoEnum;
+  idTramitacaoRef?: number;
 }
 
 export interface ProximoStatusRequest {

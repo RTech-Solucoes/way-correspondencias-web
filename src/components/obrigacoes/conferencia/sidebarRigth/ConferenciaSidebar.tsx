@@ -34,7 +34,7 @@ interface ConferenciaSidebarProps {
   onRefreshAnexos?: () => void;
   podeEnviarComentarioPorPerfilEArea?: boolean;
   isStatusDesabilitadoParaTramitacao?: boolean;
-  onGetComentarioTexto?: (getter: () => string) => void;
+  onRegisterComentarioActions?: (actions: { get: () => string; reset: () => void }) => void;
   arquivosTramitacaoPendentes?: ArquivoDTO[];
   onAddArquivosTramitacao?: (files: ArquivoDTO[]) => void;
   onRemoveArquivoTramitacao?: (index: number) => void;
@@ -51,7 +51,7 @@ export function ConferenciaSidebar({
   onRefreshAnexos, 
   podeEnviarComentarioPorPerfilEArea = false, 
   isStatusDesabilitadoParaTramitacao = false, 
-  onGetComentarioTexto,
+  onRegisterComentarioActions,
   arquivosTramitacaoPendentes = [],
   onAddArquivosTramitacao,
   onRemoveArquivoTramitacao,
@@ -81,13 +81,24 @@ export function ConferenciaSidebar({
   const [exportingPdf, setExportingPdf] = useState(false);
 
   useEffect(() => {
-    if (onGetComentarioTexto) {
-      onGetComentarioTexto(() => {
-        const textarea = document.getElementById('comentario-textarea') as HTMLTextAreaElement;
-        return textarea?.value || comentarioTexto;
+    if (onRegisterComentarioActions) {
+      onRegisterComentarioActions({
+        get: () => {
+          const textarea = document.getElementById('comentario-textarea') as HTMLTextAreaElement;
+          return textarea?.value || comentarioTexto;
+        },
+        reset: () => {
+          setComentarioTexto('');
+          setParecerReferencia(null);
+          setTramitacaoReferencia(null);
+          const textarea = document.getElementById('comentario-textarea') as HTMLTextAreaElement;
+          if (textarea) {
+            textarea.value = '';
+          }
+        }
       });
     }
-  }, [onGetComentarioTexto, comentarioTexto]);
+  }, [onRegisterComentarioActions, comentarioTexto]);
 
   const areaAtribuida = useMemo(() => {
     return detalhe?.obrigacao?.areas?.find((area) => area.tipoArea?.cdTipo === TipoEnum.ATRIBUIDA);

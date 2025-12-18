@@ -216,8 +216,21 @@ export function ConferenciaFooter({
     if (isAreaRespondeu != null && isAreaRespondeu?.length > 0) return false;
 
     if (idStatusSolicitacao === statusList.EM_APROVACAO.id) {
-      return true;
+      if (idPerfil === perfilUtil.EXECUTOR_AVANCADO) return true;
     }
+    
+    if (idStatusSolicitacao === statusList.ANALISE_REGULATORIA.id) {
+      if (idPerfil === perfilUtil.ADMINISTRADOR || idPerfil === perfilUtil.GESTOR_DO_SISTEMA) return true;
+    }
+
+    if (idStatusSolicitacao === statusList.EM_CHANCELA.id) {
+      if (idPerfil === perfilUtil.ADMINISTRADOR) return true;
+    }
+
+    if (idStatusSolicitacao === statusList.EM_ASSINATURA_DIRETORIA.id) {
+      if (idPerfil === perfilUtil.ADMINISTRADOR || idPerfil === perfilUtil.VALIDADOR_ASSINANTE) return true;
+    }
+
     return false;
 
   }, [idPerfil, idStatusSolicitacao, flExigeCienciaGerenteRegul, isCienciaChecked, tramitacoes, userResponsavel, isStatusEmAnaliseGerenteRegulatorio]);

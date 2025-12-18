@@ -3,7 +3,7 @@
 import { Clock } from 'lucide-react';
 import { useMemo } from 'react';
 import { SolicitacaoPrazoResponse } from '@/api/solicitacoes/types';
-import { cn } from '@/utils/utils';
+import { cn, formatDateTimeBr } from '@/utils/utils';
 
 interface PrazoStatusPillProps {
   idStatusAtual?: number;
@@ -17,19 +17,13 @@ export function PrazoStatusPill({ idStatusAtual, prazos = [] }: PrazoStatusPillP
   }, [idStatusAtual, prazos]);
 
   const isVencido = useMemo(() => {
-    if (!prazoAtual?.dtPrazoLimite) return false;
+    if (!prazoAtual?.dtPrazoLimite || (prazoAtual?.nrPrazoInterno ?? 0) <= 0) return false;
     return new Date() > new Date(prazoAtual.dtPrazoLimite);
   }, [prazoAtual]);
 
-  const formatDateTime = (iso?: string | null) => {
-    if (!iso) return '—';
-    const d = new Date(iso);
-    const date = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    const time = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false });
-    return `${date} às ${time}`;
-  };
-
-  if (!prazoAtual?.dtPrazoLimite) return null;
+  if (!prazoAtual?.dtPrazoLimite || (prazoAtual?.nrPrazoInterno ?? 0) <= 0) {
+    return null;
+  }
 
   return (
     <div
@@ -42,7 +36,7 @@ export function PrazoStatusPill({ idStatusAtual, prazos = [] }: PrazoStatusPillP
     >
       <Clock className={cn('h-4 w-4', isVencido ? 'text-red-600' : 'text-green-600')} />
       <span>
-        Prazo de resposta: <span className="font-bold">{formatDateTime(prazoAtual.dtPrazoLimite)}</span>
+        Prazo de resposta: <span className="font-bold">{formatDateTimeBr(prazoAtual.dtPrazoLimite)}</span>
       </span>
     </div>
   );
