@@ -66,8 +66,6 @@ function ObrigacoesContent() {
     setObrigacaoToDelete,
     filters,
     setFilters,
-    sortField,
-    sortDirection,
     handleSort,
     loadObrigacoes,
   } = useObrigacoes();

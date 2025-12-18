@@ -666,14 +666,8 @@ export default function ConferenciaObrigacaoPage() {
                 <TabsContent value="anexos" className="p-0">
                   <ConferenciaStepAnexos
                     anexos={anexos}
-                    tramitacoes={detalhe?.tramitacoes}
                     downloadingId={downloading}
                     onDownloadAnexo={handleDownloadAnexo}
-                    idObrigacao={obrigacao?.idSolicitacao}
-                    idPerfil={idPerfil ?? undefined}
-                    onRefreshAnexos={reloadDetalhe}
-                    isStatusDesabilitadoParaTramitacao={isStatusDesabilitadoParaTramitacao}
-                    isStatusConcluido={isStatusConcluido}
                   />
                 </TabsContent>
 

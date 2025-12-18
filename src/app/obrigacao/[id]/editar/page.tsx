@@ -580,4 +580,3 @@ export default function EditarObrigacaoPage() {
     </div>
   );
 }
-
