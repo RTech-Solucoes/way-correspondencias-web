@@ -1,6 +1,6 @@
 export { ObrigacaoModal } from './ObrigacaoModal';
-export { FilterModalObrigacao } from '../FilterModalObrigacao';
-export { DeleteObrigacaoDialog } from '../DeleteObrigacaoDialog';
+export { FilterModalObrigacao } from '../modal/FilterModalObrigacao';
+export { DeleteObrigacaoDialog } from '../modal/DeleteObrigacaoDialog';
 
 // Steps
 export { Step1Obrigacao } from './steps/Step1Obrigacao';

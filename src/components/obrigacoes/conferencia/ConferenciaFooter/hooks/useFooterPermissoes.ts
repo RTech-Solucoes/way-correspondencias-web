@@ -75,8 +75,8 @@ export function useFooterPermissoes({
       }
     }
 
-    if (tramitacaoExecutada != null && tramitacaoExecutada?.length > 0) return false;
-    if (isAreaRespondeu != null && isAreaRespondeu?.length > 0) return false;
+    // if (tramitacaoExecutada != null && tramitacaoExecutada?.length > 0) return false;
+    // if (isAreaRespondeu != null && isAreaRespondeu?.length > 0) return false;
 
     if (idStatusSolicitacao === statusList.EM_APROVACAO.id) {
       if (idPerfil === perfilUtil.EXECUTOR_AVANCADO) return true;

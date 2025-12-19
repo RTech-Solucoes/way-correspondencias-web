@@ -1,7 +1,7 @@
 'use client';
 
 import { TipoDocumentoAnexoEnum, type AnexoResponse } from '@/api/anexos/type';
-import { ItemAnexo } from './ItensAnexos';
+import { ItemAnexo } from '../../sidebarRigth/anexo/ItensAnexos';
 
 interface ConferenciaStepAnexosProps {
   anexos: AnexoResponse[];

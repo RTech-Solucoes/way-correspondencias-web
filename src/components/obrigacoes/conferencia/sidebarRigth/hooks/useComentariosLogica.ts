@@ -13,6 +13,7 @@ import { TramitacaoResponse as SolTramitacaoResponse, TramitacaoComAnexosRespons
 import { perfilUtil } from '@/api/perfis/types';
 import type { ObrigacaoDetalheResponse } from '@/api/obrigacao/types';
 import type { ArquivoDTO } from '@/api/anexos/type';
+import { statusListObrigacao } from '@/api/status-obrigacao/types';
 
 interface UseComentariosLogicaParams {
   detalhe: ObrigacaoDetalheResponse;
@@ -59,6 +60,14 @@ export function useComentariosLogica({
   useEffect(() => {
     if (detalhe?.solicitacaoParecer) {
       setSolicitacaoPareceres(detalhe.solicitacaoParecer);
+      // Atualizar o mapa de parecer-tramitação quando pareceres mudarem
+      const novoMap = new Map<number, number>();
+      detalhe.solicitacaoParecer.forEach(parecer => {
+        if (parecer.idTramitacao) {
+          novoMap.set(parecer.idSolicitacaoParecer, parecer.idTramitacao);
+        }
+      });
+      setParecerTramitacaoMap(novoMap);
     }
     if (detalhe?.tramitacoes) {
       setTramitacoes(detalhe.tramitacoes);
@@ -234,7 +243,6 @@ export function useComentariosLogica({
     return true;
   }, [idResponsavelLogado, userResponsavel, isDaAreaAtribuida, tramitacoes]);
 
-  // Verificar se pode enviar comentário
   const podeEnviarComentario = useMemo(() => {
     if (podeEnviarComentarioPorPerfilEArea) {
       return true;
@@ -343,9 +351,37 @@ export function useComentariosLogica({
             };
 
             await tramitacoesClient.tramitarViaFluxo(tramitacaoRequest);
+                   
             onClearArquivosTramitacao?.();
             
-            await reloadDados();
+            if (onRefreshAnexos) {
+              await onRefreshAnexos();
+            }
+          }
+
+          if (idStatusAtual === statusListObrigacao.ATRASADA.id) {
+            const parecerRequest: {
+              idSolicitacao: number;
+              idStatusSolicitacao: number;
+              dsDarecer: string;
+              idSolicitacaoParecerReferen?: number | null;
+              idTramitacao?: number | null;
+            } = {
+              idSolicitacao: detalhe.obrigacao.idSolicitacao,
+              idStatusSolicitacao: detalhe.obrigacao.statusSolicitacao.idStatusSolicitacao,
+              dsDarecer: textoCompleto.trim(),
+            };
+
+            if (parecerReferencia) {
+              parecerRequest.idSolicitacaoParecerReferen = parecerReferencia;
+            }
+
+            if (tramitacaoReferencia) {
+              parecerRequest.idTramitacao = tramitacaoReferencia;
+            }
+
+            await solicitacaoParecerClient.criar(parecerRequest);
+            
             if (onRefreshAnexos) {
               await onRefreshAnexos();
             }
@@ -379,7 +415,6 @@ export function useComentariosLogica({
         await solicitacaoParecerClient.criar(parecerRequest);
         onClearArquivosTramitacao?.();
 
-        await reloadDados();
         if (onRefreshAnexos) {
           await onRefreshAnexos();
         }
@@ -413,7 +448,6 @@ export function useComentariosLogica({
         await solicitacaoParecerClient.criar(requestData);
         onClearArquivosTramitacao?.();
 
-        await reloadDados();
         if (onRefreshAnexos) {
           await onRefreshAnexos();
         }
@@ -446,9 +480,8 @@ export function useComentariosLogica({
     podeResponderTramitacao, 
     onRefreshAnexos, 
     statusPermitidoParaTramitar, 
-    reloadDados, 
     arquivosTramitacaoPendentes, 
-    onClearArquivosTramitacao
+    onClearArquivosTramitacao,
   ]);
 
   // Função para resetar comentário

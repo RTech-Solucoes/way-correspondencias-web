@@ -5,7 +5,7 @@ import { ExternalLink } from 'lucide-react';
 import type { ObrigacaoDetalheResponse } from '@/api/obrigacao/types';
 import type { ReactNode } from 'react';
 import type { ObrigacaoStatusStyle } from '@/utils/obrigacoes/status';
-import { getCriticidadeBadgeClasses } from './utils';
+import { getCriticidadeBadgeClasses } from '../../utils';
 import { ConferenciaInfoRow } from './ConferenciaInfoRow';
 import { TipoEnum } from '@/api/tipos/types';
 import { formatDateTimeBr } from '@/utils/utils';

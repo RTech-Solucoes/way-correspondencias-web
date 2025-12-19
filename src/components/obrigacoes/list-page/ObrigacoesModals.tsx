@@ -1,12 +1,12 @@
 'use client';
 
 import { ObrigacaoModal } from "@/components/obrigacoes/criar/ObrigacaoModal";
-import { FilterModalObrigacao } from "@/components/obrigacoes/FilterModalObrigacao";
-import { DeleteObrigacaoDialog } from "@/components/obrigacoes/DeleteObrigacaoDialog";
-import { ImportObrigacoesModal } from "@/components/obrigacoes/ImportObrigacoesModal";
-import { AnexarProtocoloModal } from "@/components/obrigacoes/AnexarProtocoloModal";
-import { ObrigacoesCondicionadasModal } from "@/components/obrigacoes/ObrigacoesCondicionadasModal";
-import { NaoAplicavelSuspensoModal } from "@/components/obrigacoes/conferencia/NaoAplicavelSuspensoModal";
+import { FilterModalObrigacao } from "@/components/obrigacoes/modal/FilterModalObrigacao";
+import { DeleteObrigacaoDialog } from "@/components/obrigacoes/modal/DeleteObrigacaoDialog";
+import { ImportObrigacoesModal } from "@/components/obrigacoes/modal/ImportObrigacoesModal";
+import { AnexarProtocoloModal } from "@/components/obrigacoes/modal/AnexarProtocoloModal";
+import { ObrigacoesCondicionadasModal } from "@/components/obrigacoes/modal/ObrigacoesCondicionadasModal";
+import { NaoAplicavelSuspensoModal } from "@/components/obrigacoes/conferencia/modal/NaoAplicavelSuspensoModal";
 import { TramitacaoObrigacaoModal } from "@/components/obrigacoes/tramitacao";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { ObrigacaoResponse, ObrigacaoResumoResponse } from "@/api/obrigacao/types";

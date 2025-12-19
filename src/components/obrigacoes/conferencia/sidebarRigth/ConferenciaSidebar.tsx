@@ -8,8 +8,8 @@ import { cn } from '@/utils/utils';
 import type { ObrigacaoDetalheResponse } from '@/api/obrigacao/types';
 import type { ArquivoDTO } from '@/api/anexos/type';
 import { TipoDocumentoAnexoEnum } from '@/api/anexos/type';
-import { AnexosTab } from './AnexosTab';
-import { ComentariosTab } from './ComentariosTab';
+import { AnexosTab } from './anexo/AnexosTab';
+import { ComentariosTab } from './comentario/ComentariosTab';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import ExportHistoricoObrigacaoPdf from '@/components/obrigacoes/relatorios/ExportHistoricoObrigacaoPdf';
 import LoadingOverlay from '@/components/ui/loading-overlay';
@@ -321,7 +321,7 @@ export function ConferenciaSidebar({
                   rows={4}
                   disabled={comentariosLogica.loadingAction || !comentariosLogica.podeEnviarComentario}
                 />
-                {isStatusDesabilitadoParaTramitacao || permissoes.isStatusEmValidacaoRegulatorio || permissoes.isStatusConcluido && (
+                {comentariosLogica.podeEnviarComentario && (
                   <Button
                     type="button"
                     size="icon"

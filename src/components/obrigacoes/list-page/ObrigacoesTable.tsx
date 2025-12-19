@@ -15,7 +15,7 @@ import { getObrigacaoStatusStyle } from "@/utils/obrigacoes/status";
 import { formatDateBr } from "@/utils/utils";
 import { TipoEnum } from "@/api/tipos/types";
 import TimeProgress from "@/components/ui/time-progress";
-import { ObrigacaoAcoesMenu } from "@/components/obrigacoes/ObrigacaoAcoesMenu";
+import { ObrigacaoAcoesMenu } from "@/components/obrigacoes/list-page/ObrigacaoAcoesMenu";
 
 interface ObrigacoesTableProps {
   obrigacoes: ObrigacaoResponse[];

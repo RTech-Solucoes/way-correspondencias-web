@@ -1,7 +1,7 @@
 'use client';
 
 import type { ObrigacaoDetalheResponse } from '@/api/obrigacao/types';
-import { normalizeDate } from './utils';
+import { normalizeDate } from '../../utils';
 import { ConferenciaInfoRow } from './ConferenciaInfoRow';
 
 interface ConferenciaStepPrazosProps {

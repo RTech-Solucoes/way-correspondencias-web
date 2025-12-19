@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Link as LinkIcon, FileText, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { ItemAnexo, ItemAnexoLink } from '../ItensAnexos';
+import { ItemAnexo, ItemAnexoLink } from './ItensAnexos';
 import type { AnexoResponse, ArquivoDTO } from '@/api/anexos/type';
 import { TipoDocumentoAnexoEnum, TipoObjetoAnexoEnum } from '@/api/anexos/type';
-import { AnexoObrigacaoModal } from '../AnexoObrigacaoModal';
+import { AnexoObrigacaoModal } from '../../modal/AnexoObrigacaoModal';
 import { perfilUtil } from '@/api/perfis/types';
 import { TramitacaoComAnexosResponse } from '@/api/solicitacoes/types';
 
