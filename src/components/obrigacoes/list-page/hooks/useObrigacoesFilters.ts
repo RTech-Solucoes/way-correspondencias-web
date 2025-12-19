@@ -7,16 +7,18 @@ import { TipoResponse } from "@/api/tipos/types";
 import areasClient from "@/api/areas/client";
 import temasClient from "@/api/temas/client";
 import tiposClient from "@/api/tipos/client";
-import { CategoriaEnum } from "@/api/tipos/types";
-import { statusObrigacaoList, statusObrigacaoLabels, StatusObrigacao } from "@/api/status-obrigacao/types";
+import { CategoriaEnum, TipoEnum } from "@/api/tipos/types";
+import statusSolicitacaoClient, { StatusSolicitacaoResponse } from "@/api/status-solicitacao/client";
 import { formatDateBr } from "@/utils/utils";
 import { ObrigacaoFiltroRequest } from "@/api/obrigacao/types";
+import { FiltersState } from "@/context/obrigacoes/ObrigacoesContext";
+import { Dispatch, SetStateAction } from "react";
 
 interface UseObrigacoesFiltersProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  filters: any;
-  setFilters: (filters: any) => void;
+  filters: FiltersState;
+  setFilters: Dispatch<SetStateAction<FiltersState>>;
 }
 
 export function useObrigacoesFilters({
@@ -29,14 +31,16 @@ export function useObrigacoesFilters({
   const [temas, setTemas] = useState<TemaResponse[]>([]);
   const [classificacoes, setClassificacoes] = useState<TipoResponse[]>([]);
   const [periodicidades, setPeriodicidades] = useState<TipoResponse[]>([]);
+  const [statusObrigacao, setStatusObrigacao] = useState<StatusSolicitacaoResponse[]>([]);
 
   useEffect(() => {
     const carregarDados = async () => {
       try {
-        const [areasResponse, temasResponse, tiposResponse] = await Promise.all([
+        const [areasResponse, temasResponse, tiposResponse, statusesResponse] = await Promise.all([
           areasClient.buscarPorFiltro({ size: 1000 }),
           temasClient.buscarPorFiltro({ size: 1000 }),
-          tiposClient.buscarPorCategorias([CategoriaEnum.OBRIG_CLASSIFICACAO, CategoriaEnum.OBRIG_PERIODICIDADE])
+          tiposClient.buscarPorCategorias([CategoriaEnum.OBRIG_CLASSIFICACAO, CategoriaEnum.OBRIG_PERIODICIDADE]),
+          statusSolicitacaoClient.listarTodos(CategoriaEnum.CLASSIFICACAO_STATUS_SOLICITACAO, [TipoEnum.TODOS, TipoEnum.OBRIGACAO])
         ]);
 
         setAreas(areasResponse.content || []);
@@ -47,6 +51,7 @@ export function useObrigacoesFilters({
         
         setClassificacoes(classif);
         setPeriodicidades(periodic);
+        setStatusObrigacao(statusesResponse || []);
       } catch (error) {
         console.error('Erro ao carregar dados dos filtros:', error);
       }
@@ -82,9 +87,7 @@ export function useObrigacoesFilters({
       ...(filters.idStatusObrigacao ? [{
         key: 'status',
         label: 'Status',
-        value: statusObrigacaoList.find(s => s.id.toString() === filters.idStatusObrigacao) 
-          ? statusObrigacaoLabels[statusObrigacaoList.find(s => s.id.toString() === filters.idStatusObrigacao)!.nmStatus as StatusObrigacao]
-          : filters.idStatusObrigacao,
+        value: statusObrigacao.find(s => s.idStatusSolicitacao.toString() === filters.idStatusObrigacao)?.nmStatus || filters.idStatusObrigacao,
         color: 'purple' as const,
         onRemove: () => setFilters({ ...filters, idStatusObrigacao: '' })
       }] : []),
@@ -145,7 +148,7 @@ export function useObrigacoesFilters({
         onRemove: () => setFilters({ ...filters, idTipoPeriodicidade: '' })
       }] : [])
     ];
-  }, [searchQuery, filters, areas, temas, classificacoes, periodicidades, setSearchQuery, setFilters]);
+  }, [searchQuery, filters, areas, temas, classificacoes, periodicidades, statusObrigacao, setSearchQuery, setFilters]);
 
   const handleClearAllFilters = () => {
     setSearchQuery('');

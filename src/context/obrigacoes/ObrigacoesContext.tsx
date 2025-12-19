@@ -4,7 +4,7 @@ import {createContext, Dispatch, ReactNode, SetStateAction, useContext, useState
 import { ObrigacaoResponse, ObrigacaoFiltroRequest} from '@/api/obrigacao/types';
 import obrigacaoClient from '@/api/obrigacao/client';
 
-interface FiltersState {
+export interface FiltersState {
   titulo: string;
   responsavel: string;
   contrato: string;

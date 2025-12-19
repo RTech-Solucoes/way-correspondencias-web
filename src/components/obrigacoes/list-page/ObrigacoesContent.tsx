@@ -271,4 +271,3 @@ export function ObrigacoesContent() {
     </div>
   );
 }
-

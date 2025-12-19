@@ -14,7 +14,7 @@ export enum StatusObrigacao {
     NAO_APLICAVEL_SUSPENSA = 'NAO_APLICAVEL_SUSPENSA',
 }
 
-export const statusObrigacaoLabels: Record<StatusObrigacao, string> = {
+export const statusObrigacaoLabels: Record<StatusObrigacao, string>  = {
     [StatusObrigacao.NAO_INICIADO]: 'Não Iniciado',
     [StatusObrigacao.PENDENTE]: 'Pendente',
     [StatusObrigacao.EM_ANDAMENTO]: 'Em Andamento',
