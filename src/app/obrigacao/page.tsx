@@ -2,7 +2,7 @@
 
 import { Suspense } from "react";
 import { ObrigacoesProvider } from "@/context/obrigacoes/ObrigacoesContext";
-import { ObrigacoesContent } from "./_components/ObrigacoesContent";
+import { ObrigacoesContent } from "../../components/obrigacoes/list-page/ObrigacoesContent";
 
 export default async function ObrigacoesPage() {
   return (

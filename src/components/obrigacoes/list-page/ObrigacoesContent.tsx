@@ -8,7 +8,6 @@ import { statusObrigacaoList, statusObrigacaoLabels, StatusObrigacao, statusList
 import obrigacaoClient from "@/api/obrigacao/client";
 import { toast } from "sonner";
 import { useUserGestao } from "@/hooks/use-user-gestao";
-import { perfilUtil } from "@/api/perfis/types";
 import { ObrigacaoResumoResponse, ObrigacaoResponse } from "@/api/obrigacao/types";
 import { usePermissoes } from "@/context/permissoes/PermissoesContext";
 
@@ -19,7 +18,8 @@ import { ObrigacoesFiltersUI } from "@/components/obrigacoes/list-page/Obrigacoe
 import { ObrigacoesModals } from "@/components/obrigacoes/list-page/ObrigacoesModals";
 
 // Hooks
-import { useObrigacoesFilters } from "../hooks/useObrigacoesFilters";
+import { useObrigacoesFilters } from "./hooks/useObrigacoesFilters";
+import { perfilUtil } from "@/api/perfis/types";
 
 export function ObrigacoesContent() {
   const {
@@ -271,3 +271,4 @@ export function ObrigacoesContent() {
     </div>
   );
 }
+
