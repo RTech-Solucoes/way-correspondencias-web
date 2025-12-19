@@ -2,32 +2,43 @@
 
 import { Briefcase, Reply } from 'lucide-react';
 import { TramitacaoResponse as SolTramitacaoResponse } from '@/api/solicitacoes/types';
+import { SolicitacaoParecerResponse } from '@/api/solicitacao-parecer/types';
 import { Button } from '@/components/ui/button';
 
 interface CardTramitacaoProps {
   tramitacao: SolTramitacaoResponse;
   tramitacaoReferenciada?: SolTramitacaoResponse | null;
+  parecerReferenciado?: SolicitacaoParecerResponse | null;
   parts?: (string | { type: 'mention'; name: string; isValid: boolean })[];
   dataFormatada: string;
   autor: string;
   area: string;
   onResponder?: (tramitacao: SolTramitacaoResponse) => void;
   onScrollToTramitacao?: (idTramitacao: number) => void;
+  onScrollToComment?: (idParecer: number) => void;
 }
 
 export function CardTramitacao({
   tramitacao,
   tramitacaoReferenciada,
+  parecerReferenciado,
   parts,
   dataFormatada,
   autor,
   area,
   onResponder,
   onScrollToTramitacao,
+  onScrollToComment,
 }: CardTramitacaoProps) {
   const handleClickTramitacaoReferenciada = () => {
     if (tramitacaoReferenciada && onScrollToTramitacao) {
       onScrollToTramitacao(tramitacaoReferenciada.idTramitacao);
+    }
+  };
+
+  const handleClickParecerReferenciado = () => {
+    if (parecerReferenciado && onScrollToComment) {
+      onScrollToComment(parecerReferenciado.idSolicitacaoParecer);
     }
   };
 
@@ -36,7 +47,23 @@ export function CardTramitacao({
       id={`tramitacao-${tramitacao.idTramitacao}`}
       className="rounded-2xl border border-gray-100 bg-white px-4 py-4 shadow-sm"
     >
-      {tramitacaoReferenciada && (
+      {parecerReferenciado ? (
+        <div 
+          className="mb-3 border-l-4 border-purple-500 bg-gray-50 rounded-r-lg p-3 text-sm cursor-pointer hover:bg-gray-100 transition-colors"
+          onClick={handleClickParecerReferenciado}
+          title="Clique para ver o comentário original"
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <Reply className="h-3 w-3 text-purple-600" />
+            <span className="font-semibold text-purple-600 text-xs">
+              {parecerReferenciado.responsavel?.nmResponsavel || 'Usuário'}
+            </span>
+          </div>
+          <p className="text-gray-700 text-xs line-clamp-2">
+            {parecerReferenciado.dsDarecer || 'Comentário referenciado'}
+          </p>
+        </div>
+      ) : tramitacaoReferenciada ? (
         <div 
           className="mb-3 border-l-4 border-purple-500 bg-gray-50 rounded-r-lg p-3 text-sm cursor-pointer hover:bg-gray-100 transition-colors"
           onClick={handleClickTramitacaoReferenciada}
@@ -52,7 +79,7 @@ export function CardTramitacao({
             {tramitacaoReferenciada.dsObservacao || 'Tramitação referenciada'}
           </p>
         </div>
-      )}
+      ) : null}
 
       <div className="flex items-center justify-between text-sm">
         <span className="font-semibold text-gray-900">{autor}</span>

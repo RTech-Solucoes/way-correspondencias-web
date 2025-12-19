@@ -1,4 +1,5 @@
 import { ArquivoDTO } from "../anexos/type";
+import { SolicitacaoParecerResponse } from "../solicitacao-parecer/types";
 
 interface Email {
   idEmail: number;
@@ -104,6 +105,8 @@ export interface TramitacaoResponse {
   flAprovado?: FlAprovadoTramitacaoEnum | string;
   tramitacaoRef?: TramitacaoResponse;
   idTramitacaoRef?: number;
+  solicitacaoParecerRef?: SolicitacaoParecerResponse;
+  idSolicitacaoParecerRef?: number | null;
 }
 
 export interface TramitacaoRequest {
@@ -116,6 +119,7 @@ export interface TramitacaoRequest {
   arquivos?: ArquivoDTO[];
   flAprovado?: FlAprovadoTramitacaoEnum;
   idTramitacaoRef?: number;
+  idSolicitacaoParecerRef?: number | null;
 }
 
 export interface ProximoStatusRequest {

@@ -52,6 +52,7 @@ export function useComentariosLogica({
   const [loadingAction, setLoadingAction] = useState(false);
   const [parecerReferencia, setParecerReferencia] = useState<number | null>(null);
   const [tramitacaoReferencia, setTramitacaoReferencia] = useState<number | null>(null);
+  const [parecerReferenciaViaTramitacao, setParecerReferenciaViaTramitacao] = useState<number | null>(null);
   const [parecerTramitacaoMap, setParecerTramitacaoMap] = useState<Map<number, number>>(new Map());
 
   const idResponsavelLogado = authClient.getUserIdResponsavelFromToken();
@@ -302,6 +303,7 @@ export function useComentariosLogica({
     setComentarioTexto(`@${nomeResponsavel} `);
     setParecerReferencia(parecer.idSolicitacaoParecer);
     setTramitacaoReferencia(null);
+    setParecerReferenciaViaTramitacao(null);
   }, []);
 
   // Handler para responder tramitação
@@ -310,6 +312,8 @@ export function useComentariosLogica({
     const nomeResponsavel = responsavelTramitacao?.nmResponsavel || 'Usuário';
     setComentarioTexto(`@${nomeResponsavel} `);
     setTramitacaoReferencia(tramitacao.idTramitacao);
+    // Se a tramitação que está sendo respondida referencia um parecer, manter essa referência
+    setParecerReferenciaViaTramitacao(tramitacao.idSolicitacaoParecerRef ?? null);
     setParecerReferencia(null);
   }, []);
 
@@ -348,6 +352,7 @@ export function useComentariosLogica({
               idResponsavel: userResponsavel?.idResponsavel,
               arquivos: arquivosTramitacaoPendentes,
               idTramitacaoRef: tramitacaoReferencia ?? undefined,
+              idSolicitacaoParecerRef: parecerReferencia ?? parecerReferenciaViaTramitacao ?? undefined,
             };
 
             await tramitacoesClient.tramitarViaFluxo(tramitacaoRequest);
@@ -460,6 +465,7 @@ export function useComentariosLogica({
       setComentarioTexto('');
       setParecerReferencia(null);
       setTramitacaoReferencia(null);
+      setParecerReferenciaViaTramitacao(null);
       
       if (textarea) {
         textarea.value = '';
@@ -472,7 +478,8 @@ export function useComentariosLogica({
     }
   }, [
     comentarioTexto, 
-    parecerReferencia, 
+    parecerReferencia,
+    parecerReferenciaViaTramitacao, 
     tramitacaoReferencia, 
     detalhe?.obrigacao?.idSolicitacao, 
     detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao, 
@@ -515,6 +522,7 @@ export function useComentariosLogica({
     setLoadingAction,
     parecerReferencia,
     setParecerReferencia,
+    parecerReferenciaViaTramitacao,
     tramitacaoReferencia,
     setTramitacaoReferencia,
     parecerTramitacaoMap,

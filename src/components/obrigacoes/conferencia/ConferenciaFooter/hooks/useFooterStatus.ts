@@ -75,8 +75,8 @@ export function useFooterStatus({
   }, [tramitacoes]);
 
   const labelBtnStatusAnaliseRegulatoria = useMemo(() => {
-    return idStatusSolicitacao === statusList.EM_ANALISE_GERENTE_REGULATORIO.id && isUltimaTramitacaoEmAprovacaoFlAprovado
-      ? 'Enviar para Em Chancela'
+    return idStatusSolicitacao === statusList.ANALISE_REGULATORIA.id && isUltimaTramitacaoEmAprovacaoFlAprovado
+      ? 'Enviar para Chancela'
       : 'Encaminhar para Gerente da Área';
   }, [idStatusSolicitacao, isUltimaTramitacaoEmAprovacaoFlAprovado]);
 

@@ -93,6 +93,7 @@ export function useConferenciaAcoes({
     }
 
     const idTramitacaoRef = comentarioActionsRef.current?.getTramitacaoRef?.() ?? undefined;
+    const idSolicitacaoParecerRef = comentarioActionsRef.current?.getParecerRef?.() ?? undefined;
 
     setLoading(true);
     try {
@@ -102,6 +103,7 @@ export function useConferenciaAcoes({
         flAprovado,
         arquivos: arquivosTramitacaoPendentes,
         idTramitacaoRef,
+        idSolicitacaoParecerRef,
       };
 
       await tramitacoesClient.tramitarViaFluxo(tramitacaoRequest);
@@ -221,12 +223,14 @@ export function useConferenciaAcoes({
         : 'Obrigação enviada para Em Validação (Regulatório).';
 
       const idTramitacaoRef = comentarioActionsRef.current?.getTramitacaoRef?.() ?? undefined;
+      const idSolicitacaoParecerRef = comentarioActionsRef.current?.getParecerRef?.() ?? undefined;
 
       const tramitacaoRequest: TramitacaoRequest = {
         idSolicitacao: obrigacaoId,
         dsObservacao: observacaoTramitacao,
         arquivos: arquivosTramitacaoPendentes,
         idTramitacaoRef,
+        idSolicitacaoParecerRef,
       };
 
       await tramitacoesClient.tramitarViaFluxo(tramitacaoRequest);
@@ -276,6 +280,7 @@ export function useConferenciaAcoes({
     }
 
     const idTramitacaoRef = comentarioActionsRef.current?.getTramitacaoRef?.() ?? undefined;
+    const idSolicitacaoParecerRef = comentarioActionsRef.current?.getParecerRef?.() ?? undefined;
 
     setLoading(true);
     try {
@@ -299,6 +304,7 @@ export function useConferenciaAcoes({
         flAprovado,
         arquivos: arquivosTramitacaoPendentes,
         idTramitacaoRef,
+        idSolicitacaoParecerRef,
       };
 
       await tramitacoesClient.tramitarViaFluxo(tramitacaoRequest);

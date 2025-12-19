@@ -155,6 +155,7 @@ export function ComentariosTab({
                 );
                 
                 const tramitacaoReferenciada = tramitacao.tramitacaoRef || (tramitacao.idTramitacaoRef ? tramitacoesMap.get(tramitacao.idTramitacaoRef) : null);
+                const parecerReferenciado = tramitacao.solicitacaoParecerRef || (tramitacao.idSolicitacaoParecerRef ? pareceresMap.get(tramitacao.idSolicitacaoParecerRef) : null);
                 
                 const partsTramitacao: (string | { type: 'mention'; name: string; isValid: boolean })[] = [];
                 const processarMensagemTramitacao = (texto: string) => {
@@ -213,12 +214,14 @@ export function ComentariosTab({
                     key={`tramitacao-${tramitacao.idTramitacao}-${index}`}
                     tramitacao={tramitacao}
                     tramitacaoReferenciada={tramitacaoReferenciada}
+                    parecerReferenciado={parecerReferenciado}
                     parts={partsTramitacao}
                     dataFormatada={dataFormatada}
                     autor={autor}
                     area={area}
                     onResponder={onResponderTramitacao}
                     onScrollToTramitacao={handleScrollToTramitacao}
+                    onScrollToComment={handleScrollToComment}
                   />
                 );
               }

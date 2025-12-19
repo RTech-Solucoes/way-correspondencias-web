@@ -93,7 +93,7 @@ export function ConferenciaSidebar({
         get: comentariosLogica.getComentarioTexto,
         reset: comentariosLogica.resetComentario,
         getTramitacaoRef: () => comentariosLogica.tramitacaoReferencia,
-        getParecerRef: () => comentariosLogica.parecerReferencia,
+        getParecerRef: () => comentariosLogica.parecerReferencia ?? comentariosLogica.parecerReferenciaViaTramitacao ?? null,
       });
     }
   }, [
@@ -101,7 +101,8 @@ export function ConferenciaSidebar({
     comentariosLogica.getComentarioTexto, 
     comentariosLogica.resetComentario, 
     comentariosLogica.tramitacaoReferencia, 
-    comentariosLogica.parecerReferencia
+    comentariosLogica.parecerReferencia,
+    comentariosLogica.parecerReferenciaViaTramitacao
   ]);
 
   const comentariosCount = comentariosLogica.comentariosUnificados.length;
