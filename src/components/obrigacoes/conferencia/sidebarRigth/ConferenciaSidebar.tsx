@@ -321,7 +321,7 @@ export function ConferenciaSidebar({
                   rows={4}
                   disabled={comentariosLogica.loadingAction || !comentariosLogica.podeEnviarComentario}
                 />
-                {comentariosLogica.podeEnviarComentario && (
+                {(isStatusDesabilitadoParaTramitacao || permissoes.isStatusConcluido || permissoes.isStatusEmValidacaoRegulatorio) && (
                   <Button
                     type="button"
                     size="icon"

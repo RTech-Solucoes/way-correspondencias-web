@@ -406,8 +406,8 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
               return (
                 <View key={`tramitacao-${tramitacao.idTramitacao}-${index}`} style={styles.item} wrap={false}>
                   {tramitacaoReferenciada && (
-                    <View style={styles.referenciaBlockBlue} wrap={false}>
-                      <Text style={[styles.small, { color: '#2563eb', fontWeight: 700, marginBottom: 2 }]}>
+                    <View style={styles.referenciaBlock} wrap={false}>
+                      <Text style={[styles.small, { color: '#9333ea', fontWeight: 700, marginBottom: 2 }]}>
                         {tramitacaoReferenciada.tramitacaoAcao?.[0]?.responsavelArea?.responsavel?.nmResponsavel || 'Usuário'}
                       </Text>
                       <Text style={styles.small}>

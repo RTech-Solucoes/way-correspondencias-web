@@ -38,13 +38,13 @@ export function CardTramitacao({
     >
       {tramitacaoReferenciada && (
         <div 
-          className="mb-3 border-l-4 border-blue-500 bg-gray-50 rounded-r-lg p-3 text-sm cursor-pointer hover:bg-gray-100 transition-colors"
+          className="mb-3 border-l-4 border-purple-500 bg-gray-50 rounded-r-lg p-3 text-sm cursor-pointer hover:bg-gray-100 transition-colors"
           onClick={handleClickTramitacaoReferenciada}
           title="Clique para ver a tramitação original"
         >
           <div className="flex items-center gap-2 mb-1">
-            <Reply className="h-3 w-3 text-blue-600" />
-            <span className="font-semibold text-blue-600 text-xs">
+            <Reply className="h-3 w-3 text-purple-600" />
+            <span className="font-semibold text-purple-600 text-xs">
               {tramitacaoReferenciada.tramitacaoAcao?.[0]?.responsavelArea?.responsavel?.nmResponsavel || 'Usuário'}
             </span>
           </div>
@@ -62,19 +62,11 @@ export function CardTramitacao({
       <div className="mt-2 text-sm text-black">
         {parts ? parts.map((part, idx) => {
           if (typeof part === 'object' && 'type' in part && part.type === 'mention') {
-            if (part.isValid) {
-              return (
-                <span key={idx} className="text-purple-600 font-semibold" style={{ color: '#9333ea', fontWeight: 600 }}>
-                  @{part.name}
-                </span>
-              );
-            } else {
-              return (
-                <span key={idx} className="text-black" style={{ color: '#000000' }}>
-                  @{part.name}
-                </span>
-              );
-            }
+            return (
+              <span key={idx} className="text-purple-600 font-semibold" style={{ color: '#9333ea', fontWeight: 600 }}>
+                @{part.name}
+              </span>
+            );
           }
           return <span key={idx} className="text-black" style={{ color: '#000000' }}>{String(part)}</span>;
         }) : (tramitacao.dsObservacao || 'Sem observação')}

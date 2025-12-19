@@ -91,7 +91,7 @@ export function CardComentario({
       <p className="mt-2 text-sm text-black">
         {parts.map((part, idx) => {
           if (typeof part === 'object' && 'type' in part && part.type === 'mention') {
-            if (part.isValid) {
+            if (comentarioReferenciado || tramitacaoReferenciada || part.isValid) {
               return (
                 <span key={idx} className="text-purple-600 font-semibold" style={{ color: '#9333ea', fontWeight: 600 }}>
                   @{part.name}

@@ -24,8 +24,6 @@ interface UseFooterPermissoesParams {
 export function useFooterPermissoes({
   idPerfil,
   isUsuarioDaAreaAtribuida,
-  userResponsavel,
-  tramitacoes = [],
   idStatusSolicitacao,
   flExigeCienciaGerenteRegul,
   isCienciaChecked = false,
@@ -53,30 +51,12 @@ export function useFooterPermissoes({
   }, [isStatusPermitidoEnviarReg, isPerfilPermitidoEnviarReg, temEvidenciaCumprimento, isStatusAtrasada, temJustificativaAtraso]);
 
   const isPerfilPermitidoEnviarTramitacaoPorStatus = useMemo(() => {
-    const nrNivelUltimaTramitacao = tramitacoes[0]?.tramitacao?.nrNivel;
-
-    const tramitacaoExecutada = tramitacoes?.filter(t =>
-      t?.tramitacao?.nrNivel === nrNivelUltimaTramitacao &&
-      t?.tramitacao?.solicitacao?.statusSolicitacao?.idStatusSolicitacao === idStatusSolicitacao &&
-      t?.tramitacao?.tramitacaoAcao?.some(ta =>
-        ta?.responsavelArea?.responsavel?.idResponsavel === userResponsavel?.idResponsavel &&
-        ta.flAcao === 'T'));
-
-    const isAreaRespondeu = tramitacoes?.filter(t =>
-      t?.tramitacao?.nrNivel === nrNivelUltimaTramitacao &&
-      idStatusSolicitacao !== statusList.EM_ASSINATURA_DIRETORIA.id &&
-      t?.tramitacao?.solicitacao?.statusSolicitacao?.idStatusSolicitacao === idStatusSolicitacao &&
-      userResponsavel?.areas?.some(a => a?.area?.idArea === t?.tramitacao?.areaOrigem?.idArea)
-    );
     
     if (isStatusEmAnaliseGerenteRegulatorio) {
       if (idPerfil === perfilUtil.ADMINISTRADOR) {
         return flExigeCienciaGerenteRegul === 'S' || !!isCienciaChecked;
       }
     }
-
-    // if (tramitacaoExecutada != null && tramitacaoExecutada?.length > 0) return false;
-    // if (isAreaRespondeu != null && isAreaRespondeu?.length > 0) return false;
 
     if (idStatusSolicitacao === statusList.EM_APROVACAO.id) {
       if (idPerfil === perfilUtil.EXECUTOR_AVANCADO) return true;
@@ -100,8 +80,6 @@ export function useFooterPermissoes({
     idStatusSolicitacao, 
     flExigeCienciaGerenteRegul, 
     isCienciaChecked, 
-    tramitacoes, 
-    userResponsavel, 
     isStatusEmAnaliseGerenteRegulatorio
   ]);
 

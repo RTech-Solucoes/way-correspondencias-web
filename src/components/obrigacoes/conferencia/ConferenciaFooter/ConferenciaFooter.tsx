@@ -71,6 +71,7 @@ export function ConferenciaFooter({
     flAprovarConferencia,
     flExigeCienciaGerenteRegul,
     isCienciaChecked,
+    tramitacoes,
   });
 
   const permissoes = useFooterPermissoes({

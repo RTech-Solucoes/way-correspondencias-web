@@ -98,6 +98,7 @@ export function ConferenciaContent({ id }: ConferenciaContentProps) {
     arquivosTramitacaoPendentes,
     comentarioActionsRef,
     reloadDetalhe,
+    onClearArquivosTramitacao: () => setArquivosTramitacaoPendentes([]),
   });
 
   // Handlers de modal

@@ -6,6 +6,7 @@ import { statusListObrigacao } from '@/api/status-obrigacao/types';
 import { statusList } from '@/api/status-solicitacao/types';
 import { TipoDocumentoAnexoEnum } from '@/api/anexos/type';
 import { AnexoResponse } from '@/api/anexos/type';
+import { TramitacaoComAnexosResponse } from '@/api/solicitacoes/types';
 
 interface UseFooterStatusParams {
   statusSolicitacao?: StatusSolicitacaoResponse | null;
@@ -14,6 +15,7 @@ interface UseFooterStatusParams {
   flAprovarConferencia?: string | null;
   flExigeCienciaGerenteRegul?: string | null;
   isCienciaChecked?: boolean;
+  tramitacoes?: TramitacaoComAnexosResponse[];
 }
 
 export function useFooterStatus({
@@ -23,6 +25,7 @@ export function useFooterStatus({
   flAprovarConferencia,
   flExigeCienciaGerenteRegul,
   isCienciaChecked = false,
+  tramitacoes = [],
 }: UseFooterStatusParams) {
   const idStatusSolicitacao = statusSolicitacao?.idStatusSolicitacao ?? 0;
 
@@ -66,14 +69,30 @@ export function useFooterStatus({
     return flAprovarConferencia === 'S';
   }, [flAprovarConferencia]);
 
+  const isUltimaTramitacaoEmAprovacaoFlAprovado = useMemo(() => {
+    const ultimaTramitacao = tramitacoes?.find(t => t.tramitacao.idStatusSolicitacao === statusList.EM_APROVACAO.id);
+    return ultimaTramitacao?.tramitacao.flAprovado === 'S';
+  }, [tramitacoes]);
+
+  const labelBtnStatusAnaliseRegulatoria = useMemo(() => {
+    return idStatusSolicitacao === statusList.EM_ANALISE_GERENTE_REGULATORIO.id && isUltimaTramitacaoEmAprovacaoFlAprovado
+      ? 'Enviar para Em Chancela'
+      : 'Encaminhar para Gerente da Área';
+  }, [idStatusSolicitacao, isUltimaTramitacaoEmAprovacaoFlAprovado]);
+
   const textoBtnEnviarParaTramitacaoPorStatus = useMemo(() => {
     const textosPorStatus: Record<number, string> = {
-      [statusList.PRE_ANALISE.id]: 'Enviar para Gerente do Regulatório',
+      [statusList.PRE_ANALISE.id]: 'Encaminhar para Gerente do Regulatório',
       [statusList.EM_ANALISE_GERENTE_REGULATORIO.id]: 'Encaminhar para Gerente da Área',
+      [statusList.EM_APROVACAO.id]: 'Encaminhar para Analise Regulatória',
+      [statusList.ANALISE_REGULATORIA.id]: labelBtnStatusAnaliseRegulatoria,
+      [statusList.EM_CHANCELA.id]: 'Encaminhar para Assinatura Diretoria',
+      [statusList.EM_ASSINATURA_DIRETORIA.id]: 'Enviar para  Conclusão',
+      [statusList.CONCLUIDO.id]: 'Obrigação já concluída',
     };
     
     return textosPorStatus[idStatusSolicitacao] ?? 'Enviar para Tramitação';
-  }, [idStatusSolicitacao]);
+  }, [idStatusSolicitacao, labelBtnStatusAnaliseRegulatoria]);
 
   return {
     idStatusSolicitacao,
@@ -89,6 +108,7 @@ export function useFooterStatus({
     textoBtnEnviarParaTramitacaoPorStatus,
     isCienciaChecked,
     flExigeCienciaGerenteRegul,
+    ultimaTramitacaoEmAprovacao: isUltimaTramitacaoEmAprovacaoFlAprovado,
   };
 }
 

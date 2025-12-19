@@ -357,6 +357,8 @@ export function useComentariosLogica({
             if (onRefreshAnexos) {
               await onRefreshAnexos();
             }
+            toast.success('Comentário de área atribuída salvo com sucessooooo222.');
+            return;
           }
 
           if (idStatusAtual === statusListObrigacao.ATRASADA.id) {
@@ -382,12 +384,12 @@ export function useComentariosLogica({
 
             await solicitacaoParecerClient.criar(parecerRequest);
             
+            toast.success('Comentário de área atribuída salvo com sucessooooo.');
             if (onRefreshAnexos) {
               await onRefreshAnexos();
             }
+            return;
           }
-          toast.success('Comentário de área atribuída salvo com sucesso.');
-          return;
         }
 
         const parecerRequest: {

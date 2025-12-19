@@ -123,7 +123,32 @@ export function useFooterTooltips({
         return 'É necessário declarar ciência para prosseguir';
       }
     }
-    return '';
+
+    if (idStatusSolicitacao === statusList.EM_APROVACAO.id) {
+      if (idPerfil !== perfilUtil.EXECUTOR_AVANCADO) {
+        return 'Apenas o Executor Avançado pode realizar esta ação quando o status for "Em Aprovação".';
+      }
+    }
+
+    if (idStatusSolicitacao === statusList.ANALISE_REGULATORIA.id) {
+      if (idPerfil !== perfilUtil.ADMINISTRADOR && idPerfil !== perfilUtil.GESTOR_DO_SISTEMA) {
+        return 'Apenas Administrador ou Gestor do Sistema podem realizar esta ação quando o status for "Análise Regulatória".';
+      }
+    }
+
+    if (idStatusSolicitacao === statusList.EM_CHANCELA.id) {
+      if (idPerfil !== perfilUtil.ADMINISTRADOR) {
+        return 'Apenas o Administrador pode realizar esta ação quando o status for "Em Chancela".';
+      }
+    }
+
+    if (idStatusSolicitacao === statusList.EM_ASSINATURA_DIRETORIA.id) {
+      if (idPerfil !== perfilUtil.ADMINISTRADOR && idPerfil !== perfilUtil.VALIDADOR_ASSINANTE) {
+        return 'Apenas Administrador ou Validador Assinante podem realizar esta ação quando o status for "Em Assinatura Diretoria".';
+      }
+    }
+
+    return 'Você não tem permissão para essa ação.';
   }, [idStatusSolicitacao, idPerfil, flExigeCienciaGerenteRegul, isCienciaChecked]);
 
   return {

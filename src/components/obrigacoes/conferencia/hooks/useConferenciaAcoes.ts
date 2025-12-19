@@ -26,6 +26,7 @@ interface UseConferenciaAcoesProps {
     getParecerRef: () => number | null;
   } | null>;
   reloadDetalhe: () => Promise<void>;
+  onClearArquivosTramitacao?: () => void;
   onSuccess?: () => void;
 }
 
@@ -40,6 +41,7 @@ export function useConferenciaAcoes({
   arquivosTramitacaoPendentes,
   comentarioActionsRef,
   reloadDetalhe,
+  onClearArquivosTramitacao,
   onSuccess,
 }: UseConferenciaAcoesProps) {
   const [loading, setLoading] = useState(false);
@@ -64,6 +66,7 @@ export function useConferenciaAcoes({
       });
       
       limparEstadoAposAcao();
+      onClearArquivosTramitacao?.();
       await reloadDetalhe();
       toast.success('Obrigação enviada para ajustes da área atribuída.');
       onSuccess?.();
@@ -73,7 +76,7 @@ export function useConferenciaAcoes({
     } finally {
       setLoading(false);
     }
-  }, [obrigacaoId, arquivosTramitacaoPendentes, limparEstadoAposAcao, reloadDetalhe, onSuccess]);
+  }, [obrigacaoId, arquivosTramitacaoPendentes, limparEstadoAposAcao, onClearArquivosTramitacao, reloadDetalhe, onSuccess]);
 
   const handleAprovarReprovarTramitacao = useCallback(async (flAprovado: FlAprovadoTramitacaoEnum) => {
     if (!obrigacaoId) {
@@ -104,6 +107,7 @@ export function useConferenciaAcoes({
       await tramitacoesClient.tramitarViaFluxo(tramitacaoRequest);
       
       limparEstadoAposAcao();
+      onClearArquivosTramitacao?.();
       await reloadDetalhe();
       toast.success(
         flAprovado === FlAprovadoTramitacaoEnum.S 
@@ -117,7 +121,7 @@ export function useConferenciaAcoes({
     } finally {
       setLoading(false);
     }
-  }, [obrigacaoId, arquivosTramitacaoPendentes, comentarioActionsRef, limparEstadoAposAcao, reloadDetalhe, onSuccess]);
+  }, [obrigacaoId, arquivosTramitacaoPendentes, comentarioActionsRef, limparEstadoAposAcao, onClearArquivosTramitacao, reloadDetalhe, onSuccess]);
 
   const confirmarAprovarConferencia = useCallback(async () => {
     if (!obrigacaoId || !statusId) {
@@ -141,6 +145,7 @@ export function useConferenciaAcoes({
       ]);
       
       limparEstadoAposAcao();
+      onClearArquivosTramitacao?.();
       await reloadDetalhe();
       toast.success('Conferência aprovada com sucesso!');
       onSuccess?.();
@@ -150,7 +155,7 @@ export function useConferenciaAcoes({
     } finally {
       setLoading(false);
     }
-  }, [obrigacaoId, statusId, arquivosTramitacaoPendentes, limparEstadoAposAcao, reloadDetalhe, onSuccess]);
+  }, [obrigacaoId, statusId, arquivosTramitacaoPendentes, limparEstadoAposAcao, onClearArquivosTramitacao, reloadDetalhe, onSuccess]);
 
   const confirmarJustificarAtraso = useCallback(async (justificativa: string) => {
     if (!obrigacaoId) {
@@ -227,6 +232,7 @@ export function useConferenciaAcoes({
       await tramitacoesClient.tramitarViaFluxo(tramitacaoRequest);
       
       limparEstadoAposAcao();
+      onClearArquivosTramitacao?.();
       await obrigacaoClient.atualizar(obrigacaoId, {
         idResponsavelTecnico: idResponsavelTecnico,
       });
@@ -250,6 +256,7 @@ export function useConferenciaAcoes({
     arquivosTramitacaoPendentes,
     comentarioActionsRef,
     limparEstadoAposAcao,
+    onClearArquivosTramitacao,
     reloadDetalhe,
     onSuccess,
   ]);
@@ -297,6 +304,7 @@ export function useConferenciaAcoes({
       await tramitacoesClient.tramitarViaFluxo(tramitacaoRequest);
       
       limparEstadoAposAcao();
+      onClearArquivosTramitacao?.();
       await reloadDetalhe();
       toast.success('Obrigação enviada para tramitação com sucesso!');
       onSuccess?.();
@@ -306,7 +314,7 @@ export function useConferenciaAcoes({
     } finally {
       setLoading(false);
     }
-  }, [obrigacaoId, statusId, detalhe, arquivosTramitacaoPendentes, comentarioActionsRef, limparEstadoAposAcao, reloadDetalhe, onSuccess]);
+  }, [obrigacaoId, statusId, detalhe, arquivosTramitacaoPendentes, comentarioActionsRef, limparEstadoAposAcao, onClearArquivosTramitacao, reloadDetalhe, onSuccess]);
 
   return {
     loading,

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { MessageSquare } from 'lucide-react';
 import { SolicitacaoParecerResponse } from '@/api/solicitacao-parecer/types';
 import { formatDateTimeBr } from '@/utils/utils';
@@ -46,6 +46,39 @@ export function ComentariosTab({
 }: ComentariosTabProps) {
   const [parecerParaDeletar, setParecerParaDeletar] = useState<number | null>(null);
   const comentariosCount = comentariosUnificados.length;
+
+  const determinarArea = useCallback((
+    idResponsavel: number | undefined,
+    areaOrigemDefault: string | null | undefined
+  ): string => {
+    if (!idResponsavel) {
+      return areaOrigemDefault || 'Regulatório';
+    }
+
+    const responsavelCompleto = responsaveis.find(
+      (r) => r.idResponsavel === idResponsavel
+    );
+
+    if (!responsavelCompleto?.areas || responsavelCompleto.areas.length === 0) {
+      return areaOrigemDefault || 'Regulatório';
+    }
+
+    const areasResponsavel = responsavelCompleto.areas;
+
+    if (areaAtribuida) {
+      const areaAtribuidaEncontrada = areasResponsavel.find(
+        (respArea) => respArea.area?.idArea === areaAtribuida.idArea
+      );
+
+      if (areaAtribuidaEncontrada) {
+        return areaAtribuida.nmArea;
+      } else {
+        return areaOrigemDefault || areasResponsavel[0]?.area?.nmArea || 'Regulatório';
+      }
+    } else {
+      return areaOrigemDefault || areasResponsavel[0]?.area?.nmArea || 'Regulatório';
+    }
+  }, [responsaveis, areaAtribuida]);
 
   const handleScrollToComment = (idSolicitacaoParecer: number) => {
     const element = document.getElementById(`comentario-${idSolicitacaoParecer}`);
@@ -116,7 +149,11 @@ export function ComentariosTab({
                 
                 const responsavelTramitacao = tramitacao.tramitacaoAcao?.[0]?.responsavelArea?.responsavel;
                 const autor = responsavelTramitacao?.nmResponsavel || 'Usuário';
-                const area = tramitacao.areaOrigem?.nmArea || 'Regulatório';
+                const area = determinarArea(
+                  responsavelTramitacao?.idResponsavel,
+                  tramitacao.areaOrigem?.nmArea
+                );
+                
                 const tramitacaoReferenciada = tramitacao.tramitacaoRef || (tramitacao.idTramitacaoRef ? tramitacoesMap.get(tramitacao.idTramitacaoRef) : null);
                 
                 const partsTramitacao: (string | { type: 'mention'; name: string; isValid: boolean })[] = [];
@@ -288,34 +325,10 @@ export function ComentariosTab({
                 ? formatDateTimeBr(parecer.dtCriacao) 
                 : '';
               const autor = parecer.responsavel?.nmResponsavel || 'Usuário';
-              
-              let areasResponsavel = parecer.responsavel?.areas || [];
-              
-              if (areasResponsavel.length === 0 && parecer.responsavel?.idResponsavel) {
-                const responsavelCompleto = responsaveis.find(
-                  (r) => r.idResponsavel === parecer.responsavel?.idResponsavel
-                );
-                if (responsavelCompleto?.areas) {
-                  areasResponsavel = responsavelCompleto.areas;
-                }
-              }
-              
-              let area = 'Regulatório';
-              if (areasResponsavel.length > 0) {
-                if (areasResponsavel.length > 1 && areaAtribuida) {
-                  const areaAtribuidaEncontrada = areasResponsavel.find(
-                    (respArea) => respArea.area?.idArea === areaAtribuida.idArea
-                  );
-                  
-                  if (areaAtribuidaEncontrada) {
-                    area = areaAtribuida.nmArea;
-                  } else {
-                    area = areasResponsavel[0]?.area?.nmArea || 'Regulatório';
-                  }
-                } else {
-                  area = areasResponsavel[0]?.area?.nmArea || 'Regulatório';
-                }
-              }
+              const area = determinarArea(
+                parecer.responsavel?.idResponsavel,
+                null
+              );
               
               const podeDeletar = !!(idResponsavelLogado && 
                                   parecer.responsavel?.idResponsavel && 
