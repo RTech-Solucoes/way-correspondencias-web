@@ -16,6 +16,12 @@ const DEFAULT_STYLE: ObrigacaoStatusStyle = {
   textColor: '#ffffff',
 };
 
+const PRE_ANALISE_STYLE: ObrigacaoStatusStyle = {
+  variant: 'secondary',
+  backgroundColor: '#b68500',
+  textColor: '#ffffff',
+};
+
 const NAO_INICIADO_STYLE: ObrigacaoStatusStyle = {
   variant: 'secondary',
   backgroundColor: '#b68500',
@@ -56,6 +62,14 @@ export const getObrigacaoStatusStyle = (
 
   const parsedStatusId = statusId != null ? parseInt(statusId.toString(), 10) : undefined;
   const normalizedName = statusName?.toUpperCase() ?? '';
+
+  if (
+    parsedStatusId === 1 ||
+    normalizedName.includes('PRE_ANALISE') ||
+    normalizedName.includes('PRE-ANALISE')
+  ) {
+    return PRE_ANALISE_STYLE;
+  }
 
   const naoIniciadoStatus = statusObrigacaoList.find((s) => s.nmStatus === StatusObrigacao.NAO_INICIADO);
   if (

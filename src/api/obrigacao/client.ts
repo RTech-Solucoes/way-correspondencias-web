@@ -1,4 +1,4 @@
-import { ObrigacaoFormData } from '@/components/obrigacoes/ObrigacaoModal';
+import { ObrigacaoFormData } from '@/components/obrigacoes/criar/ObrigacaoModal';
 import { buildQueryParams } from '@/utils/utils';
 
 import ApiClient from '../client';
@@ -11,6 +11,7 @@ import {
     ObrigacoesRelacionadasResponse,
     ObrigacaoCalendarioResponse,
     ObrigacaoCalendarioMesCountResponse,
+    ObrigacaoStep1Request,
 } from './types';
 
 export interface PaginatedResponse<T> {
@@ -36,6 +37,13 @@ export class ObrigacaoClient {
 
     async atualizar(id: number, data: ObrigacaoRequest): Promise<ObrigacaoResponse> {
         return this.client.request<ObrigacaoResponse>(`/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async atualizarStep1(id: number, data: ObrigacaoStep1Request): Promise<ObrigacaoResponse> {
+        return this.client.request<ObrigacaoResponse>(`/${id}/step1`, {
             method: 'PUT',
             body: JSON.stringify(data),
         });

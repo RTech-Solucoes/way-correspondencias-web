@@ -34,7 +34,8 @@ async function buscarComentarioMaisRecente(idSolicitacao: number): Promise<strin
 
     // Adicionar comentários de tramitações
     if (detalhe.tramitacoes) {
-      detalhe.tramitacoes.forEach(tramitacao => {
+      detalhe.tramitacoes.forEach(t => {
+        const { tramitacao } = t;
         if (tramitacao.dsObservacao) {
           const dataTramitacao = tramitacao.tramitacaoAcao?.[0]?.dtCriacao || 
                                 tramitacao.solicitacao?.dtCriacao || 

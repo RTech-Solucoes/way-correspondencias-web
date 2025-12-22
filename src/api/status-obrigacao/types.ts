@@ -14,7 +14,7 @@ export enum StatusObrigacao {
     NAO_APLICAVEL_SUSPENSA = 'NAO_APLICAVEL_SUSPENSA',
 }
 
-export const statusObrigacaoLabels: Record<StatusObrigacao, string> = {
+export const statusObrigacaoLabels: Record<StatusObrigacao, string>  = {
     [StatusObrigacao.NAO_INICIADO]: 'Não Iniciado',
     [StatusObrigacao.PENDENTE]: 'Pendente',
     [StatusObrigacao.EM_ANDAMENTO]: 'Em Andamento',
@@ -34,7 +34,7 @@ export const statusObrigacaoList: StatusObrigacaoResponse[] = [
     { id: 17, nmStatus: StatusObrigacao.NAO_APLICAVEL_SUSPENSA },
 ];
 
-export const statusListObrigacao: Record<StatusObrigacao, StatusObrigacaoResponse> = {
+export const statusListObrigacao: Record<StatusObrigacao, StatusObrigacaoResponse>= {
     [StatusObrigacao.NAO_INICIADO]: statusObrigacaoList[0],
     [StatusObrigacao.PENDENTE]: statusObrigacaoList[1],
     [StatusObrigacao.EM_ANDAMENTO]: statusObrigacaoList[2],

@@ -1,11 +1,10 @@
-import { AreaSolicitacao, SolicitacaoResponse } from '../solicitacoes/types';
+import { AreaSolicitacao, SolicitacaoAssinanteResponse, SolicitacaoPrazoResponse, SolicitacaoResponse, TramitacaoComAnexosResponse } from '../solicitacoes/types';
 import { TipoResponse } from '../tipos/types';
 import { TemaResponse } from '../temas/types';
 import { StatusSolicitacaoResponse } from '../status-solicitacao/client';
 import { SolicitacaoResumoResponse } from '@/types/solicitacoes/types';
 import { ArquivoDTO, AnexoResponse } from '../anexos/type';
 import { SolicitacaoParecerResponse } from '../solicitacao-parecer/types';
-import { TramitacaoResponse } from '../tramitacoes/types';
 import { ResponsavelResponse } from '../responsaveis/types';
 
 export interface ObrigacaoResumoResponse {
@@ -56,6 +55,8 @@ export interface ObrigacaoResponse extends Omit<SolicitacaoResponse, 'tema'> {
   dtRespNaoAplicavelSusp?: string | null;
   dsRespNaoAplicavelSusp?: string | null;
   responsavelNaoAplicavelSusp?: ResponsavelResponse | null;
+  solicitacaoPrazos: SolicitacaoPrazoResponse[];
+  solicitacoesAssinantes: SolicitacaoAssinanteResponse[];
 }
 
 export interface ObrigacaoRequest {
@@ -98,7 +99,9 @@ export interface ObrigacaoDetalheResponse {
   obrigacao: ObrigacaoResponse;
   anexos: AnexoResponse[];
   solicitacaoParecer: SolicitacaoParecerResponse[];
-  tramitacoes: TramitacaoResponse[];
+  tramitacoes: TramitacaoComAnexosResponse[];
+  solicitacoesAssinantes?: SolicitacaoAssinanteResponse[];
+  solicitacaoPrazos?: SolicitacaoPrazoResponse[];
 }
 
 export interface ObrigacaoFiltroRequest {
@@ -143,4 +146,11 @@ export interface ObrigacaoCalendarioResponse {
 export interface ObrigacaoCalendarioMesCountResponse {
   mes: number;
   quantidade: number;
+}
+
+export interface ObrigacaoStep1Request {
+  dsTarefa: string;
+  flAnaliseGerenteDiretor: string;
+  flExigeCienciaGerenteRegul: string;
+  dsObservacao?: string;
 }

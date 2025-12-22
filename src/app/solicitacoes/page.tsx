@@ -58,6 +58,7 @@ import { formatDateBr } from '@/utils/utils';
 import { useSearchParams } from 'next/navigation';
 import TimeProgress from '@/components/ui/time-progress';
 import { CategoriaEnum, TipoEnum } from '@/api/tipos/types';
+import { FlAprovadoTramitacaoEnum } from '@/api/tramitacoes/types';
 
 export default function SolicitacoesPage() {
   return (
@@ -445,7 +446,7 @@ function SolicitacoesPageContent() {
     toast.message('Abrir histórico de respostas (implemente a navegação).');
   }, []);
 
-  const enviarDevolutiva = useCallback(async (mensagem: string, arquivos: ArquivoDTO[], flAprovado?: 'S' | 'N') => {
+  const enviarDevolutiva = useCallback(async (mensagem: string, arquivos: ArquivoDTO[], flAprovado?: FlAprovadoTramitacaoEnum) => {
     const alvo = detalhesSolicitacao;
     if (!alvo) return;
     try {

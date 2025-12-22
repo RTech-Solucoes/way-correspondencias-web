@@ -22,6 +22,7 @@ export type ArquivoDTO = {
   tpResponsavel?: TipoResponsavelAnexoEnum | null;
   conteudoArquivo: string;
   tpDocumento?: TipoDocumentoAnexoEnum | string;
+  idResponsavel?: number;
 };
 
 export enum TipoResponsavelAnexoEnum {
