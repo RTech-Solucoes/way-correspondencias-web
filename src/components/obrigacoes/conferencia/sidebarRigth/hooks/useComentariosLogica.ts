@@ -250,7 +250,8 @@ export function useComentariosLogica({
     }
 
     if (idPerfil === perfilUtil.ADMINISTRADOR ||
-      idPerfil === perfilUtil.GESTOR_DO_SISTEMA) {
+      idPerfil === perfilUtil.GESTOR_DO_SISTEMA ||
+      idPerfil === perfilUtil.VALIDADOR_ASSINANTE) {
       return true;
     }
 

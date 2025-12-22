@@ -51,8 +51,13 @@ export function useFooterStatus({
 
   const isStatusBtnFlAprovar = useMemo(() => {
     return (isStatusEmAnaliseGerenteRegulatorio && flExigeCienciaGerenteRegul === 'S') ||
-           statusSolicitacao?.idStatusSolicitacao === statusList.EM_APROVACAO.id;
+      statusSolicitacao?.idStatusSolicitacao === statusList.EM_APROVACAO.id || 
+      statusSolicitacao?.idStatusSolicitacao === statusList.EM_ASSINATURA_DIRETORIA.id;
   }, [isStatusEmAnaliseGerenteRegulatorio, flExigeCienciaGerenteRegul, statusSolicitacao?.idStatusSolicitacao]);
+
+  const isStatusEmAnaliseRegulatoria = useMemo(() => {
+    return idStatusSolicitacao === statusList.ANALISE_REGULATORIA.id;
+  }, [idStatusSolicitacao]);
 
   const temEvidenciaCumprimento = useMemo(() => {
     return anexos.some(anexo => 
@@ -102,6 +107,7 @@ export function useFooterStatus({
     isStatusPermitidoEnviarReg,
     isStatusEmAnaliseGerenteRegulatorio,
     isStatusBtnFlAprovar,
+    isStatusEmAnaliseRegulatoria,
     temEvidenciaCumprimento,
     temJustificativaAtraso,
     conferenciaAprovada,

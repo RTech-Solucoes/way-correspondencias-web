@@ -205,6 +205,7 @@ export function ConferenciaContent({ id }: ConferenciaContentProps) {
         onSolicitarAjustes={handleSolicitarAjustesClick}
         onAprovarConferencia={handleAprovarConferenciaClick}
         onReprovarConferencia={handleReprovarConferenciaClick}
+        onAprovarReprovarTramitacao={handleAprovarReprovarTramitacao}
         onJustificarAtraso={() => openModal('showJustificarAtrasoModal')}
         onAnexarEvidencia={() => openModal('showAnexarEvidenciaModal')}
         onEnviarParaAnalise={handleEnviarParaAnaliseClick}

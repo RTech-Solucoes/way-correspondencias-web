@@ -9,6 +9,7 @@ import { ArquivoDTO } from '@/api/anexos/type';
 import { AnexoResponse } from '@/api/anexos/type';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { TramitacaoComAnexosResponse } from '@/api/solicitacoes/types';
+import { FlAprovadoTramitacaoEnum } from '@/api/tramitacoes/types';
 import { useFooterStatus, useFooterPermissoes, useFooterTooltips } from './hooks';
 
 interface ConferenciaFooterProps {
@@ -30,6 +31,7 @@ interface ConferenciaFooterProps {
   onSolicitarAjustes: () => void;
   onAprovarConferencia: () => void;
   onReprovarConferencia?: () => void;
+  onAprovarReprovarTramitacao?: (flAprovado: FlAprovadoTramitacaoEnum) => void;
   onJustificarAtraso: () => void;
   onAnexarEvidencia: () => void;
   onEnviarParaAnalise: () => void;
@@ -56,7 +58,8 @@ export function ConferenciaFooter({
   onAnexarCorrespondencia,
   onSolicitarAjustes,
   onAprovarConferencia,
-  onReprovarConferencia,
+  onReprovarConferencia, // Mantido para compatibilidade, mas não usado quando onAprovarReprovarTramitacao está disponível
+  onAprovarReprovarTramitacao,
   onJustificarAtraso,
   onAnexarEvidencia,
   onEnviarParaAnalise,
@@ -107,18 +110,22 @@ export function ConferenciaFooter({
   return (
     <footer className="fixed bottom-0 left-0 right-0 z-11 border-t border-gray-200 bg-white px-8 py-4">
       <div className="ml-auto flex w-full max-w-6xl flex-wrap items-center justify-end gap-3">
+        {status.isStatusEmAnaliseRegulatoria || (isAdminOrGestor && status.isStatusEmValidacaoRegulatorio) && (
+        
+        <Button
+          type="button"
+          className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={onAnexarCorrespondencia}
+          disabled={!status.isStatusEmValidacaoRegulatorio || !status.conferenciaAprovada || !status.isStatusEmAnaliseRegulatoria}
+          tooltip={tooltips.tooltipAnexarCorrespondencia}
+        >
+          <Paperclip className="h-4 w-4" />
+          Anexar correspondência
+        </Button>
+        )}
+
         {isAdminOrGestor && status.isStatusEmValidacaoRegulatorio ? (
           <>
-            <Button
-              type="button"
-              className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={onAnexarCorrespondencia}
-              disabled={!status.isStatusEmValidacaoRegulatorio || !status.conferenciaAprovada}
-              tooltip={tooltips.tooltipAnexarCorrespondencia}
-            >
-              <Paperclip className="h-4 w-4" />
-              Anexar correspondência
-            </Button>
             {canSolicitarAjustes && (
               <Button
                 type="button"
@@ -190,7 +197,13 @@ export function ConferenciaFooter({
             <Button
               type="button"
               className="flex items-center gap-2 rounded-full bg-red-600 px-6 py-3 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={onReprovarConferencia}
+              onClick={() => {
+                if (onReprovarConferencia) {
+                  onReprovarConferencia();
+                } else if (onAprovarReprovarTramitacao) {
+                  onAprovarReprovarTramitacao(FlAprovadoTramitacaoEnum.N);
+                }
+              }}
               disabled={!permissoes.isPerfilPermitidoEnviarTramitacaoPorStatus}
               tooltip={!permissoes.isPerfilPermitidoEnviarTramitacaoPorStatus ? tooltips.tooltipPerfilPermitidoEnviarTramitacaoPorStatus : ''}
             >
@@ -201,7 +214,13 @@ export function ConferenciaFooter({
             <Button
               type="button"
               className="flex items-center gap-2 rounded-full bg-green-600 px-6 py-3 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={onAprovarConferencia}
+              onClick={() => {
+                if (onAprovarReprovarTramitacao) {
+                  onAprovarReprovarTramitacao(FlAprovadoTramitacaoEnum.S);
+                } else {
+                  onAprovarConferencia();
+                }
+              }}
               disabled={!permissoes.isPerfilPermitidoEnviarTramitacaoPorStatus}
               tooltip={!permissoes.isPerfilPermitidoEnviarTramitacaoPorStatus ? tooltips.tooltipPerfilPermitidoEnviarTramitacaoPorStatus : ''}
             >

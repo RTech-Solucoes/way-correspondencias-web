@@ -12,6 +12,7 @@ export enum StatusObrigacao {
     ATRASADA = 'ATRASADA',
     CONCLUIDO = 'CONCLUIDO',
     NAO_APLICAVEL_SUSPENSA = 'NAO_APLICAVEL_SUSPENSA',
+    APROVACAO_TRAMITACAO = 'APROVACAO_TRAMITACAO',
 }
 
 export const statusObrigacaoLabels: Record<StatusObrigacao, string>  = {
@@ -22,6 +23,7 @@ export const statusObrigacaoLabels: Record<StatusObrigacao, string>  = {
     [StatusObrigacao.ATRASADA]: 'Atrasada',
     [StatusObrigacao.CONCLUIDO]: 'Concluído',
     [StatusObrigacao.NAO_APLICAVEL_SUSPENSA]: 'Não Aplicável/Suspensa',
+    [StatusObrigacao.APROVACAO_TRAMITACAO]: 'Aprovação Tramitação',
 }
 
 export const statusObrigacaoList: StatusObrigacaoResponse[] = [
@@ -32,6 +34,7 @@ export const statusObrigacaoList: StatusObrigacaoResponse[] = [
     { id: 16, nmStatus: StatusObrigacao.ATRASADA },
     { id: 9, nmStatus: StatusObrigacao.CONCLUIDO },
     { id: 17, nmStatus: StatusObrigacao.NAO_APLICAVEL_SUSPENSA },
+    { id: 18, nmStatus: StatusObrigacao.APROVACAO_TRAMITACAO },
 ];
 
 export const statusListObrigacao: Record<StatusObrigacao, StatusObrigacaoResponse>= {
@@ -42,4 +45,5 @@ export const statusListObrigacao: Record<StatusObrigacao, StatusObrigacaoRespons
     [StatusObrigacao.ATRASADA]: statusObrigacaoList[4],
     [StatusObrigacao.CONCLUIDO]: statusObrigacaoList[5],
     [StatusObrigacao.NAO_APLICAVEL_SUSPENSA]: statusObrigacaoList[6],
+    [StatusObrigacao.APROVACAO_TRAMITACAO]: statusObrigacaoList[7],
 };
