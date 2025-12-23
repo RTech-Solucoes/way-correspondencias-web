@@ -8,7 +8,7 @@ import { StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
 import { ArquivoDTO } from '@/api/anexos/type';
 import { AnexoResponse } from '@/api/anexos/type';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
-import { TramitacaoComAnexosResponse } from '@/api/solicitacoes/types';
+import { TramitacaoComAnexosResponse, SolicitacaoAssinanteResponse } from '@/api/solicitacoes/types';
 import { FlAprovadoTramitacaoEnum } from '@/api/tramitacoes/types';
 import { useFooterStatus, useFooterPermissoes, useFooterTooltips } from './hooks';
 
@@ -20,6 +20,7 @@ interface ConferenciaFooterProps {
   idPerfil?: number | null;
   userResponsavel?: ResponsavelResponse | null;
   tramitacoes?: TramitacaoComAnexosResponse[];
+  solicitacoesAssinantes?: SolicitacaoAssinanteResponse[];
   anexos?: AnexoResponse[];
   dsJustificativaAtraso?: string | null;
   canAprovarConferencia?: boolean | null;
@@ -48,6 +49,7 @@ export function ConferenciaFooter({
   idPerfil,
   userResponsavel,
   tramitacoes = [],
+  solicitacoesAssinantes = [],
   anexos = [],
   dsJustificativaAtraso,
   canAprovarConferencia = true,
@@ -82,6 +84,7 @@ export function ConferenciaFooter({
     isUsuarioDaAreaAtribuida,
     userResponsavel,
     tramitacoes,
+    solicitacoesAssinantes,
     idStatusSolicitacao: status.idStatusSolicitacao,
     flExigeCienciaGerenteRegul,
     isCienciaChecked,
@@ -96,12 +99,16 @@ export function ConferenciaFooter({
     idPerfil,
     isUsuarioDaAreaAtribuida,
     idStatusSolicitacao: status.idStatusSolicitacao,
+    userResponsavel,
+    solicitacoesAssinantes,
     flExigeCienciaGerenteRegul,
     isCienciaChecked,
     isStatusEmValidacaoRegulatorio: status.isStatusEmValidacaoRegulatorio,
+    isStatusEmAnaliseRegulatoria: status.isStatusEmAnaliseRegulatoria,
     isStatusAtrasada: status.isStatusAtrasada,
     isStatusPermitidoEnviarReg: status.isStatusPermitidoEnviarReg,
     isPerfilPermitidoEnviarReg: permissoes.isPerfilPermitidoEnviarReg,
+    isDiretorJaAprovou: permissoes.isDiretorJaAprovou,
     conferenciaAprovada: status.conferenciaAprovada,
     temEvidenciaCumprimento: status.temEvidenciaCumprimento,
     temJustificativaAtraso: status.temJustificativaAtraso,
@@ -116,8 +123,8 @@ export function ConferenciaFooter({
           type="button"
           className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={onAnexarCorrespondencia}
-          disabled={!status.isStatusEmValidacaoRegulatorio || !status.conferenciaAprovada || !status.isStatusEmAnaliseRegulatoria}
-          tooltip={tooltips.tooltipAnexarCorrespondencia}
+          disabled={!status.conferenciaAprovada || (!status.isStatusEmValidacaoRegulatorio && !status.isStatusEmAnaliseRegulatoria)}
+          tooltip={(!status.conferenciaAprovada || (!status.isStatusEmValidacaoRegulatorio && !status.isStatusEmAnaliseRegulatoria)) ? tooltips.tooltipAnexarCorrespondencia : ''}
         >
           <Paperclip className="h-4 w-4" />
           Anexar correspondência

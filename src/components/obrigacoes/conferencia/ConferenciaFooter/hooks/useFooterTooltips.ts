@@ -3,46 +3,56 @@
 import { useMemo } from 'react';
 import { perfilUtil } from '@/api/perfis/types';
 import { statusList } from '@/api/status-solicitacao/types';
+import { SolicitacaoAssinanteResponse } from '@/api/solicitacoes/types';
+import { ResponsavelResponse } from '@/api/responsaveis/types';
 
 interface UseFooterTooltipsParams {
   idPerfil?: number | null;
   isUsuarioDaAreaAtribuida: boolean;
   idStatusSolicitacao: number;
+  userResponsavel?: ResponsavelResponse | null;
+  solicitacoesAssinantes?: SolicitacaoAssinanteResponse[];
   flExigeCienciaGerenteRegul?: string | null;
   isCienciaChecked?: boolean;
   isStatusEmValidacaoRegulatorio: boolean;
+  isStatusEmAnaliseRegulatoria: boolean;
   isStatusAtrasada: boolean;
   isStatusPermitidoEnviarReg: boolean;
   isPerfilPermitidoEnviarReg: boolean;
   conferenciaAprovada: boolean;
   temEvidenciaCumprimento: boolean;
   temJustificativaAtraso: boolean;
+  isDiretorJaAprovou?: boolean;
 }
 
 export function useFooterTooltips({
   idPerfil,
   isUsuarioDaAreaAtribuida,
   idStatusSolicitacao,
+  userResponsavel,
+  solicitacoesAssinantes = [],
   flExigeCienciaGerenteRegul,
   isCienciaChecked = false,
   isStatusEmValidacaoRegulatorio,
+  isStatusEmAnaliseRegulatoria,
   isStatusAtrasada,
   isStatusPermitidoEnviarReg,
   isPerfilPermitidoEnviarReg,
   conferenciaAprovada,
   temEvidenciaCumprimento,
   temJustificativaAtraso,
+  isDiretorJaAprovou = false,
 }: UseFooterTooltipsParams) {
 
   const tooltipAnexarCorrespondencia = useMemo(() => {
     if (!conferenciaAprovada) {
       return 'É necessário aprovar a conferência antes de anexar correspondência.';
     }
-    if (!isStatusEmValidacaoRegulatorio) {
-      return 'Apenas é possível anexar correspondência quando o status for "Em Validação (Regulatório)".';
+    if (!isStatusEmValidacaoRegulatorio && !isStatusEmAnaliseRegulatoria) {
+      return 'Apenas é possível anexar correspondência quando o status for "Em Validação (Regulatório)" ou "Análise Regulatória".';
     }
     return '';
-  }, [conferenciaAprovada, isStatusEmValidacaoRegulatorio]);
+  }, [conferenciaAprovada, isStatusEmValidacaoRegulatorio, isStatusEmAnaliseRegulatoria]);
 
   const tooltipStatusValidacaoRegulatorio = useMemo(() => {
     if (conferenciaAprovada) {
@@ -143,13 +153,25 @@ export function useFooterTooltips({
     }
 
     if (idStatusSolicitacao === statusList.EM_ASSINATURA_DIRETORIA.id) {
-      if (idPerfil !== perfilUtil.ADMINISTRADOR && idPerfil !== perfilUtil.VALIDADOR_ASSINANTE) {
-        return 'Apenas Administrador ou Validador Assinante podem realizar esta ação quando o status for "Em Assinatura Diretoria".';
+      if (isDiretorJaAprovou) {
+        return 'Já aprovado por um diretor. É necessário aguardar outro diretor aprovar.';
+      }
+      
+      const idResponsavelLogado = userResponsavel?.idResponsavel;
+      if (idResponsavelLogado) {
+        const isAssinante = solicitacoesAssinantes.some(
+          assinante => assinante.idResponsavel === idResponsavelLogado
+        );
+        if (!isAssinante) {
+          return 'Apenas os validadores assinantes definidos na Step 4 (Solicitação Assinantes) podem realizar esta ação quando o status for "Em Assinatura Diretoria".';
+        }
+      } else {
+        return 'Apenas os validadores assinantes definidos na Step 4 (Solicitação Assinantes) podem realizar esta ação quando o status for "Em Assinatura Diretoria".';
       }
     }
 
     return 'Você não tem permissão para essa ação.';
-  }, [idStatusSolicitacao, idPerfil, flExigeCienciaGerenteRegul, isCienciaChecked]);
+  }, [idStatusSolicitacao, idPerfil, flExigeCienciaGerenteRegul, isCienciaChecked, userResponsavel?.idResponsavel, solicitacoesAssinantes, isDiretorJaAprovou]);
 
   return {
     tooltipAnexarCorrespondencia,

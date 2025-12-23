@@ -194,6 +194,7 @@ export function ConferenciaContent({ id }: ConferenciaContentProps) {
         idPerfil={idPerfil}
         userResponsavel={userResponsavel}
         tramitacoes={detalhe?.tramitacoes}
+        solicitacoesAssinantes={detalhe?.solicitacoesAssinantes || obrigacao?.solicitacoesAssinantes}
         anexos={anexos}
         dsJustificativaAtraso={obrigacao?.dsJustificativaAtraso}
         canAprovarConferencia={canAprovarConferenciaObrigacao}
