@@ -110,7 +110,7 @@ export default function RecentActivityObrigacoes({ refreshTrigger }: RecentActiv
                     </div>
                     
                     <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                      <span className="text-xs font-medium text-gray-900 break-all text-right max-w-[120px]">
+                      <span className="text-xs font-medium text-gray-900 break-all text-right max-w-[130px]">
                         {activity.cdIdentificacao}
                       </span>
                       <span className="text-xs text-gray-600 whitespace-nowrap">
