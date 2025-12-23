@@ -10,6 +10,7 @@ import { TramitacaoResponse as SolTramitacaoResponse } from '@/api/solicitacoes/
 import { SolicitacaoParecerResponse } from '@/api/solicitacao-parecer/types';
 import { AnexoResponse } from '@/api/anexos/type';
 import statusSolicitacaoClient from '@/api/status-solicitacao/client';
+import { statusList } from '@/api/status-solicitacao/types';
 import LoadingOverlay from '@/components/ui/loading-overlay';
 import { getLayoutClient, getLabelTitle, getLogoPath } from '@/lib/layout/layout-client';
 
@@ -453,6 +454,25 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
                         return idStatus ? (statusMap.get(idStatus) || tramitacao.solicitacao?.statusSolicitacao?.nmStatus || '—') : (tramitacao.solicitacao?.statusSolicitacao?.nmStatus || '—');
                       })()}
                     </Text>
+                    {(() => {
+                      const tramitacaoComStatus = tramitacao as SolTramitacaoResponse & { idStatusSolicitacao?: number };
+                      const idStatus = tramitacaoComStatus.idStatusSolicitacao || tramitacao.solicitacao?.statusSolicitacao?.idStatusSolicitacao;
+                      const statusComFlAprovado = [
+                        statusList.EM_ASSINATURA_DIRETORIA.id,
+                        statusList.EM_APROVACAO.id,
+                        statusList.EM_ANALISE_GERENTE_REGULATORIO.id,
+                      ];
+                      
+                      if (idStatus && statusComFlAprovado.includes(idStatus) && tramitacao.flAprovado) {
+                        const flAprovadoTexto = tramitacao.flAprovado === 'S' ? 'Sim' : tramitacao.flAprovado === 'N' ? 'Não' : tramitacao.flAprovado;
+                        return (
+                          <Text style={styles.small}>
+                            <Text style={styles.smallBold}>Aprovado:</Text> {flAprovadoTexto}
+                          </Text>
+                        );
+                      }
+                      return null;
+                    })()}
                   </View>
                 </View>
               );
