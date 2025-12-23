@@ -118,6 +118,10 @@ export function ConferenciaContent({ id }: ConferenciaContentProps) {
     }
   }, [isStatusBtnFlAprovar, openModal]);
 
+  const handleAprovarTramitacaoClick = useCallback(() => {
+    openModal('showConfirmarAprovarTramitacaoDialog');
+  }, [openModal]);
+
   const handleReprovarConferenciaClick = useCallback(() => {
     openModal('showConfirmarReprovarTramitacaoDialog');
   }, [openModal]);
@@ -206,7 +210,13 @@ export function ConferenciaContent({ id }: ConferenciaContentProps) {
         onSolicitarAjustes={handleSolicitarAjustesClick}
         onAprovarConferencia={handleAprovarConferenciaClick}
         onReprovarConferencia={handleReprovarConferenciaClick}
-        onAprovarReprovarTramitacao={handleAprovarReprovarTramitacao}
+        onAprovarReprovarTramitacao={(flAprovado) => {
+          if (flAprovado === FlAprovadoTramitacaoEnum.S) {
+            handleAprovarTramitacaoClick();
+          } else if (flAprovado === FlAprovadoTramitacaoEnum.N) {
+            handleReprovarConferenciaClick();
+          }
+        }}
         onJustificarAtraso={() => openModal('showJustificarAtrasoModal')}
         onAnexarEvidencia={() => openModal('showAnexarEvidenciaModal')}
         onEnviarParaAnalise={handleEnviarParaAnaliseClick}
