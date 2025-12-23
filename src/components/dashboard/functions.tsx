@@ -17,7 +17,6 @@ import {
 import { JSX } from "react";
 import { weeks } from "./MockDados";
 import { statusList } from "@/api/status-solicitacao/types";
-import { StatusObrigacao, statusObrigacaoLabels } from "@/api/status-obrigacao/types";
 
 const statusConfig: Record<
     string,
@@ -100,7 +99,7 @@ const statusConfig: Record<
         textColor: "#16a34a",
     },
     // CONCLUIDO também para obrigações (mesma cor)
-    [statusObrigacaoLabels[StatusObrigacao.CONCLUIDO]]: {
+    [statusList.CONCLUIDO.label]: {
         icon: <CheckCircleIcon className="h-4 w-4 text-green-600 mr-2" />,
         visionColor: "bg-green-400",
         calendarColor: "bg-[#22c55e] text-white",
@@ -115,42 +114,42 @@ const statusConfig: Record<
         textColor: "#4b5563",
     },
     // Status específicos de obrigações (cores diferentes)
-    [statusObrigacaoLabels[StatusObrigacao.NAO_INICIADO]]: {
+    [statusList.NAO_INICIADO.label]: {
         icon: <ClockIcon className="h-4 w-4 text-yellow-600 mr-2" />,
         visionColor: "bg-yellow-500",
         calendarColor: "bg-[#eab308] text-white",
         bgColor: "#eab308",
         textColor: "#ca8a04",
     },
-    [statusObrigacaoLabels[StatusObrigacao.PENDENTE]]: {
+    [statusList.PENDENTE.label]: {
         icon: <AlertCircleIcon className="h-4 w-4 text-orange-500 mr-2" />,
         visionColor: "bg-orange-500",
         calendarColor: "bg-[#f97316] text-white",
         bgColor: "#f97316",
         textColor: "#ea580c",
     },
-    [statusObrigacaoLabels[StatusObrigacao.EM_ANDAMENTO]]: {
+    [statusList.EM_ANDAMENTO.label]: {
         icon: <PlayCircleIcon className="h-4 w-4 text-indigo-500 mr-2" />,
         visionColor: "bg-indigo-500",
         calendarColor: "bg-[#6366f1] text-white",
         bgColor: "#6366f1",
         textColor: "#4f46e5",
     },
-    [statusObrigacaoLabels[StatusObrigacao.EM_VALIDACAO_REGULATORIO]]: {
+    [statusList.EM_VALIDACAO_REGULATORIO.label]: {
         icon: <FileCheckIcon className="h-4 w-4 text-teal-500 mr-2" />,
         visionColor: "bg-teal-500",
         calendarColor: "bg-[#14b8a6] text-white",
         bgColor: "#14b8a6",
         textColor: "#0d9488",
     },
-    [statusObrigacaoLabels[StatusObrigacao.ATRASADA]]: {
+    [statusList.ATRASADA.label]: {
         icon: <XCircleIcon className="h-4 w-4 text-rose-600 mr-2" />,
         visionColor: "bg-rose-600",
         calendarColor: "bg-[#e11d48] text-white",
         bgColor: "#e11d48",
         textColor: "#be123c",
     },
-    [statusObrigacaoLabels[StatusObrigacao.NAO_APLICAVEL_SUSPENSA]]: {
+    [statusList.NAO_APLICAVEL_SUSPENSA.label]: {
         icon: <BanIcon className="h-4 w-4 text-slate-500 mr-2" />,
         visionColor: "bg-slate-500",
         calendarColor: "bg-[#64748b] text-white",
@@ -290,39 +289,39 @@ export function getStatusColorCalendarObrigacao(status: string) {
 export function getAllStatusLegendObrigacoes() {
     return [
         {
-            label: statusObrigacaoLabels[StatusObrigacao.NAO_INICIADO],
-            bgColor: statusConfig[statusObrigacaoLabels[StatusObrigacao.NAO_INICIADO]]?.bgColor || "#eab308",
-            textColor: statusConfig[statusObrigacaoLabels[StatusObrigacao.NAO_INICIADO]]?.textColor || "#ca8a04",
+            label: statusList.NAO_INICIADO.label,
+            bgColor: statusConfig[statusList.NAO_INICIADO.label]?.bgColor || "#eab308",
+            textColor: statusConfig[statusList.NAO_INICIADO.label]?.textColor || "#ca8a04",
         },
         {
-            label: statusObrigacaoLabels[StatusObrigacao.PENDENTE],
-            bgColor: statusConfig[statusObrigacaoLabels[StatusObrigacao.PENDENTE]]?.bgColor || "#f97316",
-            textColor: statusConfig[statusObrigacaoLabels[StatusObrigacao.PENDENTE]]?.textColor || "#ea580c",
+            label: statusList.PENDENTE.label,
+            bgColor: statusConfig[statusList.PENDENTE.label]?.bgColor || "#f97316",
+            textColor: statusConfig[statusList.PENDENTE.label]?.textColor || "#ea580c",
         },
         {
-            label: statusObrigacaoLabels[StatusObrigacao.EM_ANDAMENTO],
-            bgColor: statusConfig[statusObrigacaoLabels[StatusObrigacao.EM_ANDAMENTO]]?.bgColor || "#6366f1",
-            textColor: statusConfig[statusObrigacaoLabels[StatusObrigacao.EM_ANDAMENTO]]?.textColor || "#4f46e5",
+            label: statusList.EM_ANDAMENTO.label,
+            bgColor: statusConfig[statusList.EM_ANDAMENTO.label]?.bgColor || "#6366f1",
+            textColor: statusConfig[statusList.EM_ANDAMENTO.label]?.textColor || "#4f46e5",
         },
         {
-            label: statusObrigacaoLabels[StatusObrigacao.EM_VALIDACAO_REGULATORIO],
-            bgColor: statusConfig[statusObrigacaoLabels[StatusObrigacao.EM_VALIDACAO_REGULATORIO]]?.bgColor || "#14b8a6",
-            textColor: statusConfig[statusObrigacaoLabels[StatusObrigacao.EM_VALIDACAO_REGULATORIO]]?.textColor || "#0d9488",
+            label: statusList.EM_VALIDACAO_REGULATORIO.label,
+            bgColor: statusConfig[statusList.EM_VALIDACAO_REGULATORIO.label]?.bgColor || "#14b8a6",
+            textColor: statusConfig[statusList.EM_VALIDACAO_REGULATORIO.label]?.textColor || "#0d9488",
         },
         {
-            label: statusObrigacaoLabels[StatusObrigacao.ATRASADA],
-            bgColor: statusConfig[statusObrigacaoLabels[StatusObrigacao.ATRASADA]]?.bgColor || "#e11d48",
-            textColor: statusConfig[statusObrigacaoLabels[StatusObrigacao.ATRASADA]]?.textColor || "#be123c",
+            label: statusList.ATRASADA.label,
+            bgColor: statusConfig[statusList.ATRASADA.label]?.bgColor || "#e11d48",
+            textColor: statusConfig[statusList.ATRASADA.label]?.textColor || "#be123c",
         },
         {
-            label: statusObrigacaoLabels[StatusObrigacao.CONCLUIDO],
-            bgColor: statusConfig[statusObrigacaoLabels[StatusObrigacao.CONCLUIDO]]?.bgColor || "#22c55e",
-            textColor: statusConfig[statusObrigacaoLabels[StatusObrigacao.CONCLUIDO]]?.textColor || "#16a34a",
+            label: statusList.CONCLUIDO.label,
+            bgColor: statusConfig[statusList.CONCLUIDO.label]?.bgColor || "#22c55e",
+            textColor: statusConfig[statusList.CONCLUIDO.label]?.textColor || "#16a34a",
         },
         {
-            label: statusObrigacaoLabels[StatusObrigacao.NAO_APLICAVEL_SUSPENSA],
-            bgColor: statusConfig[statusObrigacaoLabels[StatusObrigacao.NAO_APLICAVEL_SUSPENSA]]?.bgColor || "#64748b",
-            textColor: statusConfig[statusObrigacaoLabels[StatusObrigacao.NAO_APLICAVEL_SUSPENSA]]?.textColor || "#475569",
+            label: statusList.NAO_APLICAVEL_SUSPENSA.label,
+            bgColor: statusConfig[statusList.NAO_APLICAVEL_SUSPENSA.label]?.bgColor || "#64748b",
+            textColor: statusConfig[statusList.NAO_APLICAVEL_SUSPENSA.label]?.textColor || "#475569",
         },
     ];
 }

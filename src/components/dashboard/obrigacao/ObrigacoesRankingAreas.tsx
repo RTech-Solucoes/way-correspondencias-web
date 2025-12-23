@@ -7,7 +7,7 @@ import dashboardClient from "@/api/dashboard/client";
 import { AreaRankingDTO } from "@/api/dashboard/type";
 import CardHeader from "../card-header";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { statusObrigacaoList } from "@/api/status-obrigacao/types";
+import { statusList } from "@/api/status-solicitacao/types";
 import {
   BarChart,
   Bar,
@@ -99,13 +99,13 @@ export default function ObrigacoesRankingAreas({ refreshTrigger }: ObrigacoesRan
       try {
         setLoading(true);
         
-        const statusAtrasada = statusObrigacaoList.find(s => s.nmStatus === 'ATRASADA');
-        const statusPendente = statusObrigacaoList.find(s => s.nmStatus === 'PENDENTE');
+        const statusAtrasada = statusList.ATRASADA;
+        const statusPendente = statusList.PENDENTE;
         
         const idsStatus: number[] = [];
-        if (selectedStatus === 'ATRASADA' && statusAtrasada) {
+        if (selectedStatus === 'ATRASADA') {
           idsStatus.push(statusAtrasada.id);
-        } else if (selectedStatus === 'PENDENTE' && statusPendente) {
+        } else if (selectedStatus === 'PENDENTE') {
           idsStatus.push(statusPendente.id);
         }
         

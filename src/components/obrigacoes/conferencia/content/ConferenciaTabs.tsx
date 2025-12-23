@@ -7,7 +7,7 @@ import { ConferenciaStepPrazos } from './tabs-steps/ConferenciaStepPrazos';
 import { ConferenciaStepAnexos } from './tabs-steps/ConferenciaStepAnexos';
 import { ConferenciaStepVinculos } from './tabs-steps/ConferenciaStepVinculos';
 import { ObrigacaoDetalheResponse } from '@/api/obrigacao/types';
-import { StatusObrigacao, statusObrigacaoLabels } from '@/api/status-obrigacao/types';
+import { statusList } from '@/api/status-solicitacao/types';
 import { getObrigacaoStatusStyle } from '@/utils/obrigacoes/status';
 import { TipoEnum } from '@/api/tipos/types';
 import { AnexoResponse } from '@/api/anexos/type';
@@ -47,11 +47,7 @@ export function ConferenciaTabs({
   const areaAtribuida = obrigacao?.areas?.find((area) => area.tipoArea?.cdTipo === TipoEnum.ATRIBUIDA);
   const areasCondicionantes = obrigacao?.areas?.filter((area) => area.tipoArea?.cdTipo === TipoEnum.CONDICIONANTE) ?? [];
 
-  const statusLabel =
-    obrigacao?.statusSolicitacao?.nmStatus &&
-    Object.values(StatusObrigacao).includes(obrigacao.statusSolicitacao.nmStatus as StatusObrigacao)
-      ? statusObrigacaoLabels[obrigacao.statusSolicitacao.nmStatus as StatusObrigacao]
-      : obrigacao?.statusSolicitacao?.nmStatus ?? '-';
+  const statusLabel = obrigacao?.statusSolicitacao?.nmStatus ?? '-';
 
   const statusStyle = getObrigacaoStatusStyle(
     obrigacao?.statusSolicitacao?.idStatusSolicitacao,

@@ -23,7 +23,7 @@ import { base64ToUint8Array, saveBlob } from '@/utils/utils';
 import Link from 'next/link';
 import statusSolicitacaoClient, { StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
-import { statusListObrigacao } from '@/api/status-obrigacao/types';
+import { statusList } from '@/api/status-solicitacao/types';
 
 type TabKey = 'dados' | 'temas' | 'prazos' | 'anexos' | 'vinculos';
 
@@ -156,7 +156,7 @@ export function EditarObrigacaoContent({ id }: EditarObrigacaoContentProps) {
       const detalhe = await obrigacaoClient.buscarDetalhePorId(parsedId);
       setFormData(mapDetalheToFormData(detalhe));
       setExistingAnexos(detalhe.anexos || []);
-      if (detalhe?.obrigacao?.flAprovarConferencia === 'S' || detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.NAO_APLICAVEL_SUSPENSA.id) {
+      if (detalhe?.obrigacao?.flAprovarConferencia === 'S' || detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.NAO_APLICAVEL_SUSPENSA.id) {
         setIsNaoPermitidoEditar(true);
       } else {
         setIsNaoPermitidoEditar(false);

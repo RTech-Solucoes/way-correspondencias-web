@@ -2,7 +2,6 @@
 
 import { useMemo } from 'react';
 import { StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
-import { statusListObrigacao, StatusObrigacao } from '@/api/status-obrigacao/types';
 import { statusList } from '@/api/status-solicitacao/types';
 import { TipoDocumentoAnexoEnum } from '@/api/anexos/type';
 import { AnexoResponse } from '@/api/anexos/type';
@@ -45,15 +44,15 @@ export function useFooterStatus({
   const idStatusSolicitacao = statusSolicitacao?.idStatusSolicitacao ?? 0;
 
   const isStatusEmValidacaoRegulatorio = useMemo(() => {
-    return idStatusSolicitacao === statusListObrigacao.EM_VALIDACAO_REGULATORIO.id;
+    return idStatusSolicitacao === statusList.EM_VALIDACAO_REGULATORIO.id;
   }, [idStatusSolicitacao]);
 
   const isStatusAtrasada = useMemo(() => {
-    return idStatusSolicitacao === statusListObrigacao.ATRASADA.id;
+    return idStatusSolicitacao === statusList.ATRASADA.id;
   }, [idStatusSolicitacao]);
 
   const isStatusEmAndamento = useMemo(() => {
-    return idStatusSolicitacao === statusListObrigacao.EM_ANDAMENTO.id;
+    return idStatusSolicitacao === statusList.EM_ANDAMENTO.id;
   }, [idStatusSolicitacao]);
 
   const isStatusPermitidoEnviarReg = useMemo(() => {
@@ -130,8 +129,8 @@ export function useFooterStatus({
       [statusList.EM_APROVACAO.id]: labelBtnStatusEmAprovacaoTramitacao,
       [statusList.ANALISE_REGULATORIA.id]: labelBtnStatusAnaliseRegulatoria,
       [statusList.EM_CHANCELA.id]: 'Encaminhar para Assinatura Diretoria',
-      [statusListObrigacao[StatusObrigacao.APROVACAO_TRAMITACAO].id]: 'Anexe Protocolo para Conclusão',
-      [statusListObrigacao[StatusObrigacao.CONCLUIDO].id]: 'Obrigação já concluída',
+      [statusList.APROVACAO_TRAMITACAO.id]: 'Anexe Protocolo para Conclusão',
+      [statusList.CONCLUIDO.id]: 'Obrigação já concluída',
     };
     
     return textosPorStatus[idStatusSolicitacao] ?? 'Encaminhar para Tramitação';

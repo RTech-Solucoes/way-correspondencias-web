@@ -1,6 +1,6 @@
 'use client';
 
-import { StatusObrigacao, statusObrigacaoList } from '@/api/status-obrigacao/types';
+import { statusList } from '@/api/status-solicitacao/types';
 
 export type ObrigacaoBadgeVariant = 'default' | 'secondary' | 'destructive' | 'outline';
 
@@ -71,49 +71,42 @@ export const getObrigacaoStatusStyle = (
     return PRE_ANALISE_STYLE;
   }
 
-  const naoIniciadoStatus = statusObrigacaoList.find((s) => s.nmStatus === StatusObrigacao.NAO_INICIADO);
   if (
-    (parsedStatusId && naoIniciadoStatus && parsedStatusId === naoIniciadoStatus.id) ||
-    normalizedName.includes(StatusObrigacao.NAO_INICIADO)
+    parsedStatusId === statusList.NAO_INICIADO.id ||
+    normalizedName.includes('NAO_INICIADO') ||
+    normalizedName.includes('NÃO INICIADO')
   ) {
     return NAO_INICIADO_STYLE;
   }
 
-  const pendenteStatus = statusObrigacaoList.find((s) => s.nmStatus === StatusObrigacao.PENDENTE);
   if (
-    (parsedStatusId && pendenteStatus && parsedStatusId === pendenteStatus.id) ||
-    normalizedName.includes(StatusObrigacao.PENDENTE)
+    parsedStatusId === statusList.PENDENTE.id ||
+    normalizedName.includes('PENDENTE')
   ) {
     return PENDENTE_STYLE;
   }
 
-  const atrasadaStatus = statusObrigacaoList.find((s) => s.nmStatus === StatusObrigacao.ATRASADA);
   if (
-    (parsedStatusId && atrasadaStatus && parsedStatusId === atrasadaStatus.id) ||
-    normalizedName.includes(StatusObrigacao.ATRASADA)
+    parsedStatusId === statusList.ATRASADA.id ||
+    normalizedName.includes('ATRASADA')
   ) {
     return ATRASADA_STYLE;
   }
 
-  const concluidoStatus = statusObrigacaoList.find((s) => s.nmStatus === StatusObrigacao.CONCLUIDO);
   if (
-    (parsedStatusId && concluidoStatus && parsedStatusId === concluidoStatus.id) ||
-    normalizedName.includes(StatusObrigacao.CONCLUIDO)
+    parsedStatusId === statusList.CONCLUIDO.id ||
+    normalizedName.includes('CONCLUIDO')
   ) {
     return CONCLUIDO_STYLE;
   }
 
-  const naoAplicavelSuspensaStatus = statusObrigacaoList.find((s) => s.nmStatus === StatusObrigacao.NAO_APLICAVEL_SUSPENSA);
   if (
-    (parsedStatusId && naoAplicavelSuspensaStatus && parsedStatusId === naoAplicavelSuspensaStatus.id) ||
-    normalizedName.includes(StatusObrigacao.NAO_APLICAVEL_SUSPENSA) ||
-    normalizedName.includes('NÃO APLICÁVEL') ||
-    normalizedName.includes('NAO APLICAVEL') ||
-    normalizedName.includes('SUSPENSA')
+    parsedStatusId === statusList.NAO_APLICAVEL_SUSPENSA.id ||
+    normalizedName.includes('NAO_APLICAVEL_SUSPENSA') ||
+    normalizedName.includes('NAO APLICAVEL/SUSPENSA')
   ) {
     return NAO_APLICAVEL_SUSPENSA_STYLE;
   }
 
   return DEFAULT_STYLE;
 };
-

@@ -1,7 +1,7 @@
 'use client';
 
 import { ObrigacaoFormData } from '../ObrigacaoModal';
-import { StatusObrigacao, statusObrigacaoLabels, statusObrigacaoList } from '@/api/status-obrigacao/types';
+import { STATUS_LIST } from '@/api/status-solicitacao/types';
 import { AnexoResponse, TipoObjetoAnexoEnum } from '@/api/anexos/type';
 import { useEffect, useState } from 'react';
 import { Label } from '@/components/ui/label';
@@ -101,8 +101,8 @@ export function Step6Obrigacao({ formData }: Step6ObrigacaoProps) {
     if (obrigacaoDetalhe?.statusSolicitacao) {
       return obrigacaoDetalhe.statusSolicitacao.nmStatus || 'Não informado';
     }
-    const current = statusObrigacaoList.find((s) => s.id === formData?.idStatusSolicitacao);
-    return current ? statusObrigacaoLabels[current.nmStatus as StatusObrigacao] : 'Não Iniciado';
+    const current = STATUS_LIST.find((s) => s.id === formData?.idStatusSolicitacao);
+    return current ? current.label : 'Não Iniciado';
   };
 
   const formatDate = (date: string | null | undefined) => {

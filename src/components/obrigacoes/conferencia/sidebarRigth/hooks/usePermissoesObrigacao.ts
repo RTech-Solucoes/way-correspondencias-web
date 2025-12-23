@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo } from 'react';
-import { statusListObrigacao } from '@/api/status-obrigacao/types';
 import { statusList } from '@/api/status-solicitacao/types';
 import { perfilUtil } from '@/api/perfis/types';
 import type { ObrigacaoDetalheResponse } from '@/api/obrigacao/types';
@@ -48,31 +47,31 @@ export function usePermissoesObrigacao({
 
   // Status helpers
   const isStatusEmAndamento = useMemo(() => {
-    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.EM_ANDAMENTO.id;
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.EM_ANDAMENTO.id;
   }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 
   const isStatusAtrasada = useMemo(() => {
-    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.ATRASADA.id;
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.ATRASADA.id;
   }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 
   const isStatusEmValidacaoRegulatorio = useMemo(() => {
-    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.EM_VALIDACAO_REGULATORIO.id;
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.EM_VALIDACAO_REGULATORIO.id;
   }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 
   const isStatusPendente = useMemo(() => {
-    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.PENDENTE.id;
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.PENDENTE.id;
   }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 
   const isStatusNaoIniciado = useMemo(() => {
-    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.NAO_INICIADO.id;
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.NAO_INICIADO.id;
   }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 
   const isStatusConcluido = useMemo(() => {
-    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.CONCLUIDO.id;
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.CONCLUIDO.id;
   }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 
   const isStatusNaoAplicavelSuspensa = useMemo(() => {
-    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.NAO_APLICAVEL_SUSPENSA.id;
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.NAO_APLICAVEL_SUSPENSA.id;
   }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 
   const isStatusPreAnalise = useMemo(() => {
@@ -151,8 +150,8 @@ export function usePermissoesObrigacao({
     const idStatus = detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao;
     if (!idStatus) return false;
     return [
-      statusListObrigacao.NAO_INICIADO.id,
-      statusListObrigacao.PENDENTE.id,  
+      statusList.NAO_INICIADO.id,
+      statusList.PENDENTE.id,  
     ].includes(idStatus);
   }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 

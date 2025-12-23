@@ -3,7 +3,6 @@
 import { useMemo } from 'react';
 import { perfilUtil } from '@/api/perfis/types';
 import { statusList } from '@/api/status-solicitacao/types';
-import { statusListObrigacao, StatusObrigacao } from '@/api/status-obrigacao/types';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { TramitacaoComAnexosResponse, SolicitacaoAssinanteResponse } from '@/api/solicitacoes/types';
 

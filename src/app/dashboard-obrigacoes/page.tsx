@@ -1,5 +1,7 @@
+'use server';
+
 import DashboardObrigacoesContent from '../../components/dashboard/obrigacao/content/DashboardObrigacoesContent';
 
-export default function DashboardObrigacoesPage() {
+export default async function DashboardObrigacoesPage() {
   return <DashboardObrigacoesContent />;
 }

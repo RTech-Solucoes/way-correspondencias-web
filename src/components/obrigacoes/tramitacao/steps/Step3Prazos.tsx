@@ -8,7 +8,6 @@ import { TramitacaoFormData } from '../TramitacaoObrigacaoModal';
 import { StatusSolicPrazoTemaForUI } from '@/api/status-prazo-tema/types';
 import { statusSolicitacaoClient, StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
 import { STATUS_LIST, statusList as statusListType } from '@/api/status-solicitacao/types';
-import { statusListObrigacao } from '@/api/status-obrigacao/types';
 import { hoursToDaysAndHours } from '@/utils/utils';
 import { Input as NextUIInput } from '@nextui-org/react';
 import { CategoriaEnum, TipoEnum } from '@/api/tipos/types';
@@ -24,12 +23,12 @@ function horasParaDias(horas: number): number {
 }
 
 const STATUS_OCULTOS = [
-  statusListObrigacao.NAO_INICIADO.id,
-  statusListObrigacao.PENDENTE.id,
-  statusListObrigacao.EM_ANDAMENTO.id,
-  statusListObrigacao.ATRASADA.id,
-  statusListObrigacao.NAO_APLICAVEL_SUSPENSA.id,
-  statusListObrigacao.EM_VALIDACAO_REGULATORIO.id,
+  statusListType.NAO_INICIADO.id,
+  statusListType.PENDENTE.id,
+  statusListType.EM_ANDAMENTO.id,
+  statusListType.ATRASADA.id,
+  statusListType.NAO_APLICAVEL_SUSPENSA.id,
+  statusListType.EM_VALIDACAO_REGULATORIO.id,
   statusListType.PRE_ANALISE.id,
   statusListType.VENCIDO_REGULATORIO.id,
   statusListType.VENCIDO_AREA_TECNICA.id,
