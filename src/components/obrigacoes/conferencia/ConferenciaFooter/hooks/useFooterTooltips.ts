@@ -169,6 +169,11 @@ export function useFooterTooltips({
         return 'Apenas os validadores assinantes definidos na Step 4 (Solicitação Assinantes) podem realizar esta ação quando o status for "Em Assinatura Diretoria".';
       }
     }
+    if (idStatusSolicitacao === statusList.APROVACAO_TRAMITACAO.id) {
+      if (idPerfil !== perfilUtil.ADMINISTRADOR || idPerfil !== perfilUtil.GESTOR_DO_SISTEMA) {
+        return 'Apenas Administrador ou Gestor do Sistema podem realizar esta ação quando o status for "Aprovação Tramitação".';
+      }
+    }
 
     return 'Você não tem permissão para essa ação.';
   }, [idStatusSolicitacao, idPerfil, flExigeCienciaGerenteRegul, isCienciaChecked, userResponsavel?.idResponsavel, solicitacoesAssinantes, isDiretorJaAprovou]);

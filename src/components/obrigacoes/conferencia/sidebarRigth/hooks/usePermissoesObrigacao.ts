@@ -78,6 +78,10 @@ export function usePermissoesObrigacao({
     return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.PRE_ANALISE.id;
   }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 
+  const isStatusAprovacaoTramitacao = useMemo(() => {
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.APROVACAO_TRAMITACAO.id;
+  }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
   // Verificar se pode gerar relatório
   const podeGerarRelatorio = useMemo(() => {
     if (idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
@@ -218,6 +222,7 @@ export function usePermissoesObrigacao({
     isStatusConcluido,
     isStatusNaoAplicavelSuspensa,
     isStatusPreAnalise,
+    isStatusAprovacaoTramitacao,
     // Permissões
     podeGerarRelatorio,
     isPerfilPermitidoPorStatus,

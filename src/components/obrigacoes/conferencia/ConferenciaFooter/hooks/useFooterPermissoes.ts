@@ -98,6 +98,10 @@ export function useFooterPermissoes({
       return false;
     }
 
+    if (idStatusSolicitacao === statusList.APROVACAO_TRAMITACAO.id) {
+      if (idPerfil === perfilUtil.ADMINISTRADOR || idPerfil === perfilUtil.GESTOR_DO_SISTEMA) return true;
+    }
+
     return false;
   }, [
     idPerfil, 

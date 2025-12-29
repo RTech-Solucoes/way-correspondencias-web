@@ -11,6 +11,8 @@ import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { TramitacaoComAnexosResponse, SolicitacaoAssinanteResponse } from '@/api/solicitacoes/types';
 import { FlAprovadoTramitacaoEnum } from '@/api/tramitacoes/types';
 import { useFooterStatus, useFooterPermissoes, useFooterTooltips } from './hooks';
+import { useMemo, useState } from 'react';
+import { AnexarProtocoloModal } from '@/components/obrigacoes/modal/AnexarProtocoloModal';
 
 interface ConferenciaFooterProps {
   statusSolicitacao?: StatusSolicitacaoResponse | null;
@@ -39,6 +41,8 @@ interface ConferenciaFooterProps {
   onEnviarParaTramitacao: () => void;
   isStatusDesabilitadoParaTramitacao: boolean;
   arquivosTramitacaoPendentes?: ArquivoDTO[];
+  idObrigacao?: number;
+  onAnexarProtocoloSuccess?: () => void;
 }
 
 export function ConferenciaFooter({
@@ -67,7 +71,10 @@ export function ConferenciaFooter({
   onEnviarParaAnalise,
   onEnviarParaTramitacao,
   isStatusDesabilitadoParaTramitacao,
+  idObrigacao,
+  onAnexarProtocoloSuccess,
 }: ConferenciaFooterProps) {
+  const [showAnexarProtocoloModal, setShowAnexarProtocoloModal] = useState(false);
 
   const status = useFooterStatus({
     statusSolicitacao,
@@ -114,21 +121,24 @@ export function ConferenciaFooter({
     temJustificativaAtraso: status.temJustificativaAtraso,
   });
 
+  const isStatusBtnEnviarParaTramitacao = useMemo(() => {
+    return !status.isStatusBtnFlAprovar && !isStatusDesabilitadoParaTramitacao && !status.isStatusEmValidacaoRegulatorio && !status.isStatusAprovacaoTramitacao
+  }, [status.isStatusBtnFlAprovar, isStatusDesabilitadoParaTramitacao, status.isStatusEmValidacaoRegulatorio, status.isStatusAprovacaoTramitacao]);
+
   return (
     <footer className="fixed bottom-0 left-0 right-0 z-11 border-t border-gray-200 bg-white px-8 py-4">
       <div className="ml-auto flex w-full max-w-6xl flex-wrap items-center justify-end gap-3">
         {status.isStatusEmAnaliseRegulatoria || (isAdminOrGestor && status.isStatusEmValidacaoRegulatorio) && (
-        
-        <Button
-          type="button"
-          className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
-          onClick={onAnexarCorrespondencia}
-          disabled={!status.conferenciaAprovada || (!status.isStatusEmValidacaoRegulatorio && !status.isStatusEmAnaliseRegulatoria)}
-          tooltip={(!status.conferenciaAprovada || (!status.isStatusEmValidacaoRegulatorio && !status.isStatusEmAnaliseRegulatoria)) ? tooltips.tooltipAnexarCorrespondencia : ''}
-        >
-          <Paperclip className="h-4 w-4" />
-          Anexar correspondência
-        </Button>
+          <Button
+            type="button"
+            className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={onAnexarCorrespondencia}
+            disabled={!status.conferenciaAprovada || (!status.isStatusEmValidacaoRegulatorio && !status.isStatusEmAnaliseRegulatoria)}
+            tooltip={(!status.conferenciaAprovada || (!status.isStatusEmValidacaoRegulatorio && !status.isStatusEmAnaliseRegulatoria)) ? tooltips.tooltipAnexarCorrespondencia : ''}
+          >
+            <Paperclip className="h-4 w-4" />
+            Anexar correspondência
+          </Button>
         )}
 
         {isAdminOrGestor && status.isStatusEmValidacaoRegulatorio ? (
@@ -256,7 +266,7 @@ export function ConferenciaFooter({
           </div>
         )}
 
-        {!status.isStatusBtnFlAprovar && !isStatusDesabilitadoParaTramitacao && !status.isStatusEmValidacaoRegulatorio && (
+        {isStatusBtnEnviarParaTramitacao && (
           <Button
             type="button"
             className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -268,7 +278,36 @@ export function ConferenciaFooter({
             {status.textoBtnEnviarParaTramitacaoPorStatus}
           </Button>
         )}
+
+        {status.isStatusAprovacaoTramitacao && (
+          <Button
+            type="button"
+            className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={() => setShowAnexarProtocoloModal(true)}
+            disabled={!permissoes.isPerfilPermitidoEnviarTramitacaoPorStatus || !idObrigacao}
+            tooltip={!permissoes.isPerfilPermitidoEnviarTramitacaoPorStatus ? tooltips.tooltipPerfilPermitidoEnviarTramitacaoPorStatus : ''}
+          >
+            <Paperclip className="h-4 w-4" />
+            Anexar Protocolo
+          </Button>
+        )}
+
       </div>
+
+      {idObrigacao && (
+        <AnexarProtocoloModal
+          open={showAnexarProtocoloModal}
+          onClose={() => setShowAnexarProtocoloModal(false)}
+          idObrigacao={idObrigacao}
+          idPerfil={idPerfil || undefined}
+          onSuccess={() => {
+            setShowAnexarProtocoloModal(false);
+            if (onAnexarProtocoloSuccess) {
+              onAnexarProtocoloSuccess();
+            }
+          }}
+        />
+      )}
     </footer>
   );
 }

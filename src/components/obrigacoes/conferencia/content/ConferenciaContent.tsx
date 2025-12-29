@@ -136,6 +136,11 @@ export function ConferenciaContent({ id }: ConferenciaContentProps) {
     toast.success('Correspondência anexada com sucesso!');
   }, [reloadDetalhe]);
 
+  const handleAnexarProtocoloSuccess = useCallback(async () => {
+    await reloadDetalhe();
+    toast.success('Protocolo anexado com sucesso!');
+  }, [reloadDetalhe]);
+
   if (pageLoading) {
     return (
       <div className="flex h-full items-center justify-center py-24">
@@ -223,6 +228,8 @@ export function ConferenciaContent({ id }: ConferenciaContentProps) {
         onEnviarParaTramitacao={handleEnviarParaTramitacao}
         isStatusDesabilitadoParaTramitacao={isStatusDesabilitadoParaTramitacao}
         arquivosTramitacaoPendentes={arquivosTramitacaoPendentes}
+        idObrigacao={obrigacao?.idSolicitacao}
+        onAnexarProtocoloSuccess={handleAnexarProtocoloSuccess}
       />
 
       <ConferenciaModals

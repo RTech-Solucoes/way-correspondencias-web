@@ -250,6 +250,7 @@ export function ConferenciaSidebar({
                 isStatusConcluido={permissoes.isStatusConcluido}
                 isStatusNaoAplicavelSuspensa={permissoes.isStatusNaoAplicavelSuspensa}
                 isStatusPreAnalise={permissoes.isStatusPreAnalise}
+                isStatusAprovacaoTramitacao={permissoes.isStatusAprovacaoTramitacao}
                 isDaAreaAtribuida={permissoes.isDaAreaAtribuida}
                 isStatusDesabilitadoParaTramitacao={isStatusDesabilitadoParaTramitacao}
                 arquivosTramitacaoPendentes={arquivosTramitacaoPendentes}

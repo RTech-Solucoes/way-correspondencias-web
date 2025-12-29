@@ -333,7 +333,9 @@ export function ComentariosTab({
                 null
               );
               
-              const podeDeletar = !!(idResponsavelLogado && 
+              const textoComentario = parecer.dsDarecer || '';
+              const isComentarioAprovacao = textoComentario.trim() === 'Obrigação aprovada na conferência.';
+              const podeDeletar = !isComentarioAprovacao && !!(idResponsavelLogado && 
                                   parecer.responsavel?.idResponsavel && 
                                   parecer.responsavel.idResponsavel === idResponsavelLogado);
 

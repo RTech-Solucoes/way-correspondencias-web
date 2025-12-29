@@ -13,6 +13,7 @@ interface TramitacaoSectionProps {
   podeExcluirAnexo: (anexo: AnexoResponse) => boolean;
   isStatusConcluido: boolean;
   isStatusPreAnalise: boolean;
+  isStatusAprovacaoTramitacao: boolean;
   onOpenAnexarTramitacaoModal: () => void;
 }
 
@@ -24,6 +25,7 @@ export function TramitacaoSection({
   podeExcluirAnexo,
   isStatusConcluido,
   isStatusPreAnalise,
+  isStatusAprovacaoTramitacao,
   onOpenAnexarTramitacaoModal,
 }: TramitacaoSectionProps) {
   return (
@@ -38,7 +40,7 @@ export function TramitacaoSection({
         variant="link"
         className="flex items-center gap-2 justify-start px-0 text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
         onClick={onOpenAnexarTramitacaoModal}
-        disabled={isStatusConcluido || isStatusPreAnalise}
+        disabled={isStatusConcluido || isStatusPreAnalise || isStatusAprovacaoTramitacao}
         tooltip="Apenas é possível selecionar anexos da tramitação durante o andamento da tramitação."
       >
         <Plus className="h-4 w-4" />

@@ -63,6 +63,10 @@ export function useFooterStatus({
     return idStatusSolicitacao === statusList.EM_ANALISE_GERENTE_REGULATORIO.id;
   }, [idStatusSolicitacao]);
 
+  const isStatusAprovacaoTramitacao = useMemo(() => {
+    return idStatusSolicitacao === statusList.APROVACAO_TRAMITACAO.id;
+  }, [idStatusSolicitacao]);
+
   const isStatusBtnFlAprovar = useMemo(() => {
     return (isStatusEmAnaliseGerenteRegulatorio && flExigeCienciaGerenteRegul === 'S') ||
       statusSolicitacao?.idStatusSolicitacao === statusList.EM_APROVACAO.id || 
@@ -129,7 +133,6 @@ export function useFooterStatus({
       [statusList.EM_APROVACAO.id]: labelBtnStatusEmAprovacaoTramitacao,
       [statusList.ANALISE_REGULATORIA.id]: labelBtnStatusAnaliseRegulatoria,
       [statusList.EM_CHANCELA.id]: 'Encaminhar para Assinatura Diretoria',
-      [statusList.APROVACAO_TRAMITACAO.id]: 'Anexe Protocolo para Conclusão',
       [statusList.CONCLUIDO.id]: 'Obrigação já concluída',
     };
     
@@ -145,6 +148,7 @@ export function useFooterStatus({
     isStatusEmAnaliseGerenteRegulatorio,
     isStatusBtnFlAprovar,
     isStatusEmAnaliseRegulatoria,
+    isStatusAprovacaoTramitacao,
     temEvidenciaCumprimento,
     temJustificativaAtraso,
     conferenciaAprovada,
