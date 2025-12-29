@@ -12,6 +12,7 @@ import { TramitacaoComAnexosResponse, SolicitacaoAssinanteResponse } from '@/api
 import { FlAprovadoTramitacaoEnum } from '@/api/tramitacoes/types';
 import { useFooterStatus, useFooterPermissoes, useFooterTooltips } from './hooks';
 import { useMemo } from 'react';
+import { perfilUtil } from '@/api/perfis/types';
 
 interface ConferenciaFooterProps {
   statusSolicitacao?: StatusSolicitacaoResponse | null;
@@ -124,8 +125,18 @@ export function ConferenciaFooter({
     return !status.isStatusBtnFlAprovar && !isStatusDesabilitadoParaTramitacao && !status.isStatusEmValidacaoRegulatorio && !status.isStatusAprovacaoTramitacao
   }, [status.isStatusBtnFlAprovar, isStatusDesabilitadoParaTramitacao, status.isStatusEmValidacaoRegulatorio, status.isStatusAprovacaoTramitacao]);
 
+  const isPermitidoAnexarEvidencia = useMemo(() => {
+    return (
+          (idPerfil === perfilUtil.EXECUTOR_AVANCADO ||
+          idPerfil === perfilUtil.EXECUTOR ||
+          idPerfil === perfilUtil.EXECUTOR_RESTRITO) &&
+         (status.isStatusPermitidoEnviarReg)
+      );
+  }, [status.isStatusPermitidoEnviarReg, idPerfil]);
+
+    
   return (
-    <footer className="fixed bottom-0 left-0 right-0 z-11 border-t border-gray-200 bg-white px-8 py-4">
+    <footer className="fixed bottom-0 left-0 right-0 z-11 border-t border-gray-200 bg-white px-8 py-4 h-[73px]">
       <div className="ml-auto flex w-full max-w-6xl flex-wrap items-center justify-end gap-3">
         {status.isStatusEmAnaliseRegulatoria || (isAdminOrGestor && status.isStatusEmValidacaoRegulatorio) && (
           <Button
@@ -187,8 +198,8 @@ export function ConferenciaFooter({
                   type="button"
                   className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={onAnexarEvidencia}
-                  disabled={!status.isStatusPermitidoEnviarReg}
-                  tooltip={tooltips.tooltipAnexarEvidencia}
+                  disabled={!isPermitidoAnexarEvidencia}
+                  tooltip={!isPermitidoAnexarEvidencia ? tooltips.tooltipAnexarEvidencia : ''}
                 >
                   <Paperclip className="h-4 w-4" />
                   Anexar evidência de cumprimento

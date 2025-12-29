@@ -114,11 +114,23 @@ export function useFooterTooltips({
   ]);
 
   const tooltipAnexarEvidencia = useMemo(() => {
-    if (!isStatusPermitidoEnviarReg) {
+    const isPerfilExecutor = idPerfil === perfilUtil.EXECUTOR_AVANCADO || 
+                             idPerfil === perfilUtil.EXECUTOR || 
+                             idPerfil === perfilUtil.EXECUTOR_RESTRITO;
+    
+    // Caso 1: Perfil não é executor (botão sempre desabilitado para não-executores)
+    if (!isPerfilExecutor) {
+      return 'Apenas Executores (Avançado, Executor e Executor Restrito) podem anexar evidência de cumprimento.';
+    }
+    
+    // Caso 2: Status não permite enviar E perfil é executor
+    if (!isStatusPermitidoEnviarReg && isPerfilExecutor) {
       return 'Apenas é possível anexar evidência de cumprimento quando o status for "Em Andamento" ou "Atrasada".';
     }
+
+    // Caso 3: Status permite enviar E perfil é executor (botão habilitado - não precisa tooltip)
     return '';
-  }, [isStatusPermitidoEnviarReg]);
+  }, [isStatusPermitidoEnviarReg, idPerfil]);
 
   const tooltipPerfilPermitidoEnviarTramitacaoPorStatus = useMemo(() => {
     if (idStatusSolicitacao === statusList.PRE_ANALISE.id) {
@@ -187,4 +199,5 @@ export function useFooterTooltips({
     tooltipPerfilPermitidoEnviarTramitacaoPorStatus,
   };
 }
+
 
