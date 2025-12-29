@@ -11,8 +11,7 @@ import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { TramitacaoComAnexosResponse, SolicitacaoAssinanteResponse } from '@/api/solicitacoes/types';
 import { FlAprovadoTramitacaoEnum } from '@/api/tramitacoes/types';
 import { useFooterStatus, useFooterPermissoes, useFooterTooltips } from './hooks';
-import { useMemo, useState } from 'react';
-import { AnexarProtocoloModal } from '@/components/obrigacoes/modal/AnexarProtocoloModal';
+import { useMemo } from 'react';
 
 interface ConferenciaFooterProps {
   statusSolicitacao?: StatusSolicitacaoResponse | null;
@@ -43,6 +42,7 @@ interface ConferenciaFooterProps {
   arquivosTramitacaoPendentes?: ArquivoDTO[];
   idObrigacao?: number;
   onAnexarProtocoloSuccess?: () => void;
+  onAnexarProtocoloClick?: () => void;
 }
 
 export function ConferenciaFooter({
@@ -72,9 +72,8 @@ export function ConferenciaFooter({
   onEnviarParaTramitacao,
   isStatusDesabilitadoParaTramitacao,
   idObrigacao,
-  onAnexarProtocoloSuccess,
+  onAnexarProtocoloClick,
 }: ConferenciaFooterProps) {
-  const [showAnexarProtocoloModal, setShowAnexarProtocoloModal] = useState(false);
 
   const status = useFooterStatus({
     statusSolicitacao,
@@ -283,8 +282,12 @@ export function ConferenciaFooter({
           <Button
             type="button"
             className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
-            onClick={() => setShowAnexarProtocoloModal(true)}
-            disabled={!permissoes.isPerfilPermitidoEnviarTramitacaoPorStatus || !idObrigacao}
+            onClick={() => {
+              if (onAnexarProtocoloClick) {
+                onAnexarProtocoloClick();
+              }
+            }}
+            disabled={!permissoes.isPerfilPermitidoEnviarTramitacaoPorStatus || !idObrigacao || !onAnexarProtocoloClick}
             tooltip={!permissoes.isPerfilPermitidoEnviarTramitacaoPorStatus ? tooltips.tooltipPerfilPermitidoEnviarTramitacaoPorStatus : ''}
           >
             <Paperclip className="h-4 w-4" />
@@ -293,21 +296,6 @@ export function ConferenciaFooter({
         )}
 
       </div>
-
-      {idObrigacao && (
-        <AnexarProtocoloModal
-          open={showAnexarProtocoloModal}
-          onClose={() => setShowAnexarProtocoloModal(false)}
-          idObrigacao={idObrigacao}
-          idPerfil={idPerfil || undefined}
-          onSuccess={() => {
-            setShowAnexarProtocoloModal(false);
-            if (onAnexarProtocoloSuccess) {
-              onAnexarProtocoloSuccess();
-            }
-          }}
-        />
-      )}
     </footer>
   );
 }
