@@ -171,7 +171,7 @@ export function Step5Obrigacao({ formData, updateFormData, disabled = false }: S
           <Label htmlFor="idObrigacaoRecusada">Obrigação recusada pelo Verificador ou ANTT</Label>
           <Select
             disabled={disabled}
-            value={formData?.idObrigacaoRecusada?.toString() || formData?.idObrigacaoContratualVinculo?.toString() || 'none'}
+            value={formData?.idObrigacaoRecusada?.toString() || 'none'}
             onValueChange={(value) => updateFormData?.({ 
               idObrigacaoRecusada: value === 'none' ? null : parseInt(value),
             })}

@@ -8,6 +8,11 @@ import { toast } from 'sonner';
 import { ArquivoDTO } from '@/api/anexos/type';
 import { useUserGestao } from '@/hooks/use-user-gestao';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
+import obrigacaoClient from '@/api/obrigacao/client';
+import { statusList } from '@/api/status-solicitacao/types';
+import { ObrigacaoResumoResponse } from '@/api/obrigacao/types';
+import { ObrigacoesCondicionadasModal } from '@/components/obrigacoes/modal/ObrigacoesCondicionadasModal';
+import { AnexarProtocoloModal } from '@/components/obrigacoes/modal/AnexarProtocoloModal';
 import { ConferenciaSidebar } from '../sidebarRigth/ConferenciaSidebar';
 import { ConferenciaFooter } from '../ConferenciaFooter';
 import LoadingOverlay from '@/components/ui/loading-overlay';
@@ -45,6 +50,9 @@ export function ConferenciaContent({ id }: ConferenciaContentProps) {
   const [activeTab, setActiveTab] = useState<TabKey>('dados');
   const [isCienciaChecked, setIsCienciaChecked] = useState(false);
   const [arquivosTramitacaoPendentes, setArquivosTramitacaoPendentes] = useState<ArquivoDTO[]>([]);
+  const [showObrigacoesCondicionadasModal, setShowObrigacoesCondicionadasModal] = useState(false);
+  const [obrigacoesCondicionadas, setObrigacoesCondicionadas] = useState<ObrigacaoResumoResponse[]>([]);
+  const [showAnexarProtocoloModal, setShowAnexarProtocoloModal] = useState(false);
   
   const comentarioActionsRef = useRef<{ 
     get: () => string; 
@@ -118,6 +126,10 @@ export function ConferenciaContent({ id }: ConferenciaContentProps) {
     }
   }, [isStatusBtnFlAprovar, openModal]);
 
+  const handleAprovarTramitacaoClick = useCallback(() => {
+    openModal('showConfirmarAprovarTramitacaoDialog');
+  }, [openModal]);
+
   const handleReprovarConferenciaClick = useCallback(() => {
     openModal('showConfirmarReprovarTramitacaoDialog');
   }, [openModal]);
@@ -131,6 +143,35 @@ export function ConferenciaContent({ id }: ConferenciaContentProps) {
     await reloadDetalhe();
     toast.success('Correspondência anexada com sucesso!');
   }, [reloadDetalhe]);
+
+  const handleAnexarProtocoloSuccess = useCallback(async () => {
+    await reloadDetalhe();
+    toast.success('Protocolo anexado com sucesso!');
+    setShowAnexarProtocoloModal(false);
+  }, [reloadDetalhe]);
+
+  const handleAnexarProtocoloClick = useCallback(async () => {
+    if (!obrigacao?.idSolicitacao) return;
+    
+    try {
+      const response = await obrigacaoClient.buscarObrigacoesCondicionadas(obrigacao.idSolicitacao);
+      const condicionadas = response.obrigacoesCondicionadas || [];
+      const condicionadasPendentes = condicionadas.filter(
+        (cond) =>
+          cond.statusSolicitacao?.idStatusSolicitacao !== statusList.CONCLUIDO.id
+      );
+
+      if (condicionadasPendentes.length > 0) {
+        setObrigacoesCondicionadas(condicionadasPendentes);
+        setShowObrigacoesCondicionadasModal(true);
+      } else {
+        setShowAnexarProtocoloModal(true);
+      }
+    } catch (error) {
+      console.error('Erro ao verificar obrigações condicionadas:', error);
+      toast.error('Erro ao verificar obrigações condicionadas. Tente novamente.');
+    }
+  }, [obrigacao?.idSolicitacao]);
 
   if (pageLoading) {
     return (
@@ -194,6 +235,7 @@ export function ConferenciaContent({ id }: ConferenciaContentProps) {
         idPerfil={idPerfil}
         userResponsavel={userResponsavel}
         tramitacoes={detalhe?.tramitacoes}
+        solicitacoesAssinantes={detalhe?.solicitacoesAssinantes || obrigacao?.solicitacoesAssinantes}
         anexos={anexos}
         dsJustificativaAtraso={obrigacao?.dsJustificativaAtraso}
         canAprovarConferencia={canAprovarConferenciaObrigacao}
@@ -205,29 +247,60 @@ export function ConferenciaContent({ id }: ConferenciaContentProps) {
         onSolicitarAjustes={handleSolicitarAjustesClick}
         onAprovarConferencia={handleAprovarConferenciaClick}
         onReprovarConferencia={handleReprovarConferenciaClick}
+        onAprovarReprovarTramitacao={(flAprovado) => {
+          if (flAprovado === FlAprovadoTramitacaoEnum.S) {
+            handleAprovarTramitacaoClick();
+          } else if (flAprovado === FlAprovadoTramitacaoEnum.N) {
+            handleReprovarConferenciaClick();
+          }
+        }}
         onJustificarAtraso={() => openModal('showJustificarAtrasoModal')}
         onAnexarEvidencia={() => openModal('showAnexarEvidenciaModal')}
         onEnviarParaAnalise={handleEnviarParaAnaliseClick}
         onEnviarParaTramitacao={handleEnviarParaTramitacao}
         isStatusDesabilitadoParaTramitacao={isStatusDesabilitadoParaTramitacao}
         arquivosTramitacaoPendentes={arquivosTramitacaoPendentes}
+        idObrigacao={obrigacao?.idSolicitacao}
+        onAnexarProtocoloSuccess={handleAnexarProtocoloSuccess}
+        onAnexarProtocoloClick={handleAnexarProtocoloClick}
       />
 
-      <ConferenciaModals
-        modals={modals}
-        onCloseModal={(modalName) => closeModal(modalName as keyof typeof modals)}
-        obrigacaoId={obrigacao.idSolicitacao}
-        idPerfil={idPerfil}
-        dsJustificativaAtraso={obrigacao.dsJustificativaAtraso || undefined}
-        onConfirmSolicitarAjustes={confirmarSolicitarAjustes}
-        onConfirmEnviarParaAnalise={confirmarEnviarParaAnalise}
-        onConfirmAprovarConferencia={confirmarAprovarConferencia}
-        onConfirmAprovarTramitacao={() => handleAprovarReprovarTramitacao(FlAprovadoTramitacaoEnum.S)}
-        onConfirmReprovarTramitacao={() => handleAprovarReprovarTramitacao(FlAprovadoTramitacaoEnum.N)}
-        onConfirmJustificarAtraso={confirmarJustificarAtraso}
-        onAnexarEvidenciaSuccess={handleAnexarEvidenciaSuccess}
-        onAnexarCorrespondenciaSuccess={handleAnexarCorrespondenciaSuccess}
-      />
+      {obrigacao?.idSolicitacao && (
+        <>
+          <ConferenciaModals
+            modals={modals}
+            onCloseModal={(modalName) => closeModal(modalName as keyof typeof modals)}
+            obrigacaoId={obrigacao.idSolicitacao}
+            idPerfil={idPerfil}
+            dsJustificativaAtraso={obrigacao.dsJustificativaAtraso || undefined}
+            onConfirmSolicitarAjustes={confirmarSolicitarAjustes}
+            onConfirmEnviarParaAnalise={confirmarEnviarParaAnalise}
+            onConfirmAprovarConferencia={confirmarAprovarConferencia}
+            onConfirmAprovarTramitacao={() => handleAprovarReprovarTramitacao(FlAprovadoTramitacaoEnum.S)}
+            onConfirmReprovarTramitacao={() => handleAprovarReprovarTramitacao(FlAprovadoTramitacaoEnum.N)}
+            onConfirmJustificarAtraso={confirmarJustificarAtraso}
+            onAnexarEvidenciaSuccess={handleAnexarEvidenciaSuccess}
+            onAnexarCorrespondenciaSuccess={handleAnexarCorrespondenciaSuccess}
+          />
+
+          <AnexarProtocoloModal
+            open={showAnexarProtocoloModal}
+            onClose={() => setShowAnexarProtocoloModal(false)}
+            idObrigacao={obrigacao.idSolicitacao}
+            idPerfil={idPerfil ?? undefined}
+            onSuccess={handleAnexarProtocoloSuccess}
+          />
+
+          <ObrigacoesCondicionadasModal
+            open={showObrigacoesCondicionadasModal}
+            onClose={() => {
+              setShowObrigacoesCondicionadasModal(false);
+              setObrigacoesCondicionadas([]);
+            }}
+            obrigacoesCondicionadas={obrigacoesCondicionadas}
+          />
+        </>
+      )}
 
       {loading && (
         <LoadingOverlay 

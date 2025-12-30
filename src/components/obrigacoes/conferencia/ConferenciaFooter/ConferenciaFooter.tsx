@@ -8,8 +8,11 @@ import { StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
 import { ArquivoDTO } from '@/api/anexos/type';
 import { AnexoResponse } from '@/api/anexos/type';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
-import { TramitacaoComAnexosResponse } from '@/api/solicitacoes/types';
+import { TramitacaoComAnexosResponse, SolicitacaoAssinanteResponse } from '@/api/solicitacoes/types';
+import { FlAprovadoTramitacaoEnum } from '@/api/tramitacoes/types';
 import { useFooterStatus, useFooterPermissoes, useFooterTooltips } from './hooks';
+import { useMemo } from 'react';
+import { perfilUtil } from '@/api/perfis/types';
 
 interface ConferenciaFooterProps {
   statusSolicitacao?: StatusSolicitacaoResponse | null;
@@ -19,6 +22,7 @@ interface ConferenciaFooterProps {
   idPerfil?: number | null;
   userResponsavel?: ResponsavelResponse | null;
   tramitacoes?: TramitacaoComAnexosResponse[];
+  solicitacoesAssinantes?: SolicitacaoAssinanteResponse[];
   anexos?: AnexoResponse[];
   dsJustificativaAtraso?: string | null;
   canAprovarConferencia?: boolean | null;
@@ -30,12 +34,16 @@ interface ConferenciaFooterProps {
   onSolicitarAjustes: () => void;
   onAprovarConferencia: () => void;
   onReprovarConferencia?: () => void;
+  onAprovarReprovarTramitacao?: (flAprovado: FlAprovadoTramitacaoEnum) => void;
   onJustificarAtraso: () => void;
   onAnexarEvidencia: () => void;
   onEnviarParaAnalise: () => void;
   onEnviarParaTramitacao: () => void;
   isStatusDesabilitadoParaTramitacao: boolean;
   arquivosTramitacaoPendentes?: ArquivoDTO[];
+  idObrigacao?: number;
+  onAnexarProtocoloSuccess?: () => void;
+  onAnexarProtocoloClick?: () => void;
 }
 
 export function ConferenciaFooter({
@@ -46,6 +54,7 @@ export function ConferenciaFooter({
   idPerfil,
   userResponsavel,
   tramitacoes = [],
+  solicitacoesAssinantes = [],
   anexos = [],
   dsJustificativaAtraso,
   canAprovarConferencia = true,
@@ -56,12 +65,15 @@ export function ConferenciaFooter({
   onAnexarCorrespondencia,
   onSolicitarAjustes,
   onAprovarConferencia,
-  onReprovarConferencia,
+  onReprovarConferencia, // Mantido para compatibilidade, mas não usado quando onAprovarReprovarTramitacao está disponível
+  onAprovarReprovarTramitacao,
   onJustificarAtraso,
   onAnexarEvidencia,
   onEnviarParaAnalise,
   onEnviarParaTramitacao,
   isStatusDesabilitadoParaTramitacao,
+  idObrigacao,
+  onAnexarProtocoloClick,
 }: ConferenciaFooterProps) {
 
   const status = useFooterStatus({
@@ -79,6 +91,7 @@ export function ConferenciaFooter({
     isUsuarioDaAreaAtribuida,
     userResponsavel,
     tramitacoes,
+    solicitacoesAssinantes,
     idStatusSolicitacao: status.idStatusSolicitacao,
     flExigeCienciaGerenteRegul,
     isCienciaChecked,
@@ -93,32 +106,53 @@ export function ConferenciaFooter({
     idPerfil,
     isUsuarioDaAreaAtribuida,
     idStatusSolicitacao: status.idStatusSolicitacao,
+    userResponsavel,
+    solicitacoesAssinantes,
     flExigeCienciaGerenteRegul,
     isCienciaChecked,
     isStatusEmValidacaoRegulatorio: status.isStatusEmValidacaoRegulatorio,
+    isStatusEmAnaliseRegulatoria: status.isStatusEmAnaliseRegulatoria,
     isStatusAtrasada: status.isStatusAtrasada,
     isStatusPermitidoEnviarReg: status.isStatusPermitidoEnviarReg,
     isPerfilPermitidoEnviarReg: permissoes.isPerfilPermitidoEnviarReg,
+    isDiretorJaAprovou: permissoes.isDiretorJaAprovou,
     conferenciaAprovada: status.conferenciaAprovada,
     temEvidenciaCumprimento: status.temEvidenciaCumprimento,
     temJustificativaAtraso: status.temJustificativaAtraso,
   });
 
+  const isStatusBtnEnviarParaTramitacao = useMemo(() => {
+    return !status.isStatusBtnFlAprovar && !isStatusDesabilitadoParaTramitacao && !status.isStatusEmValidacaoRegulatorio && !status.isStatusAprovacaoTramitacao
+  }, [status.isStatusBtnFlAprovar, isStatusDesabilitadoParaTramitacao, status.isStatusEmValidacaoRegulatorio, status.isStatusAprovacaoTramitacao]);
+
+  const isPermitidoAnexarEvidencia = useMemo(() => {
+    return (
+          (idPerfil === perfilUtil.EXECUTOR_AVANCADO ||
+          idPerfil === perfilUtil.EXECUTOR ||
+          idPerfil === perfilUtil.EXECUTOR_RESTRITO) &&
+         (status.isStatusPermitidoEnviarReg)
+      );
+  }, [status.isStatusPermitidoEnviarReg, idPerfil]);
+
+    
   return (
-    <footer className="fixed bottom-0 left-0 right-0 z-11 border-t border-gray-200 bg-white px-8 py-4">
+    <footer className="fixed bottom-0 left-0 right-0 z-11 border-t border-gray-200 bg-white px-8 py-4 h-[73px]">
       <div className="ml-auto flex w-full max-w-6xl flex-wrap items-center justify-end gap-3">
+        {status.isStatusEmAnaliseRegulatoria || (isAdminOrGestor && status.isStatusEmValidacaoRegulatorio) && (
+          <Button
+            type="button"
+            className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={onAnexarCorrespondencia}
+            disabled={!status.conferenciaAprovada || (!status.isStatusEmValidacaoRegulatorio && !status.isStatusEmAnaliseRegulatoria)}
+            tooltip={(!status.conferenciaAprovada || (!status.isStatusEmValidacaoRegulatorio && !status.isStatusEmAnaliseRegulatoria)) ? tooltips.tooltipAnexarCorrespondencia : ''}
+          >
+            <Paperclip className="h-4 w-4" />
+            Anexar correspondência
+          </Button>
+        )}
+
         {isAdminOrGestor && status.isStatusEmValidacaoRegulatorio ? (
           <>
-            <Button
-              type="button"
-              className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={onAnexarCorrespondencia}
-              disabled={!status.isStatusEmValidacaoRegulatorio || !status.conferenciaAprovada}
-              tooltip={tooltips.tooltipAnexarCorrespondencia}
-            >
-              <Paperclip className="h-4 w-4" />
-              Anexar correspondência
-            </Button>
             {canSolicitarAjustes && (
               <Button
                 type="button"
@@ -164,8 +198,8 @@ export function ConferenciaFooter({
                   type="button"
                   className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={onAnexarEvidencia}
-                  disabled={!status.isStatusPermitidoEnviarReg}
-                  tooltip={tooltips.tooltipAnexarEvidencia}
+                  disabled={!isPermitidoAnexarEvidencia}
+                  tooltip={!isPermitidoAnexarEvidencia ? tooltips.tooltipAnexarEvidencia : ''}
                 >
                   <Paperclip className="h-4 w-4" />
                   Anexar evidência de cumprimento
@@ -190,7 +224,13 @@ export function ConferenciaFooter({
             <Button
               type="button"
               className="flex items-center gap-2 rounded-full bg-red-600 px-6 py-3 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={onReprovarConferencia}
+              onClick={() => {
+                if (onReprovarConferencia) {
+                  onReprovarConferencia();
+                } else if (onAprovarReprovarTramitacao) {
+                  onAprovarReprovarTramitacao(FlAprovadoTramitacaoEnum.N);
+                }
+              }}
               disabled={!permissoes.isPerfilPermitidoEnviarTramitacaoPorStatus}
               tooltip={!permissoes.isPerfilPermitidoEnviarTramitacaoPorStatus ? tooltips.tooltipPerfilPermitidoEnviarTramitacaoPorStatus : ''}
             >
@@ -201,7 +241,13 @@ export function ConferenciaFooter({
             <Button
               type="button"
               className="flex items-center gap-2 rounded-full bg-green-600 px-6 py-3 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={onAprovarConferencia}
+              onClick={() => {
+                if (onAprovarReprovarTramitacao) {
+                  onAprovarReprovarTramitacao(FlAprovadoTramitacaoEnum.S);
+                } else {
+                  onAprovarConferencia();
+                }
+              }}
               disabled={!permissoes.isPerfilPermitidoEnviarTramitacaoPorStatus}
               tooltip={!permissoes.isPerfilPermitidoEnviarTramitacaoPorStatus ? tooltips.tooltipPerfilPermitidoEnviarTramitacaoPorStatus : ''}
             >
@@ -230,7 +276,7 @@ export function ConferenciaFooter({
           </div>
         )}
 
-        {!status.isStatusBtnFlAprovar && !isStatusDesabilitadoParaTramitacao && !status.isStatusEmValidacaoRegulatorio && (
+        {isStatusBtnEnviarParaTramitacao && (
           <Button
             type="button"
             className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -242,6 +288,24 @@ export function ConferenciaFooter({
             {status.textoBtnEnviarParaTramitacaoPorStatus}
           </Button>
         )}
+
+        {status.isStatusAprovacaoTramitacao && (
+          <Button
+            type="button"
+            className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={() => {
+              if (onAnexarProtocoloClick) {
+                onAnexarProtocoloClick();
+              }
+            }}
+            disabled={!permissoes.isPerfilPermitidoEnviarTramitacaoPorStatus || !idObrigacao || !onAnexarProtocoloClick}
+            tooltip={!permissoes.isPerfilPermitidoEnviarTramitacaoPorStatus ? tooltips.tooltipPerfilPermitidoEnviarTramitacaoPorStatus : ''}
+          >
+            <Paperclip className="h-4 w-4" />
+            Anexar Protocolo
+          </Button>
+        )}
+
       </div>
     </footer>
   );

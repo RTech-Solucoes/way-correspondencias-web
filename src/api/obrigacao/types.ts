@@ -150,7 +150,6 @@ export interface ObrigacaoCalendarioMesCountResponse {
 
 export interface ObrigacaoStep1Request {
   dsTarefa: string;
-  flAnaliseGerenteDiretor: string;
   flExigeCienciaGerenteRegul: string;
   dsObservacao?: string;
 }

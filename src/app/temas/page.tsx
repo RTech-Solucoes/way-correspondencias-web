@@ -276,7 +276,9 @@ export default function TemasPage() {
                   <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
               </StickyTableHead>
-              <StickyTableHead className="text-right">Ações</StickyTableHead>
+              {(canAtualizarTema || canDeletarTema) && (
+                <StickyTableHead className="text-right">Ações</StickyTableHead>
+              )}
             </StickyTableRow>
           </StickyTableHeader>
           <StickyTableBody>
@@ -330,7 +332,7 @@ export default function TemasPage() {
                         </Button>
                       }
                     </div>
-                  </StickyTableCell>
+                    </StickyTableCell>
                 </StickyTableRow>
               )))
             }

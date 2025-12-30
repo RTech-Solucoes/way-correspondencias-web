@@ -4,13 +4,14 @@ import { useMemo } from 'react';
 import { perfilUtil } from '@/api/perfis/types';
 import { statusList } from '@/api/status-solicitacao/types';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
-import { TramitacaoComAnexosResponse } from '@/api/solicitacoes/types';
+import { TramitacaoComAnexosResponse, SolicitacaoAssinanteResponse } from '@/api/solicitacoes/types';
 
 interface UseFooterPermissoesParams {
   idPerfil?: number | null;
   isUsuarioDaAreaAtribuida: boolean;
   userResponsavel?: ResponsavelResponse | null;
   tramitacoes?: TramitacaoComAnexosResponse[];
+  solicitacoesAssinantes?: SolicitacaoAssinanteResponse[];
   idStatusSolicitacao: number;
   flExigeCienciaGerenteRegul?: string | null;
   isCienciaChecked?: boolean;
@@ -24,6 +25,9 @@ interface UseFooterPermissoesParams {
 export function useFooterPermissoes({
   idPerfil,
   isUsuarioDaAreaAtribuida,
+  userResponsavel,
+  tramitacoes = [],
+  solicitacoesAssinantes = [],
   idStatusSolicitacao,
   flExigeCienciaGerenteRegul,
   isCienciaChecked = false,
@@ -50,6 +54,19 @@ export function useFooterPermissoes({
            (!isStatusAtrasada || temJustificativaAtraso);
   }, [isStatusPermitidoEnviarReg, isPerfilPermitidoEnviarReg, temEvidenciaCumprimento, isStatusAtrasada, temJustificativaAtraso]);
 
+  const isDiretorJaAprovou = useMemo(() => {
+    const nrNivelUltimaTramitacao = tramitacoes?.[0]?.tramitacao?.nrNivel;
+    
+    return tramitacoes?.some(t =>
+      t?.tramitacao?.nrNivel === nrNivelUltimaTramitacao &&
+      t?.tramitacao?.idStatusSolicitacao === idStatusSolicitacao &&
+      t?.tramitacao?.flAprovado === 'S' &&
+      (t?.tramitacao?.tramitacaoAcao?.some(ta =>
+        ta?.responsavelArea?.responsavel?.idResponsavel === userResponsavel?.idResponsavel
+      ) ?? false)
+    ) ?? false;
+  }, [tramitacoes, idStatusSolicitacao, userResponsavel?.idResponsavel]);
+
   const isPerfilPermitidoEnviarTramitacaoPorStatus = useMemo(() => {
     
     if (isStatusEmAnaliseGerenteRegulatorio) {
@@ -71,7 +88,18 @@ export function useFooterPermissoes({
     }
 
     if (idStatusSolicitacao === statusList.EM_ASSINATURA_DIRETORIA.id) {
-      if (idPerfil === perfilUtil.ADMINISTRADOR || idPerfil === perfilUtil.VALIDADOR_ASSINANTE) return true;
+      const idResponsavelLogado = userResponsavel?.idResponsavel;
+      if (idResponsavelLogado) {
+        const isAssinante = solicitacoesAssinantes.some(
+          assinante => assinante.idResponsavel === idResponsavelLogado
+        );
+        if (isAssinante && !isDiretorJaAprovou) return true;
+      }
+      return false;
+    }
+
+    if (idStatusSolicitacao === statusList.APROVACAO_TRAMITACAO.id) {
+      if (idPerfil === perfilUtil.ADMINISTRADOR || idPerfil === perfilUtil.GESTOR_DO_SISTEMA) return true;
     }
 
     return false;
@@ -80,13 +108,17 @@ export function useFooterPermissoes({
     idStatusSolicitacao, 
     flExigeCienciaGerenteRegul, 
     isCienciaChecked, 
-    isStatusEmAnaliseGerenteRegulatorio
+    isStatusEmAnaliseGerenteRegulatorio,
+    userResponsavel?.idResponsavel,
+    solicitacoesAssinantes,
+    isDiretorJaAprovou
   ]);
 
   return {
     isPerfilPermitidoEnviarReg,
     podeEnviarParaAnalise,
     isPerfilPermitidoEnviarTramitacaoPorStatus,
+    isDiretorJaAprovou,
   };
 }
 

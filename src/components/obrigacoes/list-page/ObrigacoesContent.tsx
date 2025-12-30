@@ -4,7 +4,7 @@ import { useObrigacoes } from "@/context/obrigacoes/ObrigacoesContext";
 import { FiltrosAplicados } from "@/components/ui/applied-filters";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { statusObrigacaoList, statusObrigacaoLabels, StatusObrigacao, statusListObrigacao } from "@/api/status-obrigacao/types";
+import { STATUS_LIST, statusList } from "@/api/status-solicitacao/types";
 import obrigacaoClient from "@/api/obrigacao/client";
 import { toast } from "sonner";
 import { useUserGestao } from "@/hooks/use-user-gestao";
@@ -105,9 +105,9 @@ export function ObrigacoesContent() {
 
   const getStatusText = (statusCode: string): string | null => {
     if (!statusCode) return null;
-    const status = statusObrigacaoList.find(s => s.id.toString() === statusCode);
+    const status = STATUS_LIST.find(s => s.id.toString() === statusCode);
     if (status) {
-      return statusObrigacaoLabels[status.nmStatus as StatusObrigacao] || status.nmStatus;
+      return status.label;
     }
     return null;
   };
@@ -225,8 +225,7 @@ export function ObrigacoesContent() {
             const condicionadas = response.obrigacoesCondicionadas || [];
             const condicionadasPendentes = condicionadas.filter(
               (cond) =>
-                cond.statusSolicitacao?.idStatusSolicitacao !== statusListObrigacao.CONCLUIDO.id &&
-                cond.statusSolicitacao?.nmStatus !== StatusObrigacao.CONCLUIDO
+                cond.statusSolicitacao?.idStatusSolicitacao !== statusList.CONCLUIDO.id
             );
 
             if (condicionadasPendentes.length > 0) {
@@ -242,7 +241,7 @@ export function ObrigacoesContent() {
           }
         }}
         onEncaminharTramitacao={(obrigacao) => {
-          const isEmValidacao = obrigacao.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.EM_VALIDACAO_REGULATORIO.id;                          
+          const isEmValidacao = obrigacao.statusSolicitacao?.idStatusSolicitacao === statusList.EM_VALIDACAO_REGULATORIO.id;                          
           if (isEmValidacao) {
             setObrigacaoParaConfirmarTramitacao(obrigacao);
             setShowConfirmTramitacao(true);

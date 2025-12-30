@@ -44,46 +44,6 @@ export function Step1Dados({ formData, updateFormData, disabled = false }: Step1
 
       <div className="space-y-2">
         <Label className="text-sm font-medium">
-          Exige aprovação especial?
-        </Label>
-        <div className="flex items-center gap-6 mt-2">
-          <div className="flex items-center gap-2">
-            <Checkbox
-              checked={(formData.flAnaliseGerenteDiretor || '').toUpperCase() === 'G'}
-              onCheckedChange={() => updateFormData({ flAnaliseGerenteDiretor: 'G' })}
-              disabled={disabled}
-            />
-            <Label className="text-sm font-light cursor-pointer">Gerente</Label>
-          </div>
-          <div className="flex items-center gap-2">
-            <Checkbox
-              checked={(formData.flAnaliseGerenteDiretor || '').toUpperCase() === 'D'}
-              onCheckedChange={() => updateFormData({ flAnaliseGerenteDiretor: 'D' })}
-              disabled={disabled}
-            />
-            <Label className="text-sm font-light cursor-pointer">Diretor</Label>
-          </div>
-          <div className="flex items-center gap-2">
-            <Checkbox
-              checked={(formData.flAnaliseGerenteDiretor || '').toUpperCase() === 'A'}
-              onCheckedChange={() => updateFormData({ flAnaliseGerenteDiretor: 'A' })}
-              disabled={disabled}
-            />
-            <Label className="text-sm font-light cursor-pointer">Ambos</Label>
-          </div>
-          <div className="flex items-center gap-2">
-            <Checkbox
-              checked={(formData.flAnaliseGerenteDiretor || '').toUpperCase() === 'N'}
-              onCheckedChange={() => updateFormData({ flAnaliseGerenteDiretor: 'N' })}
-              disabled={disabled}
-            />
-            <Label className="text-sm font-light cursor-pointer">Não necessita</Label>
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label className="text-sm font-medium">
           Exige manifestação do Gerente do Regulatório?*
         </Label>
         <div className="flex items-center gap-6 mt-2">

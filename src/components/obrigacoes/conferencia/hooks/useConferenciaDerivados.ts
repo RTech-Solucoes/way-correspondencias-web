@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { statusListObrigacao } from '@/api/status-obrigacao/types';
 import { TipoDocumentoAnexoEnum } from '@/api/anexos/type';
 import { statusList } from '@/api/status-solicitacao/types';
 import { ObrigacaoDetalheResponse } from '@/api/obrigacao/types';
@@ -11,7 +10,7 @@ interface UseConferenciaDerivadosProps {
 
 export function useConferenciaDerivados({ obrigacao, anexos }: UseConferenciaDerivadosProps) {
   const isStatusAtrasada = useMemo(() => {
-    return obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.ATRASADA.id;
+    return obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.ATRASADA.id;
   }, [obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 
   const temEvidenciaCumprimento = useMemo(() => {
@@ -29,11 +28,11 @@ export function useConferenciaDerivados({ obrigacao, anexos }: UseConferenciaDer
     const idStatus = obrigacao?.statusSolicitacao?.idStatusSolicitacao ?? 0;
     
     return (
-      idStatus === statusListObrigacao.NAO_INICIADO.id ||
-      idStatus === statusListObrigacao.PENDENTE.id ||
-      idStatus === statusListObrigacao.EM_ANDAMENTO.id ||
-      idStatus === statusListObrigacao.ATRASADA.id ||
-      idStatus === statusListObrigacao.NAO_APLICAVEL_SUSPENSA.id
+      idStatus === statusList.NAO_INICIADO.id ||
+      idStatus === statusList.PENDENTE.id ||
+      idStatus === statusList.EM_ANDAMENTO.id ||
+      idStatus === statusList.ATRASADA.id ||
+      idStatus === statusList.NAO_APLICAVEL_SUSPENSA.id
     );
   }, [obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 

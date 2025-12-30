@@ -575,7 +575,7 @@ function SolicitacoesPageContent() {
                 className="cursor-pointer"
                 onClick={() => handleSort('cdIdentificacao')}
               >
-                <div className="flex items-center">
+                <div className="flex items-center min-w-[120px]">
                   Identificação
                   <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
                 </div>
@@ -635,7 +635,7 @@ function SolicitacoesPageContent() {
               sortedSolicitacoes()?.map((solicitacao: SolicitacaoResponse) => (
                 <React.Fragment key={solicitacao.idSolicitacao}>
                   <StickyTableRow>
-                    <StickyTableCell className="font-medium">{solicitacao.cdIdentificacao}</StickyTableCell>
+                    <StickyTableCell className="font-medium min-w-[120px]">{solicitacao.cdIdentificacao}</StickyTableCell>
                     <StickyTableCell className="max-w-xs truncate">{solicitacao.dsAssunto}</StickyTableCell>
                     <StickyTableCell>
                       {(solicitacao.area && solicitacao.area.length > 0) ? (

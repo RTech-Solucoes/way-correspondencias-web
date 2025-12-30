@@ -18,7 +18,7 @@ import {
 } from "@phosphor-icons/react";
 import { ObrigacaoResponse } from "@/api/obrigacao/types";
 import { BriefcaseIcon, FileTextIcon, BanIcon } from "lucide-react";
-import { StatusObrigacao, statusListObrigacao } from "@/api/status-obrigacao/types";
+import { statusList } from "@/api/status-solicitacao/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useUserGestao } from "@/hooks/use-user-gestao";
 import { perfilUtil } from "@/api/perfis/types";
@@ -62,28 +62,29 @@ export function ObrigacaoAcoesMenu({
   } = usePermissoes();
   
   
-  const isStatusConcluido = obrigacao.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.CONCLUIDO.id ||
-    obrigacao.statusSolicitacao?.nmStatus === StatusObrigacao.CONCLUIDO;
+  const isStatusConcluido = obrigacao.statusSolicitacao?.idStatusSolicitacao === statusList.CONCLUIDO.id;
 
   const isStatusNaoAplicavelSuspenso = useMemo(() => {
-    return obrigacao.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.NAO_APLICAVEL_SUSPENSA.id ||
-      obrigacao.statusSolicitacao?.nmStatus === StatusObrigacao.NAO_APLICAVEL_SUSPENSA;
+    return obrigacao.statusSolicitacao?.idStatusSolicitacao === statusList.NAO_APLICAVEL_SUSPENSA.id;
   }, [obrigacao.statusSolicitacao]);
 
   const isStatusEmValidacao = useMemo(() => {
-    return obrigacao.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.EM_VALIDACAO_REGULATORIO.id ||
-      obrigacao.statusSolicitacao?.nmStatus === StatusObrigacao.EM_VALIDACAO_REGULATORIO;
+    return obrigacao.statusSolicitacao?.idStatusSolicitacao === statusList.EM_VALIDACAO_REGULATORIO.id;
+  }, [obrigacao.statusSolicitacao]);
+
+  const isStatusAprovacaoTramitacao = useMemo(() => {
+    return obrigacao.statusSolicitacao?.idStatusSolicitacao === statusList.APROVACAO_TRAMITACAO.id;
   }, [obrigacao.statusSolicitacao]);
 
   const isStatusDesabilitadoTramitacao = useMemo(() => {
     const idStatus = obrigacao.statusSolicitacao?.idStatusSolicitacao;
     
     return (
-      idStatus === statusListObrigacao.NAO_INICIADO.id ||
-      idStatus === statusListObrigacao.PENDENTE.id ||
-      idStatus === statusListObrigacao.EM_ANDAMENTO.id ||
-      idStatus === statusListObrigacao.ATRASADA.id ||
-      idStatus === statusListObrigacao.NAO_APLICAVEL_SUSPENSA.id
+      idStatus === statusList.NAO_INICIADO.id ||
+      idStatus === statusList.PENDENTE.id ||
+      idStatus === statusList.EM_ANDAMENTO.id ||
+      idStatus === statusList.ATRASADA.id ||
+      idStatus === statusList.NAO_APLICAVEL_SUSPENSA.id
     );
   }, [obrigacao.statusSolicitacao]);
 
@@ -130,15 +131,15 @@ export function ObrigacaoAcoesMenu({
   }, [obrigacao.idSolicitacao]);
 
   const podeAnexarProtocolo = useMemo(() => {
-    return isAdminOrGestor && isStatusEmValidacao && !isStatusConcluido && isExisteAnexoCorrespondencia;
-  }, [isAdminOrGestor, isStatusEmValidacao, isStatusConcluido, isExisteAnexoCorrespondencia]);
+    return isAdminOrGestor && (isStatusEmValidacao || isStatusAprovacaoTramitacao) && !isStatusConcluido && isExisteAnexoCorrespondencia;
+  }, [isAdminOrGestor, isStatusEmValidacao, isStatusAprovacaoTramitacao, isStatusConcluido, isExisteAnexoCorrespondencia]);
 
   const tooltipAnexarProtocolo = useMemo(() => {
     if (isStatusConcluido) {
       return 'Esta obrigação já está concluída. Não é possível anexar protocolo.';
     }
-    if (!isStatusEmValidacao) {
-      return 'Apenas é possível anexar protocolo quando a obrigação estiver em "Em Validação (Regulatório)".';
+    if (!isStatusEmValidacao && !isStatusAprovacaoTramitacao) {
+      return 'Apenas é possível anexar protocolo quando a obrigação estiver em "Em Validação (Regulatório)" ou "Aprovação Tramitação".';
     }
 
     if (!isExisteAnexoCorrespondencia) {
@@ -149,7 +150,7 @@ export function ObrigacaoAcoesMenu({
       return 'Apenas administradores e gestores do sistema podem anexar protocolo.';
     }
     return '';
-  }, [isStatusConcluido, isStatusEmValidacao, isAdminOrGestor, isExisteAnexoCorrespondencia]);
+  }, [isStatusConcluido, isStatusEmValidacao, isStatusAprovacaoTramitacao, isAdminOrGestor, isExisteAnexoCorrespondencia]);
 
   const jaEnviadoParaArea = obrigacao.flEnviandoArea === 'S';
   const isNaoPermitidoEditar = conferenciaAprovada || isStatusNaoAplicavelSuspenso;

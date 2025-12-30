@@ -1,12 +1,12 @@
 'use client';
 
 import { useMemo } from 'react';
-import { statusListObrigacao } from '@/api/status-obrigacao/types';
 import { statusList } from '@/api/status-solicitacao/types';
 import { perfilUtil } from '@/api/perfis/types';
 import type { ObrigacaoDetalheResponse } from '@/api/obrigacao/types';
 import type { ResponsavelResponse } from '@/api/responsaveis/types';
 import { TipoEnum } from '@/api/tipos/types';
+import { CdAreaEnum } from '@/api/areas/types';
 
 interface UsePermissoesObrigacaoParams {
   detalhe: ObrigacaoDetalheResponse;
@@ -46,37 +46,57 @@ export function usePermissoesObrigacao({
     return idsAreasCondicionantes.some(idArea => userAreaIds.includes(idArea));
   }, [areasCondicionantes, userAreaIds]);
 
+  const isDaAreaDiretoria = useMemo(() => {
+    if (!userResponsavel?.areas) return false;
+    return userResponsavel.areas.some(
+      ra => ra.area?.cdArea === CdAreaEnum.DIRETORIA || 
+            ra.area?.nmArea?.toLowerCase().includes('diretoria')
+    );
+  }, [userResponsavel?.areas]);
+
+  const isValidadorAssinanteDiretoria = useMemo(() => {
+    return idPerfil === perfilUtil.VALIDADOR_ASSINANTE && isDaAreaDiretoria;
+  }, [idPerfil, isDaAreaDiretoria]);
+
   // Status helpers
   const isStatusEmAndamento = useMemo(() => {
-    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.EM_ANDAMENTO.id;
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.EM_ANDAMENTO.id;
   }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 
   const isStatusAtrasada = useMemo(() => {
-    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.ATRASADA.id;
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.ATRASADA.id;
   }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 
   const isStatusEmValidacaoRegulatorio = useMemo(() => {
-    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.EM_VALIDACAO_REGULATORIO.id;
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.EM_VALIDACAO_REGULATORIO.id;
   }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 
   const isStatusPendente = useMemo(() => {
-    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.PENDENTE.id;
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.PENDENTE.id;
   }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 
   const isStatusNaoIniciado = useMemo(() => {
-    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.NAO_INICIADO.id;
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.NAO_INICIADO.id;
   }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 
   const isStatusConcluido = useMemo(() => {
-    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.CONCLUIDO.id;
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.CONCLUIDO.id;
   }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 
   const isStatusNaoAplicavelSuspensa = useMemo(() => {
-    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusListObrigacao.NAO_APLICAVEL_SUSPENSA.id;
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.NAO_APLICAVEL_SUSPENSA.id;
   }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 
   const isStatusPreAnalise = useMemo(() => {
     return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.PRE_ANALISE.id;
+  }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
+  const isStatusAprovacaoTramitacao = useMemo(() => {
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.APROVACAO_TRAMITACAO.id;
+  }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
+  const isStatusEmAssinaturaDiretoria = useMemo(() => {
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.EM_ASSINATURA_DIRETORIA.id;
   }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 
   // Verificar se pode gerar relatório
@@ -95,8 +115,13 @@ export function usePermissoesObrigacao({
     return false;
   }, [idPerfil, isDaAreaAtribuida, isDeAreaCondicionante]);
 
-  // Verificar permissão do perfil por status
   const isPerfilPermitidoPorStatus = useMemo(() => {
+    if (isValidadorAssinanteDiretoria) {
+      if (!isDaAreaAtribuida || isStatusEmAssinaturaDiretoria) {
+        return true;
+      }
+    }
+
     if (isStatusNaoIniciado) {
       if (isDaAreaAtribuida) {
         return true;
@@ -143,7 +168,9 @@ export function usePermissoesObrigacao({
     isStatusEmValidacaoRegulatorio,
     isStatusConcluido, 
     isStatusNaoAplicavelSuspensa, 
-    isDaAreaAtribuida
+    isDaAreaAtribuida,
+    isValidadorAssinanteDiretoria,
+    isStatusEmAssinaturaDiretoria
   ]);
 
   // Status permitido para tramitar
@@ -151,13 +178,23 @@ export function usePermissoesObrigacao({
     const idStatus = detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao;
     if (!idStatus) return false;
     return [
-      statusListObrigacao.NAO_INICIADO.id,
-      statusListObrigacao.PENDENTE.id,  
+      statusList.NAO_INICIADO.id,
+      statusList.PENDENTE.id,  
     ].includes(idStatus);
   }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 
   // Tooltip para enviar comentário
   const tooltipPerfilPermitidoPorStatus = useMemo(() => {
+    if (isValidadorAssinanteDiretoria && isDaAreaAtribuida && !isStatusEmAssinaturaDiretoria) {
+      return 'Por ser da área atribuída, não é possível adicionar parecer. Apenas é permitido quando o status for "Em Assinatura Diretoria" ou quando não for da área atribuída.';
+    }
+    
+    if (isValidadorAssinanteDiretoria) {
+      if (!isDaAreaAtribuida || isStatusEmAssinaturaDiretoria) {
+        return '';
+      }
+    }
+
     if (isStatusNaoIniciado) {
       if (!isDaAreaAtribuida) {
         return 'Apenas usuários da área atribuída podem inserir comentários quando o status é "Não Iniciado".';
@@ -199,7 +236,9 @@ export function usePermissoesObrigacao({
     isStatusConcluido,
     isStatusNaoAplicavelSuspensa,
     isDaAreaAtribuida,
-    idPerfil
+    idPerfil,
+    isValidadorAssinanteDiretoria,
+    isStatusEmAssinaturaDiretoria
   ]);
 
   return {
@@ -210,6 +249,8 @@ export function usePermissoesObrigacao({
     idAreaAtribuida,
     isDaAreaAtribuida,
     isDeAreaCondicionante,
+    isDaAreaDiretoria,
+    isValidadorAssinanteDiretoria,
     // Status
     isStatusEmAndamento,
     isStatusAtrasada,
@@ -219,6 +260,8 @@ export function usePermissoesObrigacao({
     isStatusConcluido,
     isStatusNaoAplicavelSuspensa,
     isStatusPreAnalise,
+    isStatusAprovacaoTramitacao,
+    isStatusEmAssinaturaDiretoria,
     // Permissões
     podeGerarRelatorio,
     isPerfilPermitidoPorStatus,

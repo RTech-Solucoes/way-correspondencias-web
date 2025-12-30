@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Stepper } from '@/components/ui/stepper';
 import { Button } from '@/components/ui/button';
@@ -69,15 +69,6 @@ export function ObrigacaoModal() {
   });
 
   useEffect(() => {
-    if (showObrigacaoModal) {
-      setFormData((prev) => ({
-        ...prev,
-        idStatusSolicitacao: 12,
-      }));
-    }
-  }, [showObrigacaoModal]);
-
-  useEffect(() => {
     const carregarTipoCondicionada = async () => {
       try {
         const tipos = await tiposClient.buscarPorCategorias([CategoriaEnum.OBRIG_CLASSIFICACAO]);
@@ -95,7 +86,7 @@ export function ObrigacaoModal() {
     }
   }, [showObrigacaoModal]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setShowObrigacaoModal(false);
     setCurrentStep(1);
     setAnexosParaEnviar([]);
@@ -122,12 +113,19 @@ export function ObrigacaoModal() {
       idObrigacaoRecusada: null,
       dsTac: null,
     });
-    loadObrigacoes();
-  };
+  }, [setShowObrigacaoModal]);
 
-  const updateFormData = (data: Partial<ObrigacaoFormData>) => {
+  const prevShowObrigacaoModalRef = useRef(showObrigacaoModal);
+  useEffect(() => {
+    if (prevShowObrigacaoModalRef.current && !showObrigacaoModal) {
+      loadObrigacoes();
+    }
+    prevShowObrigacaoModalRef.current = showObrigacaoModal;
+  }, [showObrigacaoModal, loadObrigacoes]);
+
+  const updateFormData = useCallback((data: Partial<ObrigacaoFormData>) => {
     setFormData((prev) => ({ ...prev, ...data }));
-  };
+  }, []);
 
   const validateStep = useCallback((step: number): boolean => {
     switch (step) {
@@ -273,7 +271,7 @@ export function ObrigacaoModal() {
   };
 
   return (
-    <Dialog open={showObrigacaoModal} onOpenChange={handleClose}>
+    <Dialog open={showObrigacaoModal} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="w-[70vw] h-[89vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">

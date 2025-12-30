@@ -40,6 +40,7 @@ interface AnexosTabProps {
   isStatusConcluido?: boolean;
   isStatusNaoAplicavelSuspensa?: boolean;
   isStatusPreAnalise?: boolean;
+  isStatusAprovacaoTramitacao?: boolean;
   isDaAreaAtribuida?: boolean;
   isStatusDesabilitadoParaTramitacao?: boolean;
   arquivosTramitacaoPendentes?: ArquivoDTO[];
@@ -66,6 +67,7 @@ export function AnexosTab({
   isStatusConcluido = false,
   isStatusNaoAplicavelSuspensa = false,
   isStatusPreAnalise = false,
+  isStatusAprovacaoTramitacao = false,
   isDaAreaAtribuida = false,
   isStatusDesabilitadoParaTramitacao = false,
   arquivosTramitacaoPendentes = [],
@@ -186,6 +188,7 @@ export function AnexosTab({
           podeExcluirAnexo={permissoes.podeExcluirAnexo}
           isStatusConcluido={isStatusConcluido}
           isStatusPreAnalise={isStatusPreAnalise}
+          isStatusAprovacaoTramitacao={isStatusAprovacaoTramitacao}
           onOpenAnexarTramitacaoModal={handleOpenAnexarTramitacaoModal}
         />
       )}

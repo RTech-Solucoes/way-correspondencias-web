@@ -28,7 +28,6 @@ export interface TramitacaoFormData {
   dsTarefa?: string;
   cdIdentificacao?: string;
   cdItem?: string;
-  flAnaliseGerenteDiretor?: string;
   flExigeCienciaGerenteRegul?: string;
   dsAssunto?: string;
   dsObservacao?: string;
@@ -71,7 +70,6 @@ export function TramitacaoObrigacaoModal({ open, onClose, onConfirm, obrigacaoId
     dsTarefa: '',
     cdIdentificacao: '',
     cdItem: '',
-    flAnaliseGerenteDiretor: '',
     flExigeCienciaGerenteRegul: '',
     dsAssunto: '',
     dsObservacao: '',
@@ -101,7 +99,6 @@ export function TramitacaoObrigacaoModal({ open, onClose, onConfirm, obrigacaoId
       const mappedData: Partial<TramitacaoFormData> = {
         dsTarefa: obrigacao.dsTarefa || '',
         cdIdentificacao: obrigacao.cdIdentificacao || '',
-        flAnaliseGerenteDiretor: obrigacao.flAnaliseGerenteDiretor || '',
         flExigeCienciaGerenteRegul: obrigacao.flExigeCienciaGerenteRegul || '',
         dsObservacao: obrigacao.dsObservacao || '',
         idTema: obrigacao.tema?.idTema || null,
@@ -195,7 +192,6 @@ export function TramitacaoObrigacaoModal({ open, onClose, onConfirm, obrigacaoId
         try {
           await obrigacaoClient.atualizarStep1(obrigacaoId, {
             dsTarefa: formData.dsTarefa || '',
-            flAnaliseGerenteDiretor: formData.flAnaliseGerenteDiretor || '',
             flExigeCienciaGerenteRegul: formData.flExigeCienciaGerenteRegul || '',
             dsObservacao: formData.dsObservacao || '',
           });
@@ -384,7 +380,6 @@ export function TramitacaoObrigacaoModal({ open, onClose, onConfirm, obrigacaoId
       dsTarefa: '',
       cdIdentificacao: '',
       cdItem: '',
-      flAnaliseGerenteDiretor: '',
       flExigeCienciaGerenteRegul: '',
       dsAssunto: '',
       dsObservacao: '',
@@ -453,8 +448,6 @@ export function TramitacaoObrigacaoModal({ open, onClose, onConfirm, obrigacaoId
     switch (step) {
       case 1:
         return !!(
-          formData.flAnaliseGerenteDiretor &&
-          formData.flAnaliseGerenteDiretor.trim() !== '' &&
           formData.flExigeCienciaGerenteRegul &&
           formData.flExigeCienciaGerenteRegul.trim() !== ''
         );

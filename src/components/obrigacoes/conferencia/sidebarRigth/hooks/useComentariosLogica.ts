@@ -13,7 +13,7 @@ import { TramitacaoResponse as SolTramitacaoResponse, TramitacaoComAnexosRespons
 import { perfilUtil } from '@/api/perfis/types';
 import type { ObrigacaoDetalheResponse } from '@/api/obrigacao/types';
 import type { ArquivoDTO } from '@/api/anexos/type';
-import { statusListObrigacao } from '@/api/status-obrigacao/types';
+import { statusList } from '@/api/status-solicitacao/types';
 
 interface UseComentariosLogicaParams {
   detalhe: ObrigacaoDetalheResponse;
@@ -250,7 +250,8 @@ export function useComentariosLogica({
     }
 
     if (idPerfil === perfilUtil.ADMINISTRADOR ||
-      idPerfil === perfilUtil.GESTOR_DO_SISTEMA) {
+      idPerfil === perfilUtil.GESTOR_DO_SISTEMA ||
+      idPerfil === perfilUtil.VALIDADOR_ASSINANTE) {
       return true;
     }
 
@@ -366,7 +367,7 @@ export function useComentariosLogica({
             return;
           }
 
-          if (idStatusAtual === statusListObrigacao.ATRASADA.id) {
+          if (idStatusAtual === statusList.ATRASADA.id) {
             const parecerRequest: {
               idSolicitacao: number;
               idStatusSolicitacao: number;
@@ -542,4 +543,3 @@ export function useComentariosLogica({
     reloadDados,
   };
 }
-

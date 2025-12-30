@@ -95,7 +95,7 @@ export function Step3Obrigacao({ formData, updateFormData, disabled = false }: S
         updateFormData({ nrDuracaoDias: diferencaEmDias > 0 ? diferencaEmDias : 0 });
       }
     }
-  }, [formData.dtInicio, formData.dtTermino]);
+  }, [formData.dtInicio, formData.dtTermino, updateFormData, formData.nrDuracaoDias]);
   const handleFrequenciaChange = (tipo: TipoFrequencia) => {
     setTipoFrequencia(tipo);
     

@@ -10,6 +10,7 @@ import { TramitacaoResponse as SolTramitacaoResponse } from '@/api/solicitacoes/
 import { SolicitacaoParecerResponse } from '@/api/solicitacao-parecer/types';
 import { AnexoResponse } from '@/api/anexos/type';
 import statusSolicitacaoClient from '@/api/status-solicitacao/client';
+import { statusList } from '@/api/status-solicitacao/types';
 import LoadingOverlay from '@/components/ui/loading-overlay';
 import { getLayoutClient, getLabelTitle, getLogoPath } from '@/lib/layout/layout-client';
 
@@ -229,6 +230,10 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
             <Text style={styles.colValue}>{obrigacao.dsTarefa || '—'}</Text>
           </View>
           <View style={styles.row}>
+            <Text style={styles.colLabelBold}>Área Atribuída:</Text>
+            <Text style={styles.colValue}>{areaAtribuida?.nmArea || '—'}</Text>
+          </View>
+          <View style={styles.row}>
             <Text style={styles.colLabelBold}>Área Condicionante:</Text>
             <Text style={styles.colValue}>
               {areasCondicionantes.length > 0 
@@ -421,26 +426,33 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
                     <Text style={styles.small}>{dataFormatada}</Text>
                   </View>
                   
-                  <Text style={[styles.small, { marginTop: 4, marginBottom: 4 }]}>
-                    {parts.map((part, idx) => {
-                      if (typeof part === 'object' && 'type' in part && part.type === 'mention') {
-                        if (part.isValid) {
-                          return (
-                            <Text key={idx} style={styles.mentionText}>
-                              @{part.name}
-                            </Text>
-                          );
-                        } else {
-                          return (
-                            <Text key={idx}>
-                              @{part.name}
-                            </Text>
-                          );
-                        }
-                      }
-                      return <Text key={idx}>{String(part)}</Text>;
-                    })}
-                  </Text>
+                  {tramitacao.dsObservacao && (
+                    <>
+                      <Text style={[styles.smallBold, { marginTop: 4, marginBottom: 2 }]}>
+                        Resposta da Tramitação:
+                      </Text>
+                      <Text style={[styles.small, { marginBottom: 4 }]}>
+                        {parts.map((part, idx) => {
+                          if (typeof part === 'object' && 'type' in part && part.type === 'mention') {
+                            if (part.isValid) {
+                              return (
+                                <Text key={idx} style={styles.mentionText}>
+                                  @{part.name}
+                                </Text>
+                              );
+                            } else {
+                              return (
+                                <Text key={idx}>
+                                  @{part.name}
+                                </Text>
+                              );
+                            }
+                          }
+                          return <Text key={idx}>{String(part)}</Text>;
+                        })}
+                      </Text>
+                    </>
+                  )}
 
                   <View style={{ marginTop: 4 }}>
                     <Text style={styles.small}>
@@ -453,6 +465,25 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
                         return idStatus ? (statusMap.get(idStatus) || tramitacao.solicitacao?.statusSolicitacao?.nmStatus || '—') : (tramitacao.solicitacao?.statusSolicitacao?.nmStatus || '—');
                       })()}
                     </Text>
+                    {(() => {
+                      const tramitacaoComStatus = tramitacao as SolTramitacaoResponse & { idStatusSolicitacao?: number };
+                      const idStatus = tramitacaoComStatus.idStatusSolicitacao || tramitacao.solicitacao?.statusSolicitacao?.idStatusSolicitacao;
+                      const statusComFlAprovado = [
+                        statusList.EM_ASSINATURA_DIRETORIA.id,
+                        statusList.EM_APROVACAO.id,
+                        statusList.EM_ANALISE_GERENTE_REGULATORIO.id,
+                      ];
+                      
+                      if (idStatus && statusComFlAprovado.includes(idStatus) && tramitacao.flAprovado) {
+                        const flAprovadoTexto = tramitacao.flAprovado === 'S' ? 'Sim' : tramitacao.flAprovado === 'N' ? 'Não' : tramitacao.flAprovado;
+                        return (
+                          <Text style={styles.small}>
+                            <Text style={styles.smallBold}>Aprovado:</Text> {flAprovadoTexto}
+                          </Text>
+                        );
+                      }
+                      return null;
+                    })()}
                   </View>
                 </View>
               );
