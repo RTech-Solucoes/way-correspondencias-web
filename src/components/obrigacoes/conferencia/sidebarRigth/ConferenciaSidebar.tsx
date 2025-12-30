@@ -335,6 +335,7 @@ export function ConferenciaSidebar({
                   rows={4}
                   disabled={comentariosLogica.loadingAction || !comentariosLogica.podeEnviarComentario}
                 />
+                
                 {podeVizualizarBtnEnviarComentario && (
                   <Button
                     type="button"
