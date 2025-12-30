@@ -140,6 +140,18 @@ export function ConferenciaSidebar({
     }, 200);
   }, [comentariosLogica]);
 
+  const podeVizualizarBtnEnviarComentario = 
+    isStatusDesabilitadoParaTramitacao || 
+    permissoes.isStatusConcluido || 
+    permissoes.isStatusEmValidacaoRegulatorio ||
+    (permissoes.isValidadorAssinanteDiretoria && !permissoes.isStatusEmAssinaturaDiretoria);
+
+  const isBotaoEnviarComentarioDisabled = 
+    comentariosLogica.loadingAction || 
+    !comentariosLogica.comentarioTexto.trim() || 
+    !comentariosLogica.podeEnviarComentario || 
+    !permissoes.isPerfilPermitidoPorStatus;
+
   const tooltipFinalEnviarComentario = useMemo(() => {
     if (comentariosLogica.loadingAction) {
       return 'Enviando comentário...';
@@ -323,18 +335,13 @@ export function ConferenciaSidebar({
                   rows={4}
                   disabled={comentariosLogica.loadingAction || !comentariosLogica.podeEnviarComentario}
                 />
-                {(isStatusDesabilitadoParaTramitacao || permissoes.isStatusConcluido || permissoes.isStatusEmValidacaoRegulatorio) && (
+                {podeVizualizarBtnEnviarComentario && (
                   <Button
                     type="button"
                     size="icon"
                     className="rounded-full bg-blue-500 text-white hover:bg-blue-600 shrink-0 h-10 w-10 disabled:opacity-50"
                     onClick={comentariosLogica.handleEnviarComentario}
-                    disabled={
-                      comentariosLogica.loadingAction || 
-                      !comentariosLogica.comentarioTexto.trim() || 
-                      !comentariosLogica.podeEnviarComentario || 
-                      !permissoes.isPerfilPermitidoPorStatus
-                    }
+                    disabled={isBotaoEnviarComentarioDisabled}
                     tooltip={tooltipFinalEnviarComentario}
                   >
                     <Send className="h-4 w-4" />

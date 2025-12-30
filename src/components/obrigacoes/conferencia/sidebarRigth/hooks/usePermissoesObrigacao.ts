@@ -6,6 +6,7 @@ import { perfilUtil } from '@/api/perfis/types';
 import type { ObrigacaoDetalheResponse } from '@/api/obrigacao/types';
 import type { ResponsavelResponse } from '@/api/responsaveis/types';
 import { TipoEnum } from '@/api/tipos/types';
+import { CdAreaEnum } from '@/api/areas/types';
 
 interface UsePermissoesObrigacaoParams {
   detalhe: ObrigacaoDetalheResponse;
@@ -45,6 +46,18 @@ export function usePermissoesObrigacao({
     return idsAreasCondicionantes.some(idArea => userAreaIds.includes(idArea));
   }, [areasCondicionantes, userAreaIds]);
 
+  const isDaAreaDiretoria = useMemo(() => {
+    if (!userResponsavel?.areas) return false;
+    return userResponsavel.areas.some(
+      ra => ra.area?.cdArea === CdAreaEnum.DIRETORIA || 
+            ra.area?.nmArea?.toLowerCase().includes('diretoria')
+    );
+  }, [userResponsavel?.areas]);
+
+  const isValidadorAssinanteDiretoria = useMemo(() => {
+    return idPerfil === perfilUtil.VALIDADOR_ASSINANTE && isDaAreaDiretoria;
+  }, [idPerfil, isDaAreaDiretoria]);
+
   // Status helpers
   const isStatusEmAndamento = useMemo(() => {
     return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.EM_ANDAMENTO.id;
@@ -82,6 +95,10 @@ export function usePermissoesObrigacao({
     return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.APROVACAO_TRAMITACAO.id;
   }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 
+  const isStatusEmAssinaturaDiretoria = useMemo(() => {
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.EM_ASSINATURA_DIRETORIA.id;
+  }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
   // Verificar se pode gerar relatório
   const podeGerarRelatorio = useMemo(() => {
     if (idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
@@ -98,8 +115,13 @@ export function usePermissoesObrigacao({
     return false;
   }, [idPerfil, isDaAreaAtribuida, isDeAreaCondicionante]);
 
-  // Verificar permissão do perfil por status
   const isPerfilPermitidoPorStatus = useMemo(() => {
+    if (isValidadorAssinanteDiretoria) {
+      if (!isDaAreaAtribuida || isStatusEmAssinaturaDiretoria) {
+        return true;
+      }
+    }
+
     if (isStatusNaoIniciado) {
       if (isDaAreaAtribuida) {
         return true;
@@ -146,7 +168,9 @@ export function usePermissoesObrigacao({
     isStatusEmValidacaoRegulatorio,
     isStatusConcluido, 
     isStatusNaoAplicavelSuspensa, 
-    isDaAreaAtribuida
+    isDaAreaAtribuida,
+    isValidadorAssinanteDiretoria,
+    isStatusEmAssinaturaDiretoria
   ]);
 
   // Status permitido para tramitar
@@ -161,6 +185,16 @@ export function usePermissoesObrigacao({
 
   // Tooltip para enviar comentário
   const tooltipPerfilPermitidoPorStatus = useMemo(() => {
+    if (isValidadorAssinanteDiretoria && isDaAreaAtribuida && !isStatusEmAssinaturaDiretoria) {
+      return 'Por ser da área atribuída, não é possível adicionar parecer. Apenas é permitido quando o status for "Em Assinatura Diretoria" ou quando não for da área atribuída.';
+    }
+    
+    if (isValidadorAssinanteDiretoria) {
+      if (!isDaAreaAtribuida || isStatusEmAssinaturaDiretoria) {
+        return '';
+      }
+    }
+
     if (isStatusNaoIniciado) {
       if (!isDaAreaAtribuida) {
         return 'Apenas usuários da área atribuída podem inserir comentários quando o status é "Não Iniciado".';
@@ -202,7 +236,9 @@ export function usePermissoesObrigacao({
     isStatusConcluido,
     isStatusNaoAplicavelSuspensa,
     isDaAreaAtribuida,
-    idPerfil
+    idPerfil,
+    isValidadorAssinanteDiretoria,
+    isStatusEmAssinaturaDiretoria
   ]);
 
   return {
@@ -213,6 +249,8 @@ export function usePermissoesObrigacao({
     idAreaAtribuida,
     isDaAreaAtribuida,
     isDeAreaCondicionante,
+    isDaAreaDiretoria,
+    isValidadorAssinanteDiretoria,
     // Status
     isStatusEmAndamento,
     isStatusAtrasada,
@@ -223,6 +261,7 @@ export function usePermissoesObrigacao({
     isStatusNaoAplicavelSuspensa,
     isStatusPreAnalise,
     isStatusAprovacaoTramitacao,
+    isStatusEmAssinaturaDiretoria,
     // Permissões
     podeGerarRelatorio,
     isPerfilPermitidoPorStatus,

@@ -7,7 +7,6 @@ import { ConferenciaStepPrazos } from './tabs-steps/ConferenciaStepPrazos';
 import { ConferenciaStepAnexos } from './tabs-steps/ConferenciaStepAnexos';
 import { ConferenciaStepVinculos } from './tabs-steps/ConferenciaStepVinculos';
 import { ObrigacaoDetalheResponse } from '@/api/obrigacao/types';
-import { statusList } from '@/api/status-solicitacao/types';
 import { getObrigacaoStatusStyle } from '@/utils/obrigacoes/status';
 import { TipoEnum } from '@/api/tipos/types';
 import { AnexoResponse } from '@/api/anexos/type';
@@ -62,7 +61,7 @@ export function ConferenciaTabs({
         className="flex flex-1 flex-col gap-6"
       >
         <div className="px-6">
-          <div className="flex w-full items-center justify-between gap-2 rounded-full border border-gray-200 bg-white px-2 py-2 shadow-sm">
+          <div className="flex w-full items-center rounded-full border border-gray-200 bg-white p-0.5 shadow-sm">
             {tabs.map((tab) => {
               const isActive = activeTab === tab.key;
               return (
@@ -70,7 +69,7 @@ export function ConferenciaTabs({
                   key={tab.key}
                   type="button"
                   onClick={() => onTabChange(tab.key)}
-                  className={`flex-1 rounded-full px-6 py-3 text-center text-base font-semibold transition-all ${
+                  className={`flex-1 rounded-full px-3 py-3.5 text-center text-base font-semibold transition-all whitespace-nowrap ${
                     isActive ? 'bg-blue-500 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100'
                   }`}
                 >

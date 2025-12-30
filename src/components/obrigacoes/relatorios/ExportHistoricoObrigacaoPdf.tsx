@@ -230,6 +230,10 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
             <Text style={styles.colValue}>{obrigacao.dsTarefa || '—'}</Text>
           </View>
           <View style={styles.row}>
+            <Text style={styles.colLabelBold}>Área Atribuída:</Text>
+            <Text style={styles.colValue}>{areaAtribuida?.nmArea || '—'}</Text>
+          </View>
+          <View style={styles.row}>
             <Text style={styles.colLabelBold}>Área Condicionante:</Text>
             <Text style={styles.colValue}>
               {areasCondicionantes.length > 0 
@@ -422,26 +426,33 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
                     <Text style={styles.small}>{dataFormatada}</Text>
                   </View>
                   
-                  <Text style={[styles.small, { marginTop: 4, marginBottom: 4 }]}>
-                    {parts.map((part, idx) => {
-                      if (typeof part === 'object' && 'type' in part && part.type === 'mention') {
-                        if (part.isValid) {
-                          return (
-                            <Text key={idx} style={styles.mentionText}>
-                              @{part.name}
-                            </Text>
-                          );
-                        } else {
-                          return (
-                            <Text key={idx}>
-                              @{part.name}
-                            </Text>
-                          );
-                        }
-                      }
-                      return <Text key={idx}>{String(part)}</Text>;
-                    })}
-                  </Text>
+                  {tramitacao.dsObservacao && (
+                    <>
+                      <Text style={[styles.smallBold, { marginTop: 4, marginBottom: 2 }]}>
+                        Resposta da Tramitação:
+                      </Text>
+                      <Text style={[styles.small, { marginBottom: 4 }]}>
+                        {parts.map((part, idx) => {
+                          if (typeof part === 'object' && 'type' in part && part.type === 'mention') {
+                            if (part.isValid) {
+                              return (
+                                <Text key={idx} style={styles.mentionText}>
+                                  @{part.name}
+                                </Text>
+                              );
+                            } else {
+                              return (
+                                <Text key={idx}>
+                                  @{part.name}
+                                </Text>
+                              );
+                            }
+                          }
+                          return <Text key={idx}>{String(part)}</Text>;
+                        })}
+                      </Text>
+                    </>
+                  )}
 
                   <View style={{ marginTop: 4 }}>
                     <Text style={styles.small}>
