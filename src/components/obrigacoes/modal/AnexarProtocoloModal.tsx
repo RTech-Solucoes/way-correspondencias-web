@@ -113,7 +113,6 @@ export function AnexarProtocoloModal({
         dsObservacaoProtocolo: observacoesTrimmed || null,
       };
 
-      // Primeiro atualiza o protocolo, depois faz upload dos anexos e tramitação
       await obrigacaoClient.atualizarProtocolo(idObrigacao, protocoloData);
       
       await Promise.all([

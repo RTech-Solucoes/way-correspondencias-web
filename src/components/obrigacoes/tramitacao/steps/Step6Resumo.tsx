@@ -21,21 +21,6 @@ interface Step6ResumoProps {
   obrigacaoId?: number | null;
 }
 
-const getAprovacaoLabel = (value?: string) => {
-  switch ((value || '').toUpperCase()) {
-    case 'G':
-      return 'Gerente';
-    case 'D':
-      return 'Diretor';
-    case 'A':
-      return 'Ambos';
-    case 'N':
-      return 'Não necessita';
-    default:
-      return '—';
-  }
-};
-
 const getManifestacaoLabel = (value?: string) => {
   switch ((value || '').toUpperCase()) {
     case 'S':
@@ -323,7 +308,7 @@ export function Step6Resumo({ formData, obrigacaoId }: Step6ResumoProps) {
       </div>
 
       <div className="border-t pt-4">
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <div>
             <Label className="text-sm font-semibold text-gray-700">Prazo principal</Label>
             <div className="p-3 bg-gray-50 border border-yellow-200 rounded-lg text-sm mt-2">
@@ -339,12 +324,6 @@ export function Step6Resumo({ formData, obrigacaoId }: Step6ResumoProps) {
               ) : (
                 prazoPrincipalDias > 0 ? `${prazoPrincipalDias} dias` : 'Não informado'
               )}
-            </div>
-          </div>
-          <div>
-            <Label className="text-sm font-semibold text-gray-700">Exige aprovação especial</Label>
-            <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm mt-2">
-              {getAprovacaoLabel(formData.flAnaliseGerenteDiretor)}
             </div>
           </div>
           <div>
