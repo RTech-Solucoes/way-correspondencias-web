@@ -625,17 +625,50 @@ export default function DetalhesSolicitacaoModal({
         ta?.responsavelArea?.responsavel?.idResponsavel === userResponsavel?.idResponsavel &&
         ta.flAcao === 'T' ));
 
-    const isAreaRespondeu = sol?.tramitacoes?.filter(t =>
-      t?.tramitacao?.nrNivel === nrNivelUltimaTramitacao &&
-      sol?.statusSolicitacao?.idStatusSolicitacao !== statusList.EM_ASSINATURA_DIRETORIA.id &&
-      t?.tramitacao?.idStatusSolicitacao === sol?.statusSolicitacao?.idStatusSolicitacao &&
-      !((sol?.statusSolicitacao?.nmStatus === statusList.EM_ANALISE_AREA_TECNICA.label || 
-        sol?.statusSolicitacao?.nmStatus === statusList.VENCIDO_AREA_TECNICA.label) &&
-        (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.D ||
-            flAnaliseGerenteDiretor === AnaliseGerenteDiretor.A)
-      ) &&
-      userResponsavel?.areas?.some(a => a?.area?.idArea === t?.tramitacao?.areaOrigem?.idArea)
-    );
+    // Verifica se TODAS as áreas do usuário que estão na solicitação já responderam
+    const todasAreasUsuarioResponderam = (() => {
+      // Pega as áreas da solicitação
+      const areasSolicitacao = Array.isArray(sol?.solicitacao?.area)
+        ? (sol!.solicitacao!.area! as Array<{ idArea?: number }>)
+            .map(a => a?.idArea)
+            .filter((id): id is number => id !== undefined && id !== null)
+        : [];
+      
+      // Pega as áreas do usuário que estão na solicitação
+      const areasUsuarioNaSolicitacao = userResponsavel?.areas
+        ?.map(a => a?.area?.idArea)
+        .filter((id): id is number => 
+          id !== undefined && 
+          id !== null && 
+          areasSolicitacao.includes(id)
+        ) || [];
+      
+      // Se o usuário não tem nenhuma área na solicitação, não bloqueia
+      if (areasUsuarioNaSolicitacao.length === 0) return false;
+      
+      // Pega as áreas que já responderam (tramitações do mesmo nível e status)
+      const areasQueJaResponderam = sol?.tramitacoes
+        ?.filter(t =>
+          t?.tramitacao?.nrNivel === nrNivelUltimaTramitacao &&
+          sol?.statusSolicitacao?.idStatusSolicitacao !== statusList.EM_ASSINATURA_DIRETORIA.id &&
+          t?.tramitacao?.idStatusSolicitacao === sol?.statusSolicitacao?.idStatusSolicitacao &&
+          !((sol?.statusSolicitacao?.nmStatus === statusList.EM_ANALISE_AREA_TECNICA.label || 
+            sol?.statusSolicitacao?.nmStatus === statusList.VENCIDO_AREA_TECNICA.label) &&
+            (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.D ||
+                flAnaliseGerenteDiretor === AnaliseGerenteDiretor.A)
+          )
+        )
+        .map(t => t?.tramitacao?.areaOrigem?.idArea)
+        .filter((id): id is number => id !== undefined && id !== null) || [];
+      
+      // Verifica se TODAS as áreas do usuário na solicitação já responderam
+      // Se ainda houver pelo menos uma área que não respondeu, permite responder
+      const todasResponderam = areasUsuarioNaSolicitacao.every(areaId => 
+        areasQueJaResponderam.includes(areaId)
+      );
+      
+      return todasResponderam;
+    })();
 
     if (sending) return false;
 
@@ -652,6 +685,14 @@ export default function DetalhesSolicitacaoModal({
 
     if (sol?.statusSolicitacao?.nmStatus === statusList.ARQUIVADO.label) return false;
 
+    if (sol?.statusSolicitacao?.nmStatus === statusList.CONCLUIDO.label) {
+      if (
+        userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR ||
+        userResponsavel?.idPerfil === perfilUtil.GESTOR_DO_SISTEMA
+      ) return true;
+      return false;
+    }
+
     if (sol?.statusSolicitacao?.nmStatus === statusList.EM_ANALISE_GERENTE_REGULATORIO.label) {
       if (userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR) return true;
       return false;
@@ -659,7 +700,8 @@ export default function DetalhesSolicitacaoModal({
 
     if (tramitacaoExecutada != null && tramitacaoExecutada?.length > 0) return false;
 
-    if (isAreaRespondeu != null && isAreaRespondeu?.length > 0) return false;
+    // // Só bloqueia se TODAS as áreas do usuário na solicitação já responderam
+     if (todasAreasUsuarioResponderam) return false;
 
     if (sol?.statusSolicitacao?.nmStatus === statusList.EM_ANALISE_AREA_TECNICA.label 
       || sol?.statusSolicitacao?.nmStatus === statusList.VENCIDO_AREA_TECNICA.label
@@ -709,14 +751,6 @@ export default function DetalhesSolicitacaoModal({
       return false;
     }
 
-    if (sol?.statusSolicitacao?.nmStatus === statusList.CONCLUIDO.label) {
-      if (
-        userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR ||
-        userResponsavel?.idPerfil === perfilUtil.GESTOR_DO_SISTEMA
-      ) return true;
-      return false;
-    }
-
     return false;
   })();
 
@@ -724,6 +758,13 @@ export default function DetalhesSolicitacaoModal({
     const isAreaTecnica = statusText === statusList.EM_ANALISE_AREA_TECNICA.label;
     
     if(statusText === statusList.EM_CHANCELA.label && !(userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR)) return 'Apenas o Administrador pode responder.';
+
+    if (statusText === statusList.CONCLUIDO.label) {
+      if (
+        userResponsavel?.idPerfil !== perfilUtil.ADMINISTRADOR &&
+        userResponsavel?.idPerfil !== perfilUtil.GESTOR_DO_SISTEMA
+      ) return 'Apenas Administrador e Gestor do Sistema podem arquivar solicitações concluídas.';
+    }
 
     if (statusText === statusList.EM_ASSINATURA_DIRETORIA.label) {
       if (!isAssinanteAutorizado) return 'Apenas os validadores/assinantes selecionados podem aprovar esta solicitação.';
