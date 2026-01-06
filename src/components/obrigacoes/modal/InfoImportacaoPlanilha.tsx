@@ -205,13 +205,13 @@ export function InfoImportacaoPlanilha() {
               <p className="font-bold text-lg text-gray-900">Exemplo Visual e Observações Importantes</p>
             </div>
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
-              <p className="text-xs text-amber-900 leading-relaxed space-y-2">
-                <strong className="font-semibold">⚠️ Observações Importantes:</strong>
-                <ul className="list-disc list-inside ml-3 mt-2 space-y-1">
+              <div className="text-xs text-amber-900 leading-relaxed space-y-2">
+                <p className="font-semibold mb-2">⚠️ Observações Importantes:</p>
+                <ul className="list-disc list-inside ml-3 space-y-1">
                   <li>As cores na imagem são apenas ilustrativas - você pode usar qualquer esquema de cores</li>
                   <li>Dados com nomes divergentes serão ignorados na importação (podem ser editados depois)</li>
                 </ul>
-              </p>
+              </div>
             </div>
           </div>
           <div 
