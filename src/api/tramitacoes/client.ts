@@ -1,6 +1,6 @@
 import { ArquivoDTO } from "../anexos/type";
 import ApiClient from "../client";
-import { HistoricoRespostaItemResponse, SolicitacaoResumoComHistoricoResponse } from "../solicitacoes";
+import { SolicitacaoResumoComHistoricoResponse } from "../solicitacoes";
 import { TramitacaoResponse, TramitacaoRequest, ProximoStatusRequest } from './types';
 
 class TramitacoesClient {
@@ -42,12 +42,12 @@ class TramitacoesClient {
     });
   }
 
-   async tramitar(data: TramitacaoRequest): Promise<TramitacaoResponse> {
-    return this.client.request<TramitacaoResponse>(`/tramitar`, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
+  //  async tramitar(data: TramitacaoRequest): Promise<TramitacaoResponse> {
+  //   return this.client.request<TramitacaoResponse>(`/tramitar`, {
+  //     method: 'POST',
+  //     body: JSON.stringify(data),
+  //   });
+  // }
 
   async tramitarViaFluxo(data: TramitacaoRequest): Promise<TramitacaoResponse> {
     return this.client.request<TramitacaoResponse>(`/tramitar-via-fluxo`, {

@@ -456,7 +456,7 @@ function SolicitacoesPageContent() {
         flAprovado: flAprovado,
         arquivos: arquivos,
       };
-      await tramitacoesClient.tramitar(data);
+      await tramitacoesClient.tramitarViaFluxo(data);
       await loadSolicitacoes();
     } catch (err) {
       throw err;

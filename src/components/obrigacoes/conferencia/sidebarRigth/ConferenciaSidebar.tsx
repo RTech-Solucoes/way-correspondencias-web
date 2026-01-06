@@ -369,7 +369,7 @@ export function ConferenciaSidebar({
         open={anexosLogica.showDeleteLinkDialog}
         onOpenChange={anexosLogica.handleCloseDeleteLinkDialog}
         title="Excluir link"
-        description={`Tem certeza que deseja excluir o link "${anexosLogica.linkToDelete}"? Esta ação não pode ser desfeita.`}
+        description={`Tem certeza que deseja excluir o link de evidência de cumprimento? Esta ação não pode ser desfeita.`}
         confirmText="Excluir"
         cancelText="Cancelar"
         onConfirm={anexosLogica.confirmDeleteLink}

@@ -152,4 +152,5 @@ export interface ObrigacaoStep1Request {
   dsTarefa: string;
   flExigeCienciaGerenteRegul: string;
   dsObservacao?: string;
+  flAnaliseGerenteDiretor: string;
 }

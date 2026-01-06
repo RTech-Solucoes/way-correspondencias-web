@@ -363,7 +363,7 @@ export function useComentariosLogica({
             if (onRefreshAnexos) {
               await onRefreshAnexos();
             }
-            toast.success('Comentário de área atribuída salvo com sucessooooo222.');
+            toast.success('Comentário de área atribuída salvo com sucesso.');
             return;
           }
 
