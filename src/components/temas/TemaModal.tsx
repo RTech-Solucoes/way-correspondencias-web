@@ -81,7 +81,7 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
         </DialogHeader>
 
         <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2">
               <Label htmlFor="nmTema">Nome do Tema *</Label>
               <Input
@@ -91,19 +91,6 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
                 placeholder="Digite o nome do tema"
               />
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="nrPrazo">Prazo (horas corridas)</Label>
-              <Input
-                id="nrPrazo"
-                type="number"
-                value={nrPrazo}
-                onChange={(e) => setNrPrazo(Number(e.target.value))}
-                placeholder="0"
-                min="1"
-              />
-            </div>
-
           </div>
 
           <div className="space-y-2">
