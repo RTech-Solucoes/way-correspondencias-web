@@ -8,6 +8,7 @@ import { CheckCircleIcon } from 'lucide-react';
 import { useObrigacoes } from '@/context/obrigacoes/ObrigacoesContext';
 import { toast } from 'sonner';
 import obrigacaoClient from '@/api/obrigacao/client';
+import LoadingOverlay from '@/components/ui/loading-overlay';
 
 interface ImportObrigacoesModalProps {
   open: boolean;
@@ -108,13 +109,20 @@ export function ImportObrigacoesModal({ open, onClose }: ImportObrigacoesModalPr
   }, []);
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[800px] h-[50vh]">
-        <DialogHeader>
-          <DialogTitle>Importar Obrigações</DialogTitle>
-        </DialogHeader>
+    <>
+      {loading && (
+        <LoadingOverlay 
+          title="Importando Obrigações" 
+          subtitle="Aguarde enquanto o arquivo é processado e as obrigações são importadas..." 
+        />
+      )}
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-[800px] h-[50vh]">
+          <DialogHeader>
+            <DialogTitle>Importar Obrigações</DialogTitle>
+          </DialogHeader>
 
-        <div className="space-y-4 flex-1 overflow-y-auto">
+          <div className="space-y-4 flex-1 overflow-y-auto">
           <div
             onDrop={handleDrop}
             onDragOver={handleDragOver}
@@ -210,6 +218,7 @@ export function ImportObrigacoesModal({ open, onClose }: ImportObrigacoesModalPr
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
 
