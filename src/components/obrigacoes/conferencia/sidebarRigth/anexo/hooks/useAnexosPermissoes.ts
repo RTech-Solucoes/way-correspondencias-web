@@ -63,9 +63,9 @@ export function useAnexosPermissoes({
     }
     
     if (anexo.tpDocumento === TipoDocumentoAnexoEnum.A) {
-      return isStatusEmAndamento || isStatusAtrasada;
+      return true;
     }
-    
+
     return false;
   }, [isStatusEmAndamento, isStatusAtrasada, isStatusPendente, isStatusEmValidacaoRegulatorio, isStatusNaoIniciado, isDaAreaAtribuida]);
 
