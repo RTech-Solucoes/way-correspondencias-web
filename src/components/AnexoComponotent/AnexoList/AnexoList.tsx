@@ -24,7 +24,7 @@ export default function AnexoList({
   onRemove,
   onDownload,
 }: AnexoListProps) {
-  const { canListarAnexo, canDeletarAnexo } = usePermissoes();
+  const { canListarAnexo } = usePermissoes();
 
   if (!canListarAnexo) {
     return (
@@ -75,7 +75,7 @@ export default function AnexoList({
                   <DownloadSimpleIcon size={18}/>
                 </Button>
               }
-              {canDeletarAnexo && onRemove &&
+              {onRemove && (!isBackend) &&
                 <Button
                   type="button"
                   variant="ghost"
@@ -84,6 +84,7 @@ export default function AnexoList({
                     e.stopPropagation();
                     onRemove(index)
                   }}
+                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
                 >
                   <XIcon className="h-4 w-4"/>
                 </Button>

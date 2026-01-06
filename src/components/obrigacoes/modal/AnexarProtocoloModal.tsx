@@ -26,6 +26,8 @@ interface AnexarProtocoloModalProps {
   onSuccess?: () => void;
 }
 
+const MAX_FILE_SIZE = 500 * 1024 * 1024;
+
 export function AnexarProtocoloModal({
   open,
   onClose,
@@ -49,10 +51,36 @@ export function AnexarProtocoloModal({
     }
   }, [open]);
 
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+  };
+
   const handleAddAnexos = useCallback((files: FileList | null) => {
     if (files && files.length > 0) {
       const fileArray = Array.from(files);
-      setArquivos((prev) => [...prev, ...fileArray]);
+      const invalidFiles: File[] = [];
+      
+      fileArray.forEach(file => {
+        if (file.size > MAX_FILE_SIZE) {
+          invalidFiles.push(file);
+        }
+      });
+
+      if (invalidFiles.length > 0) {
+        const fileNames = invalidFiles.map(f => `${f.name} (${formatFileSize(f.size)})`).join(', ');
+        toast.error(
+          `Os seguintes arquivos excedem o tamanho máximo de ${formatFileSize(MAX_FILE_SIZE)}: ${fileNames}`
+        );
+
+        const validFiles = fileArray.filter(file => file.size <= MAX_FILE_SIZE);
+        if (validFiles.length > 0) {
+          setArquivos((prev) => [...prev, ...validFiles]);
+        }
+      } else {
+        setArquivos((prev) => [...prev, ...fileArray]);
+      }
     }
   }, []);
 

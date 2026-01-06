@@ -2,8 +2,8 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import {obrigacaoAnexosClient} from '@/api/obrigacao/anexos-client';
 import anexosClient from '@/api/anexos/client';
-import obrigacaoAnexosClient from '@/api/obrigacao/anexos-client';
 import { base64ToUint8Array, saveBlob } from '@/utils/utils';
 import type { AnexoResponse } from '@/api/anexos/type';
 import { TipoObjetoAnexoEnum, TipoDocumentoAnexoEnum, TipoResponsavelAnexoEnum } from '@/api/anexos/type';
@@ -56,11 +56,11 @@ export function useAnexosLogica({
 
   // Handler para confirmar deleção de anexo
   const confirmDeleteAnexo = useCallback(async () => {
-    if (!anexoToDelete) return;
+    if (!anexoToDelete || !detalhe?.obrigacao?.idSolicitacao) return;
 
     setLoadingAction(true);
     try {
-      await anexosClient.deletar(anexoToDelete.idAnexo);
+      await obrigacaoAnexosClient.deletar(detalhe.obrigacao.idSolicitacao, anexoToDelete.idAnexo);
       toast.success('Anexo removido com sucesso.');
       
       if (onRefreshAnexos) {
@@ -73,7 +73,7 @@ export function useAnexosLogica({
       setLoadingAction(false);
       setAnexoToDelete(null);
     }
-  }, [anexoToDelete, onRefreshAnexos]);
+  }, [anexoToDelete, detalhe?.obrigacao?.idSolicitacao, onRefreshAnexos]);
 
   // Handler para fechar dialog de deletar anexo
   const handleCloseDeleteAnexoDialog = useCallback((open: boolean) => {
