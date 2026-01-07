@@ -32,97 +32,90 @@ export function InfoImportacaoPlanilha() {
           </div>
           
           <div className="space-y-3">
-            <div className="bg-white rounded-lg border-l-4 border-blue-500 p-4 shadow-sm">
+            <div className="bg-white rounded-lg border-l-4 border-blue-500 p-4 shadow-sm min-h-[180px]">
               <div className="flex items-start gap-3">
                 <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
                   1
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-gray-900 mb-2">Verificar se arquivo da planilha tem outras abas, além da aba &quot;Cronograma Obrigações&quot;:</p>
-                  <div className="ml-6 space-y-2 text-gray-700 text-sm">
-                    <div className="flex items-start gap-2">
-                      <span className="text-gray-400">•</span>
-                      <span>
-                        <strong className="text-gray-900">Se tiver abas:</strong> A aba deve ter o nome exato:{' '}
+                  <p className="font-semibold text-gray-900 mb-3">Verificação das abas da planilha</p>
+                  <ul className="space-y-2 text-gray-700 text-sm list-disc list-inside">
+                    <li>
+                      <strong className="text-gray-900">Se o arquivo possuir apenas uma aba:</strong>
+                      <br />
+                      <span className="ml-4">O sistema irá importar automaticamente os dados contidos nessa aba, independentemente do nome da aba.</span>
+                    </li>
+                    <li>
+                      <strong className="text-gray-900">Se o arquivo possuir duas ou mais abas:</strong>
+                      <br />
+                      <span className="ml-4">
+                        É obrigatório que uma das abas tenha exatamente o nome:{' '}
                         <code className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-mono">
                           &quot;Cronograma Obrigações&quot;
                         </code>
+                        <br />
+                        Nesse caso, somente o conteúdo dessa aba será importado.
                       </span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <span className="text-gray-400">•</span>
-                      <span>
-                        <strong className="text-gray-900">Se não tiver várias abas:</strong> Pule para o Passo 2
-                      </span>
-                    </div>
-                  </div>
+                    </li>
+                  </ul>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg border-l-4 border-green-500 p-4 shadow-sm">
+            <div className="bg-white rounded-lg border-l-4 border-green-500 p-4 shadow-sm min-h-[180px]">
               <div className="flex items-start gap-3">
                 <div className="flex-shrink-0 w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
                   2
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-gray-900 mb-2">Estrutura das linhas da planilha:</p>
-                  <div className="ml-6 space-y-2 text-gray-700 text-sm">
-                    <div className="flex items-start gap-2">
-                      <span className="text-gray-400">•</span>
-                      <span>
-                        <strong className="text-gray-900">Linha 1:</strong> Título da planilha
-                        <span className="text-xs text-gray-600 italic ml-2">
-                          (Ex: &quot;Cronograma Obrigações Contratuais {nomeConcessionaria} - ANO 01&quot;)
-                        </span>
+                  <p className="font-semibold text-gray-900 mb-3">Estrutura das linhas da planilha</p>
+                  <p className="text-gray-700 text-sm mb-3">
+                    A planilha deve seguir obrigatoriamente a estrutura abaixo:
+                  </p>
+                  <ul className="space-y-2 text-gray-700 text-sm list-disc list-inside">
+                    <li>
+                      <strong className="text-gray-900">Linha 1:</strong> Título da planilha
+                      <br />
+                      <span className="text-xs text-gray-600 italic ml-4">
+                        (Exemplo: Cronograma Obrigações Contratuais {nomeConcessionaria || 'Way 262'} – ANO 01)
                       </span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <span className="text-gray-400">•</span>
-                      <span>
-                        <strong className="text-gray-900">Linha 2:</strong> Nomes das colunas (cabeçalho) - <span className="text-red-600 font-semibold">OBRIGATÓRIO</span>
-                      </span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <span className="text-gray-400">•</span>
-                      <span>
-                        <strong className="text-gray-900">Linha 3 em diante:</strong> Dados das obrigações
-                      </span>
-                    </div>
-                  </div>
+                    </li>
+                    <li>
+                      <strong className="text-gray-900">Linha 2:</strong> Cabeçalho com os nomes das colunas{' '}
+                      <span className="text-red-600 font-semibold">(abaixo estão descritas as colunas obrigatórias)</span>
+                    </li>
+                    <li>
+                      <strong className="text-gray-900">Linha 3 em diante:</strong> Preenchimento dos dados das obrigações
+                    </li>
+                  </ul>
                 </div>
               </div>
             </div>
 
-            {/* Passo 3 */}
-            <div className="bg-white rounded-lg border-l-4 border-purple-500 p-4 shadow-sm">
+            <div className="bg-white rounded-lg border-l-4 border-purple-500 p-4 shadow-sm min-h-[180px]">
               <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                <div className="flex-shrink-0 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
                   3
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-gray-900 mb-2">Preencher os dados:</p>
-                  <p className="text-gray-700 text-sm mb-2">
-                    Use os <strong className="text-red-600">nomes exatos</strong> que já estão cadastrados no sistema, por exemplo:
+                  <p className="font-semibold text-gray-900 mb-3">Preenchimento correto dos dados</p>
+                  <p className="text-gray-700 text-sm mb-3">
+                    Os campos devem ser preenchidos exatamente com os nomes já cadastrados no sistema.
                   </p>
-                  <div className="ml-6 space-y-1 text-gray-700 text-sm">
-                    <div className="flex items-start gap-2">
-                      <span className="text-gray-400">•</span>
-                      <span><strong>Item (nome Tema):</strong> Ex: &quot;Autorizações Governamentais&quot;, &quot;Bens da Concessão&quot;</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <span className="text-gray-400">•</span>
-                      <span><strong>Áreas:</strong> Ex: &quot;Meio Ambiente&quot;, &quot;Jurídico&quot;, &quot;Engenharia&quot;</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <span className="text-gray-400">•</span>
-                      <span><strong>Status:</strong> Ex: &quot;Pendente&quot;, &quot;Em andamento&quot;, &quot;Concluído&quot;</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <span className="text-gray-400">•</span>
-                      <span><strong>Periodicidade:</strong> Ex: &quot;Semanal&quot;, &quot;Mensal&quot;, &quot;Anual&quot;, &quot;Semestral&quot;</span>
-                    </div>
-                  </div>
+                  <ul className="space-y-1 text-gray-700 text-sm list-disc list-inside">
+                    <li>
+                      <strong>Item (Tema):</strong> &quot;Autorizações Governamentais&quot;, &quot;Bens da Concessão&quot;
+                    </li>
+                    <li>
+                      <strong>Área:</strong> &quot;Meio Ambiente&quot;, &quot;Jurídico&quot;, &quot;Engenharia&quot;
+                    </li>
+                    <li>
+                      <strong>Status:</strong> &quot;Pendente&quot;, &quot;Em andamento&quot;, &quot;Concluído&quot;
+                    </li>
+                    <li>
+                      <strong>Periodicidade:</strong> &quot;Semanal&quot;, &quot;Mensal&quot;, &quot;Semestral&quot;, &quot;Anual&quot;
+                    </li>
+                  </ul>
                 </div>
               </div>
             </div>
@@ -132,67 +125,67 @@ export function InfoImportacaoPlanilha() {
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <div className="w-1 h-6 bg-blue-500 rounded"></div>
-            <p className="font-bold text-lg text-gray-900">Colunas Obrigatórias (Linha 2 - Cabeçalho)</p>
+            <p className="font-bold text-lg text-gray-900">Nomes das colunas obrigatórias (Linha 2 – Cabeçalho)</p>
           </div>
           <p className="text-sm text-gray-600 ml-3 mb-3">
-            ⚠️ <strong>ATENÇÃO:</strong> Ordem exata e nomes exatos na <strong>Linha 2</strong>:
+            ⚠️ <strong>ATENÇÃO:</strong> a ordem das colunas e os nomes devem ser exatamente iguais aos descritos abaixo.
           </p>
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-sm">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
               <div className="flex items-start gap-2">
                 <span className="text-blue-600 font-bold min-w-[20px]">1.</span>
-                <span className="font-mono text-gray-800">NOME DA TAREFA</span>
-                <span className="text-gray-500 text-[10px]">(texto livre)</span>
+                <span className="font-bold text-gray-800">NOME DA TAREFA</span>
+                <span className="text-gray-500">(texto livre)</span>
               </div>
               <div className="flex items-start gap-2">
                 <span className="text-blue-600 font-bold min-w-[20px]">2.</span>
-                <span className="font-mono text-gray-800">ITEM</span>
-                <span className="text-gray-500 text-[10px]">(Nome do Tema)</span>
+                <span className="font-bold text-gray-800">ITEM</span>
+                <span className="text-gray-500">(Nome do Tema)</span>
               </div>
               <div className="flex items-start gap-2">
                 <span className="text-blue-600 font-bold min-w-[20px]">3.</span>
-                <span className="font-mono text-gray-800">STATUS</span>
-                <span className="text-gray-500 text-[10px]">(Pendente, Em andamento, Concluído, etc.)</span>
+                <span className="font-bold text-gray-800">STATUS</span>
+                <span className="text-gray-500">(Pendente, Em andamento, Concluído, etc.)</span>
               </div>
               <div className="flex items-start gap-2">
                 <span className="text-blue-600 font-bold min-w-[20px]">4.</span>
-                <span className="font-mono text-gray-800">ATRIBUIDO A</span>
-                <span className="text-gray-500 text-[10px]">(Nome da área atribuída, etc.)</span>
+                <span className="font-bold text-gray-800">ATRIBUIDO A</span>
+                <span className="text-gray-500">(Nome da área atribuída)</span>
               </div>
               <div className="flex items-start gap-2">
                 <span className="text-blue-600 font-bold min-w-[20px]">5.</span>
-                <span className="font-mono text-gray-800">ÁREA CONDICIONANTE</span>
-                <span className="text-gray-500 text-[10px]">(Nome da área condicionante)</span>
+                <span className="font-bold text-gray-800">ÁREA CONDICIONANTE</span>
+                <span className="text-gray-500">(Nome da área condicionante)</span>
               </div>
               <div className="flex items-start gap-2">
                 <span className="text-blue-600 font-bold min-w-[20px]">6.</span>
-                <span className="font-mono text-gray-800">PERIODICIDADE</span>
-                <span className="text-gray-500 text-[10px]">(Semanal, Mensal, Anual, Semestral, etc.)</span>
+                <span className="font-bold text-gray-800">PERIODICIDADE</span>
+                <span className="text-gray-500">(Semanal, Mensal, Anual, Semestral, etc.)</span>
               </div>
               <div className="flex items-start gap-2">
                 <span className="text-blue-600 font-bold min-w-[20px]">7.</span>
-                <span className="font-mono text-gray-800">DATA DE INÍCIO</span>
-                <span className="text-gray-500 text-[10px]">(dd/mm/aaaa)</span>
+                <span className="font-bold text-gray-800">DATA DE INÍCIO</span>
+                <span className="text-gray-500">(dd/mm/aaaa)</span>
               </div>
               <div className="flex items-start gap-2">
                 <span className="text-blue-600 font-bold min-w-[20px]">8.</span>
-                <span className="font-mono text-gray-800">DATA DE TÉRMINO</span>
-                <span className="text-gray-500 text-[10px]">(dd/mm/aaaa)</span>
+                <span className="font-bold text-gray-800">DATA DE TÉRMINO</span>
+                <span className="text-gray-500">(dd/mm/aaaa)</span>
               </div>
               <div className="flex items-start gap-2">
                 <span className="text-blue-600 font-bold min-w-[20px]">9.</span>
-                <span className="font-mono text-gray-800">DURAÇÃO em dia</span>
-                <span className="text-gray-500 text-[10px]">(aceita apenas números)</span>
+                <span className="font-bold text-gray-800">DURAÇÃO em dia</span>
+                <span className="text-gray-500">(Aceita apenas valores numéricos)</span>
               </div>
               <div className="flex items-start gap-2">
                 <span className="text-blue-600 font-bold min-w-[20px]">10.</span>
-                <span className="font-mono text-gray-800">DATA Limite</span>
-                <span className="text-gray-500 text-[10px]">(dd/mm/aaaa)</span>
+                <span className="font-bold text-gray-800">DATA Limite</span>
+                <span className="text-gray-500">(dd/mm/aaaa)</span>
               </div>
               <div className="flex items-start gap-2">
                 <span className="text-blue-600 font-bold min-w-[20px]">11.</span>
-                <span className="font-mono text-gray-800">COMENTÁRIOS</span>
-                <span className="text-gray-500 text-[10px]">(texto livre)</span>
+                <span className="font-bold text-gray-800">COMENTÁRIOS</span>
+                <span className="text-gray-500">(texto livre)</span>
               </div>
             </div>
           </div>
