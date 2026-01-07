@@ -275,6 +275,77 @@ Os assets (logos, backgrounds, favicons) são organizados em:
 - Favicon específico por cliente
 - Títulos e labels customizados
 
+## 📋 Roteiro de Implantação (Novo Cliente)
+
+### 2.1 Variáveis de Ambiente
+
+| Variável | Descrição |
+|----------|-----------|
+| `NEXT_PUBLIC_LAYOUT_CLIENT` | Identificador do cliente (ex: `nome_novo_cliente`) |
+| `NEXT_PUBLIC_API_URL` | DNS/URL do back-end |
+| `NEXT_PUBLIC_LDAP_ENABLED` | Habilita/desabilita integração LDAP (`"true"` ou `"false"`) |
+
+**Exemplo de configuração:**
+```bash
+NEXT_PUBLIC_LAYOUT_CLIENT=way
+NEXT_PUBLIC_API_URL=http://localhost:8080/api
+NEXT_PUBLIC_LDAP_ENABLED=false
+```
+
+### 2.2 Alterações no Código
+
+#### Configurar layout do cliente
+
+Editar o arquivo `src/lib/layout/layout-client.enum.ts` e adicionar um novo objeto JSON com os textos e imagens personalizados do cliente.
+
+#### Adicionar assets do cliente
+
+Criar a pasta `public/images/nome_novo_cliente/` e adicionar os arquivos de imagem.
+
+**Assets obrigatórios:**
+
+| Arquivo | Descrição |
+|---------|-----------|
+| `logo.png` | Logotipo principal do cliente |
+| `favicon.ico` | Ícone da aba do navegador |
+| `login-bg.png` | Imagem de fundo da tela de login |
+
+### 2.3 Configuração LDAP
+
+A variável `NEXT_PUBLIC_LDAP_ENABLED` controla a integração com LDAP:
+
+```bash
+NEXT_PUBLIC_LDAP_ENABLED="true"  # Habilita LDAP
+NEXT_PUBLIC_LDAP_ENABLED="false" # Desabilita LDAP (padrão)
+NEXT_PUBLIC_LDAP_ENABLED="true" # Indica se login é via LDAP ou não (true/false)
+
+```
+
+**Importante:** Deve possuir o mesmo valor no frontend e no backend.
+
+Quando habilitado (`"true"`):
+- O botão "Gerar Senha" aparece no menu de ações dos responsáveis
+- Requer a permissão `RESPONSAVEL_GERAR_SENHA` para usar a funcionalidade
+- O usuário logado não pode gerar senha para si mesmo
+
+### 2.4 Envio de senha por e-mail
+
+O responsável com perfil **Admin** possui a opção de enviar a senha do usuário por e-mail através do botão "Gerar Senha" no menu de ações dos responsáveis.
+
+**Requisitos:**
+- `NEXT_PUBLIC_LDAP_ENABLED="true"`
+- Permissão `RESPONSAVEL_GERAR_SENHA`
+- Endpoint: `POST /responsaveis/{id}/gerar-senha`
+
+### 2.5 Senha padrão para Admin (Seed – quando NÃO for LDAP)
+
+Quando o sistema **não** está configurado com LDAP, a senha padrão para o usuário Admin é:
+
+- **Senha padrão:** `Rtech1234`
+- **Hash (bcrypt):** `$10$acPyxdXF7pqD0Ul27hrAbeyPf4yH0CfvqkpjWkaVmsO17yUp9UZ6C`
+
+> **Nota:** Esta senha é usada apenas durante a configuração inicial ou quando LDAP está desabilitado. Em produção com LDAP, as senhas são gerenciadas pelo servidor LDAP.
+
 ## 🔧 Configuração de Desenvolvimento
 
 ### Variáveis de Ambiente

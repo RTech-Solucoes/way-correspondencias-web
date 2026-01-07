@@ -15,6 +15,7 @@ import {
   ArrowClockwiseIcon,
   ArrowsDownUpIcon,
   FunnelSimpleIcon,
+  LockIcon,
   MagnifyingGlassIcon,
   PencilSimpleIcon,
   PlusIcon,
@@ -38,9 +39,13 @@ import {useDebounce} from '@/hooks/use-debounce';
 import {FiltrosAplicados} from '@/components/ui/applied-filters';
 import {usePermissoes} from "@/context/permissoes/PermissoesContext";
 import {useUserGestao} from "@/hooks/use-user-gestao";
+import {ResponsavelResponse} from '@/api/responsaveis/types';
+import {authClient} from '@/api/auth/client';
+import {ResponsaveisContextProps} from '@/context/responsaveis/ResponsaveisContext';
 
 
 export default function ResponsaveisPage() {
+  const contextValue = useResponsaveis();
   const {
     responsaveis,
     setResponsaveis,
@@ -77,11 +82,15 @@ export default function ResponsaveisPage() {
     applyFilters,
     clearFilters,
     handleSort,
-  } = useResponsaveis();
+  }: ResponsaveisContextProps = contextValue;
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
-  const { canInserirResponsavel, canAtualizarResponsavel, canDeletarResponsavel } = usePermissoes();
+  const { canInserirResponsavel, canAtualizarResponsavel, canDeletarResponsavel, canGerarSenhaResponsavel } = usePermissoes();
   const { isAdminOrGestor } = useUserGestao();
+  const [gerandoSenha, setGerandoSenha] = React.useState<number | null>(null);
+  const [showGerarSenhaDialog, setShowGerarSenhaDialog] = React.useState(false);
+  const [responsavelParaGerarSenha, setResponsavelParaGerarSenha] = React.useState<ResponsavelResponse | null>(null);
+  const ldapEnabled = (process.env.NEXT_PUBLIC_LDAP_ENABLED || 'false') === 'true';
 
   const loadResponsaveis = useCallback(async () => {
     try {
@@ -129,6 +138,38 @@ export default function ResponsaveisPage() {
   const onResponsavelSave = () => {
     handleResponsavelSave();
     loadResponsaveis();
+  };
+
+  const handleGerarSenhaClick = (responsavel: ResponsavelResponse) => {
+    if (!canGerarSenhaResponsavel) {
+      toast.error('Você não tem permissão para gerar senha.');
+      return;
+    }
+    setResponsavelParaGerarSenha(responsavel);
+    setShowGerarSenhaDialog(true);
+  };
+
+  const confirmGerarSenha = async () => {
+    if (!responsavelParaGerarSenha) {
+      return;
+    }
+
+    try {
+      setGerandoSenha(responsavelParaGerarSenha.idResponsavel);
+      await responsaveisClient.gerarSenhaEEnviarEmail(responsavelParaGerarSenha.idResponsavel);
+      toast.success('Senha gerada e enviada por email com sucesso!');
+      loadResponsaveis();
+    } catch (error) {
+      console.error('Erro ao gerar senha:', error);
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'Erro ao gerar senha. Tente novamente.';
+      toast.error(errorMessage);
+    } finally {
+      setGerandoSenha(null);
+      setShowGerarSenhaDialog(false);
+      setResponsavelParaGerarSenha(null);
+    }
   };
 
   const sortedResponsaveis = () => {
@@ -305,7 +346,7 @@ export default function ResponsaveisPage() {
                   </div>
                 </StickyTableHead>
               )}
-              {(canDeletarResponsavel || canAtualizarResponsavel) && (
+              {(canDeletarResponsavel || canAtualizarResponsavel || (ldapEnabled && canGerarSenhaResponsavel)) && (
                 <StickyTableHead className="text-right">Ações</StickyTableHead>
               )}
             </StickyTableRow>
@@ -369,6 +410,29 @@ export default function ResponsaveisPage() {
                   )}
                   <StickyTableCell className="text-right">
                     <div className="flex items-center justify-end space-x-2">
+                    {ldapEnabled && canGerarSenhaResponsavel && (() => {
+                        const isUsuarioLogado = authClient.getUserIdResponsavelFromToken() === responsavel.idResponsavel;
+                        const isDisabled = gerandoSenha === responsavel.idResponsavel || isUsuarioLogado;
+                        
+                        return (
+                        <div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleGerarSenhaClick(responsavel)}
+                            disabled={isDisabled}
+                            title="Gerar Senha"
+                            tooltip={isUsuarioLogado ? 'Você não pode gerar senha para você mesmo.' : ''}
+                          >
+                             {gerandoSenha === responsavel.idResponsavel ? (
+                               <SpinnerIcon className="h-4 w-4 animate-spin"/>
+                             ) : (
+                               <LockIcon className="h-4 w-4"/>
+                             )}
+                          </Button>
+                        </div>
+                        );
+                      })()}
                       {canAtualizarResponsavel &&
                         <Button
                           variant="ghost"
@@ -449,10 +513,31 @@ export default function ResponsaveisPage() {
 
       <ConfirmationDialog
         open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
+        onOpenChange={(open) => {
+          setShowDeleteDialog(open);
+          if (!open) {
+            setResponsavelToDelete(null);
+          }
+        }}
         onConfirm={confirmDelete}
         title="Excluir Responsável"
         description={`Tem certeza que deseja excluir o responsável "${responsavelToDelete?.nmResponsavel}"? Esta ação não pode ser desfeita.`}
+      />
+
+      <ConfirmationDialog
+        open={showGerarSenhaDialog}
+        onOpenChange={(open) => {
+          setShowGerarSenhaDialog(open);
+          if (!open) {
+            setResponsavelParaGerarSenha(null);
+          }
+        }}
+        onConfirm={confirmGerarSenha}
+        title="Gerar Senha de Acesso"
+        description={`Deseja realmente enviar a senha de acesso ao cliente do responsável "${responsavelParaGerarSenha?.nmResponsavel}"? A senha será gerada e enviada por email.`}
+        confirmText="Sim, gerar e enviar"
+        cancelText="Cancelar"
+        variant="default"
       />
     </div>
   );
