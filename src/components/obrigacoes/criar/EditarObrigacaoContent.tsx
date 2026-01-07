@@ -128,6 +128,7 @@ export function EditarObrigacaoContent({ id }: EditarObrigacaoContentProps) {
   const [showDeleteAnexoDialog, setShowDeleteAnexoDialog] = useState(false);
   const [anexoToDelete, setAnexoToDelete] = useState<AnexoResponse | null>(null);
   const [isNaoPermitidoEditar, setIsNaoPermitidoEditar] = useState(false);
+  const [hasStep3ValidationErrors, setHasStep3ValidationErrors] = useState(false);
 
   useEffect(() => {
     tiposClient.buscarPorCategorias([CategoriaEnum.OBRIG_CLASSIFICACAO])
@@ -240,11 +241,19 @@ export function EditarObrigacaoContent({ id }: EditarObrigacaoContentProps) {
           if (dataTermino <= dataInicio) return false;
         }
 
+        if (formData.dtTermino && formData.dtLimite) {
+          const dataTermino = new Date(formData.dtTermino);
+          const dataLimite = new Date(formData.dtLimite);
+          if (dataLimite < dataTermino) return false;
+        }
+
+        if (hasStep3ValidationErrors) return false;
+
         return true;
       default:
         return true;
     }
-  }, [formData, idClassificacaoCondicionada]);
+  }, [formData, idClassificacaoCondicionada, hasStep3ValidationErrors]);
 
   const requiredStepsForTab = useMemo(() => {
     switch (activeTab) {
@@ -439,6 +448,7 @@ export function EditarObrigacaoContent({ id }: EditarObrigacaoContentProps) {
             formData={formData}
             updateFormData={updateFormData}
             disabled={isNaoPermitidoEditar}
+            onValidationChange={setHasStep3ValidationErrors}
           />
         );
       case 'anexos':
