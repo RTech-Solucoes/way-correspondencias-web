@@ -44,6 +44,7 @@ export function ObrigacaoModal() {
   const [loading, setLoading] = useState(false);
   const [idTipoClassificacaoCondicionada, setIdTipoClassificacaoCondicionada] = useState<number | null>(null);
   const [anexosParaEnviar, setAnexosParaEnviar] = useState<File[]>([]);
+  const [hasStep3ValidationErrors, setHasStep3ValidationErrors] = useState(false);
   const [formData, setFormData] = useState<ObrigacaoFormData>({
     cdIdentificador: '',
     dsTarefa: '',
@@ -90,6 +91,7 @@ export function ObrigacaoModal() {
     setShowObrigacaoModal(false);
     setCurrentStep(1);
     setAnexosParaEnviar([]);
+    setHasStep3ValidationErrors(false);
     setFormData({
       idSolicitacao: null,
       dsTarefa: '',
@@ -152,12 +154,14 @@ export function ObrigacaoModal() {
 
         if (!formData.dtLimite) return false;
         
+        if (hasStep3ValidationErrors) return false;
+        
         return true;
 
       default:
         return true;
     }
-  }, [formData, idTipoClassificacaoCondicionada]);
+  }, [formData, idTipoClassificacaoCondicionada, hasStep3ValidationErrors]);
 
   const isvalidProximaStep = useMemo(() => {
     return validateStep(currentStep);
@@ -258,7 +262,7 @@ export function ObrigacaoModal() {
       case 2:
         return <Step2Obrigacao formData={formData} updateFormData={updateFormData} />;
       case 3:
-        return <Step3Obrigacao formData={formData} updateFormData={updateFormData} />;
+        return <Step3Obrigacao formData={formData} updateFormData={updateFormData} onValidationChange={setHasStep3ValidationErrors} />;
       case 4:
         return <Step4Obrigacao formData={formData} updateFormData={updateFormData} anexos={anexosParaEnviar} onAnexosChange={setAnexosParaEnviar} />;
       case 5:
@@ -317,4 +321,3 @@ export function ObrigacaoModal() {
     </Dialog>
   );
 }
-

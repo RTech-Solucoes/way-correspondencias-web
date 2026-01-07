@@ -14,11 +14,12 @@ interface Step3ObrigacaoProps {
   formData: ObrigacaoFormData;
   updateFormData: (data: Partial<ObrigacaoFormData>) => void;
   disabled?: boolean;
+  onValidationChange?: (hasErrors: boolean) => void;
 }
 
 type TipoFrequencia = 'unica' | 'recorrente' | null;
 
-export function Step3Obrigacao({ formData, updateFormData, disabled = false }: Step3ObrigacaoProps) {
+export function Step3Obrigacao({ formData, updateFormData, disabled = false, onValidationChange }: Step3ObrigacaoProps) {
 
   const [periodicidadesSelecionadas, setPeriodicidadesSelecionadas] = useState<TipoResponse[]>([]);
   const [tipoUnica, setTipoUnica] = useState<TipoResponse | null>(null);
@@ -82,6 +83,13 @@ export function Step3Obrigacao({ formData, updateFormData, disabled = false }: S
     }
     return null;
   }, [formData.dtTermino, formData.dtLimite]);
+
+  useEffect(() => {
+    if (onValidationChange) {
+      const hasErrors = !!(erroDataTermino || erroDataLimite);
+      onValidationChange(hasErrors);
+    }
+  }, [erroDataTermino, erroDataLimite, onValidationChange]);
 
   useEffect(() => {
     if (formData.dtInicio && formData.dtTermino) {
