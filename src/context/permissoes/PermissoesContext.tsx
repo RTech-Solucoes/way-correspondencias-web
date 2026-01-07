@@ -25,6 +25,7 @@ export interface PermissoesContextProps {
   canInserirResponsavel: boolean | null
   canAtualizarResponsavel: boolean | null
   canDeletarResponsavel: boolean | null
+  canGerarSenhaResponsavel: boolean | null
   canListarSolicitacao: boolean | null
   canInserirSolicitacao: boolean | null
   canAtualizarSolicitacao: boolean | null
@@ -68,6 +69,7 @@ export const PermissoesProvider = ({ children }: { children: ReactNode }) => {
   const canInserirResponsavel = useHasPermissao(Permissoes.RESPONSAVEL_INSERIR)
   const canAtualizarResponsavel = useHasPermissao(Permissoes.RESPONSAVEL_ATUALIZAR)
   const canDeletarResponsavel = useHasPermissao(Permissoes.RESPONSAVEL_DELETAR)
+  const canGerarSenhaResponsavel = useHasPermissao(Permissoes.RESPONSAVEL_GERAR_SENHA)
   const canListarSolicitacao = useHasPermissao(Permissoes.SOLICITACAO_LISTAR)
   const canInserirSolicitacao = useHasPermissao(Permissoes.SOLICITACAO_INSERIR)
   const canAtualizarSolicitacao = useHasPermissao(Permissoes.SOLICITACAO_ATUALIZAR)
@@ -110,6 +112,7 @@ export const PermissoesProvider = ({ children }: { children: ReactNode }) => {
         canInserirResponsavel,
         canAtualizarResponsavel,
         canDeletarResponsavel,
+        canGerarSenhaResponsavel,
         canListarSolicitacao,
         canInserirSolicitacao,
         canAtualizarSolicitacao,
