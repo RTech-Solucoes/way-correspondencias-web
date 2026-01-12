@@ -194,6 +194,7 @@ export function TramitacaoObrigacaoModal({ open, onClose, onConfirm, obrigacaoId
             dsTarefa: formData.dsTarefa || '',
             flExigeCienciaGerenteRegul: formData.flExigeCienciaGerenteRegul || '',
             dsObservacao: formData.dsObservacao || '',
+            flAnaliseGerenteDiretor: 'N',
           });
         } catch (error) {
           console.error('Erro ao salvar step 1:', error);
