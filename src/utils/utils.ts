@@ -1,11 +1,10 @@
 import {type ClassValue, clsx} from 'clsx';
 import {twMerge} from 'tailwind-merge';
-import {StatusAtivo} from "@/types/misc/types";
+import {StatusAtivo} from "@/utils/misc/status-ativo";
 import {ArquivoDTO, TipoResponsavelAnexoEnum} from '@/api/anexos/type';
 import { z } from "zod";
 import { cpf } from "cpf-cnpj-validator";
 import dayjs from "dayjs";
-// import { SolicitacaoResumoResponse } from '@/types/solicitacoes/types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

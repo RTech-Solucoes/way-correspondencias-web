@@ -35,16 +35,16 @@ export enum TipoResponsavelAnexoEnum {
 export enum TipoObjetoAnexoEnum {
   E = "E", // Email
   T = "T", // Tramitacao
-  S = "S", // Solicitacao
+  S = "S", // Correspondência (Antes da migração era 'Solicitação'. Após a migração, passou a ser 'Correspondência'. Os anexos pertencem à Correspondência)
   R = "R", // Responsavel
-  O = "O", // Obrigacao Contratual
+  O = "O", // Obrigacao 
 }
 
 export  enum TipoDocumentoAnexoEnum {
   C = 'C', // Comum
   E = 'E', // Evidência de cumprimento
   A = 'A', // Auxiliar
-  R = 'R', // Correspondência
+  R = 'R', // Correspondência da Obrigacao
   L = 'L', // Link
   P = 'P', // Protocolo
 }

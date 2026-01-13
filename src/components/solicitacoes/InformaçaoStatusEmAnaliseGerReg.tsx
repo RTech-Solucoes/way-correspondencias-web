@@ -1,15 +1,16 @@
 'use client';
 
-import { useMemo } from 'react';
-import { Label } from '@/components/ui/label';
-import { SolicitacaoDetalheResponse, SolicitacaoPrazoResponse } from '@/api/solicitacoes/types';
+import { CorrespondenciaDetalheResponse } from '@/api/correspondencia/types';
+import { ResponsavelResponse } from '@/api/responsaveis/types';
+import { SolicitacaoPrazoResponse } from '@/api/solicitacoes/types';
 import { StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
 import { STATUS_LIST, statusList } from '@/api/status-solicitacao/types';
+import { Label } from '@/components/ui/label';
 import { hoursToDaysAndHours } from '@/utils/utils';
-import { ResponsavelResponse } from '@/api/responsaveis/types';
+import { useMemo } from 'react';
 
 interface PrazosConfiguradosSectionProps {
-  solicitacao: SolicitacaoDetalheResponse | null;
+  correspondencia: CorrespondenciaDetalheResponse | null;
   statusListPrazos: StatusSolicitacaoResponse[];
   prazosSolicitacaoPorStatus: SolicitacaoPrazoResponse[];
   responsaveis: ResponsavelResponse[];
@@ -17,7 +18,7 @@ interface PrazosConfiguradosSectionProps {
 }
 
 export default function InformaçaoStatusEmAnaliseGerReg({
-  solicitacao,
+  correspondencia,
   statusListPrazos,
   prazosSolicitacaoPorStatus,
   responsaveis,
@@ -58,14 +59,14 @@ export default function InformaçaoStatusEmAnaliseGerReg({
         <div key={status.codigo} className="flex justify-between items-center p-2 bg-white border rounded-lg shadow-sm">
           <span className="font-medium">{status.nome}</span>
           <span className="text-gray-600">
-            {solicitacao?.solicitacao?.flExcepcional === 'S' 
+            {correspondencia?.correspondencia?.flExcepcional === 'S' 
               ? `${horas} horas` 
               : `${hoursToDaysAndHours(horas)} dias`
             }
           </span>
         </div>
       ));
-  }, [statusListPrazos, prazosSolicitacaoPorStatus, solicitacao?.solicitacao?.flExcepcional]);
+  }, [statusListPrazos, prazosSolicitacaoPorStatus, correspondencia?.correspondencia?.flExcepcional]);
 
   return (
     <>
@@ -75,7 +76,7 @@ export default function InformaçaoStatusEmAnaliseGerReg({
             <Label className="text-sm font-semibold">Validadores/Assinantes</Label>
             <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
               <div className="space-y-3">
-                {solicitacao?.solicitacoesAssinantes.map(assinante => {
+                {correspondencia?.solicitacoesAssinantes.map(assinante => {
                   const responsavel = responsaveis.find(r => r.idResponsavel === assinante.idResponsavel);
                   return responsavel ? (
                     <div key={assinante.idResponsavel} className="flex items-center justify-between p-3 bg-white border rounded-lg shadow-sm">

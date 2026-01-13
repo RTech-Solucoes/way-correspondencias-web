@@ -1,4 +1,4 @@
-import {StatusAtivo} from "@/types/misc/types";
+import {StatusAtivo} from "@/utils/misc/status-ativo";
 
 export enum CdAreaEnum {
   OPERACAO = "OPE",

@@ -23,6 +23,7 @@ import solicitacaoAssinanteClient from '@/api/solicitacao-assinante/client';
 import obrigacaoAnexosClient from '@/api/obrigacao/anexos-client';
 import { statusList as statusListType } from '@/api/status-solicitacao/types';
 import tramitacoesClient from '@/api/tramitacoes/client';
+import correspondenciaClient from '@/api/correspondencia/client';
 
 export interface TramitacaoFormData {
   dsTarefa?: string;
@@ -194,6 +195,7 @@ export function TramitacaoObrigacaoModal({ open, onClose, onConfirm, obrigacaoId
             dsTarefa: formData.dsTarefa || '',
             flExigeCienciaGerenteRegul: formData.flExigeCienciaGerenteRegul || '',
             dsObservacao: formData.dsObservacao || '',
+            flAnaliseGerenteDiretor: 'N',
           });
         } catch (error) {
           console.error('Erro ao salvar step 1:', error);
@@ -214,7 +216,7 @@ export function TramitacaoObrigacaoModal({ open, onClose, onConfirm, obrigacaoId
               flExcepcional: formData.flExcepcional || 'N',
             }));
 
-          await solicitacoesClient.etapaPrazo(obrigacaoId, {
+          await correspondenciaClient.etapaPrazo(obrigacaoId, {
             idTema: formData.idTema || undefined,
             nrPrazoInterno: formData.nrPrazo || undefined,
             flExcepcional: formData.flExcepcional || 'N',

@@ -10,7 +10,8 @@ import responsaveisClient from '@/api/responsaveis/client';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
 import solicitacaoAssinanteClient from '@/api/solicitacao-assinante/client';
 import { solicitacoesClient } from '@/api/solicitacoes/client';
-import { SolicitacaoPrazoResponse, SolicitacaoRequest, SolicitacaoResponse } from '@/api/solicitacoes/types';
+import { SolicitacaoPrazoResponse, SolicitacaoResponse } from '@/api/solicitacoes/types';
+import { CorrespondenciaRequest, CorrespondenciaResponse } from '@/api/correspondencia/types';
 import { statusSolicPrazoTemaClient } from '@/api/status-prazo-tema/client';
 import { StatusSolicPrazoTemaForUI } from '@/api/status-prazo-tema/types';
 import { statusSolicitacaoClient, StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
@@ -27,7 +28,7 @@ import { Stepper } from '@/components/ui/stepper';
 import { TextField } from '@/components/ui/text-field';
 import { Textarea } from '@/components/ui/textarea';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
-import { AnaliseGerenteDiretor, getTipoAprovacaoLabel } from '@/types/solicitacoes/types';
+import { AnaliseGerenteDiretor, getTipoAprovacaoLabel } from '@/api/solicitacoes/types';
 import { base64ToUint8Array, capitalize, getRows, hoursToDaysAndHours, saveBlob } from '@/utils/utils';
 import { Input } from '@nextui-org/react';
 import { ArrowArcRightIcon, CaretLeftIcon, CaretRightIcon, DownloadSimpleIcon } from '@phosphor-icons/react';
@@ -39,6 +40,7 @@ import AnexoComponent from '../AnexoComponotent/AnexoComponent';
 import AnexoList from '../AnexoComponotent/AnexoList/AnexoList';
 import { MultiSelectAssinantes } from '../ui/multi-select-assinates';
 import { CategoriaEnum, TipoEnum } from '@/api/tipos/types';
+import correspondenciaClient from '@/api/correspondencia/client';
 
 interface AnexoListItem {
   idAnexo?: number;
@@ -51,7 +53,7 @@ interface AnexoListItem {
 }
 
 interface SolicitacaoModalProps {
-  solicitacao: SolicitacaoResponse | null;
+  correspondencia: CorrespondenciaResponse | null;
   open: boolean;
 
   onClose(): void;
@@ -65,7 +67,7 @@ interface SolicitacaoModalProps {
 }
 
 export default function SolicitacaoModal({
-  solicitacao,
+  correspondencia,
   open,
   onClose,
   onSave,
@@ -76,7 +78,7 @@ export default function SolicitacaoModal({
 }: SolicitacaoModalProps) {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(3);
-  const [formData, setFormData] = useState<SolicitacaoRequest>({
+  const [formData, setFormData] = useState<CorrespondenciaRequest>({
     cdIdentificacao: '',
     dsAssunto: '',
     dsSolicitacao: '',
@@ -120,13 +122,13 @@ export default function SolicitacaoModal({
   } | null>(null);
   
   const canEditSolicitacao = useMemo(() => {
-    if (!solicitacao) return true; 
+    if (!correspondencia) return true; 
     
-    const isPreAnalise = solicitacao.statusSolicitacao?.idStatusSolicitacao === statusListType.PRE_ANALISE.id || 
-                         solicitacao.statusSolicitacao?.nmStatus === statusListType.PRE_ANALISE.label;
+    const isPreAnalise = correspondencia.statusSolicitacao?.idStatusSolicitacao === statusListType.PRE_ANALISE.id || 
+                         correspondencia.statusSolicitacao?.nmStatus === statusListType.PRE_ANALISE.label;
     
     return isPreAnalise;
-  }, [solicitacao]);
+  }, [correspondencia]);
 
   const handleConfirmSend = useCallback(async () => {
     try {
@@ -136,7 +138,7 @@ export default function SolicitacaoModal({
       
       // Se for nova solicitação, cria primeiro
       if (isNewSolicitacao && pendingCreateData) {
-        const created = await solicitacoesClient.criar({
+        const created = await correspondenciaClient.criar({
           idTema: formData.idTema,
           ...(pendingCreateData.cdIdentificacao && { cdIdentificacao: pendingCreateData.cdIdentificacao }),
           dsAssunto: formData.dsAssunto?.trim(),
@@ -154,7 +156,7 @@ export default function SolicitacaoModal({
         });
         idToSend = created.idSolicitacao;
       } else if (!isNewSolicitacao && idToSend) {
-        await solicitacoesClient.etapaStatus(idToSend);
+        await correspondenciaClient.etapaStatus(idToSend);
       }
       
       if (!idToSend) return;
@@ -191,17 +193,17 @@ export default function SolicitacaoModal({
   
   useEffect(() => {
     const loadPrazos = async () => {
-      const prazosSolicitacaoPorStatus = await solicitacoesClient.listarPrazos(solicitacao?.idSolicitacao || 0);
+      const prazosSolicitacaoPorStatus = await solicitacoesClient.listarPrazos(correspondencia?.idSolicitacao || 0);
       setPrazosSolicitacaoPorStatus(prazosSolicitacaoPorStatus || []);
       
-      if (solicitacao) {
-        const isExcepcional = (solicitacao.flExcepcional || 'N') === 'S';
+      if (correspondencia) {
+        const isExcepcional = (correspondencia.flExcepcional || 'N') === 'S';
         setPrazoExcepcional(isExcepcional);
       }
 
       try {
-        const temaId = formData.idTema || solicitacao?.idTema || solicitacao?.tema?.idTema || 0;
-        const temaNome = getSelectedTema()?.nmTema || solicitacao?.tema?.nmTema || '';
+        const temaId = formData.idTema || correspondencia?.idTema || correspondencia?.tema?.idTema || 0;
+        const temaNome = getSelectedTema()?.nmTema || correspondencia?.tema?.nmTema || '';
         if ((prazosSolicitacaoPorStatus || []).length > 0) {
           const mapped = (prazosSolicitacaoPorStatus || []).map(p => ({
             idStatusSolicPrazoTema: 0,
@@ -215,10 +217,10 @@ export default function SolicitacaoModal({
         }
       } catch {}
     };
-    if (solicitacao?.idSolicitacao) {
+    if (correspondencia?.idSolicitacao) {
       loadPrazos();
     }
-  }, [solicitacao?.idSolicitacao]);
+  }, [correspondencia?.idSolicitacao]);
 
   useEffect(() => {
     const flExcepcionalValue = prazoExcepcional ? 'S' : 'N';
@@ -229,30 +231,30 @@ export default function SolicitacaoModal({
   }, [prazoExcepcional]);
 
   useEffect(() => {
-    if (solicitacao) {
+    if (correspondencia) {
       setFormData({
-        idEmail: solicitacao.idEmail,
-        cdIdentificacao: solicitacao.cdIdentificacao || '',
-        dsAssunto: solicitacao.dsAssunto || '',
-        dsSolicitacao: solicitacao.dsSolicitacao || '',
-        dsObservacao: solicitacao.dsObservacao || '',
-        flStatus: solicitacao.flStatus || 'P',
-        idResponsavel: solicitacao.idResponsavel || 0,
-        idTema: solicitacao.tema?.idTema || solicitacao.idTema || 0,
+        idEmail: correspondencia.idEmail,
+        cdIdentificacao: correspondencia.cdIdentificacao || '',
+        dsAssunto: (correspondencia as CorrespondenciaResponse).dsAssunto || '',
+        dsSolicitacao: (correspondencia as CorrespondenciaResponse).dsSolicitacao || '',
+        dsObservacao: correspondencia.dsObservacao || '',
+        flStatus: correspondencia.flStatus || 'P',
+        idResponsavel: correspondencia.idResponsavel || 0,
+        idTema: correspondencia.tema?.idTema || correspondencia.idTema || 0,
         idsAreas: [
-          ...(solicitacao.area?.map(a => a.idArea) || []),
-          ...(solicitacao.tema?.areas?.map(a => a.idArea) || [])
+          ...(correspondencia.area?.map(a => a.idArea) || []),
+          ...(correspondencia.tema?.areas?.map(a => a.idArea) || [])
         ],
-        nrPrazo: solicitacao.nrPrazo || undefined,
-        tpPrazo: solicitacao.tpPrazo === 'C' ? 'H' : (solicitacao.tpPrazo || ''),
-        nrOficio: solicitacao.nrOficio || '',
-        nrProcesso: solicitacao.nrProcesso || '',
-        flAnaliseGerenteDiretor: solicitacao.flAnaliseGerenteDiretor || '',
-        flExcepcional: solicitacao.flExcepcional || 'N',
-        flExigeCienciaGerenteRegul: solicitacao.flExigeCienciaGerenteRegul || '',
+        nrPrazo: correspondencia.nrPrazo || undefined,
+        tpPrazo: correspondencia.tpPrazo === 'C' ? 'H' : (correspondencia.tpPrazo || ''),
+        nrOficio: (correspondencia as CorrespondenciaResponse).nrOficio || '',
+        nrProcesso: correspondencia.nrProcesso || '',
+        flAnaliseGerenteDiretor: correspondencia.flAnaliseGerenteDiretor || '',
+        flExcepcional: correspondencia.flExcepcional || 'N',
+        flExigeCienciaGerenteRegul: correspondencia.flExigeCienciaGerenteRegul || '',
       });
       
-      const isExcepcional = (solicitacao.flExcepcional || 'N') === 'S';
+      const isExcepcional = (correspondencia.flExcepcional || 'N') === 'S';
       setPrazoExcepcional(isExcepcional);
 
     } else {
@@ -279,11 +281,11 @@ export default function SolicitacaoModal({
     }
     setCurrentStep(1);
     setAnexos([]);
-  }, [solicitacao, open, initialSubject, initialDescription]);
+  }, [correspondencia, open, initialSubject, initialDescription]);
 
   useEffect(() => {
-    if (solicitacao && solicitacao.idSolicitacao && open) {
-      solicitacoesClient.buscarAnexos(solicitacao.idSolicitacao).then((anexos) => {
+    if (correspondencia && correspondencia.idSolicitacao && open) {
+      solicitacoesClient.buscarAnexos(correspondencia.idSolicitacao).then((anexos) => {
         setAnexosBackend(anexos);
       });
     } else {
@@ -292,14 +294,14 @@ export default function SolicitacaoModal({
     if (!open) {
       setAnexos([]);
     }
-  }, [solicitacao, open, initialSubject, initialDescription]);
+  }, [correspondencia, open, initialSubject, initialDescription]);
 
   useEffect(() => {
     const loadAssinantes = async () => {
-      if (solicitacao?.idSolicitacao && open) {
+      if (correspondencia?.idSolicitacao && open) {
         try {
           const assinantes = await solicitacaoAssinanteClient.buscarPorIdSolicitacaoEIdStatusSolicitacao(
-            solicitacao.idSolicitacao,
+            correspondencia.idSolicitacao,
             [statusListType.EM_ASSINATURA_DIRETORIA.id]
           );
           const idsAssinantes = assinantes.map(a => a.idResponsavel);
@@ -314,7 +316,7 @@ export default function SolicitacaoModal({
     };
 
     loadAssinantes();
-  }, [solicitacao?.idSolicitacao, open]);
+  }, [correspondencia?.idSolicitacao, open]);
 
   useEffect(() => {
     const loadAllAreas = async () => {
@@ -425,13 +427,46 @@ export default function SolicitacaoModal({
           toast.error("É obrigatório selecionar se exige manifestação do Gerente do Regulatório");
           return;
         }
-        if (!solicitacao) {
+        
+        // Verificar se o cdIdentificacao já existe ao criar nova solicitação
+        if (!correspondencia || (correspondencia?.cdIdentificacao === null && correspondencia?.idSolicitacao === undefined)) {
+          const cdIdentificacao = formData.cdIdentificacao?.trim();
+          if (cdIdentificacao) {
+            const existeCdIdentificacao = await solicitacoesClient.verificarExisteCdIdentificacaoPorFluxo(
+              cdIdentificacao,
+              TipoEnum.CORRESPONDENCIA
+            );
+            
+            if (existeCdIdentificacao) {
+              toast.error(`O código de identificação "${cdIdentificacao}" já existe.`);
+              return;
+            }
+          }
+        }
+        
+        if (!correspondencia) {
           setCurrentStep(2);
           return;
         }
         if (canEditSolicitacao) {
-          await solicitacoesClient.etapaIdentificacao(solicitacao.idSolicitacao, {
-            cdIdentificacao: formData.cdIdentificacao?.trim(),
+          const cdIdentificacao = formData.cdIdentificacao?.trim();
+          const cdIdentificacaoOriginal = correspondencia?.cdIdentificacao || '';
+          
+          // Verificar se o código mudou e se já existe
+          if (cdIdentificacao && cdIdentificacao !== cdIdentificacaoOriginal) {
+            const existeCdIdentificacao = await solicitacoesClient.verificarExisteCdIdentificacaoPorFluxo(
+              cdIdentificacao,
+              TipoEnum.CORRESPONDENCIA
+            );
+            
+            if (existeCdIdentificacao) {
+              toast.error(`O código de identificação "${cdIdentificacao}" já existe.`);
+              return;
+            }
+          }
+          
+          await correspondenciaClient.etapaIdentificacao(correspondencia.idSolicitacao, {
+            cdIdentificacao: cdIdentificacao,
             dsAssunto: formData.dsAssunto?.trim(),
             dsObservacao: formData.dsObservacao?.trim(),
             nrOficio: formData.nrOficio?.trim(),
@@ -462,12 +497,12 @@ export default function SolicitacaoModal({
           console.error('Erro ao carregar prazos padrão:', error);
         }
 
-        if (!solicitacao) {
+        if (!correspondencia) {
           setCurrentStep(3);
           return;
         }
         if (canEditSolicitacao) {
-          await solicitacoesClient.etapaTema(solicitacao.idSolicitacao, {
+          await correspondenciaClient.etapaTema(correspondencia.idSolicitacao, {
             idTema: formData.idTema,
             tpPrazo: formData.tpPrazo || undefined,
             nrPrazoInterno: formData.nrPrazo,
@@ -478,7 +513,7 @@ export default function SolicitacaoModal({
 
         setCurrentStep(3);
       } else if (currentStep === 3) {
-        if (!solicitacao) {
+        if (!correspondencia) {
           setCurrentStep(4);
           return;
         }
@@ -492,7 +527,7 @@ export default function SolicitacaoModal({
               flExcepcional: formData.flExcepcional || 'N'
             }));
 
-          await solicitacoesClient.etapaPrazo(solicitacao.idSolicitacao, {
+          await correspondenciaClient.etapaPrazo(correspondencia.idSolicitacao, {
             idTema: formData.idTema,
             nrPrazoInterno: formData.nrPrazo,
             flExcepcional: formData.flExcepcional,
@@ -507,14 +542,14 @@ export default function SolicitacaoModal({
           return;
         }
 
-        if (!solicitacao) {
+        if (!correspondencia) {
           setCurrentStep(5);
           return;
         }
 
         if (canEditSolicitacao && formData.idsResponsaveisAssinates && formData.idsResponsaveisAssinates.length > 0) {
           await solicitacaoAssinanteClient.criar(formData.idsResponsaveisAssinates.map(id => ({
-            idSolicitacao: solicitacao.idSolicitacao,
+            idSolicitacao: correspondencia.idSolicitacao,
             idStatusSolicitacao: statusListType.EM_ASSINATURA_DIRETORIA.id,
             idResponsavel: id
           })));
@@ -523,7 +558,7 @@ export default function SolicitacaoModal({
         setCurrentStep(5);
       }
       else if (currentStep === 5) {
-        if (!solicitacao) {
+        if (!correspondencia) {
           setCurrentStep(6);
           return;
         }
@@ -592,9 +627,9 @@ export default function SolicitacaoModal({
 
             try {
               setLoading(true);
-              await solicitacoesClient.uploadAnexos(solicitacao.idSolicitacao, arquivosDTO);
+              await solicitacoesClient.uploadAnexos(correspondencia.idSolicitacao, arquivosDTO);
               try {
-                const atualizados = await solicitacoesClient.buscarAnexos(solicitacao.idSolicitacao);
+                const atualizados = await solicitacoesClient.buscarAnexos(correspondencia.idSolicitacao);
                 setAnexosBackend(atualizados);
               } catch {}
               setAnexos([]);
@@ -616,7 +651,7 @@ export default function SolicitacaoModal({
 
       onFinish();
     }
-  }, [currentStep, formData, solicitacao, statusPrazos, anexos, anexosBackend, anexosTypeE, canEditSolicitacao]);
+  }, [currentStep, formData, correspondencia, statusPrazos, anexos, anexosBackend, anexosTypeE, canEditSolicitacao]);
 
   const handlePreviousStep = useCallback(() => {
     if (currentStep === 2) {
@@ -660,16 +695,16 @@ export default function SolicitacaoModal({
   }, []);
 
   const handleRemoveAnexoBackend = useCallback(async (idAnexo: number) => {
-    if (!solicitacao?.idSolicitacao) return;
+    if (!correspondencia?.idSolicitacao) return;
 
     try {
-      await solicitacoesClient.removerAnexo(solicitacao.idSolicitacao, idAnexo);
+      await solicitacoesClient.removerAnexo(correspondencia.idSolicitacao, idAnexo);
       setAnexosBackend(prev => prev.filter(anexo => anexo.idAnexo !== idAnexo));
       toast.success('Documento removido com sucesso');
     } catch {
       toast.error('Erro ao remover documento');
     }
-  }, [solicitacao?.idSolicitacao]);
+  }, [correspondencia?.idSolicitacao]);
 
   const handleDownloadAnexoBackend = useCallback(async (anexo: AnexoListItem) => {
     try {
@@ -723,7 +758,7 @@ export default function SolicitacaoModal({
     e.preventDefault();
     try {
       setLoading(true);
-      const id = solicitacao?.idSolicitacao || createdSolicitacao?.idSolicitacao;
+      const id = correspondencia?.idSolicitacao || createdSolicitacao?.idSolicitacao;
 
       if (createdSolicitacao?.idSolicitacao) {
         if (!canEditSolicitacao) { toast.message('Esta solicitação não pode ser editada no status atual.'); setLoading(false); return; }
@@ -732,9 +767,9 @@ export default function SolicitacaoModal({
         setShowConfirmSend(true);
         setLoading(false);
         return;
-      } else if (solicitacao?.idSolicitacao) {
+      } else if (correspondencia?.idSolicitacao) {
         if (!canEditSolicitacao) { toast.message('Esta solicitação não pode ser editada no status atual.'); setLoading(false); return; }
-        setConfirmSendId(solicitacao.idSolicitacao);
+        setConfirmSendId(correspondencia.idSolicitacao);
         setConfirmSendToast('Solicitação encaminhada com sucesso!');
         setShowConfirmSend(true);
         setLoading(false);
@@ -755,6 +790,19 @@ export default function SolicitacaoModal({
 
         const cdIdentificacao = formData.cdIdentificacao?.trim();
         
+        if (id === undefined && correspondencia?.cdIdentificacao === null && correspondencia?.idSolicitacao === undefined) {
+          const existeCdIdentificacao = await solicitacoesClient.verificarExisteCdIdentificacaoPorFluxo(
+            cdIdentificacao,
+            TipoEnum.CORRESPONDENCIA
+          );
+          
+          if (existeCdIdentificacao) {
+            toast.error(`O código de identificação "${cdIdentificacao}" já existe.`);
+            setLoading(false);
+            return;
+          }
+        }
+        
         const solicitacoesPrazos = statusPrazos
           .filter(p => p.nrPrazoInterno && p.nrPrazoInterno > 0 && p.idStatusSolicitacao)
           .map(p => ({
@@ -766,7 +814,7 @@ export default function SolicitacaoModal({
             flExcepcional: formData.flExcepcional === 'S' ? 'S' : 'N'
           }));
         
-        if (id === undefined || solicitacao?.idSolicitacao === undefined) {
+        if (id === undefined || correspondencia?.idSolicitacao === undefined) {
 
           const solicitacoesAssinantes = (formData.idsResponsaveisAssinates || []).map(idResp => ({
             idStatusSolicitacao: statusListType.EM_ASSINATURA_DIRETORIA.id,
@@ -804,7 +852,25 @@ export default function SolicitacaoModal({
           return;
         }        
 
-        await solicitacoesClient.etapaIdentificacao(id, {
+        // Verificar se o cdIdentificacao mudou e se já existe
+        if (cdIdentificacao && id !== undefined && correspondencia?.idSolicitacao !== undefined) {
+          const cdIdentificacaoOriginal = correspondencia?.cdIdentificacao || '';
+          // Só verifica se o código mudou em relação ao original
+          if (cdIdentificacao !== cdIdentificacaoOriginal) {
+            const existeCdIdentificacao = await solicitacoesClient.verificarExisteCdIdentificacaoPorFluxo(
+              cdIdentificacao,
+              TipoEnum.CORRESPONDENCIA
+            );
+            
+            if (existeCdIdentificacao) {
+              toast.error(`O código de identificação "${cdIdentificacao}" já existe.`);
+              setLoading(false);
+              return;
+            }
+          }
+        }
+
+        await correspondenciaClient.etapaIdentificacao(id, {
           ...(cdIdentificacao && { cdIdentificacao }),
           dsAssunto: formData.dsAssunto?.trim(),
           dsObservacao: formData.dsObservacao?.trim(),
@@ -814,7 +880,7 @@ export default function SolicitacaoModal({
           flExigeCienciaGerenteRegul: formData.flExigeCienciaGerenteRegul
         });
 
-        await solicitacoesClient.etapaTema(id, {
+        await correspondenciaClient.etapaTema(id, {
           idTema: formData.idTema,
           tpPrazo: formData.tpPrazo || undefined,
           nrPrazoInterno: formData.nrPrazo,
@@ -833,14 +899,14 @@ export default function SolicitacaoModal({
               tpPrazo: formData.tpPrazo || undefined,
               flExcepcional: 'S'
             }));
-          await solicitacoesClient.etapaPrazo(id, {
+          await correspondenciaClient.etapaPrazo(id, {
             idTema: formData.idTema,
             nrPrazoInterno: formData.nrPrazo,
             flExcepcional: 'S',
             solicitacoesPrazos
           });
         } else {
-          await solicitacoesClient.etapaPrazo(id, {
+          await correspondenciaClient.etapaPrazo(id, {
             idTema: formData.idTema,
             nrPrazoInterno: formData.nrPrazo,
             flExcepcional: 'N',
@@ -888,7 +954,7 @@ export default function SolicitacaoModal({
       
     } catch (err) {
       console.error(err);
-      let errorMessage = solicitacao || createdSolicitacao ? 'Erro ao encaminhar solicitação' : 'Erro ao criar solicitação';
+      let errorMessage = correspondencia || createdSolicitacao ? 'Erro ao encaminhar solicitação' : 'Erro ao criar solicitação';
       
       if (err instanceof Error) {
         if (err.message) {
@@ -1083,9 +1149,9 @@ export default function SolicitacaoModal({
             <SelectValue placeholder="Selecione o tema" />
           </SelectTrigger>
           <SelectContent>
-            {solicitacao?.tema && !temas.find(t => t.idTema === solicitacao.tema!.idTema) && (
-              <SelectItem key={solicitacao.tema.idTema} value={solicitacao.tema.idTema.toString()}>
-                {solicitacao.tema.nmTema}
+            {correspondencia?.tema && !temas.find(t => t.idTema === correspondencia.tema!.idTema) && (
+              <SelectItem key={correspondencia.tema.idTema} value={correspondencia.tema.idTema.toString()}>
+                {correspondencia.tema.nmTema}
               </SelectItem>
             )}
             {temas.map((tema) => (
@@ -1104,7 +1170,7 @@ export default function SolicitacaoModal({
           label="Áreas *"
         />
     </div>
-  ), [formData.idTema, formData.idsAreas, temas, getResponsavelFromTema, handleAreasSelectionChange, solicitacao, canEditSolicitacao]);
+  ), [formData.idTema, formData.idsAreas, temas, getResponsavelFromTema, handleAreasSelectionChange, correspondencia, canEditSolicitacao]);
 
   function horasParaDias(horas: number): number {
     return Math.floor(horas / 24);
@@ -1118,8 +1184,8 @@ export default function SolicitacaoModal({
 
         try {
           if (prazosSolicitacaoPorStatus.length > 0) {
-            const temaId = formData.idTema || solicitacao?.idTema || solicitacao?.tema?.idTema || 0;
-            const temaNome = selectedTema?.nmTema || solicitacao?.tema?.nmTema || '';
+            const temaId = formData.idTema || correspondencia?.idTema || correspondencia?.tema?.idTema || 0;
+            const temaNome = selectedTema?.nmTema || correspondencia?.tema?.nmTema || '';
             const mapped = (prazosSolicitacaoPorStatus || []).map(p => ({
               idStatusSolicPrazoTema: 0,
               idStatusSolicitacao: p.idStatusSolicitacao,
@@ -1537,7 +1603,7 @@ export default function SolicitacaoModal({
           <div>
             <Label className="text-sm font-semibold text-gray-700">Tema</Label>
             <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
-              {getSelectedTema()?.nmTema || solicitacao?.tema?.nmTema || solicitacao?.nmTema || 'Não selecionado'}
+              {getSelectedTema()?.nmTema || correspondencia?.tema?.nmTema || correspondencia?.nmTema || 'Não selecionado'}
             </div>
           </div>
         </div>
@@ -1772,7 +1838,7 @@ export default function SolicitacaoModal({
         </div>
       </div>
     </div>
-  ), [formData.cdIdentificacao, formData.nrOficio, formData.nrProcesso, formData.dsAssunto, formData.dsObservacao, formData.dsSolicitacao, formData.idsAreas, formData.nrPrazo, formData.idResponsavel, formData.tpPrazo, formData.idsResponsaveisAssinates, formData.flAnaliseGerenteDiretor, formData.flExigeCienciaGerenteRegul, getSelectedTema, solicitacao?.tema?.nmTema, solicitacao?.nmTema, solicitacao?.statusSolicitacao?.idStatusSolicitacao, solicitacao?.statusSolicitacao?.nmStatus, solicitacao?.statusCodigo, responsaveis, statusPrazos, anexos, anexosBackend, anexosTypeE, canListarAnexo, allAreas, getResponsavelByArea, statusList, handleDownloadAnexoBackend, handleDownloadAnexoEmail, currentPrazoTotal, prazoExcepcional, prazosSolicitacaoPorStatus, statusOcultos]);
+  ), [formData.cdIdentificacao, formData.nrOficio, formData.nrProcesso, formData.dsAssunto, formData.dsObservacao, formData.dsSolicitacao, formData.idsAreas, formData.nrPrazo, formData.idResponsavel, formData.tpPrazo, formData.idsResponsaveisAssinates, formData.flAnaliseGerenteDiretor, formData.flExigeCienciaGerenteRegul, getSelectedTema, correspondencia?.tema?.nmTema, correspondencia?.nmTema, correspondencia?.statusSolicitacao?.idStatusSolicitacao, correspondencia?.statusSolicitacao?.nmStatus, correspondencia?.statusCodigo, responsaveis, statusPrazos, anexos, anexosBackend, anexosTypeE, canListarAnexo, allAreas, getResponsavelByArea, statusList, handleDownloadAnexoBackend, handleDownloadAnexoEmail, currentPrazoTotal, prazoExcepcional, prazosSolicitacaoPorStatus, statusOcultos]);
 
   useEffect(() => {
     const loadStatusList = async () => {
@@ -1796,10 +1862,10 @@ export default function SolicitacaoModal({
   }, [formData.idTema, open, loadStatusPrazos]);
   useEffect(() => {
     const loadAnexosTypeE = async () => {
-      if (( currentStep === 5 || currentStep === 6) && solicitacao?.idSolicitacao) {
+      if (( currentStep === 5 || currentStep === 6) && correspondencia?.idSolicitacao) {
         try {
           const anexosE = await anexosClient.buscarPorIdObjetoETipoObjeto(
-            solicitacao.idSolicitacao,
+            correspondencia.idSolicitacao,
             TipoObjetoAnexoEnum.E
           );
           setAnexosTypeE(anexosE);
@@ -1815,14 +1881,14 @@ export default function SolicitacaoModal({
     if (open) {
       loadAnexosTypeE();
     }
-  }, [currentStep, open, solicitacao?.idSolicitacao]);
+  }, [currentStep, open, correspondencia?.idSolicitacao]);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="h-full flex flex-col">
         <DialogHeader className="pb-6 flex-shrink-0">
           <DialogTitle className="text-xl font-semibold">
-            {solicitacao ? 'Editar Solicitação' : 'Nova Solicitação'}
+            {correspondencia ? 'Editar Solicitação' : 'Nova Solicitação'}
           </DialogTitle>
         </DialogHeader>
 
@@ -2013,8 +2079,8 @@ export default function SolicitacaoModal({
                 className="flex items-center gap-2"
                 tooltip={!canEditSolicitacao ? 'Esta solicitação não pode ser editada no status atual.' : ''}
               >
-                {solicitacao && <ArrowArcRightIcon className={"w-4 h-4 mr-1"} />}
-                {loading ? 'Salvando...' : solicitacao ? 'Encaminhar para Gerente do Regulatório' : 'Criar Solicitação'}
+                {correspondencia && <ArrowArcRightIcon className={"w-4 h-4 mr-1"} />}
+                {loading ? 'Salvando...' : correspondencia ? 'Encaminhar para Gerente do Regulatório' : 'Criar Solicitação'}
               </Button>
             </>
           )}

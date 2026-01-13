@@ -9,8 +9,8 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { CloudArrowDownIcon } from '@phosphor-icons/react';
-import ExportSolicitacoesExcel from '@/components/solicitacoes/ExportSolicitacoesExcel';
-import ExportSolicitacoesPdf from '@/components/solicitacoes/ExportSolicitacoesPdf';
+import ExportSolicitacoesExcel from '@/components/solicitacoes/relatorios/ExportSolicitacoesExcel';
+import ExportSolicitacoesPdf from '@/components/solicitacoes/relatorios/ExportSolicitacoesPdf';
 import { SolicitacaoFilterParams } from '@/api/solicitacoes/types';
 import LoadingOverlay from '@/components/ui/loading-overlay';
 

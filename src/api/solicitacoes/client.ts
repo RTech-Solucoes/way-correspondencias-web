@@ -1,20 +1,14 @@
-import ApiClient from '../client';
 import { buildQueryParams } from '@/utils/utils';
-import {
-  SolicitacaoResponse,
-  SolicitacaoRequest,
-  SolicitacaoIdentificacaoRequest,
-  SolicitacaoTemaEtapaRequest,
-  SolicitacaoEtapaPrazoRequest,
-  SolicitacaoPrazoResponse,
-  PagedResponse,
-  SolicitacaoDetalheResponse,
-  SolicitacaoFilterParams,
-  SolicitacaoBuscaSimpleResponse,
-} from './types';
-import { solicitacaoAnexosClient } from './anexos-client';
 import { AnexoResponse, ArquivoDTO } from '../anexos/type';
+import ApiClient from '../client';
 import { TipoEnum } from '../tipos/types';
+import { solicitacaoAnexosClient } from './anexos-client';
+import {
+  SolicitacaoBuscaSimpleResponse,
+  SolicitacaoDetalheResponse,
+  SolicitacaoPrazoResponse,
+  SolicitacaoResponse,
+} from './types';
 
 class SolicitacoesClient {
 
@@ -24,75 +18,14 @@ class SolicitacoesClient {
     this.client = new ApiClient('/solicitacoes');
   }
 
-  async buscarPorFiltro(params: SolicitacaoFilterParams = {}): Promise<PagedResponse<SolicitacaoResponse> | SolicitacaoResponse[]> {
-
-    const allowedKeys = [
-      'filtro',
-      'page',
-      'size',
-      'idSolicitacao',
-      'idStatusSolicitacao',
-      'idArea',
-      'cdIdentificacao',
-      'idTema',
-      'nmResponsavel',
-      'dtCriacaoInicio',
-      'dtCriacaoFim',
-      'flExigeCienciaGerenteRegul',
-      'sort',
-    ] as const;
-
-    const qs = buildQueryParams(params, allowedKeys).toString();
-    return this.client.request<PagedResponse<SolicitacaoResponse> | SolicitacaoResponse[]>(qs ? `?${qs}` : '', { method: 'GET' });
-  }
-
   async buscarPorId(id: number): Promise<SolicitacaoResponse> {
     return this.client.request<SolicitacaoResponse>(`/${id}`, {
       method: 'GET',
     });
   }
 
-  async criar(solicitacao: SolicitacaoRequest): Promise<SolicitacaoResponse> {
-    return this.client.request<SolicitacaoResponse>('', {
-      method: 'POST',
-      body: JSON.stringify(solicitacao),
-    });
-  }
-
-  async deletar(id: number): Promise<void> {
-    return this.client.request<void>(`/${id}`, {
-      method: 'DELETE',
-    });
-  }
-
   async listarPrazos(idSolicitacao: number): Promise<SolicitacaoPrazoResponse[]> {
     return this.client.request<SolicitacaoPrazoResponse[]>(`/${idSolicitacao}/prazos`, { method: 'GET' });
-  }
-
-  async etapaIdentificacao(id: number, req: SolicitacaoIdentificacaoRequest) {
-    return this.client.request<SolicitacaoResponse>(`/encaminhar/${id}/etapa01`, {
-      method: 'PUT',
-      body: JSON.stringify(req),
-    });
-  }
-
-  async etapaTema(id: number, req: SolicitacaoTemaEtapaRequest) {
-    return this.client.request<SolicitacaoResponse>(`/encaminhar/${id}/etapa02`, {
-      method: 'PUT',
-      body: JSON.stringify(req),
-    });
-  }
-
-  async etapaPrazo(id: number, req: SolicitacaoEtapaPrazoRequest) {
-    return this.client.request<SolicitacaoResponse>(`/encaminhar/${id}/etapa03`, {
-      method: 'PUT',
-      body: JSON.stringify(req),
-    });
-  }
-
-  async etapaStatus(id: number, idStatusSolicitacao?: number) {
-    const qs = idStatusSolicitacao ? `?idStatusSolicitacao=${idStatusSolicitacao}` : '';
-    return this.client.request<void>(`/encaminhar/${id}/etapa06${qs}`, { method: 'PUT' });
   }
 
   async buscarAnexos(idSolicitacao: number): Promise<AnexoResponse[]> {
@@ -141,6 +74,12 @@ class SolicitacoesClient {
       { method: 'GET' }
     );
   }
+
+  async verificarExisteCdIdentificacaoPorFluxo(cdIdentificacao: string, cdFluxo: TipoEnum): Promise<boolean> {
+    return this.client.request<boolean>(`/verificar-cd-identificacao?cdIdentificacao=${cdIdentificacao}&cdFluxo=${cdFluxo}`, {
+      method: 'GET',
+    });
+  } 
 }
 
 export const solicitacoesClient = new SolicitacoesClient();

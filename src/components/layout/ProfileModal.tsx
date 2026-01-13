@@ -10,7 +10,7 @@ import { ResponsavelRequest, ResponsavelResponse } from '@/api/responsaveis/type
 import { responsaveisClient } from '@/api/responsaveis/client';
 import { PerfilResponse } from '@/api/perfis/types';
 import { perfisClient } from '@/api/perfis/client';
-import { User } from '@/types/auth/types';
+import { User } from '@/api/auth/types';
 import { toast } from 'sonner';
 import { mask, validateCPF, validateEmail } from "@/utils/utils";
 import authClient from '@/api/auth/client';

@@ -11,7 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ArrowsDownUpIcon } from "@phosphor-icons/react";
 import { ObrigacaoResponse } from "@/api/obrigacao/types";
-import { getObrigacaoStatusStyle } from "@/utils/obrigacoes/status";
+import { getObrigacaoStatusStyle } from "@/components/obrigacoes/list-page/status";
 import { formatDateBr } from "@/utils/utils";
 import { TipoEnum } from "@/api/tipos/types";
 import TimeProgress from "@/components/ui/time-progress";

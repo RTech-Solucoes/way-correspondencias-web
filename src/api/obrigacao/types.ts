@@ -2,10 +2,10 @@ import { AreaSolicitacao, SolicitacaoAssinanteResponse, SolicitacaoPrazoResponse
 import { TipoResponse } from '../tipos/types';
 import { TemaResponse } from '../temas/types';
 import { StatusSolicitacaoResponse } from '../status-solicitacao/client';
-import { SolicitacaoResumoResponse } from '@/types/solicitacoes/types';
 import { ArquivoDTO, AnexoResponse } from '../anexos/type';
 import { SolicitacaoParecerResponse } from '../solicitacao-parecer/types';
 import { ResponsavelResponse } from '../responsaveis/types';
+import { CorrespondenciaResumoResponse } from '../correspondencia/types';
 
 export interface ObrigacaoResumoResponse {
   idSolicitacao: number;
@@ -45,7 +45,7 @@ export interface ObrigacaoResponse extends Omit<SolicitacaoResponse, 'tema'> {
   flAprovarConferencia?: string | null;
   obrigacaoPrincipal?: ObrigacaoResumoResponse | null;
   obrigacaoRecusada?: ObrigacaoResumoResponse | null;
-  correspondencia?: SolicitacaoResumoResponse | null;
+  correspondencia?: CorrespondenciaResumoResponse | null;
   solicitacaoParecer? : SolicitacaoParecerResponse[];
   responsavelJustifAtraso?: ResponsavelResponse | null;
   dsJustificativaAtraso?: string | null;

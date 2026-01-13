@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { CaretLeftIcon, CaretRightIcon, CaretDownIcon, CheckIcon } from '@phosphor-icons/react';
 import { useSidebar } from '@/context/sidebar/SidebarContext';
-import { PageDef } from "@/types/pages/pages";
+import { PageDef } from "@/constants/pages/pages";
 import { usePermittedPages } from "@/hooks/use-permitted-pages";
 import { MODULES_DEF } from "@/constants/pages";
 import { Button } from '@/components/ui/button';

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import dashboardClient from '@/api/dashboard/client';
-import { SolicitacaoResumoResponse } from '@/types/solicitacoes/types';
+import { CorrespondenciaResumoResponse } from '@/api/correspondencia/types';
 import Link from 'next/link';
 import { useConcessionaria } from '@/context/concessionaria/ConcessionariaContext';
 
@@ -12,8 +12,8 @@ export default function SolicitacoesPendentes({ refreshTrigger }: SolicitacoesPe
   const { concessionariaSelecionada } = useConcessionaria();
   const idConcessionaria = concessionariaSelecionada?.idConcessionaria;
 
-  const { data: items = [], isLoading: loading } = useQuery<SolicitacaoResumoResponse[]>({
-    queryKey: ['solicitacoesPendentes', idConcessionaria, refreshTrigger],
+  const { data: items = [], isLoading: loading } = useQuery<CorrespondenciaResumoResponse[]>({
+    queryKey: ['correspondenciasPendentes', idConcessionaria, refreshTrigger],
     queryFn: () => dashboardClient.getSolicitacoesPendentes(),
     enabled: !!idConcessionaria,
     staleTime: 30000,
@@ -22,7 +22,7 @@ export default function SolicitacoesPendentes({ refreshTrigger }: SolicitacoesPe
     refetchOnMount: true, 
   });
 
-  const getAreasLabel = (s: SolicitacaoResumoResponse): string => {
+  const getAreasLabel = (s: CorrespondenciaResumoResponse): string => {
     const nmAreas = s.nmAreas as unknown;
     if (Array.isArray(nmAreas)) {
       return nmAreas.filter(Boolean).join(', ');

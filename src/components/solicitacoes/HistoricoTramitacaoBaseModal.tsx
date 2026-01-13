@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { ArrowRightIcon, SpinnerIcon, ClockIcon } from '@phosphor-icons/react';
 import { Badge } from '@/components/ui/badge';
 import { formatDateTime, formatMinutosEmDiasHorasMinutos } from '@/utils/utils';
-import { TipoHistoricoResposta } from '@/api/solicitacoes';
+import { TipoHistoricoResposta } from '@/api/correspondencia/types';
 import { perfilUtil } from '@/api/perfis/types';
 import { statusList } from '@/api/status-solicitacao/types';
 

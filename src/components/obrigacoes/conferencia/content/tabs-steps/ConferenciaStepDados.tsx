@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { ExternalLink } from 'lucide-react';
 import type { ObrigacaoDetalheResponse } from '@/api/obrigacao/types';
 import type { ReactNode } from 'react';
-import type { ObrigacaoStatusStyle } from '@/utils/obrigacoes/status';
+import type { ObrigacaoStatusStyle } from '@/components/obrigacoes/list-page/status';
 import { getCriticidadeBadgeClasses } from '../../utils';
 import { ConferenciaInfoRow } from './ConferenciaInfoRow';
 import { TipoEnum } from '@/api/tipos/types';

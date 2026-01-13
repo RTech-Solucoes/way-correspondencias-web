@@ -2,9 +2,9 @@
 
 import { Document, Image, Page, StyleSheet, Text, View, pdf, Svg, Polyline } from '@react-pdf/renderer';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { HistoricoRespostaItemResponse, TipoHistoricoResposta } from '@/api/solicitacoes/types';
+import { CorrespondenciaResumoComHistoricoResponse, TipoHistoricoResposta } from '@/api/correspondencia/types';
 import { formatDateTime, formatDateTimeBrCompactExport, formatMinutosEmDiasHorasMinutos } from '@/utils/utils';
-import { SolicitacaoResumoResponse } from '@/types/solicitacoes/types';
+import { CorrespondenciaResumoResponse } from '@/api/correspondencia/types';
 import { perfilUtil } from '@/api/perfis/types';
 import { statusList } from '@/api/status-solicitacao/types';
 import { toast } from 'sonner';
@@ -12,8 +12,8 @@ import { getLayoutClient, getLabelTitle, getLogoPath } from '@/lib/layout/layout
 import LoadingOverlay from '@/components/ui/loading-overlay';
 
 interface ExportHistoricoPdfProps {
-  solicitacao: SolicitacaoResumoResponse;
-  historico: HistoricoRespostaItemResponse[];
+  correspondencia: CorrespondenciaResumoResponse;
+  historico: CorrespondenciaResumoComHistoricoResponse['historicoResposta'];
   onDone?: () => void;
 }
 
@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
   footer: { position: 'absolute', left: 28, right: 28, bottom: 12, fontSize: 8.5, color: '#6b7280', flexDirection: 'row', justifyContent: 'space-between' },
 });
 
-function HistoricoPdfDoc({ solicitacao, historico }: { solicitacao: SolicitacaoResumoResponse; historico: HistoricoRespostaItemResponse[] }) {
+function HistoricoPdfDoc({ correspondencia, historico }: { correspondencia: CorrespondenciaResumoResponse; historico: CorrespondenciaResumoComHistoricoResponse['historicoResposta'] }) {
 const ArrowRight = () => (
     <Svg width={10} height={10} viewBox="0 0 24 24">
     <Polyline points="8 4 16 12 8 20" fill="none" stroke="#4b5563" strokeWidth={2} />
@@ -88,18 +88,18 @@ return (
 
         <Text style={styles.sectionTitle}>Dados da Solicitação</Text>
         <View style={styles.block} wrap={false}>
-            <View style={styles.row}><Text style={styles.colLabelBold}>Identificação:</Text><Text style={styles.colValue}>{solicitacao.cdIdentificacao}</Text></View>
-            <View style={styles.row}><Text style={styles.colLabelBold}>Assunto:</Text><Text style={styles.colValue}>{solicitacao.dsAssunto}</Text></View>
-            <View style={styles.row}><Text style={styles.colLabelBold}>Tema:</Text><Text style={styles.colValue}>{solicitacao.nmTema}</Text></View>
-            <View style={styles.row}><Text style={styles.colLabelBold}>Áreas:</Text><Text style={styles.colValue}>{getAreasLabel(solicitacao.nmAreas)}</Text></View>
-            <View style={styles.row}><Text style={styles.colLabelBold}>Status:</Text><Text style={styles.colValue}>{solicitacao.nmStatus}</Text></View>
-            <View style={styles.row}><Text style={styles.colLabelBold}>Data de Criação:</Text><Text style={styles.colValue}>{formatDateTime(solicitacao.dtCriacao)}</Text></View>
-            <View style={styles.row}><Text style={styles.colLabelBold}>Data da 1ª Tramitação:</Text><Text style={styles.colValue}>{formatDateTime(solicitacao.dtPrimeiraTramitacao)}</Text></View>
-            <View style={styles.row}><Text style={styles.colLabelBold}>Data do Prazo Limite:</Text><Text style={styles.colValue}>{formatDateTime(solicitacao.dtPrazoLimite)}</Text></View>
-            {solicitacao.dtConclusaoTramitacao &&
+            <View style={styles.row}><Text style={styles.colLabelBold}>Identificação:</Text><Text style={styles.colValue}>{correspondencia.cdIdentificacao}</Text></View>
+            <View style={styles.row}><Text style={styles.colLabelBold}>Assunto:</Text><Text style={styles.colValue}>{correspondencia.dsAssunto}</Text></View>
+            <View style={styles.row}><Text style={styles.colLabelBold}>Tema:</Text><Text style={styles.colValue}>{correspondencia.nmTema}</Text></View>
+            <View style={styles.row}><Text style={styles.colLabelBold}>Áreas:</Text><Text style={styles.colValue}>{getAreasLabel(correspondencia.nmAreas)}</Text></View>
+            <View style={styles.row}><Text style={styles.colLabelBold}>Status:</Text><Text style={styles.colValue}>{correspondencia.nmStatus}</Text></View>
+            <View style={styles.row}><Text style={styles.colLabelBold}>Data de Criação:</Text><Text style={styles.colValue}>{formatDateTime(correspondencia.dtCriacao)}</Text></View>
+            <View style={styles.row}><Text style={styles.colLabelBold}>Data da 1ª Tramitação:</Text><Text style={styles.colValue}>{formatDateTime(correspondencia.dtPrimeiraTramitacao)}</Text></View>
+            <View style={styles.row}><Text style={styles.colLabelBold}>Data do Prazo Limite:</Text><Text style={styles.colValue}>{formatDateTime(correspondencia.dtPrazoLimite)}</Text></View>
+            {correspondencia.dtConclusaoTramitacao &&
                 <View style={styles.row}>
                     <Text style={styles.colLabelBold}>Data de Conclusão:</Text>
-                    <Text style={styles.colValue}>{formatDateTime(solicitacao.dtConclusaoTramitacao)}</Text>
+                    <Text style={styles.colValue}>{formatDateTime(correspondencia.dtConclusaoTramitacao)}</Text>
                 </View>
             }
         </View>
@@ -162,9 +162,9 @@ return (
   );
 }
 
-export default function ExportHistoricoPdf({ solicitacao, historico, onDone }: ExportHistoricoPdfProps) {
+export default function ExportHistoricoPdf({ correspondencia: solicitacao, historico, onDone }: ExportHistoricoPdfProps) {
   const doc = useMemo(() => (
-    <HistoricoPdfDoc solicitacao={solicitacao} historico={historico} />
+    <HistoricoPdfDoc correspondencia={solicitacao} historico={historico} />
   ), [solicitacao, historico]);
 
   const [exporting, setExporting] = useState(false);

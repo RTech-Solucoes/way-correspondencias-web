@@ -5,7 +5,7 @@ import {ReactNode, useCallback, useEffect, useState} from 'react';
 import {AppLayout} from './AppLayout';
 import {SidebarProvider} from '@/context/sidebar/SidebarContext';
 import {PUBLIC_ROUTES} from "@/constants/pages";
-import {User} from "@/types/auth/types";
+import {User} from "@/api/auth/types";
 import authClient from "@/api/auth/client";
 import responsaveisClient from "@/api/responsaveis/client";
 import anexosClient from "@/api/anexos/client";
