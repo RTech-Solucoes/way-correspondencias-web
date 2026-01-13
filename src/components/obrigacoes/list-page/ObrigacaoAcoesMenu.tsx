@@ -25,6 +25,9 @@ import { perfilUtil } from "@/api/perfis/types";
 import { usePermissoes } from "@/context/permissoes/PermissoesContext";
 import anexosClient from "@/api/anexos/client";
 import { TipoDocumentoAnexoEnum, TipoObjetoAnexoEnum } from "@/api/anexos/type";
+import { useValidarObrigacao } from "@/components/obrigacoes/conferencia/hooks/use-validar-obrigacao";
+import { ValidationError } from "@/components/obrigacoes/conferencia/hooks/use-validar-obrigacao";
+import { mostrarValidacaoObrigacaoToast } from "@/components/obrigacoes/criar/ValidarObrigacaoToast";
 
 interface ObrigacaoAcoesMenuProps {
   obrigacao: ObrigacaoResponse;
@@ -50,6 +53,10 @@ export function ObrigacaoAcoesMenu({
   const { idPerfil } = useUserGestao();
 
   const [isExisteAnexoCorrespondencia, setIsExisteAnexoCorrespondencia] = useState<boolean>(false);
+  const [temCamposObrigatoriosFaltando, setTemCamposObrigatoriosFaltando] = useState<boolean>(false);
+  const [errosValidacao, setErrosValidacao] = useState<ValidationError[]>([]);
+  
+  const { validar, loading: validandoCampos } = useValidarObrigacao();
 
   const { 
     canInserirObrigacao, 
@@ -130,6 +137,35 @@ export function ObrigacaoAcoesMenu({
     verificarAnexoCorrespondencia();
   }, [obrigacao.idSolicitacao]);
 
+  const jaEnviadoParaArea = obrigacao.flEnviandoArea === 'S';
+
+  useEffect(() => {
+    const validarCamposObrigatorios = async () => {
+      if (!obrigacao.idSolicitacao || jaEnviadoParaArea) {
+        setTemCamposObrigatoriosFaltando(false);
+        setErrosValidacao([]);
+        return;
+      }
+
+      try {
+        const { isValid, errors } = await validar(obrigacao.idSolicitacao);
+        setTemCamposObrigatoriosFaltando(!isValid);
+        setErrosValidacao(errors);
+      } catch (error) {
+        console.error('Erro ao validar campos obrigatórios:', error);
+        setTemCamposObrigatoriosFaltando(false);
+        setErrosValidacao([]);
+      }
+    };
+
+    if (onEnviarArea && canEnviarAreasObrigacao && !jaEnviadoParaArea) {
+      validarCamposObrigatorios();
+    } else {
+      setTemCamposObrigatoriosFaltando(false);
+      setErrosValidacao([]);
+    }
+  }, [obrigacao.idSolicitacao, obrigacao.flEnviandoArea, onEnviarArea, canEnviarAreasObrigacao, validar, jaEnviadoParaArea]);
+
   const podeAnexarProtocolo = useMemo(() => {
     return isAdminOrGestor && (isStatusEmValidacao || isStatusAprovacaoTramitacao) && !isStatusConcluido && isExisteAnexoCorrespondencia;
   }, [isAdminOrGestor, isStatusEmValidacao, isStatusAprovacaoTramitacao, isStatusConcluido, isExisteAnexoCorrespondencia]);
@@ -151,9 +187,8 @@ export function ObrigacaoAcoesMenu({
     }
     return '';
   }, [isStatusConcluido, isStatusEmValidacao, isStatusAprovacaoTramitacao, isAdminOrGestor, isExisteAnexoCorrespondencia]);
-
-  const jaEnviadoParaArea = obrigacao.flEnviandoArea === 'S';
   const isNaoPermitidoEditar = conferenciaAprovada || isStatusNaoAplicavelSuspenso;
+  const podeEnviarParaArea = !jaEnviadoParaArea && !temCamposObrigatoriosFaltando;
 
   return (
     <DropdownMenu>
@@ -250,11 +285,21 @@ export function ObrigacaoAcoesMenu({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="w-full">
+                <div 
+                  className="w-full"
+                  onMouseEnter={(e) => {
+                    e.stopPropagation();
+                    if (!podeEnviarParaArea && temCamposObrigatoriosFaltando && errosValidacao.length > 0 && !jaEnviadoParaArea) {
+                      mostrarValidacaoObrigacaoToast(errosValidacao, {
+                        mensagemPersonalizada: 'É necessário preencher todos os campos obrigatórios antes de enviar para as áreas.',
+                      });
+                    }
+                  }}
+                >
                   <DropdownMenuItem 
-                    onClick={() => !jaEnviadoParaArea && onEnviarArea(obrigacao)}
-                    disabled={jaEnviadoParaArea}
-                    className={jaEnviadoParaArea ? 'opacity-50 cursor-not-allowed' : ''}
+                    onClick={() => podeEnviarParaArea && onEnviarArea(obrigacao)}
+                    disabled={!podeEnviarParaArea || validandoCampos}
+                    className={!podeEnviarParaArea ? 'opacity-50 cursor-not-allowed' : ''}
                   >
                     <BriefcaseIcon className="mr-2 h-4 w-4" />
                     Enviar para área
@@ -312,4 +357,3 @@ export function ObrigacaoAcoesMenu({
     </DropdownMenu>
   );
 }
-

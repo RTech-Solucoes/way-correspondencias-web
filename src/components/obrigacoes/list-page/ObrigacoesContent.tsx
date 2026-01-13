@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import { useUserGestao } from "@/hooks/use-user-gestao";
 import { ObrigacaoResumoResponse, ObrigacaoResponse } from "@/api/obrigacao/types";
 import { usePermissoes } from "@/context/permissoes/PermissoesContext";
+import { useValidarObrigacao } from "@/components/obrigacoes/conferencia/hooks/use-validar-obrigacao";
+import { mostrarValidacaoObrigacaoToast } from "@/components/obrigacoes/criar/ValidarObrigacaoToast";
 
 // Modular Components
 import { ObrigacoesTable } from "@/components/obrigacoes/list-page/ObrigacoesTable";
@@ -74,6 +76,8 @@ export function ObrigacoesContent() {
   const canConcluirObrigacao = !!permissions.canConcluirObrigacao;
   const canEnviarAreasObrigacao = !!permissions.canEnviarAreasObrigacao;
   const canNaoAplicavelSuspensaObrigacao = !!permissions.canNaoAplicavelSuspensaObrigacao;
+  
+  const { validar } = useValidarObrigacao();
 
   const idObrigacaoFromUrl = useMemo(() => {
     const param = searchParams.get('idObrigacao');
@@ -252,7 +256,17 @@ export function ObrigacoesContent() {
         }}
         onEnviarArea={async (obrigacao) => {
           if (!obrigacao.idSolicitacao) return;
+          
           try {
+            const { isValid, errors } = await validar(obrigacao.idSolicitacao);
+
+            if (!isValid) {
+              mostrarValidacaoObrigacaoToast(errors, {
+                mensagemPersonalizada: 'É necessário preencher todos os campos obrigatórios antes de enviar para as áreas.',
+              });
+              return;
+            }
+
             const response = await obrigacaoClient.atualizarFlEnviandoArea(obrigacao.idSolicitacao);
             toast.success(response.mensagem);
             await loadObrigacoes();

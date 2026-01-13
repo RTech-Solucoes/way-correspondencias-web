@@ -466,7 +466,7 @@ export function EditarObrigacaoContent({ id }: EditarObrigacaoContentProps) {
         {isNaoPermitidoEditar && (
           <div className="mb-4 rounded-lg bg-yellow-50 border border-yellow-200 px-4 py-3 text-center">
             <p className="text-sm text-yellow-800">
-              <strong>Atenção:</strong> Não é possível editar esta obrigação.
+              <strong>Atenção:</strong> Não é possível editar esta obrigação. Conferência já foi aprovada.
             </p>
           </div>
         )}
