@@ -121,7 +121,7 @@ export function Step3Obrigacao({ formData, updateFormData, disabled = false, onV
   return (
     <div className="space-y-6">
       <div className="space-y-3">
-        <Label>Qual será a frequência da obrigação?</Label>
+        <Label>Qual será a frequência da obrigação? <span className="text-red-500">*</span></Label>
         <div className="grid grid-cols-2 gap-4">
           <div
             onClick={() => !disabled && handleFrequenciaChange('unica')}
@@ -217,7 +217,7 @@ export function Step3Obrigacao({ formData, updateFormData, disabled = false, onV
             
             {tipoFrequencia === 'recorrente' && (
               <div className="space-y-2">
-                <Label htmlFor="idTipoPeriodicidade">Periodicidade*</Label>
+                <Label htmlFor="idTipoPeriodicidade">Periodicidade <span className="text-red-500">*</span></Label>
                 <Select
                   value={formData.idTipoPeriodicidade?.toString() || ''}
                   onValueChange={(value) => {
@@ -243,7 +243,7 @@ export function Step3Obrigacao({ formData, updateFormData, disabled = false, onV
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2"> 
-                <Label htmlFor="dtInicio">Data de Início*</Label>
+                <Label htmlFor="dtInicio">Data de Início <span className="text-red-500">*</span></Label>
                 <Input
                   id="dtInicio"
                   type="date"
@@ -254,7 +254,7 @@ export function Step3Obrigacao({ formData, updateFormData, disabled = false, onV
               </div>
 
               <div className="space-y-2"> 
-                <Label htmlFor="dtTermino">Data de Término*</Label>
+                <Label htmlFor="dtTermino">Data de Término <span className="text-red-500">*</span></Label>
                 <Input
                   id="dtTermino"
                   type="date"
@@ -269,7 +269,7 @@ export function Step3Obrigacao({ formData, updateFormData, disabled = false, onV
               </div>
 
               <div className="space-y-2"> 
-                <Label htmlFor="dtLimite">Data Limite*</Label>
+                <Label htmlFor="dtLimite">Data Limite <span className="text-red-500">*</span></Label>
                 <Input
                   id="dtLimite"
                   type="date"

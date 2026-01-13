@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
+import { statusList } from '@/api/status-solicitacao/types';
 import { ArquivoDTO } from '@/api/anexos/type';
 import { AnexoResponse } from '@/api/anexos/type';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
@@ -122,8 +123,19 @@ export function ConferenciaFooter({
   });
 
   const isStatusBtnEnviarParaTramitacao = useMemo(() => {
-    return !status.isStatusBtnFlAprovar && !isStatusDesabilitadoParaTramitacao && !status.isStatusEmValidacaoRegulatorio && !status.isStatusAprovacaoTramitacao
-  }, [status.isStatusBtnFlAprovar, isStatusDesabilitadoParaTramitacao, status.isStatusEmValidacaoRegulatorio, status.isStatusAprovacaoTramitacao]);
+    return (
+      !status.isStatusBtnFlAprovar &&
+      !isStatusDesabilitadoParaTramitacao &&
+      !status.isStatusEmValidacaoRegulatorio &&
+      !status.isStatusAprovacaoTramitacao &&
+      !status.isStatusConcluido
+    )
+  }, [status.isStatusBtnFlAprovar,
+    isStatusDesabilitadoParaTramitacao,
+    status.isStatusEmValidacaoRegulatorio,
+    status.isStatusAprovacaoTramitacao,
+    status.isStatusConcluido
+  ]);
 
   const isPermitidoAnexarEvidencia = useMemo(() => {
     return (

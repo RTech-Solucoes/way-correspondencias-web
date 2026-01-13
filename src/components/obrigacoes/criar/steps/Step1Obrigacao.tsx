@@ -127,7 +127,7 @@ export function Step1Obrigacao({
       <div className="space-y-6 ">
         <div className="flex column gap-4">
             <div className="flex flex-col space-y-4" style={{ width: '100%' }}>
-            <Label htmlFor="dsTarefa">Tarefa*</Label>
+            <Label htmlFor="dsTarefa">Tarefa <span className="text-red-500">*</span></Label>
                 <Textarea
                     id="dsTarefa"
                     placeholder="Digite a tarefa"
@@ -143,7 +143,7 @@ export function Step1Obrigacao({
 
         <div className="flex flex-row w-full gap-4">
             <div className="space-y-2 w-full">
-                <Label htmlFor="idStatusSolicitacao">Status*</Label>
+                <Label htmlFor="idStatusSolicitacao">Status <span className="text-red-500">*</span></Label>
                 <Select
                     value={formData.idStatusSolicitacao?.toString() || ''}
                     onValueChange={(value) => {
@@ -165,7 +165,7 @@ export function Step1Obrigacao({
             </div>
 
             <div className="space-y-2 w-full">
-                <Label htmlFor="idTipoClassificacao">Classificação*</Label>
+                <Label htmlFor="idTipoClassificacao">Classificação <span className="text-red-500">*</span></Label>
                 <Select
                     value={formData.idTipoClassificacao?.toString() || ''}
                     onValueChange={(value) => {
@@ -191,7 +191,7 @@ export function Step1Obrigacao({
             {isCondicionada && (
                 <div className="space-y-2 w-full">
                   <>
-                    <Label htmlFor="idObrigacaoPrincipal">Obrigação Principal</Label>
+                    <Label htmlFor="idObrigacaoPrincipal">Obrigação Principal <span className="text-red-500">*</span></Label>
                     <Select
                       value={formData.idObrigacaoPrincipal?.toString() || 'none'}
                       onValueChange={(value) => updateFormData({ 
@@ -236,7 +236,7 @@ export function Step1Obrigacao({
 
         <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-                <Label htmlFor="idTipoCriticidade">Criticidade*</Label>
+                <Label htmlFor="idTipoCriticidade">Criticidade <span className="text-red-500">*</span></Label>
                 <Select
                     value={formData.idTipoCriticidade?.toString() || ''}
                     onValueChange={(value) => {
@@ -260,7 +260,7 @@ export function Step1Obrigacao({
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="idTipoNatureza">Natureza*</Label>
+                <Label htmlFor="idTipoNatureza">Natureza <span className="text-red-500">*</span></Label>
                 <Select
                     value={formData.idTipoNatureza?.toString() || ''}
                     onValueChange={(value) => {
@@ -299,4 +299,3 @@ export function Step1Obrigacao({
     </div>
   );
 }
-

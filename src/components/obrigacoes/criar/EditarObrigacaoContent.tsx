@@ -24,6 +24,8 @@ import Link from 'next/link';
 import statusSolicitacaoClient, { StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { statusList } from '@/api/status-solicitacao/types';
+import { useValidarObrigacao } from '@/components/obrigacoes/conferencia/hooks/use-validar-obrigacao';
+import { mostrarValidacaoObrigacaoToast } from './ValidarObrigacaoToast';
 
 type TabKey = 'dados' | 'temas' | 'prazos' | 'anexos' | 'vinculos';
 
@@ -115,8 +117,10 @@ interface EditarObrigacaoContentProps {
 export function EditarObrigacaoContent({ id }: EditarObrigacaoContentProps) {
   const router = useRouter();
   const { idPerfil } = useUserGestao();
-
+  
   const [activeTab, setActiveTab] = useState<TabKey>('dados');
+  
+  const { validarObrigacao } = useValidarObrigacao();
   const [formData, setFormData] = useState<ObrigacaoFormData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -209,68 +213,13 @@ export function EditarObrigacaoContent({ id }: EditarObrigacaoContentProps) {
     });
   }, []);
 
-  const validateStep = useCallback((step: number): boolean => {
-    if (!formData) {
-      return false;
-    }
 
-    switch (step) {
-      case 1:
-        if (!formData.dsTarefa?.trim()) return false;
-        if (!formData.idTipoClassificacao) return false;
-        if (!formData.idTipoCriticidade) return false;
-        if (!formData.idTipoNatureza) return false;
 
-        const isCondicionada = formData.idTipoClassificacao === idClassificacaoCondicionada;
-        if (isCondicionada && !formData.idObrigacaoPrincipal) return false;
-
-        return true;
-      case 2:
-        if (!formData.idTema) return false;
-        if (!formData.idAreaAtribuida) return false;
-        return true;
-      case 3:
-        if (!formData.dtInicio) return false;
-        if (!formData.dtTermino) return false;
-        if (!formData.dtLimite) return false;
-        if (!formData.idTipoPeriodicidade) return false;
-
-        if (formData.dtInicio && formData.dtTermino) {
-          const dataInicio = new Date(formData.dtInicio);
-          const dataTermino = new Date(formData.dtTermino);
-          if (dataTermino <= dataInicio) return false;
-        }
-
-        if (formData.dtTermino && formData.dtLimite) {
-          const dataTermino = new Date(formData.dtTermino);
-          const dataLimite = new Date(formData.dtLimite);
-          if (dataLimite < dataTermino) return false;
-        }
-
-        if (hasStep3ValidationErrors) return false;
-
-        return true;
-      default:
-        return true;
-    }
-  }, [formData, idClassificacaoCondicionada, hasStep3ValidationErrors]);
-
+  // Sempre validar todos os steps obrigatórios (1, 2, 3) independente da aba ativa
   const requiredStepsForTab = useMemo(() => {
-    switch (activeTab) {
-      case 'dados':
-        return [1];
-      case 'temas':
-        return [1, 2];
-      case 'prazos':
-        return [1, 2, 3];
-      default:
-        return [1, 2, 3];
-    }
-  }, [activeTab]);
+    return [1, 2, 3];
+  }, []);
 
-  const tabValido = useMemo(() => {
-    return requiredStepsForTab.every((step) => validateStep(step));
-  }, [requiredStepsForTab, validateStep]);
 
   const handleDownloadAnexo = useCallback(async (anexo: AnexoResponse) => {
     try {
@@ -304,7 +253,6 @@ export function EditarObrigacaoContent({ id }: EditarObrigacaoContentProps) {
     try {
       await anexosClient.deletar(anexoToDelete.idAnexo);
       toast.success('Anexo removido com sucesso.');
-      // Recarrega os dados após a exclusão
       await carregarDetalhes();
     } catch (error) {
       console.error('Erro ao remover anexo:', error);
@@ -320,20 +268,17 @@ export function EditarObrigacaoContent({ id }: EditarObrigacaoContentProps) {
       return;
     }
 
-    const invalidStep = requiredStepsForTab.find((step) => !validateStep(step));
-    if (invalidStep !== undefined) {
-      const stepToTab: Record<number, TabKey> = {
-        1: 'dados',
-        2: 'temas',
-        3: 'prazos',
-      };
+    const { isValid, errors } = validarObrigacao(
+      formData,
+      idClassificacaoCondicionada,
+      hasStep3ValidationErrors,
+      requiredStepsForTab,
+    );
 
-      const tab = stepToTab[invalidStep];
-      if (tab) {
-        setActiveTab(tab);
-      }
-
-      toast.error('Verifique as informações obrigatórias antes de salvar.');
+    if (!isValid) {
+      mostrarValidacaoObrigacaoToast(errors, {
+        onTabChange: setActiveTab,
+      });
       return;
     }
 
@@ -417,7 +362,7 @@ export function EditarObrigacaoContent({ id }: EditarObrigacaoContentProps) {
     } finally {
       setSaving(false);
     }
-  }, [carregarDetalhes, existingAnexos, formData, novosAnexos, requiredStepsForTab, validateStep, idPerfil]);
+  }, [carregarDetalhes, existingAnexos, formData, novosAnexos, requiredStepsForTab, hasStep3ValidationErrors, idPerfil, idClassificacaoCondicionada, validarObrigacao]);
 
   const renderTabContent = () => {
     if (!formData) {
@@ -565,7 +510,7 @@ export function EditarObrigacaoContent({ id }: EditarObrigacaoContentProps) {
           </Button>
           <Button
             onClick={handleSave}
-            disabled={saving || !tabValido || isNaoPermitidoEditar}
+            disabled={saving || isNaoPermitidoEditar}
             className="flex items-center gap-2 px-6"
             tooltip={isNaoPermitidoEditar ? 'A conferência já foi aprovada. Não é possível editar a obrigação.' : ''}
           >
