@@ -1,13 +1,13 @@
 'use client';
 
-import { useMemo, useCallback } from 'react';
-import { toast } from 'sonner';
-import { SolicitacaoDetalheResponse } from '@/api/solicitacoes/types';
-import type { AnexoResponse, TipoObjetoAnexoEnum } from '@/api/anexos/type';
-import { TipoResponsavelAnexoEnum, ArquivoDTO } from '@/api/anexos/type';
 import { anexosClient } from '@/api/anexos/client';
+import type { AnexoResponse, TipoObjetoAnexoEnum } from '@/api/anexos/type';
+import { ArquivoDTO, TipoResponsavelAnexoEnum } from '@/api/anexos/type';
+import { CorrespondenciaDetalheResponse } from '@/api/correspondencia/types';
 import { base64ToUint8Array, saveBlob } from '@/utils/utils';
 import { DownloadIcon } from 'lucide-react';
+import { useCallback, useMemo } from 'react';
+import { toast } from 'sonner';
 import { Button } from '../ui/button';
 
 type AnexoItemShape = {
@@ -19,7 +19,7 @@ type AnexoItemShape = {
 };
 
 interface AnexoModalTramitacaoProps {
-  solicitacao: SolicitacaoDetalheResponse | null;
+  correspondencia: CorrespondenciaDetalheResponse | null;
   canListarAnexo: boolean | null;
   isAnaliseGerenteRegulatorio: boolean;
 }
@@ -59,7 +59,7 @@ function AnexoItem({
 }
 
 export default function AnexoModalTramitacao({
-  solicitacao,
+  correspondencia,
   canListarAnexo,
   isAnaliseGerenteRegulatorio
 }: AnexoModalTramitacaoProps) {
@@ -92,11 +92,11 @@ export default function AnexoModalTramitacao({
   );
   
   const anexosData = useMemo(() => {
-    if (!solicitacao) return null;
+    if (!correspondencia) return null;
 
-    const anexosTramitacoes: AnexoResponse[] = (solicitacao?.tramitacoes ?? []).flatMap((t) => t?.anexos ?? []);
-    const anexosSolic: AnexoResponse[] = solicitacao?.anexosSolicitacao ?? [];
-    const anexosEmail: AnexoResponse[] = solicitacao?.email?.anexos ?? [];
+    const anexosTramitacoes: AnexoResponse[] = (correspondencia?.tramitacoes ?? []).flatMap((t) => t?.anexos ?? []);
+    const anexosSolic: AnexoResponse[] = correspondencia?.anexosSolicitacao ?? [];
+    const anexosEmail: AnexoResponse[] = correspondencia?.email?.anexos ?? [];
 
     const mapToItem = (
       a: Partial<AnexoResponse> & { idAnexo: number; idObjeto: number; nmArquivo: string; tpObjeto?: string }
@@ -135,7 +135,7 @@ export default function AnexoModalTramitacao({
       anexosDiretor,
       anexosRegulatorio
     };
-  }, [solicitacao]);
+  }, [correspondencia]);
 
   if (!canListarAnexo || !anexosData) {
     return null;

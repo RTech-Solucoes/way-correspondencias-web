@@ -5,7 +5,7 @@ import dashboardClient from '@/api/dashboard/client';
 import { SolicitacaoCountResponse } from '@/api/dashboard/type';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useConcessionaria } from '@/context/concessionaria/ConcessionariaContext';
-import { User as UserType } from '@/types/auth/types';
+import { User } from '@/api/auth/types';
 import { BellIcon, BuildingIcon, RoadHorizonIcon } from '@phosphor-icons/react';
 import { useQuery } from '@tanstack/react-query';
 import Image from 'next/image';
@@ -32,7 +32,7 @@ export function AppHeader({
   const router = useRouter();
   const { concessionariaSelecionada, concessionarias, loading: loadingConcessionaria, setConcessionariaSelecionada } = useConcessionaria();
   
-  const user: UserType = {
+  const user: User = {
     name: userName || "Usuário",
     username: userLogin || "user@email.com",
     email: userLogin || "user@email.com",

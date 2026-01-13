@@ -8,7 +8,7 @@ import {
 import {Button} from "@/components/ui/button";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {SignOutIcon, UserIcon} from "@phosphor-icons/react";
-import {User} from "@/types/auth/types";
+import {User} from "@/api/auth/types";
 import {getFirstAndLastName, getInitials} from "@/utils/utils";
 import ProfileModal from "./ProfileModal";
 import { useState } from 'react';

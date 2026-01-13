@@ -1,4 +1,4 @@
-import { ModuleDef, PageDef } from "@/types/pages/pages";
+import { ModuleDef, PageDef } from "@/constants/pages/pages";
 import { 
   BuildingIcon, 
   ClipboardTextIcon, 

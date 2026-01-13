@@ -10,6 +10,7 @@ import { solicitacaoParecerClient } from '@/api/solicitacao-parecer/client';
 import { SolicitacaoParecerResponse } from '@/api/solicitacao-parecer/types';
 import { solicitacoesClient } from '@/api/solicitacoes';
 import { SolicitacaoDetalheResponse, SolicitacaoPrazoResponse } from '@/api/solicitacoes/types';
+import { CorrespondenciaDetalheResponse, CorrespondenciaResponse } from '@/api/correspondencia/types';
 import statusSolicitacaoClient, { StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
 import { statusList } from '@/api/status-solicitacao/types';
 import tramitacoesClient from '@/api/tramitacoes/client';
@@ -20,7 +21,7 @@ import { Label } from '@/components/ui/label';
 import { Pill } from '@/components/ui/pill';
 import { Textarea } from '@/components/ui/textarea';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
-import { AnaliseGerenteDiretor, getTipoAprovacaoLabel } from '@/types/solicitacoes/types';
+import { AnaliseGerenteDiretor, getTipoAprovacaoLabel } from '@/api/solicitacoes/types';
 import { fileToArquivoDTO, hoursToDaysAndHours } from '@/utils/utils';
 import { ClockIcon, PaperclipIcon, X as XIcon } from '@phosphor-icons/react';
 import { ChangeEvent, CSSProperties, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -39,7 +40,7 @@ import { FlAprovadoTramitacaoEnum } from '@/api/tramitacoes/types';
 type DetalhesSolicitacaoModalProps = {
   open: boolean;
   onClose(): void;
-  solicitacao: SolicitacaoDetalheResponse | null;
+  correspondencia: CorrespondenciaDetalheResponse | SolicitacaoDetalheResponse | null;
   anexos?: AnexoResponse[];
   onHistoricoRespostas?(): void;
   onAbrirEmailOriginal?(): void;
@@ -73,7 +74,7 @@ function renderDescricaoWithBreaks(text?: string | null) {
 export default function DetalhesSolicitacaoModal({
   open,
   onClose,
-  solicitacao,
+  correspondencia,
   onEnviarDevolutiva,
   statusLabel = 'Status',
 }: DetalhesSolicitacaoModalProps) {
@@ -97,38 +98,37 @@ export default function DetalhesSolicitacaoModal({
   const [prazosSolicitacaoPorStatus, setPrazosSolicitacaoPorStatus] = useState<SolicitacaoPrazoResponse[]>([]);
   const [areaDiretoria, setAreaDiretoria] = useState<number | null>(null);
   
- // solicitacao!.statusSolicitacao!.nmStatus = statusList.EM_ANALISE_GERENTE_REGULATORIO.label;
-  const sol = solicitacao ?? null;
+  const correspond = correspondencia as CorrespondenciaDetalheResponse;
 
   const identificador = useMemo(
-    () => (sol?.solicitacao?.cdIdentificacao ? `#${sol.solicitacao.cdIdentificacao}` : ''),
-    [sol?.solicitacao?.cdIdentificacao]
+    () => (correspond?.correspondencia?.cdIdentificacao ? `#${correspond.correspondencia.cdIdentificacao}` : ''),
+    [correspond?.correspondencia?.cdIdentificacao]
   );
 
-  const statusText = sol?.statusSolicitacao?.nmStatus ?? statusLabel;
+  const statusText = correspond?.statusSolicitacao?.nmStatus ?? statusLabel;
  // const statusText = statusList.EM_ANALISE_GERENTE_REGULATORIO.label;
 
-  const flAnaliseGerenteDiretor = sol?.solicitacao?.flAnaliseGerenteDiretor as AnaliseGerenteDiretor;
+  const flAnaliseGerenteDiretor = correspond?.correspondencia?.flAnaliseGerenteDiretor as AnaliseGerenteDiretor;
   const isExisteCienciaGerenteRegul =
-    (sol?.solicitacao?.flExigeCienciaGerenteRegul !== undefined &&
-      sol?.solicitacao?.flExigeCienciaGerenteRegul === 'S') ? true : false;
+    (correspond?.correspondencia?.flExigeCienciaGerenteRegul !== undefined &&
+      correspond?.correspondencia?.flExigeCienciaGerenteRegul === 'S') ? true : false;
 
-  const criadorLine = useMemo(() => formatDateTime(sol?.dtCriacao), [sol?.dtCriacao]);
+  const criadorLine = useMemo(() => formatDateTime(correspond?.dtCriacao), [correspond?.dtCriacao]);
   const prazoLine = useMemo(() => {
-    const prazoAtual = sol?.solcitacaoPrazos?.find(
-      (p) => +(p?.idStatusSolicitacao) === (sol?.statusSolicitacao?.idStatusSolicitacao) &&
+    const prazoAtual = correspond?.solcitacaoPrazos?.find(
+      (p) => +(p?.idStatusSolicitacao) === (correspond?.statusSolicitacao?.idStatusSolicitacao) &&
         p?.nrPrazoInterno > 0
     );
 
-    if (sol?.statusSolicitacao?.nmStatus === statusList.VENCIDO_AREA_TECNICA.label ) {
-      const prazoAtualVencido = sol?.solcitacaoPrazos?.find(
+    if (correspond?.statusSolicitacao?.nmStatus === statusList.VENCIDO_AREA_TECNICA.label ) {
+      const prazoAtualVencido = correspond?.solcitacaoPrazos?.find(
         (p) => +(p?.idStatusSolicitacao) === (statusList.EM_ANALISE_AREA_TECNICA.id)
       );
       return formatDateTime(prazoAtualVencido?.dtPrazoLimite);
     }
 
-    if (sol?.statusSolicitacao?.nmStatus === statusList.VENCIDO_REGULATORIO.label ) {
-      const prazoAtualVencido = sol?.solcitacaoPrazos?.find(
+    if (correspond?.statusSolicitacao?.nmStatus === statusList.VENCIDO_REGULATORIO.label ) {
+      const prazoAtualVencido = correspond?.solcitacaoPrazos?.find(
         (p) => +(p?.idStatusSolicitacao) === (statusList.ANALISE_REGULATORIA.id)
       );
       return formatDateTime(prazoAtualVencido?.dtPrazoLimite);
@@ -138,7 +138,7 @@ export default function DetalhesSolicitacaoModal({
     }
 
     return '—';
-  }, [sol?.statusSolicitacao?.idStatusSolicitacao, sol?.solcitacaoPrazos, sol?.statusSolicitacao?.nmStatus]);
+  }, [correspond?.statusSolicitacao?.idStatusSolicitacao, correspond?.solcitacaoPrazos, correspond?.statusSolicitacao?.nmStatus]);
 
   useEffect(() => {
     const loadResponsaveis = async () => {
@@ -165,19 +165,19 @@ export default function DetalhesSolicitacaoModal({
 
   useEffect(() => {
     const loadPrazos = async () => {
-      const prazosSolicitacaoPorStatus = await solicitacoesClient.listarPrazos(solicitacao?.solicitacao?.idSolicitacao || 0);
+      const prazosSolicitacaoPorStatus = await solicitacoesClient.listarPrazos(correspond?.correspondencia?.idSolicitacao || 0);
       setPrazosSolicitacaoPorStatus(prazosSolicitacaoPorStatus || []);
     };
-    if (solicitacao?.solicitacao?.idSolicitacao) {
+    if (correspond?.correspondencia?.idSolicitacao) {
       loadPrazos();
     }
-  }, [solicitacao?.solicitacao?.idSolicitacao]);
+  }, [correspond?.correspondencia?.idSolicitacao]);
 
   const isPrazoVencido = useMemo(() => {
     const dataAtual = new Date();
     
-    if (sol?.statusSolicitacao?.nmStatus === statusList.VENCIDO_AREA_TECNICA.label) {
-      const prazoAtualVencido = sol?.solcitacaoPrazos?.find(
+    if (correspond?.statusSolicitacao?.nmStatus === statusList.VENCIDO_AREA_TECNICA.label) {
+      const prazoAtualVencido = correspond?.solcitacaoPrazos?.find(
         (p) => +(p?.idStatusSolicitacao) === (statusList.EM_ANALISE_AREA_TECNICA.id)
       );
       if (prazoAtualVencido?.dtPrazoLimite) {
@@ -187,8 +187,8 @@ export default function DetalhesSolicitacaoModal({
       return true; 
     }
     
-    if (sol?.statusSolicitacao?.nmStatus === statusList.VENCIDO_REGULATORIO.label) {
-      const prazoAtualVencido = sol?.solcitacaoPrazos?.find(
+    if (correspond?.statusSolicitacao?.nmStatus === statusList.VENCIDO_REGULATORIO.label) {
+      const prazoAtualVencido = correspond?.solcitacaoPrazos?.find(
         (p) => +(p?.idStatusSolicitacao) === (statusList.ANALISE_REGULATORIA.id)
       );
       if (prazoAtualVencido?.dtPrazoLimite) {
@@ -198,8 +198,8 @@ export default function DetalhesSolicitacaoModal({
       return true; 
     }
     
-    const prazoAtual = sol?.solcitacaoPrazos?.find(
-      (p) => +(p?.idStatusSolicitacao) === (sol?.statusSolicitacao?.idStatusSolicitacao)
+    const prazoAtual = correspond?.solcitacaoPrazos?.find(
+      (p) => +(p?.idStatusSolicitacao) === (correspond?.statusSolicitacao?.idStatusSolicitacao)
     );
     
     if (prazoAtual?.dtPrazoLimite) {
@@ -209,25 +209,25 @@ export default function DetalhesSolicitacaoModal({
     }
     
     return false;
-  }, [sol?.statusSolicitacao?.nmStatus, sol?.statusSolicitacao?.idStatusSolicitacao, sol?.solcitacaoPrazos]);
+  }, [correspond?.statusSolicitacao?.nmStatus, correspond?.statusSolicitacao?.idStatusSolicitacao, correspond?.solcitacaoPrazos]);
 
-  const assunto = sol?.solicitacao?.dsAssunto ?? '';
-  const descricao = sol?.solicitacao?.dsSolicitacao ?? '';
-  const observacao = sol?.solicitacao?.dsObservacao && sol?.solicitacao?.dsObservacao.trim().length > 0 ? sol?.solicitacao?.dsObservacao : null;
-  const areas = Array.isArray(sol?.solicitacao?.area)
-    ? (sol!.solicitacao!.area! as Array<{ nmArea: string; idArea?: number; cdArea?: string }>)
+  const assunto = (correspond?.correspondencia as CorrespondenciaResponse)?.dsAssunto ?? '';
+  const descricao = (correspond?.correspondencia as CorrespondenciaResponse)?.dsSolicitacao ?? '';
+  const observacao = correspond?.correspondencia?.dsObservacao && correspond?.correspondencia?.dsObservacao.trim().length > 0 ? correspond?.correspondencia?.dsObservacao : null;
+  const areas = Array.isArray(correspond?.correspondencia?.area)
+    ? (correspond!.correspondencia!.area! as Array<{ nmArea: string; idArea?: number; cdArea?: string }>)
     : [];
 
-  const temaLabel = sol?.solicitacao?.tema?.nmTema ?? sol?.solicitacao?.nmTema ?? '—';
+  const temaLabel = correspond?.correspondencia?.tema?.nmTema ?? correspond?.correspondencia?.nmTema ?? '—';
 
 
-  const isAprovacao = sol?.statusSolicitacao?.idStatusSolicitacao ===  statusList.EM_APROVACAO.id; 
-  const isDiretoria = sol?.statusSolicitacao?.idStatusSolicitacao ===  statusList.EM_ASSINATURA_DIRETORIA.id; 
+  const isAprovacao = correspond?.statusSolicitacao?.idStatusSolicitacao ===  statusList.EM_APROVACAO.id; 
+  const isDiretoria = correspond?.statusSolicitacao?.idStatusSolicitacao ===  statusList.EM_ASSINATURA_DIRETORIA.id; 
   const isAnaliseRegulatoriaAprovarDevolutiva =
-    sol?.statusSolicitacao?.idStatusSolicitacao ===  statusList.ANALISE_REGULATORIA.id &&
+    correspond?.statusSolicitacao?.idStatusSolicitacao ===  statusList.ANALISE_REGULATORIA.id &&
     idProximoStatusAnaliseRegulatoria === statusList.EM_APROVACAO.id; 
   
-  const isConcluido = sol?.statusSolicitacao?.idStatusSolicitacao === statusList.CONCLUIDO.id;
+  const isConcluido = correspond?.statusSolicitacao?.idStatusSolicitacao === statusList.CONCLUIDO.id;
   const isAnaliseGerenteRegulatorio = statusText === statusList.EM_ANALISE_GERENTE_REGULATORIO.label;
 
   const isFlagVisivel =
@@ -252,7 +252,7 @@ export default function DetalhesSolicitacaoModal({
         setUserResponsavel(resp);
         const idPerfil = resp?.idPerfil;
 
-        const idAreaInicial = sol?.solicitacao?.idAreaInicial;
+        const idAreaInicial = correspond?.correspondencia?.idAreaInicial;
         const userAreaIds = (resp?.areas || [])
           .map((a: { area?: { idArea?: number | string; nmArea?: string } } | null | undefined) => a?.area?.idArea)
           .map((id) => +((id as unknown) as number))
@@ -263,8 +263,8 @@ export default function DetalhesSolicitacaoModal({
           const areaInicialNum = +idAreaInicial;
           isInSolicAreas = !Number.isNaN(areaInicialNum) && userAreaIds.includes(areaInicialNum);
         } else {
-          const areasSolic = Array.isArray(sol?.solicitacao?.area)
-            ? (sol!.solicitacao!.area as Array<{ idArea?: number; nmArea?: string }>)
+          const areasSolic = Array.isArray(correspond?.correspondencia?.area)
+            ? (correspond!.correspondencia!.area as Array<{ idArea?: number; nmArea?: string }>)
             : [];
           const solicitacaoAreaIds = areasSolic
             .map(a => +((a?.idArea as unknown) as number))
@@ -282,10 +282,10 @@ export default function DetalhesSolicitacaoModal({
       }
     };
 
-    if (open && sol?.solicitacao?.idSolicitacao) {
+    if (open && correspond?.correspondencia?.idSolicitacao) {
       checkResponsavelInicial();
     }
-  }, [open, sol?.solicitacao?.idSolicitacao, sol?.solicitacao?.area, sol]);
+  }, [open, correspond?.correspondencia?.idSolicitacao, correspond?.correspondencia?.area, correspond]);
 
   const measureDescricao = useCallback(() => {
     const el = descRef.current;
@@ -382,7 +382,7 @@ export default function DetalhesSolicitacaoModal({
         return;
       }
 
-      if (!sol?.solicitacao?.idSolicitacao) {
+      if (!correspond?.correspondencia?.idSolicitacao) {
         toast.error('ID da solicitação não encontrado.');
         return;
       }
@@ -410,12 +410,12 @@ export default function DetalhesSolicitacaoModal({
         setSending(false);
       }
     },
-    [onEnviarDevolutiva, resposta, arquivos, sol?.solicitacao?.idSolicitacao, sol?.solicitacao?.flExigeCienciaGerenteRegul, onClose, flAprovado, isFlagVisivel, tpResponsavelUpload, statusText, isExisteCienciaGerenteRegul]
+    [onEnviarDevolutiva, resposta, arquivos, correspond?.correspondencia?.idSolicitacao, onClose, flAprovado, isFlagVisivel, tpResponsavelUpload, statusText, isExisteCienciaGerenteRegul]
   );
 
   const handleSalvarParecer = useCallback(async () => {
     try {
-      if (!sol?.solicitacao?.idSolicitacao || !sol?.statusSolicitacao?.idStatusSolicitacao) {
+      if (!correspond?.correspondencia?.idSolicitacao || !correspond?.statusSolicitacao?.idStatusSolicitacao) {
         toast.error('Dados da solicitação incompletos.');
         return;
       }
@@ -427,21 +427,21 @@ export default function DetalhesSolicitacaoModal({
       setSending(true);
 
       const req = {
-        idSolicitacao: sol.solicitacao.idSolicitacao,
-        idStatusSolicitacao: sol.statusSolicitacao.idStatusSolicitacao,
+        idSolicitacao: correspond.correspondencia.idSolicitacao,
+        idStatusSolicitacao: correspond.statusSolicitacao.idStatusSolicitacao,
         dsDarecer: dsDarecer.trim(),
       };
-      const ultimoNivel = Number(sol?.tramitacoes?.[0]?.tramitacao?.nrNivel ?? 0);
+      const ultimoNivel = Number(correspond?.tramitacoes?.[0]?.tramitacao?.nrNivel ?? 0);
       const nextNivel = ultimoNivel + 1;
 
-      const existingParecer = sol?.solicitacaoPareceres?.find(
+      const existingParecer = correspond?.solicitacaoPareceres?.find(
         (p) =>
-          p?.idStatusSolicitacao === sol.statusSolicitacao.idStatusSolicitacao &&
+          p?.idStatusSolicitacao === correspond.statusSolicitacao.idStatusSolicitacao &&
           Number(p?.nrNivel) === Number(nextNivel) &&
           p?.responsavel?.idResponsavel === (userResponsavel?.idResponsavel ?? 0) 
       );
 
-      const isArquivado = sol.statusSolicitacao.idStatusSolicitacao === statusList.ARQUIVADO.id;
+      const isArquivado = correspond.statusSolicitacao.idStatusSolicitacao === statusList.ARQUIVADO.id;
       const canUpdate = Boolean(existingParecer?.idSolicitacaoParecer) && !isArquivado;
 
       if (canUpdate) {
@@ -461,7 +461,7 @@ export default function DetalhesSolicitacaoModal({
     } finally {
       setSending(false);
     }
-  }, [dsDarecer, onClose, sol?.solicitacao?.idSolicitacao,sol?.tramitacoes, sol?.statusSolicitacao?.idStatusSolicitacao, sol?.solicitacaoPareceres, userResponsavel?.idResponsavel]);
+  }, [dsDarecer, onClose, correspond?.correspondencia?.idSolicitacao,correspond?.tramitacoes, correspond?.statusSolicitacao?.idStatusSolicitacao, correspond?.solicitacaoPareceres, userResponsavel?.idResponsavel]);
 
 
   const descricaoCollapsedStyle: CSSProperties =
@@ -470,8 +470,8 @@ export default function DetalhesSolicitacaoModal({
       : {};
 
   const quantidadeDevolutivas = (() => {
-    const qtdTramitacoes = solicitacao?.tramitacoes?.filter(t => !!t?.tramitacao?.idTramitacao)?.length ?? 0;
-    const qtdPareceres = sol?.solicitacaoPareceres?.length ?? 0;
+    const qtdTramitacoes = correspond?.tramitacoes?.filter((t) => !!t?.tramitacao?.idTramitacao)?.length ?? 0;
+    const qtdPareceres = correspond?.solicitacaoPareceres?.length ?? 0;
     return qtdTramitacoes + qtdPareceres;
   })();
 
@@ -490,25 +490,25 @@ export default function DetalhesSolicitacaoModal({
 
   useEffect(() => {
     const loadIdProximoStatusAnaliseRegulatoria = async () => {
-      if (!sol?.solicitacao?.idSolicitacao || !sol?.statusSolicitacao?.idStatusSolicitacao) {
+      if (!correspond?.correspondencia?.idSolicitacao || !correspond?.statusSolicitacao?.idStatusSolicitacao) {
         setIdProximoStatusAnaliseRegulatoria(null);
         return;
       }
       const response = await tramitacoesClient.buscarProximoStatusPorIdSolicitacaoEIdStatusSolicitacao({
-        idSolicitacao: sol.solicitacao.idSolicitacao,
-        idStatusSolicitacao: sol.statusSolicitacao.idStatusSolicitacao,
+        idSolicitacao: correspond.correspondencia.idSolicitacao,
+        idStatusSolicitacao: correspond.statusSolicitacao.idStatusSolicitacao,
       });
       setIdProximoStatusAnaliseRegulatoria(response ?? null);
     };
     loadIdProximoStatusAnaliseRegulatoria();
-  }, [sol?.solicitacao?.idSolicitacao, sol?.statusSolicitacao?.idStatusSolicitacao]);
+  }, [correspond?.correspondencia?.idSolicitacao, correspond?.statusSolicitacao?.idStatusSolicitacao]);
 
-  const devolutivaReprovadaUmavezDiretoria = sol?.tramitacoes?.some(
+  const devolutivaReprovadaUmavezDiretoria = correspond?.tramitacoes?.some(
     t => t.tramitacao.idStatusSolicitacao === statusList.EM_ASSINATURA_DIRETORIA.id && t.tramitacao.flAprovado === 'N'
   );
 
   const devolutivaReprovadaPelaDiretoriaSegundaVez = (() => {
-    const reprovacoesCount = sol?.tramitacoes?.filter(
+    const reprovacoesCount = correspond?.tramitacoes?.filter(
       t => t.tramitacao.idStatusSolicitacao === statusList.EM_ASSINATURA_DIRETORIA.id && t.tramitacao.flAprovado === 'N'
     )?.length || 0;
     return reprovacoesCount >= 2;
@@ -583,15 +583,15 @@ export default function DetalhesSolicitacaoModal({
     default: 'Aprovar devolutiva?'
   }
 
-  const labelStatusTextarea = labelTextareaDevolutiva[sol?.statusSolicitacao?.nmStatus as keyof typeof labelTextareaDevolutiva] ?? labelTextareaDevolutiva.default;
-  const btnEnviarDevolutivaLabel = btnEnviarDevolutiva[sol?.statusSolicitacao?.nmStatus as keyof typeof btnEnviarDevolutiva] ?? btnEnviarDevolutiva.default;
-  const labelFlAprovacao = textlabelFlag[sol?.statusSolicitacao?.nmStatus as keyof typeof textlabelFlag] ?? textlabelFlag.default;
+  const labelStatusTextarea = labelTextareaDevolutiva[correspond?.statusSolicitacao?.nmStatus as keyof typeof labelTextareaDevolutiva] ?? labelTextareaDevolutiva.default;
+  const btnEnviarDevolutivaLabel = btnEnviarDevolutiva[correspond?.statusSolicitacao?.nmStatus as keyof typeof btnEnviarDevolutiva] ?? btnEnviarDevolutiva.default;
+  const labelFlAprovacao = textlabelFlag[correspond?.statusSolicitacao?.nmStatus as keyof typeof textlabelFlag] ?? textlabelFlag.default;
 
-  const nrNivelUltimaTramitacao = sol?.tramitacoes[0]?.tramitacao?.nrNivel;
+  const nrNivelUltimaTramitacao = correspond?.tramitacoes[0]?.tramitacao?.nrNivel;
 
-  const isDiretorJaAprovou = sol?.tramitacoes?.some(t =>
+  const isDiretorJaAprovou = correspond?.tramitacoes?.some(t =>
     t?.tramitacao?.nrNivel === nrNivelUltimaTramitacao &&
-    t?.tramitacao?.idStatusSolicitacao === sol?.statusSolicitacao?.idStatusSolicitacao &&
+    t?.tramitacao?.idStatusSolicitacao === correspond?.statusSolicitacao?.idStatusSolicitacao &&
     t?.tramitacao?.flAprovado === 'S' &&
     (t?.tramitacao?.tramitacaoAcao?.some(ta =>
       ta?.responsavelArea?.responsavel?.idResponsavel === userResponsavel?.idResponsavel
@@ -609,8 +609,8 @@ export default function DetalhesSolicitacaoModal({
     userResponsavel?.idPerfil === perfilUtil.EXECUTOR 
   );
 
-  const idsResponsaveisAssinates: number[] = sol?.solicitacoesAssinantes?.filter(
-    a => a.idSolicitacao === sol?.solicitacao?.idSolicitacao &&
+  const idsResponsaveisAssinates: number[] = correspond?.solicitacoesAssinantes?.filter(
+    a => a.idSolicitacao === correspond?.correspondencia?.idSolicitacao &&
     a.idStatusSolicitacao === statusList.EM_ASSINATURA_DIRETORIA.id
   ).map(a => a.idResponsavel) ?? [];
 
@@ -618,9 +618,9 @@ export default function DetalhesSolicitacaoModal({
   idsResponsaveisAssinates.includes(userResponsavel.idResponsavel);
 
   const enableEnviarDevolutiva = (() => {
-    const tramitacaoExecutada = sol?.tramitacoes?.filter(t =>
+    const tramitacaoExecutada = correspond?.tramitacoes?.filter(t =>
       t?.tramitacao?.nrNivel === nrNivelUltimaTramitacao &&
-      t?.tramitacao?.idStatusSolicitacao === sol?.statusSolicitacao?.idStatusSolicitacao &&
+      t?.tramitacao?.idStatusSolicitacao === correspond?.statusSolicitacao?.idStatusSolicitacao &&
       t?.tramitacao?.tramitacaoAcao?.some(ta =>
         ta?.responsavelArea?.responsavel?.idResponsavel === userResponsavel?.idResponsavel &&
         ta.flAcao === 'T' ));
@@ -628,8 +628,8 @@ export default function DetalhesSolicitacaoModal({
     // Verifica se TODAS as áreas do usuário que estão na solicitação já responderam
     const todasAreasUsuarioResponderam = (() => {
       // Pega as áreas da solicitação
-      const areasSolicitacao = Array.isArray(sol?.solicitacao?.area)
-        ? (sol!.solicitacao!.area! as Array<{ idArea?: number }>)
+      const areasSolicitacao = Array.isArray(correspond?.correspondencia?.area)
+        ? (correspond!.correspondencia!.area! as Array<{ idArea?: number }>)
             .map(a => a?.idArea)
             .filter((id): id is number => id !== undefined && id !== null)
         : [];
@@ -647,13 +647,13 @@ export default function DetalhesSolicitacaoModal({
       if (areasUsuarioNaSolicitacao.length === 0) return false;
       
       // Pega as áreas que já responderam (tramitações do mesmo nível e status)
-      const areasQueJaResponderam = sol?.tramitacoes
+      const areasQueJaResponderam = correspond?.tramitacoes
         ?.filter(t =>
           t?.tramitacao?.nrNivel === nrNivelUltimaTramitacao &&
-          sol?.statusSolicitacao?.idStatusSolicitacao !== statusList.EM_ASSINATURA_DIRETORIA.id &&
-          t?.tramitacao?.idStatusSolicitacao === sol?.statusSolicitacao?.idStatusSolicitacao &&
-          !((sol?.statusSolicitacao?.nmStatus === statusList.EM_ANALISE_AREA_TECNICA.label || 
-            sol?.statusSolicitacao?.nmStatus === statusList.VENCIDO_AREA_TECNICA.label) &&
+          correspond?.statusSolicitacao?.idStatusSolicitacao !== statusList.EM_ASSINATURA_DIRETORIA.id &&
+          t?.tramitacao?.idStatusSolicitacao === correspond?.statusSolicitacao?.idStatusSolicitacao &&
+          !((correspond?.statusSolicitacao?.nmStatus === statusList.EM_ANALISE_AREA_TECNICA.label || 
+            correspond?.statusSolicitacao?.nmStatus === statusList.VENCIDO_AREA_TECNICA.label) &&
             (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.D ||
                 flAnaliseGerenteDiretor === AnaliseGerenteDiretor.A)
           )
@@ -672,7 +672,7 @@ export default function DetalhesSolicitacaoModal({
 
     if (sending) return false;
 
-    if (sol?.statusSolicitacao?.nmStatus === statusList.EM_ASSINATURA_DIRETORIA.label) {
+    if (correspond?.statusSolicitacao?.nmStatus === statusList.EM_ASSINATURA_DIRETORIA.label) {
 
       const isRolePermitido = (
         userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR ||
@@ -683,9 +683,9 @@ export default function DetalhesSolicitacaoModal({
       return isRolePermitido && isAssinanteAutorizado && !isDiretorJaAprovou;
     }
 
-    if (sol?.statusSolicitacao?.nmStatus === statusList.ARQUIVADO.label) return false;
+    if (correspond?.statusSolicitacao?.nmStatus === statusList.ARQUIVADO.label) return false;
 
-    if (sol?.statusSolicitacao?.nmStatus === statusList.CONCLUIDO.label) {
+    if (correspond?.statusSolicitacao?.nmStatus === statusList.CONCLUIDO.label) {
       if (
         userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR ||
         userResponsavel?.idPerfil === perfilUtil.GESTOR_DO_SISTEMA
@@ -693,7 +693,7 @@ export default function DetalhesSolicitacaoModal({
       return false;
     }
 
-    if (sol?.statusSolicitacao?.nmStatus === statusList.EM_ANALISE_GERENTE_REGULATORIO.label) {
+    if (correspond?.statusSolicitacao?.nmStatus === statusList.EM_ANALISE_GERENTE_REGULATORIO.label) {
       if (userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR) return true;
       return false;
     }
@@ -703,8 +703,8 @@ export default function DetalhesSolicitacaoModal({
     // // Só bloqueia se TODAS as áreas do usuário na solicitação já responderam
      if (todasAreasUsuarioResponderam) return false;
 
-    if (sol?.statusSolicitacao?.nmStatus === statusList.EM_ANALISE_AREA_TECNICA.label 
-      || sol?.statusSolicitacao?.nmStatus === statusList.VENCIDO_AREA_TECNICA.label
+    if (correspond?.statusSolicitacao?.nmStatus === statusList.EM_ANALISE_AREA_TECNICA.label 
+      || correspond?.statusSolicitacao?.nmStatus === statusList.VENCIDO_AREA_TECNICA.label
     ) {
 
       if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.G) {
@@ -732,21 +732,21 @@ export default function DetalhesSolicitacaoModal({
       return false;
     }
 
-    if (sol?.statusSolicitacao?.nmStatus === statusList.ANALISE_REGULATORIA.label ||
-      sol?.statusSolicitacao?.nmStatus === statusList.VENCIDO_REGULATORIO.label) {
+    if (correspond?.statusSolicitacao?.nmStatus === statusList.ANALISE_REGULATORIA.label ||
+      correspond?.statusSolicitacao?.nmStatus === statusList.VENCIDO_REGULATORIO.label) {
         if (userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR) return true;
         if (hasAreaInicial && userResponsavel?.idPerfil === perfilUtil.GESTOR_DO_SISTEMA) return true;
       return false;
     }
     
-    if (sol?.statusSolicitacao?.nmStatus === statusList.EM_APROVACAO.label) {
+    if (correspond?.statusSolicitacao?.nmStatus === statusList.EM_APROVACAO.label) {
       if (userResponsavel?.idPerfil === perfilUtil.EXECUTOR_AVANCADO) return true;
       return false;
     }
 
     if (!hasAreaInicial && !isPermissaoEnviandoDevolutiva) return true;
 
-    if (sol?.statusSolicitacao?.nmStatus === statusList.EM_CHANCELA.label) {
+    if (correspond?.statusSolicitacao?.nmStatus === statusList.EM_CHANCELA.label) {
       if (userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR) return true;
       return false;
     }
@@ -810,9 +810,9 @@ export default function DetalhesSolicitacaoModal({
   })();
 
   const currentPrazoTotal = useMemo(() => {
-    const total = sol?.solcitacaoPrazos?.reduce((acc, curr) => acc + curr.nrPrazoInterno, 0);
+    const total = correspond?.solcitacaoPrazos?.reduce((acc, curr) => acc + curr.nrPrazoInterno, 0);
     return total;
-  }, [sol?.solcitacaoPrazos]);
+  }, [correspond?.solcitacaoPrazos]);
 
   return (
     <>
@@ -887,18 +887,18 @@ export default function DetalhesSolicitacaoModal({
               <div className="h-px bg-border" />
               <div className="grid grid-cols-12">
                 <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Nº do ofício:</div>
-                <div className="col-span-9 px-4 py-3 text-sm">{sol?.solicitacao?.nrOficio || '—'}</div>
+                <div className="col-span-9 px-4 py-3 text-sm">{correspond?.correspondencia?.nrOficio || '—'}</div>
               </div>
               <div className="h-px bg-border" />
               <div className="grid grid-cols-12">
                 <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Nº do processo:</div>
-                <div className="col-span-9 px-4 py-3 text-sm">{sol?.solicitacao?.nrProcesso || '—'}</div>
+                <div className="col-span-9 px-4 py-3 text-sm">{correspond?.correspondencia?.nrProcesso || '—'}</div>
                 </div>
               <div className="h-px bg-border" />
                 <div className="grid grid-cols-12">
                 <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Exige aprovação especial:</div>
                 <div className="col-span-9 px-4 py-3 text-sm">
-                  {getTipoAprovacaoLabel(sol?.solicitacao?.flAnaliseGerenteDiretor ?? '')}
+                  {getTipoAprovacaoLabel(correspond?.correspondencia?.flAnaliseGerenteDiretor ?? '')}
                 </div>
               </div>
               {isAnaliseGerenteRegulatorio && (
@@ -908,7 +908,7 @@ export default function DetalhesSolicitacaoModal({
                     <div className="col-span-3 px-4 py-3 text-xs text-muted-foreground">Prazo Principal:</div>
                     <div className="col-span-9 px-4 py-3 text-sm">
                       {hoursToDaysAndHours(currentPrazoTotal ?? 0)}
-                      {sol?.solicitacao?.flExcepcional === 'S' ? (
+                      {correspond?.correspondencia?.flExcepcional === 'S' ? (
                         <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
                           Excepcional
                         </span>
@@ -960,7 +960,7 @@ export default function DetalhesSolicitacaoModal({
 
           {isAnaliseGerenteRegulatorio && (
             <InformaçaoStatusEmAnaliseGerReg 
-              solicitacao={solicitacao}
+              correspondencia={correspond}
               statusListPrazos={statusListPrazos}
               prazosSolicitacaoPorStatus={prazosSolicitacaoPorStatus}
               responsaveis={responsaveis}
@@ -969,7 +969,7 @@ export default function DetalhesSolicitacaoModal({
           )}
             
           <AnexoModalTramitacao 
-            solicitacao={solicitacao}
+            correspondencia={correspond}
             canListarAnexo={canListarAnexo}
             isAnaliseGerenteRegulatorio={isAnaliseGerenteRegulatorio}
           />
@@ -1026,7 +1026,7 @@ export default function DetalhesSolicitacaoModal({
                 </h3>
 
               <HistoricoRespostasModalButton
-                idSolicitacao={sol?.solicitacao?.idSolicitacao ?? null}
+                idSolicitacao={correspond?.correspondencia?.idSolicitacao ?? null}
                 showButton={quantidadeDevolutivas > 0}
                 quantidadeDevolutivas={quantidadeDevolutivas}
               />

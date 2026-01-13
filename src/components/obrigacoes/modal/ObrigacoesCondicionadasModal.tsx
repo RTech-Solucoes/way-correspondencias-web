@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { AlertCircle, ExternalLink } from 'lucide-react';
 import { ObrigacaoResumoResponse } from '@/api/obrigacao/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { getObrigacaoStatusStyle } from '@/utils/obrigacoes/status';
+import { getObrigacaoStatusStyle } from '@/components/obrigacoes/list-page/status';
 
 interface ObrigacoesCondicionadasModalProps {
   open: boolean;

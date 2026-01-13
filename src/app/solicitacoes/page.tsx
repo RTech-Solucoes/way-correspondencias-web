@@ -30,7 +30,6 @@ import {
   XIcon
 } from '@phosphor-icons/react';
 import PageTitle from '@/components/ui/page-title';
-import {solicitacoesClient} from '@/api/solicitacoes/client';
 import {responsaveisClient} from '@/api/responsaveis/client';
 import {temasClient} from '@/api/temas/client';
 import {areasClient} from '@/api/areas/client';
@@ -46,9 +45,7 @@ import anexosClient from '@/api/anexos/client';
 import {AnexoResponse, TipoObjetoAnexoEnum, ArquivoDTO} from '@/api/anexos/type';
 import {
   AreaSolicitacao,
-  PagedResponse,
-  SolicitacaoDetalheResponse,
-  SolicitacaoResponse
+  PagedResponse
 } from '@/api/solicitacoes/types';
 import tramitacoesClient from '@/api/tramitacoes/client';
 import {usePermissoes} from "@/context/permissoes/PermissoesContext";
@@ -59,6 +56,8 @@ import { useSearchParams } from 'next/navigation';
 import TimeProgress from '@/components/ui/time-progress';
 import { CategoriaEnum, TipoEnum } from '@/api/tipos/types';
 import { FlAprovadoTramitacaoEnum } from '@/api/tramitacoes/types';
+import correspondenciaClient from '@/api/correspondencia/client';
+import { CorrespondenciaDetalheResponse, CorrespondenciaResponse } from '@/api/correspondencia/types';
 
 export default function SolicitacoesPage() {
   return (
@@ -71,8 +70,8 @@ export default function SolicitacoesPage() {
 function SolicitacoesPageContent() {
   const searchParams = useSearchParams();
   const {
-    solicitacoes,
-    setSolicitacoes,
+    correspondencia: solicitacoes,
+    setCorrespondencia: setSolicitacoes,
     responsaveis,
     setResponsaveis,
     temas,
@@ -84,7 +83,7 @@ function SolicitacoesPageContent() {
     searchQuery,
     setSearchQuery,
     selectedSolicitacao,
-    setSelectedSolicitacao,
+    setSelectedCorrespondencia: setSelectedSolicitacao,
     showSolicitacaoModal,
     setShowSolicitacaoModal,
     showFilterModal,
@@ -122,13 +121,13 @@ function SolicitacoesPageContent() {
 
 
   const [showDetalhesModal, setShowDetalhesModal] = useState(false);
-  const [detalhesSolicitacao, setDetalhesSolicitacao] = useState<SolicitacaoDetalheResponse | null>(null);
+  const [detalhesCorrespondencia, setDetalhesSolicitacao] = useState<CorrespondenciaDetalheResponse | null>(null);
   const [detalhesAnexos, setDetalhesAnexos] = useState<AnexoResponse[]>([]);
   const [showTramitacaoModal, setShowTramitacaoModal] = useState(false);
   const [tramitacaoSolicitacaoId, setTramitacaoSolicitacaoId] = useState<number | null>(null);
   const [statuses, setStatuses] = useState<{ idStatusSolicitacao: number; nmStatus: string; flAtivo?: string }[]>([]);
   
-  const handleTramitacoes = (solicitacao: SolicitacaoResponse) => {
+  const handleTramitacoes = (solicitacao: CorrespondenciaResponse) => {
     setTramitacaoSolicitacaoId(solicitacao.idSolicitacao);
     setShowTramitacaoModal(true);
   };
@@ -163,7 +162,7 @@ function SolicitacoesPageContent() {
         ? activeFilters.flExigeCienciaGerenteRegul 
         : undefined;
 
-      const response = await solicitacoesClient.buscarPorFiltro({
+      const response = await correspondenciaClient.buscarPorFiltro({
         filtro,
         page: currentPage,
         size: 10,
@@ -180,12 +179,12 @@ function SolicitacoesPageContent() {
       });
 
       if (response && typeof response === 'object' && 'content' in response) {
-        const paginatedResponse = response as unknown as PagedResponse<SolicitacaoResponse>;
+        const paginatedResponse = response as unknown as PagedResponse<CorrespondenciaResponse>;
         setSolicitacoes(paginatedResponse.content ?? []);
         setTotalPages(paginatedResponse.totalPages ?? 1);
         setTotalElements(paginatedResponse.totalElements ?? 0);
       } else {
-        setSolicitacoes(response ?? []);
+        setSolicitacoes((response as CorrespondenciaResponse[]) ?? []);
         setTotalPages(1);
         setTotalElements((response ?? []).length);
       }
@@ -350,7 +349,7 @@ function SolicitacoesPageContent() {
   const confirmDelete = async () => {
     if (solicitacaoToDelete) {
       try {
-        await solicitacoesClient.deletar(solicitacaoToDelete.idSolicitacao);
+        await correspondenciaClient.deletar(solicitacaoToDelete.idSolicitacao);
         toast.success('Solicitação excluída com sucesso');
         loadSolicitacoes();
       } catch {
@@ -383,7 +382,7 @@ function SolicitacoesPageContent() {
     const sorted = [...solicitacoes];
 
     if (sortField) {
-      sorted.sort((a: SolicitacaoResponse, b: SolicitacaoResponse) => {
+      sorted.sort((a: CorrespondenciaResponse, b: CorrespondenciaResponse) => {
         let aValue: string | number | null;
         let bValue: string | number | null;
 
@@ -422,13 +421,13 @@ function SolicitacoesPageContent() {
     return sorted;
   };
 
-  const openDetalhes = useCallback(async (s: SolicitacaoResponse) => {
+  const openDetalhes = useCallback(async (s: CorrespondenciaResponse) => {
     setSelectedSolicitacao(s);
     setShowDetalhesModal(true);
     setDetalhesSolicitacao(null);
 
     try {
-      const detalhes = await solicitacoesClient.buscarDetalhesPorId(s.idSolicitacao);
+      const detalhes = await correspondenciaClient.buscarDetalhesPorId(s.idSolicitacao);
       setDetalhesSolicitacao(detalhes);
       const anexos = await anexosClient.buscarPorIdObjetoETipoObjeto(s.idSolicitacao, TipoObjetoAnexoEnum.S);
       setDetalhesAnexos(anexos || []);
@@ -447,12 +446,12 @@ function SolicitacoesPageContent() {
   }, []);
 
   const enviarDevolutiva = useCallback(async (mensagem: string, arquivos: ArquivoDTO[], flAprovado?: FlAprovadoTramitacaoEnum) => {
-    const alvo = detalhesSolicitacao;
+    const alvo = detalhesCorrespondencia;
     if (!alvo) return;
     try {
       const data = {
         dsObservacao: mensagem || '',
-        idSolicitacao: alvo.solicitacao.idSolicitacao,
+        idSolicitacao: alvo.correspondencia.idSolicitacao,
         flAprovado: flAprovado,
         arquivos: arquivos,
       };
@@ -461,7 +460,7 @@ function SolicitacoesPageContent() {
     } catch (err) {
       throw err;
     }
-  }, [detalhesSolicitacao, loadSolicitacoes]);
+  }, [detalhesCorrespondencia, loadSolicitacoes]);
 
   const getJoinedNmAreas = (areas: AreaSolicitacao[] | undefined) => {
     if (areas && areas.length > 0) {
@@ -632,7 +631,7 @@ function SolicitacoesPageContent() {
                 </StickyTableCell>
               </StickyTableRow>
             ) : (
-              sortedSolicitacoes()?.map((solicitacao: SolicitacaoResponse) => (
+              sortedSolicitacoes()?.map((solicitacao: CorrespondenciaResponse) => (
                 <React.Fragment key={solicitacao.idSolicitacao}>
                   <StickyTableRow>
                     <StickyTableCell className="font-medium min-w-[120px]">{solicitacao.cdIdentificacao}</StickyTableCell>
@@ -789,7 +788,7 @@ function SolicitacoesPageContent() {
 
       {showSolicitacaoModal && (
         <SolicitacaoModal
-          solicitacao={selectedSolicitacao}
+          correspondencia={selectedSolicitacao}
           open={showSolicitacaoModal}
           onClose={() => {
             setShowSolicitacaoModal(false);
@@ -802,7 +801,7 @@ function SolicitacoesPageContent() {
         />
       )}
 
-      {showDetalhesModal && detalhesSolicitacao && (
+      {showDetalhesModal && detalhesCorrespondencia && (
         <DetalhesSolicitacaoModal
           open={showDetalhesModal}
           onClose={() => {
@@ -811,9 +810,9 @@ function SolicitacoesPageContent() {
             setDetalhesSolicitacao(null);
             loadSolicitacoes();
           }}
-          solicitacao={detalhesSolicitacao}
+          correspondencia={detalhesCorrespondencia}
           anexos={(detalhesAnexos ?? [])}
-          statusLabel={getStatusText((detalhesSolicitacao)?.statusSolicitacao?.nmStatus?.toString() || '')}
+          statusLabel={getStatusText((detalhesCorrespondencia)?.statusSolicitacao?.nmStatus?.toString() || '')}
           onAbrirEmailOriginal={abrirEmailOriginal}
           onHistoricoRespostas={abrirHistorico}
           onEnviarDevolutiva={enviarDevolutiva}

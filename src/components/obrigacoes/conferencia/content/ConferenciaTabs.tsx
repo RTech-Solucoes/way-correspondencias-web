@@ -7,7 +7,7 @@ import { ConferenciaStepPrazos } from './tabs-steps/ConferenciaStepPrazos';
 import { ConferenciaStepAnexos } from './tabs-steps/ConferenciaStepAnexos';
 import { ConferenciaStepVinculos } from './tabs-steps/ConferenciaStepVinculos';
 import { ObrigacaoDetalheResponse } from '@/api/obrigacao/types';
-import { getObrigacaoStatusStyle } from '@/utils/obrigacoes/status';
+import { getObrigacaoStatusStyle } from '@/components/obrigacoes/list-page/status';
 import { TipoEnum } from '@/api/tipos/types';
 import { AnexoResponse } from '@/api/anexos/type';
 

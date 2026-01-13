@@ -1,8 +1,8 @@
-import { SolicitacaoResumoResponse } from "@/types/solicitacoes/types";
 import ApiClient from "../client";
 import { AreaRankingDTO, DashboardListSummary, DashboardOverview, ICalendar, ICalendarYear, IRecentActivity, ObrigacaoAreaTemaDTO, ObrigacaoPendenteResponse, ObrigacaoPrazoResponse, ObrigacaoRecentActivityDTO, ObrigacaoTempoMedioResponse, PaginatedResponse, SolicitacaoCountResponse, SolicitacaoPrazo } from "./type";
 import { buildQueryParams } from "@/utils/utils";
 import { ObrigacaoCalendarioResponse, ObrigacaoCalendarioMesCountResponse } from "../obrigacao/types";
+import { CorrespondenciaResumoResponse } from "../correspondencia/types";
 
 interface OverviewParams {
     cdTipoFluxo?: string;
@@ -70,8 +70,8 @@ class DashboardClient {
         });
     }
 
-    async getSolicitacoesPendentes(): Promise<SolicitacaoResumoResponse[]> {
-        return this.client.request<SolicitacaoResumoResponse[]>(`/solicitacoes-pendentes`, {
+    async getSolicitacoesPendentes(): Promise<CorrespondenciaResumoResponse[]> {
+        return this.client.request<CorrespondenciaResumoResponse[]>(`/solicitacoes-pendentes`, {
             method: "GET",
         });
     }

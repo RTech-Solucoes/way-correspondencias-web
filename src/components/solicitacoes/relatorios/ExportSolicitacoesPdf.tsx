@@ -3,13 +3,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Document, Page, StyleSheet, Text, View, pdf, Image } from '@react-pdf/renderer';
 import { toast } from 'sonner';
-import { solicitacoesClient } from '@/api/solicitacoes/client';
-import { PagedResponse, SolicitacaoFilterParams, SolicitacaoResponse } from '@/api/solicitacoes/types';
+import { PagedResponse, } from '@/api/solicitacoes/types';
 import { formatDateTimeBr, formatDateTimeBrCompactExport } from '@/utils/utils';
 import { getLayoutClient, getLabelTitle, getLogoPath } from '@/lib/layout/layout-client';
+import correspondenciaClient from '@/api/correspondencia/client';
+import { CorrespondenciaFilterParams, CorrespondenciaResponse } from '@/api/correspondencia/types';
 
 type ExportSolicitacoesPdfProps = {
-	filterParams: Omit<SolicitacaoFilterParams, 'page' | 'size' | 'sort'>;
+	filterParams: Omit<CorrespondenciaFilterParams, 'page' | 'size' | 'sort'>;
 	getStatusText: (statusCode: string) => string | null;
 	onDone?: () => void;
 };
@@ -40,7 +41,7 @@ const styles = StyleSheet.create({
 	c11: { width: '6.5%' }, // Atendido dentro do prazo
 });
   
-function SolicitacoesPdfDoc({ data, getStatusText }: { data: SolicitacaoResponse[]; getStatusText: (code: string) => string | null }) {
+function SolicitacoesPdfDoc({ data, getStatusText }: { data: CorrespondenciaResponse[]; getStatusText: (code: string) => string | null }) {
 	const nowStr = useMemo(() => new Date().toLocaleString('pt-BR'), []);
 	const layoutClient = getLayoutClient();
 	const labelTitle = getLabelTitle(layoutClient);
@@ -120,21 +121,21 @@ function SolicitacoesPdfDoc({ data, getStatusText }: { data: SolicitacaoResponse
 }
 
 export default function ExportSolicitacoesPdf({ filterParams, getStatusText, onDone }: ExportSolicitacoesPdfProps) {
-	const [data, setData] = useState<SolicitacaoResponse[] | null>(null);
+	const [data, setData] = useState<CorrespondenciaResponse[] | null>(null);
 	const [fileName, setFileName] = useState('');
 	const startedRef = useRef(false);
 	const downloadedRef = useRef(false);
 
 	const loadData = useCallback(async () => {
 		try {
-			const response = await solicitacoesClient.buscarPorFiltro({
+			const response = await correspondenciaClient.buscarPorFiltro({
 				...filterParams,
 				page: 0,
 				size: 10000,
 			});
 			const lista = (response && typeof response === 'object' && 'content' in response)
-				? (response as unknown as PagedResponse<SolicitacaoResponse>).content ?? []
-				: (response as SolicitacaoResponse[]) ?? [];
+				? (response as unknown as PagedResponse<CorrespondenciaResponse>).content ?? []
+				: (response as CorrespondenciaResponse[]) ?? [];
 			setData(lista);
 			setFileName(`solicitacoes_export_${formatDateTimeBrCompactExport()}.pdf`);
 		} catch {

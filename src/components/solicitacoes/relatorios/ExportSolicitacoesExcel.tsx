@@ -2,12 +2,13 @@
 
 import {useCallback, useEffect, useRef, useState} from 'react';
 import { toast } from 'sonner';
-import { PagedResponse, SolicitacaoFilterParams, SolicitacaoResponse } from '@/api/solicitacoes/types';
-import { solicitacoesClient } from '@/api/solicitacoes/client';
+import { PagedResponse, } from '@/api/solicitacoes/types';
 import { formatDateTimeBrCompactExport } from '@/utils/utils';
+import correspondenciaClient from '@/api/correspondencia/client';
+import { CorrespondenciaFilterParams, CorrespondenciaResponse } from '@/api/correspondencia/types';
 
 type ExportSoliExceloesExcelnProps = {
-  filterParams: Omit<SolicitacaoFilterParams, 'page' | 'size' | 'sort'>;
+  filterParams: Omit<CorrespondenciaFilterParams, 'page' | 'size' | 'sort'>;
   getStatusText: (statusCode: string) => string | null;
   className?: string;
   onDone?: () => void;
@@ -22,15 +23,15 @@ export default function ExportSoliExceloesExcel({ filterParams, getStatusText, o
       
       setExporting(true);
 
-      const response = await solicitacoesClient.buscarPorFiltro({
+      const response = await correspondenciaClient.buscarPorFiltro({
         ...filterParams,
         page: 0,
         size: 10000,
       });
 
       const lista = (response && typeof response === 'object' && 'content' in response)
-        ? (response as unknown as PagedResponse<SolicitacaoResponse>).content ?? []
-        : (response as SolicitacaoResponse[]) ?? [];
+        ? (response as unknown as PagedResponse<CorrespondenciaResponse>).content ?? []
+        : (response as CorrespondenciaResponse[]) ?? [];
 
       const headers = [
         'Identificação',

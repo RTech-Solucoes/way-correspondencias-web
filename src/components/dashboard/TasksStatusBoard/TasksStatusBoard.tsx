@@ -10,7 +10,7 @@ import { statusList } from "@/api/status-solicitacao/types";
 import SolicitacoesPendentes from "../SolicitacoesPendentes";
 import ObrigacoesPendentes from "../obrigacao/ObrigacoesPendentes";
 import { CategoriaEnum, TipoEnum } from "@/api/tipos/types";
-import { getObrigacaoStatusStyle } from "@/utils/obrigacoes/status";
+import { getObrigacaoStatusStyle } from "@/components/obrigacoes/list-page/status";
 import RecentSummary from "./RecentSummary";
 
 interface TasksStatusBoardProps {

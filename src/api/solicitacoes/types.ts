@@ -1,10 +1,7 @@
-import { SolicitacaoResumoResponse } from "@/types/solicitacoes/types";
-import { AnexoResponse, ArquivoDTO } from "../anexos/type";
-import { AreaResponse } from "../areas/types";
-import { ResponsavelResponse } from "../responsaveis/types";
+import { AnexoResponse } from "../anexos/type";
 import { SolicitacaoParecerResponse } from "../solicitacao-parecer/types";
-import { TramitacaoAcao } from "../tramitacoes/types";
 import { TipoResponse } from "../tipos/types";
+import { TramitacaoAcao } from "../tramitacoes/types";
 
 export interface AreaSolicitacao {
   idArea: number;
@@ -65,11 +62,8 @@ export interface SolicitacaoResponse extends BaseResponse {
   statusCodigo?: number;
   flStatus?: string;
   cdIdentificacao?: string;
-  dsAssunto?: string;
-  dsSolicitacao?: string;
   dsObservacao?: string;
   nrPrazo?: number;
-  nrOficio?: string;
   flExcepcional?: string;
   nrProcesso?: string;
   tpPrazo?: string;
@@ -79,12 +73,9 @@ export interface SolicitacaoResponse extends BaseResponse {
   nmTema?: string;
   areas?: AreaSolicitacao[];
   nmUsuarioCriacao?: string;
-  email?: Email;
   statusSolicitacao?: StatusSolicitacao;
   area?: AreaSolicitacao[];
   tema?: AreaTema;
-  dtPrazoLimite?: string;
-  dtPrimeiraTramitacao?: string;
   dtConclusaoTramitacao?: string;
   flExigeCienciaGerenteRegul?: string;
 }
@@ -104,45 +95,8 @@ export interface SolicitacaoAssinanteItemRequest {
   idResponsavel: number;
 }
 
-export interface SolicitacaoRequest {
-  idEmail?: number;
-  idTema?: number;
-  idResponsavel?: number;
-  idStatusSolicitacao?: number;
-  statusCodigo?: number;
-  flStatus?: string;
-  cdIdentificacao?: string;
-  dsAssunto?: string;
-  dsSolicitacao?: string;
-  dsObservacao?: string;
-  nrPrazo?: number;
-  nrOficio?: string;
-  nrProcesso?: string;
-  tpPrazo?: string;
-  idsAreas?: number[];
-  flExcepcional?: string;
-  flAnaliseGerenteDiretor?: string;
-  idsResponsaveisAssinates?: number[];
-  solicitacoesAssinantes?: SolicitacaoAssinanteItemRequest[];
-  flExigeCienciaGerenteRegul?: string;
-  flAprovacaoGerenteRegul?: string;
-  dsObservacaoGerenteRegul?: string;
-  solicitacoesPrazos?: SolicitacaoPrazoItemRequest[];
-  arquivos?: ArquivoDTO[];
-}
-
 export interface SolicitacaoTemaRequest {
   idTema?: number;
-}
-
-export interface SolicitacaoIdentificacaoRequest {
-  cdIdentificacao?: string;
-  dsAssunto?: string;
-  dsObservacao?: string;
-  nrOficio?: string;
-  nrProcesso?: string;
-  flAnaliseGerenteDiretor?: string;
-  flExigeCienciaGerenteRegul?: string;
 }
 
 export interface SolicitacaoPrazoResponse {
@@ -167,39 +121,6 @@ export interface PagedResponse<T> {
   first: boolean;
   last: boolean;
   empty: boolean;
-}
-
-export interface SolicitacaoFilterParams {
-  filtro?: string;
-  idSolicitacao?: number;
-  idStatusSolicitacao?: number;
-  idArea?: number;
-  cdIdentificacao?: string;
-  idTema?: number;
-  nmResponsavel?: string;
-  dtCriacaoInicio?: string;
-  dtCriacaoFim?: string;
-  flExigeCienciaGerenteRegul?: string;
-  page?: number;
-  size?: number;
-  sort?: string;
-}
-
-export interface SolicitacaoEtapaPrazoRequest {
-  idTema?: number;
-  nrPrazoInterno?: number;
-  nrPrazoExterno?: number;
-  flExcepcional?: string;
-  solicitacoesPrazos: SolicitacaoPrazoItemRequest[];
-}
-
-export interface SolicitacaoTemaEtapaRequest {
-  idTema: number;
-  tpPrazo?: string;
-  nrPrazoInterno?: number;
-  nrPrazoExterno?: number;
-  flExcepcional?: string;
-  idsAreas?: number[];
 }
 
 export interface EmailComAnexosResponse {
@@ -255,29 +176,29 @@ export interface SolicitacaoAssinanteResponse extends BaseResponse {
   idResponsavel: number;
 }
 
-export enum TipoHistoricoResposta {
-  TRAMITACAO = 'TRAMITACAO',
-  PARECER = 'PARECER'
-}
-
-export interface HistoricoRespostaItemResponse {
-  tipo: TipoHistoricoResposta;
-  id: number;
-  dsDescricao: string;
-  nmStatus: string;
-  dtCriacao: string;
-  responsavel: ResponsavelResponse;
-  areaOrigem: AreaResponse;
-  areaDestino: AreaResponse;
-  nrTempoGasto: number;
-  flAprovado: string | null;
-}
-export interface SolicitacaoResumoComHistoricoResponse {
-  solicitacao: SolicitacaoResumoResponse;
-  historicoResposta: HistoricoRespostaItemResponse[];
-}
-
 export interface SolicitacaoBuscaSimpleResponse {
   idSolicitacao: number;
   cdIdentificacao: string;
 }
+
+export enum AnaliseGerenteDiretor {
+  D = 'D', // Diretor
+  G = 'G', // Gerente
+  A = 'A', // Ambos
+  N = 'N'  // Não Necessita
+}
+
+export const getTipoAprovacaoLabel = (tipoAnalise?: string) => {
+  switch (tipoAnalise) {
+    case AnaliseGerenteDiretor.G:
+      return 'Gerente';
+    case AnaliseGerenteDiretor.D:
+      return 'Diretor';
+    case AnaliseGerenteDiretor.A:
+      return 'Ambos';
+    case AnaliseGerenteDiretor.N:
+      return 'Não Necessita';
+    default:
+      return '—';
+  }
+};
