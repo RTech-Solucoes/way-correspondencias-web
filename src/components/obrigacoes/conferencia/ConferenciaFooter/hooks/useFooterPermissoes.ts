@@ -5,6 +5,23 @@ import { perfilUtil } from '@/api/perfis/types';
 import { statusList } from '@/api/status-solicitacao/types';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { TramitacaoComAnexosResponse, SolicitacaoAssinanteResponse } from '@/api/solicitacoes/types';
+import { AnexoResponse } from '@/api/anexos/type';
+import { TipoDocumentoAnexoEnum } from '@/api/anexos/type';
+
+const ordenarTramitacoesPorData = (tramitacoes: TramitacaoComAnexosResponse[]): TramitacaoComAnexosResponse[] => {
+  return [...tramitacoes].sort((a, b) => {
+    const dataA = a.tramitacao.tramitacaoAcao?.[0]?.dtCriacao || 
+                  a.tramitacao.solicitacao?.dtCriacao || 
+                  '';
+    const dataB = b.tramitacao.tramitacaoAcao?.[0]?.dtCriacao || 
+                  b.tramitacao.solicitacao?.dtCriacao || 
+                  '';
+    if (!dataA && !dataB) return 0;
+    if (!dataA) return 1;
+    if (!dataB) return -1;
+    return new Date(dataB).getTime() - new Date(dataA).getTime();
+  });
+};
 
 interface UseFooterPermissoesParams {
   idPerfil?: number | null;
@@ -20,6 +37,7 @@ interface UseFooterPermissoesParams {
   temEvidenciaCumprimento: boolean;
   isStatusAtrasada: boolean;
   temJustificativaAtraso: boolean;
+  anexos?: AnexoResponse[];
 }
 
 export function useFooterPermissoes({
@@ -36,6 +54,7 @@ export function useFooterPermissoes({
   temEvidenciaCumprimento,
   isStatusAtrasada,
   temJustificativaAtraso,
+  anexos = [],
 }: UseFooterPermissoesParams) {
   
   const isPerfilPermitidoEnviarReg = useMemo(() => {
@@ -67,6 +86,48 @@ export function useFooterPermissoes({
     ) ?? false;
   }, [tramitacoes, idStatusSolicitacao, userResponsavel?.idResponsavel]);
 
+  const isReprovadoEmAprovacaoStatusAtualAnaliseRegulatoria = useMemo(() => {
+    if (!tramitacoes || tramitacoes.length === 0) return null; // null = não foi reprovado
+    if (idStatusSolicitacao !== statusList.ANALISE_REGULATORIA.id) return null;
+    
+    const tramitacoesOrdenadas = ordenarTramitacoesPorData(tramitacoes);
+    const ultimaTramitacao = tramitacoesOrdenadas[0];
+    
+    if (!ultimaTramitacao?.tramitacao) return null;
+    
+    const foiReprovado = ultimaTramitacao.tramitacao.idStatusSolicitacao === statusList.EM_APROVACAO.id &&
+                         ultimaTramitacao.tramitacao.flAprovado === 'N';
+    
+    if (!foiReprovado) return null; // null = não foi reprovado
+    
+    // Se foi reprovado, verifica se tem anexo novo de correspondência
+    const dataUltimaTramitacaoReprovada = ultimaTramitacao.tramitacao.tramitacaoAcao?.[0]?.dtCriacao ||
+                                          ultimaTramitacao.tramitacao.solicitacao?.dtCriacao ||
+                                          '';
+    
+    if (!dataUltimaTramitacaoReprovada) return true; // Se não tem data, assume que pode prosseguir
+    
+    const anexosCorrespondencia = anexos.filter(
+      anexo => anexo.tpDocumento === TipoDocumentoAnexoEnum.R
+    );
+    
+    if (anexosCorrespondencia.length === 0) return false; // Foi reprovado mas não tem anexo novo
+    
+    const dataUltimaTramitacaoReprovadaTime = new Date(dataUltimaTramitacaoReprovada).getTime();
+    
+    const temAnexoNovo = anexosCorrespondencia.some(anexo => {
+      if (!anexo.dtCriacao) return false;
+      const dataAnexoTime = new Date(anexo.dtCriacao).getTime();
+      return dataAnexoTime > dataUltimaTramitacaoReprovadaTime;
+    });
+    
+    // Retorna:
+    // - null: não foi reprovado (permite prosseguir)
+    // - true: foi reprovado E tem anexo novo (permite prosseguir)
+    // - false: foi reprovado mas não tem anexo novo (bloqueia)
+    return temAnexoNovo;
+  }, [tramitacoes, idStatusSolicitacao, anexos]);
+
   const isPerfilPermitidoEnviarTramitacaoPorStatus = useMemo(() => {
     
     if (isStatusEmAnaliseGerenteRegulatorio) {
@@ -80,7 +141,14 @@ export function useFooterPermissoes({
     }
     
     if (idStatusSolicitacao === statusList.ANALISE_REGULATORIA.id) {
-      if (idPerfil === perfilUtil.ADMINISTRADOR || idPerfil === perfilUtil.GESTOR_DO_SISTEMA) return true;
+      if (idPerfil === perfilUtil.ADMINISTRADOR || idPerfil === perfilUtil.GESTOR_DO_SISTEMA) {
+        // isReprovadoEmAprovacaoStatusAtualAnaliseRegulatoria retorna:
+        // - null: não foi reprovado (permite prosseguir)
+        // - true: foi reprovado E tem anexo novo (permite prosseguir)
+        // - false: foi reprovado mas não tem anexo novo (bloqueia)
+        // Então só bloqueia se retornar false
+        return isReprovadoEmAprovacaoStatusAtualAnaliseRegulatoria !== false;
+      }
     }
 
     if (idStatusSolicitacao === statusList.EM_CHANCELA.id) {
@@ -111,7 +179,8 @@ export function useFooterPermissoes({
     isStatusEmAnaliseGerenteRegulatorio,
     userResponsavel?.idResponsavel,
     solicitacoesAssinantes,
-    isDiretorJaAprovou
+    isDiretorJaAprovou,
+    isReprovadoEmAprovacaoStatusAtualAnaliseRegulatoria,
   ]);
 
   return {
@@ -119,6 +188,7 @@ export function useFooterPermissoes({
     podeEnviarParaAnalise,
     isPerfilPermitidoEnviarTramitacaoPorStatus,
     isDiretorJaAprovou,
+    isReprovadoEmAprovacaoStatusAtualAnaliseRegulatoria,
   };
 }
 

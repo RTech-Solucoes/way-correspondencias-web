@@ -1,6 +1,6 @@
 import { buildQueryParams } from '@/utils/utils';
 import ApiClient from '../client';
-import { CorrespondenciaDetalheResponse, CorrespondenciaEtapaPrazoRequest, CorrespondenciaFilterParams, CorrespondenciaIdentificacaoRequest, CorrespondenciaRequest, CorrespondenciaResponse, CorrespondenciaResumoComHistoricoResponse, CorrespondenciaTemaEtapaRequest } from './types';
+import { CorrespondenciaDetalheResponse, CorrespondenciaFilterParams, CorrespondenciaIdentificacaoRequest, CorrespondenciaRequest, CorrespondenciaResponse, CorrespondenciaResumoComHistoricoResponse, CorrespondenciaTemaEtapaRequest } from './types';
 import { PagedResponse } from '../solicitacoes';
 
 class CorrespondenciaClient {
@@ -46,13 +46,6 @@ class CorrespondenciaClient {
 
   async etapaTema(id: number, req: CorrespondenciaTemaEtapaRequest) {
     return this.client.request<CorrespondenciaResponse>(`/encaminhar/${id}/etapa02`, {
-      method: 'PUT',
-      body: JSON.stringify(req),
-    });
-  }
-
-  async etapaPrazo(id: number, req: CorrespondenciaEtapaPrazoRequest) {
-    return this.client.request<CorrespondenciaResponse>(`/encaminhar/${id}/etapa03`, {
       method: 'PUT',
       body: JSON.stringify(req),
     });

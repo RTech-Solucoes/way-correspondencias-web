@@ -216,7 +216,7 @@ export function TramitacaoObrigacaoModal({ open, onClose, onConfirm, obrigacaoId
               flExcepcional: formData.flExcepcional || 'N',
             }));
 
-          await correspondenciaClient.etapaPrazo(obrigacaoId, {
+          await solicitacoesClient.etapaPrazo(obrigacaoId, {
             idTema: formData.idTema || undefined,
             nrPrazoInterno: formData.nrPrazo || undefined,
             flExcepcional: formData.flExcepcional || 'N',

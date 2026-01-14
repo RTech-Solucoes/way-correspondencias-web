@@ -100,6 +100,7 @@ export function ConferenciaFooter({
     temEvidenciaCumprimento: status.temEvidenciaCumprimento,
     isStatusAtrasada: status.isStatusAtrasada,
     temJustificativaAtraso: status.temJustificativaAtraso,
+    anexos,
   });
 
   const tooltips = useFooterTooltips({
@@ -119,6 +120,7 @@ export function ConferenciaFooter({
     conferenciaAprovada: status.conferenciaAprovada,
     temEvidenciaCumprimento: status.temEvidenciaCumprimento,
     temJustificativaAtraso: status.temJustificativaAtraso,
+    isReprovadoEmAprovacaoStatusAtualAnaliseRegulatoria: permissoes.isReprovadoEmAprovacaoStatusAtualAnaliseRegulatoria,
   });
 
   const isStatusBtnEnviarParaTramitacao = useMemo(() => {

@@ -34,14 +34,6 @@ export interface CorrespondenciaFilterParams {
   sort?: string;
 }
 
-export interface CorrespondenciaEtapaPrazoRequest {
-  idTema?: number;
-  nrPrazoInterno?: number;
-  nrPrazoExterno?: number;
-  flExcepcional?: string;
-  solicitacoesPrazos: SolicitacaoPrazoItemRequest[];
-}
-
 export interface CorrespondenciaTemaEtapaRequest {
   idTema: number;
   tpPrazo?: string;

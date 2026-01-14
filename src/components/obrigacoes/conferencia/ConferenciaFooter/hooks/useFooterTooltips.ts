@@ -23,6 +23,7 @@ interface UseFooterTooltipsParams {
   temEvidenciaCumprimento: boolean;
   temJustificativaAtraso: boolean;
   isDiretorJaAprovou?: boolean;
+  isReprovadoEmAprovacaoStatusAtualAnaliseRegulatoria?: boolean | null;
 }
 
 export function useFooterTooltips({
@@ -42,6 +43,7 @@ export function useFooterTooltips({
   temEvidenciaCumprimento,
   temJustificativaAtraso,
   isDiretorJaAprovou = false,
+  isReprovadoEmAprovacaoStatusAtualAnaliseRegulatoria = null,
 }: UseFooterTooltipsParams) {
 
   const tooltipAnexarCorrespondencia = useMemo(() => {
@@ -52,7 +54,7 @@ export function useFooterTooltips({
       return 'Apenas é possível anexar correspondência quando o status for "Em Validação (Regulatório)" ou "Análise Regulatória".';
     }
     return '';
-  }, [conferenciaAprovada, isStatusEmValidacaoRegulatorio, isStatusEmAnaliseRegulatoria]);
+  }, [conferenciaAprovada, isStatusEmValidacaoRegulatorio, isStatusEmAnaliseRegulatoria, isReprovadoEmAprovacaoStatusAtualAnaliseRegulatoria]);
 
   const tooltipStatusValidacaoRegulatorio = useMemo(() => {
     if (conferenciaAprovada) {
@@ -155,6 +157,9 @@ export function useFooterTooltips({
     if (idStatusSolicitacao === statusList.ANALISE_REGULATORIA.id) {
       if (idPerfil !== perfilUtil.ADMINISTRADOR && idPerfil !== perfilUtil.GESTOR_DO_SISTEMA) {
         return 'Apenas Administrador ou Gestor do Sistema podem realizar esta ação quando o status for "Análise Regulatória".';
+      }
+      if (isReprovadoEmAprovacaoStatusAtualAnaliseRegulatoria === false) {
+        return 'Gerente da Área reprovou. É necessário anexar uma nova correspondência para prosseguir.';
       }
     }
 

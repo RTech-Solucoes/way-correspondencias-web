@@ -181,6 +181,14 @@ export interface SolicitacaoBuscaSimpleResponse {
   cdIdentificacao: string;
 }
 
+export interface SolicitacaoEtapaPrazoRequest {
+  idTema?: number;
+  nrPrazoInterno?: number;
+  nrPrazoExterno?: number;
+  flExcepcional?: string;
+  solicitacoesPrazos: SolicitacaoPrazoItemRequest[];
+}
+
 export enum AnaliseGerenteDiretor {
   D = 'D', // Diretor
   G = 'G', // Gerente
