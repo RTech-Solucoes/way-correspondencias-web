@@ -7,8 +7,7 @@ import {Input} from '@/components/ui/input';
 import {Label} from '@/components/ui/label';
 import {Textarea} from '@/components/ui/textarea';
 import {AreaRequest, AreaResponse} from '@/api/areas/types';
-import areasClient from '@/api/areas/client';
-import {SpinnerIcon, WarningCircleIcon, WarningIcon} from "@phosphor-icons/react";
+import {WarningCircleIcon} from "@phosphor-icons/react";
 
 interface AreaModalProps {
   area: AreaResponse | null;
@@ -25,56 +24,27 @@ export default function AreaModal({area, open, onClose, onSave}: AreaModalProps)
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [codeExistsWarning, setCodeExistsWarning] = useState<string>('');
-  const [isCheckingCdArea, setIsCheckingCdArea] = useState(false);
   const [hasValidationError, setHasValidationError] = useState(false);
 
   useEffect(() => {
-    if (area) {
-      setFormData({
-        cdArea: area.cdArea,
-        nmArea: area.nmArea,
-        dsArea: area.dsArea
-      });
-    } else {
-      setFormData({
-        cdArea: '',
-        nmArea: '',
-        dsArea: ''
-      });
-    }
-  }, [area]);
-
-  const checkCodeExists = useCallback(async (cdArea: string) => {
-    if (!cdArea.trim()) {
-      setCodeExistsWarning('');
-      setHasValidationError(false);
-      return;
-    }
-
-    if (area && area.cdArea === cdArea) {
-      setCodeExistsWarning('');
-      setHasValidationError(false);
-      return;
-    }
-
-    setIsCheckingCdArea(true);
-    try {
-      const existingArea = await areasClient.buscarPorCdArea(cdArea);
-      if (existingArea) {
-        setCodeExistsWarning('Já existe uma área com este código');
-        setHasValidationError(true);
+    if (open) {
+      if (area) {
+        setFormData({
+          cdArea: area.cdArea,
+          nmArea: area.nmArea,
+          dsArea: area.dsArea
+        });
       } else {
-        setCodeExistsWarning('');
-        setHasValidationError(false);
+        setFormData({
+          cdArea: '',
+          nmArea: '',
+          dsArea: ''
+        });
       }
-    } catch (error) {
-      setCodeExistsWarning('');
+      setErrors({});
       setHasValidationError(false);
-    } finally {
-      setIsCheckingCdArea(false);
     }
-  }, [area]);
+  }, [area, open]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -87,22 +57,18 @@ export default function AreaModal({area, open, onClose, onSave}: AreaModalProps)
       newErrors.nmArea = 'Nome é obrigatório';
     }
 
-    if (!formData.dsArea.trim()) {
-      newErrors.dsArea = 'Descrição é obrigatória';
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors)?.length === 0 && !hasValidationError;
   };
 
   const isFormValid = useCallback(() => {
-    const requiredFields = ['cdArea', 'nmArea', 'dsArea'];
+    const requiredFields = ['cdArea', 'nmArea'];
     const allFieldsFilled = requiredFields.every(field =>
       formData[field as keyof AreaRequest]?.toString().trim() !== ''
     );
 
-    return allFieldsFilled && !hasValidationError && !isCheckingCdArea;
-  }, [formData, hasValidationError, isCheckingCdArea]);
+    return allFieldsFilled && !hasValidationError ;
+  }, [formData, hasValidationError]);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -113,9 +79,14 @@ export default function AreaModal({area, open, onClose, onSave}: AreaModalProps)
   };
 
   const handleChange = (field: keyof AreaRequest, value: string) => {
+    // Converte para maiúsculas se for cdArea ou nmArea
+    const processedValue = (field === 'cdArea' || field === 'nmArea') 
+      ? value.toUpperCase() 
+      : value;
+
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      [field]: processedValue
     }));
 
     if (errors[field]) {
@@ -125,16 +96,6 @@ export default function AreaModal({area, open, onClose, onSave}: AreaModalProps)
       }));
     }
 
-    if (field === 'cdArea') {
-      setCodeExistsWarning('');
-      setHasValidationError(false);
-    }
-  };
-
-  const handleCodeBlur = () => {
-    if (formData.cdArea.trim()) {
-      checkCodeExists(formData.cdArea.trim());
-    }
   };
 
   const isSubmitDisabled = !isFormValid();
@@ -156,25 +117,13 @@ export default function AreaModal({area, open, onClose, onSave}: AreaModalProps)
                 id="cdArea"
                 value={formData.cdArea}
                 onChange={(e) => handleChange('cdArea', e.target.value)}
-                onBlur={handleCodeBlur}
                 placeholder="Digite o código da área"
-                className={errors.cdArea || codeExistsWarning ? 'border-red-500' : ''}
-                disabled={isCheckingCdArea}
               />
-              {isCheckingCdArea && (
-                <SpinnerIcon className="absolute right-4 h-4 w-4 text-blue-500 animate-spin" />
-              )}
             </div>
             {errors.cdArea && (
               <div className="flex items-center gap-1 mt-1">
                 <WarningCircleIcon className="h-4 w-4 text-red-500"/>
                 <p className="text-red-500 text-sm">{errors.cdArea}</p>
-              </div>
-            )}
-            {codeExistsWarning && (
-              <div className="flex items-center gap-1 mt-1">
-                <WarningIcon className="h-4 w-4 text-yellow-500"/>
-                <p className="text-yellow-600 text-sm">{codeExistsWarning}</p>
               </div>
             )}
           </div>
@@ -197,7 +146,7 @@ export default function AreaModal({area, open, onClose, onSave}: AreaModalProps)
           </div>
 
           <div>
-            <Label htmlFor="dsArea">Descrição *</Label>
+            <Label htmlFor="dsArea">Descrição</Label>
             <Textarea
               id="dsArea"
               value={formData.dsArea}
