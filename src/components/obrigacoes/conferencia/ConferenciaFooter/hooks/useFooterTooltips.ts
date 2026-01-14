@@ -54,7 +54,7 @@ export function useFooterTooltips({
       return 'Apenas é possível anexar correspondência quando o status for "Em Validação (Regulatório)" ou "Análise Regulatória".';
     }
     return '';
-  }, [conferenciaAprovada, isStatusEmValidacaoRegulatorio, isStatusEmAnaliseRegulatoria, isReprovadoEmAprovacaoStatusAtualAnaliseRegulatoria]);
+  }, [conferenciaAprovada, isStatusEmValidacaoRegulatorio, isStatusEmAnaliseRegulatoria]);
 
   const tooltipStatusValidacaoRegulatorio = useMemo(() => {
     if (conferenciaAprovada) {
@@ -159,7 +159,7 @@ export function useFooterTooltips({
         return 'Apenas Administrador ou Gestor do Sistema podem realizar esta ação quando o status for "Análise Regulatória".';
       }
       if (isReprovadoEmAprovacaoStatusAtualAnaliseRegulatoria === false) {
-        return 'Gerente da Área reprovou. É necessário anexar uma nova correspondência para prosseguir.';
+        return 'Foi reprovado no status anterior. É necessário anexar uma nova correspondência para prosseguir.';
       }
     }
 
@@ -193,7 +193,7 @@ export function useFooterTooltips({
     }
 
     return 'Você não tem permissão para essa ação.';
-  }, [idStatusSolicitacao, idPerfil, flExigeCienciaGerenteRegul, isCienciaChecked, userResponsavel?.idResponsavel, solicitacoesAssinantes, isDiretorJaAprovou]);
+  }, [idStatusSolicitacao, idPerfil, flExigeCienciaGerenteRegul, isCienciaChecked, userResponsavel?.idResponsavel, solicitacoesAssinantes, isDiretorJaAprovou, isReprovadoEmAprovacaoStatusAtualAnaliseRegulatoria]);
 
   return {
     tooltipAnexarCorrespondencia,

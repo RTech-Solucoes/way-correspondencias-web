@@ -86,7 +86,7 @@ export function useFooterPermissoes({
     ) ?? false;
   }, [tramitacoes, idStatusSolicitacao, userResponsavel?.idResponsavel]);
 
-  const isReprovadoEmAprovacaoStatusAtualAnaliseRegulatoria = useMemo(() => {
+  const isReprovadoStatusAnteriorEAtualAnaliseRegulatoria = useMemo(() => {
     if (!tramitacoes || tramitacoes.length === 0) return null; // null = não foi reprovado
     if (idStatusSolicitacao !== statusList.ANALISE_REGULATORIA.id) return null;
     
@@ -95,8 +95,14 @@ export function useFooterPermissoes({
     
     if (!ultimaTramitacao?.tramitacao) return null;
     
-    const foiReprovado = ultimaTramitacao.tramitacao.idStatusSolicitacao === statusList.EM_APROVACAO.id &&
-                         ultimaTramitacao.tramitacao.flAprovado === 'N';
+    // Verifica se foi reprovado em EM_APROVACAO ou EM_ASSINATURA_DIRETORIA
+    const foiReprovadoEmAprovacao = ultimaTramitacao.tramitacao.idStatusSolicitacao === statusList.EM_APROVACAO.id &&
+                                    ultimaTramitacao.tramitacao.flAprovado === 'N';
+    
+    const foiReprovadoEmDiretoria = ultimaTramitacao.tramitacao.idStatusSolicitacao === statusList.EM_ASSINATURA_DIRETORIA.id &&
+                                    ultimaTramitacao.tramitacao.flAprovado === 'N';
+    
+    const foiReprovado = foiReprovadoEmAprovacao || foiReprovadoEmDiretoria;
     
     if (!foiReprovado) return null; // null = não foi reprovado
     
@@ -147,7 +153,7 @@ export function useFooterPermissoes({
         // - true: foi reprovado E tem anexo novo (permite prosseguir)
         // - false: foi reprovado mas não tem anexo novo (bloqueia)
         // Então só bloqueia se retornar false
-        return isReprovadoEmAprovacaoStatusAtualAnaliseRegulatoria !== false;
+        return isReprovadoStatusAnteriorEAtualAnaliseRegulatoria !== false;
       }
     }
 
@@ -180,7 +186,7 @@ export function useFooterPermissoes({
     userResponsavel?.idResponsavel,
     solicitacoesAssinantes,
     isDiretorJaAprovou,
-    isReprovadoEmAprovacaoStatusAtualAnaliseRegulatoria,
+    isReprovadoStatusAnteriorEAtualAnaliseRegulatoria,
   ]);
 
   return {
@@ -188,7 +194,7 @@ export function useFooterPermissoes({
     podeEnviarParaAnalise,
     isPerfilPermitidoEnviarTramitacaoPorStatus,
     isDiretorJaAprovou,
-    isReprovadoEmAprovacaoStatusAtualAnaliseRegulatoria,
+    isReprovadoEmAprovacaoStatusAtualAnaliseRegulatoria: isReprovadoStatusAnteriorEAtualAnaliseRegulatoria,
   };
 }
 
