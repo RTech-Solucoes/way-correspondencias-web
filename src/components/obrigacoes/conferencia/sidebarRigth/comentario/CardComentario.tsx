@@ -62,7 +62,7 @@ export function CardComentario({
               {tramitacaoReferenciada.tramitacaoAcao?.[0]?.responsavelArea?.responsavel?.nmResponsavel || 'Usuário'}
             </span>
           </div>
-          <p className="text-gray-700 text-xs line-clamp-2">
+          <p className="text-gray-700 text-xs line-clamp-2 break-words" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
             {tramitacaoReferenciada.dsObservacao || 'Tramitação referenciada'}
           </p>
         </div>
@@ -78,7 +78,7 @@ export function CardComentario({
               {comentarioReferenciado.responsavel?.nmResponsavel || 'Usuário'}
             </span>
           </div>
-          <p className="text-gray-700 text-xs line-clamp-2">
+          <p className="text-gray-700 text-xs line-clamp-2 break-words" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
             {comentarioReferenciado.dsDarecer || 'Comentário referenciado'}
           </p>
         </div>
@@ -88,24 +88,24 @@ export function CardComentario({
         <span className="font-semibold text-gray-900">{autor}</span>
         <span className="text-xs text-gray-400">{dataFormatada}</span>
       </div>
-      <p className="mt-2 text-sm text-black">
+      <p className="mt-2 text-sm text-black break-words" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
         {parts.map((part, idx) => {
           if (typeof part === 'object' && 'type' in part && part.type === 'mention') {
             if (comentarioReferenciado || tramitacaoReferenciada || part.isValid) {
               return (
-                <span key={idx} className="text-purple-600 font-semibold" style={{ color: '#9333ea', fontWeight: 600 }}>
+                <span key={idx} className="text-purple-600 font-semibold break-words" style={{ color: '#9333ea', fontWeight: 600, wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                   @{part.name}
                 </span>
               );
             } else {
               return (
-                <span key={idx} className="text-black" style={{ color: '#000000' }}>
+                <span key={idx} className="text-black break-words" style={{ color: '#000000', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                   @{part.name}
                 </span>
               );
             }
           }
-          return <span key={idx} className="text-black" style={{ color: '#000000' }}>{String(part)}</span>;
+          return <span key={idx} className="text-black break-words" style={{ color: '#000000', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{String(part)}</span>;
         })}
       </p>
       <div className="mt-3 flex items-center justify-between">
