@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
-import { statusList } from '@/api/status-solicitacao/types';
 import { ArquivoDTO } from '@/api/anexos/type';
 import { AnexoResponse } from '@/api/anexos/type';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
@@ -150,7 +149,7 @@ export function ConferenciaFooter({
   return (
     <footer className="fixed bottom-0 left-0 right-0 z-11 border-t border-gray-200 bg-white px-8 py-4 h-[73px]">
       <div className="ml-auto flex w-full max-w-6xl flex-wrap items-center justify-end gap-3">
-        {status.isStatusEmAnaliseRegulatoria || (isAdminOrGestor && status.isStatusEmValidacaoRegulatorio) && (
+        {isAdminOrGestor && (status.isStatusEmAnaliseRegulatoria || status.isStatusEmValidacaoRegulatorio) && (
           <Button
             type="button"
             className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
