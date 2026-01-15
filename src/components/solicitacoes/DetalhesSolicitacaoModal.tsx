@@ -30,6 +30,7 @@ import { toast } from 'sonner';
 import AnexoModalTramitacao from './AnexoModalTramitacao';
 import { HistoricoRespostasModalButton } from './HistoricoRespostasModal';
 import InformaçaoStatusEmAnaliseGerReg from './InformaçaoStatusEmAnaliseGerReg';
+import { AreaSelectionButtons } from './AreaSelectionButtons';
 
 import type { AnexoResponse } from '@/api/anexos/type';
 import { CategoriaEnum, TipoEnum } from '@/api/tipos/types';
@@ -44,7 +45,12 @@ type DetalhesSolicitacaoModalProps = {
   anexos?: AnexoResponse[];
   onHistoricoRespostas?(): void;
   onAbrirEmailOriginal?(): void;
-  onEnviarDevolutiva?(mensagem: string, arquivos: ArquivoDTO[], flAprovado?: FlAprovadoTramitacaoEnum): Promise<void> | void;
+  onEnviarDevolutiva?(
+    mensagem: string,
+    arquivos: ArquivoDTO[],
+    flAprovado?: FlAprovadoTramitacaoEnum,
+    idAreaOrigem?: number | null
+  ): Promise<void> | void;
   statusLabel?: string;
 };
 
@@ -97,6 +103,7 @@ export default function DetalhesSolicitacaoModal({
   const [statusListPrazos, setStatusListPrazos] = useState<StatusSolicitacaoResponse[]>([]);
   const [prazosSolicitacaoPorStatus, setPrazosSolicitacaoPorStatus] = useState<SolicitacaoPrazoResponse[]>([]);
   const [areaDiretoria, setAreaDiretoria] = useState<number | null>(null);
+  const [areaSelecionadaParaResposta, setAreaSelecionadaParaResposta] = useState<number | null>(null);
   
   const correspond = correspondencia as CorrespondenciaDetalheResponse;
 
@@ -105,25 +112,48 @@ export default function DetalhesSolicitacaoModal({
     [correspond?.correspondencia?.cdIdentificacao]
   );
 
-  const isResponsavelPossuiMaisUmaAreaIgualSolicitacao = useMemo(() => {
-    if (userResponsavel?.areas && userResponsavel.areas.length > 1) {
-      const areasSolicitacao = Array.isArray(correspond?.correspondencia?.area)
-        ? (correspond.correspondencia.area as Array<{ idArea?: number }>)
-            .map(a => a?.idArea)
-            .filter((id): id is number => id !== undefined && id !== null)
-        : [];
-      
-      return userResponsavel.areas.some((respArea) => {
-        const respAreaId = respArea?.area?.idArea;
-        return respAreaId !== undefined && areasSolicitacao.includes(respAreaId);
-      });
+  const areasCorrespondentesParaSelecao = useMemo(() => {
+    if (!userResponsavel?.areas || userResponsavel.areas.length <= 1) {
+      return [];
     }
-    return false;
-  }, [userResponsavel?.areas, correspond?.correspondencia?.area]);
+    
+    const idStatusSolicitacao = correspond?.statusSolicitacao?.idStatusSolicitacao;
+    const statusNaoPermiteSelecaoArea = 
+      idStatusSolicitacao === statusList.VENCIDO_REGULATORIO.id ||
+      idStatusSolicitacao === statusList.ANALISE_REGULATORIA.id ||
+      idStatusSolicitacao === statusList.ARQUIVADO.id ||
+      idStatusSolicitacao === statusList.CONCLUIDO.id ||
+      idStatusSolicitacao === statusList.PRE_ANALISE.id ||
+      idStatusSolicitacao === statusList.EM_CHANCELA.id;
+    
+    if (statusNaoPermiteSelecaoArea) {
+      return [];
+    }
+    
+    const areasCorrespondencia = Array.isArray(correspond?.correspondencia?.area)
+      ? (correspond.correspondencia.area as Array<{ idArea?: number; nmArea?: string }>)
+          .map(a => a?.idArea)
+          .filter((id): id is number => id !== undefined && id !== null)
+      : [];
+    
+    return userResponsavel.areas
+      .filter((respArea) => {
+        const respAreaId = respArea?.area?.idArea;
+        return respAreaId !== undefined && areasCorrespondencia.includes(respAreaId);
+      })
+      .map((respArea) => ({
+        idArea: respArea?.area?.idArea,
+        nmArea: respArea?.area?.nmArea || ''
+      }))
+      .filter((area): area is { idArea: number; nmArea: string } => area.idArea !== undefined && area.idArea !== null);
+  }, [userResponsavel?.areas, correspond?.correspondencia?.area, correspond?.statusSolicitacao?.idStatusSolicitacao]);
 
+  const isResponsavelPossuiMaisUmaAreaIgualSolicitacao = useMemo(() => {
+    return areasCorrespondentesParaSelecao.length > 1;
+  }, [areasCorrespondentesParaSelecao]);
 
   const statusText = correspond?.statusSolicitacao?.nmStatus ?? statusLabel;
- // const statusText = statusList.EM_ANALISE_GERENTE_REGULATORIO.label;
+  const idStatusSolicitacao = correspond?.statusSolicitacao?.idStatusSolicitacao;
 
   const flAnaliseGerenteDiretor = correspond?.correspondencia?.flAnaliseGerenteDiretor as AnaliseGerenteDiretor;
   const isExisteCienciaGerenteRegul =
@@ -137,14 +167,14 @@ export default function DetalhesSolicitacaoModal({
         p?.nrPrazoInterno > 0
     );
 
-    if (correspond?.statusSolicitacao?.nmStatus === statusList.VENCIDO_AREA_TECNICA.label ) {
+    if (correspond?.statusSolicitacao?.idStatusSolicitacao === statusList.VENCIDO_AREA_TECNICA.id ) {
       const prazoAtualVencido = correspond?.solcitacaoPrazos?.find(
         (p) => +(p?.idStatusSolicitacao) === (statusList.EM_ANALISE_AREA_TECNICA.id)
       );
       return formatDateTime(prazoAtualVencido?.dtPrazoLimite);
     }
 
-    if (correspond?.statusSolicitacao?.nmStatus === statusList.VENCIDO_REGULATORIO.label ) {
+    if (correspond?.statusSolicitacao?.idStatusSolicitacao === statusList.VENCIDO_REGULATORIO.id ) {
       const prazoAtualVencido = correspond?.solcitacaoPrazos?.find(
         (p) => +(p?.idStatusSolicitacao) === (statusList.ANALISE_REGULATORIA.id)
       );
@@ -155,7 +185,7 @@ export default function DetalhesSolicitacaoModal({
     }
 
     return '—';
-  }, [correspond?.statusSolicitacao?.idStatusSolicitacao, correspond?.solcitacaoPrazos, correspond?.statusSolicitacao?.nmStatus]);
+  }, [correspond?.statusSolicitacao?.idStatusSolicitacao, correspond?.solcitacaoPrazos]);
 
   useEffect(() => {
     const loadResponsaveis = async () => {
@@ -193,7 +223,7 @@ export default function DetalhesSolicitacaoModal({
   const isPrazoVencido = useMemo(() => {
     const dataAtual = new Date();
     
-    if (correspond?.statusSolicitacao?.nmStatus === statusList.VENCIDO_AREA_TECNICA.label) {
+    if (correspond?.statusSolicitacao?.idStatusSolicitacao === statusList.VENCIDO_AREA_TECNICA.id) {
       const prazoAtualVencido = correspond?.solcitacaoPrazos?.find(
         (p) => +(p?.idStatusSolicitacao) === (statusList.EM_ANALISE_AREA_TECNICA.id)
       );
@@ -204,7 +234,7 @@ export default function DetalhesSolicitacaoModal({
       return true; 
     }
     
-    if (correspond?.statusSolicitacao?.nmStatus === statusList.VENCIDO_REGULATORIO.label) {
+    if (correspond?.statusSolicitacao?.idStatusSolicitacao === statusList.VENCIDO_REGULATORIO.id) {
       const prazoAtualVencido = correspond?.solcitacaoPrazos?.find(
         (p) => +(p?.idStatusSolicitacao) === (statusList.ANALISE_REGULATORIA.id)
       );
@@ -226,7 +256,7 @@ export default function DetalhesSolicitacaoModal({
     }
     
     return false;
-  }, [correspond?.statusSolicitacao?.nmStatus, correspond?.statusSolicitacao?.idStatusSolicitacao, correspond?.solcitacaoPrazos]);
+  }, [correspond?.statusSolicitacao?.idStatusSolicitacao, correspond?.solcitacaoPrazos]);
 
   const assunto = (correspond?.correspondencia as CorrespondenciaResponse)?.dsAssunto ?? '';
   const descricao = (correspond?.correspondencia as CorrespondenciaResponse)?.dsSolicitacao ?? '';
@@ -245,7 +275,7 @@ export default function DetalhesSolicitacaoModal({
     idProximoStatusAnaliseRegulatoria === statusList.EM_APROVACAO.id; 
   
   const isConcluido = correspond?.statusSolicitacao?.idStatusSolicitacao === statusList.CONCLUIDO.id;
-  const isAnaliseGerenteRegulatorio = statusText === statusList.EM_ANALISE_GERENTE_REGULATORIO.label;
+  const isAnaliseGerenteRegulatorio = correspond?.statusSolicitacao?.idStatusSolicitacao === statusList.EM_ANALISE_GERENTE_REGULATORIO.id;
 
   const isFlagVisivel =
     isAprovacao ||
@@ -356,7 +386,7 @@ export default function DetalhesSolicitacaoModal({
       e.preventDefault();
       if (!onEnviarDevolutiva) return;
 
-      if (statusText === statusList.EM_ANALISE_GERENTE_REGULATORIO.label) {
+      if (idStatusSolicitacao === statusList.EM_ANALISE_GERENTE_REGULATORIO.id) {
         if (isFlagVisivel && !flAprovado) {
           toast.error('É obrigatório aprovar ou reprovar a solicitação (Sim/Não).');
           return;
@@ -374,7 +404,7 @@ export default function DetalhesSolicitacaoModal({
         
       }
 
-      if (statusText === statusList.CONCLUIDO.label) {
+      if (idStatusSolicitacao === statusList.CONCLUIDO.id) {
         if (isFlagVisivel && !flAprovado) {
           toast.error('É obrigatório escolher uma opção (Sim/Não) para arquivar a solicitação.');
           return;
@@ -387,6 +417,11 @@ export default function DetalhesSolicitacaoModal({
           toast.error('É obrigatório escrever uma justificativa na caixa de texto.');
           return;
         }
+      }
+
+      if (isResponsavelPossuiMaisUmaAreaIgualSolicitacao && !areaSelecionadaParaResposta) {
+        toast.error('É obrigatório selecionar a área para responder.');
+        return;
       }
 
       if (!resposta.trim() && arquivos.length === 0) {
@@ -413,11 +448,12 @@ export default function DetalhesSolicitacaoModal({
             )
           : [];
 
-        await onEnviarDevolutiva(resposta.trim(), arquivosDTO, flAprovado as FlAprovadoTramitacaoEnum | undefined);
+        await onEnviarDevolutiva(resposta.trim(), arquivosDTO, flAprovado as FlAprovadoTramitacaoEnum | undefined, areaSelecionadaParaResposta);
 
         toast.success('Resposta enviada com sucesso!');
         setResposta('');
         setArquivos([]);
+        setAreaSelecionadaParaResposta(null);
         onClose();
       } catch (err) {
         console.error(err);
@@ -427,7 +463,7 @@ export default function DetalhesSolicitacaoModal({
         setSending(false);
       }
     },
-    [onEnviarDevolutiva, resposta, arquivos, correspond?.correspondencia?.idSolicitacao, onClose, flAprovado, isFlagVisivel, tpResponsavelUpload, statusText, isExisteCienciaGerenteRegul]
+    [onEnviarDevolutiva, resposta, arquivos, correspond?.correspondencia?.idSolicitacao, onClose, flAprovado, isFlagVisivel, tpResponsavelUpload, idStatusSolicitacao, isExisteCienciaGerenteRegul, areaSelecionadaParaResposta, isResponsavelPossuiMaisUmaAreaIgualSolicitacao]
   );
 
   const handleSalvarParecer = useCallback(async () => {
@@ -566,22 +602,22 @@ export default function DetalhesSolicitacaoModal({
     : 'Encaminhar para Área Técnica';
 
   const labelTextareaDevolutiva = {
-    [statusList.ANALISE_REGULATORIA.label]: labelStatusAnaliseRegulatoria,
-    [statusList.EM_APROVACAO.label]: 'Escrever parecer',
-    [statusList.EM_CHANCELA.label]: 'Escrever resposta à Diretoria',
-    [statusList.EM_ASSINATURA_DIRETORIA.label]: 'Escrever Parecer',
-    [statusList.CONCLUIDO.label]: 'Informações do arquivamento',
-    [statusList.EM_ANALISE_GERENTE_REGULATORIO.label]: 'Parecer do Gerente do Regulatório',
+    [statusList.ANALISE_REGULATORIA.id]: labelStatusAnaliseRegulatoria,
+    [statusList.EM_APROVACAO.id]: 'Escrever parecer',
+    [statusList.EM_CHANCELA.id]: 'Escrever resposta à Diretoria',
+    [statusList.EM_ASSINATURA_DIRETORIA.id]: 'Escrever Parecer',
+    [statusList.CONCLUIDO.id]: 'Informações do arquivamento',
+    [statusList.EM_ANALISE_GERENTE_REGULATORIO.id]: 'Parecer do Gerente do Regulatório',
     default: 'Enviar devolutiva ao Regulatório'
   }
 
   const btnEnviarDevolutiva = {
-    [statusList.EM_CHANCELA.label]: 'Enviar para assinatura da Diretoria',
-    [statusList.EM_APROVACAO.label]: btnTextareaEmAprovacao,
-    [statusList.ANALISE_REGULATORIA.label]: btnLabelStatusAnaliseRegulatoria,
-    [statusList.EM_ASSINATURA_DIRETORIA.label]: flAprovado !== '' ? btnStatusEmAssinaturaDiretoria : 'Aprovar Solicitação',
-    [statusList.CONCLUIDO.label]: 'Arquivar Solicitação',
-    [statusList.EM_ANALISE_GERENTE_REGULATORIO.label]: btnEncaminharParaGestorSistema,
+    [statusList.EM_CHANCELA.id]: 'Enviar para assinatura da Diretoria',
+    [statusList.EM_APROVACAO.id]: btnTextareaEmAprovacao,
+    [statusList.ANALISE_REGULATORIA.id]: btnLabelStatusAnaliseRegulatoria,
+    [statusList.EM_ASSINATURA_DIRETORIA.id]: flAprovado !== '' ? btnStatusEmAssinaturaDiretoria : 'Aprovar Solicitação',
+    [statusList.CONCLUIDO.id]: 'Arquivar Solicitação',
+    [statusList.EM_ANALISE_GERENTE_REGULATORIO.id]: btnEncaminharParaGestorSistema,
     default: 'Enviar Resposta'
   }
   
@@ -592,17 +628,17 @@ export default function DetalhesSolicitacaoModal({
   const labelFragAnaliseRegulatoria = isAnaliseRegulatoriaAprovarDevolutiva ? 'Aprovar devolutiva da(s) Área(s)' : '';
 
   const textlabelFlag = {
-    [statusList.ANALISE_REGULATORIA.label]: labelFragAnaliseRegulatoria,
-    [statusList.EM_ASSINATURA_DIRETORIA.label]: labelFragEmDiretoria,
-    [statusList.EM_APROVACAO.label]: labelFragEmAprovacao,
-    [statusList.CONCLUIDO.label]: 'Incluir Protocolo ANTT ?',
-    [statusList.EM_ANALISE_GERENTE_REGULATORIO.label]: 'Aprovar Solicitação?',
+    [statusList.ANALISE_REGULATORIA.id]: labelFragAnaliseRegulatoria,
+    [statusList.EM_ASSINATURA_DIRETORIA.id]: labelFragEmDiretoria,
+    [statusList.EM_APROVACAO.id]: labelFragEmAprovacao,
+    [statusList.CONCLUIDO.id]: 'Incluir Protocolo ANTT ?',
+    [statusList.EM_ANALISE_GERENTE_REGULATORIO.id]: 'Aprovar Solicitação?',
     default: 'Aprovar devolutiva?'
   }
 
-  const labelStatusTextarea = labelTextareaDevolutiva[correspond?.statusSolicitacao?.nmStatus as keyof typeof labelTextareaDevolutiva] ?? labelTextareaDevolutiva.default;
-  const btnEnviarDevolutivaLabel = btnEnviarDevolutiva[correspond?.statusSolicitacao?.nmStatus as keyof typeof btnEnviarDevolutiva] ?? btnEnviarDevolutiva.default;
-  const labelFlAprovacao = textlabelFlag[correspond?.statusSolicitacao?.nmStatus as keyof typeof textlabelFlag] ?? textlabelFlag.default;
+  const labelStatusTextarea = labelTextareaDevolutiva[correspond?.statusSolicitacao?.idStatusSolicitacao as keyof typeof labelTextareaDevolutiva] ?? labelTextareaDevolutiva.default;
+  const btnEnviarDevolutivaLabel = btnEnviarDevolutiva[correspond?.statusSolicitacao?.idStatusSolicitacao as keyof typeof btnEnviarDevolutiva] ?? btnEnviarDevolutiva.default;
+  const labelFlAprovacao = textlabelFlag[correspond?.statusSolicitacao?.idStatusSolicitacao as keyof typeof textlabelFlag] ?? textlabelFlag.default;
 
   const nrNivelUltimaTramitacao = correspond?.tramitacoes[0]?.tramitacao?.nrNivel;
 
@@ -669,8 +705,8 @@ export default function DetalhesSolicitacaoModal({
           t?.tramitacao?.nrNivel === nrNivelUltimaTramitacao &&
           correspond?.statusSolicitacao?.idStatusSolicitacao !== statusList.EM_ASSINATURA_DIRETORIA.id &&
           t?.tramitacao?.idStatusSolicitacao === correspond?.statusSolicitacao?.idStatusSolicitacao &&
-          !((correspond?.statusSolicitacao?.nmStatus === statusList.EM_ANALISE_AREA_TECNICA.label || 
-            correspond?.statusSolicitacao?.nmStatus === statusList.VENCIDO_AREA_TECNICA.label) &&
+          !((correspond?.statusSolicitacao?.idStatusSolicitacao === statusList.EM_ANALISE_AREA_TECNICA.id || 
+            correspond?.statusSolicitacao?.idStatusSolicitacao === statusList.VENCIDO_AREA_TECNICA.id) &&
             (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.D ||
                 flAnaliseGerenteDiretor === AnaliseGerenteDiretor.A)
           )
@@ -689,7 +725,7 @@ export default function DetalhesSolicitacaoModal({
 
     if (sending) return false;
 
-    if (correspond?.statusSolicitacao?.nmStatus === statusList.EM_ASSINATURA_DIRETORIA.label) {
+    if (idStatusSolicitacao === statusList.EM_ASSINATURA_DIRETORIA.id) {
 
       const isRolePermitido = (
         userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR ||
@@ -700,9 +736,9 @@ export default function DetalhesSolicitacaoModal({
       return isRolePermitido && isAssinanteAutorizado && !isDiretorJaAprovou;
     }
 
-    if (correspond?.statusSolicitacao?.nmStatus === statusList.ARQUIVADO.label) return false;
+    if (idStatusSolicitacao === statusList.ARQUIVADO.id) return false;
 
-    if (correspond?.statusSolicitacao?.nmStatus === statusList.CONCLUIDO.label) {
+    if (idStatusSolicitacao === statusList.CONCLUIDO.id) {
       if (
         userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR ||
         userResponsavel?.idPerfil === perfilUtil.GESTOR_DO_SISTEMA
@@ -710,7 +746,7 @@ export default function DetalhesSolicitacaoModal({
       return false;
     }
 
-    if (correspond?.statusSolicitacao?.nmStatus === statusList.EM_ANALISE_GERENTE_REGULATORIO.label) {
+    if (idStatusSolicitacao === statusList.EM_ANALISE_GERENTE_REGULATORIO.id) {
       if (userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR) return true;
       return false;
     }
@@ -720,8 +756,8 @@ export default function DetalhesSolicitacaoModal({
     // // Só bloqueia se TODAS as áreas do usuário na solicitação já responderam
      if (todasAreasUsuarioResponderam) return false;
 
-    if (correspond?.statusSolicitacao?.nmStatus === statusList.EM_ANALISE_AREA_TECNICA.label 
-      || correspond?.statusSolicitacao?.nmStatus === statusList.VENCIDO_AREA_TECNICA.label
+    if (idStatusSolicitacao === statusList.EM_ANALISE_AREA_TECNICA.id 
+      || idStatusSolicitacao === statusList.VENCIDO_AREA_TECNICA.id
     ) {
 
       if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.G) {
@@ -749,21 +785,21 @@ export default function DetalhesSolicitacaoModal({
       return false;
     }
 
-    if (correspond?.statusSolicitacao?.nmStatus === statusList.ANALISE_REGULATORIA.label ||
-      correspond?.statusSolicitacao?.nmStatus === statusList.VENCIDO_REGULATORIO.label) {
+    if (idStatusSolicitacao === statusList.ANALISE_REGULATORIA.id ||
+      idStatusSolicitacao === statusList.VENCIDO_REGULATORIO.id) {
         if (userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR) return true;
         if (hasAreaInicial && userResponsavel?.idPerfil === perfilUtil.GESTOR_DO_SISTEMA) return true;
       return false;
     }
     
-    if (correspond?.statusSolicitacao?.nmStatus === statusList.EM_APROVACAO.label) {
+    if (idStatusSolicitacao === statusList.EM_APROVACAO.id) {
       if (userResponsavel?.idPerfil === perfilUtil.EXECUTOR_AVANCADO) return true;
       return false;
     }
 
     if (!hasAreaInicial && !isPermissaoEnviandoDevolutiva) return true;
 
-    if (correspond?.statusSolicitacao?.nmStatus === statusList.EM_CHANCELA.label) {
+    if (idStatusSolicitacao === statusList.EM_CHANCELA.id) {
       if (userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR) return true;
       return false;
     }
@@ -772,18 +808,18 @@ export default function DetalhesSolicitacaoModal({
   })();
 
   const btnTooltip = (() => {
-    const isAreaTecnica = statusText === statusList.EM_ANALISE_AREA_TECNICA.label;
+    const isAreaTecnica = idStatusSolicitacao === statusList.EM_ANALISE_AREA_TECNICA.id;
     
-    if(statusText === statusList.EM_CHANCELA.label && !(userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR)) return 'Apenas o Administrador pode responder.';
+    if(idStatusSolicitacao === statusList.EM_CHANCELA.id && !(userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR)) return 'Apenas o Administrador pode responder.';
 
-    if (statusText === statusList.CONCLUIDO.label) {
+    if (idStatusSolicitacao === statusList.CONCLUIDO.id) {
       if (
         userResponsavel?.idPerfil !== perfilUtil.ADMINISTRADOR &&
         userResponsavel?.idPerfil !== perfilUtil.GESTOR_DO_SISTEMA
       ) return 'Apenas Administrador e Gestor do Sistema podem arquivar solicitações concluídas.';
     }
 
-    if (statusText === statusList.EM_ASSINATURA_DIRETORIA.label) {
+    if (idStatusSolicitacao === statusList.EM_ASSINATURA_DIRETORIA.id) {
       if (!isAssinanteAutorizado) return 'Apenas os validadores/assinantes selecionados podem aprovar esta solicitação.';
       if (isDiretorJaAprovou) return 'Já aprovado por um diretor. É necessário outro diretor aprovar.';
     }
@@ -803,7 +839,7 @@ export default function DetalhesSolicitacaoModal({
   const diretorPermitidoDsParecer = (() => {
     const isDiretoriaPerfil = userResponsavel?.idPerfil === perfilUtil.VALIDADOR_ASSINANTE;
 
-  if (statusText === statusList.ARQUIVADO.label) {
+  if (idStatusSolicitacao === statusList.ARQUIVADO.id) {
       if (
         (userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR) ||
         (userResponsavel?.idPerfil === perfilUtil.GESTOR_DO_SISTEMA) ||
@@ -814,15 +850,15 @@ export default function DetalhesSolicitacaoModal({
 
     if (!isDiretoriaPerfil) return false;
     if (
-      (statusText === statusList.EM_ANALISE_AREA_TECNICA.label || 
-        statusText === statusList.VENCIDO_AREA_TECNICA.label) &&
+      (idStatusSolicitacao === statusList.EM_ANALISE_AREA_TECNICA.id || 
+        idStatusSolicitacao === statusList.VENCIDO_AREA_TECNICA.id) &&
       (
         flAnaliseGerenteDiretor !== AnaliseGerenteDiretor.N &&
         flAnaliseGerenteDiretor !== AnaliseGerenteDiretor.G
       )
     ) return false;
-    if (statusText === statusList.CONCLUIDO.label) return false;
-    if (statusText === statusList.EM_ASSINATURA_DIRETORIA.label) return false;
+    if (idStatusSolicitacao === statusList.CONCLUIDO.id) return false;
+    if (idStatusSolicitacao === statusList.EM_ASSINATURA_DIRETORIA.id) return false;
     return true;
   })();
 
@@ -1037,6 +1073,17 @@ export default function DetalhesSolicitacaoModal({
           )}
 
           <section className="space-y-3">
+            {isResponsavelPossuiMaisUmaAreaIgualSolicitacao && (
+              <AreaSelectionButtons
+                areas={areasCorrespondentesParaSelecao}
+                selectedAreaId={areaSelecionadaParaResposta}
+                onAreaSelect={setAreaSelecionadaParaResposta}
+                disabled={!enableEnviarDevolutiva}
+                label="Selecione para qual área você está respondendo?"
+                required
+              />
+            )}
+
             <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold">
                   {diretorPermitidoDsParecer ? 'Escrever Parecer' : labelStatusTextarea}
@@ -1050,6 +1097,7 @@ export default function DetalhesSolicitacaoModal({
             </div>
 
             <div className="rounded-md border bg-muted/30 p-4">
+
               <Label htmlFor="resposta" className="sr-only">
                 Escreva aqui …
                 </Label>

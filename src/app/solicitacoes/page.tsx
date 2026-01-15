@@ -16,6 +16,7 @@ import {Badge} from '@/components/ui/badge';
 import SolicitacaoModal from '../../components/solicitacoes/SolicitacaoModal';
 import DetalhesSolicitacaoModal from '@/components/solicitacoes/DetalhesSolicitacaoModal';
 import {ConfirmationDialog} from '@/components/ui/confirmation-dialog';
+import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from '@/components/ui/tooltip';
 import {
   ArrowClockwiseIcon,
   ArrowsDownUpIcon,
@@ -447,7 +448,7 @@ function SolicitacoesPageContent() {
     toast.message('Abrir histórico de respostas (implemente a navegação).');
   }, []);
 
-  const enviarDevolutiva = useCallback(async (mensagem: string, arquivos: ArquivoDTO[], flAprovado?: FlAprovadoTramitacaoEnum) => {
+  const enviarDevolutiva = useCallback(async (mensagem: string, arquivos: ArquivoDTO[], flAprovado?: FlAprovadoTramitacaoEnum, idAreaOrigem?: number | null) => {
     const alvo = detalhesCorrespondencia;
     if (!alvo) return;
     try {
@@ -456,6 +457,7 @@ function SolicitacoesPageContent() {
         idSolicitacao: alvo.correspondencia.idSolicitacao,
         flAprovado: flAprovado,
         arquivos: arquivos,
+        idAreaOrigem: idAreaOrigem ?? undefined,
       };
       await tramitacoesClient.tramitarViaFluxo(data);
       await loadSolicitacoes();
@@ -640,37 +642,55 @@ function SolicitacoesPageContent() {
                     <StickyTableCell className="max-w-xs truncate">{solicitacao.dsAssunto}</StickyTableCell>
                     <StickyTableCell>
                       {(solicitacao.area && solicitacao.area.length > 0) ? (
-                        <div className="flex items-center flex-wrap gap-1" title={getJoinedNmAreas(solicitacao.area)}>
-                          {solicitacao.area.slice(0, 2).map((area: AreaSolicitacao) => (
-                            <span
-                              key={area.idArea}
-                              className="text-xs bg-gray-100 px-2 py-1 rounded"
-                            >
-                              {area.nmArea}
-                            </span>
-                          ))}
-                          {solicitacao.area.length > 2 && (
-                            <span className="text-xs text-gray-500 h-fit">
-                              +{solicitacao.area.length - 2} mais
-                            </span>
-                          )}
-                        </div>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center flex-wrap gap-1 cursor-help">
+                                {solicitacao.area.slice(0, 2).map((area: AreaSolicitacao) => (
+                                  <span
+                                    key={area.idArea}
+                                    className="text-xs bg-gray-100 px-2 py-1 rounded"
+                                  >
+                                    {area.nmArea}
+                                  </span>
+                                ))}
+                                {solicitacao.area.length > 2 && (
+                                  <span className="text-xs text-gray-500 h-fit">
+                                    +{solicitacao.area.length - 2} mais
+                                  </span>
+                                )}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="max-w-xs">{getJoinedNmAreas(solicitacao.area)}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       ) : (solicitacao.tema?.areas && solicitacao.tema.areas.length > 0) ? (
-                        <div className="flex items-center flex-wrap gap-1" title={getJoinedNmAreas(solicitacao.area)}>
-                          {solicitacao.tema.areas.slice(0, 2).map((area: AreaSolicitacao) => (
-                            <span
-                              key={area.idArea}
-                              className="text-xs bg-gray-100 px-2 py-1 rounded"
-                            >
-                              {area.nmArea}
-                            </span>
-                          ))}
-                          {solicitacao.tema.areas.length > 2 && (
-                            <span className="text-xs text-gray-500">
-                              +{solicitacao.tema.areas.length - 2} mais
-                            </span>
-                          )}
-                        </div>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center flex-wrap gap-1 cursor-help">
+                                {solicitacao.tema.areas.slice(0, 2).map((area: AreaSolicitacao) => (
+                                  <span
+                                    key={area.idArea}
+                                    className="text-xs bg-gray-100 px-2 py-1 rounded"
+                                  >
+                                    {area.nmArea}
+                                  </span>
+                                ))}
+                                {solicitacao.tema.areas.length > 2 && (
+                                  <span className="text-xs text-gray-500">
+                                    +{solicitacao.tema.areas.length - 2} mais
+                                  </span>
+                                )}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="max-w-xs">{getJoinedNmAreas(solicitacao.tema.areas)}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       ) : (
                         <span className="text-gray-400 text-sm">-</span>
                       )}

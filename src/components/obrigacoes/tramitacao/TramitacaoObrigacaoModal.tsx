@@ -23,7 +23,6 @@ import solicitacaoAssinanteClient from '@/api/solicitacao-assinante/client';
 import obrigacaoAnexosClient from '@/api/obrigacao/anexos-client';
 import { statusList as statusListType } from '@/api/status-solicitacao/types';
 import tramitacoesClient from '@/api/tramitacoes/client';
-import correspondenciaClient from '@/api/correspondencia/client';
 
 export interface TramitacaoFormData {
   dsTarefa?: string;
