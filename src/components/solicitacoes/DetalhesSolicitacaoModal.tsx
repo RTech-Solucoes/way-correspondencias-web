@@ -105,6 +105,23 @@ export default function DetalhesSolicitacaoModal({
     [correspond?.correspondencia?.cdIdentificacao]
   );
 
+  const isResponsavelPossuiMaisUmaAreaIgualSolicitacao = useMemo(() => {
+    if (userResponsavel?.areas && userResponsavel.areas.length > 1) {
+      const areasSolicitacao = Array.isArray(correspond?.correspondencia?.area)
+        ? (correspond.correspondencia.area as Array<{ idArea?: number }>)
+            .map(a => a?.idArea)
+            .filter((id): id is number => id !== undefined && id !== null)
+        : [];
+      
+      return userResponsavel.areas.some((respArea) => {
+        const respAreaId = respArea?.area?.idArea;
+        return respAreaId !== undefined && areasSolicitacao.includes(respAreaId);
+      });
+    }
+    return false;
+  }, [userResponsavel?.areas, correspond?.correspondencia?.area]);
+
+
   const statusText = correspond?.statusSolicitacao?.nmStatus ?? statusLabel;
  // const statusText = statusList.EM_ANALISE_GERENTE_REGULATORIO.label;
 

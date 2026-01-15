@@ -41,6 +41,8 @@ class TramitacoesClient {
     });
   }
 
+  // TODO: Metódo do tramitar solicitacao, comentando pois está	sendo usado o tramitar via fluxo de tramitação (tramitarViaFluxo)
+  // Deve ser removido posteriormente, após testes e validações
   //  async tramitar(data: TramitacaoRequest): Promise<TramitacaoResponse> {
   //   return this.client.request<TramitacaoResponse>(`/tramitar`, {
   //     method: 'POST',
