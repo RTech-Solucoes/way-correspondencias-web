@@ -6,6 +6,7 @@ import { solicitacaoAnexosClient } from './anexos-client';
 import {
   SolicitacaoBuscaSimpleResponse,
   SolicitacaoDetalheResponse,
+  SolicitacaoEtapaPrazoRequest,
   SolicitacaoPrazoResponse,
   SolicitacaoResponse,
 } from './types';
@@ -80,6 +81,14 @@ class SolicitacoesClient {
       method: 'GET',
     });
   } 
+
+
+  async etapaPrazo(id: number, req: SolicitacaoEtapaPrazoRequest) {
+    return this.client.request<SolicitacaoResponse>(`/encaminhar/${id}/etapa03`, {
+      method: 'PUT',
+      body: JSON.stringify(req),
+    });
+  }
 }
 
 export const solicitacoesClient = new SolicitacoesClient();

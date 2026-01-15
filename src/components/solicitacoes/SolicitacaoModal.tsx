@@ -527,7 +527,7 @@ export default function SolicitacaoModal({
               flExcepcional: formData.flExcepcional || 'N'
             }));
 
-          await correspondenciaClient.etapaPrazo(correspondencia.idSolicitacao, {
+          await solicitacoesClient.etapaPrazo(correspondencia.idSolicitacao, {
             idTema: formData.idTema,
             nrPrazoInterno: formData.nrPrazo,
             flExcepcional: formData.flExcepcional,
@@ -899,14 +899,14 @@ export default function SolicitacaoModal({
               tpPrazo: formData.tpPrazo || undefined,
               flExcepcional: 'S'
             }));
-          await correspondenciaClient.etapaPrazo(id, {
+          await solicitacoesClient.etapaPrazo(id, {
             idTema: formData.idTema,
             nrPrazoInterno: formData.nrPrazo,
             flExcepcional: 'S',
             solicitacoesPrazos
           });
         } else {
-          await correspondenciaClient.etapaPrazo(id, {
+          await solicitacoesClient.etapaPrazo(id, {
             idTema: formData.idTema,
             nrPrazoInterno: formData.nrPrazo,
             flExcepcional: 'N',

@@ -77,7 +77,7 @@ export function Step2Obrigacao({ formData, updateFormData, disabled = false }: S
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <Label htmlFor="idTema">Tema*</Label>
+        <Label htmlFor="idTema">Tema <span className="text-red-500">*</span></Label>
         <Select
           value={formData.idTema?.toString() || ''}
           onValueChange={(value) => updateFormData({ idTema: parseInt(value) })}
@@ -128,10 +128,11 @@ export function Step2Obrigacao({ formData, updateFormData, disabled = false }: S
       <MultiSelectAreas
         selectedAreaIds={getSelectedAreaIds()}
         onSelectionChange={handleAreasChange}
-        label={tipoAreaSelecionado === 'atribuida' ? 'Selecione a Área Atribuída*' : 'Selecione as Áreas Condicionantes'}
+        label={tipoAreaSelecionado === 'atribuida' ? 'Selecione a Área Atribuída *' : 'Selecione as Áreas Condicionantes'}
         disabled={disabled || loading}
         maxSelection={tipoAreaSelecionado === 'atribuida' ? 1 : undefined}
         excludedAreaIds={tipoAreaSelecionado === 'condicionante' && formData.idAreaAtribuida ? [formData.idAreaAtribuida] : []}
+        labelRequired={tipoAreaSelecionado === 'atribuida'}
       />
     </div>
   );

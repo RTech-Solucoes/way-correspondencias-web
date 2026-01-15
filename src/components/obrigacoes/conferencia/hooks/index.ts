@@ -4,4 +4,4 @@ export { useConferenciaModals } from './useConferenciaModals';
 export { useConferenciaAcoes } from './useConferenciaAcoes';
 export { useConferenciaDerivados } from './useConferenciaDerivados';
 export { useConferenciaPermissoes } from './useConferenciaPermissoes';
-
+export { useValidarObrigacao } from './use-validar-obrigacao';

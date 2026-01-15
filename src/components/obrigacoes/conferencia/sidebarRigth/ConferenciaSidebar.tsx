@@ -268,6 +268,7 @@ export function ConferenciaSidebar({
                 arquivosTramitacaoPendentes={arquivosTramitacaoPendentes}
                 onAddArquivosTramitacao={onAddArquivosTramitacao}
                 onRemoveArquivoTramitacao={onRemoveArquivoTramitacao}
+                isStatusEmAnaliseRegulatoria={permissoes.isStatusEmAnaliseRegulatoria}
               />
             ) : (
               <ComentariosTab

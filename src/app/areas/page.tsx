@@ -16,8 +16,10 @@ import FilterModalArea from "@/components/areas/FilterModalArea";
 import PageTitle from '@/components/ui/page-title';
 import {ArrowClockwiseIcon} from '@phosphor-icons/react';
 import {Button} from '@nextui-org/react';
+import {usePermissoes} from '@/context/permissoes/PermissoesContext';
 
 export default function AreasPage() {
+  const { canInserirArea } = usePermissoes();
   const {
     areas,
     setAreas,
@@ -107,11 +109,15 @@ export default function AreasPage() {
       if (selectedArea && selectedArea.idArea) {
         await areasClient.atualizar(selectedArea.idArea, data);
         toast.success('Área atualizada com sucesso');
+      } else {
+        await areasClient.criar(data);
+        toast.success('Área criada com sucesso');
       }
       handleAreaSaved();
       loadAreas();
-    } catch {
-      toast.error('Erro ao salvar área');
+    } catch (error) {
+      const errorMessage = (error as Error)?.message || 'Erro ao salvar área';
+      toast.error(errorMessage);
     }
   };
 
@@ -199,6 +205,11 @@ export default function AreasPage() {
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           setShowFilterModal={setShowFilterModal}
+          canInserirArea={canInserirArea}
+          onCriarArea={() => {
+            setSelectedArea(null);
+            setShowAreaModal(true);
+          }}
         />
       </div>
 

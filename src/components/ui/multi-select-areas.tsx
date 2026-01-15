@@ -16,6 +16,7 @@ interface MultiSelectAreasProps {
   disabled?: boolean;
   maxSelection?: number;
   excludedAreaIds?: number[]; 
+  labelRequired?: boolean;
 }
 
 export function MultiSelectAreas({
@@ -25,7 +26,8 @@ export function MultiSelectAreas({
   className,
   disabled,
   maxSelection,
-  excludedAreaIds = []
+  excludedAreaIds = [],
+  labelRequired = false
 }: MultiSelectAreasProps) {
   const [areaExecutorAvancado, setAreaExecutorAvancado] = useState<AreaExecutorAvancadoResponse[]>([]);
   const [loading, setLoading] = useState(false);
@@ -67,6 +69,34 @@ export function MultiSelectAreas({
     }
   };
 
+  const renderLabel = () => {
+    if (!label) return null;
+    
+    if (labelRequired) {
+      const parts = label.split('*');
+      if (parts.length === 1) {
+
+        return (
+          <span>
+            {label} <span className="text-red-500">*</span>
+          </span>
+        );
+      }
+
+      return (
+        <>
+          {parts.map((part, index) => (
+            <span key={index}>
+              {part}
+              {index < parts.length - 1 && <span className="text-red-500">*</span>}
+            </span>
+          ))}
+        </>
+      );
+    }
+    return label;
+  };
+
   return (
     <div
       className={cn("space-y-4", className, disabled && "pointer-events-none")}
@@ -74,7 +104,7 @@ export function MultiSelectAreas({
     >
       <Label
         className={cn(disabled && 'opacity-50')}
-      >{label}</Label>
+      >{renderLabel()}</Label>
       {loading ? (
         <div className="flex items-center justify-center p-8">
           <div className="text-sm text-gray-500">Buscando áreas...</div>

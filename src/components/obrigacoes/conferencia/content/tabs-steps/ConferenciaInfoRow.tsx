@@ -13,12 +13,12 @@ export function ConferenciaInfoRow({ label, value, border = true }: ConferenciaI
   return (
     <div
       className={cn(
-        'grid items-start gap-6 px-8 py-5 text-sm sm:grid-cols-[160px_1fr]',
+        'flex flex-col gap-2 px-8 py-5 text-sm',
         border ? 'border-b border-gray-100' : '',
       )}
     >
       <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">{label}</span>
-      <div className="text-sm leading-relaxed text-gray-800">{value ?? '-'}</div>
+      <div className="text-sm leading-relaxed text-gray-800 w-full">{value ?? '-'}</div>
     </div>
   );
 }

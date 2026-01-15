@@ -203,7 +203,7 @@ export function ConferenciaStepDados({ obrigacao, statusLabel, statusStyle }: Co
             label="Justificativa de não aplicabilidade/suspensão"
             border={false}
             value={
-              <div className="space-y-3 ml-5">
+              <div className="space-y-3">
                 <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-wrap">
                   {obrigacao.dsRespNaoAplicavelSusp}
                 </p>

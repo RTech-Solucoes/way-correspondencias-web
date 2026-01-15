@@ -23,6 +23,7 @@ interface UseFooterTooltipsParams {
   temEvidenciaCumprimento: boolean;
   temJustificativaAtraso: boolean;
   isDiretorJaAprovou?: boolean;
+  isReprovadoEmAprovacaoStatusAtualAnaliseRegulatoria?: boolean | null;
 }
 
 export function useFooterTooltips({
@@ -42,6 +43,7 @@ export function useFooterTooltips({
   temEvidenciaCumprimento,
   temJustificativaAtraso,
   isDiretorJaAprovou = false,
+  isReprovadoEmAprovacaoStatusAtualAnaliseRegulatoria = null,
 }: UseFooterTooltipsParams) {
 
   const tooltipAnexarCorrespondencia = useMemo(() => {
@@ -156,6 +158,9 @@ export function useFooterTooltips({
       if (idPerfil !== perfilUtil.ADMINISTRADOR && idPerfil !== perfilUtil.GESTOR_DO_SISTEMA) {
         return 'Apenas Administrador ou Gestor do Sistema podem realizar esta ação quando o status for "Análise Regulatória".';
       }
+      if (isReprovadoEmAprovacaoStatusAtualAnaliseRegulatoria === false) {
+        return 'Foi reprovado no status anterior. É necessário anexar uma nova correspondência para prosseguir.';
+      }
     }
 
     if (idStatusSolicitacao === statusList.EM_CHANCELA.id) {
@@ -188,7 +193,7 @@ export function useFooterTooltips({
     }
 
     return 'Você não tem permissão para essa ação.';
-  }, [idStatusSolicitacao, idPerfil, flExigeCienciaGerenteRegul, isCienciaChecked, userResponsavel?.idResponsavel, solicitacoesAssinantes, isDiretorJaAprovou]);
+  }, [idStatusSolicitacao, idPerfil, flExigeCienciaGerenteRegul, isCienciaChecked, userResponsavel?.idResponsavel, solicitacoesAssinantes, isDiretorJaAprovou, isReprovadoEmAprovacaoStatusAtualAnaliseRegulatoria]);
 
   return {
     tooltipAnexarCorrespondencia,
