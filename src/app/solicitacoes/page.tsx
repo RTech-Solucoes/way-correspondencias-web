@@ -145,9 +145,9 @@ function SolicitacoesPageContent() {
 
       const filtro = debouncedSearchQuery || undefined;
 
-      const idStatusSolicitacao = activeFilters.status && activeFilters.status !== 'all'
+      const idStatusSolicitacao: number | undefined = activeFilters.status && activeFilters.status !== 'all' && activeFilters.status !== ''
         ? Number(activeFilters.status)
-        : undefined;
+        : activeFilters.status === 'all' ? -1 : undefined;
       const idArea = activeFilters.area && activeFilters.area !== 'all'
         ? Number(activeFilters.area)
         : undefined;
@@ -267,10 +267,12 @@ function SolicitacoesPageContent() {
         setFilters(newFilters);
       }
     }] : []),
-    ...(activeFilters.status && activeFilters.status !== 'all' ? [{
+    ...(activeFilters.status && activeFilters.status !== '' ? [{
       key: 'status',
       label: 'Status',
-      value: statuses.find(s => s.idStatusSolicitacao.toString() === activeFilters.status)?.nmStatus || activeFilters.status,
+      value: activeFilters.status === 'all' 
+        ? 'Todos' 
+        : (statuses.find(s => s.idStatusSolicitacao.toString() === activeFilters.status)?.nmStatus || activeFilters.status),
       color: 'purple' as const,
       onRemove: () => {
         const newFilters = { ...activeFilters, status: '' };
