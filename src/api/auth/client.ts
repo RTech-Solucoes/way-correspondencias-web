@@ -1,6 +1,7 @@
 import ApiClient from "../client";
 import {LoginRequest, LoginResponse} from "./types";
 import { jwtDecode } from "jwt-decode";
+import { setCookie, getCookie, removeCookie } from "@/utils/cookies";
 
 class AuthClient {
   private client: ApiClient;
@@ -16,9 +17,21 @@ class AuthClient {
     });
 
     if (response.accessToken) {
-      localStorage.setItem('authToken', response.accessToken);
-      localStorage.setItem('tokenType', response.tokenType);
-      localStorage.setItem('userName', data.username);
+      // Salva em cookies (funciona no servidor e cliente)
+      setCookie('authToken', response.accessToken);
+      setCookie('tokenType', response.tokenType);
+      setCookie('userName', data.username);
+      
+      // Limpa localStorage antigo (migração completa)
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('tokenType');
+        localStorage.removeItem('userName');
+        localStorage.removeItem('concessionaria-selecionada');
+        localStorage.removeItem('selectedModule');
+        localStorage.removeItem('permissoes-storage');
+        sessionStorage.removeItem('permissoes-storage');
+      }
       
       // Disparar evento customizado para notificar que o token foi salvo (mesma aba)
       if (typeof window !== 'undefined') {
@@ -32,30 +45,30 @@ class AuthClient {
   }
 
   logout(): void {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('tokenType');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('permissoes-storage');
-    localStorage.removeItem('concessionaria-selecionada');
-    sessionStorage.removeItem('permissoes-storage');
+    // Remove cookies
+    removeCookie('authToken');
+    removeCookie('tokenType');
+    removeCookie('userName');
+    removeCookie('concessionaria-selecionada');
+    removeCookie('permissoes-storage');
+    removeCookie('selectedModule');
     
     // Disparar evento customizado para notificar que o token foi removido (mesma aba)
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('authTokenRemoved'));
     }
-    
   }
 
   isAuthenticated(): boolean {
-    return !!localStorage.getItem('authToken');
+    return !!getCookie('authToken');
   }
 
   getToken(): string | null {
-    return localStorage.getItem('authToken');
+    return getCookie('authToken');
   }
 
   getUserName(): string | null {
-    return localStorage.getItem('userName');
+    return getCookie('userName');
   }
 
   getUserIdResponsavelFromToken(): number | null {

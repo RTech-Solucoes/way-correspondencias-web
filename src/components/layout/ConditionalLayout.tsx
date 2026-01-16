@@ -1,6 +1,7 @@
 'use client';
 
 import {usePathname} from 'next/navigation';
+import { getCookie } from '@/utils/cookies';
 import {ReactNode, useCallback, useEffect, useState} from 'react';
 import {AppLayout} from './AppLayout';
 import {SidebarProvider} from '@/context/sidebar/SidebarContext';
@@ -20,10 +21,15 @@ interface ConditionalLayoutProps {
   children: ReactNode;
 }
 
+
 const waitForConcessionaria = (): Promise<void> => {
   return new Promise((resolve) => {
     const checkConcessionaria = () => {
-      const concessionaria = localStorage.getItem('concessionaria-selecionada');
+      if (typeof document === 'undefined') {
+        setTimeout(checkConcessionaria, CONCESSIONARIA_CHECK_INTERVAL);
+        return;
+      }
+      const concessionaria = getCookie('concessionaria-selecionada');
       if (concessionaria) {
         resolve();
       } else {

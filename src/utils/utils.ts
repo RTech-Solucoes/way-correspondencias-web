@@ -1,3 +1,4 @@
+import { getCookie } from '@/utils/cookies';
 import {type ClassValue, clsx} from 'clsx';
 import {twMerge} from 'tailwind-merge';
 import {StatusAtivo} from "@/utils/misc/status-ativo";
@@ -208,14 +209,21 @@ export const validateEmail = (email: string): boolean => {
   return emailRegex.test(email);
 };
 
+
 export const hasPermissao = (permissao: string): boolean | null => {
-  const permissoesStorage = localStorage.getItem("permissoes-storage");
+  if (typeof document === 'undefined') return null;
+  
+  const permissoesStorage = getCookie("permissoes-storage");
 
   if (!permissoesStorage) {
     return null;
   } else {
-    const parsed = JSON.parse(permissoesStorage);
-    return parsed?.state?.permissoes?.includes(permissao) ?? null;
+    try {
+      const parsed = JSON.parse(permissoesStorage);
+      return parsed?.state?.permissoes?.includes(permissao) ?? null;
+    } catch {
+      return null;
+    }
   }
 }
 
