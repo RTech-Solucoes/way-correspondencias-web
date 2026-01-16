@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import obrigacaoClient from '@/api/obrigacao/client';
@@ -112,9 +112,10 @@ const mapDetalheToFormData = (detalhe: ObrigacaoDetalheResponse): ObrigacaoFormD
 
 interface EditarObrigacaoContentProps {
   id: string;
+  initialData?: ObrigacaoDetalheResponse | null;
 }
 
-export function EditarObrigacaoContent({ id }: EditarObrigacaoContentProps) {
+export function EditarObrigacaoContent({ id, initialData }: EditarObrigacaoContentProps) {
   const router = useRouter();
   const { idPerfil } = useUserGestao();
   
@@ -133,6 +134,7 @@ export function EditarObrigacaoContent({ id }: EditarObrigacaoContentProps) {
   const [anexoToDelete, setAnexoToDelete] = useState<AnexoResponse | null>(null);
   const [isNaoPermitidoEditar, setIsNaoPermitidoEditar] = useState(false);
   const [hasStep3ValidationErrors, setHasStep3ValidationErrors] = useState(false);
+  const hasInitializedRef = useRef(false);
 
   useEffect(() => {
     tiposClient.buscarPorCategorias([CategoriaEnum.OBRIG_CLASSIFICACAO])
@@ -177,8 +179,24 @@ export function EditarObrigacaoContent({ id }: EditarObrigacaoContentProps) {
   }, [id, router]);
 
   useEffect(() => {
-    carregarDetalhes();
-  }, [carregarDetalhes]);
+    if (hasInitializedRef.current) return;
+    
+    if (initialData) {
+      setFormData(mapDetalheToFormData(initialData));
+      setExistingAnexos(initialData.anexos || []);
+      if (initialData?.obrigacao?.flAprovarConferencia === 'S' || initialData?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.NAO_APLICAVEL_SUSPENSA.id) {
+        setIsNaoPermitidoEditar(true);
+      } else {
+        setIsNaoPermitidoEditar(false);
+      }
+      setLoading(false);
+      setAnexosLoading(false);
+      hasInitializedRef.current = true;
+    } else {
+      carregarDetalhes();
+      hasInitializedRef.current = true;
+    }
+  }, [initialData, carregarDetalhes]);
 
   useEffect(() => {
     statusSolicitacaoClient
@@ -213,9 +231,6 @@ export function EditarObrigacaoContent({ id }: EditarObrigacaoContentProps) {
     });
   }, []);
 
-
-
-  // Sempre validar todos os steps obrigatórios (1, 2, 3) independente da aba ativa
   const requiredStepsForTab = useMemo(() => {
     return [1, 2, 3];
   }, []);
@@ -321,8 +336,6 @@ export function EditarObrigacaoContent({ id }: EditarObrigacaoContentProps) {
         : [];
 
       const arquivos: ArquivoDTO[] = [...arquivosExistentes, ...arquivosNovos];
-
-      // Verificar se a classificação é Condicionada
       const tipos = await tiposClient.buscarPorCategorias([CategoriaEnum.OBRIG_CLASSIFICACAO]);
       const condicionada = tipos.find((tipo) => tipo.cdTipo === TipoEnum.CONDICIONADA);
       const isCondicionada = formData.idTipoClassificacao === condicionada?.idTipo;
@@ -365,9 +378,7 @@ export function EditarObrigacaoContent({ id }: EditarObrigacaoContentProps) {
   }, [carregarDetalhes, existingAnexos, formData, novosAnexos, requiredStepsForTab, hasStep3ValidationErrors, idPerfil, idClassificacaoCondicionada, validarObrigacao]);
 
   const renderTabContent = () => {
-    if (!formData) {
-      return null;
-    }
+    if (!formData)  return null;
 
     switch (activeTab) {
       case 'dados':
@@ -538,4 +549,3 @@ export function EditarObrigacaoContent({ id }: EditarObrigacaoContentProps) {
     </div>
   );
 }
-

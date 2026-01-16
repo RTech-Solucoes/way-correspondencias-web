@@ -7,14 +7,12 @@ import {Input} from '@/components/ui/input';
 import {Label} from '@/components/ui/label';
 import {Textarea} from '@/components/ui/textarea';
 import {TemaRequest, TemaResponse} from '@/api/temas/types';
-import {temasClient} from '@/api/temas/client';
-import {toast} from 'sonner';
 
 interface TemaModalProps {
   tema: TemaResponse | null;
   open: boolean;
   onClose(): void;
-  onSave(): void;
+  onSave(data: TemaRequest): void;
 }
 
 export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
@@ -41,34 +39,18 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
     return nmTema.trim() !== '' && dsTema.trim() !== '';
   }, [nmTema, dsTema]);
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!isFormValid()) return;
 
-    try {
-      setLoading(true);
-      const temaRequest: TemaRequest = {
-        nmTema: nmTema.trim(),
-        dsTema: dsTema.trim(),
-        nrPrazo: nrPrazo > 0 ? nrPrazo : undefined,
-        tpPrazo: 'H'
-      };
+    const temaRequest: TemaRequest = {
+      nmTema: nmTema.trim(),
+      dsTema: dsTema.trim(),
+      nrPrazo: nrPrazo > 0 ? nrPrazo : undefined,
+      tpPrazo: 'H'
+    };
 
-      if (tema) {
-        await temasClient.atualizar(tema.idTema, temaRequest);
-        toast.success("Tema atualizado com sucesso!");
-      } else {
-        await temasClient.criar(temaRequest);
-        toast.success("Tema criado com sucesso!");
-      }
-
-      onSave();
-      onClose();
-    } catch (error) {
-      console.error('Erro ao salvar tema:', error);
-      toast.error(`Erro ao ${tema ? 'atualizar' : 'criar'} tema`);
-    } finally {
-      setLoading(false);
-    }
+    onSave(temaRequest);
+    onClose();
   };
 
   return (

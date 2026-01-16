@@ -10,7 +10,7 @@ import { useUserGestao } from '@/hooks/use-user-gestao';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
 import obrigacaoClient from '@/api/obrigacao/client';
 import { statusList } from '@/api/status-solicitacao/types';
-import { ObrigacaoResumoResponse } from '@/api/obrigacao/types';
+import { ObrigacaoResumoResponse, ObrigacaoDetalheResponse } from '@/api/obrigacao/types';
 import { ObrigacoesCondicionadasModal } from '@/components/obrigacoes/modal/ObrigacoesCondicionadasModal';
 import { AnexarProtocoloModal } from '@/components/obrigacoes/modal/AnexarProtocoloModal';
 import { ConferenciaSidebar } from '../sidebarRigth/ConferenciaSidebar';
@@ -37,9 +37,10 @@ type TabKey = 'dados' | 'temas' | 'prazos' | 'anexos' | 'vinculos';
 
 interface ConferenciaContentProps {
   id: string;
+  initialData?: ObrigacaoDetalheResponse | null;
 }
 
-export function ConferenciaContent({ id }: ConferenciaContentProps) {
+export function ConferenciaContent({ id, initialData }: ConferenciaContentProps) {
   const router = useRouter();
   const { isAdminOrGestor, idPerfil } = useUserGestao();
   const { 
@@ -62,7 +63,7 @@ export function ConferenciaContent({ id }: ConferenciaContentProps) {
   } | null>(null);
 
   // Hooks de dados
-  const { detalhe, pageLoading, userResponsavel, reloadDetalhe } = useConferenciaDetalhes({ id });
+  const { detalhe, pageLoading, userResponsavel, reloadDetalhe } = useConferenciaDetalhes({ id, initialData });
 
   const obrigacao = detalhe?.obrigacao;
   const anexos = useMemo(() => detalhe?.anexos ?? [], [detalhe]);

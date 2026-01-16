@@ -9,12 +9,13 @@ import { ResponsavelResponse } from '@/api/responsaveis/types';
 
 interface UseConferenciaDetalhesProps {
   id: string | null;
+  initialData?: ObrigacaoDetalheResponse | null;
 }
 
-export function useConferenciaDetalhes({ id }: UseConferenciaDetalhesProps) {
+export function useConferenciaDetalhes({ id, initialData }: UseConferenciaDetalhesProps) {
   const router = useRouter();
-  const [detalhe, setDetalhe] = useState<ObrigacaoDetalheResponse | null>(null);
-  const [pageLoading, setPageLoading] = useState(true);
+  const [detalhe, setDetalhe] = useState<ObrigacaoDetalheResponse | null>(initialData || null);
+  const [pageLoading, setPageLoading] = useState(!initialData);
   const [userResponsavel, setUserResponsavel] = useState<ResponsavelResponse | null>(null);
 
   const parsedId = useMemo(() => {
@@ -57,8 +58,10 @@ export function useConferenciaDetalhes({ id }: UseConferenciaDetalhesProps) {
   }, [parsedId]);
 
   useEffect(() => {
-    carregarDetalhe();
-  }, [carregarDetalhe]);
+    if (!initialData) {
+      carregarDetalhe();
+    }
+  }, [carregarDetalhe, initialData]);
 
   useEffect(() => {
     const carregarUserResponsavel = async () => {
