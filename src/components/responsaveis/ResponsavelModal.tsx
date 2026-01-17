@@ -386,7 +386,6 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
       return;
     }
 
-    // Caso contrário, salvar diretamente
     await performSubmit();
   };
 
@@ -405,7 +404,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
   const isFormValid = useCallback(() => {
     const result = responsavelSchema.safeParse(formData);
     return result.success && Object.keys(errors).length === 0;
-  }, [formData, errors]);
+  }, [formData, errors, responsavelSchema]);
 
   return (
     <Dialog open={open} onOpenChange={(newOpen) => !newOpen && onClose()}>
