@@ -47,6 +47,7 @@ interface AnexosTabProps {
   onAddArquivosTramitacao?: (files: ArquivoDTO[]) => void;
   onRemoveArquivoTramitacao?: (index: number) => void;
   isStatusEmAnaliseRegulatoria?: boolean;
+  isStatusVencidoRegulatorio?: boolean;
 }
 
 export function AnexosTab({
@@ -75,6 +76,7 @@ export function AnexosTab({
   onAddArquivosTramitacao,
   onRemoveArquivoTramitacao,
   isStatusEmAnaliseRegulatoria = false,
+  isStatusVencidoRegulatorio = false,
 }: AnexosTabProps) {
   const anexosFiltrados = useAnexosFiltrados({ anexos, tramitacoes });
 
@@ -89,6 +91,7 @@ export function AnexosTab({
     isDaAreaAtribuida,
     idPerfil,
     isStatusEmAnaliseRegulatoria,
+    isStatusVencidoRegulatorio,
   });
 
   const evidenceLinkInput = useEvidenceLinkInput({

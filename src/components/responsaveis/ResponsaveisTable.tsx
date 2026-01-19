@@ -12,7 +12,7 @@ import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { formatCPF, getStatusText } from "@/utils/utils";
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
 import { useUserGestao } from "@/hooks/use-user-gestao";
-import { authClient } from '@/api/auth/client';
+import { useIdResponsavelLogado } from '@/hooks/use-id-responsavel-logado';
 
 interface ResponsaveisTableProps {
   responsaveis: ResponsavelResponse[];
@@ -41,6 +41,8 @@ export default function ResponsaveisTable({
 }: ResponsaveisTableProps) {
   const { canAtualizarResponsavel, canDeletarResponsavel, canGerarSenhaResponsavel } = usePermissoes();
   const { isAdminOrGestor } = useUserGestao();
+  
+  const idResponsavelLogado = useIdResponsavelLogado();
 
   const sortedResponsaveis = () => {
     const sorted = [...responsaveis];
@@ -135,7 +137,7 @@ export default function ResponsaveisTable({
             </StickyTableRow>
           ) : (
             sortedResponsaveis().map((responsavel) => {
-              const isUsuarioLogado = authClient.getUserIdResponsavelFromToken() === responsavel.idResponsavel;
+              const isUsuarioLogado = idResponsavelLogado === responsavel.idResponsavel;
               const isDisabled = gerandoSenha === responsavel.idResponsavel || isUsuarioLogado;
 
               return (

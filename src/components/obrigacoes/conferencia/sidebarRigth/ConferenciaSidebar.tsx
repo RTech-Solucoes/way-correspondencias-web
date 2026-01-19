@@ -269,6 +269,7 @@ export function ConferenciaSidebar({
                 onAddArquivosTramitacao={onAddArquivosTramitacao}
                 onRemoveArquivoTramitacao={onRemoveArquivoTramitacao}
                 isStatusEmAnaliseRegulatoria={permissoes.isStatusEmAnaliseRegulatoria}
+                isStatusVencidoRegulatorio={permissoes.isStatusVencidoRegulatorio}
               />
             ) : (
               <ComentariosTab

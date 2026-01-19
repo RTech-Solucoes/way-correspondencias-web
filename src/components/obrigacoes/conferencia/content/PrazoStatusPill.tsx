@@ -4,6 +4,7 @@ import { Clock } from 'lucide-react';
 import { useMemo } from 'react';
 import { SolicitacaoPrazoResponse } from '@/api/solicitacoes/types';
 import { cn, formatDateTimeBr } from '@/utils/utils';
+import { statusList } from '@/api/status-solicitacao/types';
 
 interface PrazoStatusPillProps {
   idStatusAtual?: number;
@@ -13,6 +14,11 @@ interface PrazoStatusPillProps {
 export function PrazoStatusPill({ idStatusAtual, prazos = [] }: PrazoStatusPillProps) {
   const prazoAtual = useMemo(() => {
     if (!idStatusAtual || !prazos.length) return null;
+
+    if (idStatusAtual === statusList.VENCIDO_REGULATORIO.id) {
+      return prazos.find((p) => Number(p.idStatusSolicitacao) === Number(statusList.ANALISE_REGULATORIA.id));
+    }
+
     return prazos.find((p) => Number(p.idStatusSolicitacao) === Number(idStatusAtual));
   }, [idStatusAtual, prazos]);
 

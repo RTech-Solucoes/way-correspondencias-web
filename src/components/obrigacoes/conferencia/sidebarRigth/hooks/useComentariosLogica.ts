@@ -6,7 +6,6 @@ import solicitacaoParecerClient from '@/api/solicitacao-parecer/client';
 import { SolicitacaoParecerResponse } from '@/api/solicitacao-parecer/types';
 import { responsaveisClient } from '@/api/responsaveis/client';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
-import { authClient } from '@/api/auth/client';
 import tramitacoesClient from '@/api/tramitacoes/client';
 import { TramitacaoRequest } from '@/api/tramitacoes/types';
 import { TramitacaoResponse as SolTramitacaoResponse, TramitacaoComAnexosResponse } from '@/api/solicitacoes/types';
@@ -14,6 +13,7 @@ import { perfilUtil } from '@/api/perfis/types';
 import type { ObrigacaoDetalheResponse } from '@/api/obrigacao/types';
 import type { ArquivoDTO } from '@/api/anexos/type';
 import { statusList } from '@/api/status-solicitacao/types';
+import { useIdResponsavelLogado } from '@/hooks/use-id-responsavel-logado';
 
 interface UseComentariosLogicaParams {
   detalhe: ObrigacaoDetalheResponse;
@@ -55,7 +55,7 @@ export function useComentariosLogica({
   const [parecerReferenciaViaTramitacao, setParecerReferenciaViaTramitacao] = useState<number | null>(null);
   const [parecerTramitacaoMap, setParecerTramitacaoMap] = useState<Map<number, number>>(new Map());
 
-  const idResponsavelLogado = authClient.getUserIdResponsavelFromToken();
+  const idResponsavelLogado = useIdResponsavelLogado();
 
   // Atualizar estados quando detalhe mudar
   useEffect(() => {

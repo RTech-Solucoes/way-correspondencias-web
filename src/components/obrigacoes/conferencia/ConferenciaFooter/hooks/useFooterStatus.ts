@@ -81,6 +81,10 @@ export function useFooterStatus({
     return idStatusSolicitacao === statusList.ANALISE_REGULATORIA.id;
   }, [idStatusSolicitacao]);
 
+  const isStatusVencidoRegulatorio = useMemo(() => {
+    return idStatusSolicitacao === statusList.VENCIDO_REGULATORIO.id;
+  }, [idStatusSolicitacao]);
+
   const temEvidenciaCumprimento = useMemo(() => {
     return anexos.some(anexo => 
       anexo.tpDocumento === TipoDocumentoAnexoEnum.E || 
@@ -117,11 +121,16 @@ export function useFooterStatus({
   }, [tramitacoes]);
   
   const labelBtnStatusAnaliseRegulatoria = useMemo(() => {
-    return idStatusSolicitacao !== statusList.ANALISE_REGULATORIA.id 
-      ? '' 
-      : isUltimaTramitacaoEmAprovacaoFlAprovado 
-        ? 'Encaminhar para Gerente da Área' 
-        : 'Enviar para Chancela';
+    const isAnaliseRegulatoriaOuVencido = (idStatusSolicitacao === statusList.ANALISE_REGULATORIA.id) 
+      || (idStatusSolicitacao === statusList.VENCIDO_REGULATORIO.id);
+    
+    if (!isAnaliseRegulatoriaOuVencido) {
+      return '';
+    }
+    
+    return isUltimaTramitacaoEmAprovacaoFlAprovado 
+      ? 'Encaminhar para Gerente da Área' 
+      : 'Enviar para Chancela';
   }, [idStatusSolicitacao, isUltimaTramitacaoEmAprovacaoFlAprovado]);
 
   const labelBtnStatusEmAprovacaoTramitacao = useMemo(() => {
@@ -136,6 +145,7 @@ export function useFooterStatus({
       [statusList.EM_ANALISE_GERENTE_REGULATORIO.id]: 'Encaminhar para Gerente da Área',
       [statusList.EM_APROVACAO.id]: labelBtnStatusEmAprovacaoTramitacao,
       [statusList.ANALISE_REGULATORIA.id]: labelBtnStatusAnaliseRegulatoria,
+      [statusList.VENCIDO_REGULATORIO.id]: labelBtnStatusAnaliseRegulatoria,
       [statusList.EM_CHANCELA.id]: 'Encaminhar para Assinatura Diretoria',
     };
     
@@ -151,6 +161,7 @@ export function useFooterStatus({
     isStatusEmAnaliseGerenteRegulatorio,
     isStatusBtnFlAprovar,
     isStatusEmAnaliseRegulatoria,
+    isStatusVencidoRegulatorio,
     isStatusAprovacaoTramitacao,
     temEvidenciaCumprimento,
     temJustificativaAtraso,

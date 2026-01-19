@@ -88,7 +88,10 @@ export function useFooterPermissoes({
 
   const isReprovadoStatusAnteriorEAtualAnaliseRegulatoria = useMemo(() => {
     if (!tramitacoes || tramitacoes.length === 0) return null; // null = não foi reprovado
-    if (idStatusSolicitacao !== statusList.ANALISE_REGULATORIA.id) return null;
+    if ((idStatusSolicitacao !== statusList.ANALISE_REGULATORIA.id) && 
+        (idStatusSolicitacao !== statusList.VENCIDO_REGULATORIO.id)) {
+      return null;
+    }
     
     const tramitacoesOrdenadas = ordenarTramitacoesPorData(tramitacoes);
     const ultimaTramitacao = tramitacoesOrdenadas[0];
@@ -146,7 +149,8 @@ export function useFooterPermissoes({
       if (idPerfil === perfilUtil.EXECUTOR_AVANCADO) return true;
     }
     
-    if (idStatusSolicitacao === statusList.ANALISE_REGULATORIA.id) {
+    if (idStatusSolicitacao === statusList.ANALISE_REGULATORIA.id || 
+        idStatusSolicitacao === statusList.VENCIDO_REGULATORIO.id) {
       if (idPerfil === perfilUtil.ADMINISTRADOR || idPerfil === perfilUtil.GESTOR_DO_SISTEMA) {
         // isReprovadoEmAprovacaoStatusAtualAnaliseRegulatoria retorna:
         // - null: não foi reprovado (permite prosseguir)

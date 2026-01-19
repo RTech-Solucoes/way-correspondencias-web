@@ -1,14 +1,16 @@
+'use client';
+
 import { useEffect, useState } from 'react';
-import DashboardHeader from './DashboardHeader/DashboardHeader';
-import DeadlinesCalendar from './DeadlinesCalendar/DeadlinesCalendar';
-import NextDeadlines from './NextDeadlines/NextDeadlines';
-import RecentActivity from './RecentActivity/RecentActivity';
-import TasksStatusBoard from './TasksStatusBoard/TasksStatusBoard';
+import DashboardHeader from '@/components/dashboard/DashboardHeader/DashboardHeader';
+import DeadlinesCalendar from '@/components/dashboard/DeadlinesCalendar/DeadlinesCalendar';
+import NextDeadlines from '@/components/dashboard/NextDeadlines/NextDeadlines';
+import RecentActivity from '@/components/dashboard/RecentActivity/RecentActivity';
+import TasksStatusBoard from '@/components/dashboard/TasksStatusBoard/TasksStatusBoard';
 import { TipoEnum } from '@/api/tipos/types';
 import { useConcessionaria } from '@/context/concessionaria/ConcessionariaContext';
 import { Quantum as Loading } from 'ldrs/react';
 
-export default function DashboardViewComponent() {
+export default function DashboardCorrespondenciaContent() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { concessionariaSelecionada, loading } = useConcessionaria();
@@ -58,5 +60,5 @@ export default function DashboardViewComponent() {
         <DeadlinesCalendar refreshTrigger={refreshTrigger} />
       </div>
     </div>
-  )
+  );
 }

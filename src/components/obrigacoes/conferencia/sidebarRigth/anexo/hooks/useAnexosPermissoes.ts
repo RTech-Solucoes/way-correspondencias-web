@@ -14,6 +14,7 @@ interface UseAnexosPermissoesParams {
   isDaAreaAtribuida?: boolean;
   idPerfil?: number;
   isStatusEmAnaliseRegulatoria?: boolean;
+  isStatusVencidoRegulatorio?: boolean;
 }
 
 export function useAnexosPermissoes({
@@ -27,6 +28,7 @@ export function useAnexosPermissoes({
   isDaAreaAtribuida = false,
   idPerfil,
   isStatusEmAnaliseRegulatoria = false,
+  isStatusVencidoRegulatorio = false,
 }: UseAnexosPermissoesParams) {
   const podeAnexarEvidencia = useMemo(() => {
     return isDaAreaAtribuida;
@@ -61,7 +63,7 @@ export function useAnexosPermissoes({
     }
     
     if (anexo.tpDocumento === TipoDocumentoAnexoEnum.R) {
-      return isStatusEmValidacaoRegulatorio || isStatusEmAnaliseRegulatoria;
+      return isStatusEmValidacaoRegulatorio || isStatusEmAnaliseRegulatoria || isStatusVencidoRegulatorio;
     }
     
     if (anexo.tpDocumento === TipoDocumentoAnexoEnum.A) {
@@ -69,7 +71,7 @@ export function useAnexosPermissoes({
     }
 
     return false;
-  }, [isStatusEmAndamento, isStatusAtrasada, isStatusPendente, isStatusEmValidacaoRegulatorio, isStatusNaoIniciado, isDaAreaAtribuida, isStatusEmAnaliseRegulatoria]);
+  }, [isStatusEmAndamento, isStatusAtrasada, isStatusPendente, isStatusEmValidacaoRegulatorio, isStatusNaoIniciado, isDaAreaAtribuida, isStatusEmAnaliseRegulatoria, isStatusVencidoRegulatorio]);
 
   const statusPermiteAnexarOutros = useMemo(() => {
     if (isStatusConcluido) {

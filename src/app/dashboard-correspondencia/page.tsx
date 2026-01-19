@@ -1,10 +1,22 @@
-'use client';
+'use server';
 
-import DashboardViewComponent from "@/components/dashboard/DashboardView";
+import LoadingOverlay from '@/components/ui/loading-overlay';
+import DashboardCorrespondenciaContent from '@/components/dashboard/correspondencia/content/DashboardCorrespondenciaContent';
+import { Suspense } from 'react';
 
-
-export default function DashboardPage() {
+export default async function DashboardPage() {
   return (
-    <DashboardViewComponent />
+    <div data-ssr="true">
+      <Suspense
+        fallback={
+          <LoadingOverlay
+            title="Carregando dashboard de correspondência..."
+            subtitle="Aguarde enquanto os dados são carregados"
+          />
+        }
+      >
+        <DashboardCorrespondenciaContent />
+      </Suspense>
+    </div>
   );
 }
