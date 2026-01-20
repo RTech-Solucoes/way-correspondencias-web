@@ -7,7 +7,7 @@ import { SolicitacoesHeader } from '@/components/solicitacoes/content/Solicitaco
 import { SolicitacoesSearch } from '@/components/solicitacoes/content/SolicitacoesSearch';
 import { SolicitacoesTable } from '@/components/solicitacoes/content/SolicitacoesTable';
 import SolicitacaoModal from '@/components/solicitacoes/SolicitacaoModal';
-import DetalhesSolicitacaoModal from '@/components/solicitacoes/DetalhesSolicitacaoModal';
+import DetalhesSolicitacaoModal from '@/components/solicitacoes/detalhes-modal-tramitacao/DetalhesSolicitacaoModal';
 import HistoricoRespostasModal from '@/components/solicitacoes/HistoricoRespostasModal';
 import FilterModal from '@/components/solicitacoes/FilterModal';
 import { useSolicitacoes } from '@/components/solicitacoes/hooks/use-solicitacoes';
