@@ -5,7 +5,7 @@ import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {AreasProvider} from '@/context/areas/AreasContext';
 import {EmailProvider} from '@/context/email/EmailContext';
 import {ResponsaveisProvider} from '@/context/responsaveis/ResponsaveisContext';
-import {SolicitacoesProvider} from '@/context/solicitacoes/SolicitacoesContext';
+import { SolicitacoesProvider } from '@/context/solicitacoes/SolicitacoesContext';
 import {TemasProvider} from '@/context/temas/TemasContext';
 import {ObrigacoesProvider} from '@/context/obrigacoes/ObrigacoesContext';
 import {ApiProvider} from "@/providers/ApiProvider";
