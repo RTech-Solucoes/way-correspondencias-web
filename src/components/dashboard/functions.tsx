@@ -43,11 +43,11 @@ const statusConfig: Record<
         textColor: "#87CEEB",
     },
     [statusList.VENCIDO_REGULATORIO.label]: {
-        icon: <XCircleIcon className="h-4 w-4 text-rose-700 mr-2" />,
-        visionColor: "bg-rose-500",
-        calendarColor: "bg-[#a80000] text-white",
-        bgColor: "#a80000",
-        textColor: "#a80000",
+        icon: <XCircleIcon className="h-4 w-4 text-red-700 mr-2" />,
+        visionColor: "bg-red-600",
+        calendarColor: "bg-[#dc2626] text-white",
+        bgColor: "#dc2626",
+        textColor: "#dc2626",
     },
     [statusList.EM_ANALISE_AREA_TECNICA.label]: {
         icon: <PencilIcon className="h-4 w-4 text-amber-700 mr-2" />,

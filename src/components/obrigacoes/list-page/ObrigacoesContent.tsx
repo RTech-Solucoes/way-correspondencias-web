@@ -5,7 +5,7 @@ import { FiltrosAplicados } from "@/components/ui/applied-filters";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { STATUS_LIST, statusList } from "@/api/status-solicitacao/types";
-import obrigacaoClient from "@/api/obrigacao/client";
+import obrigacaoClient, { PaginatedResponse } from "@/api/obrigacao/client";
 import { toast } from "sonner";
 import { useUserGestao } from "@/hooks/use-user-gestao";
 import { ObrigacaoResumoResponse, ObrigacaoResponse } from "@/api/obrigacao/types";
@@ -23,7 +23,11 @@ import { ObrigacoesModals } from "@/components/obrigacoes/list-page/ObrigacoesMo
 import { useObrigacoesFilters } from "./hooks/useObrigacoesFilters";
 import { perfilUtil } from "@/api/perfis/types";
 
-export function ObrigacoesContent() {
+interface ObrigacoesContentProps {
+  initialData?: PaginatedResponse<ObrigacaoResponse>;
+}
+
+export function ObrigacoesContent({ initialData }: ObrigacoesContentProps) {
   const {
     obrigacoes,
     loading,
@@ -41,7 +45,23 @@ export function ObrigacoesContent() {
     setFilters,
     handleSort,
     loadObrigacoes,
+    setObrigacoes,
+    setTotalPages,
+    setTotalElements,
+    setLoading,
   } = useObrigacoes();
+
+  // Inicializa com dados do servidor se disponíveis
+  const hasInitializedRef = useRef(false);
+  useEffect(() => {
+    if (initialData && !hasInitializedRef.current) {
+      setObrigacoes(initialData.content || []);
+      setTotalPages(initialData.totalPages || 0);
+      setTotalElements(initialData.totalElements || 0);
+      setLoading(false);
+      hasInitializedRef.current = true;
+    }
+  }, [initialData, setObrigacoes, setTotalPages, setTotalElements, setLoading]);
 
   const {
     hasActiveFilters,
@@ -94,6 +114,12 @@ export function ObrigacoesContent() {
         setCurrentPage(0);
         return;
       }
+    }
+
+    // Se temos initialData e é a primeira montagem, não recarrega
+    if (initialData && isInitialMount.current && !idObrigacaoFromUrl) {
+      isInitialMount.current = false;
+      return;
     }
 
     loadObrigacoes(idObrigacaoFromUrl);

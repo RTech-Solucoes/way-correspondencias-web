@@ -1,42 +1,32 @@
 'use client';
 
-import authClient from "@/api/auth/client";
-import concessionariaClient from "@/api/concessionaria/client";
+import authClient from '@/api/auth/client';
+import concessionariaClient from '@/api/concessionaria/client';
 import { Button } from '@/components/ui/button';
 import { TextField } from '@/components/ui/text-field';
-import { PAGES_DEF } from "@/constants/pages";
+import { getBackgroundLoginPath, getLabelTitle, getLogoPath, getNomeSistema } from "@/lib/layout/layout-client";
+import { useSetPermissoes } from '@/stores/permissoes-store';
+import { getCookie, removeCookie } from '@/utils/cookies';
 import { cn } from '@/utils/utils';
 import { LockIcon, UserIcon } from '@phosphor-icons/react';
-import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { jwtDecode } from 'jwt-decode';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
 import { toast } from 'sonner';
 
-import { jwtDecode } from "jwt-decode";
-import { useSetPermissoes } from "@/stores/permissoes-store";
-import { getLayoutClient, getLabelTitle, getLogoPath, getBackgroundLoginPath, getNomeSistema } from "@/lib/layout/layout-client";
-
 interface TokenPayload {
-  sub: string;
-  exp: number;
   permissoes: string[];
 }
 
 export default function LoginPage() {
+  const router = useRouter();
+  const setPermissoes = useSetPermissoes();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [usernameError, setUsernameError] = useState('');
   const [passwordError, setPasswordError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const setPermissoes = useSetPermissoes()
-
-  const router = useRouter();
-
-  const layoutClient = getLayoutClient();
-  const labelTitle = getLabelTitle(layoutClient);
-  const nomeSistema = getNomeSistema(layoutClient);
-  const logoPath = getLogoPath(layoutClient);
-  const backgroundPath = getBackgroundLoginPath(layoutClient);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -46,16 +36,13 @@ export default function LoginPage() {
 
     let hasErrors = false;
 
-    if (!username) {
-      setUsernameError('Username é obrigatório');
+    if (!username.trim()) {
+      setUsernameError('Usuário é obrigatório');
       hasErrors = true;
     }
 
-    if (!password) {
+    if (!password.trim()) {
       setPasswordError('Senha é obrigatória');
-      hasErrors = true;
-    } else if (password?.length < 6) {
-      setPasswordError('Senha deve ter pelo menos 6 caracteres');
       hasErrors = true;
     }
 
@@ -67,68 +54,64 @@ export default function LoginPage() {
           password: password.trim()
         });
 
-        const token = localStorage.getItem("authToken");
+        const token = getCookie("authToken");
 
-        if (token) {
-          const decoded = jwtDecode<TokenPayload>(token);
-          setPermissoes(decoded.permissoes);
+        if (!token) {
+          toast.error('Erro ao obter token de autenticação', { id: 'login' });
+          setIsLoading(false);
+          return;
+        }
+
+        const decoded = jwtDecode<TokenPayload>(token);
+        setPermissoes(decoded.permissoes);
+        
+        const idsConcessionarias = authClient.getIdsConcessionariasFromToken();
+        
+        if (!idsConcessionarias || idsConcessionarias.length === 0) {
+          removeCookie('authToken');
+          removeCookie('tokenType');
+          removeCookie('userName');
+          removeCookie('permissoes-storage');
           
-          // Validar se o usuário tem concessionárias associadas
-          const idsConcessionarias = authClient.getIdsConcessionariasFromToken();
+          toast.error("Seu usuário não possui concessionárias associadas. Entre em contato com o administrador do sistema.", { id: 'login' });
+          setIsLoading(false);
+          return;
+        }
+
+        try {
+          const concessionariasDoResponsavel = await concessionariaClient.buscarPorIdResponsavelLogado();
           
-          if (!idsConcessionarias || idsConcessionarias.length === 0) {
-            // Remover token e limpar dados
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('tokenType');
-            localStorage.removeItem('userName');
-            localStorage.removeItem('permissoes-storage');
-            sessionStorage.removeItem('permissoes-storage');
+          if (!concessionariasDoResponsavel || concessionariasDoResponsavel.length === 0) {
+            removeCookie('authToken');
+            removeCookie('tokenType');
+            removeCookie('userName');
+            removeCookie('permissoes-storage');
             
-            toast.error("Seu usuário não possui concessionárias associadas. Entre em contato com o administrador do sistema.");
+            toast.error("Você foi deslogado pois não possui concessionária associada ao seu usuário. Entre em contato com o administrador do sistema.", { id: 'login' });
             setIsLoading(false);
             return;
           }
-
-          // Verificar se realmente existem concessionárias disponíveis para o responsável
-          try {
-            const concessionariasDoResponsavel = await concessionariaClient.buscarPorIdResponsavelLogado();
+        } catch {
+          if (idsConcessionarias.length === 0) {
+            removeCookie('authToken');
+            removeCookie('tokenType');
+            removeCookie('userName');
+            removeCookie('permissoes-storage');
             
-            if (!concessionariasDoResponsavel || concessionariasDoResponsavel.length === 0) {
-              // Remover token e limpar dados
-              localStorage.removeItem('authToken');
-              localStorage.removeItem('tokenType');
-              localStorage.removeItem('userName');
-              localStorage.removeItem('permissoes-storage');
-              sessionStorage.removeItem('permissoes-storage');
-              
-              toast.error("Você foi deslogado pois não possui concessionária associada ao seu usuário. Entre em contato com o administrador do sistema.");
-              setIsLoading(false);
-              return;
-            }
-          } catch {
-            // Se der erro ao buscar, verificar se tem IDs no token como fallback
-            if (idsConcessionarias.length === 0) {
-              localStorage.removeItem('authToken');
-              localStorage.removeItem('tokenType');
-              localStorage.removeItem('userName');
-              localStorage.removeItem('permissoes-storage');
-              sessionStorage.removeItem('permissoes-storage');
-              
-              toast.error("Você foi deslogado pois não possui concessionária associada ao seu usuário. Entre em contato com o administrador do sistema.");
-              setIsLoading(false);
-              return;
-            }
+            toast.error("Você foi deslogado pois não possui concessionária associada ao seu usuário. Entre em contato com o administrador do sistema.", { id: 'login' });
+            setIsLoading(false);
+            return;
           }
         }
 
-        await new Promise(resolve => setTimeout(resolve, 400));
-        toast.success("Login Realizado com Sucesso.");
+        toast.success('Login realizado com sucesso!', { id: 'login' });
         
-        router.push(PAGES_DEF[0].path);
-        setUsername('');
-        setPassword('');
-      } catch {
-        toast.warning("Nome de usuário ou senha inválidos")
+        await new Promise(resolve => setTimeout(resolve, 100));
+        router.push('/dashboard-correspondencia');
+      } catch (error) {
+        console.error(error);
+        toast.error('Usuário ou senha inválidos', { id: 'login' });
+        setIsLoading(false);
       } finally {
         setIsLoading(false);
       }
@@ -140,7 +123,7 @@ export default function LoginPage() {
       <form onSubmit={handleSubmit} className="flex flex-col w-[45%] max-md:w-full gap-12 p-8 max-[1024px]:p-2 rounded-4xl max-[1460px]:w-[40%] min-[1440px]:max-w-[30%] justify-center mb-32">
         <div>
           <Image
-            src={logoPath}
+            src={getLogoPath()}
             alt="Logo"
             width={400}
             height={221}
@@ -150,7 +133,7 @@ export default function LoginPage() {
 
         <div className="flex flex-col justify-center items-center gap-8 w-full ">
           <div className="flex gap-6 items-center">
-            <h2 className="text-[#101A2D] font-semibold text-2xl text-center">{nomeSistema} <span className="text-[#276EEB]">{labelTitle}</span></h2>
+            <h2 className="text-[#101A2D] font-semibold text-2xl text-center">{getNomeSistema()} <span className="text-[#276EEB]">{getLabelTitle()}</span></h2>
           </div>
 
           <div className="flex flex-col gap-6 w-full">
@@ -202,7 +185,7 @@ export default function LoginPage() {
 
       <div className="relative w-[55%] h-[90vh] m-auto rounded-4xl overflow-hidden max-[1460px]:w-[60%] hidden md:block">
         <Image
-          src={backgroundPath}
+          src={getBackgroundLoginPath()}
           alt="Rodovia"
           fill
           className="object-center"

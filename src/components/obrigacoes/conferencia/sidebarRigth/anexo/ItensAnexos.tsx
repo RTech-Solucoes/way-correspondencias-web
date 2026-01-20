@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import type { AnexoResponse } from '@/api/anexos/type';
 import { formatDate } from '@/utils/utils';
 import React from 'react';
-import { authClient } from '@/api/auth/client';
+import { useIdResponsavelLogado } from '@/hooks/use-id-responsavel-logado';
 
 interface FileAccent {
   Icon: LucideIcon | React.ComponentType<{ className?: string }>;
@@ -147,7 +147,9 @@ export const ItemAnexo = ({
   const responsavelNome = responsavel || anexo.responsavel?.nmResponsavel || anexo.nmUsuario || null;
   const dataFormatada = dataUpload ? formatDate(dataUpload) : null;
   
-  const idResponsavelLogado = authClient.getUserIdResponsavelFromToken();
+  // Hook seguro para SSR - evita erro de hidratação
+  const idResponsavelLogado = useIdResponsavelLogado();
+
   const podeExcluir = idResponsavelLogado && anexo.responsavel?.idResponsavel === idResponsavelLogado;
 
   return (
@@ -219,8 +221,14 @@ export const ItemAnexoLink = ({
 }: ItemAnexoLinkProps) => {
   const dataFormatada = dataUpload ? formatDate(dataUpload) : null;
   
-  const idResponsavelLogado = authClient.getUserIdResponsavelFromToken();
+  // Hook seguro para SSR - evita erro de hidratação
+  const idResponsavelLogado = useIdResponsavelLogado();
   const podeExcluir = idResponsavelLogado && anexo?.responsavel?.idResponsavel === idResponsavelLogado;
+
+  // Função de abertura de link (só executa no cliente)
+  const handleOpenLink = () => {
+    window.open(link, '_blank', 'noopener,noreferrer');
+  };
   
   return (
     <li
@@ -247,11 +255,7 @@ export const ItemAnexoLink = ({
           variant="ghost"
           size="icon"
           className="text-gray-500 hover:text-blue-600"
-          onClick={() => {
-            if (typeof window !== 'undefined') {
-              window.open(link, '_blank', 'noopener,noreferrer');
-            }
-          }}
+          onClick={handleOpenLink}
         >
           <ExternalLink className="h-4 w-4" />
         </Button>

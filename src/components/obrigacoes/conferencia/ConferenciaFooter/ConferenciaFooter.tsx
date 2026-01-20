@@ -113,6 +113,7 @@ export function ConferenciaFooter({
     isCienciaChecked,
     isStatusEmValidacaoRegulatorio: status.isStatusEmValidacaoRegulatorio,
     isStatusEmAnaliseRegulatoria: status.isStatusEmAnaliseRegulatoria,
+    isStatusVencidoRegulatorio: status.isStatusVencidoRegulatorio,
     isStatusAtrasada: status.isStatusAtrasada,
     isStatusPermitidoEnviarReg: status.isStatusPermitidoEnviarReg,
     isPerfilPermitidoEnviarReg: permissoes.isPerfilPermitidoEnviarReg,
@@ -147,17 +148,29 @@ export function ConferenciaFooter({
       );
   }, [status.isStatusPermitidoEnviarReg, idPerfil]);
 
-    
+  const podeMostrarBotaoAnexarCorrespondencia = useMemo(() => {
+    return status.isStatusEmAnaliseRegulatoria || 
+           status.isStatusEmValidacaoRegulatorio || 
+           status.isStatusVencidoRegulatorio;
+  }, [status.isStatusEmAnaliseRegulatoria, status.isStatusEmValidacaoRegulatorio, status.isStatusVencidoRegulatorio]);
+
+  const isBotaoAnexarCorrespondenciaDesabilitado = useMemo(() => {
+    return !status.conferenciaAprovada || 
+           (!status.isStatusEmValidacaoRegulatorio && 
+            !status.isStatusEmAnaliseRegulatoria && 
+            !status.isStatusVencidoRegulatorio);
+  }, [status.conferenciaAprovada, status.isStatusEmValidacaoRegulatorio, status.isStatusEmAnaliseRegulatoria, status.isStatusVencidoRegulatorio]);
+
   return (
     <footer className="fixed bottom-0 left-0 right-0 z-11 border-t border-gray-200 bg-white px-8 py-4 h-[73px]">
       <div className="ml-auto flex w-full max-w-6xl flex-wrap items-center justify-end gap-3">
-        {isAdminOrGestor && (status.isStatusEmAnaliseRegulatoria || status.isStatusEmValidacaoRegulatorio) && (
+        {isAdminOrGestor && podeMostrarBotaoAnexarCorrespondencia && (
           <Button
             type="button"
             className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={onAnexarCorrespondencia}
-            disabled={!status.conferenciaAprovada || (!status.isStatusEmValidacaoRegulatorio && !status.isStatusEmAnaliseRegulatoria)}
-            tooltip={(!status.conferenciaAprovada || (!status.isStatusEmValidacaoRegulatorio && !status.isStatusEmAnaliseRegulatoria)) ? tooltips.tooltipAnexarCorrespondencia : ''}
+            disabled={isBotaoAnexarCorrespondenciaDesabilitado}
+            tooltip={isBotaoAnexarCorrespondenciaDesabilitado ? tooltips.tooltipAnexarCorrespondencia : ''}
           >
             <Paperclip className="h-4 w-4" />
             Anexar correspondência

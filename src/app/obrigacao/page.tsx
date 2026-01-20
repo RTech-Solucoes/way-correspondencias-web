@@ -1,19 +1,23 @@
-'use server';
-
 import { Suspense } from "react";
-import { ObrigacoesProvider } from "@/context/obrigacoes/ObrigacoesContext";
-import { ObrigacoesContent } from "../../components/obrigacoes/list-page/ObrigacoesContent";
+import { ObrigacoesContent } from "@/components/obrigacoes/list-page/ObrigacoesContent";
+import LoadingOverlay from "@/components/ui/loading-overlay";
+import obrigacaoClient from "@/api/obrigacao/client";
 
 export default async function ObrigacoesPage() {
+  const data = await obrigacaoClient.buscarLista({ page: 0, size: 10 });
+
   return (
-    <ObrigacoesProvider>
-      <Suspense fallback={
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-gray-500 italic animate-pulse">Carregando obrigações...</div>
-        </div>
-      }>
-        <ObrigacoesContent />
+    <div data-ssr="true">
+      <Suspense
+        fallback={
+          <LoadingOverlay
+            title="Carregando obrigações..."
+            subtitle="Aguarde enquanto os dados são carregados"
+          />
+        }
+      >
+        <ObrigacoesContent initialData={data} />
       </Suspense>
-    </ObrigacoesProvider>
+    </div>
   );
 }

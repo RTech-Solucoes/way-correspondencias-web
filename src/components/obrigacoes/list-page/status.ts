@@ -46,6 +46,12 @@ const ATRASADA_STYLE: ObrigacaoStatusStyle = {
   textColor: '#ffffff',
 };
 
+const VENCIDO_REGULATORIO_STYLE: ObrigacaoStatusStyle = {
+  variant: 'destructive',
+  backgroundColor: '#dc2626',
+  textColor: '#ffffff',
+};
+
 const NAO_APLICAVEL_SUSPENSA_STYLE: ObrigacaoStatusStyle = {
   variant: 'secondary',
   backgroundColor: '#ea580c',
@@ -91,6 +97,15 @@ export const getObrigacaoStatusStyle = (
     normalizedName.includes('ATRASADA')
   ) {
     return ATRASADA_STYLE;
+  }
+
+  if (
+    parsedStatusId === statusList.VENCIDO_REGULATORIO.id ||
+    normalizedName.includes('VENCIDO_REGULATORIO') ||
+    normalizedName.includes('VENCIDO REGULATÓRIO') ||
+    normalizedName.includes('VENCIDO REGULATORIO')
+  ) {
+    return VENCIDO_REGULATORIO_STYLE;
   }
 
   if (

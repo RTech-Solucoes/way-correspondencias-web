@@ -16,6 +16,7 @@ interface UseFooterTooltipsParams {
   isCienciaChecked?: boolean;
   isStatusEmValidacaoRegulatorio: boolean;
   isStatusEmAnaliseRegulatoria: boolean;
+  isStatusVencidoRegulatorio?: boolean;
   isStatusAtrasada: boolean;
   isStatusPermitidoEnviarReg: boolean;
   isPerfilPermitidoEnviarReg: boolean;
@@ -36,6 +37,7 @@ export function useFooterTooltips({
   isCienciaChecked = false,
   isStatusEmValidacaoRegulatorio,
   isStatusEmAnaliseRegulatoria,
+  isStatusVencidoRegulatorio = false,
   isStatusAtrasada,
   isStatusPermitidoEnviarReg,
   isPerfilPermitidoEnviarReg,
@@ -50,11 +52,11 @@ export function useFooterTooltips({
     if (!conferenciaAprovada) {
       return 'É necessário aprovar a conferência antes de anexar correspondência.';
     }
-    if (!isStatusEmValidacaoRegulatorio && !isStatusEmAnaliseRegulatoria) {
-      return 'Apenas é possível anexar correspondência quando o status for "Em Validação (Regulatório)" ou "Análise Regulatória".';
+    if (!isStatusEmValidacaoRegulatorio && !isStatusEmAnaliseRegulatoria && !isStatusVencidoRegulatorio) {
+      return 'Apenas é possível anexar correspondência quando o status for "Em Validação (Regulatório)", "Análise Regulatória" ou "Vencido Regulatório".';
     }
     return '';
-  }, [conferenciaAprovada, isStatusEmValidacaoRegulatorio, isStatusEmAnaliseRegulatoria]);
+  }, [conferenciaAprovada, isStatusEmValidacaoRegulatorio, isStatusEmAnaliseRegulatoria, isStatusVencidoRegulatorio]);
 
   const tooltipStatusValidacaoRegulatorio = useMemo(() => {
     if (conferenciaAprovada) {
@@ -154,9 +156,13 @@ export function useFooterTooltips({
       }
     }
 
-    if (idStatusSolicitacao === statusList.ANALISE_REGULATORIA.id) {
+    if (idStatusSolicitacao === statusList.ANALISE_REGULATORIA.id || 
+        idStatusSolicitacao === statusList.VENCIDO_REGULATORIO.id) {
       if (idPerfil !== perfilUtil.ADMINISTRADOR && idPerfil !== perfilUtil.GESTOR_DO_SISTEMA) {
-        return 'Apenas Administrador ou Gestor do Sistema podem realizar esta ação quando o status for "Análise Regulatória".';
+        const statusLabel = idStatusSolicitacao === statusList.VENCIDO_REGULATORIO.id 
+          ? 'Vencido Regulatório' 
+          : 'Análise Regulatória';
+        return `Apenas Administrador ou Gestor do Sistema podem realizar esta ação quando o status for "${statusLabel}".`;
       }
       if (isReprovadoEmAprovacaoStatusAtualAnaliseRegulatoria === false) {
         return 'Foi reprovado no status anterior. É necessário anexar uma nova correspondência para prosseguir.';

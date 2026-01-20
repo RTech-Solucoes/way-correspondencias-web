@@ -103,6 +103,10 @@ export function usePermissoesObrigacao({
     return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.ANALISE_REGULATORIA.id;
   }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 
+  const isStatusVencidoRegulatorio = useMemo(() => {
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.VENCIDO_REGULATORIO.id;
+  }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
   // Verificar se pode gerar relatório
   const podeGerarRelatorio = useMemo(() => {
     if (idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
@@ -267,6 +271,7 @@ export function usePermissoesObrigacao({
     isStatusAprovacaoTramitacao,
     isStatusEmAssinaturaDiretoria,
     isStatusEmAnaliseRegulatoria,
+    isStatusVencidoRegulatorio,
     // Permissões
     podeGerarRelatorio,
     isPerfilPermitidoPorStatus,

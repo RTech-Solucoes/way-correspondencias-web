@@ -1,6 +1,6 @@
 'use client';
 
-import React, {memo, useCallback, useEffect, useState} from 'react';
+import React, {memo, useCallback, useEffect, useState, useRef} from 'react';
 import {EnvelopeSimpleIcon, PaperclipIcon, SpinnerIcon} from '@phosphor-icons/react';
 import {cn, formatDateTimeBr} from '@/utils/utils';
 import {toast} from 'sonner';
@@ -9,25 +9,9 @@ import {EmailResponse} from '@/api/email/types';
 import {useDebounce} from '@/hooks/use-debounce';
 import {EmailFiltersState} from "@/context/email/EmailContext";
 
-const formatDate = (dateString?: string): string => {
-  if (!dateString) return '';
 
-  try {
-    const date = new Date(dateString);
 
-    if (isNaN(date.getTime())) return '';
-
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-
-    return `${day}/${month}/${year} ${hours}:${minutes}`;
-  } catch {
-    return '';
-  }
-};
+import { PagedResponse } from '@/api/email/types';
 
 interface EmailListProps {
   searchQuery: string;
@@ -35,6 +19,7 @@ interface EmailListProps {
   onEmailSelect: (emailId: string) => void;
   currentPage?: number;
   emailFilters?: EmailFiltersState;
+  initialData?: PagedResponse<EmailResponse> | null;
 }
 
 const EmailItem = memo<{
@@ -105,10 +90,12 @@ function EmailList({
     dateTo: '',
     isRead: '',
     hasAttachments: ''
-  }
+  },
+  initialData
 }: EmailListProps) {
   const [loading, setLoading] = useState(false);
-  const [emails, setEmails] = useState<EmailResponse[]>([]);
+  const [emails, setEmails] = useState<EmailResponse[]>(initialData?.content || []);
+  const hasInitializedRef = useRef(false);
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
@@ -150,8 +137,18 @@ function EmailList({
   }, [debouncedSearchQuery, externalPage, emailFilters.remetente, emailFilters.destinatario, emailFilters.dateFrom, emailFilters.dateTo]);
 
   useEffect(() => {
-    loadEmails();
-  }, [loadEmails]);
+    if (initialData && !hasInitializedRef.current) {
+      setEmails(initialData.content || []);
+      hasInitializedRef.current = true;
+      return;
+    }
+    
+    if (hasInitializedRef.current || !initialData) {
+      loadEmails();
+    } else {
+      hasInitializedRef.current = true;
+    }
+  }, [loadEmails, initialData]);
 
 
   return (

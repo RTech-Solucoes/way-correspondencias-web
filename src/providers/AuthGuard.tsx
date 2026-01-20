@@ -9,6 +9,8 @@ import {PUBLIC_ROUTES} from "@/constants/pages";
 import {usePermittedRoutes} from "@/hooks/use-permitted-routes";
 import authClient from "@/api/auth/client";
 import { toast } from 'sonner';
+import { getCookie, removeCookie } from '@/utils/cookies';
+import { migrateLocalStorageToCookies } from '@/utils/migrate-storage';
 
 export default function AuthGuard({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -19,19 +21,22 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
   const permittedRoutes = usePermittedRoutes()
 
   useEffect(() => {
+    // Migra dados do localStorage para cookies na primeira carga
+    migrateLocalStorageToCookies();
+
     const checkAuth = () => {
-      const authToken = localStorage.getItem('authToken');
+      const authToken = getCookie('authToken');
 
       if (authToken) {
         const idsConcessionarias = authClient.getIdsConcessionariasFromToken();
         
         if (!idsConcessionarias || idsConcessionarias.length === 0) {
-          localStorage.removeItem('authToken');
-          localStorage.removeItem('tokenType');
-          localStorage.removeItem('userName');
-          localStorage.removeItem('permissoes-storage');
-          localStorage.removeItem('concessionaria-selecionada');
-          sessionStorage.removeItem('permissoes-storage');
+          // Remove cookies
+          removeCookie('authToken');
+          removeCookie('tokenType');
+          removeCookie('userName');
+          removeCookie('permissoes-storage');
+          removeCookie('concessionaria-selecionada');
           
           toast.error("Seu usuário não possui concessionárias associadas. Entre em contato com o administrador do sistema.");
           router.push('/');
@@ -68,21 +73,14 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
 
     checkAuth();
 
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'authToken') {
-        checkAuth();
-      }
-    };
-
+    // Cookies não disparam eventos de storage, então usamos eventos customizados
     const handleAuthTokenRemoved = () => {
       checkAuth();
     };
 
-    window.addEventListener('storage', handleStorageChange);
     window.addEventListener('authTokenRemoved', handleAuthTokenRemoved);
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('authTokenRemoved', handleAuthTokenRemoved);
     };
   }, [pathname, router, isPublicRoute, permittedRoutes]);

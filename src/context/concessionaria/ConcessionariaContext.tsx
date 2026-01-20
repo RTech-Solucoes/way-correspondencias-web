@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { authClient } from '@/api/auth/client';
 import concessionariaClient from '@/api/concessionaria/client';
 import { ConcessionariaResponse } from '@/api/concessionaria/types';
+import { setCookie, getCookie, removeCookie } from '@/utils/cookies';
 
 // Constantes de configuração
 const STORAGE_KEY = 'concessionaria-selecionada';
@@ -33,9 +34,10 @@ export function ConcessionariaProvider({ children }: { children: ReactNode }) {
     
     setConcessionariaSelecionadaState(concessionaria);
     if (concessionaria) {
-      localStorage.setItem(STORAGE_KEY, concessionaria.idConcessionaria.toString());
+      // Salva em cookies
+      setCookie(STORAGE_KEY, concessionaria.idConcessionaria.toString());
     } else {
-      localStorage.removeItem(STORAGE_KEY);
+      removeCookie(STORAGE_KEY);
     }
     
     // Se mudou a concessionária, incrementa a chave para disparar recarregamento
@@ -113,7 +115,8 @@ export function ConcessionariaProvider({ children }: { children: ReactNode }) {
 
         setConcessionarias(concessionariasDoResponsavel);
 
-        const idSalvo = localStorage.getItem(STORAGE_KEY);
+        // Busca concessionária salva em cookies
+        const idSalvo = getCookie(STORAGE_KEY);
         if (idSalvo) {
           const concessionariaSalva = concessionariasDoResponsavel.find(
             c => c.idConcessionaria.toString() === idSalvo
@@ -158,14 +161,6 @@ export function ConcessionariaProvider({ children }: { children: ReactNode }) {
       }, AUTH_TOKEN_SAVED_DELAY);
     };
 
-    // Listener para quando o token for salvo em outra aba
-    const handleStorageChange = (e: StorageEvent) => {
-      if (!isMounted) return;
-      if (e.key === 'authToken' && e.newValue) {
-        carregarConcessionarias();
-      }
-    };
-
     // Listener para quando o token for removido (logout)
     const handleAuthTokenRemoved = () => {
       if (!isMounted) return;
@@ -173,18 +168,16 @@ export function ConcessionariaProvider({ children }: { children: ReactNode }) {
       console.log('[ConcessionariaContext] Token removido, limpando dados...');
       setConcessionarias([]);
       setConcessionariaSelecionadaState(null);
-      localStorage.removeItem(STORAGE_KEY);
+      removeCookie(STORAGE_KEY);
       setLoading(false);
     };
 
     window.addEventListener('authTokenSaved', handleAuthTokenSaved);
-    window.addEventListener('storage', handleStorageChange);
     window.addEventListener('authTokenRemoved', handleAuthTokenRemoved);
 
     return () => {
       isMounted = false;
       window.removeEventListener('authTokenSaved', handleAuthTokenSaved);
-      window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('authTokenRemoved', handleAuthTokenRemoved);
     };
   }, [setConcessionariaSelecionada, router]);
@@ -211,4 +204,3 @@ export const useConcessionaria = () => {
   }
   return context;
 };
-

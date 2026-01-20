@@ -1,6 +1,7 @@
 'use client';
 
 import React, {createContext, ReactNode, useContext, useEffect, useState} from 'react';
+import { getCookie, setCookie } from '@/utils/cookies';
 
 interface SidebarContextType {
   isCollapsed: boolean;
@@ -17,7 +18,7 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
   const [selectedModule, setSelectedModuleState] = useState<string>('correspondencias');
 
   useEffect(() => {
-    const savedModule = localStorage.getItem('selectedModule');
+    const savedModule = getCookie('selectedModule');
     if (savedModule) {
       setSelectedModuleState(savedModule);
     }
@@ -29,7 +30,7 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
 
   const setSelectedModule = (moduleId: string) => {
     setSelectedModuleState(moduleId);
-    localStorage.setItem('selectedModule', moduleId);
+    setCookie('selectedModule', moduleId);
   };
 
   const sidebarWidth = isCollapsed ? 104 : 310;
@@ -47,4 +48,4 @@ export function useSidebar() {
     throw new Error('useSidebar must be used within a SidebarProvider');
   }
   return context;
-} 
+}

@@ -140,6 +140,7 @@ export default function TasksStatusBoard({
         normalizedStatus.includes('EM_ANDAMENTO') ||
         (normalizedStatus.includes('EM VALIDAÇÃO') && normalizedStatus.includes('REGULATÓRIO')) ||
         (normalizedStatus.includes('EM_VALIDACAO') && normalizedStatus.includes('REGULATORIO')) ||
+        normalizedStatus.includes('VENCIDO REGULATORIO') ||
         normalizedStatus.includes('ATRASADA') ||
         normalizedStatus.includes('NÃO APLICÁVEL') ||
         normalizedStatus.includes('NAO_APLICAVEL') ||
