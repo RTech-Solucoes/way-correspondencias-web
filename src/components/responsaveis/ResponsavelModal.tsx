@@ -20,6 +20,7 @@ import { ArquivoDTO, TipoObjetoAnexoEnum } from '@/api/anexos/type';
 import anexosClient from '@/api/anexos/client';
 import { useConcessionaria } from '@/context/concessionaria/ConcessionariaContext';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { useResponsavelValidation } from './hooks/use-responsavel-validation';
 
 interface ResponsavelModalProps {
   responsavel: ResponsavelResponse | null;
@@ -266,7 +267,6 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
       ...prev,
       idsConcessionarias: selectedIds
     }));
-    // Limpar erro de validação quando uma concessionária for selecionada
     if (selectedIds.length > 0 && errors.idsConcessionarias) {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -276,14 +276,8 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
     }
   }, [errors.idsConcessionarias]);
 
-  const responsavelSchema = z.object({
-    nmResponsavel: formValidator.name,
-    nmUsuarioLogin: formValidator.username,
-    dsEmail: formValidator.email,
-    nrCpf: formValidator.cpf,
-    dtNascimento: formValidator.birthDate,
-    idPerfil: formValidator.id,
-    idsAreas: z.array(z.number()).min(1, 'Selecione pelo menos uma área'),
+  const { isFormValid, getValidationTooltip, responsavelSchema } = useResponsavelValidation({
+    formData,  errors, selectedAreaIds,  selectedConcessionariaIds,
   });
 
   const performSubmit = async () => {
@@ -371,15 +365,12 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
         return newErrors;
       });
     }
-
-    // Verificar se as concessionárias selecionadas incluem a concessionária atualmente selecionada
     const concessionariaAtualId = concessionariaSelecionada?.idConcessionaria;
     const temConcessionariasSelecionadas = selectedConcessionariaIds.length > 0;
     const incluiConcessionariaAtual = concessionariaAtualId 
       ? selectedConcessionariaIds.includes(concessionariaAtualId)
       : false;
 
-    // Se há concessionárias selecionadas mas não inclui a atual, mostrar aviso
     if (temConcessionariasSelecionadas && concessionariaAtualId && !incluiConcessionariaAtual) {
       setPendingSubmit(() => performSubmit);
       setShowConcessionariaWarning(true);
@@ -400,12 +391,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
   const handleClose = () => {
     onClose();
   };
-
-  const isFormValid = useCallback(() => {
-    const result = responsavelSchema.safeParse(formData);
-    return result.success && Object.keys(errors).length === 0;
-  }, [formData, errors, responsavelSchema]);
-
+  
   return (
     <Dialog open={open} onOpenChange={(newOpen) => !newOpen && onClose()}>
       <DialogContent className="h-full flex flex-col">
@@ -605,8 +591,9 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={loading || !isFormValid() || selectedAreaIds.length === 0 || selectedConcessionariaIds.length === 0}
+            disabled={loading || !isFormValid()}
             className="disabled:opacity-50 disabled:cursor-not-allowed"
+            tooltip={loading ? '' : (getValidationTooltip() || undefined)}
           >
             {loading ? 'Salvando...' : responsavel ? 'Salvar Alterações' : 'Criar Responsável'}
           </Button>
