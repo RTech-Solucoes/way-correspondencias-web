@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { TramitacaoFormData } from '../TramitacaoObrigacaoModal';
 import { StatusSolicPrazoTemaForUI } from '@/api/status-prazo-tema/types';
 import { statusSolicitacaoClient, StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
 import { STATUS_LIST, statusList as statusListType } from '@/api/status-solicitacao/types';
@@ -12,17 +11,25 @@ import { hoursToDaysAndHours } from '@/utils/utils';
 import { Input as NextUIInput } from '@nextui-org/react';
 import { CategoriaEnum, TipoEnum } from '@/api/tipos/types';
 
-interface Step3PrazosProps {
-  formData: TramitacaoFormData;
-  updateFormData: (data: Partial<TramitacaoFormData>) => void;
+export interface PrazosFormData {
+  statusPrazos?: StatusSolicPrazoTemaForUI[];
+  flExcepcional?: string;
+}
+
+interface Step3PrazosProps<T extends PrazosFormData> {
+  formData: T;
+  updateFormData: (data: Partial<T>) => void;
   disabled?: boolean;
+  defaultPrazosPorStatus?: { [key: number]: number };
+  statusOcultos?: number[];
+  tipoEnum?: TipoEnum;
 }
 
 function horasParaDias(horas: number): number {
   return Math.floor(horas / 24);
 }
 
-const STATUS_OCULTOS = [
+const DEFAULT_STATUS_OCULTOS_OBRIGACAO = [
   statusListType.NAO_INICIADO.id,
   statusListType.PENDENTE.id,
   statusListType.EM_ANDAMENTO.id,
@@ -36,7 +43,7 @@ const STATUS_OCULTOS = [
   statusListType.ARQUIVADO.id,
 ];
 
-const DEFAULT_PRAZOS_POR_STATUS: { [key: number]: number } = {
+export const DEFAULT_PRAZOS_POR_STATUS: { [key: number]: number } = {
   [statusListType.EM_ANALISE_GERENTE_REGULATORIO.id]: 48,
   [statusListType.EM_ANALISE_AREA_TECNICA.id]: 72,
   [statusListType.ANALISE_REGULATORIA.id]: 72,
@@ -44,7 +51,14 @@ const DEFAULT_PRAZOS_POR_STATUS: { [key: number]: number } = {
   [statusListType.EM_ASSINATURA_DIRETORIA.id]: 48,
 };
 
-export function Step3Prazos({ formData, updateFormData, disabled = false }: Step3PrazosProps) {
+export function Step3Prazos<T extends PrazosFormData>({
+  formData,
+  updateFormData,
+  disabled = false,
+  defaultPrazosPorStatus = DEFAULT_PRAZOS_POR_STATUS,
+  statusOcultos = DEFAULT_STATUS_OCULTOS_OBRIGACAO,
+  tipoEnum = TipoEnum.OBRIGACAO,
+}: Step3PrazosProps<T>) {
   const [statusList, setStatusList] = useState<StatusSolicitacaoResponse[]>([]);
   const hasInitialized = useRef(false);
 
@@ -55,7 +69,7 @@ export function Step3Prazos({ formData, updateFormData, disabled = false }: Step
       try {
         const status = await statusSolicitacaoClient.listarTodos(
           CategoriaEnum.CLASSIFICACAO_STATUS_SOLICITACAO,
-          [TipoEnum.TODOS, TipoEnum.OBRIGACAO]
+          [TipoEnum.TODOS, tipoEnum]
         );
         setStatusList(status);
       } catch (error) {
@@ -63,7 +77,7 @@ export function Step3Prazos({ formData, updateFormData, disabled = false }: Step
       }
     };
     loadStatusList();
-  }, []);
+  }, [tipoEnum]);
 
   const statusOptions = useMemo(() => {
     const allStatus = statusList.length > 0
@@ -77,13 +91,13 @@ export function Step3Prazos({ formData, updateFormData, disabled = false }: Step
         }));
 
     return allStatus
-      .filter(status => !STATUS_OCULTOS.includes(status.codigo))
+      .filter(status => !statusOcultos.includes(status.codigo))
       .sort((a, b) => {
         if (a.codigo === statusListType.EM_ANALISE_GERENTE_REGULATORIO.id) return -1;
         if (b.codigo === statusListType.EM_ANALISE_GERENTE_REGULATORIO.id) return 1;
         return a.codigo - b.codigo;
       });
-  }, [statusList]);
+  }, [statusList, statusOcultos]);
 
   const statusPrazos = useMemo((): StatusSolicPrazoTemaForUI[] => {
     if (formData.statusPrazos && formData.statusPrazos.length > 0) {
@@ -94,14 +108,14 @@ export function Step3Prazos({ formData, updateFormData, disabled = false }: Step
       return statusOptions.map(status => ({
         idStatusSolicPrazoTema: 0,
         idStatusSolicitacao: status.codigo,
-        nrPrazoInterno: DEFAULT_PRAZOS_POR_STATUS[status.codigo] || 0,
+        nrPrazoInterno: defaultPrazosPorStatus[status.codigo] || 0,
         nrPrazoExterno: 0,
         flAtivo: 'S',
       }));
     }
 
     return [];
-  }, [formData.statusPrazos, statusOptions]);
+  }, [formData.statusPrazos, statusOptions, defaultPrazosPorStatus]);
 
   useEffect(() => {
     const shouldInitialize = !hasInitialized.current && 
@@ -110,7 +124,7 @@ export function Step3Prazos({ formData, updateFormData, disabled = false }: Step
     
     if (shouldInitialize) {
       hasInitialized.current = true;
-      updateFormData({ statusPrazos });
+      updateFormData({ statusPrazos } as Partial<T>);
     }
   }, [statusPrazos.length, formData.statusPrazos?.length, updateFormData, formData, hasInitialized, statusPrazos]);
 
@@ -136,7 +150,7 @@ export function Step3Prazos({ formData, updateFormData, disabled = false }: Step
         });
       }
 
-      updateFormData({ statusPrazos: updated });
+      updateFormData({ statusPrazos: updated } as Partial<T>);
     },
     [statusPrazos, updateFormData]
   );
@@ -144,20 +158,20 @@ export function Step3Prazos({ formData, updateFormData, disabled = false }: Step
   const handlePrazoExcepcionalChange = useCallback(
     (checked: boolean) => {
       const ativo = !!checked;
-      updateFormData({ flExcepcional: ativo ? 'S' : 'N' });
+      updateFormData({ flExcepcional: ativo ? 'S' : 'N' } as Partial<T>);
 
       if (!ativo) {
         const defaultPrazos = statusOptions.map(status => ({
           idStatusSolicPrazoTema: 0,
           idStatusSolicitacao: status.codigo,
-          nrPrazoInterno: DEFAULT_PRAZOS_POR_STATUS[status.codigo] || 0,
+          nrPrazoInterno: defaultPrazosPorStatus[status.codigo] || 0,
           nrPrazoExterno: 0,
           flAtivo: 'S',
         }));
-        updateFormData({ statusPrazos: defaultPrazos });
+        updateFormData({ statusPrazos: defaultPrazos } as Partial<T>);
       }
     },
-    [statusOptions, updateFormData]
+    [statusOptions, updateFormData, defaultPrazosPorStatus]
   );
 
   if (statusOptions.length === 0) {
@@ -202,7 +216,7 @@ export function Step3Prazos({ formData, updateFormData, disabled = false }: Step
             {statusOptions.map((status) => {
               const prazoAtual = statusPrazos.find(
                 p => p.idStatusSolicitacao === status.codigo
-              )?.nrPrazoInterno ?? DEFAULT_PRAZOS_POR_STATUS[status.codigo] ?? 0;
+              )?.nrPrazoInterno ?? defaultPrazosPorStatus[status.codigo] ?? 0;
 
               return (
                 <div key={status.codigo} className="rounded-lg p-4 bg-gray-50">

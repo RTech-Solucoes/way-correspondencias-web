@@ -6,7 +6,7 @@ import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { SolicitacoesHeader } from '@/components/solicitacoes/content/SolicitacoesHeader';
 import { SolicitacoesSearch } from '@/components/solicitacoes/content/SolicitacoesSearch';
 import { SolicitacoesTable } from '@/components/solicitacoes/content/SolicitacoesTable';
-import SolicitacaoModal from '@/components/solicitacoes/SolicitacaoModal';
+import SolicitacaoModal from '@/components/solicitacoes/editar-modal/SolicitacaoModal';
 import DetalhesSolicitacaoModal from '@/components/solicitacoes/detalhes-modal-tramitacao/DetalhesSolicitacaoModal';
 import HistoricoRespostasModal from '@/components/solicitacoes/HistoricoRespostasModal';
 import FilterModal from '@/components/solicitacoes/FilterModal';
@@ -187,12 +187,9 @@ export function SolicitacoesContent({ initialData }: SolicitacoesContentProps) {
             open={showDetalhesModal}
             onClose={handleCloseDetalhesModal}
             correspondencia={detalhesCorrespondencia}
-            anexos={detalhesAnexos ?? []}
             statusLabel={getStatusText(
               detalhesCorrespondencia?.statusSolicitacao?.nmStatus?.toString() || ''
             )}
-            onAbrirEmailOriginal={abrirEmailOriginal}
-            onHistoricoRespostas={abrirHistorico}
             onEnviarDevolutiva={enviarDevolutiva}
           />
         )}
