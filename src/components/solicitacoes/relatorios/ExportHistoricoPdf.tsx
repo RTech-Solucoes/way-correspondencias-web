@@ -61,7 +61,7 @@ const getParecerLabel = (idPerfil?: number | null) => {
     if (idPerfil === perfilUtil.VALIDADOR_ASSINANTE) {
       return 'DIRETORIA (PARECER)';
     }
-    if (idPerfil === perfilUtil.ADMINISTRADOR || idPerfil === perfilUtil.GESTOR_DO_SISTEMA) {
+    if (idPerfil === perfilUtil.ADMINISTRADOR || idPerfil === perfilUtil.ADMIN_MASTER || idPerfil === perfilUtil.GESTOR_DO_SISTEMA) {
       return 'REGULATÓRIO (PARECER)';
     }
     return 'PARECER';

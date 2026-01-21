@@ -122,6 +122,7 @@ export function ObrigacaoAcoesMenu({
 
   const isAdminOrGestor = useMemo(() => {
     return idPerfil === perfilUtil.ADMINISTRADOR ||
+      idPerfil === perfilUtil.ADMIN_MASTER ||
       idPerfil === perfilUtil.GESTOR_DO_SISTEMA;
   }, [idPerfil]);
 

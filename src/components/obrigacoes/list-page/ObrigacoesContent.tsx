@@ -128,6 +128,7 @@ export function ObrigacoesContent({ initialData }: ObrigacoesContentProps) {
 
   const isAdminOrGestor = useMemo(() => {
     return idPerfil === perfilUtil.ADMINISTRADOR ||
+      idPerfil === perfilUtil.ADMIN_MASTER ||
       idPerfil === perfilUtil.GESTOR_DO_SISTEMA ||
       idPerfil === perfilUtil.VALIDADOR_ASSINANTE ||
       idPerfil === perfilUtil.TECNICO_SUPORTE;

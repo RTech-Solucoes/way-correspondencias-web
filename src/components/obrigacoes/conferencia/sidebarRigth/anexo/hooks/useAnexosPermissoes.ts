@@ -77,13 +77,15 @@ export function useAnexosPermissoes({
     if (isStatusConcluido) {
       return idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
              idPerfil === perfilUtil.ADMINISTRADOR || 
+             idPerfil === perfilUtil.ADMIN_MASTER || 
              idPerfil === perfilUtil.VALIDADOR_ASSINANTE;
     }
     
     if (isStatusNaoAplicavelSuspensa) {
-      return idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
-             idPerfil === perfilUtil.ADMINISTRADOR || 
-             idPerfil === perfilUtil.VALIDADOR_ASSINANTE;
+      return  idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
+              idPerfil === perfilUtil.ADMINISTRADOR ||
+              idPerfil === perfilUtil.ADMIN_MASTER ||
+              idPerfil === perfilUtil.VALIDADOR_ASSINANTE;
     }
     
     return isStatusEmAndamento || isStatusAtrasada || isStatusNaoIniciado || isStatusEmValidacaoRegulatorio || isStatusPendente;

@@ -10,7 +10,7 @@ import {MultiSelectAreas} from '@/components/ui/multi-select-areas';
 import {MultiSelectConcessionarias} from '@/components/ui/multi-select-concessionarias';
 import {ResponsavelRequest, ResponsavelResponse} from '@/api/responsaveis/types';
 import {responsaveisClient} from '@/api/responsaveis/client';
-import {PerfilResponse} from '@/api/perfis/types';
+import {PerfilResponse, perfilUtil} from '@/api/perfis/types';
 import {perfisClient} from '@/api/perfis/client';
 import {toast} from 'sonner';
 import {formValidator, mask} from "@/utils/utils";
@@ -477,7 +477,11 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
               <SelectContent>
                 {!loadingPerfis && perfis?.length > 0 ? (
                   perfis.map(perfil => (
-                    <SelectItem key={perfil.idPerfil} value={perfil.idPerfil.toString()}>
+                    <SelectItem 
+                      key={perfil.idPerfil} 
+                      value={perfil.idPerfil.toString()}
+                      disabled={perfil.idPerfil === perfilUtil.ADMIN_MASTER}
+                    >
                       {perfil.nmPerfil}
                     </SelectItem>
                   ))
