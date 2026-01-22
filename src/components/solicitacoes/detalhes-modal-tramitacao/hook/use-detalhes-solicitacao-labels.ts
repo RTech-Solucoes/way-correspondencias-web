@@ -32,6 +32,7 @@ export function useDetalhesSolicitacaoLabels({
     if (idProximoStatusAnaliseRegulatoria === statusList.EM_CHANCELA.id) {
       return 'Escrever resposta ao Gerente do Regulatório';
     }
+
     return 'Enviar devolutiva';
   }, [idProximoStatusAnaliseRegulatoria]);
 
@@ -104,7 +105,6 @@ export function useDetalhesSolicitacaoLabels({
   const labelTextareaDevolutiva = useMemo(() => ({
     [statusList.ANALISE_REGULATORIA.id]: labelStatusAnaliseRegulatoria,
     [statusList.VENCIDO_REGULATORIO.id]: labelStatusAnaliseRegulatoria,
-    [statusList.VENCIDO_AREA_TECNICA.id]: labelStatusAnaliseRegulatoria,
     [statusList.EM_APROVACAO.id]: 'Escrever parecer',
     [statusList.EM_CHANCELA.id]: 'Escrever resposta à Diretoria',
     [statusList.EM_ASSINATURA_DIRETORIA.id]: 'Escrever Parecer',
@@ -118,7 +118,7 @@ export function useDetalhesSolicitacaoLabels({
     [statusList.EM_CHANCELA.id]: 'Enviar para assinatura da Diretoria',
     [statusList.EM_APROVACAO.id]: btnTextareaEmAprovacao,
     [statusList.ANALISE_REGULATORIA.id]: btnLabelStatusAnaliseRegulatoria,
-    [statusList.VENCIDO_REGULATORIO.id]: labelFragAnaliseRegulatoria,
+    [statusList.VENCIDO_REGULATORIO.id]: btnLabelStatusAnaliseRegulatoria,
     [statusList.EM_ASSINATURA_DIRETORIA.id]: flAprovado !== '' ? btnStatusEmAssinaturaDiretoria : 'Aprovar Solicitação',
     [statusList.CONCLUIDO.id]: 'Arquivar Solicitação',
     [statusList.EM_ANALISE_GERENTE_REGULATORIO.id]: btnEncaminharParaGestorSistema,

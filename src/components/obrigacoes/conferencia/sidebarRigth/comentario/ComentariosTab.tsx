@@ -137,7 +137,7 @@ export function ComentariosTab({
             );
             
             const tramitacoesMap = new Map(
-              tramitacoes.map(t => [t.tramitacao.idTramitacao, t.tramitacao])
+              tramitacoes.map(t => [t.tramitacao?.idTramitacao, t?.tramitacao])
             );
             
             return comentariosUnificados.map((item, index) => {

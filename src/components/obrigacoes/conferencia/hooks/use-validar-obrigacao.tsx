@@ -132,8 +132,10 @@ export function useValidarObrigacao() {
       const errors: ValidationError[] = [];
       requiredSteps.forEach((step) => {
         const invalidCampos = getInvalidFields(formData, step, idClassificacaoCondicionada);
-        if (invalidCampos.length > 0 || (step === 3 && hasStep3ValidationErrors)) {
+        if (invalidCampos.length > 0) {
           errors.push({ step, campos: invalidCampos });
+        } else if (step === 3 && hasStep3ValidationErrors) {
+          errors.push({ step, campos: ['Erros de validação nos prazos'] });
         }
       });
 
