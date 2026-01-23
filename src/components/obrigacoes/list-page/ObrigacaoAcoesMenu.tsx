@@ -26,7 +26,6 @@ import { usePermissoes } from "@/context/permissoes/PermissoesContext";
 import anexosClient from "@/api/anexos/client";
 import { TipoDocumentoAnexoEnum, TipoObjetoAnexoEnum } from "@/api/anexos/type";
 import { useValidarObrigacao } from "@/components/obrigacoes/conferencia/hooks/use-validar-obrigacao";
-import { mostrarValidacaoObrigacaoToast } from "@/components/obrigacoes/criar/ValidarObrigacaoToast";
 
 interface ObrigacaoAcoesMenuProps {
   obrigacao: ObrigacaoResponse;
@@ -53,6 +52,7 @@ export function ObrigacaoAcoesMenu({
 
   const [isExisteAnexoCorrespondencia, setIsExisteAnexoCorrespondencia] = useState<boolean>(false);
   const [temCamposObrigatoriosFaltando, setTemCamposObrigatoriosFaltando] = useState<boolean>(false);
+  const [tooltipEnviarArea, setTooltipEnviarArea] = useState<string>('');
   const validandoRef = useRef<boolean>(false);
   
   const { validar, loading: validandoCampos } = useValidarObrigacao();
@@ -107,7 +107,7 @@ export function ObrigacaoAcoesMenu({
       return 'Você não tem permissão para encaminhar obrigações para tramitação.';
     }
     if (!conferenciaAprovada) {
-      return 'A conferência não foi aprovada. Não é possível encaminhar para tramitação.';
+      return 'A conferência não foi aprovada.\nNão é possível encaminhar para tramitação.';
     }
     if (isStatusDesabilitadoTramitacao) {
       const statusLabel = obrigacao.statusSolicitacao?.nmStatus || 'este status';
@@ -185,6 +185,16 @@ export function ObrigacaoAcoesMenu({
   }, [isStatusConcluido, isStatusEmValidacao, isStatusAprovacaoTramitacao, isAdminOrGestor, isExisteAnexoCorrespondencia]);
   const isNaoPermitidoEditar = conferenciaAprovada || isStatusNaoAplicavelSuspenso;
   const podeEnviarParaArea = !jaEnviadoParaArea && !temCamposObrigatoriosFaltando;
+
+  const tooltipEnviarAreaMemo = useMemo(() => {
+    if (jaEnviadoParaArea) {
+      return 'Obrigação já enviada para área';
+    }
+    if (temCamposObrigatoriosFaltando) {
+      return 'É necessário preencher todos os campos\n obrigatórios antes de enviar para as áreas';
+    }
+    return tooltipEnviarArea || '';
+  }, [jaEnviadoParaArea, temCamposObrigatoriosFaltando, tooltipEnviarArea]);
 
   return (
     <DropdownMenu>
@@ -271,7 +281,7 @@ export function ObrigacaoAcoesMenu({
               </TooltipTrigger>
               {!podeTramitar && tooltipOpçãoEnviarTramitacao && (
                 <TooltipContent>
-                  <p>{tooltipOpçãoEnviarTramitacao}</p>
+                  <p style={{ whiteSpace: 'pre-line' }}>{tooltipOpçãoEnviarTramitacao}</p>
                 </TooltipContent>
               )}
             </Tooltip>
@@ -285,20 +295,25 @@ export function ObrigacaoAcoesMenu({
                   className="w-full"
                   onMouseEnter={async (e) => {
                     e.stopPropagation();
-                    if (!podeEnviarParaArea && !jaEnviadoParaArea && !validandoRef.current) {
+                    if (jaEnviadoParaArea) {
+                      setTooltipEnviarArea('Obrigação já enviada para área');
+                    } else if (!podeEnviarParaArea && !validandoRef.current) {
                       validandoRef.current = true;
                       try {
                         const { isValid, errors } = await validar(obrigacao.idSolicitacao);
                         if (!isValid && errors.length > 0) {
-                          mostrarValidacaoObrigacaoToast(errors, {
-                            mensagemPersonalizada: 'É necessário preencher todos os campos obrigatórios antes de enviar para as áreas',
-                          });
+                          setTooltipEnviarArea('É necessário preencher todos os campos obrigatórios\nantes de enviar para as áreas');
+                        } else {
+                          setTooltipEnviarArea('');
                         }
                       } catch (error) {
                         console.error('Erro ao validar campos obrigatórios:', error);
+                        setTooltipEnviarArea('');
                       } finally {
                         validandoRef.current = false;
                       }
+                    } else {
+                      setTooltipEnviarArea('');
                     }
                   }}
                 >
@@ -311,9 +326,7 @@ export function ObrigacaoAcoesMenu({
                         try {
                           const { isValid, errors } = await validar(obrigacao.idSolicitacao);
                           if (!isValid && errors.length > 0) {
-                            mostrarValidacaoObrigacaoToast(errors, {
-                              mensagemPersonalizada: 'É necessário preencher todos os campos obrigatórios antes de enviar para as áreas',
-                            });
+                            setTooltipEnviarArea('É necessário preencher todos os campos obrigatórios\nantes de enviar para as áreas');
                           }
                         } catch (error) {
                           console.error('Erro ao validar campos obrigatórios:', error);
@@ -330,9 +343,9 @@ export function ObrigacaoAcoesMenu({
                   </DropdownMenuItem>
                 </div>
               </TooltipTrigger>
-              {jaEnviadoParaArea && (
+              {(!podeEnviarParaArea || jaEnviadoParaArea) && tooltipEnviarAreaMemo && (
                 <TooltipContent>
-                  <p>Obrigação já enviada para área</p>
+                  <p style={{ whiteSpace: 'pre-line' }}>{tooltipEnviarAreaMemo}</p>
                 </TooltipContent>
               )}
             </Tooltip>
