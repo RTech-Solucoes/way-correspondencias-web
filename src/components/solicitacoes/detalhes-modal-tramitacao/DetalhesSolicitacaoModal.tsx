@@ -57,6 +57,8 @@ export default function DetalhesSolicitacaoModal({
     isResponsavelPossuiMaisUmaAreaIgualSolicitacao: data.isResponsavelPossuiMaisUmaAreaIgualSolicitacao,
     tpResponsavelUpload: data.tpResponsavelUpload,
     userResponsavel: data.userResponsavel,
+    areaParaAutoSelecao: data.areaParaAutoSelecao,
+    open,
     onEnviarDevolutiva,
     onClose,
   });

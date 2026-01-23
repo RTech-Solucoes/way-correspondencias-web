@@ -148,7 +148,7 @@ export function useDetalhesSolicitacaoData({
     Array.isArray(correspond?.correspondencia?.area)
       ? (correspond!.correspondencia!.area! as Array<{ nmArea: string; idArea?: number; cdArea?: string }>)
       : [],
-    [correspond?.correspondencia?.area]
+    [correspond]
   );
 
   const temaLabel = correspond?.correspondencia?.tema?.nmTema ?? correspond?.correspondencia?.nmTema ?? '—';
@@ -171,7 +171,7 @@ export function useDetalhesSolicitacaoData({
 
   // Áreas para seleção
   const areasCorrespondentesParaSelecao = useMemo(() => {
-    if (!userResponsavel?.areas || userResponsavel.areas.length <= 1) {
+    if (!userResponsavel?.areas) {
       return [];
     }
 
@@ -193,19 +193,65 @@ export function useDetalhesSolicitacaoData({
         .filter((id): id is number => id !== undefined && id !== null)
       : [];
 
+    // Buscar o nível da última tramitação
+    const nrNivelUltimaTramitacao = correspond?.tramitacoes?.[0]?.tramitacao?.nrNivel;
+
+    // Identificar áreas que QUALQUER USUÁRIO já respondeu neste nível e status
+    // Regra: Cada área só pode ter UMA resposta (independente de quem respondeu)
+    const areasJaRespondidasPorQualquerUsuario = correspond?.tramitacoes
+      ?.filter(t =>
+        t?.tramitacao?.nrNivel === nrNivelUltimaTramitacao &&
+        t?.tramitacao?.idStatusSolicitacao === correspond?.statusSolicitacao?.idStatusSolicitacao &&
+        t?.tramitacao?.tramitacaoAcao?.some(ta => ta.flAcao === 'T')
+      )
+      .map(t => t?.tramitacao?.areaOrigem?.idArea)
+      .filter((id): id is number => id !== undefined && id !== null) || [];
+
+
+    // Retornar TODAS as áreas que:
+    // 1. O usuário tem acesso
+    // 2. Estão na solicitação
+    // Com indicação de quais já foram respondidas (por qualquer pessoa) para desabilitar
     return userResponsavel.areas
       .filter((respArea) => {
         const respAreaId = respArea?.area?.idArea;
-        return respAreaId !== undefined && areasCorrespondencia.includes(respAreaId);
+        return (
+          respAreaId !== undefined && 
+          areasCorrespondencia.includes(respAreaId)
+        );
       })
-      .map((respArea) => ({
-        idArea: respArea?.area?.idArea,
-        nmArea: respArea?.area?.nmArea || ''
-      }))
-      .filter((area): area is { idArea: number; nmArea: string } => area.idArea !== undefined && area.idArea !== null);
-  }, [userResponsavel?.areas, correspond?.correspondencia?.area, idStatusSolicitacao]);
+      .map((respArea) => {
+        const areaId = respArea?.area?.idArea;
+        // Desabilita se QUALQUER pessoa já respondeu por esta área
+        const foiRespondida = areaId !== undefined ? areasJaRespondidasPorQualquerUsuario.includes(areaId) : false;
+        return {
+          idArea: areaId,
+          nmArea: respArea?.area?.nmArea || '',
+          disabled: foiRespondida
+        };
+      })
+      .filter((area): area is { idArea: number; nmArea: string; disabled: boolean } => 
+        area.idArea !== undefined && area.idArea !== null
+      );
+  }, [userResponsavel?.areas, idStatusSolicitacao, correspond]);
 
+  // Verifica se o usuário tem mais de uma área em comum com a solicitação
   const isResponsavelPossuiMaisUmaAreaIgualSolicitacao = areasCorrespondentesParaSelecao.length > 1;
+
+  const areaParaAutoSelecao = useMemo(() => {
+    // Só auto-seleciona se houver múltiplas áreas inicialmente
+    if (areasCorrespondentesParaSelecao.length <= 1) return null;
+    
+    // Filtra apenas áreas que NÃO estão desabilitadas (ainda podem ser respondidas)
+    const areasDisponiveis = areasCorrespondentesParaSelecao.filter(area => !area.disabled);
+    
+    // Se só resta uma área disponível, auto-seleciona ela
+    if (areasDisponiveis.length === 1) {
+      return areasDisponiveis[0].idArea;
+    }
+    
+    return null;
+  }, [areasCorrespondentesParaSelecao]);
 
   // Quantidade de devolutivas
   const quantidadeDevolutivas = useMemo(() => {
@@ -421,6 +467,7 @@ export function useDetalhesSolicitacaoData({
     // Áreas
     areasCorrespondentesParaSelecao,
     isResponsavelPossuiMaisUmaAreaIgualSolicitacao,
+    areaParaAutoSelecao,
 
     // Descrição expandir/colapsar
     expandDescricao,

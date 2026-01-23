@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, ChangeEvent, FormEvent } from 'react';
+import { useState, useCallback, useEffect, ChangeEvent, FormEvent } from 'react';
 import { ArquivoDTO, TipoResponsavelAnexoEnum } from '@/api/anexos/type';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { solicitacaoParecerClient } from '@/api/solicitacao-parecer/client';
@@ -19,6 +19,8 @@ export type UseDetalhesSolicitacaoFormProps = {
   isResponsavelPossuiMaisUmaAreaIgualSolicitacao: boolean;
   tpResponsavelUpload: TipoResponsavelAnexoEnum;
   userResponsavel: ResponsavelResponse | null;
+  areaParaAutoSelecao?: number | null;
+  open?: boolean;
   onEnviarDevolutiva?(
     mensagem: string,
     arquivos: ArquivoDTO[],
@@ -36,6 +38,8 @@ export function useDetalhesSolicitacaoForm({
   isResponsavelPossuiMaisUmaAreaIgualSolicitacao,
   tpResponsavelUpload,
   userResponsavel,
+  areaParaAutoSelecao,
+  open = false,
   onEnviarDevolutiva,
   onClose,
 }: UseDetalhesSolicitacaoFormProps) {
@@ -46,6 +50,17 @@ export function useDetalhesSolicitacaoForm({
   const [flAprovado, setFlAprovado] = useState<'S' | 'N' | ''>('');
   const [areaSelecionadaParaResposta, setAreaSelecionadaParaResposta] = useState<number | null>(null);
   const [, setParecerAtual] = useState<SolicitacaoParecerResponse | null>(null);
+
+  // Auto-seleciona a área se só resta uma área pendente quando o modal abrir
+  useEffect(() => {
+    if (open && areaParaAutoSelecao) {
+      // Quando o modal abre e há uma área para auto-seleção, seleciona ela automaticamente
+      setAreaSelecionadaParaResposta(areaParaAutoSelecao);
+    } else if (!open) {
+      // Quando o modal fecha, limpa a seleção
+      setAreaSelecionadaParaResposta(null);
+    }
+  }, [open, areaParaAutoSelecao]);
 
   const handleUploadChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;

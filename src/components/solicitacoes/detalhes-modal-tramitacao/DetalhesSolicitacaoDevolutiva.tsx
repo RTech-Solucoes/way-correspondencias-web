@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { PaperclipIcon, X as XIcon } from '@phosphor-icons/react';
 import { ChangeEvent } from 'react';
-import { AreaSelectionButtons } from '../AreaSelectionButtons';
+import { AreaSelectionButtons } from './AreaSelectionButtons';
 import { HistoricoRespostasModalButton } from '../HistoricoRespostasModal';
 
 type Area = {
