@@ -143,7 +143,7 @@ export function useFooterTooltips({
 
     if (idStatusSolicitacao === statusList.EM_ANALISE_GERENTE_REGULATORIO.id) {
       if (idPerfil !== perfilUtil.ADMINISTRADOR && idPerfil !== perfilUtil.ADMIN_MASTER) {
-        return 'Apenas o Administrador pode realizar esta ação';
+        return 'Apenas o Administrador ou Admin Master podem realizar esta ação';
       }
       if (flExigeCienciaGerenteRegul === 'N' && !isCienciaChecked) {
         return 'É necessário declarar ciência para prosseguir';
@@ -171,7 +171,7 @@ export function useFooterTooltips({
 
     if (idStatusSolicitacao === statusList.EM_CHANCELA.id) {
       if (idPerfil !== perfilUtil.ADMINISTRADOR && idPerfil !== perfilUtil.ADMIN_MASTER) {
-        return 'Apenas o Administrador pode realizar esta ação quando o status for "Em Chancela".';
+        return 'Apenas o Administrador ou Admin Master podem realizar esta ação quando o status for "Em Chancela".';
       }
     }
 

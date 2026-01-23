@@ -25,7 +25,6 @@ import statusSolicitacaoClient, { StatusSolicitacaoResponse } from '@/api/status
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { statusList } from '@/api/status-solicitacao/types';
 import { useValidarObrigacao } from '@/components/obrigacoes/conferencia/hooks/use-validar-obrigacao';
-import { mostrarValidacaoObrigacaoToast } from './ValidarObrigacaoToast';
 
 type TabKey = 'dados' | 'temas' | 'prazos' | 'anexos' | 'vinculos';
 
@@ -291,9 +290,7 @@ export function EditarObrigacaoContent({ id, initialData }: EditarObrigacaoConte
     );
 
     if (!isValid) {
-      mostrarValidacaoObrigacaoToast(errors, {
-        onTabChange: setActiveTab,
-      });
+      toast.error('É necessário preencher todos os campos obrigatórios antes de salvar as alterações.');
       return;
     }
 

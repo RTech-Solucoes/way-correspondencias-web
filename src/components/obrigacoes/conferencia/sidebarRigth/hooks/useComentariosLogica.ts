@@ -182,7 +182,7 @@ export function useComentariosLogica({
 
     tramitacoes.forEach(t => {
       const tramitacao = t.tramitacao;
-      if (tramitacao.dsObservacao) {
+      if (tramitacao?.dsObservacao) {
         const textoTramitacao = (tramitacao.dsObservacao || '').trim().toLowerCase();
         
         if (!textosPareceres.has(textoTramitacao)) {
@@ -219,10 +219,10 @@ export function useComentariosLogica({
     }
 
     const tramitacoesComData = tramitacoes
-      .filter(t => t.tramitacao.dsObservacao)
+      .filter(t => t.tramitacao?.dsObservacao)
       .map(t => ({
-        tramitacao: t.tramitacao,
-        data: t.tramitacao.tramitacaoAcao?.[0]?.dtCriacao || t.tramitacao.solicitacao?.dtCriacao || '',
+        tramitacao: t.tramitacao!,
+        data: t.tramitacao?.tramitacaoAcao?.[0]?.dtCriacao || t.tramitacao?.solicitacao?.dtCriacao || '',
       }))
       .sort((a, b) => {
         const dataA = a.data ? new Date(a.data).getTime() : 0;
@@ -234,8 +234,8 @@ export function useComentariosLogica({
       return true;
     }
 
-    const ultimaTramitacao = tramitacoesComData[0].tramitacao;
-    const responsavelUltimaTramitacao = ultimaTramitacao.tramitacaoAcao?.[0]?.responsavelArea?.responsavel;
+    const ultimaTramitacao = tramitacoesComData[0]?.tramitacao;
+    const responsavelUltimaTramitacao = ultimaTramitacao?.tramitacaoAcao?.[0]?.responsavelArea?.responsavel;
 
     if (responsavelUltimaTramitacao?.idResponsavel === idResponsavelLogado) {
       return false;

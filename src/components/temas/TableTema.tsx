@@ -36,12 +36,6 @@ export default function TableTema(props: TableTemaProps) {
               </div>
             </StickyTableHead>
             <StickyTableHead>Descrição</StickyTableHead>
-            <StickyTableHead className="cursor-pointer" onClick={() => props.handleSort('nrPrazo')}>
-              <div className="flex items-center">
-                Prazo (horas corridas)
-                <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
-              </div>
-            </StickyTableHead>
             {(canAtualizarTema || canDeletarTema) && (
               <StickyTableHead className="text-right">Ações</StickyTableHead>
             )}
@@ -72,9 +66,6 @@ export default function TableTema(props: TableTemaProps) {
                 <StickyTableCell className="font-medium">{tema.nmTema}</StickyTableCell>
                 <StickyTableCell className="max-w-xs truncate" title={tema.dsTema}>
                   {tema.dsTema || '-'}
-                </StickyTableCell>
-                <StickyTableCell>
-                  {tema.nrPrazo ? `${tema.nrPrazo} horas` : '-'}
                 </StickyTableCell>
                 {(canAtualizarTema || canDeletarTema) && (
                   <StickyTableCell className="text-right">

@@ -76,15 +76,19 @@ export function useDetalhesSolicitacaoPermissoes({
     idsResponsaveisAssinates.includes(userResponsavel.idResponsavel));
 
   const enableEnviarDevolutiva = useMemo(() => {
+    // Validação antiga: Se o usuário tem apenas 1 área e já respondeu, bloqueia
     const tramitacaoExecutada = correspond?.tramitacoes?.filter(t =>
       t?.tramitacao?.nrNivel === nrNivelUltimaTramitacao &&
       t?.tramitacao?.idStatusSolicitacao === correspond?.statusSolicitacao?.idStatusSolicitacao &&
       t?.tramitacao?.tramitacaoAcao?.some(ta =>
         ta?.responsavelArea?.responsavel?.idResponsavel === userResponsavel?.idResponsavel &&
-        ta.flAcao === 'T'));
+        ta.flAcao === 'T'
+      )
+    );
 
-    // Verifica se TODAS as áreas do usuário que estão na solicitação já responderam
-    const todasAreasUsuarioResponderam = (() => {
+    // Verifica se o PRÓPRIO USUÁRIO já respondeu por todas as suas áreas
+    // Regra: Cada USUÁRIO pode responder UMA VEZ por cada área que ele tem acesso
+    const { todasAreasUsuarioRespondeu, existemAreasPendentesDoUsuario, temApenasUmaArea } = (() => {
       const areasSolicitacao = Array.isArray(correspond?.correspondencia?.area)
         ? (correspond!.correspondencia!.area! as Array<{ idArea?: number }>)
           .map(a => a?.idArea)
@@ -99,13 +103,18 @@ export function useDetalhesSolicitacaoPermissoes({
           areasSolicitacao.includes(id)
         ) || [];
 
-      if (areasUsuarioNaSolicitacao.length === 0) return false;
+      if (areasUsuarioNaSolicitacao.length === 0) return { todasAreasUsuarioRespondeu: false, existemAreasPendentesDoUsuario: false, temApenasUmaArea: false };
+      
+      const temApenasUmaAreaComum = areasUsuarioNaSolicitacao.length === 1;
 
-      const areasQueJaResponderam = correspond?.tramitacoes
+      // Áreas que QUALQUER USUÁRIO já respondeu no mesmo nível e status
+      // Regra: Cada área só pode ter UMA resposta (independente de quem respondeu)
+      const areasJaRespondidasPorQualquerUsuario = correspond?.tramitacoes
         ?.filter(t =>
           t?.tramitacao?.nrNivel === nrNivelUltimaTramitacao &&
           correspond?.statusSolicitacao?.idStatusSolicitacao !== statusList.EM_ASSINATURA_DIRETORIA.id &&
           t?.tramitacao?.idStatusSolicitacao === correspond?.statusSolicitacao?.idStatusSolicitacao &&
+          t?.tramitacao?.tramitacaoAcao?.some(ta => ta.flAcao === 'T') &&
           !((correspond?.statusSolicitacao?.idStatusSolicitacao === statusList.EM_ANALISE_AREA_TECNICA.id ||
             correspond?.statusSolicitacao?.idStatusSolicitacao === statusList.VENCIDO_AREA_TECNICA.id) &&
             (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.D ||
@@ -115,12 +124,28 @@ export function useDetalhesSolicitacaoPermissoes({
         .map(t => t?.tramitacao?.areaOrigem?.idArea)
         .filter((id): id is number => id !== undefined && id !== null) || [];
 
-      return areasUsuarioNaSolicitacao.every(areaId =>
-        areasQueJaResponderam.includes(areaId)
+      // Verifica se TODAS as áreas do usuário já foram respondidas (por qualquer pessoa)
+      const todasResponderam = areasUsuarioNaSolicitacao.every(areaId =>
+        areasJaRespondidasPorQualquerUsuario.includes(areaId)
       );
+
+      // Verifica se ainda existem áreas que NÃO foram respondidas por NINGUÉM
+      const areasPendentes = areasUsuarioNaSolicitacao.filter(areaId =>
+        !areasJaRespondidasPorQualquerUsuario.includes(areaId)
+      );
+
+      return { 
+        todasAreasUsuarioRespondeu: todasResponderam, 
+        existemAreasPendentesDoUsuario: areasPendentes.length > 0,
+        temApenasUmaArea: temApenasUmaAreaComum
+      };
     })();
 
     if (sending) return false;
+
+    // Validação antiga: Se o usuário tem apenas 1 área em comum e já respondeu, bloqueia
+    // Se tem múltiplas áreas, permite responder por cada uma
+    if (temApenasUmaArea && tramitacaoExecutada != null && tramitacaoExecutada?.length > 0) return false;
 
     if (idStatusSolicitacao === statusList.EM_ASSINATURA_DIRETORIA.id) {
       const isRolePermitido = (
@@ -149,9 +174,9 @@ export function useDetalhesSolicitacaoPermissoes({
       return false;
     }
 
-    if (tramitacaoExecutada != null && tramitacaoExecutada?.length > 0) return false;
-
-    if (todasAreasUsuarioResponderam) return false;
+    // Se o PRÓPRIO USUÁRIO já respondeu por TODAS as suas áreas, bloqueia
+    // Caso ainda existam áreas que ele não respondeu, permite continuar
+    if (todasAreasUsuarioRespondeu && !existemAreasPendentesDoUsuario) return false;
 
     if (idStatusSolicitacao === statusList.EM_ANALISE_AREA_TECNICA.id
       || idStatusSolicitacao === statusList.VENCIDO_AREA_TECNICA.id
@@ -209,10 +234,101 @@ export function useDetalhesSolicitacaoPermissoes({
   ]);
 
   const btnTooltip = useMemo(() => {
-    const isAreaTecnica = idStatusSolicitacao === statusList.EM_ANALISE_AREA_TECNICA.id;
+    // Se o botão está habilitado, não precisa de tooltip
+    if (enableEnviarDevolutiva) return '';
 
-    if (idStatusSolicitacao === statusList.EM_CHANCELA.id && !(userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR || userResponsavel?.idPerfil === perfilUtil.ADMIN_MASTER)) {
-      return 'Apenas o Administrador pode responder.';
+    // Verificar as mesmas condições do enableEnviarDevolutiva para dar mensagens específicas
+    const isAreaTecnica = idStatusSolicitacao === statusList.EM_ANALISE_AREA_TECNICA.id;
+    
+    // Validação: Se o usuário tem apenas 1 área e já respondeu
+    const tramitacaoExecutada = correspond?.tramitacoes?.filter(t =>
+      t?.tramitacao?.nrNivel === nrNivelUltimaTramitacao &&
+      t?.tramitacao?.idStatusSolicitacao === correspond?.statusSolicitacao?.idStatusSolicitacao &&
+      t?.tramitacao?.tramitacaoAcao?.some(ta =>
+        ta?.responsavelArea?.responsavel?.idResponsavel === userResponsavel?.idResponsavel &&
+        ta.flAcao === 'T'
+      )
+    );
+
+    const { todasAreasUsuarioRespondeu, existemAreasPendentesDoUsuario, temApenasUmaArea } = (() => {
+      const areasSolicitacao = Array.isArray(correspond?.correspondencia?.area)
+        ? (correspond!.correspondencia!.area! as Array<{ idArea?: number }>)
+          .map(a => a?.idArea)
+          .filter((id): id is number => id !== undefined && id !== null)
+        : [];
+
+      const areasUsuarioNaSolicitacao = userResponsavel?.areas
+        ?.map(a => a?.area?.idArea)
+        .filter((id): id is number =>
+          id !== undefined &&
+          id !== null &&
+          areasSolicitacao.includes(id)
+        ) || [];
+
+      if (areasUsuarioNaSolicitacao.length === 0) return { todasAreasUsuarioRespondeu: false, existemAreasPendentesDoUsuario: false, temApenasUmaArea: false };
+      
+      const temApenasUmaAreaComum = areasUsuarioNaSolicitacao.length === 1;
+
+      const areasJaRespondidasPorQualquerUsuario = correspond?.tramitacoes
+        ?.filter(t =>
+          t?.tramitacao?.nrNivel === nrNivelUltimaTramitacao &&
+          correspond?.statusSolicitacao?.idStatusSolicitacao !== statusList.EM_ASSINATURA_DIRETORIA.id &&
+          t?.tramitacao?.idStatusSolicitacao === correspond?.statusSolicitacao?.idStatusSolicitacao &&
+          t?.tramitacao?.tramitacaoAcao?.some(ta => ta.flAcao === 'T') &&
+          !((correspond?.statusSolicitacao?.idStatusSolicitacao === statusList.EM_ANALISE_AREA_TECNICA.id ||
+            correspond?.statusSolicitacao?.idStatusSolicitacao === statusList.VENCIDO_AREA_TECNICA.id) &&
+            (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.D ||
+              flAnaliseGerenteDiretor === AnaliseGerenteDiretor.A)
+          )
+        )
+        .map(t => t?.tramitacao?.areaOrigem?.idArea)
+        .filter((id): id is number => id !== undefined && id !== null) || [];
+
+      const todasResponderam = areasUsuarioNaSolicitacao.every(areaId =>
+        areasJaRespondidasPorQualquerUsuario.includes(areaId)
+      );
+
+      const areasPendentes = areasUsuarioNaSolicitacao.filter(areaId =>
+        !areasJaRespondidasPorQualquerUsuario.includes(areaId)
+      );
+
+      return { 
+        todasAreasUsuarioRespondeu: todasResponderam, 
+        existemAreasPendentesDoUsuario: areasPendentes.length > 0,
+        temApenasUmaArea: temApenasUmaAreaComum
+      };
+    })();
+
+    // Verificar condições na mesma ordem do enableEnviarDevolutiva
+    if (sending) {
+      return 'Enviando resposta...';
+    }
+
+    if (temApenasUmaArea && tramitacaoExecutada != null && tramitacaoExecutada?.length > 0) {
+      return 'Você já respondeu por esta área. Cada área só pode ter uma resposta.';
+    }
+
+    if (idStatusSolicitacao === statusList.ARQUIVADO.id) {
+      return 'Esta solicitação está arquivada e não pode ser respondida.';
+    }
+
+    if (idStatusSolicitacao === statusList.EM_ASSINATURA_DIRETORIA.id) {
+      const isRolePermitido = (
+        userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR ||
+        userResponsavel?.idPerfil === perfilUtil.ADMIN_MASTER ||
+        userResponsavel?.idPerfil === perfilUtil.VALIDADOR_ASSINANTE ||
+        userResponsavel?.areas?.some(a => a?.area?.idArea === areaDiretoria)
+      );
+
+      if (!isRolePermitido) {
+        return 'Apenas Administrador, Admin Master, Gestor do Sistema, Validador/Assinante ou responsáveis da Diretoria podem aprovar.';
+      }
+      if (!isAssinanteAutorizado) {
+        return 'Apenas os validadores/assinantes selecionados podem aprovar esta solicitação.';
+      }
+      if (isDiretorJaAprovou) {
+        return 'Já aprovado por um diretor. É necessário outro diretor aprovar.';
+      }
     }
 
     if (idStatusSolicitacao === statusList.CONCLUIDO.id) {
@@ -220,25 +336,97 @@ export function useDetalhesSolicitacaoPermissoes({
         userResponsavel?.idPerfil !== perfilUtil.ADMINISTRADOR &&
         userResponsavel?.idPerfil !== perfilUtil.ADMIN_MASTER &&
         userResponsavel?.idPerfil !== perfilUtil.GESTOR_DO_SISTEMA
-      ) return 'Apenas Administrador e Gestor do Sistema podem arquivar solicitações concluídas.';
+      ) {
+        return 'Apenas Administrador, Admin Master e Gestor do Sistema podem arquivar solicitações concluídas.';
+      }
     }
 
-    if (idStatusSolicitacao === statusList.EM_ASSINATURA_DIRETORIA.id) {
-      if (!isAssinanteAutorizado) return 'Apenas os validadores/assinantes selecionados podem aprovar esta solicitação.';
-      if (isDiretorJaAprovou) return 'Já aprovado por um diretor. É necessário outro diretor aprovar.';
+    if (idStatusSolicitacao === statusList.EM_ANALISE_GERENTE_REGULATORIO.id || idStatusSolicitacao === statusList.VENCIDO_REGULATORIO.id) {
+      if (userResponsavel?.idPerfil !== perfilUtil.ADMINISTRADOR && userResponsavel?.idPerfil !== perfilUtil.ADMIN_MASTER) {
+        return 'Apenas Administrador, Gestor do Sistema e Admin Master podem responder nesta etapa.';
+      }
     }
 
-    if (isAreaTecnica) {
-      if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.G) return 'Apenas Executor Avançado (Gerente) de cada área pode responder.';
-      if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.D) return 'Diretor, Executor Avançado ou Executor podem responder; é necessária a resposta do Diretor.';
-      if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.A) return 'Precisa do parecer do Executor Avançado (Gerente) e Validador/Assinante (Diretor). Você já respondeu ou não tem o perfil necessário.';
-
-      return 'Podem responder: Executor ou Executor Avançado (Gerente) de cada área.';
+    if (todasAreasUsuarioRespondeu && !existemAreasPendentesDoUsuario) {
+      return 'Todas as suas áreas já foram respondidas. Não há mais áreas pendentes para você responder.';
     }
-    return isPermissaoEnviandoDevolutiva
-      ? 'Apenas gerente/diretores da área pode enviar resposta da devolutiva'
-      : '';
-  }, [idStatusSolicitacao, userResponsavel?.idPerfil, flAnaliseGerenteDiretor, isAssinanteAutorizado, isDiretorJaAprovou, isPermissaoEnviandoDevolutiva]);
+
+    if (isAreaTecnica || idStatusSolicitacao === statusList.VENCIDO_AREA_TECNICA.id) {
+      if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.G) {
+        if (userResponsavel?.idPerfil !== perfilUtil.EXECUTOR_AVANCADO) {
+          return 'Apenas Executor Avançado (Gerente) de cada área pode responder.';
+        }
+      }
+
+      if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.D) {
+        if (!isRolePermitidoAnaliseAreaTecnicaFlD) {
+          return 'Diretor, Executor Avançado ou Executor podem responder; é necessária a resposta do Diretor.';
+        }
+      }
+
+      if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.A) {
+        if (!isRolePermitidoAnaliseAreaTecnicaFlA) {
+          return 'Precisa do parecer do Executor Avançado (Gerente) e Validador/Assinante (Diretor). Você já respondeu ou não tem o perfil necessário.';
+        }
+      }
+
+      if (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.N || !flAnaliseGerenteDiretor) {
+        if (
+          userResponsavel?.idPerfil !== perfilUtil.EXECUTOR_AVANCADO &&
+          userResponsavel?.idPerfil !== perfilUtil.EXECUTOR &&
+          userResponsavel?.idPerfil !== perfilUtil.EXECUTOR_RESTRITO
+        ) {
+          return 'Podem responder: Executor, Executor Avançado (Gerente) ou Executor Restrito de cada área.';
+        }
+      }
+
+      if (hasAreaInicial && !(
+        (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.G && userResponsavel?.idPerfil === perfilUtil.EXECUTOR_AVANCADO) ||
+        (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.D && isRolePermitidoAnaliseAreaTecnicaFlD) ||
+        (flAnaliseGerenteDiretor === AnaliseGerenteDiretor.A && isRolePermitidoAnaliseAreaTecnicaFlA) ||
+        ((flAnaliseGerenteDiretor === AnaliseGerenteDiretor.N || !flAnaliseGerenteDiretor) && (
+          userResponsavel?.idPerfil === perfilUtil.EXECUTOR_AVANCADO ||
+          userResponsavel?.idPerfil === perfilUtil.EXECUTOR ||
+          userResponsavel?.idPerfil === perfilUtil.EXECUTOR_RESTRITO
+        ))
+      )) {
+        return 'Você não tem permissão para responder nesta etapa ou não possui área inicial nesta solicitação.';
+      }
+    }
+
+    if (idStatusSolicitacao === statusList.ANALISE_REGULATORIA.id ||
+      idStatusSolicitacao === statusList.VENCIDO_REGULATORIO.id) {
+      if (userResponsavel?.idPerfil !== perfilUtil.ADMINISTRADOR && userResponsavel?.idPerfil !== perfilUtil.ADMIN_MASTER) {
+        if (hasAreaInicial && userResponsavel?.idPerfil !== perfilUtil.GESTOR_DO_SISTEMA) {
+          return 'Apenas Administrador, Admin Master ou Gestor do Sistema (com área inicial) podem responder.';
+        }
+        return 'Apenas Administrador, Admin Master ou Gestor do Sistema podem responder nesta etapa.';
+      }
+    }
+
+    if (idStatusSolicitacao === statusList.EM_APROVACAO.id) {
+      if (userResponsavel?.idPerfil !== perfilUtil.EXECUTOR_AVANCADO) {
+        return 'Apenas Executor Avançado pode responder nesta etapa.';
+      }
+    }
+
+    if (idStatusSolicitacao === statusList.EM_CHANCELA.id) {
+      if (userResponsavel?.idPerfil !== perfilUtil.ADMINISTRADOR && userResponsavel?.idPerfil !== perfilUtil.ADMIN_MASTER) {
+        return 'Apenas o Administrador  ou Admin Masterpode responder.';
+      }
+    }
+
+    if (isPermissaoEnviandoDevolutiva) {
+      return 'Apenas gerente/diretores da área pode enviar resposta da devolutiva.';
+    }
+
+    return 'Você não tem permissão para enviar resposta nesta solicitação.';
+  }, [
+    enableEnviarDevolutiva, sending, idStatusSolicitacao, userResponsavel, flAnaliseGerenteDiretor,
+    isAssinanteAutorizado, isDiretorJaAprovou, isPermissaoEnviandoDevolutiva, hasAreaInicial,
+    areaDiretoria, isRolePermitidoAnaliseAreaTecnicaFlA, isRolePermitidoAnaliseAreaTecnicaFlD,
+    correspond, nrNivelUltimaTramitacao
+  ]);
 
   const diretorPermitidoDsParecer = useMemo(() => {
     const isDiretoriaPerfil = userResponsavel?.idPerfil === perfilUtil.VALIDADOR_ASSINANTE;

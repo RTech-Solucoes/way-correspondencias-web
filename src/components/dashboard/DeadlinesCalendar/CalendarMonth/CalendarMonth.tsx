@@ -218,12 +218,12 @@ export default function CalendarMonth({ config }: CalendarMonthProps) {
                     -
                   </div>
                 ) : (
-                  dayItems.slice(0, 2).map((item) => {
+                  dayItems.slice(0, 2).map((item, itemIndex) => {
                     const display = formatItemDisplay(item);
 
                     return (
                       <div
-                        key={item.id}
+                        key={`${index}-${item.id}-${itemIndex}`}
                         className={`p-1.5 rounded text-xs cursor-pointer hover:opacity-90 transition-all border hover:shadow-sm ${config.getItemStyle(item)}`}
                         title={`${item.cdIdentificacao}`}
                         onClick={() => router.push(config.getItemRoute(item))}
@@ -266,12 +266,12 @@ export default function CalendarMonth({ config }: CalendarMonthProps) {
           <div className="font-semibold text-sm mb-2 text-gray-700">
             {config.tooltipTitle}
           </div>
-          {tooltip.items.map((item) => {
+          {tooltip.items.map((item, itemIndex) => {
             const display = formatItemDisplay(item);
 
             return (
               <div
-                key={item.id}
+                key={`tooltip-${item.id}-${itemIndex}`}
                 className={`p-2 mb-1.5 rounded text-xs cursor-pointer hover:opacity-90 transition-all border hover:shadow-sm ${config.getItemStyle(item)}`}
                 onClick={() => router.push(config.getItemRoute(item))}
               >
