@@ -178,6 +178,7 @@ export function useDetalhesSolicitacaoData({
     const statusNaoPermiteSelecaoArea =
       idStatusSolicitacao === statusList.VENCIDO_REGULATORIO.id ||
       idStatusSolicitacao === statusList.ANALISE_REGULATORIA.id ||
+      idStatusSolicitacao === statusList.EM_ANALISE_GERENTE_REGULATORIO.id ||
       idStatusSolicitacao === statusList.ARQUIVADO.id ||
       idStatusSolicitacao === statusList.CONCLUIDO.id ||
       idStatusSolicitacao === statusList.PRE_ANALISE.id ||
@@ -198,10 +199,16 @@ export function useDetalhesSolicitacaoData({
 
     // Identificar áreas que QUALQUER USUÁRIO já respondeu neste nível e status
     // Regra: Cada área só pode ter UMA resposta (independente de quem respondeu)
+    // IMPORTANTE: Se o status for VENCIDO_AREA_TECNICA, validar como se fosse EM_ANALISE_AREA_TECNICA
+    const statusParaValidacao = 
+      idStatusSolicitacao === statusList.VENCIDO_AREA_TECNICA.id
+        ? statusList.EM_ANALISE_AREA_TECNICA.id
+        : idStatusSolicitacao;
+
     const areasJaRespondidasPorQualquerUsuario = correspond?.tramitacoes
       ?.filter(t =>
         t?.tramitacao?.nrNivel === nrNivelUltimaTramitacao &&
-        t?.tramitacao?.idStatusSolicitacao === correspond?.statusSolicitacao?.idStatusSolicitacao &&
+        t?.tramitacao?.idStatusSolicitacao === statusParaValidacao &&
         t?.tramitacao?.tramitacaoAcao?.some(ta => ta.flAcao === 'T')
       )
       .map(t => t?.tramitacao?.areaOrigem?.idArea)
