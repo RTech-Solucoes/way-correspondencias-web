@@ -11,6 +11,7 @@ import { TipoResponse, CategoriaEnum, TipoEnum } from '@/api/tipos/types';
 import { useEffect, useState } from 'react';
 import { solicitacoesClient } from '@/api/solicitacoes';
 import statusSolicitacaoClient, { StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
+import obrigacaoClient from '@/api/obrigacao/client';
 
 interface Step1ObrigacaoProps {
   formData: ObrigacaoFormData;
@@ -123,6 +124,32 @@ export function Step1Obrigacao({
       const t = setTimeout(carregar, 1000);
       return () => { cancelado = true; clearTimeout(t); };
     }, [buscaObrigacao, isCondicionada]);
+
+    useEffect(() => {
+      if (!formData.dtLimite || disabled) return;
+      
+      let cancelado = false;
+      const definirStatusInicial = async () => {
+        try {
+          setLoadingStatuses(true);
+          const response = await obrigacaoClient.definirStatusInicialParaObrigacaoNova(formData.dtLimite!);
+          if (!cancelado && response.idStatusSolicitacao) {
+            updateFormData({ idStatusSolicitacao: response.idStatusSolicitacao });
+          }
+        } catch (error) {
+          console.error('Erro ao definir status inicial da obrigação:', error);
+        } finally {
+          if (!cancelado) {
+            setLoadingStatuses(false);
+          }
+        }
+      };
+
+      definirStatusInicial();
+      return () => {
+        cancelado = true;
+      };
+    }, [formData.dtLimite, disabled, updateFormData]);
     return (
       <div className="space-y-6 ">
         <div className="flex column gap-4">

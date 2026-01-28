@@ -65,7 +65,7 @@ export function Step3Obrigacao({ formData, updateFormData, disabled = false, onV
       const dataInicio = new Date(formData.dtInicio);
       const dataTermino = new Date(formData.dtTermino);
       
-      if (dataTermino <= dataInicio) {
+      if (dataTermino < dataInicio) {
         return 'A data de término deve ser maior que a data de início';
       }
     }
