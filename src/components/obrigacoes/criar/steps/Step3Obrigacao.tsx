@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { CategoriaEnum, StatusAtivo, TipoEnum, TipoResponse } from '@/api/tipos/types';
 import tiposClient from '@/api/tipos/client';
 import { CalendarIcon, ArrowClockwiseIcon } from '@phosphor-icons/react';
+import { statusList } from '@/api/status-solicitacao/types';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 interface Step3ObrigacaoProps {
@@ -15,11 +17,12 @@ interface Step3ObrigacaoProps {
   updateFormData: (data: Partial<ObrigacaoFormData>) => void;
   disabled?: boolean;
   onValidationChange?: (hasErrors: boolean) => void;
+  idStatusObrigacao?: number | null;
 }
 
 type TipoFrequencia = 'unica' | 'recorrente' | null;
 
-export function Step3Obrigacao({ formData, updateFormData, disabled = false, onValidationChange }: Step3ObrigacaoProps) {
+export function Step3Obrigacao({ formData, updateFormData, disabled = false, onValidationChange, idStatusObrigacao }: Step3ObrigacaoProps) {
 
   const [periodicidadesSelecionadas, setPeriodicidadesSelecionadas] = useState<TipoResponse[]>([]);
   const [tipoUnica, setTipoUnica] = useState<TipoResponse | null>(null);
@@ -117,6 +120,11 @@ export function Step3Obrigacao({ formData, updateFormData, disabled = false, onV
       });
     }
   };
+
+  const isPermitidoEditarDtLimite = useMemo(() => {
+    if (!idStatusObrigacao) return true;
+    return [statusList.NAO_INICIADO.id, statusList.PENDENTE.id].includes(idStatusObrigacao);
+  }, [idStatusObrigacao]);
 
   return (
     <div className="space-y-6">
@@ -270,14 +278,27 @@ export function Step3Obrigacao({ formData, updateFormData, disabled = false, onV
 
               <div className="space-y-2"> 
                 <Label htmlFor="dtLimite">Data Limite <span className="text-red-500">*</span></Label>
-                <Input
-                  id="dtLimite"
-                  type="date"
-                  disabled={disabled}
-                  value={formData.dtLimite || ''}
-                  onChange={(e) => updateFormData({ dtLimite: e.target.value })}
-                  className={erroDataLimite ? 'border-red-500' : ''}
-                />
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <Input
+                          id="dtLimite"
+                          type="date"
+                          disabled={disabled || !isPermitidoEditarDtLimite}
+                          value={formData.dtLimite || ''}
+                          onChange={(e) => updateFormData({ dtLimite: e.target.value })}
+                          className={erroDataLimite ? 'border-red-500' : ''}
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    {!isPermitidoEditarDtLimite && (
+                      <TooltipContent>
+                        <p>A data limite só pode ser alterada quando o status for &quot;Não Iniciado&quot; ou &quot;Pendente&quot;</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
                 {erroDataLimite && (
                   <p className="text-sm text-red-500 mt-1">{erroDataLimite}</p>
                 )}

@@ -18,6 +18,7 @@ interface Step1ObrigacaoProps {
   updateFormData: (data: Partial<ObrigacaoFormData>) => void;
   statusOptions?: StatusSolicitacaoResponse[];
   disabled?: boolean;
+  isTelaEdicao?: boolean;
 }
 
 export function Step1Obrigacao({
@@ -25,6 +26,7 @@ export function Step1Obrigacao({
   updateFormData,
   statusOptions = [],
   disabled = false,
+  isTelaEdicao = false,
 }: Step1ObrigacaoProps) {
 
     const [buscaObrigacao, setBuscaObrigacao] = useState<string>('');
@@ -126,6 +128,8 @@ export function Step1Obrigacao({
     }, [buscaObrigacao, isCondicionada]);
 
     useEffect(() => {
+      if (isTelaEdicao) return;
+      
       if (!formData.dtLimite || disabled) return;
       
       let cancelado = false;
@@ -149,7 +153,7 @@ export function Step1Obrigacao({
       return () => {
         cancelado = true;
       };
-    }, [formData.dtLimite, disabled, updateFormData]);
+    }, [formData.dtLimite, formData.idSolicitacao, disabled, updateFormData]);
     return (
       <div className="space-y-6 ">
         <div className="flex column gap-4">
