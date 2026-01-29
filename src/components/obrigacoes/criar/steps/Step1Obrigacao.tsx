@@ -11,12 +11,14 @@ import { TipoResponse, CategoriaEnum, TipoEnum } from '@/api/tipos/types';
 import { useEffect, useState } from 'react';
 import { solicitacoesClient } from '@/api/solicitacoes';
 import statusSolicitacaoClient, { StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
+import obrigacaoClient from '@/api/obrigacao/client';
 
 interface Step1ObrigacaoProps {
   formData: ObrigacaoFormData;
   updateFormData: (data: Partial<ObrigacaoFormData>) => void;
   statusOptions?: StatusSolicitacaoResponse[];
   disabled?: boolean;
+  isTelaEdicao?: boolean;
 }
 
 export function Step1Obrigacao({
@@ -24,6 +26,7 @@ export function Step1Obrigacao({
   updateFormData,
   statusOptions = [],
   disabled = false,
+  isTelaEdicao = false,
 }: Step1ObrigacaoProps) {
 
     const [buscaObrigacao, setBuscaObrigacao] = useState<string>('');
@@ -123,6 +126,34 @@ export function Step1Obrigacao({
       const t = setTimeout(carregar, 1000);
       return () => { cancelado = true; clearTimeout(t); };
     }, [buscaObrigacao, isCondicionada]);
+
+    useEffect(() => {
+      if (isTelaEdicao) return;
+      
+      if (!formData.dtLimite || disabled) return;
+      
+      let cancelado = false;
+      const definirStatusInicial = async () => {
+        try {
+          setLoadingStatuses(true);
+          const response = await obrigacaoClient.definirStatusInicialParaObrigacaoNova(formData.dtLimite!);
+          if (!cancelado && response.idStatusSolicitacao) {
+            updateFormData({ idStatusSolicitacao: response.idStatusSolicitacao });
+          }
+        } catch (error) {
+          console.error('Erro ao definir status inicial da obrigação:', error);
+        } finally {
+          if (!cancelado) {
+            setLoadingStatuses(false);
+          }
+        }
+      };
+
+      definirStatusInicial();
+      return () => {
+        cancelado = true;
+      };
+    }, [formData.dtLimite, formData.idSolicitacao, disabled, updateFormData]);
     return (
       <div className="space-y-6 ">
         <div className="flex column gap-4">

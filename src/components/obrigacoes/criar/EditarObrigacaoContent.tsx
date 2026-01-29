@@ -133,6 +133,7 @@ export function EditarObrigacaoContent({ id, initialData }: EditarObrigacaoConte
   const [anexoToDelete, setAnexoToDelete] = useState<AnexoResponse | null>(null);
   const [isNaoPermitidoEditar, setIsNaoPermitidoEditar] = useState(false);
   const [hasStep3ValidationErrors, setHasStep3ValidationErrors] = useState(false);
+  const [idStatusObrigacao, setIdStatusObrigacao] = useState<number | null>(null);
   const hasInitializedRef = useRef(false);
 
   useEffect(() => {
@@ -162,6 +163,7 @@ export function EditarObrigacaoContent({ id, initialData }: EditarObrigacaoConte
       const detalhe = await obrigacaoClient.buscarDetalhePorId(parsedId);
       setFormData(mapDetalheToFormData(detalhe));
       setExistingAnexos(detalhe.anexos || []);
+      setIdStatusObrigacao(detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao || null);
       if (detalhe?.obrigacao?.flAprovarConferencia === 'S' || detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.NAO_APLICAVEL_SUSPENSA.id) {
         setIsNaoPermitidoEditar(true);
       } else {
@@ -183,6 +185,7 @@ export function EditarObrigacaoContent({ id, initialData }: EditarObrigacaoConte
     if (initialData) {
       setFormData(mapDetalheToFormData(initialData));
       setExistingAnexos(initialData.anexos || []);
+      setIdStatusObrigacao(initialData?.obrigacao?.statusSolicitacao?.idStatusSolicitacao || null);
       if (initialData?.obrigacao?.flAprovarConferencia === 'S' || initialData?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.NAO_APLICAVEL_SUSPENSA.id) {
         setIsNaoPermitidoEditar(true);
       } else {
@@ -289,6 +292,7 @@ export function EditarObrigacaoContent({ id, initialData }: EditarObrigacaoConte
       requiredStepsForTab,
     );
 
+    console.log('errors', errors);
     if (!isValid) {
       toast.error('É necessário preencher todos os campos obrigatórios antes de salvar as alterações.');
       return;
@@ -385,6 +389,7 @@ export function EditarObrigacaoContent({ id, initialData }: EditarObrigacaoConte
             updateFormData={updateFormData}
             statusOptions={statusOptions}
             disabled={isNaoPermitidoEditar}
+            isTelaEdicao={true}
           />
         );
       case 'temas':
@@ -402,6 +407,7 @@ export function EditarObrigacaoContent({ id, initialData }: EditarObrigacaoConte
             updateFormData={updateFormData}
             disabled={isNaoPermitidoEditar}
             onValidationChange={setHasStep3ValidationErrors}
+            idStatusObrigacao={idStatusObrigacao}
           />
         );
       case 'anexos':
@@ -473,9 +479,16 @@ export function EditarObrigacaoContent({ id, initialData }: EditarObrigacaoConte
 
         {isNaoPermitidoEditar && (
           <div className="mb-4 rounded-lg bg-yellow-50 border border-yellow-200 px-4 py-3 text-center">
-            <p className="text-sm text-yellow-800">
-              <strong>Atenção:</strong> Não é possível editar esta obrigação. Conferência já foi aprovada.
-            </p>
+
+            {formData?.idStatusSolicitacao === statusList.NAO_APLICAVEL_SUSPENSA.id ? (
+              <p className="text-sm text-yellow-800">
+                <strong>Atenção:</strong> Não é possível editar uma obrigação com status &quot;Não Aplicável/Suspensa&quot;.
+              </p>
+            ) : (
+              <p className="text-sm text-yellow-800">
+                <strong>Atenção:</strong> Não é possível editar esta obrigação. Conferência já foi aprovada.
+              </p>
+            )}
           </div>
         )}
 

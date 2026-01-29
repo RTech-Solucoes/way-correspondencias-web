@@ -233,7 +233,7 @@ export function ObrigacaoAcoesMenu({
                 <TooltipContent>
                   <p>
                     {isStatusNaoAplicavelSuspenso 
-                      ? 'Esta obrigação está com status não aplicável/suspenso.' 
+                      ? 'Não é possível editar uma obrigação com status "Não Aplicável/Suspensa".' 
                       : 'A conferência já foi aprovada. Não é possível editar a obrigação.'}
                   </p>
                 </TooltipContent>

@@ -164,6 +164,14 @@ export class ObrigacaoClient {
             method: 'GET',
         });
     }
+
+    async definirStatusInicialParaObrigacaoNova(dtLimite: string): Promise<{ idStatusSolicitacao: number }> {
+        const params = new URLSearchParams();
+        params.append('dtLimite', dtLimite);
+        return this.client.request<{ idStatusSolicitacao: number }>(`/definir-status-inicial-para-obrigacao-nova?${params.toString()}`, {
+            method: 'GET',
+        });
+    }
 }
 
 const obrigacaoClient = new ObrigacaoClient();
