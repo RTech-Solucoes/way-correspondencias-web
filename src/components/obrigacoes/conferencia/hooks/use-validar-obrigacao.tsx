@@ -98,7 +98,7 @@ export function useValidarObrigacao() {
           if (formData.dtInicio && formData.dtTermino) {
             const dataInicio = new Date(formData.dtInicio);
             const dataTermino = new Date(formData.dtTermino);
-            if (dataTermino <= dataInicio) {
+            if (dataTermino < dataInicio) {
               invalidFields.push('Data de Término deve ser posterior à Data de Início');
             }
           }

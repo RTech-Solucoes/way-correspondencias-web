@@ -285,14 +285,13 @@ export function EditarObrigacaoContent({ id, initialData }: EditarObrigacaoConte
       return;
     }
 
-    const { isValid, errors } = validarObrigacao(
+    const { isValid } = validarObrigacao(
       formData,
       idClassificacaoCondicionada,
       hasStep3ValidationErrors,
       requiredStepsForTab,
     );
 
-    console.log('errors', errors);
     if (!isValid) {
       toast.error('É necessário preencher todos os campos obrigatórios antes de salvar as alterações.');
       return;

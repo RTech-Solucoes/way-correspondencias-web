@@ -153,7 +153,7 @@ export function Step1Obrigacao({
       return () => {
         cancelado = true;
       };
-    }, [formData.dtLimite, formData.idSolicitacao, disabled, updateFormData]);
+    }, [formData.dtLimite, formData.idSolicitacao, disabled, updateFormData, isTelaEdicao]);
     return (
       <div className="space-y-6 ">
         <div className="flex column gap-4">
