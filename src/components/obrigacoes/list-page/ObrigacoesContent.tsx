@@ -1,17 +1,11 @@
 'use client';
 
-import { useObrigacoes } from "@/context/obrigacoes/ObrigacoesContext";
+import { useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { FiltrosAplicados } from "@/components/ui/applied-filters";
-import { useState, useEffect, useMemo, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { STATUS_LIST, statusList } from "@/api/status-solicitacao/types";
-import obrigacaoClient, { PaginatedResponse } from "@/api/obrigacao/client";
-import { toast } from "sonner";
-import { useUserGestao } from "@/hooks/use-user-gestao";
-import { ObrigacaoResumoResponse, ObrigacaoResponse } from "@/api/obrigacao/types";
-import { usePermissoes } from "@/context/permissoes/PermissoesContext";
-import { useValidarObrigacao } from "@/components/obrigacoes/conferencia/hooks/use-validar-obrigacao";
-import { mostrarValidacaoObrigacaoToast } from "@/components/obrigacoes/criar/ValidarObrigacaoToast";
+
+// Context
+import { ObrigacoesUIProvider } from "@/components/obrigacoes/context/ObrigacoesUIContext";
 
 // Modular Components
 import { ObrigacoesTable } from "@/components/obrigacoes/list-page/ObrigacoesTable";
@@ -20,48 +14,92 @@ import { ObrigacoesFiltersUI } from "@/components/obrigacoes/list-page/Obrigacoe
 import { ObrigacoesModals } from "@/components/obrigacoes/list-page/ObrigacoesModals";
 
 // Hooks
+import { useObrigacoes } from "@/components/obrigacoes/hooks/use-obrigacoes";
 import { useObrigacoesFilters } from "./hooks/useObrigacoesFilters";
-import { perfilUtil } from "@/api/perfis/types";
 
-interface ObrigacoesContentProps {
-  initialData?: PaginatedResponse<ObrigacaoResponse>;
-}
+export function ObrigacoesContent() {
+  const searchParams = useSearchParams();
+  
+  const idObrigacaoFromUrl = useMemo(() => {
+    const param = searchParams.get('idObrigacao');
+    return param ? Number(param) : undefined;
+  }, [searchParams]);
 
-export function ObrigacoesContent({ initialData }: ObrigacoesContentProps) {
   const {
+    // Dados
     obrigacoes,
+    totalPages,
+    totalElements,
     loading,
+    
+    // UI State
     searchQuery,
     setSearchQuery,
     currentPage,
-    totalPages,
-    totalElements,
     setCurrentPage,
-    setShowObrigacaoModal,
-    setShowFilterModal,
-    setShowDeleteDialog,
-    setObrigacaoToDelete,
+    
+    // Filtros
     filters,
     setFilters,
-    handleSort,
+    
+    // Modais principais
+    showObrigacaoModal,
+    setShowObrigacaoModal,
+    showFilterModal,
+    setShowFilterModal,
+    showDeleteDialog,
+    setShowDeleteDialog,
+    obrigacaoToDelete,
+    setObrigacaoToDelete,
+    
+    // Modais específicos
+    showImportModal,
+    setShowImportModal,
+    showAnexarProtocoloModal,
+    setShowAnexarProtocoloModal,
+    obrigacaoParaProtocolo,
+    setObrigacaoParaProtocolo,
+    showObrigacoesCondicionadasModal,
+    setShowObrigacoesCondicionadasModal,
+    obrigacoesCondicionadas,
+    setObrigacoesCondicionadas,
+    showNaoAplicavelSuspensoModal,
+    setShowNaoAplicavelSuspensoModal,
+    obrigacaoParaNaoAplicavelSuspenso,
+    setObrigacaoParaNaoAplicavelSuspenso,
+    showTramitacaoModal,
+    setShowTramitacaoModal,
+    obrigacaoParaTramitacao,
+    setObrigacaoParaTramitacao,
+    showConfirmTramitacao,
+    setShowConfirmTramitacao,
+    obrigacaoParaConfirmarTramitacao,
+    setObrigacaoParaConfirmarTramitacao,
+    
+    // Permissões
+    canInserirObrigacao,
+    canDeletarObrigacao,
+    canConcluirObrigacao,
+    canEnviarAreasObrigacao,
+    canNaoAplicavelSuspensaObrigacao,
+    
+    // Handlers
     loadObrigacoes,
-    setObrigacoes,
-    setTotalPages,
-    setTotalElements,
-    setLoading,
-  } = useObrigacoes();
-
-  // Inicializa com dados do servidor se disponíveis
-  const hasInitializedRef = useRef(false);
-  useEffect(() => {
-    if (initialData && !hasInitializedRef.current) {
-      setObrigacoes(initialData.content || []);
-      setTotalPages(initialData.totalPages || 0);
-      setTotalElements(initialData.totalElements || 0);
-      setLoading(false);
-      hasInitializedRef.current = true;
-    }
-  }, [initialData, setObrigacoes, setTotalPages, setTotalElements, setLoading]);
+    handleSort,
+    handleVisualize,
+    handleEdit,
+    handleDelete,
+    handleNaoAplicavelSuspenso,
+    handleConfirmNaoAplicavelSuspenso,
+    handleEnviarArea,
+    handleAnexarProtocolo,
+    handleEncaminharTramitacao,
+    
+    // Helpers
+    isAdminOrGestor,
+    getStatusText,
+    idPerfil,
+  } = useObrigacoes({ idObrigacaoFromUrl });
 
   const {
     hasActiveFilters,
@@ -75,104 +113,37 @@ export function ObrigacoesContent({ initialData }: ObrigacoesContentProps) {
     setFilters,
   });
 
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [showAnexarProtocoloModal, setShowAnexarProtocoloModal] = useState(false);
-  const [showObrigacoesCondicionadasModal, setShowObrigacoesCondicionadasModal] = useState(false);
-  const [obrigacaoParaProtocolo, setObrigacaoParaProtocolo] = useState<ObrigacaoResponse | null>(null);
-  const [obrigacoesCondicionadas, setObrigacoesCondicionadas] = useState<ObrigacaoResumoResponse[]>([]);
-  const [showNaoAplicavelSuspensoModal, setShowNaoAplicavelSuspensoModal] = useState(false);
-  const [obrigacaoParaNaoAplicavelSuspenso, setObrigacaoParaNaoAplicavelSuspenso] = useState<ObrigacaoResponse | null>(null);
-  const [showTramitacaoModal, setShowTramitacaoModal] = useState(false);
-  const [obrigacaoParaTramitacao, setObrigacaoParaTramitacao] = useState<ObrigacaoResponse | null>(null);
-  const [showConfirmTramitacao, setShowConfirmTramitacao] = useState(false);
-  const [obrigacaoParaConfirmarTramitacao, setObrigacaoParaConfirmarTramitacao] = useState<ObrigacaoResponse | null>(null);
-  
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const { idPerfil } = useUserGestao();
-  const permissions = usePermissoes();
-  const canInserirObrigacao = !!permissions.canInserirObrigacao;
-  const canDeletarObrigacao = !!permissions.canDeletarObrigacao;
-  const canConcluirObrigacao = !!permissions.canConcluirObrigacao;
-  const canEnviarAreasObrigacao = !!permissions.canEnviarAreasObrigacao;
-  const canNaoAplicavelSuspensaObrigacao = !!permissions.canNaoAplicavelSuspensaObrigacao;
-  
-  const { validar } = useValidarObrigacao();
-
-  const idObrigacaoFromUrl = useMemo(() => {
-    const param = searchParams.get('idObrigacao');
-    return param ? Number(param) : undefined;
-  }, [searchParams]);
-
-  const isInitialMount = useRef(true);
-  const prevIdObrigacao = useRef(idObrigacaoFromUrl);
-
-  useEffect(() => {
-    if (prevIdObrigacao.current !== idObrigacaoFromUrl) {
-      prevIdObrigacao.current = idObrigacaoFromUrl;
-      if (!isInitialMount.current) {
-        setCurrentPage(0);
-        return;
-      }
-    }
-
-    // Se temos initialData e é a primeira montagem, não recarrega
-    if (initialData && isInitialMount.current && !idObrigacaoFromUrl) {
-      isInitialMount.current = false;
-      return;
-    }
-
-    loadObrigacoes(idObrigacaoFromUrl);
-    isInitialMount.current = false;
-  }, [idObrigacaoFromUrl, filters, currentPage, searchQuery]); // eslint-disable-line react-hooks/exhaustive-deps 
-
-  const isAdminOrGestor = useMemo(() => {
-    return idPerfil === perfilUtil.ADMINISTRADOR ||
-      idPerfil === perfilUtil.ADMIN_MASTER ||
-      idPerfil === perfilUtil.GESTOR_DO_SISTEMA ||
-      idPerfil === perfilUtil.VALIDADOR_ASSINANTE ||
-      idPerfil === perfilUtil.TECNICO_SUPORTE;
-  }, [idPerfil]);
-
-  const getStatusText = (statusCode: string): string | null => {
-    if (!statusCode) return null;
-    const status = STATUS_LIST.find(s => s.id.toString() === statusCode);
-    if (status) {
-      return status.label;
-    }
-    return null;
-  };
-
-  const handleNaoAplicavelSuspenso = (obrigacao: ObrigacaoResponse) => {
-    setObrigacaoParaNaoAplicavelSuspenso(obrigacao);
-    setShowNaoAplicavelSuspensoModal(true);
-  };
-
-  const handleConfirmNaoAplicavelSuspenso = async (justificativa: string) => {
-    if (!obrigacaoParaNaoAplicavelSuspenso?.idSolicitacao) {
-      toast.error('ID da obrigação não encontrado.');
-      return;
-    }
-
-    try {
-      const response = await obrigacaoClient.atualizarStatusNaoAplicavelSusp(
-        obrigacaoParaNaoAplicavelSuspenso.idSolicitacao,
-        justificativa
-      );
-      toast.success(response.mensagem);
-      await loadObrigacoes();
-      setShowNaoAplicavelSuspensoModal(false);
-      setObrigacaoParaNaoAplicavelSuspenso(null);
-    } catch (error) {
-      console.error('Erro ao atualizar status:', error);
-      toast.error('Erro ao atualizar status. Tente novamente.');
-      throw error;
-    }
-  };
+  // Context value para modais
+  const uiContextValue = useMemo(() => ({
+    showObrigacaoModal,
+    setShowObrigacaoModal,
+    showFilterModal,
+    setShowFilterModal,
+    showDeleteDialog,
+    setShowDeleteDialog,
+    obrigacaoToDelete,
+    setObrigacaoToDelete,
+    filters,
+    setFilters,
+    loadObrigacoes,
+  }), [
+    showObrigacaoModal,
+    setShowObrigacaoModal,
+    showFilterModal,
+    setShowFilterModal,
+    showDeleteDialog,
+    setShowDeleteDialog,
+    obrigacaoToDelete,
+    setObrigacaoToDelete,
+    filters,
+    setFilters,
+    loadObrigacoes,
+  ]);
 
   return (
-    <div className="flex flex-col min-h-0 flex-1">
-      <ObrigacoesModals 
+    <ObrigacoesUIProvider value={uiContextValue}>
+      <div className="flex flex-col min-h-0 flex-1">
+        <ObrigacoesModals 
         showImportModal={showImportModal}
         setShowImportModal={setShowImportModal}
         obrigacaoParaProtocolo={obrigacaoParaProtocolo}
@@ -203,7 +174,7 @@ export function ObrigacoesContent({ initialData }: ObrigacoesContentProps) {
       <ObrigacoesHeader 
         totalElements={totalElements}
         loadObrigacoes={loadObrigacoes}
-        loading={loading}
+        loading={loading && obrigacoes.length === 0}
         currentPage={currentPage}
         totalPages={totalPages}
         setCurrentPage={setCurrentPage}
@@ -233,7 +204,7 @@ export function ObrigacoesContent({ initialData }: ObrigacoesContentProps) {
 
       <ObrigacoesTable 
         obrigacoes={obrigacoes}
-        loading={loading}
+        loading={loading && obrigacoes.length === 0}
         isAdminOrGestor={isAdminOrGestor}
         handleSort={handleSort}
         canInserirObrigacao={canInserirObrigacao}
@@ -241,73 +212,15 @@ export function ObrigacoesContent({ initialData }: ObrigacoesContentProps) {
         canEnviarAreasObrigacao={canEnviarAreasObrigacao}
         canNaoAplicavelSuspensaObrigacao={canNaoAplicavelSuspensaObrigacao}
         canDeletarObrigacao={canDeletarObrigacao}
-        onVisualizar={(obrigacao) => {
-          if (!obrigacao.idSolicitacao) return;
-          router.push(`/obrigacao/${obrigacao.idSolicitacao}/conferencia`);
-        }}
-        onEditar={(obrigacao) => {
-          if (!obrigacao.idSolicitacao) return;
-          router.push(`/obrigacao/${obrigacao.idSolicitacao}/editar`);
-        }}
-        onAnexarProtocolo={async (obrigacao) => {
-          if (!obrigacao.idSolicitacao) return;
-          try {
-            const response = await obrigacaoClient.buscarObrigacoesCondicionadas(obrigacao.idSolicitacao);
-            const condicionadas = response.obrigacoesCondicionadas || [];
-            const condicionadasPendentes = condicionadas.filter(
-              (cond) =>
-                cond.statusSolicitacao?.idStatusSolicitacao !== statusList.CONCLUIDO.id
-            );
-
-            if (condicionadasPendentes.length > 0) {
-              setObrigacoesCondicionadas(condicionadasPendentes);
-              setShowObrigacoesCondicionadasModal(true);
-            } else {
-              setObrigacaoParaProtocolo(obrigacao);
-              setShowAnexarProtocoloModal(true);
-            }
-          } catch (error) {
-            console.error('Erro ao verificar obrigações condicionadas:', error);
-            toast.error('Erro ao verificar obrigações condicionadas. Tente novamente.');
-          }
-        }}
-        onEncaminharTramitacao={(obrigacao) => {
-          const isEmValidacao = obrigacao.statusSolicitacao?.idStatusSolicitacao === statusList.EM_VALIDACAO_REGULATORIO.id;                          
-          if (isEmValidacao) {
-            setObrigacaoParaConfirmarTramitacao(obrigacao);
-            setShowConfirmTramitacao(true);
-          } else {
-            setObrigacaoParaTramitacao(obrigacao);
-            setShowTramitacaoModal(true);
-          }
-        }}
-        onEnviarArea={async (obrigacao) => {
-          if (!obrigacao.idSolicitacao) return;
-          
-          try {
-            const { isValid, errors } = await validar(obrigacao.idSolicitacao);
-
-            if (!isValid) {
-              mostrarValidacaoObrigacaoToast(errors, {
-                mensagemPersonalizada: 'É necessário preencher todos os campos obrigatórios antes de enviar para as áreas.',
-              });
-              return;
-            }
-
-            const response = await obrigacaoClient.atualizarFlEnviandoArea(obrigacao.idSolicitacao);
-            toast.success(response.mensagem);
-            await loadObrigacoes();
-          } catch (error) {
-            console.error('Erro ao enviar obrigação para área:', error);
-            toast.error('Erro ao enviar obrigação para área. Tente novamente.');
-          }
-        }}
+        onVisualizar={handleVisualize}
+        onEditar={handleEdit}
+        onAnexarProtocolo={handleAnexarProtocolo}
+        onEncaminharTramitacao={handleEncaminharTramitacao}
+        onEnviarArea={handleEnviarArea}
         onNaoAplicavelSuspenso={handleNaoAplicavelSuspenso}
-        onExcluir={(obrigacao) => {
-          setObrigacaoToDelete(obrigacao);
-          setShowDeleteDialog(true);
-        }}
+        onExcluir={handleDelete}
       />
-    </div>
+      </div>
+    </ObrigacoesUIProvider>
   );
 }

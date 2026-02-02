@@ -1,8 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/use-debounce';
-import correspondenciaClient from '@/api/correspondencia/client';
 import { CorrespondenciaResponse } from '@/api/correspondencia/types';
 import { responsaveisClient } from '@/api/responsaveis/client';
 import { temasClient } from '@/api/temas/client';
@@ -14,9 +12,9 @@ import { AreaResponse } from '@/api/areas/types';
 import { PagedResponse } from '@/api/solicitacoes/types';
 import { CategoriaEnum, TipoEnum } from '@/api/tipos/types';
 import { FiltersState } from './use-solicitacoes-filters';
+import { useSolicitacoesQuery } from './use-solicitacoes-query';
 
 interface UseSolicitacoesDataOptions {
-  initialData?: PagedResponse<CorrespondenciaResponse> | null;
   pageSize?: number;
 }
 
@@ -32,23 +30,15 @@ export function useSolicitacoesData(
   options: UseSolicitacoesDataOptions = {},
   deps: UseSolicitacoesDataDeps
 ) {
-  const { initialData, pageSize = 10 } = options;
+  const { pageSize = 10 } = options;
   const { currentPage, activeFilters, searchQuery, sortField, sortDirection } = deps;
   const searchParams = useSearchParams();
-
-  // Estado dos dados principais
-  const [solicitacoes, setSolicitacoes] = useState<CorrespondenciaResponse[]>(initialData?.content || []);
-  const [totalPages, setTotalPages] = useState(initialData?.totalPages || 1);
-  const [totalElements, setTotalElements] = useState(initialData?.totalElements || 0);
 
   // Estado dos dados auxiliares
   const [responsaveis, setResponsaveis] = useState<ResponsavelResponse[]>([]);
   const [temas, setTemas] = useState<TemaResponse[]>([]);
   const [areas, setAreas] = useState<AreaResponse[]>([]);
   const [statuses, setStatuses] = useState<{ idStatusSolicitacao: number; nmStatus: string; flAtivo?: string }[]>([]);
-
-  // Estado de UI
-  const [loading, setLoading] = useState(!initialData);
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
@@ -59,60 +49,56 @@ export function useSolicitacoesData(
     };
   })();
 
-  // Função principal de carregamento
-  const loadSolicitacoes = useCallback(async () => {
-    try {
-      setLoading(true);
+  // Refs para detectar mudança de filtros (melhor prática React Query)
+  const prevFiltersRef = useRef(JSON.stringify(activeFilters));
+  const prevSearchRef = useRef(debouncedSearchQuery);
 
-      const filtro = debouncedSearchQuery || undefined;
-      const idStatusSolicitacao: number | undefined = activeFilters.status && activeFilters.status !== 'all' && activeFilters.status !== ''
-        ? Number(activeFilters.status)
-        : activeFilters.status === 'all' ? -1 : undefined;
-      const idArea = activeFilters.area && activeFilters.area !== 'all'
-        ? Number(activeFilters.area)
-        : undefined;
-      const idTema = activeFilters.tema && activeFilters.tema !== 'all'
-        ? Number(activeFilters.tema)
-        : undefined;
-      const cdIdentificacao = activeFilters.identificacao || undefined;
-      const nmResponsavel = activeFilters.nmResponsavel || undefined;
-      const dtCriacaoInicio = activeFilters.dtCriacaoInicio ? `${activeFilters.dtCriacaoInicio}T00:00:00` : undefined;
-      const dtCriacaoFim = activeFilters.dtCriacaoFim ? `${activeFilters.dtCriacaoFim}T23:59:59` : undefined;
-      const flExigeCienciaGerenteRegul = activeFilters.flExigeCienciaGerenteRegul && activeFilters.flExigeCienciaGerenteRegul !== 'all'
-        ? activeFilters.flExigeCienciaGerenteRegul
-        : undefined;
+  // Parâmetros da query - calcula página efetiva de forma síncrona
+  const queryParams = useMemo(() => {
+    const currentFiltersStr = JSON.stringify(activeFilters);
+    const filtersChanged = prevFiltersRef.current !== currentFiltersStr;
+    const searchChanged = prevSearchRef.current !== debouncedSearchQuery;
+    
+    // Página efetiva: 0 se filtros mudaram, senão usa currentPage
+    const effectivePage = (filtersChanged || searchChanged) ? 0 : currentPage;
+    
+    // Atualiza refs para próxima comparação
+    prevFiltersRef.current = currentFiltersStr;
+    prevSearchRef.current = debouncedSearchQuery;
+    
+    const filtro = debouncedSearchQuery || undefined;
+    const idStatusSolicitacao: number | undefined = activeFilters.status && activeFilters.status !== 'all' && activeFilters.status !== ''
+      ? Number(activeFilters.status)
+      : activeFilters.status === 'all' ? -1 : undefined;
+    const idArea = activeFilters.area && activeFilters.area !== 'all'
+      ? Number(activeFilters.area)
+      : undefined;
+    const idTema = activeFilters.tema && activeFilters.tema !== 'all'
+      ? Number(activeFilters.tema)
+      : undefined;
+    const cdIdentificacao = activeFilters.identificacao || undefined;
+    const nmResponsavel = activeFilters.nmResponsavel || undefined;
+    const dtCriacaoInicio = activeFilters.dtCriacaoInicio ? `${activeFilters.dtCriacaoInicio}T00:00:00` : undefined;
+    const dtCriacaoFim = activeFilters.dtCriacaoFim ? `${activeFilters.dtCriacaoFim}T23:59:59` : undefined;
+    const flExigeCienciaGerenteRegul = activeFilters.flExigeCienciaGerenteRegul && activeFilters.flExigeCienciaGerenteRegul !== 'all'
+      ? activeFilters.flExigeCienciaGerenteRegul
+      : undefined;
 
-      const response = await correspondenciaClient.buscarPorFiltro({
-        filtro,
-        page: currentPage,
-        size: pageSize,
-        idStatusSolicitacao,
-        idArea,
-        cdIdentificacao,
-        idTema,
-        nmResponsavel,
-        dtCriacaoInicio,
-        dtCriacaoFim,
-        flExigeCienciaGerenteRegul,
-        idSolicitacao: prefilledFilters.idSolicitacao,
-        sort: sortField ? `${sortField},${sortDirection === 'desc' ? 'desc' : 'asc'}` : undefined,
-      });
-
-      if (response && typeof response === 'object' && 'content' in response) {
-        const paginatedResponse = response as unknown as PagedResponse<CorrespondenciaResponse>;
-        setSolicitacoes(paginatedResponse.content ?? []);
-        setTotalPages(paginatedResponse.totalPages ?? 1);
-        setTotalElements(paginatedResponse.totalElements ?? 0);
-      } else {
-        setSolicitacoes((response as CorrespondenciaResponse[]) ?? []);
-        setTotalPages(1);
-        setTotalElements((response ?? []).length);
-      }
-    } catch {
-      toast.error('Erro ao carregar solicitações');
-    } finally {
-      setLoading(false);
-    }
+    return {
+      filtro,
+      page: effectivePage,
+      size: pageSize,
+      idStatusSolicitacao,
+      idArea,
+      cdIdentificacao,
+      idTema,
+      nmResponsavel,
+      dtCriacaoInicio,
+      dtCriacaoFim,
+      flExigeCienciaGerenteRegul,
+      idSolicitacao: prefilledFilters.idSolicitacao,
+      sort: sortField ? `${sortField},${sortDirection === 'desc' ? 'desc' : 'asc'}` : undefined,
+    };
   }, [
     currentPage,
     activeFilters,
@@ -122,6 +108,13 @@ export function useSolicitacoesData(
     sortDirection,
     pageSize,
   ]);
+
+  // Query principal
+  const { data, isLoading, refetch } = useSolicitacoesQuery(queryParams);
+
+  const loadSolicitacoes = useCallback(async () => {
+    await refetch();
+  }, [refetch]);
 
   // Funções de carregamento auxiliar
   const loadResponsaveis = useCallback(async () => {
@@ -171,6 +164,28 @@ export function useSolicitacoesData(
     loadAreas();
   }, [loadStatuses, loadResponsaveis, loadTemas, loadAreas]);
 
+  // Extrai dados da resposta paginada
+  const solicitacoes = useMemo(() => {
+    if (data && typeof data === 'object' && 'content' in data) {
+      return (data as PagedResponse<CorrespondenciaResponse>).content ?? [];
+    }
+    return (data as CorrespondenciaResponse[]) ?? [];
+  }, [data]);
+
+  const totalPages = useMemo(() => {
+    if (data && typeof data === 'object' && 'totalPages' in data) {
+      return (data as PagedResponse<CorrespondenciaResponse>).totalPages ?? 1;
+    }
+    return 1;
+  }, [data]);
+
+  const totalElements = useMemo(() => {
+    if (data && typeof data === 'object' && 'totalElements' in data) {
+      return (data as PagedResponse<CorrespondenciaResponse>).totalElements ?? 0;
+    }
+    return solicitacoes.length;
+  }, [data, solicitacoes.length]);
+
   return {
     // Dados principais
     solicitacoes,
@@ -184,7 +199,7 @@ export function useSolicitacoesData(
     statuses,
 
     // UI State
-    loading,
+    loading: isLoading,
     debouncedSearchQuery,
 
     // Funções

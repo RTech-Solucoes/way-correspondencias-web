@@ -1,24 +1,23 @@
-'use server';
-
-import { Suspense } from 'react';
+import { HydrationBoundary, dehydrate } from "@tanstack/react-query";
 import { SolicitacoesContent } from '@/components/solicitacoes/content/SolicitacoesContent';
-import LoadingOverlay from '@/components/ui/loading-overlay';
 import correspondenciaClient from '@/api/correspondencia/client';
-import { PagedResponse } from '@/api/solicitacoes/types';
-import { CorrespondenciaResponse } from '@/api/correspondencia/types';
+import { makeQueryClient } from "@/lib/query-client";
+import { solicitacoesKeys } from "@/components/solicitacoes/hooks/use-solicitacoes-query";
+import LoadingOverlay from "@/components/ui/loading-overlay";
+import { Suspense } from "react";
 
 export default async function SolicitacoesPage() {
-  let initialData: PagedResponse<CorrespondenciaResponse> | null = null;
+  const queryClient = makeQueryClient();
+  
+  const initialParams = {
+    page: 0,
+    size: 10,
+  };
 
-  try {
-    const response = await correspondenciaClient.buscarPorFiltro({ page: 0, size: 10 });
-    
-    if (response) {
-      initialData = response as PagedResponse<CorrespondenciaResponse>;
-    }
-  } catch {
-    initialData = null;
-  }
+  await queryClient.prefetchQuery({
+    queryKey: solicitacoesKeys.list(initialParams),
+    queryFn: () => correspondenciaClient.buscarPorFiltro(initialParams),
+  });
 
   return (
     <div data-ssr="true">
@@ -30,7 +29,10 @@ export default async function SolicitacoesPage() {
           />
         }
       >
-        <SolicitacoesContent initialData={initialData} />
+
+        <HydrationBoundary state={dehydrate(queryClient)}>
+          <SolicitacoesContent />
+        </HydrationBoundary>
       </Suspense>
     </div>
   );

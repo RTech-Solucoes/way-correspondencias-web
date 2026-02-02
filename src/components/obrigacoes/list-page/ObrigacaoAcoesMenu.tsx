@@ -179,7 +179,7 @@ export function ObrigacaoAcoesMenu({
     }
 
     if (!isAdminOrGestor) {
-      return 'Apenas administradores e gestores do sistema podem anexar protocolo.';
+      return 'Apenas administradores, gestores do sistema e administrador master podem anexar protocolo.';
     }
     return '';
   }, [isStatusConcluido, isStatusEmValidacao, isStatusAprovacaoTramitacao, isAdminOrGestor, isExisteAnexoCorrespondencia]);

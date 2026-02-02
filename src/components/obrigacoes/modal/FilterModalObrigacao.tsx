@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useObrigacoes } from '@/context/obrigacoes/ObrigacoesContext';
+import { useObrigacoesUI } from '@/components/obrigacoes/context/ObrigacoesUIContext';
 import { useState, useEffect } from 'react';
 import areasClient from '@/api/areas/client';
 import temasClient from '@/api/temas/client';
@@ -28,7 +28,7 @@ interface FilterState {
 }
 
 export function FilterModalObrigacao() {
-  const { showFilterModal, setShowFilterModal, filters, setFilters } = useObrigacoes();
+  const { showFilterModal, setShowFilterModal, filters, setFilters } = useObrigacoesUI();
   
   const [localFilters, setLocalFilters] = useState<FilterState>({
     idStatusObrigacao: '',

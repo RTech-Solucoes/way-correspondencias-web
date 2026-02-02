@@ -1,8 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
-import { AreaFilterParams, AreaRequest, AreaResponse, PagedResponse } from '@/api/areas/types';
-import { areasClient } from '@/api/areas/client';
+import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
+import { AreaRequest, AreaResponse, PagedResponse } from '@/api/areas/types';
 import { useDebounce } from '@/hooks/use-debounce';
+import { 
+  useAreasQuery, 
+  useCreateArea, 
+  useUpdateArea, 
+  useDeleteArea 
+} from './use-areas-query';
 
 interface FiltersState {
   codigo: string;
@@ -19,23 +23,14 @@ const initialFilters: FiltersState = {
 };
 
 interface UseAreasOptions {
-  initialData?: PagedResponse<AreaResponse>;
   pageSize?: number;
 }
 
 export function useAreas(options: UseAreasOptions = {}) {
-  const { initialData, pageSize } = options;
-  
-  // Usa o size do initialData ou o pageSize passado, ou padrão 10
-  const size = initialData?.size || pageSize || 10;
-
-  // Estado dos dados
-  const [areas, setAreas] = useState<AreaResponse[]>(initialData?.content || []);
-  const [totalPages, setTotalPages] = useState(initialData?.totalPages || 0);
-  const [totalElements, setTotalElements] = useState(initialData?.totalElements || 0);
+  const { pageSize = 10 } = options;
+  const size = pageSize;
 
   // Estado de UI
-  const [loading, setLoading] = useState(!initialData);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
   const [sortField, setSortField] = useState<keyof AreaResponse | null>(null);
@@ -55,50 +50,50 @@ export function useAreas(options: UseAreasOptions = {}) {
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
 
-  const loadAreas = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params: AreaFilterParams = {
-        filtro: debouncedSearchQuery || undefined,
-        cdArea: activeFilters.codigo || undefined,
-        nmArea: activeFilters.nome || undefined,
-        dsArea: activeFilters.descricao || undefined,
-        page: currentPage,
-        size: size,
-        sort: sortField ? `${sortField},${sortDirection === 'desc' ? 'desc' : 'asc'}` : undefined,
-      };
+  // Refs para detectar mudança de filtros (melhor prática React Query)
+  const prevFiltersRef = useRef(JSON.stringify(activeFilters));
+  const prevSearchRef = useRef(debouncedSearchQuery);
 
-      const response = await areasClient.buscarPorFiltro(params);
-      setAreas(response.content);
-      setTotalPages(response.totalPages);
-      setTotalElements(response.totalElements);
-    } catch {
-      toast.error("Erro ao carregar áreas");
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, activeFilters, debouncedSearchQuery, sortField, sortDirection]);
+  // Parâmetros para a query - calcula página efetiva de forma síncrona
+  const queryParams = useMemo(() => {
+    const currentFiltersStr = JSON.stringify(activeFilters);
+    const filtersChanged = prevFiltersRef.current !== currentFiltersStr;
+    const searchChanged = prevSearchRef.current !== debouncedSearchQuery;
+    
+    // Página efetiva: 0 se filtros mudaram, senão usa currentPage
+    const effectivePage = (filtersChanged || searchChanged) ? 0 : currentPage;
+    
+    // Atualiza refs para próxima comparação
+    prevFiltersRef.current = currentFiltersStr;
+    prevSearchRef.current = debouncedSearchQuery;
+    
+    return {
+      filtro: debouncedSearchQuery || undefined,
+      cdArea: activeFilters.codigo || undefined,
+      nmArea: activeFilters.nome || undefined,
+      dsArea: activeFilters.descricao || undefined,
+      page: effectivePage,
+      size: size,
+      sort: sortField ? `${sortField},${sortDirection === 'desc' ? 'desc' : 'asc'}` : undefined,
+    };
+  }, [debouncedSearchQuery, activeFilters, currentPage, size, sortField, sortDirection]);
 
-  const hasUsedInitialDataRef = useRef(false);
-
+  // Sincroniza estado da página com a página efetiva calculada
   useEffect(() => {
-    // Evita recarregar na primeira montagem se temos dados iniciais válidos
-    // Isso previne uma requisição duplicada no SSR
-    const shouldSkipInitialLoad = initialData && 
-                                   !hasUsedInitialDataRef.current && 
-                                   currentPage === 0 && 
-                                   !hasActiveFilters && 
-                                   !debouncedSearchQuery && 
-                                   !sortField;
-    
-    if (shouldSkipInitialLoad) {
-      hasUsedInitialDataRef.current = true;
-      return;
+    if (queryParams.page !== currentPage) {
+      setCurrentPage(queryParams.page);
     }
-    
-    loadAreas();
-  }, [currentPage, activeFilters, debouncedSearchQuery, sortField, loadAreas, initialData, hasActiveFilters]);
+  }, [queryParams.page, currentPage]);
 
+  // ✨ Query principal - React Query cuida de tudo!
+  const { data, isLoading, refetch } = useAreasQuery(queryParams);
+
+  // Mutations
+  const createMutation = useCreateArea();
+  const updateMutation = useUpdateArea();
+  const deleteMutation = useDeleteArea();
+
+  // Handlers - Muito mais simples agora!
   const handleSort = useCallback((field: keyof AreaResponse) => {
     let newSortDirection: 'asc' | 'desc' = 'asc';
     if (sortField === field && sortDirection === 'asc') {
@@ -121,47 +116,36 @@ export function useAreas(options: UseAreasOptions = {}) {
 
   const confirmDelete = useCallback(async () => {
     if (areaToDelete) {
-      try {
-        await areasClient.deletar(areaToDelete);
-        toast.success("Área excluída com sucesso");
-        loadAreas();
-      } catch {
-        toast.error("Erro ao excluir área");
-      } finally {
-        setShowDeleteDialog(false);
-        setAreaToDelete(null);
-      }
+      await deleteMutation.mutateAsync(areaToDelete);
+      setShowDeleteDialog(false);
+      setAreaToDelete(null);
     }
-  }, [areaToDelete, loadAreas]);
+  }, [areaToDelete, deleteMutation]);
 
-  const onAreaSave = useCallback(async (data: AreaRequest) => {
+  const onAreaSave = useCallback(async (formData: AreaRequest) => {
     try {
       if (selectedArea && selectedArea.idArea) {
-        await areasClient.atualizar(selectedArea.idArea, data);
-        toast.success('Área atualizada com sucesso');
+        await updateMutation.mutateAsync({ id: selectedArea.idArea, data: formData });
       } else {
-        await areasClient.criar(data);
-        toast.success('Área criada com sucesso');
+        await createMutation.mutateAsync(formData);
       }
       setShowAreaModal(false);
       setSelectedArea(null);
-      loadAreas();
     } catch (error) {
-      const errorMessage = (error as Error)?.message || 'Erro ao salvar área';
-      toast.error(errorMessage);
+      // Erro já tratado nas mutations
+      throw error;
     }
-  }, [selectedArea, loadAreas]);
+  }, [selectedArea, createMutation, updateMutation]);
 
   const applyFilters = useCallback(() => {
     setActiveFilters(filters);
-    setCurrentPage(0);
     setShowFilterModal(false);
+    // setCurrentPage(0) já é chamado pelo useEffect acima
   }, [filters]);
 
   const clearFilters = useCallback(() => {
     setFilters(initialFilters);
     setActiveFilters(initialFilters);
-    setCurrentPage(0);
     setShowFilterModal(false);
   }, []);
 
@@ -175,7 +159,7 @@ export function useAreas(options: UseAreasOptions = {}) {
     setShowAreaModal(true);
   }, []);
 
-  const filtrosAplicados = [
+  const filtrosAplicados = useMemo(() => [
     ...(searchQuery ? [{
       key: 'search',
       label: 'Busca',
@@ -216,16 +200,16 @@ export function useAreas(options: UseAreasOptions = {}) {
         setFilters(newFilters);
       }
     }] : [])
-  ];
+  ], [searchQuery, activeFilters]);
 
   return {
-    // Dados
-    areas,
-    totalPages,
-    totalElements,
+    // Dados - Direto do React Query
+    areas: data?.content || [],
+    totalPages: data?.totalPages || 0,
+    totalElements: data?.totalElements || 0,
     
     // UI State
-    loading,
+    loading: isLoading,
     searchQuery,
     setSearchQuery,
     currentPage,
@@ -249,7 +233,7 @@ export function useAreas(options: UseAreasOptions = {}) {
     setShowDeleteDialog,
     
     // Handlers
-    loadAreas,
+    loadAreas: refetch, // Expõe refetch como loadAreas para compatibilidade
     handleSort,
     handleEdit,
     handleDelete,

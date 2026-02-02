@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { UploadIcon, XIcon } from '@phosphor-icons/react';
 import { CheckCircleIcon, FileText } from 'lucide-react';
-import { useObrigacoes } from '@/context/obrigacoes/ObrigacoesContext';
+import { useObrigacoesUI } from '@/components/obrigacoes/context/ObrigacoesUIContext';
 import { toast } from 'sonner';
 import obrigacaoClient from '@/api/obrigacao/client';
 import LoadingOverlay from '@/components/ui/loading-overlay';
@@ -17,7 +17,7 @@ interface ImportObrigacoesModalProps {
 }
 
 export function ImportObrigacoesModal({ open, onClose }: ImportObrigacoesModalProps) {
-  const { loadObrigacoes } = useObrigacoes();
+  const { loadObrigacoes } = useObrigacoesUI();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [dragActive, setDragActive] = useState(false);

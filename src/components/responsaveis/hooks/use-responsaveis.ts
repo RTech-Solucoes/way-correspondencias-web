@@ -1,9 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
-import { toast } from 'sonner';
-import { ResponsavelFilterParams, ResponsavelResponse, PagedResponse } from '@/api/responsaveis/types';
-import { responsaveisClient } from '@/api/responsaveis/client';
+import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
+import { ResponsavelResponse, PagedResponse } from '@/api/responsaveis/types';
 import { useDebounce } from '@/hooks/use-debounce';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
+import { 
+  useResponsaveisQuery, 
+  useDeleteResponsavel,
+  useGerarSenhaResponsavel
+} from './use-responsaveis-query';
 
 interface FiltersState {
   usuario: string;
@@ -16,22 +19,14 @@ const initialFilters: FiltersState = {
 };
 
 interface UseResponsaveisOptions {
-  initialData?: PagedResponse<ResponsavelResponse> | null;
   pageSize?: number;
 }
 
 export function useResponsaveis(options: UseResponsaveisOptions = {}) {
-  const { initialData, pageSize } = options;
-  
-  const size = initialData?.size || pageSize || 10;
-
-  // Estado dos dados
-  const [responsaveis, setResponsaveis] = useState<ResponsavelResponse[]>(initialData?.content || []);
-  const [totalPages, setTotalPages] = useState(initialData?.totalPages || 0);
-  const [totalElements, setTotalElements] = useState(initialData?.totalElements || 0);
+  const { pageSize = 10 } = options;
+  const size = pageSize;
 
   // Estado de UI
-  const [loading, setLoading] = useState(!initialData);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
   const [sortField, setSortField] = useState<keyof ResponsavelResponse | null>(null);
@@ -58,40 +53,48 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
   const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
   const ldapEnabled = (process.env.NEXT_PUBLIC_LDAP_ENABLED || 'false') === 'true';
 
-  const loadResponsaveis = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params: ResponsavelFilterParams = {
-        filtro: debouncedSearchQuery || undefined,
-        nmUsuarioLogin: activeFilters.usuario || undefined,
-        dsEmail: activeFilters.email || undefined,
-        page: currentPage,
-        size: size,
-        sort: sortField ? `${sortField},${sortDirection === 'desc' ? 'desc' : 'asc'}` : undefined,
-      };
+  // Refs para detectar mudança de filtros (melhor prática React Query)
+  const prevFiltersRef = useRef(JSON.stringify(activeFilters));
+  const prevSearchRef = useRef(debouncedSearchQuery);
 
-      const response = await responsaveisClient.buscarPorFiltro(params);
-      setResponsaveis(response.content);
-      setTotalPages(response.totalPages);
-      setTotalElements(response.totalElements);
-    } catch {
-      toast.error("Erro ao carregar responsáveis");
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, activeFilters, debouncedSearchQuery, sortField, sortDirection, size]);
-
-  const [hasUsedInitialData, setHasUsedInitialData] = useState(false);
-
-  useEffect(() => {
-    if (initialData && !hasUsedInitialData && currentPage === 0 && !hasActiveFilters && !debouncedSearchQuery && !sortField) {
-      setHasUsedInitialData(true);
-      return;
-    }
+  // Parâmetros para a query - calcula página efetiva de forma síncrona
+  const queryParams = useMemo(() => {
+    const currentFiltersStr = JSON.stringify(activeFilters);
+    const filtersChanged = prevFiltersRef.current !== currentFiltersStr;
+    const searchChanged = prevSearchRef.current !== debouncedSearchQuery;
     
-    loadResponsaveis();
-  }, [loadResponsaveis, initialData, currentPage, hasActiveFilters, debouncedSearchQuery, sortField, hasUsedInitialData]);
+    // Página efetiva: 0 se filtros mudaram, senão usa currentPage
+    const effectivePage = (filtersChanged || searchChanged) ? 0 : currentPage;
+    
+    // Atualiza refs para próxima comparação
+    prevFiltersRef.current = currentFiltersStr;
+    prevSearchRef.current = debouncedSearchQuery;
+    
+    return {
+      filtro: debouncedSearchQuery || undefined,
+      nmUsuarioLogin: activeFilters.usuario || undefined,
+      dsEmail: activeFilters.email || undefined,
+      page: effectivePage,
+      size: size,
+      sort: sortField ? `${sortField},${sortDirection === 'desc' ? 'desc' : 'asc'}` : undefined,
+    };
+  }, [debouncedSearchQuery, activeFilters, currentPage, size, sortField, sortDirection]);
 
+  // Sincroniza estado da página com a página efetiva calculada
+  useEffect(() => {
+    if (queryParams.page !== currentPage) {
+      setCurrentPage(queryParams.page);
+    }
+  }, [queryParams.page, currentPage]);
+
+  // Query principal
+  const { data, isLoading, refetch } = useResponsaveisQuery(queryParams);
+
+  // Mutations
+  const deleteMutation = useDeleteResponsavel();
+  const gerarSenhaMutation = useGerarSenhaResponsavel();
+
+  // Handlers
   const handleSort = useCallback((field: keyof ResponsavelResponse) => {
     let newSortDirection: 'asc' | 'desc' = 'asc';
     if (sortField === field && sortDirection === 'asc') {
@@ -114,28 +117,20 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
 
   const confirmDelete = useCallback(async () => {
     if (responsavelToDelete) {
-      try {
-        await responsaveisClient.deletar(responsavelToDelete.idResponsavel);
-        toast.success("Responsável excluído com sucesso");
-        loadResponsaveis();
-      } catch {
-        toast.error("Erro ao excluir responsável");
-      } finally {
-        setShowDeleteDialog(false);
-        setResponsavelToDelete(null);
-      }
+      await deleteMutation.mutateAsync(responsavelToDelete.idResponsavel);
+      setShowDeleteDialog(false);
+      setResponsavelToDelete(null);
     }
-  }, [responsavelToDelete, loadResponsaveis]);
+  }, [responsavelToDelete, deleteMutation]);
 
   const onResponsavelSave = useCallback(() => {
     setShowResponsavelModal(false);
     setSelectedResponsavel(null);
-    loadResponsaveis();
-  }, [loadResponsaveis]);
+    refetch();
+  }, [refetch]);
 
   const handleGerarSenhaClick = useCallback((responsavel: ResponsavelResponse) => {
     if (!canGerarSenhaResponsavel) {
-      toast.error('Você não tem permissão para gerar senha.');
       return;
     }
     setResponsavelParaGerarSenha(responsavel);
@@ -149,32 +144,22 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
 
     try {
       setGerandoSenha(responsavelParaGerarSenha.idResponsavel);
-      await responsaveisClient.gerarSenhaEEnviarEmail(responsavelParaGerarSenha.idResponsavel);
-      toast.success('Senha gerada e enviada por email com sucesso!');
-      loadResponsaveis();
-    } catch (error) {
-      console.error('Erro ao gerar senha:', error);
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : 'Erro ao gerar senha. Tente novamente.';
-      toast.error(errorMessage);
+      await gerarSenhaMutation.mutateAsync(responsavelParaGerarSenha.idResponsavel);
     } finally {
       setGerandoSenha(null);
       setShowGerarSenhaDialog(false);
       setResponsavelParaGerarSenha(null);
     }
-  }, [responsavelParaGerarSenha, loadResponsaveis]);
+  }, [responsavelParaGerarSenha, gerarSenhaMutation]);
 
   const applyFilters = useCallback(() => {
     setActiveFilters(filters);
-    setCurrentPage(0);
     setShowFilterModal(false);
   }, [filters]);
 
   const clearFilters = useCallback(() => {
     setFilters(initialFilters);
     setActiveFilters(initialFilters);
-    setCurrentPage(0);
     setShowFilterModal(false);
   }, []);
 
@@ -188,7 +173,7 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
     setShowResponsavelModal(true);
   }, []);
 
-  const filtrosAplicados = [
+  const filtrosAplicados = useMemo(() => [
     ...(searchQuery ? [{
       key: 'search',
       label: 'Busca',
@@ -218,16 +203,16 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
         setFilters(newFilters);
       }
     }] : [])
-  ];
+  ], [searchQuery, activeFilters]);
 
   return {
     // Dados
-    responsaveis,
-    totalPages,
-    totalElements,
+    responsaveis: data?.content || [],
+    totalPages: data?.totalPages || 0,
+    totalElements: data?.totalElements || 0,
 
     // UI State
-    loading,
+    loading: isLoading,
     searchQuery,
     setSearchQuery,
     currentPage,
@@ -265,7 +250,7 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
     sortDirection,
 
     // Handlers
-    loadResponsaveis,
+    loadResponsaveis: refetch,
     handleSort,
     handleEdit,
     handleDelete,

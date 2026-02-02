@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { ArrowClockwiseIcon } from '@phosphor-icons/react';
-import { Button } from '@nextui-org/react';
+import { Button } from '@/components/ui/button';
 
 import AreaModal from '@/components/areas/AreaModal';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
@@ -13,15 +13,10 @@ import TableArea from '@/components/areas/TableArea';
 import FilterModalArea from '@/components/areas/FilterModalArea';
 import PageTitle from '@/components/ui/page-title';
 
-import { AreaResponse, PagedResponse } from '@/api/areas/types';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
 import { useAreas } from './hooks/use-areas';
 
-interface AreaContentProps {
-  initialData?: PagedResponse<AreaResponse>;
-}
-
-export function AreaContent({ initialData }: AreaContentProps) {
+export function AreaContent() {
   const { canInserirArea } = usePermissoes();
   
   const {
@@ -62,7 +57,7 @@ export function AreaContent({ initialData }: AreaContentProps) {
     onAreaSave,
     handleCloseAreaModal,
     handleOpenCreateArea,
-  } = useAreas({ initialData });
+  } = useAreas();
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
@@ -73,7 +68,7 @@ export function AreaContent({ initialData }: AreaContentProps) {
           <Button
             variant="ghost"
             size="sm"
-            onClick={loadAreas}
+            onClick={() => loadAreas()}
             disabled={loading}
           >
             <ArrowClockwiseIcon className={`h-4 w-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
@@ -90,7 +85,7 @@ export function AreaContent({ initialData }: AreaContentProps) {
             totalPages={totalPages}
             totalElements={totalElements}
             onPageChange={setCurrentPage}
-            loading={loading}
+            loading={loading && areas.length === 0}
             showOnlyPaginationButtons={true}
           />
         </div>
@@ -120,7 +115,7 @@ export function AreaContent({ initialData }: AreaContentProps) {
           handleDelete={handleDelete}
           handleEdit={handleEdit}
           handleSort={handleSort}
-          loading={loading}
+          loading={loading && areas.length === 0}
         />
       </div>
 

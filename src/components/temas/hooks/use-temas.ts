@@ -1,8 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
-import { toast } from 'sonner';
-import { TemaFilterParams, TemaRequest, TemaResponse, PagedResponse } from '@/api/temas/types';
-import { temasClient } from '@/api/temas/client';
+import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
+import { TemaRequest, TemaResponse, PagedResponse } from '@/api/temas/types';
 import { useDebounce } from '@/hooks/use-debounce';
+import { 
+  useTemasQuery, 
+  useCreateTema, 
+  useUpdateTema, 
+  useDeleteTema 
+} from './use-temas-query';
 
 interface FiltersState {
   nome: string;
@@ -15,23 +19,14 @@ const initialFilters: FiltersState = {
 };
 
 interface UseTemasOptions {
-  initialData?: PagedResponse<TemaResponse>;
   pageSize?: number;
 }
 
 export function useTemas(options: UseTemasOptions = {}) {
-  const { initialData, pageSize } = options;
-  
-  // Usa o size do initialData ou o pageSize passado, ou padrão 10
-  const size = initialData?.size || pageSize || 10;
-
-  // Estado dos dados
-  const [temas, setTemas] = useState<TemaResponse[]>(initialData?.content || []);
-  const [totalPages, setTotalPages] = useState(initialData?.totalPages || 0);
-  const [totalElements, setTotalElements] = useState(initialData?.totalElements || 0);
+  const { pageSize = 10 } = options;
+  const size = pageSize;
 
   // Estado de UI
-  const [loading, setLoading] = useState(!initialData);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
   const [sortField, setSortField] = useState<keyof TemaResponse | null>(null);
@@ -51,40 +46,49 @@ export function useTemas(options: UseTemasOptions = {}) {
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
 
-  const loadTemas = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params: TemaFilterParams = {
-        filtro: debouncedSearchQuery || undefined,
-        nmTema: activeFilters.nome || undefined,
-        dsTema: activeFilters.descricao || undefined,
-        page: currentPage,
-        size: size,
-        sort: sortField ? `${sortField},${sortDirection === 'desc' ? 'desc' : 'asc'}` : undefined,
-      };
+  // Refs para detectar mudança de filtros (melhor prática React Query)
+  const prevFiltersRef = useRef(JSON.stringify(activeFilters));
+  const prevSearchRef = useRef(debouncedSearchQuery);
 
-      const response = await temasClient.buscarPorFiltro(params);
-      setTemas(response.content);
-      setTotalPages(response.totalPages);
-      setTotalElements(response.totalElements);
-    } catch {
-      toast.error("Erro ao carregar temas");
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, activeFilters, debouncedSearchQuery, sortField, sortDirection, size]);
-
-  const [hasUsedInitialData, setHasUsedInitialData] = useState(false);
-
-  useEffect(() => {
-    if (initialData && !hasUsedInitialData && currentPage === 0 && !hasActiveFilters && !debouncedSearchQuery && !sortField) {
-      setHasUsedInitialData(true);
-      return;
-    }
+  // Parâmetros para a query - calcula página efetiva de forma síncrona
+  const queryParams = useMemo(() => {
+    const currentFiltersStr = JSON.stringify(activeFilters);
+    const filtersChanged = prevFiltersRef.current !== currentFiltersStr;
+    const searchChanged = prevSearchRef.current !== debouncedSearchQuery;
     
-    loadTemas();
-  }, [loadTemas, initialData, currentPage, hasActiveFilters, debouncedSearchQuery, sortField, hasUsedInitialData]);
+    // Página efetiva: 0 se filtros mudaram, senão usa currentPage
+    const effectivePage = (filtersChanged || searchChanged) ? 0 : currentPage;
+    
+    // Atualiza refs para próxima comparação
+    prevFiltersRef.current = currentFiltersStr;
+    prevSearchRef.current = debouncedSearchQuery;
+    
+    return {
+      filtro: debouncedSearchQuery || undefined,
+      nmTema: activeFilters.nome || undefined,
+      dsTema: activeFilters.descricao || undefined,
+      page: effectivePage,
+      size: size,
+      sort: sortField ? `${sortField},${sortDirection === 'desc' ? 'desc' : 'asc'}` : undefined,
+    };
+  }, [debouncedSearchQuery, activeFilters, currentPage, size, sortField, sortDirection]);
 
+  // Sincroniza estado da página com a página efetiva calculada
+  useEffect(() => {
+    if (queryParams.page !== currentPage) {
+      setCurrentPage(queryParams.page);
+    }
+  }, [queryParams.page, currentPage]);
+
+  // Query principal
+  const { data, isLoading, refetch } = useTemasQuery(queryParams);
+
+  // Mutations
+  const createMutation = useCreateTema();
+  const updateMutation = useUpdateTema();
+  const deleteMutation = useDeleteTema();
+
+  // Handlers
   const handleSort = useCallback((field: keyof TemaResponse) => {
     let newSortDirection: 'asc' | 'desc' = 'asc';
     if (sortField === field && sortDirection === 'asc') {
@@ -107,47 +111,34 @@ export function useTemas(options: UseTemasOptions = {}) {
 
   const confirmDelete = useCallback(async () => {
     if (temaToDelete) {
-      try {
-        await temasClient.deletar(temaToDelete.idTema);
-        toast.success("Tema excluído com sucesso");
-        loadTemas();
-      } catch {
-        toast.error("Erro ao excluir tema");
-      } finally {
-        setShowDeleteDialog(false);
-        setTemaToDelete(null);
-      }
+      await deleteMutation.mutateAsync(temaToDelete.idTema);
+      setShowDeleteDialog(false);
+      setTemaToDelete(null);
     }
-  }, [temaToDelete, loadTemas]);
+  }, [temaToDelete, deleteMutation]);
 
-  const onTemaSave = useCallback(async (data: TemaRequest) => {
+  const onTemaSave = useCallback(async (formData: TemaRequest) => {
     try {
       if (selectedTema && selectedTema.idTema) {
-        await temasClient.atualizar(selectedTema.idTema, data);
-        toast.success('Tema atualizado com sucesso');
+        await updateMutation.mutateAsync({ id: selectedTema.idTema, data: formData });
       } else {
-        await temasClient.criar(data);
-        toast.success('Tema criado com sucesso');
+        await createMutation.mutateAsync(formData);
       }
       setShowTemaModal(false);
       setSelectedTema(null);
-      loadTemas();
     } catch (error) {
-      const errorMessage = (error as Error)?.message || 'Erro ao salvar tema';
-      toast.error(errorMessage);
+      throw error;
     }
-  }, [selectedTema, loadTemas]);
+  }, [selectedTema, createMutation, updateMutation]);
 
   const applyFilters = useCallback(() => {
     setActiveFilters(filters);
-    setCurrentPage(0);
     setShowFilterModal(false);
   }, [filters]);
 
   const clearFilters = useCallback(() => {
     setFilters(initialFilters);
     setActiveFilters(initialFilters);
-    setCurrentPage(0);
     setShowFilterModal(false);
   }, []);
 
@@ -162,6 +153,7 @@ export function useTemas(options: UseTemasOptions = {}) {
   }, []);
 
   const sortedTemas = useCallback(() => {
+    const temas = data?.content || [];
     const sorted = [...temas];
     if (sortField) {
       sorted.sort((a, b) => {
@@ -179,9 +171,9 @@ export function useTemas(options: UseTemasOptions = {}) {
       });
     }
     return sorted;
-  }, [temas, sortField, sortDirection]);
+  }, [data?.content, sortField, sortDirection]);
 
-  const filtrosAplicados = [
+  const filtrosAplicados = useMemo(() => [
     ...(searchQuery ? [{
       key: 'search',
       label: 'Busca',
@@ -211,16 +203,16 @@ export function useTemas(options: UseTemasOptions = {}) {
         setFilters(newFilters);
       }
     }] : [])
-  ];
+  ], [searchQuery, activeFilters]);
 
   return {
     // Dados
     temas: sortedTemas(),
-    totalPages,
-    totalElements,
+    totalPages: data?.totalPages || 0,
+    totalElements: data?.totalElements || 0,
 
     // UI State
-    loading,
+    loading: isLoading,
     searchQuery,
     setSearchQuery,
     currentPage,
@@ -245,7 +237,7 @@ export function useTemas(options: UseTemasOptions = {}) {
     temaToDelete,
 
     // Handlers
-    loadTemas,
+    loadTemas: refetch,
     handleSort,
     handleEdit,
     handleDelete,

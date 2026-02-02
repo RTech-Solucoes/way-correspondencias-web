@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import obrigacaoClient from '@/api/obrigacao/client';
 import { ObrigacaoDetalheResponse, ObrigacaoRequest } from '@/api/obrigacao/types';
@@ -25,6 +26,7 @@ import statusSolicitacaoClient, { StatusSolicitacaoResponse } from '@/api/status
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { statusList } from '@/api/status-solicitacao/types';
 import { useValidarObrigacao } from '@/components/obrigacoes/conferencia/hooks/use-validar-obrigacao';
+import { obrigacoesKeys } from '@/components/obrigacoes/hooks/use-obrigacoes-query';
 
 type TabKey = 'dados' | 'temas' | 'prazos' | 'anexos' | 'vinculos';
 
@@ -116,6 +118,7 @@ interface EditarObrigacaoContentProps {
 
 export function EditarObrigacaoContent({ id, initialData }: EditarObrigacaoContentProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { idPerfil } = useUserGestao();
   
   const [activeTab, setActiveTab] = useState<TabKey>('dados');
@@ -366,6 +369,10 @@ export function EditarObrigacaoContent({ id, initialData }: EditarObrigacaoConte
       };
 
       await obrigacaoClient.atualizar(formData.idSolicitacao, payload);
+      
+      // Invalida o cache para que a lista seja recarregada quando voltar
+      queryClient.invalidateQueries({ queryKey: obrigacoesKeys.lists() });
+      
       toast.success('Obrigação atualizada com sucesso.');
       setNovosAnexos([]);
       await carregarDetalhes();
@@ -375,7 +382,7 @@ export function EditarObrigacaoContent({ id, initialData }: EditarObrigacaoConte
     } finally {
       setSaving(false);
     }
-  }, [carregarDetalhes, existingAnexos, formData, novosAnexos, requiredStepsForTab, hasStep3ValidationErrors, idPerfil, idClassificacaoCondicionada, validarObrigacao]);
+  }, [carregarDetalhes, existingAnexos, formData, novosAnexos, requiredStepsForTab, hasStep3ValidationErrors, idPerfil, idClassificacaoCondicionada, validarObrigacao, queryClient]);
 
   const renderTabContent = () => {
     if (!formData)  return null;

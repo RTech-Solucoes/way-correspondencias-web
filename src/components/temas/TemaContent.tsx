@@ -12,11 +12,7 @@ import { TemaResponse, PagedResponse } from '@/api/temas/types';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
 import { useTemas } from './hooks/use-temas';
 
-interface TemaContentProps {
-  initialData?: PagedResponse<TemaResponse>;
-}
-
-export function TemaContent({ initialData }: TemaContentProps) {
+export function TemaContent() {
   const { canInserirTema } = usePermissoes();
 
   const {
@@ -58,7 +54,7 @@ export function TemaContent({ initialData }: TemaContentProps) {
     onTemaSave,
     handleCloseTemaModal,
     handleOpenCreateTema,
-  } = useTemas({ initialData });
+  } = useTemas();
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
@@ -66,7 +62,7 @@ export function TemaContent({ initialData }: TemaContentProps) {
         totalElements={totalElements}
         currentPage={currentPage}
         totalPages={totalPages}
-        loading={loading}
+        loading={loading && temas.length === 0}
         onRefresh={loadTemas}
         onPageChange={setCurrentPage}
       />
@@ -95,7 +91,7 @@ export function TemaContent({ initialData }: TemaContentProps) {
           handleDelete={handleDelete}
           handleEdit={handleEdit}
           handleSort={handleSort}
-          loading={loading}
+          loading={loading && temas.length === 0}
         />
       </div>
 

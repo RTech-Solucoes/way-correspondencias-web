@@ -11,11 +11,7 @@ import ResponsaveisTable from '@/components/responsaveis/ResponsaveisTable';
 import ResponsaveisFilterDialog from '@/components/responsaveis/ResponsaveisFilterDialog';
 import { useResponsaveis } from '@/components/responsaveis/hooks/use-responsaveis';
 
-interface ResponsaveisContentProps {
-  initialData?: PagedResponse<ResponsavelResponse> | null;
-}
-
-export function ResponsaveisContent({ initialData }: ResponsaveisContentProps) {
+export function ResponsaveisContent() {
   const {
     responsaveis,
     loading,
@@ -56,7 +52,7 @@ export function ResponsaveisContent({ initialData }: ResponsaveisContentProps) {
     ldapEnabled,
     filtrosAplicados,
     loadResponsaveis,
-  } = useResponsaveis({ initialData });
+  } = useResponsaveis();
 
   const { canInserirResponsavel } = usePermissoes();
 
@@ -66,7 +62,7 @@ export function ResponsaveisContent({ initialData }: ResponsaveisContentProps) {
         totalElements={totalElements}
         currentPage={currentPage}
         totalPages={totalPages}
-        loading={loading}
+        loading={loading && responsaveis.length === 0}
         onRefresh={loadResponsaveis}
         onPageChange={setCurrentPage}
       />
@@ -91,7 +87,7 @@ export function ResponsaveisContent({ initialData }: ResponsaveisContentProps) {
 
       <ResponsaveisTable
         responsaveis={responsaveis}
-        loading={loading}
+        loading={loading && responsaveis.length === 0}
         sortField={sortField}
         sortDirection={sortDirection}
         handleSort={handleSort}

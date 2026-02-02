@@ -1,10 +1,23 @@
-import { Suspense } from "react";
+import { HydrationBoundary, dehydrate } from "@tanstack/react-query";
 import { ObrigacoesContent } from "@/components/obrigacoes/list-page/ObrigacoesContent";
-import LoadingOverlay from "@/components/ui/loading-overlay";
 import obrigacaoClient from "@/api/obrigacao/client";
+import { makeQueryClient } from "@/lib/query-client";
+import { obrigacoesKeys } from "@/components/obrigacoes/hooks/use-obrigacoes-query";
+import LoadingOverlay from "@/components/ui/loading-overlay";
+import { Suspense } from "react";
 
 export default async function ObrigacoesPage() {
-  const data = await obrigacaoClient.buscarLista({ page: 0, size: 10 });
+  const queryClient = makeQueryClient();
+  
+  const initialParams = {
+    page: 0,
+    size: 10,
+  };
+
+  await queryClient.prefetchQuery({
+    queryKey: obrigacoesKeys.list(initialParams),
+    queryFn: () => obrigacaoClient.buscarLista(initialParams),
+  });
 
   return (
     <div data-ssr="true">
@@ -16,7 +29,9 @@ export default async function ObrigacoesPage() {
           />
         }
       >
-        <ObrigacoesContent initialData={data} />
+        <HydrationBoundary state={dehydrate(queryClient)}>
+          <ObrigacoesContent />
+        </HydrationBoundary>
       </Suspense>
     </div>
   );

@@ -15,11 +15,7 @@ import { PagedResponse } from '@/api/solicitacoes/types';
 import { CorrespondenciaResponse } from '@/api/correspondencia/types';
 import { toast } from 'sonner';
 
-interface SolicitacoesContentProps {
-  initialData?: PagedResponse<CorrespondenciaResponse> | null;
-}
-
-export function SolicitacoesContent({ initialData }: SolicitacoesContentProps) {
+export function SolicitacoesContent() {
   const {
     // Dados principais
     sortedSolicitacoes,
@@ -101,7 +97,7 @@ export function SolicitacoesContent({ initialData }: SolicitacoesContentProps) {
 
     // Helpers
     getJoinedNmAreas,
-  } = useSolicitacoes({ initialData });
+  } = useSolicitacoes();
 
   const abrirEmailOriginal = () => {
     toast.message('Abrir e-mail original (implemente a navegação/URL).');
@@ -118,7 +114,7 @@ export function SolicitacoesContent({ initialData }: SolicitacoesContentProps) {
           totalElements={totalElements}
           currentPage={currentPage}
           totalPages={totalPages}
-          loading={loading}
+          loading={loading && sortedSolicitacoes.length === 0}
           onRefresh={loadSolicitacoes}
           onPageChange={setCurrentPage}
         />
@@ -143,7 +139,7 @@ export function SolicitacoesContent({ initialData }: SolicitacoesContentProps) {
 
         <SolicitacoesTable
           solicitacoes={sortedSolicitacoes}
-          loading={loading}
+          loading={loading && sortedSolicitacoes.length === 0}
           sortField={sortField}
           sortDirection={sortDirection}
           canAtualizarSolicitacao={!!canAtualizarSolicitacao}

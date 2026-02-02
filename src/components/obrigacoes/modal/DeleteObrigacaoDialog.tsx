@@ -1,7 +1,8 @@
 'use client';
 
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
-import { useObrigacoes } from '@/context/obrigacoes/ObrigacoesContext';
+import { useObrigacoesUI } from '@/components/obrigacoes/context/ObrigacoesUIContext';
+import { useDeleteObrigacao } from '@/components/obrigacoes/hooks/use-obrigacoes-query';
 import { useState } from 'react';
 import obrigacaoClient from '@/api/obrigacao/client';
 
@@ -11,26 +12,18 @@ export function DeleteObrigacaoDialog() {
     setShowDeleteDialog,
     obrigacaoToDelete,
     setObrigacaoToDelete,
-    setObrigacoes,
-  } = useObrigacoes();
-  const [loading, setLoading] = useState(false);
+  } = useObrigacoesUI();
+  
+  const { mutateAsync: deleteObrigacao, isPending } = useDeleteObrigacao();
 
   const handleDelete = async () => {
-    if (!obrigacaoToDelete) return;
+    if (!obrigacaoToDelete?.idSolicitacao) return;
 
-    setLoading(true);
     try {
-      await obrigacaoClient.deletar(obrigacaoToDelete.idSolicitacao);
-      
-      setObrigacoes((prev) =>
-        prev.filter((o) => o.idSolicitacao !== obrigacaoToDelete.idSolicitacao)
-      );
-
+      await deleteObrigacao(obrigacaoToDelete.idSolicitacao);
       handleClose();
     } catch (error) {
       console.error('Erro ao excluir obrigação:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -45,7 +38,7 @@ export function DeleteObrigacaoDialog() {
       onOpenChange={handleClose}
       title="Excluir Obrigação"
       description={`Tem certeza que deseja excluir esta obrigação?`}
-      confirmText={loading ? 'Excluindo...' : 'Excluir'}
+      confirmText={isPending ? 'Excluindo...' : 'Excluir'}
       cancelText="Cancelar"
       onConfirm={handleDelete}
       variant="destructive"

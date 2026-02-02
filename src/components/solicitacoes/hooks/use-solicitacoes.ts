@@ -1,21 +1,20 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
 import { CorrespondenciaResponse } from '@/api/correspondencia/types';
 import { PagedResponse } from '@/api/solicitacoes/types';
 import { useSolicitacoesData } from './use-solicitacoes-data';
-import { useSolicitacoesFilters, FiltersState } from './use-solicitacoes-filters';
+import { useSolicitacoesFilters } from './use-solicitacoes-filters';
 import { useSolicitacoesModals } from './use-solicitacoes-modals';
 import { useSolicitacoesHandlers } from './use-solicitacoes-handlers';
 
 export type { FiltersState } from './use-solicitacoes-filters';
 
 interface UseSolicitacoesOptions {
-  initialData?: PagedResponse<CorrespondenciaResponse> | null;
   pageSize?: number;
 }
 
 export function useSolicitacoes(options: UseSolicitacoesOptions = {}) {
-  const { initialData, pageSize = 10 } = options;
+  const { pageSize = 10 } = options;
 
   // Permissões
   const { canInserirSolicitacao, canAtualizarSolicitacao, canDeletarSolicitacao } = usePermissoes();
@@ -34,9 +33,13 @@ export function useSolicitacoes(options: UseSolicitacoesOptions = {}) {
     sortDirection: tempSortDirection,
   });
 
+  // Refs para rastrear mudanças nos filtros e busca (usados no useEffect de carregamento)
+  const prevActiveFiltersRef = useRef<string>(JSON.stringify(filtersHook.activeFilters));
+  const prevSearchQueryRef = useRef<string>(filtersHook.searchQuery);
+
   // Hook de dados
   const dataHook = useSolicitacoesData(
-    { initialData, pageSize },
+    { pageSize },
     {
       currentPage: filtersHook.currentPage,
       activeFilters: filtersHook.activeFilters,
@@ -173,7 +176,7 @@ export function useSolicitacoes(options: UseSolicitacoesOptions = {}) {
         }
       }] : [])
     ];
-  }, [filtersHook, dataHook.statuses, dataHook.areas, dataHook.temas]);
+  }, [filtersHook, dataHook.statuses, dataHook.areas, dataHook.temas, dataHook.responsaveis, dataHook.solicitacoes]);
 
   // Parâmetros de filtro para exportação
   const exportFilterParams = useMemo(() => ({
@@ -243,23 +246,39 @@ export function useSolicitacoes(options: UseSolicitacoesOptions = {}) {
   }, [dataHook.solicitacoes, handlersHook.sortField, handlersHook.sortDirection, handlersHook.getStatusText, handlersHook.getByPath]);
 
   // Effect para carregar solicitações
-  const [hasUsedInitialData, setHasUsedInitialData] = useState(false);
+  const isInitialMountRef = useRef(true);
 
   useEffect(() => {
-    if (initialData && !hasUsedInitialData && filtersHook.currentPage === 0 && 
-        !filtersHook.hasActiveFilters && !dataHook.debouncedSearchQuery && !handlersHook.sortField) {
-      setHasUsedInitialData(true);
-      return;
+    // Verifica se filtros ou busca mudaram
+    const currentFiltersStr = JSON.stringify(filtersHook.activeFilters);
+    const filtersChanged = prevActiveFiltersRef.current !== currentFiltersStr;
+    const searchChanged = prevSearchQueryRef.current !== dataHook.debouncedSearchQuery;
+
+    if (filtersChanged || searchChanged) {
+      prevActiveFiltersRef.current = currentFiltersStr;
+      prevSearchQueryRef.current = dataHook.debouncedSearchQuery;
+
+      // Se os filtros mudaram e não estamos na página 0, reseta para página 0
+      // O useEffect será disparado novamente quando currentPage mudar
+      if (!isInitialMountRef.current && filtersHook.currentPage !== 0) {
+        filtersHook.setCurrentPage(0);
+        return;
+      }
     }
+
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false;
+    }
+
     dataHook.loadSolicitacoes();
   }, [
-    dataHook.loadSolicitacoes, 
-    initialData, 
+    dataHook.loadSolicitacoes,
     filtersHook.currentPage, 
     filtersHook.hasActiveFilters, 
+    filtersHook.activeFilters,
+    filtersHook.setCurrentPage,
     dataHook.debouncedSearchQuery, 
-    handlersHook.sortField, 
-    hasUsedInitialData
+    handlersHook.sortField
   ]);
 
   return {

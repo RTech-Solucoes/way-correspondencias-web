@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Stepper } from '@/components/ui/stepper';
 import { Button } from '@/components/ui/button';
-import { useObrigacoes } from '@/context/obrigacoes/ObrigacoesContext';
+import { useObrigacoesUI } from '@/components/obrigacoes/context/ObrigacoesUIContext';
 import { ObrigacaoRequest } from '@/api/obrigacao/types';
 import { CaretRightIcon, CaretLeftIcon } from '@phosphor-icons/react';
 
@@ -38,7 +38,7 @@ const steps = [
 ];
 
 export function ObrigacaoModal() {
-  const { showObrigacaoModal, setShowObrigacaoModal, loadObrigacoes } = useObrigacoes();
+  const { showObrigacaoModal, setShowObrigacaoModal, loadObrigacoes } = useObrigacoesUI();
   const { idPerfil } = useUserGestao();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
