@@ -13,7 +13,6 @@ interface EmailQueryParams {
   size: number;
 }
 
-// Query Keys
 export const emailsKeys = {
   all: ['emails'] as const,
   lists: () => [...emailsKeys.all, 'list'] as const,
@@ -21,13 +20,11 @@ export const emailsKeys = {
   detail: (id: string) => [...emailsKeys.all, 'detail', id] as const,
 };
 
-// Hook para buscar emails
 export function useEmailsQuery(params: EmailQueryParams) {
   return useQuery<PagedResponse<EmailResponse>>({
     queryKey: emailsKeys.list(params),
     queryFn: async (): Promise<PagedResponse<EmailResponse>> => {
       try {
-        // Timeout de 30 segundos
         const timeoutPromise = new Promise<never>((_, reject) => {
           setTimeout(() => reject(new Error('Tempo limite excedido')), 30000);
         });
@@ -37,12 +34,10 @@ export function useEmailsQuery(params: EmailQueryParams) {
           timeoutPromise
         ]);
         
-        // Validação da resposta
         if (!response || typeof response !== 'object') {
           throw new Error('Resposta inválida da API');
         }
         
-        // Se não tem content, retorna estrutura vazia válida
         if (!('content' in response) || !response.content) {
           return {
             content: [],
