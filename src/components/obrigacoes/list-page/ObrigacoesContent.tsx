@@ -16,8 +16,13 @@ import { ObrigacoesModals } from "@/components/obrigacoes/list-page/ObrigacoesMo
 // Hooks
 import { useObrigacoes } from "@/components/obrigacoes/hooks/use-obrigacoes";
 import { useObrigacoesFilters } from "./hooks/useObrigacoesFilters";
+import { ObrigacaoFiltroRequest } from "@/api/obrigacao/types";
 
-export function ObrigacoesContent() {
+interface ObrigacoesContentProps {
+  defaultFilters?: Partial<ObrigacaoFiltroRequest>;
+}
+
+export function ObrigacoesContent({ defaultFilters }: ObrigacoesContentProps) {
   const searchParams = useSearchParams();
   
   const idObrigacaoFromUrl = useMemo(() => {
@@ -99,7 +104,7 @@ export function ObrigacoesContent() {
     isAdminOrGestor,
     getStatusText,
     idPerfil,
-  } = useObrigacoes({ idObrigacaoFromUrl });
+  } = useObrigacoes({ idObrigacaoFromUrl, defaultFilters });
 
   const {
     hasActiveFilters,

@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useObrigacoesUI } from '@/components/obrigacoes/context/ObrigacoesUIContext';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import areasClient from '@/api/areas/client';
 import temasClient from '@/api/temas/client';
 import tiposClient from '@/api/tipos/client';
@@ -14,6 +14,8 @@ import { AreaResponse } from '@/api/areas/types';
 import { TemaResponse } from '@/api/temas/types';
 import { TipoResponse, CategoriaEnum, TipoEnum } from '@/api/tipos/types';
 import statusSolicitacaoClient, { StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
+import { useUserGestao } from '@/hooks/use-user-gestao';
+import { PERFIS_FILTRO_DEFAULT_DATA_LIMITE } from '@/api/obrigacao/types';
 
 interface FilterState {
   idStatusObrigacao: string;
@@ -22,6 +24,8 @@ interface FilterState {
   dtLimiteFim: string;
   dtInicioInicio: string;
   dtInicioFim: string;
+  dtTerminoInicio: string;
+  dtTerminoFim: string;
   idTema: string;
   idTipoClassificacao: string;
   idTipoPeriodicidade: string;
@@ -29,6 +33,11 @@ interface FilterState {
 
 export function FilterModalObrigacao() {
   const { showFilterModal, setShowFilterModal, filters, setFilters } = useObrigacoesUI();
+  const { idPerfil } = useUserGestao();
+  
+  const mostrarFiltroDataLimite = useMemo(() => {
+    return PERFIS_FILTRO_DEFAULT_DATA_LIMITE.includes(idPerfil ?? 0) ? true : false;
+  }, [idPerfil]);
   
   const [localFilters, setLocalFilters] = useState<FilterState>({
     idStatusObrigacao: '',
@@ -37,6 +46,8 @@ export function FilterModalObrigacao() {
     dtLimiteFim: '',
     dtInicioInicio: '',
     dtInicioFim: '',
+    dtTerminoInicio: '',
+    dtTerminoFim: '',
     idTema: '',
     idTipoClassificacao: '',
     idTipoPeriodicidade: '',
@@ -58,6 +69,8 @@ export function FilterModalObrigacao() {
         dtLimiteFim: filters.dtLimiteFim || '',
         dtInicioInicio: filters.dtInicioInicio || '',
         dtInicioFim: filters.dtInicioFim || '',
+        dtTerminoInicio: filters.dtTerminoInicio || '',
+        dtTerminoFim: filters.dtTerminoFim || '',
         idTema: filters.idTema || '',
         idTipoClassificacao: filters.idTipoClassificacao || '',
         idTipoPeriodicidade: filters.idTipoPeriodicidade || '',
@@ -116,6 +129,8 @@ export function FilterModalObrigacao() {
       dtLimiteFim: '',
       dtInicioInicio: '',
       dtInicioFim: '',
+      dtTerminoInicio: '',
+      dtTerminoFim: '',
       idTema: '',
       idTipoClassificacao: '',
       idTipoPeriodicidade: '',
@@ -178,31 +193,7 @@ export function FilterModalObrigacao() {
           </div>
 
           <div className="space-y-2">
-            <Label>Data Limite (Range)</Label>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="dtLimiteInicio" className="text-sm text-gray-600">Data Início</Label>
-                <Input
-                  id="dtLimiteInicio"
-                  type="date"
-                  value={localFilters.dtLimiteInicio}
-                  onChange={(e) => setLocalFilters({ ...localFilters, dtLimiteInicio: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="dtLimiteFim" className="text-sm text-gray-600">Data Fim</Label>
-                <Input
-                  id="dtLimiteFim"
-                  type="date"
-                  value={localFilters.dtLimiteFim}
-                  onChange={(e) => setLocalFilters({ ...localFilters, dtLimiteFim: e.target.value })}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Data de Início (Range)</Label>
+            <Label>Data de Início</Label>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="dtInicioInicio" className="text-sm text-gray-600">Data Início</Label>
@@ -224,6 +215,56 @@ export function FilterModalObrigacao() {
               </div>
             </div>
           </div>
+
+          <div className="space-y-2">
+            <Label>Data de Término</Label>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="dtTerminoInicio" className="text-sm text-gray-600">Data Início</Label>
+                <Input
+                  id="dtTerminoInicio"
+                  type="date"
+                  value={localFilters.dtTerminoInicio}
+                  onChange={(e) => setLocalFilters({ ...localFilters, dtTerminoInicio: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="dtTerminoFim" className="text-sm text-gray-600">Data Fim</Label>
+                <Input
+                  id="dtTerminoFim"
+                  type="date"
+                  value={localFilters.dtTerminoFim}
+                  onChange={(e) => setLocalFilters({ ...localFilters, dtTerminoFim: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+
+          {mostrarFiltroDataLimite && (
+            <div className="space-y-2">
+              <Label>Data Limite</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="dtLimiteInicio" className="text-sm text-gray-600">Data Início</Label>
+                  <Input
+                    id="dtLimiteInicio"
+                    type="date"
+                    value={localFilters.dtLimiteInicio}
+                    onChange={(e) => setLocalFilters({ ...localFilters, dtLimiteInicio: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="dtLimiteFim" className="text-sm text-gray-600">Data Fim</Label>
+                  <Input
+                    id="dtLimiteFim"
+                    type="date"
+                    value={localFilters.dtLimiteFim}
+                    onChange={(e) => setLocalFilters({ ...localFilters, dtLimiteFim: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="idTema">Tema</Label>

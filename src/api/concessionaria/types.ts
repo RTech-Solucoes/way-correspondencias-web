@@ -8,3 +8,7 @@ export interface ConcessionariaResponse {
   flAtivo: StatusAtivo;
 }
 
+export interface AnoConcessaoConcessionariaResponse {
+  dtBaseInicioConcessao: string;
+  dtLimiteConcessao: string;
+}

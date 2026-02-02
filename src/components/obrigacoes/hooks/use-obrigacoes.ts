@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ObrigacaoResponse, ObrigacaoResumoResponse } from '@/api/obrigacao/types';
+import { ObrigacaoFiltroRequest, ObrigacaoResponse, ObrigacaoResumoResponse } from '@/api/obrigacao/types';
 import obrigacaoClient from '@/api/obrigacao/client';
 import { useDebounce } from '@/hooks/use-debounce';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
@@ -30,6 +30,8 @@ export interface FiltersState {
   dtLimiteFim: string;
   dtInicioInicio: string;
   dtInicioFim: string;
+  dtTerminoInicio: string;
+  dtTerminoFim: string;
   idTema: string;
   idTipoClassificacao: string;
   idTipoPeriodicidade: string;
@@ -49,6 +51,8 @@ const initialFilters: FiltersState = {
   dtLimiteFim: '',
   dtInicioInicio: '',
   dtInicioFim: '',
+  dtTerminoInicio: '',
+  dtTerminoFim: '',
   idTema: '',
   idTipoClassificacao: '',
   idTipoPeriodicidade: '',
@@ -58,10 +62,21 @@ const initialFilters: FiltersState = {
 interface UseObrigacoesOptions {
   pageSize?: number;
   idObrigacaoFromUrl?: number;
+  defaultFilters?: Partial<ObrigacaoFiltroRequest>;
+}
+
+function createInitialFilters(defaultFilters?: Partial<ObrigacaoFiltroRequest>): FiltersState {
+  return {
+    ...initialFilters,
+    dtLimiteInicio: defaultFilters?.dtLimiteInicio || '',
+    dtLimiteFim: defaultFilters?.dtLimiteFim || '',
+    dtTerminoInicio: defaultFilters?.dtTerminoInicio || '',
+    dtTerminoFim: defaultFilters?.dtTerminoFim || '',
+  };
 }
 
 export function useObrigacoes(options: UseObrigacoesOptions = {}) {
-  const { pageSize = 10, idObrigacaoFromUrl } = options;
+  const { pageSize = 10, idObrigacaoFromUrl, defaultFilters } = options;
   const router = useRouter();
   
   // Permissões
@@ -75,8 +90,8 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
-  // Estado de filtros
-  const [filters, setFilters] = useState<FiltersState>(initialFilters);
+  // Estado de filtros - inicializado com os filtros padrão do servidor
+  const [filters, setFilters] = useState<FiltersState>(() => createInitialFilters(defaultFilters));
 
   // Estado de modais
   const [selectedObrigacao, setSelectedObrigacao] = useState<ObrigacaoResponse | null>(null);
@@ -138,6 +153,8 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
       dtLimiteFim: filters.dtLimiteFim || null,
       dtInicioInicio: filters.dtInicioInicio || null,
       dtInicioFim: filters.dtInicioFim || null,
+      dtTerminoInicio: filters.dtTerminoInicio || null,
+      dtTerminoFim: filters.dtTerminoFim || null,
       idTema: filters.idTema ? parseInt(filters.idTema) : null,
       idTipoClassificacao: filters.idTipoClassificacao ? parseInt(filters.idTipoClassificacao) : null,
       idTipoPeriodicidade: filters.idTipoPeriodicidade ? parseInt(filters.idTipoPeriodicidade) : null,

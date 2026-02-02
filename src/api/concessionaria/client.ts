@@ -1,5 +1,5 @@
 import ApiClient from '../client';
-import { ConcessionariaResponse } from './types';
+import { AnoConcessaoConcessionariaResponse, ConcessionariaResponse } from './types';
 
 class ConcessionariaClient {
   private client: ApiClient;
@@ -19,6 +19,12 @@ class ConcessionariaClient {
       method: 'GET',
       skipConcessionariaParam: true
     });
+  }
+
+  async buscarAnoConcessaoConcessionariaPorIdConcessionaria() : Promise<AnoConcessaoConcessionariaResponse> {
+    return this.client.request<AnoConcessaoConcessionariaResponse>('/ano-concessao', {
+      method: 'GET',
+    })
   }
 }
 
