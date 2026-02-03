@@ -1,8 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
 import { AreaResponse } from '@/api/areas/types';
 import { TemaResponse } from '@/api/temas/types';
+import { formatDateBr } from '@/utils/utils';
 
-export interface FiltersState {
+export interface CorrespondenciaFiltroRequest {
   identificacao: string;
   responsavel: string;
   tema: string;
@@ -14,9 +15,11 @@ export interface FiltersState {
   dtCriacaoInicio: string;
   dtCriacaoFim: string;
   flExigeCienciaGerenteRegul: string;
+  page: number;
+  size: number;
 }
 
-export const initialFilters: FiltersState = {
+export const initialFilters: CorrespondenciaFiltroRequest = {
   identificacao: '',
   responsavel: '',
   tema: '',
@@ -28,6 +31,8 @@ export const initialFilters: FiltersState = {
   dtCriacaoInicio: '',
   dtCriacaoFim: '',
   flExigeCienciaGerenteRegul: 'all',
+  page: 0,
+  size: 10,
 };
 
 interface UseSolicitacoesFiltersDeps {
@@ -36,10 +41,18 @@ interface UseSolicitacoesFiltersDeps {
   temas: TemaResponse[];
   sortField: string | null;
   sortDirection: 'asc' | 'desc';
+  defaultFilters?: Partial<CorrespondenciaFiltroRequest>;
 }
 
 export function useSolicitacoesFilters(deps: UseSolicitacoesFiltersDeps) {
-  const { statuses, areas, temas, sortField, sortDirection } = deps;
+  const { statuses, areas, temas, sortField, sortDirection, defaultFilters } = deps;
+
+  const filtrosPadrao = useMemo<CorrespondenciaFiltroRequest>(() => {
+    return {
+      ...initialFilters,
+      ...defaultFilters,
+    };
+  }, [defaultFilters]);
 
   // Estado de busca
   const [searchQuery, setSearchQuery] = useState('');
@@ -48,8 +61,8 @@ export function useSolicitacoesFilters(deps: UseSolicitacoesFiltersDeps) {
   const [currentPage, setCurrentPage] = useState(0);
 
   // Estado de filtros
-  const [filters, setFilters] = useState<FiltersState>(initialFilters);
-  const [activeFilters, setActiveFilters] = useState<FiltersState>(initialFilters);
+  const [filters, setFilters] = useState<CorrespondenciaFiltroRequest>(filtrosPadrao);
+  const [activeFilters, setActiveFilters] = useState<CorrespondenciaFiltroRequest>(filtrosPadrao);
 
   // Estado do modal de filtros
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -71,11 +84,11 @@ export function useSolicitacoesFilters(deps: UseSolicitacoesFiltersDeps) {
   }, [filters]);
 
   const clearFilters = useCallback(() => {
-    setFilters(initialFilters);
-    setActiveFilters(initialFilters);
+    setFilters(filtrosPadrao);
+    setActiveFilters(filtrosPadrao);
     setCurrentPage(0);
     setShowFilterModal(false);
-  }, []);
+  }, [filtrosPadrao]);
 
   // Filtros aplicados para exibição
   const filtrosAplicados = useMemo(() => {
@@ -146,8 +159,8 @@ export function useSolicitacoesFilters(deps: UseSolicitacoesFiltersDeps) {
       }] : []),
       ...(activeFilters.dtCriacaoInicio ? [{
         key: 'dtCriacaoInicio',
-        label: 'Data Criação Início',
-        value: activeFilters.dtCriacaoInicio,
+        label: 'Data Criação (Início)',
+        value: formatDateBr(activeFilters.dtCriacaoInicio),
         color: 'pink' as const,
         onRemove: () => {
           const newFilters = { ...activeFilters, dtCriacaoInicio: '' };
@@ -157,8 +170,8 @@ export function useSolicitacoesFilters(deps: UseSolicitacoesFiltersDeps) {
       }] : []),
       ...(activeFilters.dtCriacaoFim ? [{
         key: 'dtCriacaoFim',
-        label: 'Data Criação Fim',
-        value: activeFilters.dtCriacaoFim,
+        label: 'Data Criação (Fim)',
+        value: formatDateBr(activeFilters.dtCriacaoFim),
         color: 'pink' as const,
         onRemove: () => {
           const newFilters = { ...activeFilters, dtCriacaoFim: '' };

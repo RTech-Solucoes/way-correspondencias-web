@@ -1,20 +1,19 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
 import { CorrespondenciaResponse } from '@/api/correspondencia/types';
-import { PagedResponse } from '@/api/solicitacoes/types';
 import { useSolicitacoesData } from './use-solicitacoes-data';
-import { useSolicitacoesFilters } from './use-solicitacoes-filters';
+import { CorrespondenciaFiltroRequest, useSolicitacoesFilters } from './use-solicitacoes-filters';
 import { useSolicitacoesModals } from './use-solicitacoes-modals';
 import { useSolicitacoesHandlers } from './use-solicitacoes-handlers';
-
-export type { FiltersState } from './use-solicitacoes-filters';
+import { formatDateBr } from '@/utils/utils';
 
 interface UseSolicitacoesOptions {
-  pageSize?: number;
+  defaultFilters?: Partial<CorrespondenciaFiltroRequest>;
 }
 
 export function useSolicitacoes(options: UseSolicitacoesOptions = {}) {
-  const { pageSize = 10 } = options;
+  const { defaultFilters } = options;
+  const pageSize = defaultFilters?.size ?? 10;
 
   // Permissões
   const { canInserirSolicitacao, canAtualizarSolicitacao, canDeletarSolicitacao } = usePermissoes();
@@ -31,6 +30,7 @@ export function useSolicitacoes(options: UseSolicitacoesOptions = {}) {
     temas: [],
     sortField: tempSortField,
     sortDirection: tempSortDirection,
+    defaultFilters,
   });
 
   // Refs para rastrear mudanças nos filtros e busca (usados no useEffect de carregamento)
@@ -144,8 +144,8 @@ export function useSolicitacoes(options: UseSolicitacoesOptions = {}) {
       }] : []),
       ...(activeFilters.dtCriacaoInicio ? [{
         key: 'dtCriacaoInicio',
-        label: 'Data Criação Início',
-        value: activeFilters.dtCriacaoInicio,
+        label: 'Data Criação (Início)',
+        value: formatDateBr(activeFilters.dtCriacaoInicio),
         color: 'pink' as const,
         onRemove: () => {
           const newFilters = { ...activeFilters, dtCriacaoInicio: '' };
@@ -155,8 +155,8 @@ export function useSolicitacoes(options: UseSolicitacoesOptions = {}) {
       }] : []),
       ...(activeFilters.dtCriacaoFim ? [{
         key: 'dtCriacaoFim',
-        label: 'Data Criação Fim',
-        value: activeFilters.dtCriacaoFim,
+        label: 'Data Criação (Fim)',
+        value: formatDateBr(activeFilters.dtCriacaoFim),
         color: 'pink' as const,
         onRemove: () => {
           const newFilters = { ...activeFilters, dtCriacaoFim: '' };

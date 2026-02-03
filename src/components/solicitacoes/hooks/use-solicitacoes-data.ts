@@ -11,7 +11,7 @@ import { TemaResponse } from '@/api/temas/types';
 import { AreaResponse } from '@/api/areas/types';
 import { PagedResponse } from '@/api/solicitacoes/types';
 import { CategoriaEnum, TipoEnum } from '@/api/tipos/types';
-import { FiltersState } from './use-solicitacoes-filters';
+import { CorrespondenciaFiltroRequest } from './use-solicitacoes-filters';
 import { useSolicitacoesQuery } from './use-solicitacoes-query';
 
 interface UseSolicitacoesDataOptions {
@@ -20,7 +20,7 @@ interface UseSolicitacoesDataOptions {
 
 interface UseSolicitacoesDataDeps {
   currentPage: number;
-  activeFilters: FiltersState;
+  activeFilters: CorrespondenciaFiltroRequest;
   searchQuery: string;
   sortField: string | null;
   sortDirection: 'asc' | 'desc';

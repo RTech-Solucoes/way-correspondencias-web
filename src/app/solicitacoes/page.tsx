@@ -5,13 +5,18 @@ import { makeQueryClient } from "@/lib/query-client";
 import { solicitacoesKeys } from "@/components/solicitacoes/hooks/use-solicitacoes-query";
 import LoadingOverlay from "@/components/ui/loading-overlay";
 import { Suspense } from "react";
+import { getPeriodoConcessao } from "@/utils/concession-period";
 
 export default async function SolicitacoesPage() {
   const queryClient = makeQueryClient();
   
+  const { dtInicio, dtFim } = await getPeriodoConcessao();
+
   const initialParams = {
     page: 0,
     size: 10,
+    dtCriacaoInicio: dtInicio ?? undefined,
+    dtCriacaoFim: dtFim ?? undefined,
   };
 
   await queryClient.prefetchQuery({
@@ -29,9 +34,8 @@ export default async function SolicitacoesPage() {
           />
         }
       >
-
         <HydrationBoundary state={dehydrate(queryClient)}>
-          <SolicitacoesContent />
+          <SolicitacoesContent defaultFilters={initialParams} />
         </HydrationBoundary>
       </Suspense>
     </div>
