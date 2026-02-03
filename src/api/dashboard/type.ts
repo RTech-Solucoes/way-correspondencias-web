@@ -8,6 +8,7 @@ export interface DashboardOverview {
 export interface DashboardListSummary {
     idSolicitacao: number;
     idArea: number;
+    cdIdentificacao?: string;
     nmArea: string;
     nmTema: string;
     dtCriacaoFormatada: string;
@@ -54,6 +55,7 @@ export interface SolicitacaoPrazo {
     minutosRestantes: number;
     estourou: 0 | 1;
     nmTema: string;
+    cdIdentificacao?: string;
 }
 
 export interface IRecentActivity {
@@ -130,6 +132,7 @@ export interface ObrigacaoAreaTemaDTO {
     areas: SolicitacaoAreaDTO[];
     nmTema: string;
     dtCriacao: string;
+    cdIdentificacao?: string;
 }
 
 export interface ObrigacaoPrazoResponse {

@@ -1,22 +1,23 @@
 import dashboardClient from "@/api/dashboard/client";
 import { SolicitacaoPrazo } from "@/api/dashboard/type";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { formatarDataHora } from "@/utils/FormattDate";
 import { ClockIcon } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import CardHeader from "../card-header";
 import { getStatusColorVision } from "../functions";
-import PaginationNextDeadlines from "./PaginationNextDeadlines";
 import PaginationRecentActivity from "../RecentActivity/PaginationRecentActivity";
 
 
 interface NextDeadlinesProps {
   refreshTrigger?: number;
+  dtCriacaoInicio?: string | null;
+  dtCriacaoFim?: string | null;
 }
 
-export default function NextDeadlines({ refreshTrigger }: NextDeadlinesProps) {
+export default function NextDeadlines({ refreshTrigger, dtCriacaoInicio, dtCriacaoFim }: NextDeadlinesProps) {
 
   const [listDeadline, setListDeadline] = useState<SolicitacaoPrazo[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
@@ -27,7 +28,10 @@ export default function NextDeadlines({ refreshTrigger }: NextDeadlinesProps) {
   useEffect(() => {
     const getRecentDeadline = async () => {
       try {
-        const response = await dashboardClient.getRecentDeadline(currentPage, 10);
+        const response = await dashboardClient.getRecentDeadline(currentPage, 10, {
+          dtCriacaoInicio,
+          dtCriacaoFim,
+        });
         setListDeadline(response.content);
         setTotalPages(response.totalPages);
         setTotalElements(response.totalElements);
@@ -40,7 +44,7 @@ export default function NextDeadlines({ refreshTrigger }: NextDeadlinesProps) {
     };
 
     getRecentDeadline();
-  }, [refreshTrigger, currentPage]);
+  }, [refreshTrigger, currentPage, dtCriacaoInicio, dtCriacaoFim]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -68,7 +72,14 @@ export default function NextDeadlines({ refreshTrigger }: NextDeadlinesProps) {
             <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
               <div className={`w-2 h-2 rounded-full ${getStatusColorVision(deadline.nmStatus)}`} />
               <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm truncate">{deadline.nmTema}</div>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="font-medium text-sm truncate">{deadline.nmTema}</div>
+                  {deadline.cdIdentificacao ? (
+                    <Badge variant="outline" className="text-[11px] font-semibold px-2 py-0.5 shrink-0">
+                      {deadline.cdIdentificacao}
+                    </Badge>
+                  ) : null}
+                </div>
                 <div className="flex items-center text-xs text-gray-500">
                   <ClockIcon className="h-3 w-3 mr-1" />
                   {formatarDataHora(deadline.dtFim)}

@@ -8,9 +8,11 @@ import PaginationRecentActivity from "./PaginationRecentActivity";
 
 interface RecentActivityProps {
   refreshTrigger?: number;
+  dtCriacaoInicio?: string | null;
+  dtCriacaoFim?: string | null;
 }
 
-export default function RecentActivity({ refreshTrigger }: RecentActivityProps) {
+export default function RecentActivity({ refreshTrigger, dtCriacaoInicio, dtCriacaoFim }: RecentActivityProps) {
   const [listActivity, setListActivity] = useState<IRecentActivity[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -21,7 +23,10 @@ export default function RecentActivity({ refreshTrigger }: RecentActivityProps) 
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await dashboardClient.getRecentActivity(currentPage, 10);
+        const response = await dashboardClient.getRecentActivity(currentPage, 10, {
+          dtCriacaoInicio,
+          dtCriacaoFim,
+        });
         setListActivity(response.content);
         setTotalPages(response.totalPages);
         setTotalElements(response.totalElements);
@@ -34,7 +39,7 @@ export default function RecentActivity({ refreshTrigger }: RecentActivityProps) 
     };
 
     fetchData();
-  }, [refreshTrigger, currentPage]);
+  }, [refreshTrigger, currentPage, dtCriacaoInicio, dtCriacaoFim]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);

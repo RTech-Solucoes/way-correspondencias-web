@@ -4,7 +4,12 @@ import { buildQueryParams } from "@/utils/utils";
 import { ObrigacaoCalendarioResponse, ObrigacaoCalendarioMesCountResponse } from "../obrigacao/types";
 import { CorrespondenciaResumoResponse } from "../correspondencia/types";
 
-interface OverviewParams {
+interface DateFilterParams {
+    dtCriacaoInicio?: string | null;
+    dtCriacaoFim?: string | null;
+}
+
+interface OverviewParams extends DateFilterParams {
     cdTipoFluxo?: string;
     nmCategoriaFluxo?: string;
     cdTipoStatus?: string[];
@@ -19,7 +24,12 @@ class DashboardClient {
     }
 
     async getOverview(params?: OverviewParams): Promise<DashboardOverview[]> {
-        const queryParams = params ? buildQueryParams(params, ['cdTipoFluxo', 'nmCategoriaFluxo', 'nmCategoriaStatus'] as const) : new URLSearchParams();
+        const queryParams = params
+            ? buildQueryParams(
+                params,
+                ['cdTipoFluxo', 'nmCategoriaFluxo', 'nmCategoriaStatus', 'dtCriacaoInicio', 'dtCriacaoFim'] as const
+            )
+            : new URLSearchParams();
         
         // Tratar arrays manualmente (cdTipoStatus)
         if (params?.cdTipoStatus && params.cdTipoStatus.length > 0) {
@@ -34,44 +44,88 @@ class DashboardClient {
         });
     }
 
-    async getRecentOverview(page: number, size: number): Promise<PaginatedResponse<DashboardListSummary>> {
-        return this.client.request<PaginatedResponse<DashboardListSummary>>(`/listar-resumo?page=${page}&size=${size}`, {
+    async getRecentOverview(
+        page: number,
+        size: number,
+        filters?: DateFilterParams
+    ): Promise<PaginatedResponse<DashboardListSummary>> {
+        const qs = buildQueryParams(
+            { page, size, dtCriacaoInicio: filters?.dtCriacaoInicio, dtCriacaoFim: filters?.dtCriacaoFim },
+            ['page', 'size', 'dtCriacaoInicio', 'dtCriacaoFim'] as const
+        ).toString();
+        return this.client.request<PaginatedResponse<DashboardListSummary>>(`/listar-resumo${qs ? `?${qs}` : ''}`, {
             method: "GET",
         });
     }
 
-    async getRecentDeadline(page: number, size: number): Promise<PaginatedResponse<SolicitacaoPrazo>> {
-        return this.client.request<PaginatedResponse<SolicitacaoPrazo>>(`/prazos-recentes?page=${page}&size=${size}`, {
+    async getRecentDeadline(
+        page: number,
+        size: number,
+        filters?: DateFilterParams
+    ): Promise<PaginatedResponse<SolicitacaoPrazo>> {
+        const qs = buildQueryParams(
+            { page, size, dtCriacaoInicio: filters?.dtCriacaoInicio, dtCriacaoFim: filters?.dtCriacaoFim },
+            ['page', 'size', 'dtCriacaoInicio', 'dtCriacaoFim'] as const
+        ).toString();
+        return this.client.request<PaginatedResponse<SolicitacaoPrazo>>(`/prazos-recentes${qs ? `?${qs}` : ''}`, {
             method: "GET",
         });
     }
 
-    async getRecentActivity(page: number, size: number): Promise<PaginatedResponse<IRecentActivity>> {
-        return this.client.request<PaginatedResponse<IRecentActivity>>(`/atividade-recente?page=${page}&size=${size}`, {
+    async getRecentActivity(
+        page: number,
+        size: number,
+        filters?: DateFilterParams
+    ): Promise<PaginatedResponse<IRecentActivity>> {
+        const qs = buildQueryParams(
+            { page, size, dtCriacaoInicio: filters?.dtCriacaoInicio, dtCriacaoFim: filters?.dtCriacaoFim },
+            ['page', 'size', 'dtCriacaoInicio', 'dtCriacaoFim'] as const
+        ).toString();
+        return this.client.request<PaginatedResponse<IRecentActivity>>(`/atividade-recente${qs ? `?${qs}` : ''}`, {
             method: "GET",
         });
     }
 
-    async getCalendarByWeek(): Promise<ICalendar[]> {
-        return this.client.request<ICalendar[]>(`/listar-por-semana`, {
+    async getCalendarByWeek(filters?: DateFilterParams): Promise<ICalendar[]> {
+        const qs = buildQueryParams(
+            { dtCriacaoInicio: filters?.dtCriacaoInicio, dtCriacaoFim: filters?.dtCriacaoFim },
+            ['dtCriacaoInicio', 'dtCriacaoFim'] as const
+        ).toString();
+        return this.client.request<ICalendar[]>(`/listar-por-semana${qs ? `?${qs}` : ''}`, {
             method: "GET",
         });
     }
 
-    async getCalendarByMonth(mes: number, ano: number): Promise<ICalendar[]> {
-        return this.client.request<ICalendar[]>(`/listar-por-mes?mes=${mes}&ano=${ano}`, {
+    async getCalendarByMonth(
+        mes: number,
+        ano: number,
+        filters?: DateFilterParams
+    ): Promise<ICalendar[]> {
+        const qs = buildQueryParams(
+            { mes, ano, dtCriacaoInicio: filters?.dtCriacaoInicio, dtCriacaoFim: filters?.dtCriacaoFim },
+            ['mes', 'ano', 'dtCriacaoInicio', 'dtCriacaoFim'] as const
+        ).toString();
+        return this.client.request<ICalendar[]>(`/listar-por-mes${qs ? `?${qs}` : ''}`, {
             method: "GET",
         });
     }
 
-    async getCalendarByYear(ano: number): Promise<ICalendarYear[]> {
-        return this.client.request<ICalendarYear[]>(`/listar-meses-do-ano?ano=${ano}`, {
+    async getCalendarByYear(ano: number, filters?: DateFilterParams): Promise<ICalendarYear[]> {
+        const qs = buildQueryParams(
+            { ano, dtCriacaoInicio: filters?.dtCriacaoInicio, dtCriacaoFim: filters?.dtCriacaoFim },
+            ['ano', 'dtCriacaoInicio', 'dtCriacaoFim'] as const
+        ).toString();
+        return this.client.request<ICalendarYear[]>(`/listar-meses-do-ano${qs ? `?${qs}` : ''}`, {
             method: "GET",
         });
     }
 
-    async getSolicitacoesPendentes(): Promise<CorrespondenciaResumoResponse[]> {
-        return this.client.request<CorrespondenciaResumoResponse[]>(`/solicitacoes-pendentes`, {
+    async getSolicitacoesPendentes(filters?: DateFilterParams): Promise<CorrespondenciaResumoResponse[]> {
+        const qs = buildQueryParams(
+            { dtCriacaoInicio: filters?.dtCriacaoInicio, dtCriacaoFim: filters?.dtCriacaoFim },
+            ['dtCriacaoInicio', 'dtCriacaoFim'] as const
+        ).toString();
+        return this.client.request<CorrespondenciaResumoResponse[]>(`/solicitacoes-pendentes${qs ? `?${qs}` : ''}`, {
             method: "GET",
         });
     }
