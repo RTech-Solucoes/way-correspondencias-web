@@ -17,7 +17,7 @@ jobs:
 
           echo "Chamando API de deploy para branch: $BRANCH"
 
-          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST https://develop.deploy.way.rtechsolution.com.br/way/web/new \
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST https://gateway.deploy.way.rtechsolution.com.br/deploy/web/new \
             -H "Content-Type: application/json" \
             -d "{\"branch\": \"$BRANCH\"}")
 
