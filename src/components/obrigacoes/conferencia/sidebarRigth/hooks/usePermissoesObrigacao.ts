@@ -217,9 +217,8 @@ export function usePermissoesObrigacao({
     if (isStatusEmValidacaoRegulatorio) {
       if (!(idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
             idPerfil === perfilUtil.ADMINISTRADOR || 
-            idPerfil === perfilUtil.ADMIN_MASTER ||
-            idPerfil === perfilUtil.VALIDADOR_ASSINANTE)) {
-        return 'Apenas Regulátorio ou Diretoria podem inserir comentários quando o status é "Em Validação (Regulatório)".';
+            idPerfil === perfilUtil.ADMIN_MASTER )) {
+        return 'Apenas administradores/gestores podem inserir comentários quando o status é "Em Validação (Regulatório)".';
       }
       return 'Você não tem permissão para inserir comentários neste status.';
     }

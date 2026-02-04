@@ -68,7 +68,9 @@ export function useSolicitacoesFilters(deps: UseSolicitacoesFiltersDeps) {
   const [showFilterModal, setShowFilterModal] = useState(false);
 
   const hasActiveFilters = useMemo(() => {
+    const keysToIgnore = ['page', 'size'];
     return Object.entries(activeFilters).some(([key, value]) => {
+      if (keysToIgnore.includes(key)) return false;
       if (key === 'flExigeCienciaGerenteRegul') {
         return value !== 'all' && value !== '';
       }
@@ -84,8 +86,13 @@ export function useSolicitacoesFilters(deps: UseSolicitacoesFiltersDeps) {
   }, [filters]);
 
   const clearFilters = useCallback(() => {
-    setFilters(filtrosPadrao);
-    setActiveFilters(filtrosPadrao);
+    const filtersLimpos = {
+      ...initialFilters,
+      size: filtrosPadrao.size,
+      page: 0,
+    };
+    setFilters(filtersLimpos);
+    setActiveFilters(filtersLimpos);
     setCurrentPage(0);
     setShowFilterModal(false);
   }, [filtrosPadrao]);

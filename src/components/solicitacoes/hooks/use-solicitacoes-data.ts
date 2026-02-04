@@ -202,6 +202,9 @@ export function useSolicitacoesData(
     loading: isLoading,
     debouncedSearchQuery,
 
+    // Filtro por URL
+    idSolicitacaoFromUrl: prefilledFilters.idSolicitacao,
+
     // Funções
     loadSolicitacoes,
   };

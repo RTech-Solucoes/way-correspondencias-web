@@ -21,6 +21,10 @@ import {
 
 interface ObrigacoesRankingAreasProps {
   refreshTrigger?: number;
+  dtLimiteInicio?: string | null;
+  dtLimiteFim?: string | null;
+  dtTerminoInicio?: string | null;
+  dtTerminoFim?: string | null;
 }
 
 interface CustomTooltipProps {
@@ -89,7 +93,13 @@ const getBarColor = (posicao: number, totalAreas: number, index: number, idArea:
   return colors[colorIndex % colors.length];
 };
 
-export default function ObrigacoesRankingAreas({ refreshTrigger }: ObrigacoesRankingAreasProps) {
+export default function ObrigacoesRankingAreas({
+  refreshTrigger,
+  dtLimiteInicio,
+  dtLimiteFim,
+  dtTerminoInicio,
+  dtTerminoFim,
+}: ObrigacoesRankingAreasProps) {
   const [data, setData] = useState<AreaRankingDTO[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<'ATRASADA' | 'PENDENTE'>('ATRASADA');
@@ -109,7 +119,10 @@ export default function ObrigacoesRankingAreas({ refreshTrigger }: ObrigacoesRan
           idsStatus.push(statusPendente.id);
         }
         
-        const response = await dashboardClient.buscarRankingAreas(idsStatus.length > 0 ? idsStatus : undefined);
+        const response = await dashboardClient.buscarRankingAreas(
+          idsStatus.length > 0 ? idsStatus : undefined,
+          { dtLimiteInicio, dtLimiteFim, dtTerminoInicio, dtTerminoFim }
+        );
         setData(response || []);
       } catch (error) {
         console.error("Erro ao buscar ranking de áreas:", error);
@@ -120,7 +133,7 @@ export default function ObrigacoesRankingAreas({ refreshTrigger }: ObrigacoesRan
     };
 
     fetchData();
-  }, [refreshTrigger, selectedStatus]);
+  }, [refreshTrigger, selectedStatus, dtLimiteInicio, dtLimiteFim, dtTerminoInicio, dtTerminoFim]);
 
   const chartData = useMemo(() => {
     return data
@@ -176,6 +189,8 @@ export default function ObrigacoesRankingAreas({ refreshTrigger }: ObrigacoesRan
                 <BarChart
                   data={chartData}
                   margin={{ top: 20, right: 20, left: 10, bottom: 80 }}
+                  barCategoryGap="30%"
+                  barGap={10}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis 
@@ -199,6 +214,7 @@ export default function ObrigacoesRankingAreas({ refreshTrigger }: ObrigacoesRan
                     dataKey="totalObrigacoes" 
                     radius={[8, 8, 0, 0]}
                     strokeWidth={0}
+                    barSize={56}
                   >
                   {chartData.map((entry, index) => (
                     <Cell 

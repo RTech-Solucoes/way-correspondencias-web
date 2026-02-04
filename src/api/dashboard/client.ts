@@ -9,7 +9,14 @@ interface DateFilterParams {
     dtCriacaoFim?: string | null;
 }
 
-interface OverviewParams extends DateFilterParams {
+interface ObrigacaoDateFilterParams {
+    dtLimiteInicio?: string | null;
+    dtLimiteFim?: string | null;
+    dtTerminoInicio?: string | null;
+    dtTerminoFim?: string | null;
+}
+
+interface OverviewParams extends DateFilterParams, ObrigacaoDateFilterParams {
     cdTipoFluxo?: string;
     nmCategoriaFluxo?: string;
     cdTipoStatus?: string[];
@@ -27,7 +34,7 @@ class DashboardClient {
         const queryParams = params
             ? buildQueryParams(
                 params,
-                ['cdTipoFluxo', 'nmCategoriaFluxo', 'nmCategoriaStatus', 'dtCriacaoInicio', 'dtCriacaoFim'] as const
+                ['cdTipoFluxo', 'nmCategoriaFluxo', 'nmCategoriaStatus', 'dtCriacaoInicio', 'dtCriacaoFim', 'dtLimiteInicio', 'dtLimiteFim', 'dtTerminoInicio', 'dtTerminoFim'] as const
             )
             : new URLSearchParams();
         
@@ -142,52 +149,87 @@ class DashboardClient {
         });
     }
 
-    async buscarCalendarioObrigacoes(dataInicio?: string, dataFim?: string): Promise<ObrigacaoCalendarioResponse[]> {
-        
-        const allowedKeys = ['dataInicio', 'dataFim'] as const;
-
-        const qs = buildQueryParams({ dataInicio, dataFim }, allowedKeys).toString();
+    async buscarCalendarioObrigacoes(
+        dataInicio?: string,
+        dataFim?: string,
+        filters?: ObrigacaoDateFilterParams
+    ): Promise<ObrigacaoCalendarioResponse[]> {
+        const qs = buildQueryParams(
+            { dataInicio, dataFim, ...filters },
+            ['dataInicio', 'dataFim', 'dtLimiteInicio', 'dtLimiteFim', 'dtTerminoInicio', 'dtTerminoFim'] as const
+        ).toString();
         return this.client.request<ObrigacaoCalendarioResponse[]>(`/obrigacoes-calendario${qs ? `?${qs}` : ''}`, {
             method: 'GET',
         });
     }
 
-    async contarObrigacoesPorMesNoAno(ano: number): Promise<ObrigacaoCalendarioMesCountResponse[]> {
-        return this.client.request<ObrigacaoCalendarioMesCountResponse[]>(`/obrigacoes-calendario/contar-por-mes?ano=${ano}`, {
+    async contarObrigacoesPorMesNoAno(ano: number, filters?: ObrigacaoDateFilterParams): Promise<ObrigacaoCalendarioMesCountResponse[]> {
+        const qs = buildQueryParams(
+            { ano, ...filters },
+            ['ano', 'dtLimiteInicio', 'dtLimiteFim', 'dtTerminoInicio', 'dtTerminoFim'] as const
+        ).toString();
+        return this.client.request<ObrigacaoCalendarioMesCountResponse[]>(`/obrigacoes-calendario/contar-por-mes${qs ? `?${qs}` : ''}`, {
             method: 'GET',
         });
     }
 
-    async getObrigacoesRecentActivity(page: number, size: number): Promise<PaginatedResponse<ObrigacaoRecentActivityDTO>> {
+    async getObrigacoesRecentActivity(
+        page: number,
+        size: number,
+        filters?: ObrigacaoDateFilterParams
+    ): Promise<PaginatedResponse<ObrigacaoRecentActivityDTO>> {
+        const qs = buildQueryParams(
+            { page, size, ...filters },
+            ['page', 'size', 'dtLimiteInicio', 'dtLimiteFim', 'dtTerminoInicio', 'dtTerminoFim'] as const
+        ).toString();
         return this.client.request<PaginatedResponse<ObrigacaoRecentActivityDTO>>(
-            `/obrigacoes-atividade-recente?page=${page}&size=${size}`,
+            `/obrigacoes-atividade-recente${qs ? `?${qs}` : ''}`,
             { method: 'GET' }
         );
     }
 
-    async getObrigacoesListSummary(page: number, size: number): Promise<PaginatedResponse<ObrigacaoAreaTemaDTO>> {
+    async getObrigacoesListSummary(
+        page: number,
+        size: number,
+        filters?: ObrigacaoDateFilterParams
+    ): Promise<PaginatedResponse<ObrigacaoAreaTemaDTO>> {
+        const qs = buildQueryParams(
+            { page, size, ...filters },
+            ['page', 'size', 'dtLimiteInicio', 'dtLimiteFim', 'dtTerminoInicio', 'dtTerminoFim'] as const
+        ).toString();
         return this.client.request<PaginatedResponse<ObrigacaoAreaTemaDTO>>(
-            `/obrigacoes-recentes?page=${page}&size=${size}`,
+            `/obrigacoes-recentes${qs ? `?${qs}` : ''}`,
             { method: 'GET' }
         );
     }
 
-    async getObrigacoesPorPrazo(): Promise<ObrigacaoPrazoResponse> {
+    async getObrigacoesPorPrazo(filters?: ObrigacaoDateFilterParams): Promise<ObrigacaoPrazoResponse> {
+        const qs = buildQueryParams(
+            { ...filters },
+            ['dtLimiteInicio', 'dtLimiteFim', 'dtTerminoInicio', 'dtTerminoFim'] as const
+        ).toString();
         return this.client.request<ObrigacaoPrazoResponse>(
-            `/obrigacoes-prazo`,
+            `/obrigacoes-prazo${qs ? `?${qs}` : ''}`,
             { method: 'GET' }
         );
     }
 
-    async getObrigacoesTempoMedio(): Promise<ObrigacaoTempoMedioResponse> {
+    async getObrigacoesTempoMedio(filters?: ObrigacaoDateFilterParams): Promise<ObrigacaoTempoMedioResponse> {
+        const qs = buildQueryParams(
+            { ...filters },
+            ['dtLimiteInicio', 'dtLimiteFim', 'dtTerminoInicio', 'dtTerminoFim'] as const
+        ).toString();
         return this.client.request<ObrigacaoTempoMedioResponse>(
-            `/obrigacoes-tempo-medio`,
+            `/obrigacoes-tempo-medio${qs ? `?${qs}` : ''}`,
             { method: 'GET' }
         );
     }
 
-    async buscarRankingAreas(idsStatus?: number[]): Promise<AreaRankingDTO[]> {
-        const queryParams = new URLSearchParams();
+    async buscarRankingAreas(idsStatus?: number[], filters?: ObrigacaoDateFilterParams): Promise<AreaRankingDTO[]> {
+        const queryParams = buildQueryParams(
+            { ...filters },
+            ['dtLimiteInicio', 'dtLimiteFim', 'dtTerminoInicio', 'dtTerminoFim'] as const
+        );
         if (idsStatus && idsStatus.length > 0) {
             idsStatus.forEach(id => {
                 queryParams.append('idsStatus', id.toString());
@@ -204,3 +246,4 @@ class DashboardClient {
 
 export const dashboardClient = new DashboardClient();
 export default dashboardClient;
+export type { ObrigacaoDateFilterParams };

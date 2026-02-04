@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo } from "react";
-import { useSearchParams } from "next/navigation";
+import { useMemo, useCallback } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { FiltrosAplicados } from "@/components/ui/applied-filters";
 
 // Context
@@ -24,6 +24,7 @@ interface ObrigacoesContentProps {
 
 export function ObrigacoesContent({ defaultFilters }: ObrigacoesContentProps) {
   const searchParams = useSearchParams();
+  const router = useRouter();
   
   const idObrigacaoFromUrl = useMemo(() => {
     const param = searchParams.get('idObrigacao');
@@ -106,6 +107,19 @@ export function ObrigacoesContent({ defaultFilters }: ObrigacoesContentProps) {
     idPerfil,
   } = useObrigacoes({ idObrigacaoFromUrl, defaultFilters });
 
+  const cdIdentificacaoFiltrado = useMemo(() => {
+    if (!idObrigacaoFromUrl || obrigacoes.length === 0) return undefined;
+    const encontrada = obrigacoes.find(o => o.idSolicitacao === idObrigacaoFromUrl) ?? obrigacoes[0];
+    return encontrada?.cdIdentificacao;
+  }, [idObrigacaoFromUrl, obrigacoes]);
+
+  const onRemoveIdObrigacao = useCallback(() => {
+    const params = new URLSearchParams(searchParams);
+    params.delete('idObrigacao');
+    const qs = params.toString();
+    router.push(qs ? `/obrigacao?${qs}` : '/obrigacao');
+  }, [searchParams, router]);
+
   const {
     hasActiveFilters,
     filtrosAplicados,
@@ -116,6 +130,9 @@ export function ObrigacoesContent({ defaultFilters }: ObrigacoesContentProps) {
     setSearchQuery,
     filters,
     setFilters,
+    idObrigacaoFromUrl,
+    cdIdentificacaoFiltrado,
+    onRemoveIdObrigacao,
   });
 
   // Context value para modais

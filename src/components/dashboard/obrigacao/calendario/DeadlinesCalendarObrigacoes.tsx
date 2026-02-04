@@ -9,18 +9,30 @@ import CalendarYear from "@/components/dashboard/DeadlinesCalendar/CalendarYear/
 
 interface DeadlinesCalendarObrigacoesProps {
   refreshTrigger?: number;
+  dtLimiteInicio?: string | null;
+  dtLimiteFim?: string | null;
+  dtTerminoInicio?: string | null;
+  dtTerminoFim?: string | null;
 }
 
-export default function DeadlinesCalendarObrigacoes({ refreshTrigger }: DeadlinesCalendarObrigacoesProps) {
+export default function DeadlinesCalendarObrigacoes({
+  refreshTrigger,
+  dtLimiteInicio,
+  dtLimiteFim,
+  dtTerminoInicio,
+  dtTerminoFim,
+}: DeadlinesCalendarObrigacoesProps) {
   const [calendarView, setCalendarView] = useState<'month' | 'week' | 'year'>('month');
   const [calendarByWeek, setCalendarByWeek] = useState<CalendarWeekItem[]>([]);
   const [calendarByYear, setCalendarByYear] = useState<ObrigacaoCalendarioMesCountResponse[]>([]);
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
 
+  const filters = { dtLimiteInicio, dtLimiteFim, dtTerminoInicio, dtTerminoFim };
+
   // Configuração do calendário mensal para obrigações
   const calendarMonthConfig: CalendarMonthConfig = useMemo(() => ({
     fetchData: async (dataInicio: string, dataFim: string): Promise<CalendarMonthItem[]> => {
-      const data = await dashboardClient.buscarCalendarioObrigacoes(dataInicio, dataFim);
+      const data = await dashboardClient.buscarCalendarioObrigacoes(dataInicio, dataFim, filters);
       return data.map(item => ({
         id: item.idObrigacao,
         cdIdentificacao: item.cdIdentificacao,
@@ -32,7 +44,7 @@ export default function DeadlinesCalendarObrigacoes({ refreshTrigger }: Deadline
     getItemStyle: () => 'bg-blue-100 text-blue-900 border-blue-200 hover:border-blue-300',
     tooltipTitle: "Outras Obrigações:",
     refreshTrigger,
-  }), [refreshTrigger]);
+  }), [refreshTrigger, dtLimiteInicio, dtLimiteFim, dtTerminoInicio, dtTerminoFim]);
 
   // Configuração do calendário semanal para obrigações
   const calendarWeekConfig: CalendarWeekConfig = useMemo(() => ({
@@ -59,7 +71,7 @@ export default function DeadlinesCalendarObrigacoes({ refreshTrigger }: Deadline
       const dataInicio = formatDate(startOfWeek);
       const dataFim = formatDate(endOfWeek);
       
-      const data = await dashboardClient.buscarCalendarioObrigacoes(dataInicio, dataFim);
+      const data = await dashboardClient.buscarCalendarioObrigacoes(dataInicio, dataFim, filters);
       setCalendarByWeek(data.map(item => ({
         id: item.idObrigacao,
         cdIdentificacao: item.cdIdentificacao,
@@ -69,16 +81,16 @@ export default function DeadlinesCalendarObrigacoes({ refreshTrigger }: Deadline
     };
 
     getCalendarByWeek();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, dtLimiteInicio, dtLimiteFim, dtTerminoInicio, dtTerminoFim]);
 
   useEffect(() => {
     const getCalendarByYear = async () => {
-      const data = await dashboardClient.contarObrigacoesPorMesNoAno(currentYear);
+      const data = await dashboardClient.contarObrigacoesPorMesNoAno(currentYear, filters);
       setCalendarByYear(data);
     };
 
     getCalendarByYear();
-  }, [refreshTrigger, currentYear]);
+  }, [refreshTrigger, currentYear, dtLimiteInicio, dtLimiteFim, dtTerminoInicio, dtTerminoFim]);
 
   const navigateYear = (direction: 'prev' | 'next') => {
     if (direction === 'prev') {

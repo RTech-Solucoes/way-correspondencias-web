@@ -19,6 +19,9 @@ interface UseObrigacoesFiltersProps {
   setSearchQuery: (query: string) => void;
   filters: FiltersState;
   setFilters: Dispatch<SetStateAction<FiltersState>>;
+  idObrigacaoFromUrl?: number;
+  cdIdentificacaoFiltrado?: string;
+  onRemoveIdObrigacao?: () => void;
 }
 
 export function useObrigacoesFilters({
@@ -26,6 +29,9 @@ export function useObrigacoesFilters({
   setSearchQuery,
   filters,
   setFilters,
+  idObrigacaoFromUrl,
+  cdIdentificacaoFiltrado,
+  onRemoveIdObrigacao,
 }: UseObrigacoesFiltersProps) {
   const [areas, setAreas] = useState<AreaResponse[]>([]);
   const [temas, setTemas] = useState<TemaResponse[]>([]);
@@ -62,6 +68,7 @@ export function useObrigacoesFilters({
 
   const hasActiveFilters = useMemo(() => {
     return !!(
+      idObrigacaoFromUrl ||
       searchQuery ||
       filters.idStatusObrigacao ||
       filters.idAreaAtribuida ||
@@ -75,10 +82,17 @@ export function useObrigacoesFilters({
       filters.idTipoClassificacao ||
       filters.idTipoPeriodicidade
     );
-  }, [searchQuery, filters]);
+  }, [idObrigacaoFromUrl, searchQuery, filters]);
 
   const filtrosAplicados = useMemo(() => {
     return [
+      ...(idObrigacaoFromUrl ? [{
+        key: 'idObrigacao',
+        label: 'Identificação',
+        value: cdIdentificacaoFiltrado || idObrigacaoFromUrl.toString(),
+        color: 'orange' as const,
+        onRemove: onRemoveIdObrigacao
+      }] : []),
       ...(searchQuery ? [{
         key: 'search',
         label: 'Busca',
@@ -164,9 +178,10 @@ export function useObrigacoesFilters({
         onRemove: () => setFilters({ ...filters, idTipoPeriodicidade: '' })
       }] : [])
     ];
-  }, [searchQuery, filters, areas, temas, classificacoes, periodicidades, statusObrigacao, setSearchQuery, setFilters]);
+  }, [idObrigacaoFromUrl, cdIdentificacaoFiltrado, onRemoveIdObrigacao, searchQuery, filters, areas, temas, classificacoes, periodicidades, statusObrigacao, setSearchQuery, setFilters]);
 
   const handleClearAllFilters = () => {
+    onRemoveIdObrigacao?.();
     setSearchQuery('');
     setFilters({
       ...filters,
