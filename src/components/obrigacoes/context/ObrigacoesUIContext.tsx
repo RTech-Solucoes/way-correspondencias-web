@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, ReactNode, useState, Dispatch, SetStateAction } from 'react';
+import { createContext, useContext, ReactNode, Dispatch, SetStateAction } from 'react';
 import { ObrigacaoResponse } from '@/api/obrigacao/types';
 import { FiltersState } from '@/components/obrigacoes/hooks/use-obrigacoes';
 

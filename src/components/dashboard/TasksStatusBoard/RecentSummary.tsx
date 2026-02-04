@@ -1,6 +1,7 @@
 import { DashboardListSummary, ObrigacaoAreaTemaDTO } from '@/api/dashboard/type';
 import { TipoEnum } from '@/api/tipos/types';
 import { formatDateTimeBr } from '@/utils/utils';
+import { Badge } from '@/components/ui/badge';
 
 interface RecentSummaryProps {
   listSummary: (DashboardListSummary | ObrigacaoAreaTemaDTO)[];
@@ -25,6 +26,7 @@ export default function RecentSummary({ listSummary, loading, cdTipoFluxo }: Rec
           ) : (
             listSummary.map((task, index) => {
               const dtCriacaoFormatada = 'dtCriacaoFormatada' in task ? task.dtCriacaoFormatada : formatDateTimeBr(task.dtCriacao);
+              const cdIdentificacao = 'cdIdentificacao' in task ? task.cdIdentificacao : undefined;
               
               return (
                 <div key={index} className="flex items-start space-x-3 bg-gray-100 rounded-lg p-4">
@@ -47,12 +49,24 @@ export default function RecentSummary({ listSummary, loading, cdTipoFluxo }: Rec
                             </span>
                           ))
                         ) : (task as DashboardListSummary).nmArea ? (
-                          <span className="font-bold text-base">{(task as DashboardListSummary).nmArea}</span>
+                          <span className="font-medium text-base">{(task as DashboardListSummary).nmArea}</span>
                         ) : null}
                       </div>
                       <div className="text-gray-600 mt-1 text-xs flex-shrink-0 ml-2">{dtCriacaoFormatada}</div>
                     </div>
-                    <span className="text-gray-600 text-sm">{task.nmTema}</span>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-gray-500 text-sm font-medium truncate">
+                        {task.nmTema}
+                      </span>
+                      {cdIdentificacao ? (
+                        <Badge
+                          variant="outline"
+                          className="text-[11px] font-semibold px-2 py-0.5 shrink-0"
+                        >
+                          {cdIdentificacao}
+                        </Badge>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
               );

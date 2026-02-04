@@ -10,9 +10,11 @@ import { getAllStatusLegend, getStatusColorCalendar } from "../functions";
 
 interface DeadlinesCalendarProps {
   refreshTrigger?: number;
+  dtCriacaoInicio?: string | null;
+  dtCriacaoFim?: string | null;
 }
 
-export default function DeadlinesCalendar({ refreshTrigger }: DeadlinesCalendarProps) {
+export default function DeadlinesCalendar({ refreshTrigger, dtCriacaoInicio, dtCriacaoFim }: DeadlinesCalendarProps) {
   const [calendarView, setCalendarView] = useState<'month' | 'week' | 'year'>('month');
   const [calendarByWeek, setCalendarByWeek] = useState<CalendarWeekItem[]>([]);
   const [calendarByYear, setCalendarByYear] = useState<ICalendarYear[]>([]);
@@ -22,7 +24,10 @@ export default function DeadlinesCalendar({ refreshTrigger }: DeadlinesCalendarP
   const calendarMonthConfig: CalendarMonthConfig = useMemo(() => ({
     fetchData: async (dataInicio: string, dataFim: string): Promise<CalendarMonthItem[]> => {
       const [ano, mes] = dataInicio.split('-');
-      const data = await dashboardClient.getCalendarByMonth(parseInt(mes), parseInt(ano));
+      const data = await dashboardClient.getCalendarByMonth(parseInt(mes), parseInt(ano), {
+        dtCriacaoInicio,
+        dtCriacaoFim,
+      });
       return data.map(item => ({
         id: item.idSolicitacao,
         cdIdentificacao: item.cdIdentificacao,
@@ -35,7 +40,7 @@ export default function DeadlinesCalendar({ refreshTrigger }: DeadlinesCalendarP
     getItemStyle: (item) => getStatusColorCalendar(item.status || ''),
     tooltipTitle: "Outras Solicitações:",
     refreshTrigger,
-  }), [refreshTrigger]);
+  }), [refreshTrigger, dtCriacaoInicio, dtCriacaoFim]);
 
   // Configuração do calendário semanal para solicitações
   const calendarWeekConfig: CalendarWeekConfig = useMemo(() => ({
@@ -46,7 +51,10 @@ export default function DeadlinesCalendar({ refreshTrigger }: DeadlinesCalendarP
 
   useEffect(() => {
     const getCalendarByWeek = async () => {
-      const data = await dashboardClient.getCalendarByWeek();
+      const data = await dashboardClient.getCalendarByWeek({
+        dtCriacaoInicio,
+        dtCriacaoFim,
+      });
       setCalendarByWeek(data.map(item => ({
         id: item.idSolicitacao,
         cdIdentificacao: item.cdIdentificacao,
@@ -57,16 +65,19 @@ export default function DeadlinesCalendar({ refreshTrigger }: DeadlinesCalendarP
     };
 
     getCalendarByWeek();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, dtCriacaoInicio, dtCriacaoFim]);
 
   useEffect(() => {
     const getCalendarByYear = async () => {
-      const data = await dashboardClient.getCalendarByYear(currentYear);
+      const data = await dashboardClient.getCalendarByYear(currentYear, {
+        dtCriacaoInicio,
+        dtCriacaoFim,
+      });
       setCalendarByYear(data);
     };
 
     getCalendarByYear();
-  }, [refreshTrigger, currentYear]);
+  }, [refreshTrigger, currentYear, dtCriacaoInicio, dtCriacaoFim]);
 
 
   const navigateYear = (direction: 'prev' | 'next') => {

@@ -13,6 +13,10 @@ import { Info } from "lucide-react";
 
 interface RecentActivityObrigacoesProps {
   refreshTrigger?: number;
+  dtLimiteInicio?: string | null;
+  dtLimiteFim?: string | null;
+  dtTerminoInicio?: string | null;
+  dtTerminoFim?: string | null;
 }
 
 const getActivityIcon = (tpAtividade: string) => {
@@ -35,7 +39,13 @@ const getActivityIcon = (tpAtividade: string) => {
   );
 };
 
-export default function RecentActivityObrigacoes({ refreshTrigger }: RecentActivityObrigacoesProps) {
+export default function RecentActivityObrigacoes({
+  refreshTrigger,
+  dtLimiteInicio,
+  dtLimiteFim,
+  dtTerminoInicio,
+  dtTerminoFim,
+}: RecentActivityObrigacoesProps) {
   const [listActivity, setListActivity] = useState<ObrigacaoRecentActivityDTO[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -46,7 +56,12 @@ export default function RecentActivityObrigacoes({ refreshTrigger }: RecentActiv
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await dashboardClient.getObrigacoesRecentActivity(currentPage, 10);
+        const response = await dashboardClient.getObrigacoesRecentActivity(currentPage, 10, {
+          dtLimiteInicio,
+          dtLimiteFim,
+          dtTerminoInicio,
+          dtTerminoFim,
+        });
         setListActivity(response.content);
         setTotalPages(response.totalPages);
         setTotalElements(response.totalElements);
@@ -59,7 +74,7 @@ export default function RecentActivityObrigacoes({ refreshTrigger }: RecentActiv
     };
 
     fetchData();
-  }, [refreshTrigger, currentPage]);
+  }, [refreshTrigger, currentPage, dtLimiteInicio, dtLimiteFim, dtTerminoInicio, dtTerminoFim]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);

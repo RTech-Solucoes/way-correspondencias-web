@@ -15,6 +15,12 @@ import RecentSummary from "./RecentSummary";
 
 interface TasksStatusBoardProps {
   refreshTrigger?: number;
+  dtCriacaoInicio?: string | null;
+  dtCriacaoFim?: string | null;
+  dtLimiteInicio?: string | null;
+  dtLimiteFim?: string | null;
+  dtTerminoInicio?: string | null;
+  dtTerminoFim?: string | null;
   cdTipoFluxo?: TipoEnum;
   cdTipoStatus?: TipoEnum[];
   title?: string;
@@ -25,6 +31,12 @@ interface TasksStatusBoardProps {
 
 export default function TasksStatusBoard({ 
   refreshTrigger,
+  dtCriacaoInicio,
+  dtCriacaoFim,
+  dtLimiteInicio,
+  dtLimiteFim,
+  dtTerminoInicio,
+  dtTerminoFim,
   cdTipoFluxo = TipoEnum.CORRESPONDENCIA,
   cdTipoStatus = [TipoEnum.TODOS, TipoEnum.CORRESPONDENCIA],
   title = "Visão Geral de Solicitações",
@@ -76,6 +88,12 @@ export default function TasksStatusBoard({
           nmCategoriaFluxo: CategoriaEnum.FLUXO,
           nmCategoriaStatus: CategoriaEnum.CLASSIFICACAO_STATUS_SOLICITACAO,
           cdTipoStatus,
+          dtCriacaoInicio,
+          dtCriacaoFim,
+          dtLimiteInicio,
+          dtLimiteFim,
+          dtTerminoInicio,
+          dtTerminoFim,
         });
 
         const sortedData = sortVisionGeral(data);
@@ -91,7 +109,10 @@ export default function TasksStatusBoard({
       if (cdTipoFluxo === TipoEnum.CORRESPONDENCIA) {
         try {
           setLoading(true);
-          const response = await dashboardClient.getRecentOverview(currentPage, 4);
+          const response = await dashboardClient.getRecentOverview(currentPage, 4, {
+            dtCriacaoInicio,
+            dtCriacaoFim,
+          });
           setListSummary(response.content);
           setTotalPages(response.totalPages);
           setTotalElements(response.totalElements);
@@ -104,7 +125,12 @@ export default function TasksStatusBoard({
       } else if (cdTipoFluxo === TipoEnum.OBRIGACAO) {
         try {
           setLoading(true);
-          const response = await dashboardClient.getObrigacoesListSummary(currentPage, 4);
+          const response = await dashboardClient.getObrigacoesListSummary(currentPage, 4, {
+            dtLimiteInicio,
+            dtLimiteFim,
+            dtTerminoInicio,
+            dtTerminoFim,
+          });
           setListSummary(response.content);
           setTotalPages(response.totalPages);
           setTotalElements(response.totalElements);
@@ -119,7 +145,7 @@ export default function TasksStatusBoard({
     getRecentOverview();
     getOverview();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshTrigger, currentPage, cdTipoFluxo, cdTipoStatusKey]);
+  }, [refreshTrigger, currentPage, cdTipoFluxo, cdTipoStatusKey, dtCriacaoInicio, dtCriacaoFim, dtLimiteInicio, dtLimiteFim, dtTerminoInicio, dtTerminoFim]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -218,6 +244,8 @@ export default function TasksStatusBoard({
             ) : (
               <SolicitacoesPendentes
                 refreshTrigger={refreshTrigger}
+                dtCriacaoInicio={dtCriacaoInicio}
+                dtCriacaoFim={dtCriacaoFim}
               />
             )}
           </div>

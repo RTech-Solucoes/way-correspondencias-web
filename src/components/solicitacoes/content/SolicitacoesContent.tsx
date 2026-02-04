@@ -11,11 +11,13 @@ import DetalhesSolicitacaoModal from '@/components/solicitacoes/detalhes-modal-t
 import HistoricoRespostasModal from '@/components/solicitacoes/HistoricoRespostasModal';
 import FilterModal from '@/components/solicitacoes/FilterModal';
 import { useSolicitacoes } from '@/components/solicitacoes/hooks/use-solicitacoes';
-import { PagedResponse } from '@/api/solicitacoes/types';
-import { CorrespondenciaResponse } from '@/api/correspondencia/types';
-import { toast } from 'sonner';
+import { CorrespondenciaFiltroRequest } from '@/components/solicitacoes/hooks/use-solicitacoes-filters';
 
-export function SolicitacoesContent() {
+interface SolicitacoesContentProps {
+  defaultFilters?: Partial<CorrespondenciaFiltroRequest>;
+}
+
+export function SolicitacoesContent({ defaultFilters }: SolicitacoesContentProps) {
   const {
     // Dados principais
     sortedSolicitacoes,
@@ -55,7 +57,6 @@ export function SolicitacoesContent() {
     // Modal Detalhes
     showDetalhesModal,
     detalhesCorrespondencia,
-    detalhesAnexos,
 
     // Modal Tramitação
     showTramitacaoModal,
@@ -97,15 +98,8 @@ export function SolicitacoesContent() {
 
     // Helpers
     getJoinedNmAreas,
-  } = useSolicitacoes();
+  } = useSolicitacoes({ defaultFilters });
 
-  const abrirEmailOriginal = () => {
-    toast.message('Abrir e-mail original (implemente a navegação/URL).');
-  };
-
-  const abrirHistorico = () => {
-    toast.message('Abrir histórico de respostas (implemente a navegação).');
-  };
 
   return (
     <Suspense fallback={<div />}>

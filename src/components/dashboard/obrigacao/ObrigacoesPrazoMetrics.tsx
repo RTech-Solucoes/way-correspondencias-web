@@ -10,6 +10,10 @@ import { CheckCircle2, XCircle, TrendingUp, Clock } from "lucide-react";
 
 interface ObrigacoesPrazoMetricsProps {
   refreshTrigger?: number;
+  dtLimiteInicio?: string | null;
+  dtLimiteFim?: string | null;
+  dtTerminoInicio?: string | null;
+  dtTerminoFim?: string | null;
 }
 
 const formatarTempoMedio = (minutos: number | null | undefined): string => {
@@ -29,7 +33,13 @@ const formatarTempoMedio = (minutos: number | null | undefined): string => {
   return partes.length > 0 ? partes.join(', ') : '0 minutos';
 };
 
-export default function ObrigacoesPrazoMetrics({ refreshTrigger }: ObrigacoesPrazoMetricsProps) {
+export default function ObrigacoesPrazoMetrics({
+  refreshTrigger,
+  dtLimiteInicio,
+  dtLimiteFim,
+  dtTerminoInicio,
+  dtTerminoFim,
+}: ObrigacoesPrazoMetricsProps) {
   const [data, setData] = useState<ObrigacaoPrazoResponse | null>(null);
   const [tempoMedioData, setTempoMedioData] = useState<ObrigacaoTempoMedioResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -38,9 +48,10 @@ export default function ObrigacoesPrazoMetrics({ refreshTrigger }: ObrigacoesPra
     const fetchData = async () => {
       try {
         setLoading(true);
+        const filters = { dtLimiteInicio, dtLimiteFim, dtTerminoInicio, dtTerminoFim };
         const [prazoResponse, tempoMedioResponse] = await Promise.all([
-          dashboardClient.getObrigacoesPorPrazo(),
-          dashboardClient.getObrigacoesTempoMedio(),
+          dashboardClient.getObrigacoesPorPrazo(filters),
+          dashboardClient.getObrigacoesTempoMedio(filters),
         ]);
         setData(prazoResponse);
         setTempoMedioData(tempoMedioResponse);
@@ -53,7 +64,7 @@ export default function ObrigacoesPrazoMetrics({ refreshTrigger }: ObrigacoesPra
     };
 
     fetchData();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, dtLimiteInicio, dtLimiteFim, dtTerminoInicio, dtTerminoFim]);
 
   if (loading) {
     return (

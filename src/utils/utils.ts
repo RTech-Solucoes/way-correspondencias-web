@@ -21,6 +21,19 @@ export function capitalize(str: string): string {
     .join(' ');
 }
 
+export function construirDataComAno(
+  dateString: string | null | undefined,
+  year: number
+): string | null {
+  if (!dateString) return null;
+  const baseDate = dayjs(dateString);
+  if (!baseDate.isValid()) return null;
+  const adjusted = baseDate.year(year);
+  if (!adjusted.isValid()) return null;
+  return adjusted.format("YYYY-MM-DD");
+}
+
+
 export function getInitials(name: string | null): string {
   if (!name) return '';
 

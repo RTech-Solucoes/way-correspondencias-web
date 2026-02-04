@@ -6,6 +6,7 @@ import { ArquivoDTO, AnexoResponse } from '../anexos/type';
 import { SolicitacaoParecerResponse } from '../solicitacao-parecer/types';
 import { ResponsavelResponse } from '../responsaveis/types';
 import { CorrespondenciaResumoResponse } from '../correspondencia/types';
+import { perfilUtil } from '../perfis/types';
 
 export interface ObrigacaoResumoResponse {
   idSolicitacao: number;
@@ -120,6 +121,9 @@ export interface ObrigacaoFiltroRequest {
   page?: number;
   size?: number;
   sort?: string;
+  dtTerminoInicio?:  string | null;
+  dtTerminoFim?:  string | null;
+
 }
 
 export interface ObrigacoesRelacionadasResponse {
@@ -154,3 +158,10 @@ export interface ObrigacaoStep1Request {
   dsObservacao?: string;
   flAnaliseGerenteDiretor: string;
 }
+
+export const PERFIS_FILTRO_DEFAULT_DATA_LIMITE = [
+  perfilUtil.ADMINISTRADOR,
+  perfilUtil.ADMIN_MASTER,
+  perfilUtil.GESTOR_DO_SISTEMA,
+  perfilUtil.VALIDADOR_ASSINANTE,
+];

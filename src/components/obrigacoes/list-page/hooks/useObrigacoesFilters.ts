@@ -11,7 +11,7 @@ import { CategoriaEnum, TipoEnum } from "@/api/tipos/types";
 import statusSolicitacaoClient, { StatusSolicitacaoResponse } from "@/api/status-solicitacao/client";
 import { formatDateBr } from "@/utils/utils";
 import { ObrigacaoFiltroRequest } from "@/api/obrigacao/types";
-import { FiltersState } from "@/context/obrigacoes/ObrigacoesContext";
+import { FiltersState } from "@/components/obrigacoes/hooks/use-obrigacoes";
 import { Dispatch, SetStateAction } from "react";
 
 interface UseObrigacoesFiltersProps {
@@ -19,6 +19,9 @@ interface UseObrigacoesFiltersProps {
   setSearchQuery: (query: string) => void;
   filters: FiltersState;
   setFilters: Dispatch<SetStateAction<FiltersState>>;
+  idObrigacaoFromUrl?: number;
+  cdIdentificacaoFiltrado?: string;
+  onRemoveIdObrigacao?: () => void;
 }
 
 export function useObrigacoesFilters({
@@ -26,6 +29,9 @@ export function useObrigacoesFilters({
   setSearchQuery,
   filters,
   setFilters,
+  idObrigacaoFromUrl,
+  cdIdentificacaoFiltrado,
+  onRemoveIdObrigacao,
 }: UseObrigacoesFiltersProps) {
   const [areas, setAreas] = useState<AreaResponse[]>([]);
   const [temas, setTemas] = useState<TemaResponse[]>([]);
@@ -62,6 +68,7 @@ export function useObrigacoesFilters({
 
   const hasActiveFilters = useMemo(() => {
     return !!(
+      idObrigacaoFromUrl ||
       searchQuery ||
       filters.idStatusObrigacao ||
       filters.idAreaAtribuida ||
@@ -69,14 +76,23 @@ export function useObrigacoesFilters({
       filters.dtLimiteFim ||
       filters.dtInicioInicio ||
       filters.dtInicioFim ||
+      filters.dtTerminoInicio ||
+      filters.dtTerminoFim ||
       filters.idTema ||
       filters.idTipoClassificacao ||
       filters.idTipoPeriodicidade
     );
-  }, [searchQuery, filters]);
+  }, [idObrigacaoFromUrl, searchQuery, filters]);
 
   const filtrosAplicados = useMemo(() => {
     return [
+      ...(idObrigacaoFromUrl ? [{
+        key: 'idObrigacao',
+        label: 'Identificação',
+        value: cdIdentificacaoFiltrado || idObrigacaoFromUrl.toString(),
+        color: 'orange' as const,
+        onRemove: onRemoveIdObrigacao
+      }] : []),
       ...(searchQuery ? [{
         key: 'search',
         label: 'Busca',
@@ -100,14 +116,14 @@ export function useObrigacoesFilters({
       }] : []),
       ...(filters.dtLimiteInicio ? [{
         key: 'dtLimiteInicio',
-        label: 'Data Limite Início',
+        label: 'Data Limite (Início)',
         value: formatDateBr(filters.dtLimiteInicio),
         color: 'indigo' as const,
         onRemove: () => setFilters({ ...filters, dtLimiteInicio: '' })
       }] : []),
       ...(filters.dtLimiteFim ? [{
         key: 'dtLimiteFim',
-        label: 'Data Limite Fim',
+        label: 'Data Limite (Fim)',
         value: formatDateBr(filters.dtLimiteFim),
         color: 'indigo' as const,
         onRemove: () => setFilters({ ...filters, dtLimiteFim: '' })
@@ -125,6 +141,20 @@ export function useObrigacoesFilters({
         value: formatDateBr(filters.dtInicioFim),
         color: 'pink' as const,
         onRemove: () => setFilters({ ...filters, dtInicioFim: '' })
+      }] : []),
+      ...(filters.dtTerminoInicio ? [{
+        key: 'dtTerminoInicio',
+        label: 'Data de Término (Início)',
+        value: formatDateBr(filters.dtTerminoInicio),
+        color: 'green' as const,
+        onRemove: () => setFilters({ ...filters, dtTerminoInicio: '' })
+      }] : []),
+      ...(filters.dtTerminoFim ? [{
+        key: 'dtTerminoFim',
+        label: 'Data de Término (Fim)',
+        value: formatDateBr(filters.dtTerminoFim),
+        color: 'green' as const,
+        onRemove: () => setFilters({ ...filters, dtTerminoFim: '' })
       }] : []),
       ...(filters.idTema ? [{
         key: 'tema',
@@ -148,9 +178,10 @@ export function useObrigacoesFilters({
         onRemove: () => setFilters({ ...filters, idTipoPeriodicidade: '' })
       }] : [])
     ];
-  }, [searchQuery, filters, areas, temas, classificacoes, periodicidades, statusObrigacao, setSearchQuery, setFilters]);
+  }, [idObrigacaoFromUrl, cdIdentificacaoFiltrado, onRemoveIdObrigacao, searchQuery, filters, areas, temas, classificacoes, periodicidades, statusObrigacao, setSearchQuery, setFilters]);
 
   const handleClearAllFilters = () => {
+    onRemoveIdObrigacao?.();
     setSearchQuery('');
     setFilters({
       ...filters,
@@ -160,6 +191,8 @@ export function useObrigacoesFilters({
       dtLimiteFim: '',
       dtInicioInicio: '',
       dtInicioFim: '',
+      dtTerminoInicio: '',
+      dtTerminoFim: '',
       idTema: '',
       idTipoClassificacao: '',
       idTipoPeriodicidade: '',
@@ -175,6 +208,8 @@ export function useObrigacoesFilters({
       dtLimiteFim: filters.dtLimiteFim || null,
       dtInicioInicio: filters.dtInicioInicio || null,
       dtInicioFim: filters.dtInicioFim || null,
+      dtTerminoInicio: filters.dtTerminoInicio || null,
+      dtTerminoFim: filters.dtTerminoFim || null,
       idTema: filters.idTema ? parseInt(filters.idTema) : null,
       idTipoClassificacao: filters.idTipoClassificacao ? parseInt(filters.idTipoClassificacao) : null,
       idTipoPeriodicidade: filters.idTipoPeriodicidade ? parseInt(filters.idTipoPeriodicidade) : null,

@@ -9,20 +9,7 @@ import { StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
 import { Button } from '@/components/ui/button';
 import { TemaResponse } from '@/api/temas/types';
 import { AreaResponse } from '@/api/areas/types';
-
-type FiltersState = {
-  identificacao: string;
-  responsavel: string;
-  tema: string;
-  area: string;
-  status: string;
-  dateFrom: string;
-  dateTo: string;
-  nmResponsavel: string;
-  dtCriacaoInicio: string;
-  dtCriacaoFim: string;
-  flExigeCienciaGerenteRegul: string;
-};
+import { CorrespondenciaFiltroRequest } from './hooks/use-solicitacoes-filters';
 
 interface FilterModalProps {
   open: boolean;
@@ -39,8 +26,10 @@ interface FilterModalProps {
     dtCriacaoInicio: string;
     dtCriacaoFim: string;
     flExigeCienciaGerenteRegul: string;
+    page: number;
+    size: number;
   };
-  setFilters: (filters: FiltersState) => void;
+  setFilters: (filters: CorrespondenciaFiltroRequest) => void;
   temas: TemaResponse[];
   areas: AreaResponse[];
   statuses: StatusSolicitacaoResponse[];

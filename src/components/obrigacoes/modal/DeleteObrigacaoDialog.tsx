@@ -3,8 +3,6 @@
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useObrigacoesUI } from '@/components/obrigacoes/context/ObrigacoesUIContext';
 import { useDeleteObrigacao } from '@/components/obrigacoes/hooks/use-obrigacoes-query';
-import { useState } from 'react';
-import obrigacaoClient from '@/api/obrigacao/client';
 
 export function DeleteObrigacaoDialog() {
   const {

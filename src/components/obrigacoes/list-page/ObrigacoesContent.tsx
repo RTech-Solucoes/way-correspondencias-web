@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo } from "react";
-import { useSearchParams } from "next/navigation";
+import { useMemo, useCallback } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { FiltrosAplicados } from "@/components/ui/applied-filters";
 
 // Context
@@ -16,9 +16,15 @@ import { ObrigacoesModals } from "@/components/obrigacoes/list-page/ObrigacoesMo
 // Hooks
 import { useObrigacoes } from "@/components/obrigacoes/hooks/use-obrigacoes";
 import { useObrigacoesFilters } from "./hooks/useObrigacoesFilters";
+import { ObrigacaoFiltroRequest } from "@/api/obrigacao/types";
 
-export function ObrigacoesContent() {
+interface ObrigacoesContentProps {
+  defaultFilters?: Partial<ObrigacaoFiltroRequest>;
+}
+
+export function ObrigacoesContent({ defaultFilters }: ObrigacoesContentProps) {
   const searchParams = useSearchParams();
+  const router = useRouter();
   
   const idObrigacaoFromUrl = useMemo(() => {
     const param = searchParams.get('idObrigacao');
@@ -99,7 +105,20 @@ export function ObrigacoesContent() {
     isAdminOrGestor,
     getStatusText,
     idPerfil,
-  } = useObrigacoes({ idObrigacaoFromUrl });
+  } = useObrigacoes({ idObrigacaoFromUrl, defaultFilters });
+
+  const cdIdentificacaoFiltrado = useMemo(() => {
+    if (!idObrigacaoFromUrl || obrigacoes.length === 0) return undefined;
+    const encontrada = obrigacoes.find(o => o.idSolicitacao === idObrigacaoFromUrl) ?? obrigacoes[0];
+    return encontrada?.cdIdentificacao;
+  }, [idObrigacaoFromUrl, obrigacoes]);
+
+  const onRemoveIdObrigacao = useCallback(() => {
+    const params = new URLSearchParams(searchParams);
+    params.delete('idObrigacao');
+    const qs = params.toString();
+    router.push(qs ? `/obrigacao?${qs}` : '/obrigacao');
+  }, [searchParams, router]);
 
   const {
     hasActiveFilters,
@@ -111,6 +130,9 @@ export function ObrigacoesContent() {
     setSearchQuery,
     filters,
     setFilters,
+    idObrigacaoFromUrl,
+    cdIdentificacaoFiltrado,
+    onRemoveIdObrigacao,
   });
 
   // Context value para modais

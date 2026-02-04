@@ -1,20 +1,22 @@
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
 import { CorrespondenciaResponse } from '@/api/correspondencia/types';
-import { PagedResponse } from '@/api/solicitacoes/types';
 import { useSolicitacoesData } from './use-solicitacoes-data';
-import { useSolicitacoesFilters } from './use-solicitacoes-filters';
+import { CorrespondenciaFiltroRequest, useSolicitacoesFilters } from './use-solicitacoes-filters';
 import { useSolicitacoesModals } from './use-solicitacoes-modals';
 import { useSolicitacoesHandlers } from './use-solicitacoes-handlers';
-
-export type { FiltersState } from './use-solicitacoes-filters';
+import { formatDateBr } from '@/utils/utils';
 
 interface UseSolicitacoesOptions {
-  pageSize?: number;
+  defaultFilters?: Partial<CorrespondenciaFiltroRequest>;
 }
 
 export function useSolicitacoes(options: UseSolicitacoesOptions = {}) {
-  const { pageSize = 10 } = options;
+  const { defaultFilters } = options;
+  const pageSize = defaultFilters?.size ?? 10;
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Permissões
   const { canInserirSolicitacao, canAtualizarSolicitacao, canDeletarSolicitacao } = usePermissoes();
@@ -31,6 +33,7 @@ export function useSolicitacoes(options: UseSolicitacoesOptions = {}) {
     temas: [],
     sortField: tempSortField,
     sortDirection: tempSortDirection,
+    defaultFilters,
   });
 
   // Refs para rastrear mudanças nos filtros e busca (usados no useEffect de carregamento)
@@ -72,12 +75,37 @@ export function useSolicitacoes(options: UseSolicitacoesOptions = {}) {
     setTempSortDirection(handlersHook.sortDirection);
   }, [handlersHook.sortField, handlersHook.sortDirection]);
 
-  // Re-calcular filtros aplicados com os dados carregados
+  const idSolicitacaoFromUrl = dataHook.idSolicitacaoFromUrl;
+  const cdIdentificacaoFiltrado = useMemo(() => {
+    if (!idSolicitacaoFromUrl || !dataHook.solicitacoes.length) return undefined;
+    const encontrada = dataHook.solicitacoes.find(s => s.idSolicitacao === idSolicitacaoFromUrl) ?? dataHook.solicitacoes[0];
+    return encontrada?.cdIdentificacao;
+  }, [idSolicitacaoFromUrl, dataHook.solicitacoes]);
+
+  const onRemoveIdSolicitacao = useCallback(() => {
+    const params = new URLSearchParams(searchParams);
+    params.delete('idSolicitacao');
+    const qs = params.toString();
+    router.push(qs ? `/solicitacoes?${qs}` : '/solicitacoes');
+  }, [searchParams, router]);
+
+  const clearFiltersWithUrl = useCallback(() => {
+    onRemoveIdSolicitacao();
+    filtersHook.clearFilters();
+  }, [onRemoveIdSolicitacao, filtersHook]);
+
   const filtrosAplicadosCompletos = useMemo(() => {
     const { searchQuery, activeFilters } = filtersHook;
     const { statuses, areas, temas } = dataHook;
 
     return [
+      ...(idSolicitacaoFromUrl ? [{
+        key: 'idSolicitacao',
+        label: 'Identificação',
+        value: cdIdentificacaoFiltrado || idSolicitacaoFromUrl.toString(),
+        color: 'blue' as const,
+        onRemove: onRemoveIdSolicitacao
+      }] : []),
       ...(searchQuery ? [{
         key: 'search',
         label: 'Busca',
@@ -144,8 +172,8 @@ export function useSolicitacoes(options: UseSolicitacoesOptions = {}) {
       }] : []),
       ...(activeFilters.dtCriacaoInicio ? [{
         key: 'dtCriacaoInicio',
-        label: 'Data Criação Início',
-        value: activeFilters.dtCriacaoInicio,
+        label: 'Data Criação (Início)',
+        value: formatDateBr(activeFilters.dtCriacaoInicio),
         color: 'pink' as const,
         onRemove: () => {
           const newFilters = { ...activeFilters, dtCriacaoInicio: '' };
@@ -155,8 +183,8 @@ export function useSolicitacoes(options: UseSolicitacoesOptions = {}) {
       }] : []),
       ...(activeFilters.dtCriacaoFim ? [{
         key: 'dtCriacaoFim',
-        label: 'Data Criação Fim',
-        value: activeFilters.dtCriacaoFim,
+        label: 'Data Criação (Fim)',
+        value: formatDateBr(activeFilters.dtCriacaoFim),
         color: 'pink' as const,
         onRemove: () => {
           const newFilters = { ...activeFilters, dtCriacaoFim: '' };
@@ -176,7 +204,7 @@ export function useSolicitacoes(options: UseSolicitacoesOptions = {}) {
         }
       }] : [])
     ];
-  }, [filtersHook, dataHook.statuses, dataHook.areas, dataHook.temas, dataHook.responsaveis, dataHook.solicitacoes]);
+  }, [filtersHook, dataHook.statuses, dataHook.areas, dataHook.temas, dataHook.responsaveis, dataHook.solicitacoes, idSolicitacaoFromUrl, cdIdentificacaoFiltrado, onRemoveIdSolicitacao]);
 
   // Parâmetros de filtro para exportação
   const exportFilterParams = useMemo(() => ({
@@ -306,9 +334,9 @@ export function useSolicitacoes(options: UseSolicitacoesOptions = {}) {
     setFilters: filtersHook.setFilters,
     activeFilters: filtersHook.activeFilters,
     setActiveFilters: filtersHook.setActiveFilters,
-    hasActiveFilters: filtersHook.hasActiveFilters,
+    hasActiveFilters: filtersHook.hasActiveFilters || !!idSolicitacaoFromUrl,
     applyFilters: filtersHook.applyFilters,
-    clearFilters: filtersHook.clearFilters,
+    clearFilters: clearFiltersWithUrl,
     filtrosAplicados: filtrosAplicadosCompletos,
     exportFilterParams,
 

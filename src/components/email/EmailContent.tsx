@@ -114,7 +114,7 @@ export function EmailContent() {
     }] : []),
     ...(activeEmailFilters.dateFrom ? [{
       key: 'dateFrom',
-      label: 'Data Recebimento Início',
+      label: 'Data Recebimento (Início)',
       value: formatDateBr(activeEmailFilters.dateFrom),
       color: 'indigo' as const,
       onRemove: () => {
@@ -125,7 +125,7 @@ export function EmailContent() {
     }] : []),
     ...(activeEmailFilters.dateTo ? [{
       key: 'dateTo',
-      label: 'Data Recebimento Fim',
+      label: 'Data Recebimento (Fim)',
       value: formatDateBr(activeEmailFilters.dateTo),
       color: 'indigo' as const,
       onRemove: () => {

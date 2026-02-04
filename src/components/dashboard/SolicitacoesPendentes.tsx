@@ -6,15 +6,21 @@ import { useConcessionaria } from '@/context/concessionaria/ConcessionariaContex
 
 interface SolicitacoesPendentesProps {
   refreshTrigger?: number;
+  dtCriacaoInicio?: string | null;
+  dtCriacaoFim?: string | null;
 }
 
-export default function SolicitacoesPendentes({ refreshTrigger }: SolicitacoesPendentesProps) {
+export default function SolicitacoesPendentes({
+  refreshTrigger,
+  dtCriacaoInicio,
+  dtCriacaoFim,
+}: SolicitacoesPendentesProps) {
   const { concessionariaSelecionada } = useConcessionaria();
   const idConcessionaria = concessionariaSelecionada?.idConcessionaria;
 
   const { data: items = [], isLoading: loading } = useQuery<CorrespondenciaResumoResponse[]>({
-    queryKey: ['correspondenciasPendentes', idConcessionaria, refreshTrigger],
-    queryFn: () => dashboardClient.getSolicitacoesPendentes(),
+    queryKey: ['correspondenciasPendentes', idConcessionaria, refreshTrigger, dtCriacaoInicio, dtCriacaoFim],
+    queryFn: () => dashboardClient.getSolicitacoesPendentes({ dtCriacaoInicio, dtCriacaoFim }),
     enabled: !!idConcessionaria,
     staleTime: 30000,
     refetchOnWindowFocus: false,
