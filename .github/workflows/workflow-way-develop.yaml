@@ -7,7 +7,7 @@ on:
 
 jobs:
   deploy:
-    name: Trigger Deploy
+    name: Deploy
     runs-on: ubuntu-latest
 
     steps:
@@ -32,62 +32,62 @@ jobs:
             exit 1
           fi
 
-      # - name: Send success message to Google Chat
-      #   if: success()
-      #   env:
-      #     COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
-      #     GIT_BRANCH: ${{ github.ref_name }}
-      #     WEBHOOK_URL: https://chat.googleapis.com/v1/spaces/AAQA5qsWFdQ/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=VyWYfeqljUfRTIYU-mvpjOntN4ykR2me8p6Cn_ROEPg
-      #   run: |
-      #     PAYLOAD=$(cat << EOF
-      #     {
-      #       "text": "Deploy do projeto Way Correspondencias",
-      #       "cards": [
-      #         {
-      #           "sections": [
-      #             {
-      #               "widgets": [
-      #                 { "keyValue": { "topLabel": "Projeto", "content": "way-correspondencias-web" } },
-      #                 { "keyValue": { "topLabel": "Branch", "content": "$GIT_BRANCH" } },
-      #                 { "keyValue": { "topLabel": "Status", "content": "SUCCESS ✅" } },
-      #                 { "keyValue": { "topLabel": "Mensagem", "content": "Deploy para o Way Correspondencias Web realizado com sucesso!" } },
-      #                 { "keyValue": { "topLabel": "Commit", "content": "$COMMIT_MESSAGE" } }
-      #               ]
-      #             }
-      #           ]
-      #         }
-      #       ]
-      #     }
-      #     EOF
-      #     )
-      #     curl -s -X POST -H "Content-Type: application/json" -d "$PAYLOAD" "$WEBHOOK_URL"
+      - name: Send success message to Google Chat
+        if: success()
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          GIT_BRANCH: ${{ github.ref_name }}
+          WEBHOOK_URL: https://chat.googleapis.com/v1/spaces/AAQA5qsWFdQ/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=VyWYfeqljUfRTIYU-mvpjOntN4ykR2me8p6Cn_ROEPg
+        run: |
+          PAYLOAD=$(cat << EOF
+          {
+            "text": "Deploy do projeto Way Correspondencias",
+            "cards": [
+              {
+                "sections": [
+                  {
+                    "widgets": [
+                      { "keyValue": { "topLabel": "Projeto", "content": "way-correspondencias-web" } },
+                      { "keyValue": { "topLabel": "Branch", "content": "$GIT_BRANCH" } },
+                      { "keyValue": { "topLabel": "Status", "content": "SUCCESS ✅" } },
+                      { "keyValue": { "topLabel": "Mensagem", "content": "Deploy para o Way Correspondencias Web realizado com sucesso!" } },
+                      { "keyValue": { "topLabel": "Commit", "content": "$COMMIT_MESSAGE" } }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+          EOF
+          )
+          curl -s -X POST -H "Content-Type: application/json" -d "$PAYLOAD" "$WEBHOOK_URL"
 
-      # - name: Send failure message to Google Chat
-      #   if: failure()
-      #   env:
-      #     COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
-      #     GIT_BRANCH: ${{ github.ref_name }}
-      #     WEBHOOK_URL: https://chat.googleapis.com/v1/spaces/AAQA5qsWFdQ/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=VyWYfeqljUfRTIYU-mvpjOntN4ykR2me8p6Cn_ROEPg
-      #   run: |
-      #     PAYLOAD=$(cat << EOF
-      #     {
-      #       "text": "Deploy do projeto Way Correspondencias",
-      #       "cards": [
-      #         {
-      #           "sections": [
-      #             {
-      #               "widgets": [
-      #                 { "keyValue": { "topLabel": "Projeto", "content": "way-correspondencias-web" } },
-      #                 { "keyValue": { "topLabel": "Branch", "content": "$GIT_BRANCH" } },
-      #                 { "keyValue": { "topLabel": "Status", "content": "FAILED ❌" } },
-      #                 { "keyValue": { "topLabel": "Mensagem", "content": "Deploy para o Way Correspondencias Web falhou!" } },
-      #                 { "keyValue": { "topLabel": "Commit", "content": "$COMMIT_MESSAGE" } }
-      #               ]
-      #             }
-      #           ]
-      #         }
-      #       ]
-      #     }
-      #     EOF
-      #     )
-      #     curl -s -X POST -H "Content-Type: application/json" -d "$PAYLOAD" "$WEBHOOK_URL"
+      - name: Send failure message to Google Chat
+        if: failure()
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          GIT_BRANCH: ${{ github.ref_name }}
+          WEBHOOK_URL: https://chat.googleapis.com/v1/spaces/AAQA5qsWFdQ/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=VyWYfeqljUfRTIYU-mvpjOntN4ykR2me8p6Cn_ROEPg
+        run: |
+          PAYLOAD=$(cat << EOF
+          {
+            "text": "Deploy do projeto Way Correspondencias",
+            "cards": [
+              {
+                "sections": [
+                  {
+                    "widgets": [
+                      { "keyValue": { "topLabel": "Projeto", "content": "way-correspondencias-web" } },
+                      { "keyValue": { "topLabel": "Branch", "content": "$GIT_BRANCH" } },
+                      { "keyValue": { "topLabel": "Status", "content": "FAILED ❌" } },
+                      { "keyValue": { "topLabel": "Mensagem", "content": "Deploy para o Way Correspondencias Web falhou!" } },
+                      { "keyValue": { "topLabel": "Commit", "content": "$COMMIT_MESSAGE" } }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+          EOF
+          )
+          curl -s -X POST -H "Content-Type: application/json" -d "$PAYLOAD" "$WEBHOOK_URL"
