@@ -194,7 +194,7 @@ export default function ObrigacoesRankingAreas({
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={chartData}
-                  margin={{ top: 20, right: 20, left: 10, bottom: 80 }}
+                  margin={{ top: 20, right: 20, left: 10, bottom: 120 }}
                   barCategoryGap="30%"
                   barGap={10}
                 >
@@ -203,10 +203,10 @@ export default function ObrigacoesRankingAreas({
                     type="category" 
                     dataKey="nmAreaShort"
                     stroke="#6b7280"
-                    fontSize={11}
-                    angle={-45}
+                    fontSize={9}
+                    angle={-62}
                     textAnchor="end"
-                    height={100}
+                    height={30}
                     tick={{ fill: '#374151' }}
                   />
                   <YAxis 
