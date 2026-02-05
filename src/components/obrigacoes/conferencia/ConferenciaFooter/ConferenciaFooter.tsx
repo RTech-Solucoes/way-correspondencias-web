@@ -161,6 +161,14 @@ export function ConferenciaFooter({
             !status.isStatusVencidoRegulatorio);
   }, [status.conferenciaAprovada, status.isStatusEmValidacaoRegulatorio, status.isStatusEmAnaliseRegulatoria, status.isStatusVencidoRegulatorio]);
 
+  const isPermitidoVizualizarBtnCienciaConteudoObrig = useMemo(() => {
+
+    return (
+      (idPerfil === perfilUtil.ADMINISTRADOR || idPerfil === perfilUtil.ADMIN_MASTER) &&
+      status.isStatusEmAnaliseGerenteRegulatorio && status.flExigeCienciaGerenteRegul === 'N'
+    )
+  }, [idPerfil, status.isStatusEmAnaliseGerenteRegulatorio, status.flExigeCienciaGerenteRegul]);
+
   return (
     <footer className="fixed bottom-0 left-0 right-0 z-11 border-t border-gray-200 bg-white px-8 py-4 h-[73px]">
       <div className="ml-auto flex w-full max-w-6xl flex-wrap items-center justify-end gap-3">
@@ -283,7 +291,7 @@ export function ConferenciaFooter({
           </>
         )}
 
-        {status.isStatusEmAnaliseGerenteRegulatorio && status.flExigeCienciaGerenteRegul === 'N' && (
+        { isPermitidoVizualizarBtnCienciaConteudoObrig && (
           <div>
             <div className="flex items-center gap-3 bg-blue-50/50 px-5 py-2.5 rounded-full border border-blue-100 shadow-sm transition-all hover:bg-blue-50">
               <Checkbox
@@ -296,7 +304,7 @@ export function ConferenciaFooter({
                 htmlFor="ciencia-checkbox"
                 className="text-sm font-semibold text-blue-900 cursor-pointer whitespace-nowrap select-none"
               >
-                Declaro estar ciente da solicitação e de seu conteúdo
+                Declaro estar ciente da obrigação e de seu conteúdo
               </Label>
             </div>
           </div>

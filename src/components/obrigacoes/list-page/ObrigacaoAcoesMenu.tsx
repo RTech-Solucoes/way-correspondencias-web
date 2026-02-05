@@ -79,7 +79,7 @@ export function ObrigacaoAcoesMenu({
   }, [obrigacao.statusSolicitacao]);
 
   const isStatusAprovacaoTramitacao = useMemo(() => {
-    return obrigacao.statusSolicitacao?.idStatusSolicitacao === statusList.APROVACAO_TRAMITACAO.id;
+    return obrigacao.statusSolicitacao?.idStatusSolicitacao === statusList.APROVACAO_DIRETORIA.id;
   }, [obrigacao.statusSolicitacao]);
 
   const isStatusDesabilitadoTramitacao = useMemo(() => {
@@ -171,7 +171,7 @@ export function ObrigacaoAcoesMenu({
       return 'Esta obrigação já está concluída. Não é possível anexar protocolo.';
     }
     if (!isStatusEmValidacao && !isStatusAprovacaoTramitacao) {
-      return 'Apenas é possível anexar protocolo quando a obrigação estiver em "Em Validação (Regulatório)" ou "Aprovação Tramitação".';
+      return 'Apenas é possível anexar protocolo quando a obrigação estiver em "Em Validação (Regulatório)" ou "Aprovado pela Diretoria".';
     }
 
     if (!isExisteAnexoCorrespondencia) {

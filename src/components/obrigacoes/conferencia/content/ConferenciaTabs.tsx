@@ -7,6 +7,7 @@ import { ConferenciaStepPrazos } from './tabs-steps/ConferenciaStepPrazos';
 import { ConferenciaStepAnexos } from './tabs-steps/ConferenciaStepAnexos';
 import { ConferenciaStepVinculos } from './tabs-steps/ConferenciaStepVinculos';
 import { ObrigacaoDetalheResponse } from '@/api/obrigacao/types';
+import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { getObrigacaoStatusStyle } from '@/components/obrigacoes/list-page/status';
 import { TipoEnum } from '@/api/tipos/types';
 import { AnexoResponse } from '@/api/anexos/type';
@@ -33,6 +34,7 @@ interface ConferenciaTabsProps {
   anexos: ObrigacaoDetalheResponse['anexos'];
   downloadingId: number | null;
   onDownloadAnexo: (anexo: AnexoResponse) => void;
+  userResponsavel?: ResponsavelResponse | null;
 }
 
 export function ConferenciaTabs({
@@ -42,6 +44,7 @@ export function ConferenciaTabs({
   anexos,
   downloadingId,
   onDownloadAnexo,
+  userResponsavel,
 }: ConferenciaTabsProps) {
   const areaAtribuida = obrigacao?.areas?.find((area) => area.tipoArea?.cdTipo === TipoEnum.ATRIBUIDA);
   const areasCondicionantes = obrigacao?.areas?.filter((area) => area.tipoArea?.cdTipo === TipoEnum.CONDICIONANTE) ?? [];
@@ -110,7 +113,7 @@ export function ConferenciaTabs({
           </TabsContent>
 
           <TabsContent value="prazos" className="p-0">
-            <ConferenciaStepPrazos obrigacao={obrigacao} />
+            <ConferenciaStepPrazos obrigacao={obrigacao} userResponsavel={userResponsavel} />
           </TabsContent>
 
           <TabsContent value="anexos" className="p-0">

@@ -92,7 +92,7 @@ export function usePermissoesObrigacao({
   }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 
   const isStatusAprovacaoTramitacao = useMemo(() => {
-    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.APROVACAO_TRAMITACAO.id;
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.APROVACAO_DIRETORIA.id;
   }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
 
   const isStatusEmAssinaturaDiretoria = useMemo(() => {

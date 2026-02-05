@@ -64,7 +64,7 @@ export function useFooterStatus({
   }, [idStatusSolicitacao]);
 
   const isStatusAprovacaoTramitacao = useMemo(() => {
-    return idStatusSolicitacao === statusList.APROVACAO_TRAMITACAO.id;
+    return idStatusSolicitacao === statusList.APROVACAO_DIRETORIA.id;
   }, [idStatusSolicitacao]);
 
   const isStatusConcluido = useMemo(() => {

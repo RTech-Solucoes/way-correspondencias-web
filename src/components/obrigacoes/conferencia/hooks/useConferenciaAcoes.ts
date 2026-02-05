@@ -60,7 +60,7 @@ export function useConferenciaAcoes({
     try {
       await tramitacoesClient.tramitarViaFluxo({
         idSolicitacao: obrigacaoId,
-        dsObservacao: 'Obrigação solicitada de ajustes. Volta para área atribuída',
+        dsObservacao: 'Obrigação devolvida à área responsável para  ajuste',
         flAprovado: FlAprovadoTramitacaoEnum.N,
         arquivos: arquivosTramitacaoPendentes,
       });
@@ -220,7 +220,7 @@ export function useConferenciaAcoes({
     try {
       const observacaoTramitacao = isStatusAtrasada && dsJustificativaAtraso
         ? 'Obrigação enviada ao Regulatório com atraso justificado'
-        : 'Obrigação enviada para Em Validação (Regulatório).';
+        : 'Obrigação enviada para o Regulatório.';
 
       const idTramitacaoRef = comentarioActionsRef.current?.getTramitacaoRef?.() ?? undefined;
       const idSolicitacaoParecerRef = comentarioActionsRef.current?.getParecerRef?.() ?? undefined;

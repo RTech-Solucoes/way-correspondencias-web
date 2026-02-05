@@ -52,17 +52,18 @@ export default function DashboardObrigacoesContent() {
     setRefreshTrigger(prev => prev + 1);
   };
 
-  const aplicarFiltros = () => {
-    setFiltrosAplicados(filtros);
-    refreshData();
-  };
+  // TODO: Comentando, pois não estava no escopo entrega da WAY
+  // const aplicarFiltros = () => {
+  //   setFiltrosAplicados(filtros);
+  //   refreshData();
+  // };
 
-  const limparFiltros = () => {
-    const vazio = { dtInicio: '', dtFim: '' };
-    setFiltros(vazio);
-    setFiltrosAplicados(vazio);
-    refreshData();
-  };
+  // const limparFiltros = () => {
+  //   const vazio = { dtInicio: '', dtFim: '' };
+  //   setFiltros(vazio);
+  //   setFiltrosAplicados(vazio);
+  //   refreshData();
+  // };
 
   return (
     <div className="space-y-6">
@@ -72,12 +73,13 @@ export default function DashboardObrigacoesContent() {
         tipoFluxo={TipoEnum.OBRIGACAO}
       />
 
-      <DashboardObrigacoesDateFilter
+      {/* TODO: Comentando, pois não estava no escopo entrega da WAY */}
+      {/* <DashboardObrigacoesDateFilter
         values={filtros}
         onChange={setFiltros}
         onApply={aplicarFiltros}
         onClear={limparFiltros}
-      />
+      /> */}
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <div className="lg:col-span-3 h-full">

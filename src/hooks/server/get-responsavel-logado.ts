@@ -1,6 +1,7 @@
 import { jwtDecode } from "jwt-decode";
 import { cookies } from "next/headers";
 import { responsaveisClient } from "@/api/responsaveis/client";
+import { ResponsavelResponse } from "@/api/responsaveis/types";
 
 // Função para obter idResponsavel no servidor (Server Components/Actions)
 export async function getServerIdResponsavel(): Promise<number | null> {
@@ -25,7 +26,7 @@ export async function getServerIdResponsavel(): Promise<number | null> {
 }
 
 // Função para obter o responsável logado no servidor (com perfil)
-export async function getServerResponsavelLogado() {
+export async function getServerResponsavelLogado(): Promise<ResponsavelResponse | null> {
   try {
     const idResponsavel = await getServerIdResponsavel();
     if (!idResponsavel) return null;

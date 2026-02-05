@@ -146,7 +146,6 @@ export function Step5Obrigacao({ formData, updateFormData, disabled = false }: S
           <Input
             disabled={disabled}
             id="dsAntt"
-            placeholder="Digite o ANTT"
             type="text"
             value={formData?.dsAntt || ''}
             onChange={(e) => updateFormData?.({ dsAntt: e.target.value })}
@@ -160,7 +159,6 @@ export function Step5Obrigacao({ formData, updateFormData, disabled = false }: S
           <Input
             disabled={disabled}
             id="dsTac"
-            placeholder="Digite o TAC"
             type="text"
             value={formData?.dsTac || ''}
             onChange={(e) => updateFormData?.({ dsTac: e.target.value })}
@@ -215,7 +213,6 @@ export function Step5Obrigacao({ formData, updateFormData, disabled = false }: S
         <Label htmlFor="dsProtocoloExterno">Outras Informações</Label>
         <Input
           id="dsProtocoloExterno"
-          placeholder="Digite outras Informações"
           type="text"
           value={formData?.dsProtocoloExterno || ''}
           onChange={(e) => updateFormData?.({ dsProtocoloExterno: e.target.value })}

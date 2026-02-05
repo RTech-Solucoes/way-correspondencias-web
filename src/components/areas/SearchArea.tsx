@@ -43,7 +43,8 @@ export default function SearchArea(props: ISearchArea) {
                 <FunnelSimpleIcon className="h-4 w-4 mr-2" />
                 Filtrar
             </Button>
-            {props.canInserirArea && (
+            {/* TODO: Comentando, pois não estava no escopo entrega da WAY */}
+            {/* {props.canInserirArea && (
                 <Button
                     className="h-10 px-4"
                     onClick={props.onCriarArea}
@@ -51,7 +52,7 @@ export default function SearchArea(props: ISearchArea) {
                     <PlusIcon className="h-4 w-4 mr-2" />
                     Criar Área
                 </Button>
-            )}
+            )} */}
         </div>
     )
 }

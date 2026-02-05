@@ -36,7 +36,7 @@ interface CustomTooltipProps {
 }
 
 const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
-  if (active && payload && payload.length) {
+  if (active && payload && payload.length && payload[0].payload.totalObrigacoes > 0) {
     const data = payload[0].payload;
     return (
       <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
@@ -144,6 +144,12 @@ export default function ObrigacoesRankingAreas({
       }));
   }, [data]);
 
+  const filteredChartData = useMemo(() => {
+    return chartData.filter(area => area.totalObrigacoes > 0);
+  }, [chartData]);
+
+  const semDadosParaExibir = filteredChartData.length === 0;
+
   if (loading) {
     return (
       <Card className="flex flex-col w-full">
@@ -209,7 +215,10 @@ export default function ObrigacoesRankingAreas({
                     fontSize={12}
                     tickFormatter={(value: number) => value.toString()}
                   />
-                  <Tooltip content={<CustomTooltip />} />
+                  
+                  {!semDadosParaExibir && (
+                    <Tooltip content={<CustomTooltip />} />
+                  )}
                   <Bar 
                     dataKey="totalObrigacoes" 
                     radius={[8, 8, 0, 0]}

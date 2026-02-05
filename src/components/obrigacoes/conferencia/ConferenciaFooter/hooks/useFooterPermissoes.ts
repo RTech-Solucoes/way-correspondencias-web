@@ -176,7 +176,7 @@ export function useFooterPermissoes({
       return false;
     }
 
-    if (idStatusSolicitacao === statusList.APROVACAO_TRAMITACAO.id) {
+    if (idStatusSolicitacao === statusList.APROVACAO_DIRETORIA.id) {
       if (idPerfil === perfilUtil.ADMINISTRADOR || idPerfil === perfilUtil.ADMIN_MASTER || idPerfil === perfilUtil.GESTOR_DO_SISTEMA) return true;
     }
 

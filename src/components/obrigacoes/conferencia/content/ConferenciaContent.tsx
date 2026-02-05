@@ -208,6 +208,7 @@ export function ConferenciaContent({ id, initialData }: ConferenciaContentProps)
             anexos={anexos}
             downloadingId={downloading}
             onDownloadAnexo={handleDownloadAnexo}
+            userResponsavel={userResponsavel}
           />
         </div>
       </main>

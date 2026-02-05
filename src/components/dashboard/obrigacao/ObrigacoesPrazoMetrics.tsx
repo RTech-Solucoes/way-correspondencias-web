@@ -69,7 +69,7 @@ export default function ObrigacoesPrazoMetrics({
   if (loading) {
     return (
       <Card className="flex flex-col h-full">
-        <CardHeader title="Obrigações por Prazo" />
+        <CardHeader title="Obrigações Concluídas" />
         <CardContent className="flex-1 flex items-center justify-center">
           <div className="text-sm text-gray-500">Carregando métricas...</div>
         </CardContent>
@@ -80,7 +80,7 @@ export default function ObrigacoesPrazoMetrics({
   if (!data) {
     return (
       <Card className="flex flex-col h-full">
-        <CardHeader title="Obrigações por Prazo" />
+        <CardHeader title="Obrigações Concluídas" />
         <CardContent className="flex-1 flex items-center justify-center">
           <div className="text-sm text-gray-500">Nenhum dado disponível.</div>
         </CardContent>
@@ -91,7 +91,7 @@ export default function ObrigacoesPrazoMetrics({
   return (
     <Card className="flex flex-col h-full">
       <CardHeader 
-        title="Obrigações por Prazo"
+        title="Obrigações Concluídas"
         description="Volume e percentual de obrigações atendidas dentro e fora do prazo"
       />
       <CardContent className="flex-1 flex flex-col gap-6">

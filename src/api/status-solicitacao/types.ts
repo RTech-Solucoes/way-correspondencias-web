@@ -18,7 +18,7 @@ export type StatusKey =
   | 'EM_VALIDACAO_REGULATORIO'
   | 'ATRASADA'
   | 'NAO_APLICAVEL_SUSPENSA'
-  | 'APROVACAO_TRAMITACAO';
+  | 'APROVACAO_DIRETORIA';
 
 export interface StatusMeta {
   id: number;
@@ -45,7 +45,7 @@ export const STATUS_LIST: StatusMeta[] = [
   { id: 15, key: 'EM_VALIDACAO_REGULATORIO', label: 'Em validação regulatória', tipo: TipoEnum.OBRIGACAO },
   { id: 16, key: 'ATRASADA', label: 'Atrasada', tipo: TipoEnum.OBRIGACAO },
   { id: 17, key: 'NAO_APLICAVEL_SUSPENSA', label: 'Não aplicável/suspensa', tipo: TipoEnum.OBRIGACAO },
-  { id: 18, key: 'APROVACAO_TRAMITACAO', label: 'Aprovação tramitação', tipo: TipoEnum.OBRIGACAO },
+  { id: 18, key: 'APROVACAO_DIRETORIA', label: 'Aprovado pela Diretoria', tipo: TipoEnum.OBRIGACAO },
 ];
 
 export const statusList: Record<StatusKey, StatusMeta> = {
@@ -66,5 +66,5 @@ export const statusList: Record<StatusKey, StatusMeta> = {
   EM_VALIDACAO_REGULATORIO: STATUS_LIST[14],
   ATRASADA: STATUS_LIST[15],
   NAO_APLICAVEL_SUSPENSA: STATUS_LIST[16],
-  APROVACAO_TRAMITACAO: STATUS_LIST[17],
+  APROVACAO_DIRETORIA: STATUS_LIST[17],
 };

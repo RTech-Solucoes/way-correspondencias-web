@@ -35,17 +35,18 @@ export default function DashboardCorrespondenciaContent() {
     setRefreshTrigger(prev => prev + 1);
   };
 
-  const aplicarFiltros = () => {
-    setFiltrosAplicados(filtros);
-    refreshData();
-  };
+  // TODO: Comentando, pois não estava no escopo entrega da WAY
+  // const aplicarFiltros = () => {
+  //   setFiltrosAplicados(filtros);
+  //   refreshData();
+  // };
 
-  const limparFiltros = () => {
-    const vazio = { dtCriacaoInicio: '', dtCriacaoFim: '' };
-    setFiltros(vazio);
-    setFiltrosAplicados(vazio);
-    refreshData();
-  };
+  // const limparFiltros = () => {
+  //   const vazio = { dtCriacaoInicio: '', dtCriacaoFim: '' };
+  //   setFiltros(vazio);
+  //   setFiltrosAplicados(vazio);
+  //   refreshData();
+  // };
 
   if (loading || !concessionariaSelecionada) {
     return (
@@ -67,12 +68,13 @@ export default function DashboardCorrespondenciaContent() {
         tipoFluxo={TipoEnum.CORRESPONDENCIA}
       />
 
-      <DashboardDateFilter
+      {/* TODO: Comentando, pois não estava no escopo entrega da WAY */}
+      {/* <DashboardDateFilter
         values={filtros}
         onChange={setFiltros}
         onApply={aplicarFiltros}
         onClear={limparFiltros}
-      />
+      /> */}
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <div className="lg:col-span-3 h-full">
