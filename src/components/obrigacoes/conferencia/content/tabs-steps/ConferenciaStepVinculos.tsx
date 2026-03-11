@@ -89,7 +89,7 @@ export function ConferenciaStepVinculos({ obrigacao }: ConferenciaStepVinculosPr
         <InfoGridRow
           items={[
             {
-              label: 'Obrigação recusada pelo Verificador ou ANTT',
+              label: 'Obrigação recusada pelo orgão regulador',
               value:
                 obrigacao.obrigacaoRecusada?.cdIdentificacao && obrigacao.obrigacaoRecusada?.idSolicitacao ? (
                   <ObrigacaoCard
@@ -116,7 +116,7 @@ export function ConferenciaStepVinculos({ obrigacao }: ConferenciaStepVinculosPr
 
         <InfoGridRow
           items={[
-            { label: 'Agência reguladora (ANTT)', value: obrigacao.dsAntt?.trim() || '-' },
+            { label: 'Obrigação recusada pelo orgão regulador', value: obrigacao.dsAntt?.trim() || '-' },
             { label: 'TAC', value: obrigacao.dsTac?.trim() || '-' },
           ]}
         />

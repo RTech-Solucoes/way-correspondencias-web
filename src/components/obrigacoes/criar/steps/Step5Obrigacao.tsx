@@ -166,7 +166,7 @@ export function Step5Obrigacao({ formData, updateFormData, disabled = false }: S
         </div>
 
         <div className="flex flex-col space-y-4">
-          <Label htmlFor="idObrigacaoRecusada">Obrigação recusada pelo Verificador ou ANTT</Label>
+          <Label htmlFor="idObrigacaoRecusada">Obrigação recusada pelo orgão regulador</Label>
           <Select
             disabled={disabled}
             value={formData?.idObrigacaoRecusada?.toString() || 'none'}

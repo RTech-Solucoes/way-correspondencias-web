@@ -131,7 +131,7 @@ export function useDetalhesSolicitacaoLabels({
     [statusList.VENCIDO_REGULATORIO.id]: labelFragAnaliseRegulatoria,
     [statusList.EM_ASSINATURA_DIRETORIA.id]: labelFragEmDiretoria,
     [statusList.EM_APROVACAO.id]: labelFragEmAprovacao,
-    [statusList.CONCLUIDO.id]: 'Incluir Protocolo ANTT ?',
+    [statusList.CONCLUIDO.id]: 'Incluir Protocolo do orgão regulador ?',
     [statusList.EM_ANALISE_GERENTE_REGULATORIO.id]: 'Aprovar Solicitação?',
     default: 'Aprovar devolutiva?'
   }), [labelFragAnaliseRegulatoria, labelFragEmDiretoria, labelFragEmAprovacao]);
