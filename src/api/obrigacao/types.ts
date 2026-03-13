@@ -161,7 +161,7 @@ export interface ObrigacaoStep1Request {
 
 export const PERFIS_FILTRO_DEFAULT_DATA_LIMITE = [
   perfilUtil.ADMINISTRADOR,
-  perfilUtil.ADMIN_MASTER,
+  perfilUtil.SUPER_ADMIN,
   perfilUtil.GESTOR_DO_SISTEMA,
   perfilUtil.VALIDADOR_ASSINANTE,
 ];

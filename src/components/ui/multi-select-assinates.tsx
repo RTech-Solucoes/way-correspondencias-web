@@ -34,7 +34,7 @@ export function MultiSelectAssinantes({
 
         const [responsaveisResponse] = await Promise.all([
           responsaveisClient.buscarPorIdPerfil(
-            [perfilUtil.VALIDADOR_ASSINANTE, perfilUtil.ADMINISTRADOR, perfilUtil.ADMIN_MASTER]
+            [perfilUtil.VALIDADOR_ASSINANTE, perfilUtil.ADMINISTRADOR, perfilUtil.SUPER_ADMIN]
           )
         ]);
 

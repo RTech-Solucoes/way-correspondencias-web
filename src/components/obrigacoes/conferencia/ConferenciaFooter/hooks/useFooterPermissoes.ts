@@ -140,7 +140,7 @@ export function useFooterPermissoes({
   const isPerfilPermitidoEnviarTramitacaoPorStatus = useMemo(() => {
     
     if (isStatusEmAnaliseGerenteRegulatorio) {
-      if (idPerfil === perfilUtil.ADMINISTRADOR || idPerfil === perfilUtil.ADMIN_MASTER) {
+      if (idPerfil === perfilUtil.ADMINISTRADOR || idPerfil === perfilUtil.SUPER_ADMIN) {
         return flExigeCienciaGerenteRegul === 'S' || !!isCienciaChecked;
       }
     }
@@ -151,7 +151,7 @@ export function useFooterPermissoes({
     
     if (idStatusSolicitacao === statusList.ANALISE_REGULATORIA.id || 
         idStatusSolicitacao === statusList.VENCIDO_REGULATORIO.id) {
-      if (idPerfil === perfilUtil.ADMINISTRADOR || idPerfil === perfilUtil.ADMIN_MASTER || idPerfil === perfilUtil.GESTOR_DO_SISTEMA) {
+      if (idPerfil === perfilUtil.ADMINISTRADOR || idPerfil === perfilUtil.SUPER_ADMIN || idPerfil === perfilUtil.GESTOR_DO_SISTEMA) {
         // isReprovadoEmAprovacaoStatusAtualAnaliseRegulatoria retorna:
         // - null: não foi reprovado (permite prosseguir)
         // - true: foi reprovado E tem anexo novo (permite prosseguir)
@@ -162,7 +162,7 @@ export function useFooterPermissoes({
     }
 
     if (idStatusSolicitacao === statusList.EM_CHANCELA.id) {
-      if (idPerfil === perfilUtil.ADMINISTRADOR || idPerfil === perfilUtil.ADMIN_MASTER) return true;
+      if (idPerfil === perfilUtil.ADMINISTRADOR || idPerfil === perfilUtil.SUPER_ADMIN) return true;
     }
 
     if (idStatusSolicitacao === statusList.EM_ASSINATURA_DIRETORIA.id) {
@@ -177,7 +177,7 @@ export function useFooterPermissoes({
     }
 
     if (idStatusSolicitacao === statusList.APROVACAO_DIRETORIA.id) {
-      if (idPerfil === perfilUtil.ADMINISTRADOR || idPerfil === perfilUtil.ADMIN_MASTER || idPerfil === perfilUtil.GESTOR_DO_SISTEMA) return true;
+      if (idPerfil === perfilUtil.ADMINISTRADOR || idPerfil === perfilUtil.SUPER_ADMIN || idPerfil === perfilUtil.GESTOR_DO_SISTEMA) return true;
     }
 
     return false;

@@ -296,7 +296,7 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
   // Helpers
   const isAdminOrGestor = useMemo(() => {
     return idPerfil === perfilUtil.ADMINISTRADOR ||
-      idPerfil === perfilUtil.ADMIN_MASTER ||
+      idPerfil === perfilUtil.SUPER_ADMIN ||
       idPerfil === perfilUtil.GESTOR_DO_SISTEMA ||
       idPerfil === perfilUtil.VALIDADOR_ASSINANTE ||
       idPerfil === perfilUtil.TECNICO_SUPORTE;

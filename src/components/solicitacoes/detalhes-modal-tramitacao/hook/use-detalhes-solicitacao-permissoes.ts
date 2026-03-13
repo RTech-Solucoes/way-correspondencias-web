@@ -150,7 +150,7 @@ export function useDetalhesSolicitacaoPermissoes({
     if (idStatusSolicitacao === statusList.EM_ASSINATURA_DIRETORIA.id) {
       const isRolePermitido = (
         userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR ||
-        userResponsavel?.idPerfil === perfilUtil.ADMIN_MASTER ||
+        userResponsavel?.idPerfil === perfilUtil.SUPER_ADMIN ||
         userResponsavel?.idPerfil === perfilUtil.VALIDADOR_ASSINANTE ||
         userResponsavel?.areas?.some(a => a?.area?.idArea === areaDiretoria)
       );
@@ -163,14 +163,14 @@ export function useDetalhesSolicitacaoPermissoes({
     if (idStatusSolicitacao === statusList.CONCLUIDO.id) {
       if (
         userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR ||
-        userResponsavel?.idPerfil === perfilUtil.ADMIN_MASTER ||
+        userResponsavel?.idPerfil === perfilUtil.SUPER_ADMIN ||
         userResponsavel?.idPerfil === perfilUtil.GESTOR_DO_SISTEMA
       ) return true;
       return false;
     }
 
     if (idStatusSolicitacao === statusList.EM_ANALISE_GERENTE_REGULATORIO.id) {
-      if (userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR || userResponsavel?.idPerfil === perfilUtil.ADMIN_MASTER) return true;
+      if (userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR || userResponsavel?.idPerfil === perfilUtil.SUPER_ADMIN) return true;
       return false;
     }
 
@@ -208,7 +208,7 @@ export function useDetalhesSolicitacaoPermissoes({
 
     if (idStatusSolicitacao === statusList.ANALISE_REGULATORIA.id ||
       idStatusSolicitacao === statusList.VENCIDO_REGULATORIO.id) {
-      if (userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR || userResponsavel?.idPerfil === perfilUtil.ADMIN_MASTER) return true;
+      if (userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR || userResponsavel?.idPerfil === perfilUtil.SUPER_ADMIN) return true;
       if (hasAreaInicial && userResponsavel?.idPerfil === perfilUtil.GESTOR_DO_SISTEMA) return true;
       return false;
     }
@@ -221,7 +221,7 @@ export function useDetalhesSolicitacaoPermissoes({
     if (!hasAreaInicial && !isPermissaoEnviandoDevolutiva) return true;
 
     if (idStatusSolicitacao === statusList.EM_CHANCELA.id) {
-      if (userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR || userResponsavel?.idPerfil === perfilUtil.ADMIN_MASTER) return true;
+      if (userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR || userResponsavel?.idPerfil === perfilUtil.SUPER_ADMIN) return true;
       return false;
     }
 
@@ -315,13 +315,13 @@ export function useDetalhesSolicitacaoPermissoes({
     if (idStatusSolicitacao === statusList.EM_ASSINATURA_DIRETORIA.id) {
       const isRolePermitido = (
         userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR ||
-        userResponsavel?.idPerfil === perfilUtil.ADMIN_MASTER ||
+        userResponsavel?.idPerfil === perfilUtil.SUPER_ADMIN ||
         userResponsavel?.idPerfil === perfilUtil.VALIDADOR_ASSINANTE ||
         userResponsavel?.areas?.some(a => a?.area?.idArea === areaDiretoria)
       );
 
       if (!isRolePermitido) {
-        return 'Apenas Administrador, Admin Master, Gestor do Sistema, Validador/Assinante ou responsáveis da Diretoria podem aprovar.';
+        return 'Apenas Administrador, Super Admin, Gestor do Sistema, Validador/Assinante ou responsáveis da Diretoria podem aprovar.';
       }
       if (!isAssinanteAutorizado) {
         return 'Apenas os validadores/assinantes selecionados podem aprovar esta solicitação.';
@@ -334,16 +334,16 @@ export function useDetalhesSolicitacaoPermissoes({
     if (idStatusSolicitacao === statusList.CONCLUIDO.id) {
       if (
         userResponsavel?.idPerfil !== perfilUtil.ADMINISTRADOR &&
-        userResponsavel?.idPerfil !== perfilUtil.ADMIN_MASTER &&
+        userResponsavel?.idPerfil !== perfilUtil.SUPER_ADMIN &&
         userResponsavel?.idPerfil !== perfilUtil.GESTOR_DO_SISTEMA
       ) {
-        return 'Apenas Administrador, Admin Master e Gestor do Sistema podem arquivar solicitações concluídas.';
+        return 'Apenas Administrador, Super Admin e Gestor do Sistema podem arquivar solicitações concluídas.';
       }
     }
 
     if (idStatusSolicitacao === statusList.EM_ANALISE_GERENTE_REGULATORIO.id || idStatusSolicitacao === statusList.VENCIDO_REGULATORIO.id) {
-      if (userResponsavel?.idPerfil !== perfilUtil.ADMINISTRADOR && userResponsavel?.idPerfil !== perfilUtil.ADMIN_MASTER) {
-        return 'Apenas Administrador, Gestor do Sistema e Admin Master podem responder nesta etapa.';
+      if (userResponsavel?.idPerfil !== perfilUtil.ADMINISTRADOR && userResponsavel?.idPerfil !== perfilUtil.SUPER_ADMIN) {
+        return 'Apenas Administrador, Gestor do Sistema e Super Admin podem responder nesta etapa.';
       }
     }
 
@@ -396,11 +396,11 @@ export function useDetalhesSolicitacaoPermissoes({
 
     if (idStatusSolicitacao === statusList.ANALISE_REGULATORIA.id ||
       idStatusSolicitacao === statusList.VENCIDO_REGULATORIO.id) {
-      if (userResponsavel?.idPerfil !== perfilUtil.ADMINISTRADOR && userResponsavel?.idPerfil !== perfilUtil.ADMIN_MASTER) {
+      if (userResponsavel?.idPerfil !== perfilUtil.ADMINISTRADOR && userResponsavel?.idPerfil !== perfilUtil.SUPER_ADMIN) {
         if (hasAreaInicial && userResponsavel?.idPerfil !== perfilUtil.GESTOR_DO_SISTEMA) {
-          return 'Apenas Administrador, Admin Master ou Gestor do Sistema (com área inicial) podem responder.';
+          return 'Apenas Administrador, Super Admin ou Gestor do Sistema (com área inicial) podem responder.';
         }
-        return 'Apenas Administrador, Admin Master ou Gestor do Sistema podem responder nesta etapa.';
+        return 'Apenas Administrador, Super Admin ou Gestor do Sistema podem responder nesta etapa.';
       }
     }
 
@@ -411,8 +411,8 @@ export function useDetalhesSolicitacaoPermissoes({
     }
 
     if (idStatusSolicitacao === statusList.EM_CHANCELA.id) {
-      if (userResponsavel?.idPerfil !== perfilUtil.ADMINISTRADOR && userResponsavel?.idPerfil !== perfilUtil.ADMIN_MASTER) {
-        return 'Apenas o Administrador  ou Admin Masterpode responder.';
+      if (userResponsavel?.idPerfil !== perfilUtil.ADMINISTRADOR && userResponsavel?.idPerfil !== perfilUtil.SUPER_ADMIN) {
+        return 'Apenas o Administrador  ou Super Admin pode responder.';
       }
     }
 
@@ -433,7 +433,7 @@ export function useDetalhesSolicitacaoPermissoes({
 
     if (idStatusSolicitacao === statusList.ARQUIVADO.id) {
       if (
-        (userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR || userResponsavel?.idPerfil === perfilUtil.ADMIN_MASTER) ||
+        (userResponsavel?.idPerfil === perfilUtil.ADMINISTRADOR || userResponsavel?.idPerfil === perfilUtil.SUPER_ADMIN) ||
         (userResponsavel?.idPerfil === perfilUtil.GESTOR_DO_SISTEMA) ||
         isDiretoriaPerfil
       )

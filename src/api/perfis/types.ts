@@ -40,12 +40,12 @@ export const perfilUtil = {
   EXECUTOR: 5,
   EXECUTOR_RESTRITO: 6,
   TECNICO_SUPORTE: 7,
-  ADMIN_MASTER: 8,
+  SUPER_ADMIN: 8,
 };
 
 export function computeTpResponsavel(perfil: number): TipoResponsavelAnexoEnum {
 
-  if (perfil === perfilUtil.ADMINISTRADOR || perfil === perfilUtil.ADMIN_MASTER || perfil === perfilUtil.GESTOR_DO_SISTEMA) {
+  if (perfil === perfilUtil.ADMINISTRADOR || perfil === perfilUtil.SUPER_ADMIN || perfil === perfilUtil.GESTOR_DO_SISTEMA) {
     return TipoResponsavelAnexoEnum.R;
   }
 

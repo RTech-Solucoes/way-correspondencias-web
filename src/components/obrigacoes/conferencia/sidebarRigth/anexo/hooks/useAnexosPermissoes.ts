@@ -77,14 +77,14 @@ export function useAnexosPermissoes({
     if (isStatusConcluido) {
       return idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
              idPerfil === perfilUtil.ADMINISTRADOR || 
-             idPerfil === perfilUtil.ADMIN_MASTER || 
+        idPerfil === perfilUtil.SUPER_ADMIN || 
              idPerfil === perfilUtil.VALIDADOR_ASSINANTE;
     }
     
     if (isStatusNaoAplicavelSuspensa) {
       return  idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
               idPerfil === perfilUtil.ADMINISTRADOR ||
-              idPerfil === perfilUtil.ADMIN_MASTER ||
+        idPerfil === perfilUtil.SUPER_ADMIN ||
               idPerfil === perfilUtil.VALIDADOR_ASSINANTE;
     }
     

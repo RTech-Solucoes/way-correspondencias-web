@@ -121,7 +121,7 @@ export function ObrigacaoAcoesMenu({
 
   const isAdminOrGestor = useMemo(() => {
     return idPerfil === perfilUtil.ADMINISTRADOR ||
-      idPerfil === perfilUtil.ADMIN_MASTER ||
+      idPerfil === perfilUtil.SUPER_ADMIN ||
       idPerfil === perfilUtil.GESTOR_DO_SISTEMA;
   }, [idPerfil]);
 
@@ -179,7 +179,7 @@ export function ObrigacaoAcoesMenu({
     }
 
     if (!isAdminOrGestor) {
-      return 'Apenas administradores, gestores do sistema e administrador master podem anexar protocolo.';
+      return 'Apenas administradores, gestores do sistema e super admin podem anexar protocolo.';
     }
     return '';
   }, [isStatusConcluido, isStatusEmValidacao, isStatusAprovacaoTramitacao, isAdminOrGestor, isExisteAnexoCorrespondencia]);

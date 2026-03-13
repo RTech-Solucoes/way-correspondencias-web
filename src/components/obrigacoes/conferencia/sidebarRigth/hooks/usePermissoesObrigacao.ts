@@ -111,7 +111,7 @@ export function usePermissoesObrigacao({
   const podeGerarRelatorio = useMemo(() => {
     if (idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
         idPerfil === perfilUtil.ADMINISTRADOR || 
-        idPerfil === perfilUtil.ADMIN_MASTER ||
+      idPerfil === perfilUtil.SUPER_ADMIN ||
         idPerfil === perfilUtil.VALIDADOR_ASSINANTE) {
       return true;
     }
@@ -141,7 +141,7 @@ export function usePermissoesObrigacao({
     if (isStatusEmValidacaoRegulatorio) {
       if (idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
         idPerfil === perfilUtil.ADMINISTRADOR || 
-        idPerfil === perfilUtil.ADMIN_MASTER ||
+        idPerfil === perfilUtil.SUPER_ADMIN ||
         idPerfil === perfilUtil.VALIDADOR_ASSINANTE) {
         return true;
       }
@@ -153,7 +153,7 @@ export function usePermissoesObrigacao({
     if (isStatusConcluido) {
       if (idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
         idPerfil === perfilUtil.ADMINISTRADOR || 
-        idPerfil === perfilUtil.ADMIN_MASTER ||
+        idPerfil === perfilUtil.SUPER_ADMIN ||
         idPerfil === perfilUtil.VALIDADOR_ASSINANTE) {
         return true;
       }
@@ -163,7 +163,7 @@ export function usePermissoesObrigacao({
     if (isStatusNaoAplicavelSuspensa) {
       if (idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
         idPerfil === perfilUtil.ADMINISTRADOR || 
-        idPerfil === perfilUtil.ADMIN_MASTER ||
+        idPerfil === perfilUtil.SUPER_ADMIN ||
         idPerfil === perfilUtil.VALIDADOR_ASSINANTE) {
         return true;
       }
@@ -217,7 +217,7 @@ export function usePermissoesObrigacao({
     if (isStatusEmValidacaoRegulatorio) {
       if (!(idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
             idPerfil === perfilUtil.ADMINISTRADOR || 
-            idPerfil === perfilUtil.ADMIN_MASTER )) {
+        idPerfil === perfilUtil.SUPER_ADMIN)) {
         return 'Apenas administradores/gestores podem inserir comentários quando o status é "Em Validação (Regulatório)".';
       }
       return 'Você não tem permissão para inserir comentários neste status.';
@@ -226,7 +226,7 @@ export function usePermissoesObrigacao({
     if (isStatusConcluido) {
       if (idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
         idPerfil === perfilUtil.ADMINISTRADOR || 
-        idPerfil === perfilUtil.ADMIN_MASTER ||
+        idPerfil === perfilUtil.SUPER_ADMIN ||
         idPerfil === perfilUtil.VALIDADOR_ASSINANTE) {
         return '';
       }
@@ -236,7 +236,7 @@ export function usePermissoesObrigacao({
     if (isStatusNaoAplicavelSuspensa) {
       if (idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
         idPerfil === perfilUtil.ADMINISTRADOR || 
-        idPerfil === perfilUtil.ADMIN_MASTER ||
+        idPerfil === perfilUtil.SUPER_ADMIN ||
         idPerfil === perfilUtil.VALIDADOR_ASSINANTE) {
         return '';
       }

@@ -15,7 +15,7 @@ export function useUserGestao() {
   });
 
   const isAdminOrGestor = userProfile.idPerfil === perfilUtil.ADMINISTRADOR || 
-                         userProfile.idPerfil === perfilUtil.ADMIN_MASTER ||
+    userProfile.idPerfil === perfilUtil.SUPER_ADMIN ||
                          userProfile.idPerfil === perfilUtil.GESTOR_DO_SISTEMA;
 
   useEffect(() => {

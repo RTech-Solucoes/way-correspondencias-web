@@ -26,7 +26,7 @@ import { ObrigacaoFiltroRequest, PERFIS_FILTRO_DEFAULT_DATA_LIMITE } from "@/api
 //   const { dtInicio, dtFim } = periodoConcessao;
 
 //   if (PERFIS_FILTRO_DEFAULT_DATA_LIMITE.includes(responsavel.idPerfil)) {
-//     // Admin, Gestor, Diretoria, Admin Master - usa data limite
+//     // Admin, Gestor, Diretoria, Super Admin - usa data limite
 //     return {
 //       dtLimiteInicio: dtInicio,
 //       dtLimiteFim: dtFim,

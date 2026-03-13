@@ -21,6 +21,8 @@ import anexosClient from '@/api/anexos/client';
 import { useConcessionaria } from '@/context/concessionaria/ConcessionariaContext';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useResponsavelValidation } from './hooks/use-responsavel-validation';
+import { useUserGestao } from '@/hooks/use-user-gestao';
+import { authClient } from '@/api/auth/client';
 
 interface ResponsavelModalProps {
   responsavel: ResponsavelResponse | null;
@@ -55,6 +57,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [showConcessionariaWarning, setShowConcessionariaWarning] = useState(false);
   const [pendingSubmit, setPendingSubmit] = useState<(() => void) | null>(null);
+  const { idPerfil: idPerfilLogado } = useUserGestao();
   
   const { concessionariaSelecionada } = useConcessionaria();
 
@@ -308,6 +311,20 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
           await responsavelAnexosClient.upload(responsavel.idResponsavel, [dto]);
         }
         toast.success("Responsável atualizado com sucesso");
+
+        const loggedInUserId = authClient.getUserIdResponsavelFromToken();
+        const isEditingSelf = responsavel.idResponsavel === loggedInUserId;
+
+        const originalConcessionariaIds = responsavel.concessionarias?.map(c => c.idConcessionaria) || [];
+        const selectedIds = selectedConcessionariaIds || [];
+        const concessionariasChanged = originalConcessionariaIds.length !== selectedIds.length ||
+          !originalConcessionariaIds.every(id => selectedIds.includes(id));
+
+        if (isEditingSelf && concessionariasChanged) {
+          onClose();
+          window.location.reload();
+          return;
+        }
       } else {
         const created = await responsaveisClient.criar(responsavelRequest);
         if (selectedPhotoFile && created?.idResponsavel) {
@@ -391,6 +408,10 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
   const handleClose = () => {
     onClose();
   };
+
+  const isPerfilRestritoParaUsuarioAtual = useCallback((idPerfil: number) => {
+    return idPerfil === perfilUtil.SUPER_ADMIN && idPerfilLogado !== perfilUtil.SUPER_ADMIN
+  }, [idPerfilLogado])
   
   return (
     <Dialog open={open} onOpenChange={(newOpen) => !newOpen && onClose()}>
@@ -480,7 +501,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
                     <SelectItem 
                       key={perfil.idPerfil} 
                       value={perfil.idPerfil.toString()}
-                      disabled={perfil.idPerfil === perfilUtil.ADMIN_MASTER}
+                      disabled={isPerfilRestritoParaUsuarioAtual(perfil.idPerfil) }
                     >
                       {perfil.nmPerfil}
                     </SelectItem>

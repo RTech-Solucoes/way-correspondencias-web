@@ -6,6 +6,8 @@ import {ConcessionariaResponse} from '@/api/concessionaria/types';
 import concessionariaClient from '@/api/concessionaria/client';
 import {cn} from '@/utils/utils';
 import {CheckIcon} from '@phosphor-icons/react';
+import { perfilUtil } from '@/api/perfis/types';
+import { useUserGestao } from '@/hooks/use-user-gestao';
 
 interface MultiSelectConcessionariasProps {
   selectedConcessionariaIds: number[];
@@ -24,14 +26,18 @@ export function MultiSelectConcessionarias({
 }: MultiSelectConcessionariasProps) {
   const [concessionarias, setConcessionarias] = useState<ConcessionariaResponse[]>([]);
   const [loading, setLoading] = useState(false);
+  const { idPerfil, loading: loadingPerfil } = useUserGestao();
 
   useEffect(() => {
     const loadData = async () => {
+      if (loadingPerfil) return;
+
       try {
         setLoading(true);
-        const response = await concessionariaClient.buscarPorIdResponsavelLogado();
-        const concessionariasAtivas = response.filter(c => c.flAtivo === 'S');
-        setConcessionarias(concessionariasAtivas);
+        const response = idPerfil === perfilUtil.SUPER_ADMIN 
+          ? await concessionariaClient.buscarTodas()
+          : await concessionariaClient.buscarPorIdResponsavelLogado();
+        setConcessionarias(response);
       } catch {
         setConcessionarias([]);
       } finally {
@@ -40,7 +46,7 @@ export function MultiSelectConcessionarias({
     };
 
     loadData();
-  }, []);
+  }, [idPerfil, loadingPerfil]);
 
   const handleConcessionariaToggle = (concessionariaId: number) => {
     if (disabled) return;

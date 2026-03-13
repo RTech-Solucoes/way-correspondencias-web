@@ -462,7 +462,7 @@ NODE_ENV=production
    - Garanta que as variáveis estão sendo passadas corretamente para o build
 
 4. **Execute a Pipeline**
-   - Faça push para a branch configurada (geralmente `main` ou `master`)
+   - Faça push para a branch configurada (geralmente `main`)
    - Ou dispare manualmente a pipeline através da interface
 
 #### Exemplo de Configuração no GitHub Actions

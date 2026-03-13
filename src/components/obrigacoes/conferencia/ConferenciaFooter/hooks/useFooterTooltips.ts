@@ -142,8 +142,8 @@ export function useFooterTooltips({
     }
 
     if (idStatusSolicitacao === statusList.EM_ANALISE_GERENTE_REGULATORIO.id) {
-      if (idPerfil !== perfilUtil.ADMINISTRADOR && idPerfil !== perfilUtil.ADMIN_MASTER) {
-        return 'Apenas o Administrador ou Admin Master podem realizar esta ação';
+      if (idPerfil !== perfilUtil.ADMINISTRADOR && idPerfil !== perfilUtil.SUPER_ADMIN) {
+        return 'Apenas o Administrador ou Super Admin podem realizar esta ação';
       }
       if (flExigeCienciaGerenteRegul === 'N' && !isCienciaChecked) {
         return 'É necessário declarar ciência para prosseguir';
@@ -158,7 +158,7 @@ export function useFooterTooltips({
 
     if (idStatusSolicitacao === statusList.ANALISE_REGULATORIA.id || 
         idStatusSolicitacao === statusList.VENCIDO_REGULATORIO.id) {
-      if (idPerfil !== perfilUtil.ADMINISTRADOR && idPerfil !== perfilUtil.ADMIN_MASTER && idPerfil !== perfilUtil.GESTOR_DO_SISTEMA) {
+      if (idPerfil !== perfilUtil.ADMINISTRADOR && idPerfil !== perfilUtil.SUPER_ADMIN && idPerfil !== perfilUtil.GESTOR_DO_SISTEMA) {
         const statusLabel = idStatusSolicitacao === statusList.VENCIDO_REGULATORIO.id 
           ? 'Vencido Regulatório' 
           : 'Análise Regulatória';
@@ -170,8 +170,8 @@ export function useFooterTooltips({
     }
 
     if (idStatusSolicitacao === statusList.EM_CHANCELA.id) {
-      if (idPerfil !== perfilUtil.ADMINISTRADOR && idPerfil !== perfilUtil.ADMIN_MASTER) {
-        return 'Apenas o Administrador ou Admin Master podem realizar esta ação quando o status for "Em Chancela".';
+      if (idPerfil !== perfilUtil.ADMINISTRADOR && idPerfil !== perfilUtil.SUPER_ADMIN) {
+        return 'Apenas o Administrador ou Super Admin podem realizar esta ação quando o status for "Em Chancela".';
       }
     }
 
@@ -193,7 +193,7 @@ export function useFooterTooltips({
       }
     }
     if (idStatusSolicitacao === statusList.APROVACAO_DIRETORIA.id) {
-      if (idPerfil !== perfilUtil.ADMINISTRADOR && idPerfil !== perfilUtil.ADMIN_MASTER && idPerfil !== perfilUtil.GESTOR_DO_SISTEMA) {
+      if (idPerfil !== perfilUtil.ADMINISTRADOR && idPerfil !== perfilUtil.SUPER_ADMIN && idPerfil !== perfilUtil.GESTOR_DO_SISTEMA) {
         return 'Apenas Administrador ou Gestor do Sistema podem realizar esta ação quando o status for "Aprovado pela Diretoria".';
       }
     }

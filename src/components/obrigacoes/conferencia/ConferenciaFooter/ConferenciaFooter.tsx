@@ -164,7 +164,7 @@ export function ConferenciaFooter({
   const isPermitidoVizualizarBtnCienciaConteudoObrig = useMemo(() => {
 
     return (
-      (idPerfil === perfilUtil.ADMINISTRADOR || idPerfil === perfilUtil.ADMIN_MASTER) &&
+      (idPerfil === perfilUtil.ADMINISTRADOR || idPerfil === perfilUtil.SUPER_ADMIN) &&
       status.isStatusEmAnaliseGerenteRegulatorio && status.flExigeCienciaGerenteRegul === 'N'
     )
   }, [idPerfil, status.isStatusEmAnaliseGerenteRegulatorio, status.flExigeCienciaGerenteRegul]);
