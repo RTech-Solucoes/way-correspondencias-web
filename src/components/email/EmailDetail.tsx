@@ -1,6 +1,6 @@
 'use client';
 
-import {useEffect, useState} from 'react';
+import {useEffect, useState, useRef} from 'react';
 import {ArrowLeftIcon, FileTextIcon} from '@phosphor-icons/react';
 import {Button} from '@/components/ui/button';
 import {Avatar, AvatarFallback, AvatarImage} from '@/components/ui/avatar';
@@ -18,6 +18,7 @@ import {getInitials} from "@/utils/utils";
 interface EmailDetailProps {
   emailId: string;
   onBack(): void;
+  initialData?: EmailResponse | null;
 }
 
 const formatDate = (dateString?: string): string => {
@@ -38,23 +39,33 @@ const formatDate = (dateString?: string): string => {
       minute: '2-digit'
     });
   } catch (error) {
+    console.error('Erro ao formatar data:', error);
     return 'Data inválida';
   }
 };
 
 export default function EmailDetail({
   emailId,
-  onBack
+  onBack,
+  initialData
 }: EmailDetailProps) {
-  const [email, setEmail] = useState<EmailResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [email, setEmail] = useState<EmailResponse | null>(initialData || null);
+  const [loading, setLoading] = useState(!initialData);
   const [showSolicitacaoModal, setShowSolicitacaoModal] = useState(false);
   const [responsaveis, setResponsaveis] = useState<ResponsavelResponse[]>([]);
   const [temas, setTemas] = useState<TemaResponse[]>([]);
   const [areas, setAreas] = useState<AreaResponse[]>([]);
   const [isDestinatarioExpanded, setIsDestinatarioExpanded] = useState(false);
+  const hasInitializedRef = useRef(false);
 
   useEffect(() => {
+    if (initialData && !hasInitializedRef.current) {
+      setEmail(initialData);
+      setLoading(false);
+      hasInitializedRef.current = true;
+      return;
+    }
+
     const loadEmail = async () => {
       try {
         setLoading(true);
@@ -72,10 +83,11 @@ export default function EmailDetail({
       }
     };
 
-    if (emailId) {
+    if (emailId && !hasInitializedRef.current) {
       loadEmail();
+      hasInitializedRef.current = true;
     }
-  }, [emailId, onBack]);
+  }, [emailId, onBack, initialData]);
 
   const loadModalData = async () => {
     try {
@@ -98,15 +110,6 @@ export default function EmailDetail({
       loadModalData();
     }
   }, [showSolicitacaoModal]);
-
-  const handleCreateSolicitacao = () => {
-    setShowSolicitacaoModal(true);
-  };
-
-  const handleSaveSolicitacao = () => {
-    toast.success("A solicitação foi criada com sucesso a partir do email");
-    setShowSolicitacaoModal(false);
-  };
 
   const toggleDestinatarioExpand = () => {
     setIsDestinatarioExpanded(prev => !prev);

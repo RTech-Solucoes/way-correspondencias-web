@@ -1,14 +1,12 @@
 'use client';
 
-import {useEffect, useMemo, useState} from 'react';
-import {HistoricoRespostaItemResponse, TipoHistoricoResposta} from '@/api/solicitacoes/types';
-import {Button} from '../ui/button';
+import correspondenciaClient from '@/api/correspondencia/client';
+import { CorrespondenciaResumoComHistoricoResponse, HistoricoRespostaItemResponse, TipoHistoricoResposta } from '@/api/correspondencia/types';
 import { FilePdfIcon } from '@phosphor-icons/react';
+import { useEffect, useMemo, useState } from 'react';
+import { Button } from '../ui/button';
+import ExportHistoricoPdf from './relatorios/ExportHistoricoPdf';
 import HistoricoTramitacaoBaseModal, { HistoricoBaseItem } from './HistoricoTramitacaoBaseModal';
-import tramitacoesClient from '@/api/tramitacoes/client';
-import ExportHistoricoPdf from './ExportHistoricoPdf';
-import { SolicitacaoResumoComHistoricoResponse } from '@/api/solicitacoes/types';
-import LoadingOverlay from '@/components/ui/loading-overlay';
 
 interface HistoricoRespostasModalProps {
   idSolicitacao: number | null;
@@ -28,7 +26,7 @@ export default function HistoricoRespostasModal({
   emptyText = 'Nenhuma resposta encontrada para esta solicitação.',
 }: HistoricoRespostasModalProps) {
   const [historico, setHistorico] = useState<HistoricoRespostaItemResponse[]>([]);
-  const [solicitacaoResumo, setSolicitacaoResumo] = useState<SolicitacaoResumoComHistoricoResponse['solicitacao'] | null>(null);
+  const [correspondenciaResumo, setCorrespondenciaResumo] = useState<CorrespondenciaResumoComHistoricoResponse['correspondencia'] | null>(null);
   const [exporting, setExporting] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -38,9 +36,9 @@ export default function HistoricoRespostasModal({
       
       try {
         setLoading(true);
-        const response = await tramitacoesClient.listarHistoricoRespostas(idSolicitacao);
+        const response = await correspondenciaClient.listarHistoricoRespostas(idSolicitacao);
         setHistorico(response.historicoResposta);
-        setSolicitacaoResumo(response.solicitacao);
+        setCorrespondenciaResumo(response.correspondencia);
       } catch (error) {
         console.error('Erro ao carregar histórico de respostas:', error);
       } finally {
@@ -99,18 +97,12 @@ export default function HistoricoRespostasModal({
         emptyText={emptyText}
         items={items}
       />
-      {exporting && solicitacaoResumo && (
-        <>
-          <ExportHistoricoPdf
-            solicitacao={solicitacaoResumo}
-            historico={historico}
-            onDone={() => setExporting(false)}
-          />
-          <LoadingOverlay
-            title="Gerando PDF..."
-            subtitle="Aguarde enquanto o relatório é processado"
-          />
-        </>
+      {exporting && correspondenciaResumo && (
+        <ExportHistoricoPdf
+          correspondencia={correspondenciaResumo}
+          historico={historico}
+          onDone={() => setExporting(false)}
+        />
       )}
     </>
   );

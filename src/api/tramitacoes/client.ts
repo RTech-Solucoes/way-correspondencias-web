@@ -1,6 +1,5 @@
 import { ArquivoDTO } from "../anexos/type";
 import ApiClient from "../client";
-import { HistoricoRespostaItemResponse, SolicitacaoResumoComHistoricoResponse } from "../solicitacoes";
 import { TramitacaoResponse, TramitacaoRequest, ProximoStatusRequest } from './types';
 
 class TramitacoesClient {
@@ -42,8 +41,17 @@ class TramitacoesClient {
     });
   }
 
-   async tramitar(data: TramitacaoRequest): Promise<TramitacaoResponse> {
-    return this.client.request<TramitacaoResponse>(`/tramitar`, {
+  // TODO: Metódo do tramitar solicitacao, comentando pois está	sendo usado o tramitar via fluxo de tramitação (tramitarViaFluxo)
+  // Deve ser removido posteriormente, após testes e validações
+  //  async tramitar(data: TramitacaoRequest): Promise<TramitacaoResponse> {
+  //   return this.client.request<TramitacaoResponse>(`/tramitar`, {
+  //     method: 'POST',
+  //     body: JSON.stringify(data),
+  //   });
+  // }
+
+  async tramitarViaFluxo(data: TramitacaoRequest): Promise<TramitacaoResponse> {
+    return this.client.request<TramitacaoResponse>(`/tramitar-via-fluxo`, {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -62,11 +70,6 @@ async uploadAnexos(id: number, files: ArquivoDTO[]): Promise<TramitacaoResponse>
     });
   }
 
-  async listarHistoricoRespostas(idSolicitacao: number): Promise<SolicitacaoResumoComHistoricoResponse> {
-    return this.client.request<SolicitacaoResumoComHistoricoResponse>(`/${idSolicitacao}/historico-respostas`, {
-      method: 'GET',
-    });
-  }
 }
 
 export const tramitacoesClient = new TramitacoesClient();

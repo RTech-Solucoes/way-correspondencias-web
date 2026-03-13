@@ -21,7 +21,7 @@ interface ITableArea {
 }
 
 export default function TableArea(props: ITableArea) {
-  const { canInserirArea, canAtualizarArea, canDeletarArea } = usePermissoes()
+  const { canAtualizarArea, canDeletarArea } = usePermissoes()
 
   return (
     <div className="flex flex-1 overflow-hidden bg-white">
@@ -47,7 +47,9 @@ export default function TableArea(props: ITableArea) {
                 <ArrowsDownUpIcon className="ml-2 h-4 w-4" />
               </div>
             </StickyTableHead>
-            <StickyTableHead className="text-right">Ações</StickyTableHead>
+            {(canAtualizarArea || canDeletarArea) && (
+              <StickyTableHead className="text-right">Ações</StickyTableHead>
+            )}
           </StickyTableRow>
         </StickyTableHeader>
         <StickyTableBody>

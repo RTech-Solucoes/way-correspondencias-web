@@ -1,4 +1,25 @@
+import { getCookie } from '@/utils/cookies';
+
 let isHandlingUnauthorized = false;
+
+// Função para detectar se está no servidor (deve ser chamada dentro dos métodos)
+function isServer(): boolean {
+  return typeof window === 'undefined';
+}
+
+// Função para obter cookies no servidor (só funciona em Server Components/Actions)
+async function getServerCookies() {
+  if (!isServer()) return null;
+  
+  try {
+    const { cookies } = await import('next/headers');
+    return cookies();
+  } catch {
+    // Se não conseguir importar (fora do contexto de requisição), retorna null
+    // Isso pode acontecer durante build ou em contextos onde cookies() não está disponível
+    return null;
+  }
+}
 
 export default class ApiClient {
   private readonly module: string;
@@ -9,33 +30,74 @@ export default class ApiClient {
     this.module = module;
   }
 
-  public getAuthHeaders(): HeadersInit {
-    const authToken = localStorage.getItem('authToken');
-    const tokenType = localStorage.getItem('tokenType');
+  public async getAuthHeaders(): Promise<HeadersInit> {
+    if (isServer()) {
+      // No servidor, tenta usar cookies do Next.js
+      try {
+        const cookieStore = await getServerCookies();
+        if (cookieStore) {
+          const authToken = cookieStore.get('authToken')?.value;
+          const tokenType = cookieStore.get('tokenType')?.value || 'Bearer';
 
-    if (authToken) {
-      return {
-        'Authorization': `${tokenType} ${authToken}`
-      };
+          if (authToken) {
+            return {
+              'Authorization': `${tokenType} ${authToken}`
+            };
+          }
+        }
+      } catch {
+        // Se falhar (fora do contexto de requisição), retorna vazio
+        // O cliente vai lidar com isso
+      }
+      return {};
+    } else {
+      // No cliente, usa cookies
+      const authToken = getCookie('authToken');
+      const tokenType = getCookie('tokenType') || 'Bearer';
+
+      if (authToken) {
+        return {
+          'Authorization': `${tokenType} ${authToken}`
+        };
+      }
+      return {};
     }
-    return {};
   }
 
-  private getIdConcessionaria(): number | null {
+  private async getIdConcessionaria(): Promise<number | null> {
     try {
-      const idSalvo = localStorage.getItem('concessionaria-selecionada');
-      if (idSalvo) {
-        const id = parseInt(idSalvo, 10);
-        return isNaN(id) ? null : id;
+      if (isServer()) {
+        // No servidor, tenta usar cookies do Next.js
+        try {
+          const cookieStore = await getServerCookies();
+          if (cookieStore) {
+            const idSalvo = cookieStore.get('concessionaria-selecionada')?.value;
+            if (idSalvo) {
+              const id = parseInt(idSalvo, 10);
+              return isNaN(id) ? null : id;
+            }
+          }
+        } catch {
+          // Se falhar, retorna null
+        }
+        return null;
+      } else {
+        // No cliente, usa cookies
+        const { getCookie } = await import('@/utils/cookies');
+        const idSalvo = getCookie('concessionaria-selecionada');
+        if (idSalvo) {
+          const id = parseInt(idSalvo, 10);
+          return isNaN(id) ? null : id;
+        }
+        return null;
       }
-      return null;
     } catch {
       return null;
     }
   }
 
-  private addConcessionariaToUrl(url: string): string {
-    const idConcessionaria = this.getIdConcessionaria();
+  private async addConcessionariaToUrl(url: string): Promise<string> {
+    const idConcessionaria = await this.getIdConcessionaria();
     if (!idConcessionaria) {
       return url;
     }
@@ -56,19 +118,22 @@ export default class ApiClient {
   }
 
   private handleUnauthorized(): void {
+    // Só executa no cliente
+    if (isServer()) return;
+
     if (isHandlingUnauthorized) {
       return;
     }
     
     isHandlingUnauthorized = true;
 
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('tokenType');
-    localStorage.removeItem('user');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('permissoes-storage');
-    localStorage.removeItem('concessionaria-selecionada');
-    sessionStorage.removeItem('permissoes-storage');
+    // Remove cookies no cliente
+    import('@/utils/cookies').then(({ removeCookie }) => {
+      removeCookie('authToken');
+      removeCookie('tokenType');
+      removeCookie('concessionaria-selecionada');
+      removeCookie('permissoes-storage');
+    });
 
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('authTokenRemoved'));
@@ -78,8 +143,8 @@ export default class ApiClient {
     const isLoginPage = currentPath === '/';
     
     if (!isLoginPage) {
-      import('sonner').then(({ toast }) => {
-        toast.error('Seu token expirou, faça login novamente');
+      import('sonner').then(({ toast: toastFn }) => {
+        toastFn.error('Seu token expirou, faça login novamente');
       });
     }
 
@@ -101,21 +166,24 @@ export default class ApiClient {
     
     // Adicionar idConcessionaria como query parameter (a menos que seja explicitamente suprimido)
     if (!skipConcessionariaParam) {
-      url = this.addConcessionariaToUrl(url);
+      url = await this.addConcessionariaToUrl(url);
     }
     
     // Suprimir warning do linter
     void _skipParam;
 
+    const authHeaders = await this.getAuthHeaders();
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...this.getAuthHeaders() as Record<string, string>,
+      ...authHeaders as Record<string, string>,
       ...(fetchOptions.headers as Record<string, string> | undefined)
     };
     
     const config: RequestInit = {
       headers,
       ...fetchOptions,
+      // Desabilita cache no servidor para garantir dados frescos
+      ...(isServer() ? { cache: 'no-store' as const } : {}),
     };
 
     if (config.body instanceof FormData) {
@@ -133,7 +201,9 @@ export default class ApiClient {
         let errorPayload: unknown = null;
         try { errorPayload = await response.json(); } catch { /* ignore */ }
 
-        if (response.status === 401 && !suppressLogout) {
+        // No servidor, não chama handleUnauthorized para 401
+        // Deixa o erro ser tratado pelo componente que chamou
+        if (response.status === 401 && !suppressLogout && !isServer()) {
           this.handleUnauthorized();
         }
 

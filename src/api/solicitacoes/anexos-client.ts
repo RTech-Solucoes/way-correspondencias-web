@@ -1,6 +1,8 @@
 import { AnexoResponse, ArquivoDTO } from '../anexos/type';
 import ApiClient from '../client';
 
+// Anexos da Correspondência (Antes da migração era 'Solicitação'. Após a migração, passou a ser
+// 'Correspondência'. Os anexos pertencem à Correspondência)
 
 class SolicitacaoAnexosClient {
   private client: ApiClient;

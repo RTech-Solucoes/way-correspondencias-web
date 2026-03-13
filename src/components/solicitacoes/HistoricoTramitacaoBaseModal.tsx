@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { ArrowRightIcon, SpinnerIcon, ClockIcon } from '@phosphor-icons/react';
 import { Badge } from '@/components/ui/badge';
 import { formatDateTime, formatMinutosEmDiasHorasMinutos } from '@/utils/utils';
-import { TipoHistoricoResposta } from '@/api/solicitacoes';
+import { TipoHistoricoResposta } from '@/api/correspondencia/types';
 import { perfilUtil } from '@/api/perfis/types';
 import { statusList } from '@/api/status-solicitacao/types';
 
@@ -51,7 +51,7 @@ export default function HistoricoTramitacaoBaseModal({
     if (idPerfil === perfilUtil.VALIDADOR_ASSINANTE) {
       return 'DIRETORIA (PARECER)';
     }
-    if (idPerfil === perfilUtil.ADMINISTRADOR || idPerfil === perfilUtil.GESTOR_DO_SISTEMA) {
+    if (idPerfil === perfilUtil.ADMINISTRADOR || idPerfil === perfilUtil.SUPER_ADMIN || idPerfil === perfilUtil.GESTOR_DO_SISTEMA) {
       return 'REGULATÓRIO (PARECER)';
     }
     return 'PARECER';

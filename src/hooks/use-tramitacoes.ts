@@ -7,7 +7,7 @@ export const useTramitacoesMutation = () => {
   return useMutation<TramitacaoResponse, Error, TramitacaoRequest>({
     mutationFn: (data: TramitacaoRequest) => tramitacoesClient.criar(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['solicitacoesPendentes'] });
+      queryClient.invalidateQueries({ queryKey: ['correspondenciasPendentes'] });
       queryClient.invalidateQueries({ queryKey: ['solicitacoesPendentesCount'] });
       queryClient.invalidateQueries({ queryKey: ['recentActivity'] });
     },

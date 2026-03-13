@@ -7,6 +7,7 @@ import {ResponsavelResponse} from '@/api/responsaveis/types';
 import { responsaveisClient } from '@/api/responsaveis/client';
 import {cn} from '@/utils/utils';
 import {CheckIcon} from '@phosphor-icons/react';
+import { perfilUtil } from '@/api/perfis/types';
 
 interface MultiSelectAssinantesProps {
   selectedResponsavelIds: number[];
@@ -32,7 +33,9 @@ export function MultiSelectAssinantes({
         setLoading(true);
 
         const [responsaveisResponse] = await Promise.all([
-          responsaveisClient.buscarPorIdPerfil([1, 3])
+          responsaveisClient.buscarPorIdPerfil(
+            [perfilUtil.VALIDADOR_ASSINANTE, perfilUtil.ADMINISTRADOR, perfilUtil.SUPER_ADMIN]
+          )
         ]);
 
         const responsaveisAtivos = responsaveisResponse.filter((resp: ResponsavelResponse) => resp.flAtivo === 'S');

@@ -1,40 +1,83 @@
 import dashboardClient from "@/api/dashboard/client";
-import { ICalendar, ICalendarYear } from "@/api/dashboard/type";
+import { ICalendarYear } from "@/api/dashboard/type";
 import { Card, CardContent } from "@/components/ui/card";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import CalendarHeader from "./CalendarHeader/CalendarHeader";
-import CalendarMonth from "./CalendarMonth/CalendarMonth";
-import CalendarWeek from "./CalendarWeek/CalendarWeek";
+import CalendarMonth, { CalendarMonthConfig, CalendarMonthItem } from "./CalendarMonth/CalendarMonth";
+import CalendarWeek, { CalendarWeekConfig, CalendarWeekItem } from "./CalendarWeek/CalendarWeek";
 import CalendarYear from "./CalendarYear/CalendarYear";
-import { getAllStatusLegend } from "../functions";
+import { getAllStatusLegend, getStatusColorCalendar } from "../functions";
 
 interface DeadlinesCalendarProps {
   refreshTrigger?: number;
+  dtCriacaoInicio?: string | null;
+  dtCriacaoFim?: string | null;
 }
 
-export default function DeadlinesCalendar({ refreshTrigger }: DeadlinesCalendarProps) {
+export default function DeadlinesCalendar({ refreshTrigger, dtCriacaoInicio, dtCriacaoFim }: DeadlinesCalendarProps) {
   const [calendarView, setCalendarView] = useState<'month' | 'week' | 'year'>('month');
-  const [calendarByWeek, setCalendarByWeek] = useState<ICalendar[]>([]);
+  const [calendarByWeek, setCalendarByWeek] = useState<CalendarWeekItem[]>([]);
   const [calendarByYear, setCalendarByYear] = useState<ICalendarYear[]>([]);
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
 
+  // Configuração do calendário mensal para solicitações
+  const calendarMonthConfig: CalendarMonthConfig = useMemo(() => ({
+    fetchData: async (dataInicio: string, dataFim: string): Promise<CalendarMonthItem[]> => {
+      const [ano, mes] = dataInicio.split('-');
+      const data = await dashboardClient.getCalendarByMonth(parseInt(mes), parseInt(ano), {
+        dtCriacaoInicio,
+        dtCriacaoFim,
+      });
+      return data.map(item => ({
+        id: item.idSolicitacao,
+        cdIdentificacao: item.cdIdentificacao,
+        data: item.dtFim,
+        status: item.nmStatus,
+        showTime: true,
+      }));
+    },
+    getItemRoute: (item) => `/solicitacoes?idSolicitacao=${item.id}`,
+    getItemStyle: (item) => getStatusColorCalendar(item.status || ''),
+    tooltipTitle: "Outras Solicitações:",
+    refreshTrigger,
+  }), [refreshTrigger, dtCriacaoInicio, dtCriacaoFim]);
+
+  // Configuração do calendário semanal para solicitações
+  const calendarWeekConfig: CalendarWeekConfig = useMemo(() => ({
+    items: calendarByWeek,
+    getItemRoute: (item) => `/solicitacoes?idSolicitacao=${item.id}`,
+    getItemStyle: (item) => getStatusColorCalendar(item.status || ''),
+  }), [calendarByWeek]);
+
   useEffect(() => {
     const getCalendarByWeek = async () => {
-      const data = await dashboardClient.getCalendarByWeek();
-      setCalendarByWeek(data);
+      const data = await dashboardClient.getCalendarByWeek({
+        dtCriacaoInicio,
+        dtCriacaoFim,
+      });
+      setCalendarByWeek(data.map(item => ({
+        id: item.idSolicitacao,
+        cdIdentificacao: item.cdIdentificacao,
+        data: item.dtFim,
+        status: item.nmStatus,
+        showTime: true,
+      })));
     };
 
     getCalendarByWeek();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, dtCriacaoInicio, dtCriacaoFim]);
 
   useEffect(() => {
     const getCalendarByYear = async () => {
-      const data = await dashboardClient.getCalendarByYear(currentYear);
+      const data = await dashboardClient.getCalendarByYear(currentYear, {
+        dtCriacaoInicio,
+        dtCriacaoFim,
+      });
       setCalendarByYear(data);
     };
 
     getCalendarByYear();
-  }, [refreshTrigger, currentYear]);
+  }, [refreshTrigger, currentYear, dtCriacaoInicio, dtCriacaoFim]);
 
 
   const navigateYear = (direction: 'prev' | 'next') => {
@@ -84,11 +127,19 @@ export default function DeadlinesCalendar({ refreshTrigger }: DeadlinesCalendarP
   function renderContent() {
     switch (calendarView) {
       case "month":
-        return <CalendarMonth />;
+        return <CalendarMonth config={calendarMonthConfig} />;
       case "week":
-        return <CalendarWeek calendarByWeek={calendarByWeek} />;
+        return <CalendarWeek config={calendarWeekConfig} />;
       case "year":
-        return <CalendarYear calendarByYear={calendarByYear} currentYear={currentYear} navigateYear={navigateYear} />
+        return (
+          <CalendarYear 
+            calendarByYear={calendarByYear.map(item => ({ mes: item.mes, quantidade: item.qtde }))} 
+            currentYear={currentYear} 
+            navigateYear={navigateYear}
+            itemLabel="solicitação"
+            itemLabelPlural="solicitações"
+          />
+        );
     }
   }
 }

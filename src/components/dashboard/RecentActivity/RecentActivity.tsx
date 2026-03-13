@@ -1,19 +1,18 @@
-import { mockUsersEmail } from "@/components/dashboard/MockDados";
-import CardHeader from "../card-header";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@radix-ui/react-avatar";
-import { useEffect, useState } from "react";
 import dashboardClient from "@/api/dashboard/client";
-import { toast } from "sonner";
 import { IRecentActivity } from "@/api/dashboard/type";
+import { Card, CardContent } from "@/components/ui/card";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import CardHeader from "../card-header";
 import PaginationRecentActivity from "./PaginationRecentActivity";
 
 interface RecentActivityProps {
   refreshTrigger?: number;
+  dtCriacaoInicio?: string | null;
+  dtCriacaoFim?: string | null;
 }
 
-export default function RecentActivity({ refreshTrigger }: RecentActivityProps) {
+export default function RecentActivity({ refreshTrigger, dtCriacaoInicio, dtCriacaoFim }: RecentActivityProps) {
   const [listActivity, setListActivity] = useState<IRecentActivity[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -24,7 +23,10 @@ export default function RecentActivity({ refreshTrigger }: RecentActivityProps) 
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await dashboardClient.getRecentActivity(currentPage, 10);
+        const response = await dashboardClient.getRecentActivity(currentPage, 10, {
+          dtCriacaoInicio,
+          dtCriacaoFim,
+        });
         setListActivity(response.content);
         setTotalPages(response.totalPages);
         setTotalElements(response.totalElements);
@@ -37,7 +39,7 @@ export default function RecentActivity({ refreshTrigger }: RecentActivityProps) 
     };
 
     fetchData();
-  }, [refreshTrigger, currentPage]);
+  }, [refreshTrigger, currentPage, dtCriacaoInicio, dtCriacaoFim]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);

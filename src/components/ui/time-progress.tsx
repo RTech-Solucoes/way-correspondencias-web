@@ -4,10 +4,10 @@ import React from 'react';
 import { cn, formatDateTime, normalizeText } from '@/utils/utils';
 
 type TimeProgressProps = {
-  dtPrimeiraTramitacao?: string | null;
-  dtPrazoLimite?: string | null;
+  start?: string | null;
+  end?: string | null;
   now?: string | Date | null;
-  dataConclusaoTramitacao?: string | Date | null;
+  finishedAt?: string | Date | null;
   className?: string;
   showLabels?: boolean;
   statusLabel?: string;
@@ -42,7 +42,9 @@ export function getTimeProgressPercent(start?: string | null, end?: string | nul
   return clamp(raw);
 }
 
-const TimeProgress: React.FC<TimeProgressProps> = ({ dtPrimeiraTramitacao: start, dtPrazoLimite: end, now, dataConclusaoTramitacao: finishedAt, className, showLabels = true, statusLabel }) => {
+const TimeProgress: React.FC<TimeProgressProps> = ({ start, end, now, finishedAt, className, showLabels = true, statusLabel }) => {
+ 
+
   if (!start && !end) {
     return (
       <div className={cn('flex flex-col gap-1 min-w-[200px]', className)}>

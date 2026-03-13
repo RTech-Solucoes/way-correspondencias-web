@@ -1,40 +1,16 @@
 'use client';
 
-import React, {memo, useCallback, useEffect, useState} from 'react';
+import React, {memo, useCallback} from 'react';
 import {EnvelopeSimpleIcon, PaperclipIcon, SpinnerIcon} from '@phosphor-icons/react';
 import {cn, formatDateTimeBr} from '@/utils/utils';
-import {toast} from 'sonner';
-import {emailClient} from '@/api/email/client';
 import {EmailResponse} from '@/api/email/types';
-import {useDebounce} from '@/hooks/use-debounce';
-import {EmailFiltersState} from "@/context/email/EmailContext";
-
-const formatDate = (dateString?: string): string => {
-  if (!dateString) return '';
-
-  try {
-    const date = new Date(dateString);
-
-    if (isNaN(date.getTime())) return '';
-
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-
-    return `${day}/${month}/${year} ${hours}:${minutes}`;
-  } catch {
-    return '';
-  }
-};
 
 interface EmailListProps {
+  emails: EmailResponse[];
+  loading: boolean;
   searchQuery: string;
   selectedEmail: string | null;
   onEmailSelect: (emailId: string) => void;
-  currentPage?: number;
-  emailFilters?: EmailFiltersState;
 }
 
 const EmailItem = memo<{
@@ -93,67 +69,12 @@ const EmailItem = memo<{
 EmailItem.displayName = 'EmailItem';
 
 function EmailList({
+  emails,
+  loading,
   searchQuery,
   selectedEmail,
   onEmailSelect,
-  currentPage: externalPage,
-  emailFilters = {
-    remetente: '',
-    destinatario: '',
-    status: '',
-    dateFrom: '',
-    dateTo: '',
-    isRead: '',
-    hasAttachments: ''
-  }
 }: EmailListProps) {
-  const [loading, setLoading] = useState(false);
-  const [emails, setEmails] = useState<EmailResponse[]>([]);
-
-  const debouncedSearchQuery = useDebounce(searchQuery, 500);
-
-  const loadEmails = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await emailClient.buscarPorFiltro({
-        filtro: debouncedSearchQuery || undefined,
-        dsRemetente: emailFilters.remetente || undefined,
-        dsDestinatario: emailFilters.destinatario || undefined,
-        dtRecebimentoInicio: emailFilters.dateFrom ? `${emailFilters.dateFrom}T00:00:00` : undefined,
-        dtRecebimentoFim: emailFilters.dateTo ? `${emailFilters.dateTo}T23:59:59` : undefined,
-        page: typeof externalPage === 'number' ? externalPage : 0,
-        size: 15
-      });
-
-      if (!response || !response.content) {
-        console.error('Resposta da API inválida:', response);
-        toast.error("Resposta da API inválida");
-        setEmails([]);
-        return;
-      }
-
-      if (!Array.isArray(response.content)) {
-        console.error('response.content não é um array:', response.content);
-        toast.error("Formato de dados inválido");
-        setEmails([]);
-        return;
-      }
-
-      setEmails(response.content);
-    } catch (error) {
-      console.error("Erro ao carregar emails:", error);
-      toast.error("Erro ao carregar emails");
-      setEmails([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [debouncedSearchQuery, externalPage, emailFilters.remetente, emailFilters.destinatario, emailFilters.dateFrom, emailFilters.dateTo]);
-
-  useEffect(() => {
-    loadEmails();
-  }, [loadEmails]);
-
-
   return (
     <div className="flex-1 flex flex-col bg-white w-full">
       <div className="flex flex-col flex-1 overflow-y-auto">
@@ -170,8 +91,8 @@ function EmailList({
                 Nenhum email encontrado
               </h3>
               <p className="text-gray-500">
-                {debouncedSearchQuery
-                  ? `Não há emails correspondentes à pesquisa "${debouncedSearchQuery}"`
+                {searchQuery
+                  ? `Não há emails correspondentes à pesquisa "${searchQuery}"`
                   : "Sua caixa de entrada está vazia"
                 }
               </p>

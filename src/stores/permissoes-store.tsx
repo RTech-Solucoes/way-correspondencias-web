@@ -1,5 +1,6 @@
 import {create} from 'zustand'
 import {createJSONStorage, persist} from 'zustand/middleware'
+import {cookieStorage} from '@/utils/cookie-storage'
 
 type PermissoesStore = {
   permissoes: string[]
@@ -14,7 +15,7 @@ export const usePermissoesStore = create<PermissoesStore>()(
     }),
     {
       name: 'permissoes-storage',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => cookieStorage),
     },
   ),
 )

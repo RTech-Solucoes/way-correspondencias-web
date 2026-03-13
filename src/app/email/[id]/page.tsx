@@ -1,27 +1,36 @@
-"use client";
+import { Suspense } from "react";
+import { EmailDetailContent } from "@/components/email/EmailDetailContent";
+import LoadingOverlay from "@/components/ui/loading-overlay";
+import { emailClient } from "@/api/email/client";
 
-import {useParams, useRouter} from "next/navigation";
-import EmailDetail from "@/components/email/EmailDetail";
-import useEmail from "@/context/email/EmailContext";
+interface EmailDetailPageProps {
+  params: Promise<{ id: string }>;
+}
 
-export default function EmailPage() {
-  const params = useParams()
-  const router = useRouter()
-  const emailId = params.id as string
-
-  const { setSelectedEmail } = useEmail()
-
-  const handleBack = () => {
-    setSelectedEmail(null)
-    router.push('/email')
+export default async function EmailDetailPage({ params }: EmailDetailPageProps) {
+  const { id } = await params;
+  
+  let initialData = null;
+  if (id && !Number.isNaN(Number(id))) {
+    try {
+      initialData = await emailClient.buscarPorId(Number(id));
+    } catch (error) {
+      console.error('Erro ao carregar detalhes do email:', error);
+    }
   }
 
   return (
-    <div className="flex flex-col min-h-0 flex-1">
-      <EmailDetail
-        emailId={emailId}
-        onBack={handleBack}
-      />
+    <div data-ssr="true">
+      <Suspense
+        fallback={
+          <LoadingOverlay
+            title="Carregando email..."
+            subtitle="Aguarde enquanto os dados são carregados"
+          />
+        }
+      >
+        <EmailDetailContent emailId={id} initialData={initialData} />
+      </Suspense>
     </div>
   );
 }

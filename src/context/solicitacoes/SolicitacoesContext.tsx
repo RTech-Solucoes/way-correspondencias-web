@@ -1,12 +1,12 @@
 'use client'
 
-import {createContext, Dispatch, ReactNode, SetStateAction, useCallback, useContext, useState} from "react";
-import {SolicitacaoResponse} from '@/api/solicitacoes/types';
+import {createContext, Dispatch, ReactNode, SetStateAction, useContext, useState} from "react";
 import {ResponsavelResponse} from '@/api/responsaveis/types';
 import {TemaResponse} from '@/api/temas/types';
 import {AreaResponse} from '@/api/areas/types';
 
 import { statusList } from "@/api/status-solicitacao/types";
+import { CorrespondenciaResponse } from "@/api/correspondencia/types";
 
 interface FiltersState {
   identificacao: string;
@@ -23,8 +23,8 @@ interface FiltersState {
 }
 
 export interface SolicitacoesContextProps {
-  solicitacoes: SolicitacaoResponse[];
-  setSolicitacoes: Dispatch<SetStateAction<SolicitacaoResponse[]>>;
+  correspondencia: CorrespondenciaResponse[];
+  setCorrespondencia: Dispatch<SetStateAction<CorrespondenciaResponse[]>>;
   responsaveis: ResponsavelResponse[];
   setResponsaveis: Dispatch<SetStateAction<ResponsavelResponse[]>>;
   temas: TemaResponse[];
@@ -35,16 +35,16 @@ export interface SolicitacoesContextProps {
   setLoading: Dispatch<SetStateAction<boolean>>;
   searchQuery: string;
   setSearchQuery: Dispatch<SetStateAction<string>>;
-  selectedSolicitacao: SolicitacaoResponse | null;
-  setSelectedSolicitacao: Dispatch<SetStateAction<SolicitacaoResponse | null>>;
+  selectedSolicitacao: CorrespondenciaResponse | null;
+  setSelectedCorrespondencia: Dispatch<SetStateAction<CorrespondenciaResponse | null>>;
   showSolicitacaoModal: boolean;
   setShowSolicitacaoModal: Dispatch<SetStateAction<boolean>>;
   showFilterModal: boolean;
   setShowFilterModal: Dispatch<SetStateAction<boolean>>;
   showDeleteDialog: boolean;
   setShowDeleteDialog: Dispatch<SetStateAction<boolean>>;
-  solicitacaoToDelete: SolicitacaoResponse | null;
-  setSolicitacaoToDelete: Dispatch<SetStateAction<SolicitacaoResponse | null>>;
+  solicitacaoToDelete: CorrespondenciaResponse | null;
+  setSolicitacaoToDelete: Dispatch<SetStateAction<CorrespondenciaResponse | null>>;
   currentPage: number;
   setCurrentPage: Dispatch<SetStateAction<number>>;
   totalPages: number;
@@ -60,8 +60,8 @@ export interface SolicitacoesContextProps {
   sortDirection: 'asc' | 'desc';
   setSortDirection: Dispatch<SetStateAction<'asc' | 'desc'>>;
   hasActiveFilters: boolean;
-  handleEdit: (solicitacao: SolicitacaoResponse) => void;
-  handleDelete: (solicitacao: SolicitacaoResponse) => void;
+  handleEdit: (correspondencia: CorrespondenciaResponse) => void;
+  handleDelete: (correspondencia: CorrespondenciaResponse) => void;
   handleSolicitacaoSave: () => void;
   applyFilters: () => void;
   clearFilters: () => void;
@@ -74,17 +74,17 @@ export interface SolicitacoesContextProps {
 const SolicitacoesContext = createContext<SolicitacoesContextProps>({} as SolicitacoesContextProps);
 
 export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
-  const [solicitacoes, setSolicitacoes] = useState<SolicitacaoResponse[]>([]);
+  const [correspondencia, setCorrespondencia] = useState<CorrespondenciaResponse[]>([]);
   const [responsaveis, setResponsaveis] = useState<ResponsavelResponse[]>([]);
   const [temas, setTemas] = useState<TemaResponse[]>([]);
   const [areas, setAreas] = useState<AreaResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedSolicitacao, setSelectedSolicitacao] = useState<SolicitacaoResponse | null>(null);
+  const [selectedSolicitacao, setSelectedSolicitacao] = useState< CorrespondenciaResponse | null>(null);
   const [showSolicitacaoModal, setShowSolicitacaoModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [solicitacaoToDelete, setSolicitacaoToDelete] = useState<SolicitacaoResponse | null>(null);
+  const [solicitacaoToDelete, setSolicitacaoToDelete] = useState<CorrespondenciaResponse | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
@@ -113,12 +113,12 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
     return value !== '';
   });
 
-  const handleEdit = (solicitacao: SolicitacaoResponse) => {
+  const handleEdit = (solicitacao: CorrespondenciaResponse) => {
     setSelectedSolicitacao(solicitacao);
     setShowSolicitacaoModal(true);
   };
 
-  const handleDelete = (solicitacao: SolicitacaoResponse) => {
+  const handleDelete = (solicitacao: CorrespondenciaResponse) => {
     setSolicitacaoToDelete(solicitacao);
     setShowDeleteDialog(true);
   };
@@ -239,8 +239,8 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
   return (
     <SolicitacoesContext.Provider
       value={{
-        solicitacoes,
-        setSolicitacoes,
+        correspondencia,
+        setCorrespondencia,
         responsaveis,
         setResponsaveis,
         temas,
@@ -252,7 +252,7 @@ export const SolicitacoesProvider = ({ children }: { children: ReactNode }) => {
         searchQuery,
         setSearchQuery,
         selectedSolicitacao,
-        setSelectedSolicitacao,
+        setSelectedCorrespondencia: setSelectedSolicitacao,
         showSolicitacaoModal,
         setShowSolicitacaoModal,
         showFilterModal,

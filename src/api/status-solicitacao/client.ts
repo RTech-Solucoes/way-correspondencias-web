@@ -1,8 +1,13 @@
 import ApiClient from '../client';
+import { buildQueryParams } from '@/utils/utils';
+import { CategoriaEnum, TipoEnum, TipoResponse } from '../tipos/types';
 
 export interface StatusSolicitacaoResponse {
   idStatusSolicitacao: number;
   nmStatus: string;
+  cdStatus?: string;
+  flAtivo?: string;
+  tipoClassificacaoStatus?: TipoResponse;
   dsStatus?: string;
 }
 
@@ -13,10 +18,23 @@ class StatusSolicitacaoClient {
     this.client = new ApiClient('/status-solicitacao');
   }
 
-  async listarTodos(): Promise<StatusSolicitacaoResponse[]> {
-    return this.client.request<StatusSolicitacaoResponse[]>('', {
+  async listarTodos( nmCategoria?: CategoriaEnum,  cdTipo?: TipoEnum[]): Promise<StatusSolicitacaoResponse[]> {
+    const params = {
+      nmCategoria,
+      cdTipo,
+    };
+    const allowedKeys = ['nmCategoria', 'cdTipo'] as const;
+    const qs = buildQueryParams(params, allowedKeys).toString();
+
+    return this.client.request<StatusSolicitacaoResponse[]>(qs ? `?${qs}` : '', {
       method: 'GET',
     });
+  }
+
+  async buscarPorId(id: number): Promise<StatusSolicitacaoResponse> {
+      return this.client.request<StatusSolicitacaoResponse>(`/${id}`, {
+        method: 'GET',
+      });
   }
 }
 

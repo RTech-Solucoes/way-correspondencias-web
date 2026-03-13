@@ -1,11 +1,11 @@
+import { getCookie } from '@/utils/cookies';
 import {type ClassValue, clsx} from 'clsx';
 import {twMerge} from 'tailwind-merge';
-import {StatusAtivo} from "@/types/misc/types";
-import {ArquivoDTO, TipoResponsavelAnexo} from '@/api/anexos/type';
+import {StatusAtivo} from "@/utils/misc/status-ativo";
+import {ArquivoDTO, TipoResponsavelAnexoEnum} from '@/api/anexos/type';
 import { z } from "zod";
 import { cpf } from "cpf-cnpj-validator";
 import dayjs from "dayjs";
-// import { SolicitacaoResumoResponse } from '@/types/solicitacoes/types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -20,6 +20,19 @@ export function capitalize(str: string): string {
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 }
+
+export function construirDataComAno(
+  dateString: string | null | undefined,
+  year: number
+): string | null {
+  if (!dateString) return null;
+  const baseDate = dayjs(dateString);
+  if (!baseDate.isValid()) return null;
+  const adjusted = baseDate.year(year);
+  if (!adjusted.isValid()) return null;
+  return adjusted.format("YYYY-MM-DD");
+}
+
 
 export function getInitials(name: string | null): string {
   if (!name) return '';
@@ -157,7 +170,7 @@ export function fileToBase64String(file: File): Promise<string> {
   });
 }
 
-export async function fileToArquivoDTO(file: File, tpResponsavel: TipoResponsavelAnexo): Promise<ArquivoDTO> {
+export async function fileToArquivoDTO(file: File, tpResponsavel: TipoResponsavelAnexoEnum): Promise<ArquivoDTO> {
   const conteudoArquivo = await fileToBase64String(file);
   return {
     nomeArquivo: file.name,
@@ -209,14 +222,21 @@ export const validateEmail = (email: string): boolean => {
   return emailRegex.test(email);
 };
 
+
 export const hasPermissao = (permissao: string): boolean | null => {
-  const permissoesStorage = localStorage.getItem("permissoes-storage");
+  if (typeof document === 'undefined') return null;
+  
+  const permissoesStorage = getCookie("permissoes-storage");
 
   if (!permissoesStorage) {
     return null;
   } else {
-    const parsed = JSON.parse(permissoesStorage);
-    return parsed?.state?.permissoes?.includes(permissao) ?? null;
+    try {
+      const parsed = JSON.parse(permissoesStorage);
+      return parsed?.state?.permissoes?.includes(permissao) ?? null;
+    } catch {
+      return null;
+    }
   }
 }
 
@@ -395,4 +415,15 @@ export function formatDateTimeBrCompactExport(): string {
   const mi = String(d.getMinutes()).padStart(2, '0');
   const ss = String(d.getSeconds()).padStart(2, '0');
   return `${dd}-${mm}-${yyyy}_${hh}-${mi}-${ss}`;
+}
+
+export function formatDateISOWithoutTimezone(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
 }

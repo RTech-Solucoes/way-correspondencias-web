@@ -1,4 +1,4 @@
-import {FunnelSimpleIcon, MagnifyingGlassIcon, XIcon} from "@phosphor-icons/react";
+import {FunnelSimpleIcon, MagnifyingGlassIcon, XIcon, PlusIcon} from "@phosphor-icons/react";
 import {Dispatch, SetStateAction} from "react";
 import {Button} from "../ui/button";
 import {Input} from "../ui/input";
@@ -8,7 +8,9 @@ interface ISearchArea {
     searchQuery: string;
     hasActiveFilters: boolean;
     clearFilters: () => void;
-    setShowFilterModal: Dispatch<SetStateAction<boolean>>
+    setShowFilterModal: Dispatch<SetStateAction<boolean>>;
+    canInserirArea?: boolean | null;
+    onCriarArea?: () => void;
 }
 
 export default function SearchArea(props: ISearchArea) {
@@ -41,6 +43,16 @@ export default function SearchArea(props: ISearchArea) {
                 <FunnelSimpleIcon className="h-4 w-4 mr-2" />
                 Filtrar
             </Button>
+            {/* TODO: Comentando, pois não estava no escopo entrega da WAY */}
+            {/* {props.canInserirArea && (
+                <Button
+                    className="h-10 px-4"
+                    onClick={props.onCriarArea}
+                >
+                    <PlusIcon className="h-4 w-4 mr-2" />
+                    Criar Área
+                </Button>
+            )} */}
         </div>
     )
 }

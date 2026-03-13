@@ -1,6 +1,6 @@
 import {usePathname} from "next/navigation";
 import {PAGES_DEF} from "@/constants/pages";
-import {PageDef} from "@/types/pages/pages";
+import {PageDef} from "@/constants/pages/pages";
 
 export default function PageTitle () {
   const pathname = usePathname();

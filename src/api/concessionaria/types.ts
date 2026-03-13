@@ -1,4 +1,4 @@
-import { StatusAtivo } from "@/types/misc/types";
+import { StatusAtivo } from "@/utils/misc/status-ativo";
 
 export interface ConcessionariaResponse {
   idConcessionaria: number;
@@ -8,3 +8,7 @@ export interface ConcessionariaResponse {
   flAtivo: StatusAtivo;
 }
 
+export interface AnoConcessaoConcessionariaResponse {
+  dtBaseInicioConcessao: string;
+  dtLimiteConcessao: string;
+}

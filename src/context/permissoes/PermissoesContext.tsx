@@ -25,6 +25,7 @@ export interface PermissoesContextProps {
   canInserirResponsavel: boolean | null
   canAtualizarResponsavel: boolean | null
   canDeletarResponsavel: boolean | null
+  canGerarSenhaResponsavel: boolean | null
   canListarSolicitacao: boolean | null
   canInserirSolicitacao: boolean | null
   canAtualizarSolicitacao: boolean | null
@@ -33,6 +34,16 @@ export interface PermissoesContextProps {
   canAssinarSolicitacao: boolean | null
   canExportarSolicitacao: boolean | null
   canAuditarSolicitacao: boolean | null
+  canListarObrigacao: boolean | null
+  canInserirObrigacao: boolean | null
+  canDeletarObrigacao: boolean | null
+  canVisualizarObrigacao: boolean | null
+  canEnviarAreasObrigacao: boolean | null
+  canAprovarConferenciaObrigacao: boolean | null
+  canConcluirObrigacao: boolean | null
+  canSolicitarAjustesObrigacao: boolean | null
+  canTramitarObrigacao: boolean | null
+  canNaoAplicavelSuspensaObrigacao: boolean | null
 }
 
 const PermissoesContext = createContext<PermissoesContextProps>({} as PermissoesContextProps);
@@ -58,6 +69,7 @@ export const PermissoesProvider = ({ children }: { children: ReactNode }) => {
   const canInserirResponsavel = useHasPermissao(Permissoes.RESPONSAVEL_INSERIR)
   const canAtualizarResponsavel = useHasPermissao(Permissoes.RESPONSAVEL_ATUALIZAR)
   const canDeletarResponsavel = useHasPermissao(Permissoes.RESPONSAVEL_DELETAR)
+  const canGerarSenhaResponsavel = useHasPermissao(Permissoes.RESPONSAVEL_GERAR_SENHA)
   const canListarSolicitacao = useHasPermissao(Permissoes.SOLICITACAO_LISTAR)
   const canInserirSolicitacao = useHasPermissao(Permissoes.SOLICITACAO_INSERIR)
   const canAtualizarSolicitacao = useHasPermissao(Permissoes.SOLICITACAO_ATUALIZAR)
@@ -66,6 +78,16 @@ export const PermissoesProvider = ({ children }: { children: ReactNode }) => {
   const canAssinarSolicitacao = useHasPermissao(Permissoes.SOLICITACAO_ASSINAR)
   const canExportarSolicitacao = useHasPermissao(Permissoes.SOLICITACAO_EXPORTAR)
   const canAuditarSolicitacao = useHasPermissao(Permissoes.SOLICITACAO_AUDITAR)
+  const canListarObrigacao = useHasPermissao(Permissoes.OBRIGACAO_LISTAR)
+  const canInserirObrigacao = useHasPermissao(Permissoes.OBRIGACAO_INSERIR)
+  const canDeletarObrigacao = useHasPermissao(Permissoes.OBRIGACAO_DELETAR)
+  const canVisualizarObrigacao = useHasPermissao(Permissoes.OBRIGACAO_VISUALIZAR)
+  const canEnviarAreasObrigacao = useHasPermissao(Permissoes.OBRIGACAO_ENVIAR_AREAS)
+  const canAprovarConferenciaObrigacao = useHasPermissao(Permissoes.OBRIGACAO_APROVAR_CONFERENCIA)
+  const canConcluirObrigacao = useHasPermissao(Permissoes.OBRIGACAO_CONCLUIR)
+  const canSolicitarAjustesObrigacao = useHasPermissao(Permissoes.OBRIGACAO_SOLICITAR_AJUSTES)
+  const canTramitarObrigacao = useHasPermissao(Permissoes.OBRIGACAO_TRAMITAR)
+  const canNaoAplicavelSuspensaObrigacao = useHasPermissao(Permissoes.OBRIGACAO_NAO_APLICAVEL_SUSPENSA)
 
   return (
     <PermissoesContext.Provider
@@ -90,6 +112,7 @@ export const PermissoesProvider = ({ children }: { children: ReactNode }) => {
         canInserirResponsavel,
         canAtualizarResponsavel,
         canDeletarResponsavel,
+        canGerarSenhaResponsavel,
         canListarSolicitacao,
         canInserirSolicitacao,
         canAtualizarSolicitacao,
@@ -97,7 +120,17 @@ export const PermissoesProvider = ({ children }: { children: ReactNode }) => {
         canAprovarSolicitacao,
         canAssinarSolicitacao,
         canExportarSolicitacao,
-        canAuditarSolicitacao
+        canAuditarSolicitacao,
+        canListarObrigacao,
+        canInserirObrigacao,
+        canDeletarObrigacao,
+        canVisualizarObrigacao,
+        canEnviarAreasObrigacao,
+        canAprovarConferenciaObrigacao,
+        canConcluirObrigacao,
+        canSolicitarAjustesObrigacao,
+        canTramitarObrigacao,
+        canNaoAplicavelSuspensaObrigacao
       }}
     >
       {children}

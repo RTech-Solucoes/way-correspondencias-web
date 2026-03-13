@@ -27,6 +27,12 @@ class SolicitacaoParecerClient {
       body: JSON.stringify(req),
     });
   }
+
+  async deletar(id: number): Promise<void> {
+    return this.client.request<void>(`/${id}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export const solicitacaoParecerClient = new SolicitacaoParecerClient();

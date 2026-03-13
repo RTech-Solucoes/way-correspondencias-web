@@ -74,6 +74,12 @@ class ResponsaveisClient {
     });
   }
 
+  async gerarSenhaEEnviarEmail(id: number): Promise<void> {
+    return this.client.request<void>(`/${id}/gerar-senha`, {
+      method: 'POST',
+    });
+  }
+
 }
 
 export const responsaveisClient = new ResponsaveisClient();

@@ -1,0 +1,289 @@
+'use client';
+
+import { useMemo } from 'react';
+import { statusList } from '@/api/status-solicitacao/types';
+import { perfilUtil } from '@/api/perfis/types';
+import type { ObrigacaoDetalheResponse } from '@/api/obrigacao/types';
+import type { ResponsavelResponse } from '@/api/responsaveis/types';
+import { TipoEnum } from '@/api/tipos/types';
+import { CdAreaEnum } from '@/api/areas/types';
+
+interface UsePermissoesObrigacaoParams {
+  detalhe: ObrigacaoDetalheResponse;
+  idPerfil?: number | null;
+  userResponsavel?: ResponsavelResponse | null;
+}
+
+export function usePermissoesObrigacao({
+  detalhe,
+  idPerfil,
+  userResponsavel,
+}: UsePermissoesObrigacaoParams) {
+  // Área atribuída
+  const areaAtribuida = useMemo(() => {
+    return detalhe?.obrigacao?.areas?.find((area) => area.tipoArea?.cdTipo === TipoEnum.ATRIBUIDA);
+  }, [detalhe?.obrigacao?.areas]);
+
+  // Áreas condicionantes
+  const areasCondicionantes = useMemo(() => {
+    return detalhe?.obrigacao?.areas?.filter((area) => area.tipoArea?.cdTipo === TipoEnum.CONDICIONANTE) ?? [];
+  }, [detalhe?.obrigacao?.areas]);
+
+  // IDs das áreas do usuário
+  const userAreaIds = useMemo(() => {
+    return userResponsavel?.areas?.map(ra => ra.area.idArea) || [];
+  }, [userResponsavel?.areas]);
+
+  // Se o usuário é da área atribuída
+  const idAreaAtribuida = areaAtribuida?.idArea;
+  const isDaAreaAtribuida = useMemo(() => {
+    return !!(idAreaAtribuida && userAreaIds.includes(idAreaAtribuida));
+  }, [idAreaAtribuida, userAreaIds]);
+
+  // Se o usuário é de uma área condicionante
+  const isDeAreaCondicionante = useMemo(() => {
+    const idsAreasCondicionantes = areasCondicionantes.map(area => area.idArea);
+    return idsAreasCondicionantes.some(idArea => userAreaIds.includes(idArea));
+  }, [areasCondicionantes, userAreaIds]);
+
+  const isDaAreaDiretoria = useMemo(() => {
+    if (!userResponsavel?.areas) return false;
+    return userResponsavel.areas.some(
+      ra => ra.area?.cdArea === CdAreaEnum.DIRETORIA || 
+            ra.area?.nmArea?.toLowerCase().includes('diretoria')
+    );
+  }, [userResponsavel?.areas]);
+
+  const isValidadorAssinanteDiretoria = useMemo(() => {
+    return idPerfil === perfilUtil.VALIDADOR_ASSINANTE && isDaAreaDiretoria;
+  }, [idPerfil, isDaAreaDiretoria]);
+
+  // Status helpers
+  const isStatusEmAndamento = useMemo(() => {
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.EM_ANDAMENTO.id;
+  }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
+  const isStatusAtrasada = useMemo(() => {
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.ATRASADA.id;
+  }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
+  const isStatusEmValidacaoRegulatorio = useMemo(() => {
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.EM_VALIDACAO_REGULATORIO.id;
+  }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
+  const isStatusPendente = useMemo(() => {
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.PENDENTE.id;
+  }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
+  const isStatusNaoIniciado = useMemo(() => {
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.NAO_INICIADO.id;
+  }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
+  const isStatusConcluido = useMemo(() => {
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.CONCLUIDO.id;
+  }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
+  const isStatusNaoAplicavelSuspensa = useMemo(() => {
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.NAO_APLICAVEL_SUSPENSA.id;
+  }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
+  const isStatusPreAnalise = useMemo(() => {
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.PRE_ANALISE.id;
+  }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
+  const isStatusAprovacaoTramitacao = useMemo(() => {
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.APROVACAO_DIRETORIA.id;
+  }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
+  const isStatusEmAssinaturaDiretoria = useMemo(() => {
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.EM_ASSINATURA_DIRETORIA.id;
+  }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
+  const isStatusEmAnaliseRegulatoria = useMemo(() => {
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.ANALISE_REGULATORIA.id;
+  }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
+  const isStatusVencidoRegulatorio = useMemo(() => {
+    return detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.VENCIDO_REGULATORIO.id;
+  }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
+  // Verificar se pode gerar relatório
+  const podeGerarRelatorio = useMemo(() => {
+    if (idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
+        idPerfil === perfilUtil.ADMINISTRADOR || 
+      idPerfil === perfilUtil.SUPER_ADMIN ||
+        idPerfil === perfilUtil.VALIDADOR_ASSINANTE) {
+      return true;
+    }
+    
+    if (idPerfil === perfilUtil.EXECUTOR_AVANCADO || 
+        idPerfil === perfilUtil.EXECUTOR) {
+      return isDaAreaAtribuida || isDeAreaCondicionante;
+    }
+    
+    return false;
+  }, [idPerfil, isDaAreaAtribuida, isDeAreaCondicionante]);
+
+  const isPerfilPermitidoPorStatus = useMemo(() => {
+    if (isValidadorAssinanteDiretoria) {
+      if (!isDaAreaAtribuida || isStatusEmAssinaturaDiretoria) {
+        return true;
+      }
+    }
+
+    if (isStatusNaoIniciado) {
+      if (isDaAreaAtribuida) {
+        return true;
+      }
+      return false;
+    }
+
+    if (isStatusEmValidacaoRegulatorio) {
+      if (idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
+        idPerfil === perfilUtil.ADMINISTRADOR || 
+        idPerfil === perfilUtil.SUPER_ADMIN ||
+        idPerfil === perfilUtil.VALIDADOR_ASSINANTE) {
+        return true;
+      }
+      return false;
+    }
+
+    if (isStatusEmAndamento || isStatusPendente || isStatusAtrasada) return true;
+
+    if (isStatusConcluido) {
+      if (idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
+        idPerfil === perfilUtil.ADMINISTRADOR || 
+        idPerfil === perfilUtil.SUPER_ADMIN ||
+        idPerfil === perfilUtil.VALIDADOR_ASSINANTE) {
+        return true;
+      }
+      return false;
+    }
+
+    if (isStatusNaoAplicavelSuspensa) {
+      if (idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
+        idPerfil === perfilUtil.ADMINISTRADOR || 
+        idPerfil === perfilUtil.SUPER_ADMIN ||
+        idPerfil === perfilUtil.VALIDADOR_ASSINANTE) {
+        return true;
+      }
+      return false;
+    }
+
+    return false;
+  }, [
+    idPerfil, 
+    isStatusNaoIniciado, 
+    isStatusEmAndamento,
+    isStatusPendente,
+    isStatusAtrasada,
+    isStatusEmValidacaoRegulatorio,
+    isStatusConcluido, 
+    isStatusNaoAplicavelSuspensa, 
+    isDaAreaAtribuida,
+    isValidadorAssinanteDiretoria,
+    isStatusEmAssinaturaDiretoria
+  ]);
+
+  // Status permitido para tramitar
+  const statusPermitidoParaTramitar = useMemo(() => {
+    const idStatus = detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao;
+    if (!idStatus) return false;
+    return [
+      statusList.NAO_INICIADO.id,
+      statusList.PENDENTE.id,  
+    ].includes(idStatus);
+  }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
+
+  // Tooltip para enviar comentário
+  const tooltipPerfilPermitidoPorStatus = useMemo(() => {
+    if (isValidadorAssinanteDiretoria && isDaAreaAtribuida && !isStatusEmAssinaturaDiretoria) {
+      return 'Por ser da área atribuída, não é possível adicionar parecer. Apenas é permitido quando o status for "Em Assinatura Diretoria" ou quando não for da área atribuída.';
+    }
+    
+    if (isValidadorAssinanteDiretoria) {
+      if (!isDaAreaAtribuida || isStatusEmAssinaturaDiretoria) {
+        return '';
+      }
+    }
+
+    if (isStatusNaoIniciado) {
+      if (!isDaAreaAtribuida) {
+        return 'Apenas usuários da área atribuída podem inserir comentários quando o status é "Não Iniciado".';
+      }
+      return '';
+    }
+
+    if (isStatusEmValidacaoRegulatorio) {
+      if (!(idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
+            idPerfil === perfilUtil.ADMINISTRADOR || 
+        idPerfil === perfilUtil.SUPER_ADMIN)) {
+        return 'Apenas administradores/gestores podem inserir comentários quando o status é "Em Validação (Regulatório)".';
+      }
+      return 'Você não tem permissão para inserir comentários neste status.';
+    }
+
+    if (isStatusConcluido) {
+      if (idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
+        idPerfil === perfilUtil.ADMINISTRADOR || 
+        idPerfil === perfilUtil.SUPER_ADMIN ||
+        idPerfil === perfilUtil.VALIDADOR_ASSINANTE) {
+        return '';
+      }
+      return 'Não é possível inserir comentários em obrigações concluídas. Apenas visualização permitida.';
+    }
+
+    if (isStatusNaoAplicavelSuspensa) {
+      if (idPerfil === perfilUtil.GESTOR_DO_SISTEMA || 
+        idPerfil === perfilUtil.ADMINISTRADOR || 
+        idPerfil === perfilUtil.SUPER_ADMIN ||
+        idPerfil === perfilUtil.VALIDADOR_ASSINANTE) {
+        return '';
+      }
+      return 'Não é possível inserir comentários em obrigações não aplicáveis/suspensas. Apenas Gestor do Sistema, Administrador ou Diretoria podem inserir comentários.';
+    }
+
+    return 'Você não tem permissão para inserir comentários neste status.';
+  }, [
+    isStatusNaoIniciado,
+    isStatusEmValidacaoRegulatorio,
+    isStatusConcluido,
+    isStatusNaoAplicavelSuspensa,
+    isDaAreaAtribuida,
+    idPerfil,
+    isValidadorAssinanteDiretoria,
+    isStatusEmAssinaturaDiretoria
+  ]);
+
+  return {
+    // Áreas
+    areaAtribuida,
+    areasCondicionantes,
+    userAreaIds,
+    idAreaAtribuida,
+    isDaAreaAtribuida,
+    isDeAreaCondicionante,
+    isDaAreaDiretoria,
+    isValidadorAssinanteDiretoria,
+    // Status
+    isStatusEmAndamento,
+    isStatusAtrasada,
+    isStatusEmValidacaoRegulatorio,
+    isStatusPendente,
+    isStatusNaoIniciado,
+    isStatusConcluido,
+    isStatusNaoAplicavelSuspensa,
+    isStatusPreAnalise,
+    isStatusAprovacaoTramitacao,
+    isStatusEmAssinaturaDiretoria,
+    isStatusEmAnaliseRegulatoria,
+    isStatusVencidoRegulatorio,
+    // Permissões
+    podeGerarRelatorio,
+    isPerfilPermitidoPorStatus,
+    statusPermitidoParaTramitar,
+    // Tooltips
+    tooltipPerfilPermitidoPorStatus,
+  };
+}
+

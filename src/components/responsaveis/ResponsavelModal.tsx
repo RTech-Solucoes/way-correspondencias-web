@@ -10,16 +10,19 @@ import {MultiSelectAreas} from '@/components/ui/multi-select-areas';
 import {MultiSelectConcessionarias} from '@/components/ui/multi-select-concessionarias';
 import {ResponsavelRequest, ResponsavelResponse} from '@/api/responsaveis/types';
 import {responsaveisClient} from '@/api/responsaveis/client';
-import {PerfilResponse} from '@/api/perfis/types';
+import {PerfilResponse, perfilUtil} from '@/api/perfis/types';
 import {perfisClient} from '@/api/perfis/client';
 import {toast} from 'sonner';
 import {formValidator, mask} from "@/utils/utils";
 import {z} from 'zod';
 import { responsavelAnexosClient } from '@/api/responsaveis/anexos-client';
-import { ArquivoDTO, TipoObjetoAnexo } from '@/api/anexos/type';
+import { ArquivoDTO, TipoObjetoAnexoEnum } from '@/api/anexos/type';
 import anexosClient from '@/api/anexos/client';
 import { useConcessionaria } from '@/context/concessionaria/ConcessionariaContext';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { useResponsavelValidation } from './hooks/use-responsavel-validation';
+import { useUserGestao } from '@/hooks/use-user-gestao';
+import { authClient } from '@/api/auth/client';
 
 interface ResponsavelModalProps {
   responsavel: ResponsavelResponse | null;
@@ -54,6 +57,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [showConcessionariaWarning, setShowConcessionariaWarning] = useState(false);
   const [pendingSubmit, setPendingSubmit] = useState<(() => void) | null>(null);
+  const { idPerfil: idPerfilLogado } = useUserGestao();
   
   const { concessionariaSelecionada } = useConcessionaria();
 
@@ -109,7 +113,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
     if (!responsavel) return;
     try {
       setPhotoBusy(true);
-      const anexos = await anexosClient.buscarPorIdObjetoETipoObjeto(responsavel.idResponsavel, TipoObjetoAnexo.R);
+      const anexos = await anexosClient.buscarPorIdObjetoETipoObjeto(responsavel.idResponsavel, TipoObjetoAnexoEnum.R);
       const byExt = anexos.find(a => /\.(jpg|jpeg|png)$/i.test(a.nmArquivo));
       const chosen = byExt || anexos[0];
       if (chosen) {
@@ -123,7 +127,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
           return;
         }
 
-        const arquivos = await anexosClient.download(responsavel.idResponsavel, TipoObjetoAnexo.R, chosen.nmArquivo);
+        const arquivos = await anexosClient.download(responsavel.idResponsavel, TipoObjetoAnexoEnum.R, chosen.nmArquivo);
         const first = arquivos?.find(a => (a.tipoConteudo?.startsWith('image/') ?? /\.(jpg|jpeg|png)$/i.test(a.nomeArquivo || '')));
         if (first?.conteudoArquivo) {
           const extMime = (chosen.nmArquivo || '').toLowerCase().endsWith('.png') ? 'image/png' : (/(\.jpe?g)$/i.test(chosen.nmArquivo || '') ? 'image/jpeg' : undefined);
@@ -266,7 +270,6 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
       ...prev,
       idsConcessionarias: selectedIds
     }));
-    // Limpar erro de validação quando uma concessionária for selecionada
     if (selectedIds.length > 0 && errors.idsConcessionarias) {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -276,14 +279,8 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
     }
   }, [errors.idsConcessionarias]);
 
-  const responsavelSchema = z.object({
-    nmResponsavel: formValidator.name,
-    nmUsuarioLogin: formValidator.username,
-    dsEmail: formValidator.email,
-    nrCpf: formValidator.cpf,
-    dtNascimento: formValidator.birthDate,
-    idPerfil: formValidator.id,
-    idsAreas: z.array(z.number()).min(1, 'Selecione pelo menos uma área'),
+  const { isFormValid, getValidationTooltip, responsavelSchema } = useResponsavelValidation({
+    formData,  errors, selectedAreaIds,  selectedConcessionariaIds,
   });
 
   const performSubmit = async () => {
@@ -314,6 +311,20 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
           await responsavelAnexosClient.upload(responsavel.idResponsavel, [dto]);
         }
         toast.success("Responsável atualizado com sucesso");
+
+        const loggedInUserId = authClient.getUserIdResponsavelFromToken();
+        const isEditingSelf = responsavel.idResponsavel === loggedInUserId;
+
+        const originalConcessionariaIds = responsavel.concessionarias?.map(c => c.idConcessionaria) || [];
+        const selectedIds = selectedConcessionariaIds || [];
+        const concessionariasChanged = originalConcessionariaIds.length !== selectedIds.length ||
+          !originalConcessionariaIds.every(id => selectedIds.includes(id));
+
+        if (isEditingSelf && concessionariasChanged) {
+          onClose();
+          window.location.reload();
+          return;
+        }
       } else {
         const created = await responsaveisClient.criar(responsavelRequest);
         if (selectedPhotoFile && created?.idResponsavel) {
@@ -371,22 +382,18 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
         return newErrors;
       });
     }
-
-    // Verificar se as concessionárias selecionadas incluem a concessionária atualmente selecionada
     const concessionariaAtualId = concessionariaSelecionada?.idConcessionaria;
     const temConcessionariasSelecionadas = selectedConcessionariaIds.length > 0;
     const incluiConcessionariaAtual = concessionariaAtualId 
       ? selectedConcessionariaIds.includes(concessionariaAtualId)
       : false;
 
-    // Se há concessionárias selecionadas mas não inclui a atual, mostrar aviso
     if (temConcessionariasSelecionadas && concessionariaAtualId && !incluiConcessionariaAtual) {
       setPendingSubmit(() => performSubmit);
       setShowConcessionariaWarning(true);
       return;
     }
 
-    // Caso contrário, salvar diretamente
     await performSubmit();
   };
 
@@ -402,11 +409,10 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
     onClose();
   };
 
-  const isFormValid = useCallback(() => {
-    const result = responsavelSchema.safeParse(formData);
-    return result.success && Object.keys(errors).length === 0;
-  }, [formData, errors]);
-
+  const isPerfilRestritoParaUsuarioAtual = useCallback((idPerfil: number) => {
+    return idPerfil === perfilUtil.SUPER_ADMIN && idPerfilLogado !== perfilUtil.SUPER_ADMIN
+  }, [idPerfilLogado])
+  
   return (
     <Dialog open={open} onOpenChange={(newOpen) => !newOpen && onClose()}>
       <DialogContent className="h-full flex flex-col">
@@ -492,7 +498,11 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
               <SelectContent>
                 {!loadingPerfis && perfis?.length > 0 ? (
                   perfis.map(perfil => (
-                    <SelectItem key={perfil.idPerfil} value={perfil.idPerfil.toString()}>
+                    <SelectItem 
+                      key={perfil.idPerfil} 
+                      value={perfil.idPerfil.toString()}
+                      disabled={isPerfilRestritoParaUsuarioAtual(perfil.idPerfil) }
+                    >
                       {perfil.nmPerfil}
                     </SelectItem>
                   ))
@@ -606,8 +616,9 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={loading || !isFormValid() || selectedAreaIds.length === 0 || selectedConcessionariaIds.length === 0}
+            disabled={loading || !isFormValid()}
             className="disabled:opacity-50 disabled:cursor-not-allowed"
+            tooltip={loading ? '' : (getValidationTooltip() || undefined)}
           >
             {loading ? 'Salvando...' : responsavel ? 'Salvar Alterações' : 'Criar Responsável'}
           </Button>

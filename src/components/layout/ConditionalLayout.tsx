@@ -1,15 +1,16 @@
 'use client';
 
 import {usePathname} from 'next/navigation';
+import { getCookie } from '@/utils/cookies';
 import {ReactNode, useCallback, useEffect, useState} from 'react';
 import {AppLayout} from './AppLayout';
 import {SidebarProvider} from '@/context/sidebar/SidebarContext';
 import {PUBLIC_ROUTES} from "@/constants/pages";
-import {User} from "@/types/auth/types";
+import {User} from "@/api/auth/types";
 import authClient from "@/api/auth/client";
 import responsaveisClient from "@/api/responsaveis/client";
 import anexosClient from "@/api/anexos/client";
-import { TipoObjetoAnexo } from "@/api/anexos/type";
+import { TipoObjetoAnexoEnum } from "@/api/anexos/type";
 
 const CONCESSIONARIA_CHECK_INTERVAL = 100; // ms
 const CONCESSIONARIA_TIMEOUT = 3000; // ms
@@ -20,10 +21,15 @@ interface ConditionalLayoutProps {
   children: ReactNode;
 }
 
+
 const waitForConcessionaria = (): Promise<void> => {
   return new Promise((resolve) => {
     const checkConcessionaria = () => {
-      const concessionaria = localStorage.getItem('concessionaria-selecionada');
+      if (typeof document === 'undefined') {
+        setTimeout(checkConcessionaria, CONCESSIONARIA_CHECK_INTERVAL);
+        return;
+      }
+      const concessionaria = getCookie('concessionaria-selecionada');
       if (concessionaria) {
         resolve();
       } else {
@@ -42,12 +48,12 @@ const createTimeout = (ms: number): Promise<void> => {
 
 const getResponsavelAvatar = async (idResponsavel: number): Promise<string | null> => {
   try {
-    const anexos = await anexosClient.buscarPorIdObjetoETipoObjeto(idResponsavel, TipoObjetoAnexo.R);
+    const anexos = await anexosClient.buscarPorIdObjetoETipoObjeto(idResponsavel, TipoObjetoAnexoEnum.R);
     const byExt = anexos.find(a => /(\.jpg|jpeg|png)$/i.test(a.nmArquivo));
     const chosen = byExt || anexos[0];
     if (!chosen) return null;
     
-    const arquivos = await anexosClient.download(idResponsavel, TipoObjetoAnexo.R, chosen.nmArquivo);
+    const arquivos = await anexosClient.download(idResponsavel, TipoObjetoAnexoEnum.R, chosen.nmArquivo);
     const first = arquivos?.find(a => (a.tipoConteudo?.startsWith('image/') ?? /(\.jpg|jpeg|png)$/i.test(a.nomeArquivo || '')));
     if (!first?.conteudoArquivo) return null;
     
@@ -212,3 +218,4 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
     </SidebarProvider>
   );
 }
+

@@ -1,25 +1,25 @@
 'use client';
 
-import { useMemo, useCallback } from 'react';
-import { toast } from 'sonner';
-import { SolicitacaoDetalheResponse } from '@/api/solicitacoes/types';
-import type { AnexoResponse, TipoObjetoAnexo } from '@/api/anexos/type';
-import { TipoResponsavelAnexo, ArquivoDTO } from '@/api/anexos/type';
 import { anexosClient } from '@/api/anexos/client';
+import type { AnexoResponse, TipoObjetoAnexoEnum } from '@/api/anexos/type';
+import { ArquivoDTO, TipoResponsavelAnexoEnum } from '@/api/anexos/type';
+import { CorrespondenciaDetalheResponse } from '@/api/correspondencia/types';
 import { base64ToUint8Array, saveBlob } from '@/utils/utils';
 import { DownloadIcon } from 'lucide-react';
+import { useCallback, useMemo } from 'react';
+import { toast } from 'sonner';
 import { Button } from '../ui/button';
 
 type AnexoItemShape = {
   idAnexo: number;
   idObjeto: number;
   nmArquivo: string;
-  tpObjeto: TipoObjetoAnexo;
-  tpResponsavel?: TipoResponsavelAnexo;
+  tpObjeto: TipoObjetoAnexoEnum;
+  tpResponsavel?: TipoResponsavelAnexoEnum;
 };
 
 interface AnexoModalTramitacaoProps {
-  solicitacao: SolicitacaoDetalheResponse | null;
+  correspondencia: CorrespondenciaDetalheResponse | null;
   canListarAnexo: boolean | null;
   isAnaliseGerenteRegulatorio: boolean;
 }
@@ -59,7 +59,7 @@ function AnexoItem({
 }
 
 export default function AnexoModalTramitacao({
-  solicitacao,
+  correspondencia,
   canListarAnexo,
   isAnaliseGerenteRegulatorio
 }: AnexoModalTramitacaoProps) {
@@ -92,11 +92,11 @@ export default function AnexoModalTramitacao({
   );
   
   const anexosData = useMemo(() => {
-    if (!solicitacao) return null;
+    if (!correspondencia) return null;
 
-    const anexosTramitacoes: AnexoResponse[] = (solicitacao?.tramitacoes ?? []).flatMap((t) => t?.anexos ?? []);
-    const anexosSolic: AnexoResponse[] = solicitacao?.anexosSolicitacao ?? [];
-    const anexosEmail: AnexoResponse[] = solicitacao?.email?.anexos ?? [];
+    const anexosTramitacoes: AnexoResponse[] = (correspondencia?.tramitacoes ?? []).flatMap((t) => t?.anexos ?? []);
+    const anexosSolic: AnexoResponse[] = correspondencia?.anexosSolicitacao ?? [];
+    const anexosEmail: AnexoResponse[] = correspondencia?.email?.anexos ?? [];
 
     const mapToItem = (
       a: Partial<AnexoResponse> & { idAnexo: number; idObjeto: number; nmArquivo: string; tpObjeto?: string }
@@ -104,24 +104,24 @@ export default function AnexoModalTramitacao({
       idAnexo: a.idAnexo,
       idObjeto: (a as AnexoResponse).idObjeto,
       nmArquivo: a.nmArquivo,
-      tpObjeto: (((a as AnexoResponse).tpObjeto as unknown) as TipoObjetoAnexo),
-      tpResponsavel: (a as { tpResponsavel?: TipoResponsavelAnexo })?.tpResponsavel,
+      tpObjeto: (((a as AnexoResponse).tpObjeto as unknown) as TipoObjetoAnexoEnum),
+      tpResponsavel: (a as { tpResponsavel?: TipoResponsavelAnexoEnum })?.tpResponsavel,
     });
 
     const anexosAnalista: AnexoItemShape[] = anexosTramitacoes
-      .filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexo.A)
+      .filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexoEnum.A)
       .map(mapToItem);
 
     const anexosGerente: AnexoItemShape[] = anexosTramitacoes
-      .filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexo.G)
+      .filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexoEnum.G)
       .map(mapToItem);
 
     const anexosDiretor: AnexoItemShape[] = anexosTramitacoes
-      .filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexo.D)
+      .filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexoEnum.D)
       .map(mapToItem);
 
     const anexosRegulatorio: AnexoItemShape[] = anexosTramitacoes 
-      .filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexo.R)
+      .filter((a: AnexoResponse) => a.tpResponsavel === TipoResponsavelAnexoEnum.R)
       .map(mapToItem);
     
     const itensSolicitacao: AnexoItemShape[] = anexosSolic.map(mapToItem);
@@ -135,7 +135,7 @@ export default function AnexoModalTramitacao({
       anexosDiretor,
       anexosRegulatorio
     };
-  }, [solicitacao]);
+  }, [correspondencia]);
 
   if (!canListarAnexo || !anexosData) {
     return null;

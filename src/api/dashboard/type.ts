@@ -8,6 +8,7 @@ export interface DashboardOverview {
 export interface DashboardListSummary {
     idSolicitacao: number;
     idArea: number;
+    cdIdentificacao?: string;
     nmArea: string;
     nmTema: string;
     dtCriacaoFormatada: string;
@@ -54,6 +55,7 @@ export interface SolicitacaoPrazo {
     minutosRestantes: number;
     estourou: 0 | 1;
     nmTema: string;
+    cdIdentificacao?: string;
 }
 
 export interface IRecentActivity {
@@ -87,4 +89,69 @@ export interface ICalendar {
 export interface ICalendarYear {
     mes: string;
     qtde: number;
+}
+
+export interface SolicitacaoCountResponse {
+    quantidadeCorrespondencias: number;
+    quantidadeObrigacoes: number;
+}
+
+export interface SolicitacaoAreaDTO {
+    idArea: number;
+    nmArea: string;
+    tipoArea?: {
+        idTipo: number;
+        nmCategoria: string;
+        cdTipo: string;
+        dsTipo: string;
+        flAtivo: string;
+    } | null;
+}
+
+export interface ObrigacaoPendenteResponse {
+    idSolicitacao: number;
+    cdIdentificacao: string;
+    nmStatus: string;
+    tarefa: string;
+    nmTema: string;
+    areas: SolicitacaoAreaDTO[];
+}
+
+export interface ObrigacaoRecentActivityDTO {
+    idSolicitacao: number;
+    nmResponsavel: string;
+    dsAssunto: string;
+    cdIdentificacao: string;
+    dtCriacao: string;
+    dsParecer?: string;
+    tpAtividade: 'TRAMITACAO' | 'PARECER';
+}
+
+export interface ObrigacaoAreaTemaDTO {
+    idSolicitacao: number;
+    areas: SolicitacaoAreaDTO[];
+    nmTema: string;
+    dtCriacao: string;
+    cdIdentificacao?: string;
+}
+
+export interface ObrigacaoPrazoResponse {
+    quantidadeDentroPrazo: number;
+    quantidadeForaPrazo: number;
+    percentualDentroPrazo: number;
+    percentualForaPrazo: number;
+    total: number;
+}
+
+export interface ObrigacaoTempoMedioResponse {
+    tempoMedioMinutos: number;
+    quantidadeObrigacoes: number;
+}
+
+export interface AreaRankingDTO {
+    idArea: number;
+    cdArea: string;
+    nmArea: string;
+    totalObrigacoes: number;
+    posicaoRanking: number;
 }

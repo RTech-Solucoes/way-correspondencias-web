@@ -1,43 +1,50 @@
 import CustomCardHeader from "../../card-header";
 import { Button } from "@/components/ui/button";
 
-type CalendarView = 'month' | 'week' | 'year';
+export type CalendarView = 'month' | 'week' | 'year';
 
-interface ICalendarHeader {
+export interface CalendarHeaderProps {
   calendarView: CalendarView;
   setCalendarView: React.Dispatch<React.SetStateAction<CalendarView>>;
+  title?: string;
+  description?: string;
 }
 
-export default function CalendarHeader(props: ICalendarHeader) {
+export default function CalendarHeader({ 
+  calendarView, 
+  setCalendarView, 
+  title = "Calendário de Solicitações",
+  description = "Visualize suas solicitações no calendário"
+}: CalendarHeaderProps) {
   return (
     <div className="w-full flex flex-row justify-between pr-8">
       <CustomCardHeader
-        title="Calendário de Solicitações"
-        description="Visualize suas solicitações no calendário"
+        title={title}
+        description={description}
       >
       </CustomCardHeader>
       <div className="flex items-center space-x-2">
         <Button
           variant="outline"
           size="sm"
-          onClick={() => props.setCalendarView('month')}
-          className={props.calendarView === 'month' ? "bg-blue-50 text-blue-700 border-blue-200" : ""}
+          onClick={() => setCalendarView('month')}
+          className={calendarView === 'month' ? "bg-blue-50 text-blue-700 border-blue-200" : ""}
         >
           Mês
         </Button>
         <Button
           variant="outline"
           size="sm"
-          onClick={() => props.setCalendarView('week')}
-          className={props.calendarView === 'week' ? "bg-blue-50 text-blue-700 border-blue-200" : ""}
+          onClick={() => setCalendarView('week')}
+          className={calendarView === 'week' ? "bg-blue-50 text-blue-700 border-blue-200" : ""}
         >
           Semana
         </Button>
         <Button
           variant="outline"
           size="sm"
-          onClick={() => props.setCalendarView('year')}
-          className={props.calendarView === 'year' ? "bg-blue-50 text-blue-700 border-blue-200" : ""}
+          onClick={() => setCalendarView('year')}
+          className={calendarView === 'year' ? "bg-blue-50 text-blue-700 border-blue-200" : ""}
         >
           Ano
         </Button>
