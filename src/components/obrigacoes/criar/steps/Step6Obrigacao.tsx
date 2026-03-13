@@ -293,7 +293,7 @@ export function Step6Obrigacao({ formData }: Step6ObrigacaoProps) {
       <div className="border-t pt-4">
         <div className="grid grid-cols-3 gap-4 mt-2">
           <div>
-            <span className="text-sm font-semibold text-gray-700">Agência Reguladora</span>
+            <span className="text-sm font-semibold text-gray-700">Orgão Regulador</span>
             <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
               {obrigacaoDetalhe?.dsAntt || formData?.dsAntt || 'Não informado'}
             </div>

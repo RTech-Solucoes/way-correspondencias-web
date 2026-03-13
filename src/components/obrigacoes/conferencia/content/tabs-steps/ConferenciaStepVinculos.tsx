@@ -116,7 +116,7 @@ export function ConferenciaStepVinculos({ obrigacao }: ConferenciaStepVinculosPr
 
         <InfoGridRow
           items={[
-            { label: 'Agência Reguladora', value: obrigacao.dsAntt?.trim() || '-' },
+            { label: 'Orgão Regulador', value: obrigacao.dsAntt?.trim() || '-' },
             { label: 'TAC', value: obrigacao.dsTac?.trim() || '-' },
           ]}
         />

@@ -142,7 +142,7 @@ export function Step5Obrigacao({ formData, updateFormData, disabled = false }: S
         </div>
   
         <div className="flex flex-col space-y-4">
-          <Label htmlFor="dsAntt">Agência Reguladora</Label>
+          <Label htmlFor="dsAntt">Orgão Regulador</Label>
           <Input
             disabled={disabled}
             id="dsAntt"
