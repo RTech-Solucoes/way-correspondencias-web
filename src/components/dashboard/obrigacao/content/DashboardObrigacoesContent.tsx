@@ -52,7 +52,6 @@ export default function DashboardObrigacoesContent() {
     setRefreshTrigger(prev => prev + 1);
   };
 
-  // TODO: Comentando, pois não estava no escopo entrega da WAY
   // const aplicarFiltros = () => {
   //   setFiltrosAplicados(filtros);
   //   refreshData();
@@ -73,7 +72,6 @@ export default function DashboardObrigacoesContent() {
         tipoFluxo={TipoEnum.OBRIGACAO}
       />
 
-      {/* TODO: Comentando, pois não estava no escopo entrega da WAY */}
       {/* <DashboardObrigacoesDateFilter
         values={filtros}
         onChange={setFiltros}

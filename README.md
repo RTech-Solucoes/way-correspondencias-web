@@ -44,6 +44,7 @@ Este é uma plataforma de gestão de correspondências que facilita o controle e
 
 - **Node.js** 18+ ou **Bun** (recomendado)
 - **npm**, **yarn** ou **bun** como gerenciador de pacotes
+- **API backend** em execução e acessível (por padrão `http://localhost:8080/api`; ajuste `NEXT_PUBLIC_API_URL` se for outro host/porta)
 
 ### Passos de Instalação
 
@@ -67,13 +68,18 @@ Este é uma plataforma de gestão de correspondências que facilita o controle e
 
 3. **Configure as variáveis de ambiente**
    
-   Crie um arquivo `.env.local` na raiz do projeto:
-   ```bash
-   # URL da API backend
-   NEXT_PUBLIC_API_URL=http://localhost:8080/api
+   Na raiz do projeto, crie o arquivo **`.env.local`** (nome usado pelo Next.js). Não use `.env-local` — esse nome não é carregado automaticamente.
    
-   # Layout do cliente (way ou mvp)
+   Variáveis utilizadas pelo frontend (todas com prefixo `NEXT_PUBLIC_`):
+   ```bash
+   # URL base da API (REST)
+   NEXT_PUBLIC_API_URL=http://localhost:8080/api
+
+   # Tema/branding: "way" (Way Brasil) ou "mvp" (RTech / testes)
    NEXT_PUBLIC_LAYOUT_CLIENT=way
+
+   # Integração LDAP: "true" ou "false" (deve estar alinhado ao backend)
+   NEXT_PUBLIC_LDAP_ENABLED=false
    ```
 
 4. **Execute o projeto em modo de desenvolvimento**
@@ -87,7 +93,7 @@ Este é uma plataforma de gestão de correspondências que facilita o controle e
 
 5. **Acesse a aplicação**
    
-   Abra o navegador em [http://localhost:3000](http://localhost:3000)
+   Abra o navegador em [http://localhost:3000](http://localhost:3000). Sem o backend na URL configurada em `NEXT_PUBLIC_API_URL`, login e demais chamadas à API falharão.
 
 ## ⚙️ Scripts Disponíveis
 
@@ -116,7 +122,9 @@ src/
 │
 ├── app/                          # Páginas da aplicação (App Router)
 │   ├── areas/                   # Página de gestão de áreas
-│   ├── dashboard/               # Dashboard principal
+│   ├── dashboard-correspondencia/ # Dashboard de correspondências
+│   ├── dashboard-obrigacoes/    # Dashboard de obrigações
+│   ├── obrigacao/               # Fluxo de obrigações (lista, edição, conferência)
 │   ├── email/                   # Página de gestão de emails
 │   ├── responsaveis/            # Página de gestão de responsáveis
 │   ├── solicitacoes/            # Página de gestão de solicitações
@@ -312,13 +320,11 @@ Criar a pasta `public/images/nome_novo_cliente/` e adicionar os arquivos de imag
 
 ### 2.3 Configuração LDAP
 
-A variável `NEXT_PUBLIC_LDAP_ENABLED` controla a integração com LDAP:
+A variável `NEXT_PUBLIC_LDAP_ENABLED` controla a integração com LDAP. Use os valores literais `"true"` ou `"false"` (string), alinhados ao backend:
 
 ```bash
-NEXT_PUBLIC_LDAP_ENABLED="true"  # Habilita LDAP
-NEXT_PUBLIC_LDAP_ENABLED="false" # Desabilita LDAP (padrão)
-NEXT_PUBLIC_LDAP_ENABLED="true" # Indica se login é via LDAP ou não (true/false)
-
+NEXT_PUBLIC_LDAP_ENABLED=true   # Habilita LDAP
+NEXT_PUBLIC_LDAP_ENABLED=false  # Desabilita LDAP (padrão local)
 ```
 
 **Importante:** Deve possuir o mesmo valor no frontend e no backend.
@@ -350,15 +356,13 @@ Quando o sistema **não** está configurado com LDAP, a senha padrão para o usu
 
 ### Variáveis de Ambiente
 
-Crie `.env.local` com as seguintes variáveis:
+Use `.env.local` na raiz (ver passos em **Instalação e Configuração**). Resumo:
 
-```bash
-# URL da API backend
-NEXT_PUBLIC_API_URL=http://localhost:8080/api
-
-# Layout do cliente (way ou mvp)
-NEXT_PUBLIC_LAYOUT_CLIENT=way
-```
+| Variável | Obrigatória | Descrição |
+|----------|-------------|-----------|
+| `NEXT_PUBLIC_API_URL` | Sim | URL base da API |
+| `NEXT_PUBLIC_LAYOUT_CLIENT` | Sim | `way` ou `mvp` |
+| `NEXT_PUBLIC_LDAP_ENABLED` | Recomendada | `true` ou `false` |
 
 ### Estrutura da API
 
@@ -442,6 +446,8 @@ NEXT_PUBLIC_API_URL=https://api.exemplo.com/api
 # Layout do cliente (way ou mvp)
 NEXT_PUBLIC_LAYOUT_CLIENT=way
 
+NEXT_PUBLIC_LDAP_ENABLED=false
+
 # Variáveis adicionais (se necessário)
 NODE_ENV=production
 ```
@@ -471,6 +477,7 @@ NODE_ENV=production
 env:
   NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
   NEXT_PUBLIC_LAYOUT_CLIENT: ${{ secrets.NEXT_PUBLIC_LAYOUT_CLIENT }}
+  NEXT_PUBLIC_LDAP_ENABLED: ${{ secrets.NEXT_PUBLIC_LDAP_ENABLED }}
   NODE_ENV: production
 ```
 
@@ -521,4 +528,4 @@ Desenvolvido pela equipe RTech Solution.
 ---
 
 **Versão:** 0.1.0  
-**Última atualização:** 2025
+**Última atualização:** 2026

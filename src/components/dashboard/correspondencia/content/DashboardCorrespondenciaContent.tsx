@@ -35,7 +35,6 @@ export default function DashboardCorrespondenciaContent() {
     setRefreshTrigger(prev => prev + 1);
   };
 
-  // TODO: Comentando, pois não estava no escopo entrega da WAY
   // const aplicarFiltros = () => {
   //   setFiltrosAplicados(filtros);
   //   refreshData();
@@ -68,7 +67,6 @@ export default function DashboardCorrespondenciaContent() {
         tipoFluxo={TipoEnum.CORRESPONDENCIA}
       />
 
-      {/* TODO: Comentando, pois não estava no escopo entrega da WAY */}
       {/* <DashboardDateFilter
         values={filtros}
         onChange={setFiltros}
