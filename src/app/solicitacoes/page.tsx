@@ -5,19 +5,18 @@ import { makeQueryClient } from "@/lib/query-client";
 import { solicitacoesKeys } from "@/components/solicitacoes/hooks/use-solicitacoes-query";
 import LoadingOverlay from "@/components/ui/loading-overlay";
 import { Suspense } from "react";
-// TODO: Comentando, pois não estava no escopo entrega da WAY
+
 // import { getPeriodoConcessao } from "@/utils/concession-period";
 
 export default async function SolicitacoesPage() {
   const queryClient = makeQueryClient();
   
-  // TODO: Comentando, pois não estava no escopo entrega da WAY
+
   // const { dtInicio, dtFim } = await getPeriodoConcessao();
 
   const initialParams = {
     page: 0,
     size: 10,
-    // // TODO: Comentando, pois não estava no escopo entrega da WAY
     // dtCriacaoInicio: dtInicio ?? undefined,
     // dtCriacaoFim: dtFim ?? undefined,
   };
@@ -38,7 +37,6 @@ export default async function SolicitacoesPage() {
         }
       >
         <HydrationBoundary state={dehydrate(queryClient)}>
-          {/* TODO: Comentando, pois não estava no escopo entrega da WAY */}
           {/* <SolicitacoesContent defaultFilters={initialParams} /> */}
           <SolicitacoesContent defaultFilters={initialParams} />
         </HydrationBoundary>
