@@ -3,7 +3,7 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY package.json ./
+COPY package.json yarn.lock* ./
 
 RUN yarn install --frozen-lockfile
 RUN yarn cache clean
@@ -17,13 +17,19 @@ FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-COPY package.json ./
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+COPY package.json yarn.lock* ./
 RUN yarn install --frozen-lockfile --production
 RUN yarn cache clean
 
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/next.config.js ./next.config.js
+
+RUN chown -R appuser:appgroup /app
+
+USER appuser
 
 EXPOSE 3000
 
