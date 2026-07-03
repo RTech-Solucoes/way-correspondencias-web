@@ -380,6 +380,7 @@ export function formatMinutosEmDiasHorasMinutos(totalMinutes?: number | null): s
 }
 
 
+
 export const formatDateBr = (dateString?: string): string => {
   if (!dateString) return '';
   const parts = dateString.split('-');

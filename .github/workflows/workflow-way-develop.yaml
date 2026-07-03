@@ -1,9 +1,7 @@
 name: Deploy Way Correspondencias Web for Develop
 
 on:
-  push:
-    branches:
-      - develop
+  workflow_dispatch:
 
 jobs:
   deploy:
