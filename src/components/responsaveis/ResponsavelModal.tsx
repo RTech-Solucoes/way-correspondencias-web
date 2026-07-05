@@ -287,9 +287,27 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
 
   const shouldShowAllErrors = submitAttempted || !!responsavel;
 
-  const displayErrors = shouldShowAllErrors
-    ? { ...getFieldErrors(), ...errors }
-    : errors;
+  const fieldErrors = getFieldErrors();
+
+  const formIsPartiallyFilled = Boolean(
+    formData.nmResponsavel?.trim() ||
+    formData.nmUsuarioLogin?.trim() ||
+    formData.dsEmail?.trim() ||
+    formData.nrCpf?.trim() ||
+    formData.dtNascimento ||
+    formData.idPerfil > 0 ||
+    selectedConcessionariaIds.length > 0 ||
+    selectedAreaIds.length > 0
+  );
+
+  const displayErrors: Record<string, string> = { ...errors };
+
+  if (shouldShowAllErrors) {
+    Object.assign(displayErrors, fieldErrors);
+  } else if (formIsPartiallyFilled) {
+    if (fieldErrors.idsAreas) displayErrors.idsAreas = fieldErrors.idsAreas;
+    if (fieldErrors.idsConcessionarias) displayErrors.idsConcessionarias = fieldErrors.idsConcessionarias;
+  }
 
   const performSubmit = async () => {
     try {
@@ -581,23 +599,20 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
               selectedAreaIds={selectedAreaIds}
               onSelectionChange={handleAreasSelectionChange}
               label="Áreas *"
+              labelRequired
               disabled={false}
+              error={displayErrors.idsAreas}
             />
-            {displayErrors.idsAreas && (
-              <p className="text-sm text-red-500 mt-1">{displayErrors.idsAreas}</p>
-            )}
           </div>
 
           <div>
             <MultiSelectConcessionarias
               selectedConcessionariaIds={selectedConcessionariaIds}
               onSelectionChange={handleConcessionariasSelectionChange}
-              label="Concessionárias"
+              label="Concessionárias *"
               disabled={false}
+              error={displayErrors.idsConcessionarias}
             />
-            {displayErrors.idsConcessionarias && (
-              <p className="text-sm text-red-500 mt-1">{displayErrors.idsConcessionarias}</p>
-            )}
           </div>
 
         </form>

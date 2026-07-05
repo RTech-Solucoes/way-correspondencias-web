@@ -6,7 +6,7 @@ import {Badge} from '@/components/ui/badge';
 import {AreaExecutorAvancadoResponse} from '@/api/areas/types';
 import {areasClient} from '@/api/areas/client';
 import {cn} from '@/utils/utils';
-import {CheckIcon} from '@phosphor-icons/react';
+import {CheckIcon, WarningCircleIcon} from '@phosphor-icons/react';
 
 interface MultiSelectAreasProps {
   selectedAreaIds: number[];
@@ -17,6 +17,7 @@ interface MultiSelectAreasProps {
   maxSelection?: number;
   excludedAreaIds?: number[]; 
   labelRequired?: boolean;
+  error?: string;
 }
 
 export function MultiSelectAreas({
@@ -27,7 +28,8 @@ export function MultiSelectAreas({
   disabled,
   maxSelection,
   excludedAreaIds = [],
-  labelRequired = false
+  labelRequired = false,
+  error,
 }: MultiSelectAreasProps) {
   const [areaExecutorAvancado, setAreaExecutorAvancado] = useState<AreaExecutorAvancadoResponse[]>([]);
   const [loading, setLoading] = useState(false);
@@ -111,7 +113,11 @@ export function MultiSelectAreas({
         </div>
       ) : (
         <div
-          className={cn("mt-2 grid grid-cols-1 md:grid-cols-3 gap-3 overflow-y-auto", disabled && "pointer-events-none")}
+          className={cn(
+            "mt-2 grid grid-cols-1 md:grid-cols-3 gap-3 overflow-y-auto",
+            disabled && "pointer-events-none",
+            error && "rounded-2xl border border-red-500 p-2"
+          )}
           aria-disabled={disabled || undefined}
         >
           {areaExecutorAvancado
@@ -176,6 +182,12 @@ export function MultiSelectAreas({
       {selectedAreaIds?.length > 0 && (
         <div className="text-xs text-gray-500 mt-2">
           {selectedAreaIds?.length} área(s) selecionada(s)
+        </div>
+      )}
+      {error && (
+        <div className="flex items-center gap-1">
+          <WarningCircleIcon className="h-4 w-4 text-red-500 flex-shrink-0" />
+          <p className="text-red-500 text-sm">{error}</p>
         </div>
       )}
     </div>
