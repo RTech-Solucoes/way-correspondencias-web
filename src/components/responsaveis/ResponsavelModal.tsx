@@ -57,6 +57,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [showConcessionariaWarning, setShowConcessionariaWarning] = useState(false);
   const [pendingSubmit, setPendingSubmit] = useState<(() => void) | null>(null);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
   const { idPerfil: idPerfilLogado } = useUserGestao();
   
   const { concessionariaSelecionada } = useConcessionaria();
@@ -155,6 +156,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
   useEffect(() => {
     if (!open) return;
     setErrors({});
+    setSubmitAttempted(false);
     if (responsavel) {
       carregarDadosResponsavel();
     } else {
@@ -279,9 +281,15 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
     }
   }, [errors.idsConcessionarias]);
 
-  const { isFormValid, getValidationTooltip, responsavelSchema } = useResponsavelValidation({
+  const { getFieldErrors, isFormValid, getValidationTooltip } = useResponsavelValidation({
     formData,  errors, selectedAreaIds,  selectedConcessionariaIds,
   });
+
+  const shouldShowAllErrors = submitAttempted || !!responsavel;
+
+  const displayErrors = shouldShowAllErrors
+    ? { ...getFieldErrors(), ...errors }
+    : errors;
 
   const performSubmit = async () => {
     try {
@@ -345,43 +353,16 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
   };
 
   const handleSubmit = async () => {
-    const result = responsavelSchema.safeParse(formData);
+    setSubmitAttempted(true);
 
-    if (!result.success) {
-      const fieldErrors: Record<string, string> = {};
-      result.error.issues.forEach((issue) => {
-        const path = issue.path[0] as string;
-        fieldErrors[path] = issue.message;
-      });
-      setErrors(fieldErrors);
+    const fieldErrors = getFieldErrors();
+    setErrors(fieldErrors);
+
+    if (Object.keys(fieldErrors).length > 0) {
       toast.error('Por favor, corrija os erros no formulário');
       return;
     }
 
-    if (selectedAreaIds.length === 0) {
-      setErrors(prev => ({ ...prev, idsAreas: 'Selecione pelo menos uma área' }));
-      return;
-    }
-
-    if (selectedConcessionariaIds.length === 0) {
-      setErrors(prev => ({ ...prev, idsConcessionarias: 'Selecione pelo menos uma concessionária' }));
-      return;
-    }
-
-    if (errors.idsAreas) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors.idsAreas;
-        return newErrors;
-      });
-    }
-    if (errors.idsConcessionarias) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors.idsConcessionarias;
-        return newErrors;
-      });
-    }
     const concessionariaAtualId = concessionariaSelecionada?.idConcessionaria;
     const temConcessionariasSelecionadas = selectedConcessionariaIds.length > 0;
     const incluiConcessionariaAtual = concessionariaAtualId 
@@ -430,7 +411,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
             value={formData.nmResponsavel}
             onChange={handleChange}
             onBlur={() => validateField('nmResponsavel', formData.nmResponsavel)}
-            error={errors.nmResponsavel}
+            error={displayErrors.nmResponsavel}
             required
             autoFocus
           />
@@ -441,7 +422,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
             value={formData.nmUsuarioLogin}
             onChange={handleChange}
             onBlur={() => validateField('nmUsuarioLogin', formData.nmUsuarioLogin)}
-            error={errors.nmUsuarioLogin}
+            error={displayErrors.nmUsuarioLogin}
             required
           />
 
@@ -452,7 +433,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
             value={formData.dsEmail}
             onChange={handleChange}
             onBlur={() => validateField('dsEmail', formData.dsEmail)}
-            error={errors.dsEmail}
+            error={displayErrors.dsEmail}
             required
           />
 
@@ -464,7 +445,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
             maxLength={14}
             required
             onBlur={() => validateField('nrCpf', formData.nrCpf)}
-            error={errors.nrCpf}
+            error={displayErrors.nrCpf}
           />
 
           <TextField
@@ -481,7 +462,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
             value={formData.dtNascimento}
             onChange={handleChange}
             onBlur={() => validateField('dtNascimento', formData.dtNascimento)}
-            error={errors.dtNascimento}
+            error={displayErrors.dtNascimento}
             required
           />
 
@@ -489,10 +470,17 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
             <Label htmlFor="idPerfil">Perfil *</Label>
             <Select
               value={formData.idPerfil > 0 ? formData.idPerfil.toString() : ""}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, idPerfil: parseInt(value) }))}
+              onValueChange={(value) => {
+                setFormData(prev => ({ ...prev, idPerfil: parseInt(value) }));
+                setErrors(prev => {
+                  const next = { ...prev };
+                  delete next.idPerfil;
+                  return next;
+                });
+              }}
               disabled={loadingPerfis}
             >
-              <SelectTrigger>
+              <SelectTrigger className={displayErrors.idPerfil ? 'border-red-500 focus:ring-red-500' : ''}>
                 <SelectValue placeholder={loadingPerfis ? "Carregando perfis..." : "Selecione o perfil"} />
               </SelectTrigger>
               <SelectContent>
@@ -513,6 +501,9 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
                 ) : null}
               </SelectContent>
             </Select>
+            {displayErrors.idPerfil && (
+              <p className="text-sm text-red-500">{displayErrors.idPerfil}</p>
+            )}
           </div>
 
           <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
@@ -592,8 +583,8 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
               label="Áreas *"
               disabled={false}
             />
-            {errors.idsAreas && (
-              <p className="text-sm text-red-500 mt-1">{errors.idsAreas}</p>
+            {displayErrors.idsAreas && (
+              <p className="text-sm text-red-500 mt-1">{displayErrors.idsAreas}</p>
             )}
           </div>
 
@@ -604,8 +595,8 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
               label="Concessionárias"
               disabled={false}
             />
-            {errors.idsConcessionarias && (
-              <p className="text-sm text-red-500 mt-1">{errors.idsConcessionarias}</p>
+            {displayErrors.idsConcessionarias && (
+              <p className="text-sm text-red-500 mt-1">{displayErrors.idsConcessionarias}</p>
             )}
           </div>
 
@@ -618,7 +609,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
             onClick={handleSubmit}
             disabled={loading || !isFormValid()}
             className="disabled:opacity-50 disabled:cursor-not-allowed"
-            tooltip={loading ? '' : (getValidationTooltip() || undefined)}
+            tooltip={loading || isFormValid() ? undefined : (getValidationTooltip() || 'Corrija os campos destacados abaixo')}
           >
             {loading ? 'Salvando...' : responsavel ? 'Salvar Alterações' : 'Criar Responsável'}
           </Button>

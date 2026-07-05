@@ -39,6 +39,24 @@ export function useDeleteResponsavel() {
 }
 
 // Hook para gerar senha
+function getGerarSenhaErrorMessage(error: Error): string {
+  const message = error.message?.trim();
+
+  if (!message) {
+    return 'Não foi possível enviar o e-mail com a senha de acesso. Tente novamente.';
+  }
+
+  if (/smtp|e-mail|email|mail/i.test(message)) {
+    return message;
+  }
+
+  if (/ldap/i.test(message)) {
+    return message;
+  }
+
+  return message;
+}
+
 export function useGerarSenhaResponsavel() {
   const queryClient = useQueryClient();
 
@@ -46,10 +64,10 @@ export function useGerarSenhaResponsavel() {
     mutationFn: (id: number) => responsaveisClient.gerarSenhaEEnviarEmail(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: responsaveisKeys.lists() });
-      toast.success('Senha gerada e enviada por email com sucesso!');
+      toast.success('Senha gerada e enviada por e-mail com sucesso!');
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Erro ao gerar senha. Tente novamente.');
+      toast.error(getGerarSenhaErrorMessage(error));
     },
   });
 }

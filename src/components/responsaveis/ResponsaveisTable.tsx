@@ -185,7 +185,7 @@ export default function ResponsaveisTable({
                           size="sm"
                           onClick={() => handleGerarSenhaClick(responsavel)}
                           disabled={isDisabled}
-                          title={isUsuarioLogado ? 'Você não pode gerar senha para você mesmo.' : 'Gerar Senha'}
+                          tooltip={isUsuarioLogado ? 'Você não pode gerar senha para você mesmo.' : 'Gerar Senha de Acesso'}
                         >
                           {gerandoSenha === responsavel.idResponsavel ? (
                             <SpinnerIcon className="h-4 w-4 animate-spin"/>

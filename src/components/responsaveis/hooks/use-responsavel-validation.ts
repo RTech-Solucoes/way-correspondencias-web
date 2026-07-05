@@ -28,97 +28,66 @@ export function useResponsavelValidation({
   selectedAreaIds,
   selectedConcessionariaIds,
 }: UseResponsavelValidationProps) {
-  const isFormValid = useCallback(() => {
-    const result = responsavelSchema.safeParse(formData);
-    return (
-      result.success &&
-      Object.keys(errors).length === 0 &&
-      selectedAreaIds.length > 0 &&
-      selectedConcessionariaIds.length > 0
-    );
-  }, [formData, errors, selectedAreaIds, selectedConcessionariaIds]);
-
-  const getValidationTooltip = useCallback(() => {
+  const getFieldErrors = useCallback((): Record<string, string> => {
+    const fieldErrors: Record<string, string> = {};
 
     const schemaResult = responsavelSchema.safeParse(formData);
-    const schemaErrors: Record<string, string> = {};
-
     if (!schemaResult.success) {
       schemaResult.error.issues.forEach((issue) => {
         const path = issue.path[0] as string;
-        schemaErrors[path] = issue.message;
+        if (!fieldErrors[path]) {
+          fieldErrors[path] = issue.message;
+        }
       });
     }
 
-    const missingFields: string[] = [];
-    const validationErrors: string[] = [];
-
-    if (schemaErrors.nmResponsavel || errors.nmResponsavel) {
-      validationErrors.push('Nome inválido');
-    } else if (!formData.nmResponsavel?.trim()) {
-      missingFields.push('Nome');
+    if (!formData.nmResponsavel?.trim()) {
+      fieldErrors.nmResponsavel = fieldErrors.nmResponsavel || 'Nome é obrigatório';
+    }
+    if (!formData.nmUsuarioLogin?.trim()) {
+      fieldErrors.nmUsuarioLogin = fieldErrors.nmUsuarioLogin || 'Usuário é obrigatório';
+    }
+    if (!formData.dsEmail?.trim()) {
+      fieldErrors.dsEmail = fieldErrors.dsEmail || 'Email é obrigatório';
+    }
+    if (!formData.nrCpf?.trim()) {
+      fieldErrors.nrCpf = fieldErrors.nrCpf || 'CPF é obrigatório';
+    }
+    if (!formData.dtNascimento) {
+      fieldErrors.dtNascimento = fieldErrors.dtNascimento || 'Data de nascimento é obrigatória';
+    }
+    if (!formData.idPerfil || formData.idPerfil === 0) {
+      fieldErrors.idPerfil = 'Selecione um perfil';
+    }
+    if (selectedAreaIds.length === 0) {
+      fieldErrors.idsAreas = 'Selecione pelo menos uma área';
+    }
+    if (selectedConcessionariaIds.length === 0) {
+      fieldErrors.idsConcessionarias = 'Selecione pelo menos uma concessionária';
     }
 
-    if (schemaErrors.nmUsuarioLogin || errors.nmUsuarioLogin) {
-      validationErrors.push('Usuário inválido');
-    } else if (!formData.nmUsuarioLogin?.trim()) {
-      missingFields.push('Usuário');
-    }
+    return fieldErrors;
+  }, [formData, selectedAreaIds, selectedConcessionariaIds]);
 
-    if (schemaErrors.dsEmail || errors.dsEmail) {
-      validationErrors.push('Email inválido');
-    } else if (!formData.dsEmail?.trim()) {
-      missingFields.push('Email');
-    }
+  const isFormValid = useCallback(() => {
+    return Object.keys(getFieldErrors()).length === 0;
+  }, [getFieldErrors]);
 
-    if (schemaErrors.nrCpf || errors.nrCpf) {
-      validationErrors.push('CPF inválido');
-    } else if (!formData.nrCpf?.trim()) {
-      missingFields.push('CPF');
-    }
+  const getValidationTooltip = useCallback(() => {
+    const fieldErrors = getFieldErrors();
+    const allErrors = { ...fieldErrors, ...errors };
 
-    if (schemaErrors.dtNascimento || errors.dtNascimento) {
-      validationErrors.push('Data de Nascimento inválida');
-    } else if (!formData.dtNascimento) {
-      missingFields.push('Data de Nascimento');
-    }
-
-    if (schemaErrors.idPerfil || errors.idPerfil) {
-      validationErrors.push('Perfil inválido');
-    } else if (!formData.idPerfil || formData.idPerfil === 0) {
-      missingFields.push('Perfil');
-    }
-
-    if (schemaErrors.idsAreas || errors.idsAreas) {
-      validationErrors.push('Selecione pelo menos uma área');
-    } else if (selectedAreaIds.length === 0) {
-      missingFields.push('Áreas');
-    }
-
-    if (errors.idsConcessionarias) {
-      validationErrors.push('Selecione pelo menos uma concessionária');
-    } else if (selectedConcessionariaIds.length === 0) {
-      missingFields.push('Concessionárias');
-    }
-
-    if (missingFields.length === 0 && validationErrors.length === 0) {
+    if (Object.keys(allErrors).length === 0) {
       return '';
     }
 
-    const messages: string[] = [];
-    if (missingFields.length > 0) {
-      messages.push(`Preencha: ${missingFields.join(', ')}`);
-    }
-    if (validationErrors.length > 0) {
-      messages.push(`Corrija: ${validationErrors.join(', ')}`);
-    }
-
-    return messages.join(' | ');
-  }, [formData, selectedAreaIds, selectedConcessionariaIds, errors]);
+    return 'Corrija os campos destacados abaixo';
+  }, [getFieldErrors, errors]);
 
   return {
     isFormValid,
     getValidationTooltip,
+    getFieldErrors,
     responsavelSchema,
   };
 }
