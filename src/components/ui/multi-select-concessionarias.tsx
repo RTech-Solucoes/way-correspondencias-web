@@ -5,7 +5,7 @@ import {Label} from '@/components/ui/label';
 import {ConcessionariaResponse} from '@/api/concessionaria/types';
 import concessionariaClient from '@/api/concessionaria/client';
 import {cn} from '@/utils/utils';
-import {CheckIcon} from '@phosphor-icons/react';
+import {CheckIcon, WarningCircleIcon} from '@phosphor-icons/react';
 import { perfilUtil } from '@/api/perfis/types';
 import { useUserGestao } from '@/hooks/use-user-gestao';
 
@@ -15,6 +15,7 @@ interface MultiSelectConcessionariasProps {
   label?: string;
   className?: string;
   disabled?: boolean;
+  error?: string;
 }
 
 export function MultiSelectConcessionarias({
@@ -22,7 +23,8 @@ export function MultiSelectConcessionarias({
   onSelectionChange,
   label = "Concessionárias",
   className,
-  disabled
+  disabled,
+  error,
 }: MultiSelectConcessionariasProps) {
   const [concessionarias, setConcessionarias] = useState<ConcessionariaResponse[]>([]);
   const [loading, setLoading] = useState(false);
@@ -66,7 +68,7 @@ export function MultiSelectConcessionarias({
       aria-disabled={disabled || undefined}
     >
       <Label
-        className={cn(disabled && 'opacity-50')}
+        className={cn(disabled && 'opacity-50', error && 'text-red-500')}
       >{label}</Label>
       {loading ? (
         <div className="flex items-center justify-center p-8">
@@ -74,7 +76,11 @@ export function MultiSelectConcessionarias({
         </div>
       ) : (
         <div
-          className={cn("mt-2 grid grid-cols-1 md:grid-cols-3 gap-3 overflow-y-auto", disabled && "pointer-events-none")}
+          className={cn(
+            "mt-2 grid grid-cols-1 md:grid-cols-3 gap-3 overflow-y-auto",
+            disabled && "pointer-events-none",
+            error && "rounded-2xl border border-red-500 p-2"
+          )}
           aria-disabled={disabled || undefined}
         >
           {concessionarias.map((concessionaria) => {
@@ -128,6 +134,12 @@ export function MultiSelectConcessionarias({
       {selectedConcessionariaIds?.length > 0 && (
         <div className="text-xs text-gray-500 mt-2">
           {selectedConcessionariaIds?.length} concessionária(s) selecionada(s)
+        </div>
+      )}
+      {error && (
+        <div className="flex items-center gap-1">
+          <WarningCircleIcon className="h-4 w-4 text-red-500 flex-shrink-0" />
+          <p className="text-red-500 text-sm">{error}</p>
         </div>
       )}
     </div>

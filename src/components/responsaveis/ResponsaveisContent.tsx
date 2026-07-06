@@ -129,6 +129,7 @@ export function ResponsaveisContent() {
       <ConfirmationDialog
         open={showGerarSenhaDialog}
         onOpenChange={(open) => {
+          if (gerandoSenha) return;
           setShowGerarSenhaDialog(open);
           if (!open) {
             setResponsavelParaGerarSenha(null);
@@ -136,10 +137,12 @@ export function ResponsaveisContent() {
         }}
         onConfirm={confirmGerarSenha}
         title="Gerar Senha de Acesso"
-        description={`Deseja realmente enviar a senha de acesso ao cliente do responsável "${responsavelParaGerarSenha?.nmResponsavel}"? A senha será gerada e enviada por email.`}
+        description={`Deseja realmente enviar a senha de acesso para ${responsavelParaGerarSenha?.nmResponsavel ?? 'o responsável'} (${responsavelParaGerarSenha?.dsEmail ?? 'e-mail não informado'})? A senha será gerada e enviada por e-mail.`}
         confirmText="Sim, gerar e enviar"
         cancelText="Cancelar"
         variant="default"
+        closeOnConfirm={false}
+        loading={gerandoSenha !== null}
       />
     </div>
   );

@@ -145,10 +145,12 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
     try {
       setGerandoSenha(responsavelParaGerarSenha.idResponsavel);
       await gerarSenhaMutation.mutateAsync(responsavelParaGerarSenha.idResponsavel);
-    } finally {
-      setGerandoSenha(null);
       setShowGerarSenhaDialog(false);
       setResponsavelParaGerarSenha(null);
+    } catch {
+      // Erro exibido pelo hook useGerarSenhaResponsavel
+    } finally {
+      setGerandoSenha(null);
     }
   }, [responsavelParaGerarSenha, gerarSenhaMutation]);
 
