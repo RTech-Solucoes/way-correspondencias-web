@@ -63,7 +63,7 @@ export default function LoginPage() {
         }
 
         const decoded = jwtDecode<TokenPayload>(token);
-        setPermissoes(decoded.permissoes);
+        setPermissoes(decoded.permissoes || []);
         
         const idsConcessionarias = authClient.getIdsConcessionariasFromToken();
         

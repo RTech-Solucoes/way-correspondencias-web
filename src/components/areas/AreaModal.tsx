@@ -6,7 +6,7 @@ import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Label} from '@/components/ui/label';
 import {Textarea} from '@/components/ui/textarea';
-import {AreaRequest, AreaResponse} from '@/api/areas/types';
+import {AreaRequest, AreaResponse, isAreaObrigatoriaSistema} from '@/api/areas/types';
 import {WarningCircleIcon} from "@phosphor-icons/react";
 
 interface AreaModalProps {
@@ -25,6 +25,7 @@ export default function AreaModal({area, open, onClose, onSave}: AreaModalProps)
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [hasValidationError, setHasValidationError] = useState(false);
+  const codigoBloqueado = Boolean(area && isAreaObrigatoriaSistema(area.cdArea));
 
   useEffect(() => {
     if (open) {
@@ -74,7 +75,10 @@ export default function AreaModal({area, open, onClose, onSave}: AreaModalProps)
     e.preventDefault();
 
     if (validateForm()) {
-      onSave(formData);
+      onSave({
+        ...formData,
+        cdArea: codigoBloqueado && area ? area.cdArea : formData.cdArea,
+      });
     }
   };
 
@@ -118,8 +122,14 @@ export default function AreaModal({area, open, onClose, onSave}: AreaModalProps)
                 value={formData.cdArea}
                 onChange={(e) => handleChange('cdArea', e.target.value)}
                 placeholder="Digite o código da área"
+                disabled={codigoBloqueado}
               />
             </div>
+            {codigoBloqueado && (
+              <p className="mt-1 text-xs text-gray-500">
+                Área obrigatória do sistema. O código não pode ser alterado.
+              </p>
+            )}
             {errors.cdArea && (
               <div className="flex items-center gap-1 mt-1">
                 <WarningCircleIcon className="h-4 w-4 text-red-500"/>

@@ -44,15 +44,17 @@ export const CLIENTES_CONFIG: Record<ClienteEnum, ClienteConfig> = {
   },
 };
 
-//IMPORTANTE: Ao adicionar novo cliente, adicione a verificação aqui
 export function getClienteAtual(): ClienteEnum {
-  const clienteEnv = process.env.NEXT_PUBLIC_LAYOUT_CLIENT;
-  
-  if (clienteEnv === ClienteEnum.WAY_BRASIL) {
-    return ClienteEnum.WAY_BRASIL;
+  const clienteEnv = process.env.NEXT_PUBLIC_LAYOUT_CLIENT
+    ?.trim()
+    .replace(/^["']|["']$/g, '')
+    .toLowerCase();
+
+  if (clienteEnv === ClienteEnum.RTECH) {
+    return ClienteEnum.RTECH;
   }
-  
-  return ClienteEnum.RTECH;
+
+  return ClienteEnum.WAY_BRASIL;
 }
 
 export function getClienteConfig(idCliente?: ClienteEnum): ClienteConfig {
