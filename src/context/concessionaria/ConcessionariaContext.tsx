@@ -48,7 +48,7 @@ export function ConcessionariaProvider({ children }: { children: ReactNode }) {
       removeCookie(STORAGE_KEY);
     }
 
-    if (idAnterior !== idNovo && idNovo !== undefined) {
+    if (idAnterior != null && idAnterior !== idNovo && idNovo !== undefined) {
       setConcessionariaChangeKey(prev => prev + 1);
       window.dispatchEvent(new CustomEvent('concessionariaChanged', {
         detail: { idConcessionaria: idNovo },

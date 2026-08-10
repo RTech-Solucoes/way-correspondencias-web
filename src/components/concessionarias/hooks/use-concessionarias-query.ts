@@ -51,6 +51,7 @@ export function useConfiguracoesConcessionariasQueries(idsConcessionarias: numbe
       retry: false,
       staleTime: 1000 * 60 * 5,
       gcTime: 1000 * 60 * 10,
+      refetchOnMount: true,
     })),
   });
 
@@ -64,7 +65,9 @@ export function useConfiguracoesConcessionariasQueries(idsConcessionarias: numbe
 
   const configuracoesLoadingById = idsConcessionarias.reduce<Record<number, boolean>>(
     (acc, idConcessionaria, index) => {
-      acc[idConcessionaria] = queries[index]?.isLoading || queries[index]?.isFetching || false;
+      // isPending/isLoading: só o carregamento inicial. Não usar isFetching —
+      // refetch em background mantinha "Calculando..." indevidamente.
+      acc[idConcessionaria] = queries[index]?.isPending ?? false;
       return acc;
     },
     {},
