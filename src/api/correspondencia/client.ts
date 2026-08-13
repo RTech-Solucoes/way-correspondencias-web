@@ -75,6 +75,14 @@ class CorrespondenciaClient {
       method: 'DELETE',
     });
   }
+
+  async deletarVarias(ids: number[]): Promise<void> {
+    return this.client.request<void>('/deletar-varias', {
+      method: 'DELETE',
+      body: JSON.stringify({ ids }),
+    });
+  }
+
   async listarHistoricoRespostas(idSolicitacao: number): Promise<CorrespondenciaResumoComHistoricoResponse> {
     return this.client.request<CorrespondenciaResumoComHistoricoResponse>(`/${idSolicitacao}/historico-respostas`, {
       method: 'GET',
