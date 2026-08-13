@@ -9,12 +9,14 @@ import {
 } from '@/components/ui/sticky-table';
 import { Button } from '@/components/ui/button';
 import { TemaResponse } from '@/api/temas/types';
+import { TipoResponse } from '@/api/tipos/types';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
 
 interface TableTemaProps {
   handleSort: (field: keyof TemaResponse) => void;
   loading: boolean;
   temas: TemaResponse[];
+  criticidades: TipoResponse[];
   handleEdit: (tema: TemaResponse) => void;
   handleDelete: (tema: TemaResponse) => void;
 }
@@ -22,7 +24,16 @@ interface TableTemaProps {
 export default function TableTema(props: TableTemaProps) {
   const { canAtualizarTema, canDeletarTema } = usePermissoes();
 
-  const colSpan = (canAtualizarTema || canDeletarTema) ? 4 : 3;
+  const colSpan = (canAtualizarTema || canDeletarTema) ? 5 : 4;
+
+  const getCriticidadeNome = (tema: TemaResponse) => {
+    if (tema.tipoCriticidade?.dsTipo) return tema.tipoCriticidade.dsTipo;
+
+    const id = tema.idTipoCriticidade ?? tema.tipoCriticidade?.idTipo;
+    if (!id) return '-';
+
+    return props.criticidades.find((tipo) => tipo.idTipo === id)?.dsTipo || '-';
+  };
 
   return (
     <div className="flex flex-1 overflow-hidden bg-white">
@@ -36,6 +47,7 @@ export default function TableTema(props: TableTemaProps) {
               </div>
             </StickyTableHead>
             <StickyTableHead>Descrição</StickyTableHead>
+            <StickyTableHead>Criticidade</StickyTableHead>
             {(canAtualizarTema || canDeletarTema) && (
               <StickyTableHead className="text-right">Ações</StickyTableHead>
             )}
@@ -66,6 +78,9 @@ export default function TableTema(props: TableTemaProps) {
                 <StickyTableCell className="font-medium">{tema.nmTema}</StickyTableCell>
                 <StickyTableCell className="max-w-xs truncate" title={tema.dsTema}>
                   {tema.dsTema || '-'}
+                </StickyTableCell>
+                <StickyTableCell>
+                  {getCriticidadeNome(tema)}
                 </StickyTableCell>
                 {(canAtualizarTema || canDeletarTema) && (
                   <StickyTableCell className="text-right">

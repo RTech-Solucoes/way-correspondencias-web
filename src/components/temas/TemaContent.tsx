@@ -20,6 +20,7 @@ export function TemaContent() {
     temas,
     totalPages,
     totalElements,
+    criticidades,
 
     // UI State
     loading,
@@ -88,6 +89,7 @@ export function TemaContent() {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex-1 overflow-auto mb-6">
         <TableTema
           temas={temas}
+          criticidades={criticidades}
           handleDelete={handleDelete}
           handleEdit={handleEdit}
           handleSort={handleSort}
