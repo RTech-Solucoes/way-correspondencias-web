@@ -10,6 +10,7 @@ import {
   StickyTableRow,
 } from '@/components/ui/sticky-table';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import LoadingRows from '@/components/solicitacoes/LoadingRows';
@@ -33,6 +34,11 @@ interface SolicitacoesTableProps {
   sortDirection: 'asc' | 'desc';
   canAtualizarSolicitacao: boolean;
   canDeletarSolicitacao: boolean;
+  allSelected: boolean;
+  someSelected: boolean;
+  isSelected: (id: number) => boolean;
+  toggleSelect: (id: number) => void;
+  toggleSelectAll: () => void;
   handleSort: (field: string) => void;
   handleEdit: (solicitacao: CorrespondenciaResponse) => void;
   handleDelete: (solicitacao: CorrespondenciaResponse) => void;
@@ -46,6 +52,11 @@ interface SolicitacoesTableProps {
 
 export function SolicitacoesTable({
   solicitacoes,
+  allSelected,
+  someSelected,
+  isSelected,
+  toggleSelect,
+  toggleSelectAll,
   loading,
   canAtualizarSolicitacao,
   canDeletarSolicitacao,
@@ -72,6 +83,12 @@ export function SolicitacoesTable({
       <StickyTable>
         <StickyTableHeader>
           <StickyTableRow>
+            <StickyTableHead>
+              <Checkbox
+                checked={allSelected ? true : someSelected ? 'indeterminate' : false}
+                onCheckedChange={toggleSelectAll}
+              />
+            </StickyTableHead>
             <StickyTableHead
               className="cursor-pointer"
               onClick={() => handleSort('cdIdentificacao')}
@@ -124,7 +141,7 @@ export function SolicitacoesTable({
             />
           ) : solicitacoes?.length === 0 ? (
             <StickyTableRow>
-              <StickyTableCell colSpan={8} className="text-center py-8">
+              <StickyTableCell colSpan={9} className="text-center py-8">
                 <div className="flex flex-col items-center space-y-2">
                   <ClipboardTextIcon className="h-8 w-8 text-gray-400" />
                   <p className="text-sm text-gray-500">Nenhuma solicitação encontrada</p>
@@ -135,6 +152,12 @@ export function SolicitacoesTable({
             solicitacoes?.map((solicitacao: CorrespondenciaResponse) => (
               <React.Fragment key={solicitacao.idSolicitacao}>
                 <StickyTableRow>
+                  <StickyTableCell>
+                    <Checkbox
+                      checked={isSelected(solicitacao.idSolicitacao)}
+                      onCheckedChange={() => toggleSelect(solicitacao.idSolicitacao)}
+                    />
+                  </StickyTableCell>
                   <StickyTableCell className="font-medium min-w-[120px]">
                     {solicitacao.cdIdentificacao}
                   </StickyTableCell>
