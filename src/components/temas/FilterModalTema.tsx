@@ -1,11 +1,9 @@
-import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import tiposClient from '@/api/tipos/client';
-import { CategoriaEnum, TipoResponse } from '@/api/tipos/types';
+import { TipoResponse } from '@/api/tipos/types';
 
 interface FiltersState {
   nome: string;
@@ -20,6 +18,7 @@ interface FilterModalTemaProps {
   setFilters: (filters: FiltersState) => void;
   clearFilters: () => void;
   setShowFilterModal: (show: boolean) => void;
+  criticidades: TipoResponse[];
 }
 
 export default function FilterModalTema({
@@ -29,38 +28,8 @@ export default function FilterModalTema({
   setFilters,
   clearFilters,
   setShowFilterModal,
+  criticidades,
 }: FilterModalTemaProps) {
-  const [criticidades, setCriticidades] = useState<TipoResponse[]>([]);
-  const [loadingTipos, setLoadingTipos] = useState(false);
-
-  useEffect(() => {
-    if (!showFilterModal) return;
-
-    let cancelado = false;
-
-    const carregarCriticidades = async () => {
-      setLoadingTipos(true);
-      try {
-        const tipos = await tiposClient.buscarPorCategorias([CategoriaEnum.OBRIG_CRITICIDADE]);
-        if (!cancelado) {
-          setCriticidades(tipos.filter((tipo) => tipo.nmCategoria === CategoriaEnum.OBRIG_CRITICIDADE));
-        }
-      } catch (error) {
-        console.error('Erro ao carregar criticidades:', error);
-      } finally {
-        if (!cancelado) {
-          setLoadingTipos(false);
-        }
-      }
-    };
-
-    carregarCriticidades();
-
-    return () => {
-      cancelado = true;
-    };
-  }, [showFilterModal]);
-
   return (
     <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
       <DialogContent>
@@ -91,10 +60,9 @@ export default function FilterModalTema({
             <Select
               value={filters.criticidade || undefined}
               onValueChange={(value) => setFilters({ ...filters, criticidade: value === 'all' ? '' : value })}
-              disabled={loadingTipos}
             >
               <SelectTrigger id="criticidade">
-                <SelectValue placeholder={loadingTipos ? 'Carregando...' : 'Todas'} />
+                <SelectValue placeholder="Todas" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>

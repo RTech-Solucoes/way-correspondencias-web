@@ -105,6 +105,7 @@ export function TemaContent() {
           setFilters={setFilters}
           clearFilters={clearFilters}
           setShowFilterModal={setShowFilterModal}
+          criticidades={criticidades}
         />
       )}
 
