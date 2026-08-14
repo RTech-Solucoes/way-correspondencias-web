@@ -8,6 +8,7 @@ import {
   StickyTableRow
 } from '@/components/ui/sticky-table';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { TemaResponse } from '@/api/temas/types';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
 
@@ -17,18 +18,29 @@ interface TableTemaProps {
   temas: TemaResponse[];
   handleEdit: (tema: TemaResponse) => void;
   handleDelete: (tema: TemaResponse) => void;
+  allSelected: boolean;
+  someSelected: boolean;
+  isSelected: (id: number) => boolean;
+  toggleSelect: (id: number) => void;
+  toggleSelectAll: () => void;
 }
 
 export default function TableTema(props: TableTemaProps) {
   const { canAtualizarTema, canDeletarTema } = usePermissoes();
 
-  const colSpan = (canAtualizarTema || canDeletarTema) ? 4 : 3;
+  const colSpan = (canAtualizarTema || canDeletarTema) ? 5 : 4;
 
   return (
     <div className="flex flex-1 overflow-hidden bg-white">
       <StickyTable>
         <StickyTableHeader>
           <StickyTableRow>
+            <StickyTableHead>
+              <Checkbox
+                checked={props.allSelected ? true : props.someSelected ? 'indeterminate' : false}
+                onCheckedChange={props.toggleSelectAll}
+              />
+            </StickyTableHead>
             <StickyTableHead className="cursor-pointer" onClick={() => props.handleSort('nmTema')}>
               <div className="flex items-center">
                 Nome
@@ -63,6 +75,12 @@ export default function TableTema(props: TableTemaProps) {
           ) : (
             props.temas.map((tema) => (
               <StickyTableRow key={tema.idTema}>
+                <StickyTableCell>
+                  <Checkbox
+                    checked={props.isSelected(tema.idTema)}
+                    onCheckedChange={() => props.toggleSelect(tema.idTema)}
+                  />
+                </StickyTableCell>
                 <StickyTableCell className="font-medium">{tema.nmTema}</StickyTableCell>
                 <StickyTableCell className="max-w-xs truncate" title={tema.dsTema}>
                   {tema.dsTema || '-'}

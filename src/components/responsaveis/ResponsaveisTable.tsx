@@ -8,6 +8,7 @@ import {
   StickyTableRow
 } from '@/components/ui/sticky-table';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { formatCPF, getStatusText } from "@/utils/utils";
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
@@ -25,6 +26,11 @@ interface ResponsaveisTableProps {
   handleGerarSenhaClick: (responsavel: ResponsavelResponse) => void;
   gerandoSenha: number | null;
   ldapEnabled: boolean;
+  allSelected: boolean;
+  someSelected: boolean;
+  isSelected: (id: number) => boolean;
+  toggleSelect: (id: number) => void;
+  toggleSelectAll: () => void;
 }
 
 export default function ResponsaveisTable({
@@ -38,6 +44,11 @@ export default function ResponsaveisTable({
   handleGerarSenhaClick,
   gerandoSenha,
   ldapEnabled,
+  allSelected,
+  someSelected,
+  isSelected,
+  toggleSelect,
+  toggleSelectAll,
 }: ResponsaveisTableProps) {
   const { canAtualizarResponsavel, canDeletarResponsavel, canGerarSenhaResponsavel } = usePermissoes();
   const { isAdminOrGestor } = useUserGestao();
@@ -64,13 +75,22 @@ export default function ResponsaveisTable({
     return sorted;
   };
 
-  const colSpan = isAdminOrGestor ? 8 : 7;
+  const showActions = canDeletarResponsavel || canAtualizarResponsavel || (ldapEnabled && canGerarSenhaResponsavel);
+  let colSpan = 1 + 7; // checkbox + nome, usuário, email, perfil, áreas, cargo, status
+  if (isAdminOrGestor) colSpan += 1;
+  if (showActions) colSpan += 1;
 
   return (
     <div className="flex flex-1 overflow-hidden bg-white rounded-lg shadow-sm border border-gray-200">
       <StickyTable>
         <StickyTableHeader>
           <StickyTableRow>
+            <StickyTableHead>
+              <Checkbox
+                checked={allSelected ? true : someSelected ? 'indeterminate' : false}
+                onCheckedChange={toggleSelectAll}
+              />
+            </StickyTableHead>
             <StickyTableHead className="cursor-pointer" onClick={() => handleSort('nmResponsavel')}>
               <div className="flex items-center">
                 Nome
@@ -111,7 +131,7 @@ export default function ResponsaveisTable({
                 </div>
               </StickyTableHead>
             )}
-            {(canDeletarResponsavel || canAtualizarResponsavel || (ldapEnabled && canGerarSenhaResponsavel)) && (
+            {showActions && (
               <StickyTableHead className="text-right">Ações</StickyTableHead>
             )}
           </StickyTableRow>
@@ -142,6 +162,12 @@ export default function ResponsaveisTable({
 
               return (
                 <StickyTableRow key={responsavel.idResponsavel}>
+                  <StickyTableCell>
+                    <Checkbox
+                      checked={isSelected(responsavel.idResponsavel)}
+                      onCheckedChange={() => toggleSelect(responsavel.idResponsavel)}
+                    />
+                  </StickyTableCell>
                   <StickyTableCell className="font-medium">{responsavel.nmResponsavel}</StickyTableCell>
                   <StickyTableCell>{responsavel.nmUsuarioLogin}</StickyTableCell>
                   <StickyTableCell>{responsavel.dsEmail}</StickyTableCell>
@@ -177,44 +203,46 @@ export default function ResponsaveisTable({
                   {isAdminOrGestor && (
                     <StickyTableCell className="w-36">{formatCPF(responsavel.nrCpf)}</StickyTableCell>
                   )}
-                  <StickyTableCell className="text-right">
-                    <div className="flex items-center justify-end space-x-2">
-                      {ldapEnabled && canGerarSenhaResponsavel && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleGerarSenhaClick(responsavel)}
-                          disabled={isDisabled}
-                          tooltip={isUsuarioLogado ? 'Você não pode gerar senha para você mesmo.' : 'Gerar Senha de Acesso'}
-                        >
-                          {gerandoSenha === responsavel.idResponsavel ? (
-                            <SpinnerIcon className="h-4 w-4 animate-spin"/>
-                          ) : (
-                            <LockIcon className="h-4 w-4"/>
-                          )}
-                        </Button>
-                      )}
-                      {canAtualizarResponsavel && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(responsavel)}
-                        >
-                          <PencilSimpleIcon className="h-4 w-4"/>
-                        </Button>
-                      )}
-                      {canDeletarResponsavel && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(responsavel)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <TrashIcon className="h-4 w-4"/>
-                        </Button>
-                      )}
-                    </div>
-                  </StickyTableCell>
+                  {showActions && (
+                    <StickyTableCell className="text-right">
+                      <div className="flex items-center justify-end space-x-2">
+                        {ldapEnabled && canGerarSenhaResponsavel && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleGerarSenhaClick(responsavel)}
+                            disabled={isDisabled}
+                            tooltip={isUsuarioLogado ? 'Você não pode gerar senha para você mesmo.' : 'Gerar Senha de Acesso'}
+                          >
+                            {gerandoSenha === responsavel.idResponsavel ? (
+                              <SpinnerIcon className="h-4 w-4 animate-spin"/>
+                            ) : (
+                              <LockIcon className="h-4 w-4"/>
+                            )}
+                          </Button>
+                        )}
+                        {canAtualizarResponsavel && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(responsavel)}
+                          >
+                            <PencilSimpleIcon className="h-4 w-4"/>
+                          </Button>
+                        )}
+                        {canDeletarResponsavel && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(responsavel)}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <TrashIcon className="h-4 w-4"/>
+                          </Button>
+                        )}
+                      </div>
+                    </StickyTableCell>
+                  )}
                 </StickyTableRow>
               );
             })

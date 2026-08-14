@@ -15,9 +15,10 @@ import PageTitle from '@/components/ui/page-title';
 
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
 import { useAreas } from './hooks/use-areas';
+import { AreasSelectionBar } from '@/components/areas/AreasSelectionBar';
 
 export function AreaContent() {
-  const { canInserirArea } = usePermissoes();
+  const { canInserirArea, canDeletarArea } = usePermissoes();
   
   const {
     // Dados
@@ -46,7 +47,19 @@ export function AreaContent() {
     showFilterModal,
     setShowFilterModal,
     showDeleteDialog,
-    setShowDeleteDialog,
+    
+    // Seleção
+    selectedCount,
+    allSelected,
+    someSelected,
+    isSelected,
+    toggleSelect,
+    toggleSelectAll,
+    clearSelection,
+    handleDeleteSelected,
+    closeDeleteDialog,
+    isDeletingBulk,
+    isBulkDeletePending,
     
     // Handlers
     loadAreas,
@@ -54,6 +67,7 @@ export function AreaContent() {
     handleEdit,
     handleDelete,
     confirmDelete,
+    confirmDeleteVarias,
     onAreaSave,
     handleCloseAreaModal,
     handleOpenCreateArea,
@@ -109,6 +123,15 @@ export function AreaContent() {
         className="mb-4"
       />
 
+      <AreasSelectionBar
+        selectedCount={selectedCount}
+        canDeletarArea={!!canDeletarArea}
+        onClearSelection={clearSelection}
+        onDeleteSelected={handleDeleteSelected}
+        isDeleting={isDeletingBulk}
+        className="mb-4"
+      />
+
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex-1 overflow-auto mb-6">
         <TableArea
           areas={areas}
@@ -116,6 +139,11 @@ export function AreaContent() {
           handleEdit={handleEdit}
           handleSort={handleSort}
           loading={loading && areas.length === 0}
+          allSelected={allSelected}
+          someSelected={someSelected}
+          isSelected={isSelected}
+          toggleSelect={toggleSelect}
+          toggleSelectAll={toggleSelectAll}
         />
       </div>
 
@@ -141,10 +169,19 @@ export function AreaContent() {
 
       <ConfirmationDialog
         open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
-        onConfirm={confirmDelete}
-        title="Excluir Área"
-        description="Tem certeza que deseja excluir esta área? Esta ação não pode ser desfeita."
+        onOpenChange={(open) => {
+          if (!open) closeDeleteDialog();
+        }}
+        onConfirm={isBulkDeletePending ? confirmDeleteVarias : confirmDelete}
+        title={isBulkDeletePending ? 'Excluir Áreas' : 'Excluir Área'}
+        description={
+          isBulkDeletePending
+            ? `Tem certeza que deseja excluir ${selectedCount} área(s) selecionada(s)? Esta ação não pode ser desfeita.`
+            : 'Tem certeza que deseja excluir esta área? Esta ação não pode ser desfeita.'
+        }
+        loading={isDeletingBulk}
+        variant="destructive"
+        confirmText="Excluir"
       />
     </div>
   );

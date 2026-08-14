@@ -55,6 +55,13 @@ export class ObrigacaoClient {
         });
     }
 
+    async deletarVarias(ids: number[]): Promise<void> {
+        return this.client.request<void>('/deletar-varias', {
+            method: 'DELETE',
+            body: JSON.stringify({ ids }),
+        });
+    }
+
     async criar(data: ObrigacaoFormData): Promise<ObrigacaoResponse> {
           
         if (data.idSolicitacao) {

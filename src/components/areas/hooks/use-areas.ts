@@ -5,7 +5,8 @@ import {
   useAreasQuery, 
   useCreateArea, 
   useUpdateArea, 
-  useDeleteArea 
+  useDeleteArea,
+  useDeleteAreas,
 } from './use-areas-query';
 
 interface FiltersState {
@@ -46,6 +47,7 @@ export function useAreas(options: UseAreasOptions = {}) {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [areaToDelete, setAreaToDelete] = useState<number | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
@@ -92,6 +94,13 @@ export function useAreas(options: UseAreasOptions = {}) {
   const createMutation = useCreateArea();
   const updateMutation = useUpdateArea();
   const deleteMutation = useDeleteArea();
+  const deleteVariasMutation = useDeleteAreas();
+
+  const areas = data?.content || [];
+
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [currentPage]);
 
   // Handlers - Muito mais simples agora!
   const handleSort = useCallback((field: keyof AreaResponse) => {
@@ -114,13 +123,76 @@ export function useAreas(options: UseAreasOptions = {}) {
     setShowDeleteDialog(true);
   }, []);
 
+  const toggleSelect = useCallback((id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAll = useCallback(() => {
+    setSelectedIds((prev) => {
+      const pageIds = areas.map((area) => area.idArea);
+      const allSelected = pageIds.length > 0 && pageIds.every((id) => prev.has(id));
+      const next = new Set(prev);
+
+      if (allSelected) {
+        pageIds.forEach((id) => next.delete(id));
+      } else {
+        pageIds.forEach((id) => next.add(id));
+      }
+
+      return next;
+    });
+  }, [areas]);
+
+  const clearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
+
+  const isSelected = useCallback((id: number) => selectedIds.has(id), [selectedIds]);
+
+  const pageIds = areas.map((area) => area.idArea);
+  const selectedOnPage = pageIds.filter((id) => selectedIds.has(id));
+  const allSelected = pageIds.length > 0 && selectedOnPage.length === pageIds.length;
+  const someSelected = selectedOnPage.length > 0 && selectedOnPage.length < pageIds.length;
+  const selectedCount = selectedIds.size;
+  const isBulkDeletePending = selectedCount > 0 && areaToDelete === null;
+
+  const handleDeleteSelected = useCallback(() => {
+    if (selectedIds.size === 0) return;
+    setAreaToDelete(null);
+    setShowDeleteDialog(true);
+  }, [selectedIds]);
+
+  const closeDeleteDialog = useCallback(() => {
+    setShowDeleteDialog(false);
+    setAreaToDelete(null);
+  }, []);
+
   const confirmDelete = useCallback(async () => {
     if (areaToDelete) {
       await deleteMutation.mutateAsync(areaToDelete);
-      setShowDeleteDialog(false);
-      setAreaToDelete(null);
+      closeDeleteDialog();
     }
-  }, [areaToDelete, deleteMutation]);
+  }, [areaToDelete, deleteMutation, closeDeleteDialog]);
+
+  const confirmDeleteVarias = useCallback(async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+
+    try {
+      await deleteVariasMutation.mutateAsync(ids);
+      setSelectedIds(new Set());
+    } finally {
+      closeDeleteDialog();
+    }
+  }, [selectedIds, deleteVariasMutation, closeDeleteDialog]);
 
   const onAreaSave = useCallback(async (formData: AreaRequest) => {
     try {
@@ -204,7 +276,7 @@ export function useAreas(options: UseAreasOptions = {}) {
 
   return {
     // Dados - Direto do React Query
-    areas: data?.content || [],
+    areas,
     totalPages: data?.totalPages || 0,
     totalElements: data?.totalElements || 0,
     
@@ -230,7 +302,19 @@ export function useAreas(options: UseAreasOptions = {}) {
     showFilterModal,
     setShowFilterModal,
     showDeleteDialog,
-    setShowDeleteDialog,
+    
+    // Seleção
+    selectedCount,
+    allSelected,
+    someSelected,
+    isSelected,
+    toggleSelect,
+    toggleSelectAll,
+    clearSelection,
+    handleDeleteSelected,
+    closeDeleteDialog,
+    isDeletingBulk: deleteVariasMutation.isPending,
+    isBulkDeletePending,
     
     // Handlers
     loadAreas: refetch, // Expõe refetch como loadAreas para compatibilidade
@@ -238,6 +322,7 @@ export function useAreas(options: UseAreasOptions = {}) {
     handleEdit,
     handleDelete,
     confirmDelete,
+    confirmDeleteVarias,
     onAreaSave,
     handleCloseAreaModal,
     handleOpenCreateArea,

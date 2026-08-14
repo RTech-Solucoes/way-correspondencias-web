@@ -9,6 +9,7 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowsDownUpIcon } from "@phosphor-icons/react";
 import { ObrigacaoResponse } from "@/api/obrigacao/types";
 import { getObrigacaoStatusStyle } from "@/components/obrigacoes/list-page/status";
@@ -34,6 +35,11 @@ interface ObrigacoesTableProps {
   onEnviarArea: (obrigacao: ObrigacaoResponse) => void;
   onNaoAplicavelSuspenso: (obrigacao: ObrigacaoResponse) => void;
   onExcluir: (obrigacao: ObrigacaoResponse) => void;
+  allSelected: boolean;
+  someSelected: boolean;
+  isSelected: (id: number) => boolean;
+  toggleSelect: (id: number) => void;
+  toggleSelectAll: () => void;
 }
 
 export function ObrigacoesTable({
@@ -53,6 +59,11 @@ export function ObrigacoesTable({
   onEnviarArea,
   onNaoAplicavelSuspenso,
   onExcluir,
+  allSelected,
+  someSelected,
+  isSelected,
+  toggleSelect,
+  toggleSelectAll,
 }: ObrigacoesTableProps) {
   
   function getProgressEndDate(obrigacao: ObrigacaoResponse) {
@@ -62,12 +73,20 @@ export function ObrigacoesTable({
     return obrigacao.dtTermino || null;
   }
 
+  const colSpan = (isAdminOrGestor ? 10 : 8) + 1;
+
   return (
     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[40px]">
+                <Checkbox
+                  checked={allSelected ? true : someSelected ? 'indeterminate' : false}
+                  onCheckedChange={toggleSelectAll}
+                />
+              </TableHead>
               <TableHead 
                 className="min-w-[200px] cursor-pointer"
                 onClick={() => handleSort('cdIdentificacao')}
@@ -127,19 +146,25 @@ export function ObrigacoesTable({
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={isAdminOrGestor ? 10 : 8} className="text-center py-8">
+                <TableCell colSpan={colSpan} className="text-center py-8">
                   Carregando...
                 </TableCell>
               </TableRow>
             ) : obrigacoes.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={isAdminOrGestor ? 10 : 8} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={colSpan} className="text-center py-8 text-gray-500">
                   Nenhuma obrigação encontrada
                 </TableCell>
               </TableRow>
             ) : (
               obrigacoes.map((obrigacao) => (
                 <TableRow key={obrigacao.idSolicitacao}>
+                  <TableCell>
+                    <Checkbox
+                      checked={isSelected(obrigacao.idSolicitacao)}
+                      onCheckedChange={() => toggleSelect(obrigacao.idSolicitacao)}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium min-w-[200px]">{obrigacao.cdIdentificacao || '-'}</TableCell>
                   <TableCell className="min-w-[250px]">
                     <div className="line-clamp-4" title={obrigacao.dsTarefa || undefined}>
@@ -252,4 +277,3 @@ export function ObrigacoesTable({
     </div>
   );
 }
-

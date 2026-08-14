@@ -52,6 +52,13 @@ class TemasClient {
       method: 'DELETE',
     });
   }
+
+  async deletarVarias(ids: number[]): Promise<void> {
+    return this.client.request<void>('/deletar-varias', {
+      method: 'DELETE',
+      body: JSON.stringify({ ids }),
+    });
+  }
 }
 
 export const temasClient = new TemasClient();

@@ -10,11 +10,20 @@ export function DeleteObrigacaoDialog() {
     setShowDeleteDialog,
     obrigacaoToDelete,
     setObrigacaoToDelete,
+    selectedCount,
+    isBulkDeletePending,
+    isDeletingBulk,
+    confirmDeleteVarias,
   } = useObrigacoesUI();
   
   const { mutateAsync: deleteObrigacao, isPending } = useDeleteObrigacao();
 
   const handleDelete = async () => {
+    if (isBulkDeletePending) {
+      await confirmDeleteVarias();
+      return;
+    }
+
     if (!obrigacaoToDelete?.idSolicitacao) return;
 
     try {
@@ -30,16 +39,25 @@ export function DeleteObrigacaoDialog() {
     setObrigacaoToDelete(null);
   };
 
+  const loading = isPending || isDeletingBulk;
+
   return (
     <ConfirmationDialog
       open={showDeleteDialog}
-      onOpenChange={handleClose}
-      title="Excluir Obrigação"
-      description={`Tem certeza que deseja excluir esta obrigação?`}
-      confirmText={isPending ? 'Excluindo...' : 'Excluir'}
+      onOpenChange={(open) => {
+        if (!open) handleClose();
+      }}
+      title={isBulkDeletePending ? 'Excluir Obrigações' : 'Excluir Obrigação'}
+      description={
+        isBulkDeletePending
+          ? `Tem certeza que deseja excluir ${selectedCount} obrigação(ões) selecionada(s)? Esta ação não pode ser desfeita.`
+          : 'Tem certeza que deseja excluir esta obrigação?'
+      }
+      confirmText={loading ? 'Excluindo...' : 'Excluir'}
       cancelText="Cancelar"
       onConfirm={handleDelete}
       variant="destructive"
+      loading={loading}
     />
   );
 }

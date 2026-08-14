@@ -8,12 +8,12 @@ import HeaderTema from '@/components/temas/HeaderTema';
 import SearchTema from '@/components/temas/SearchTema';
 import TableTema from '@/components/temas/TableTema';
 import FilterModalTema from '@/components/temas/FilterModalTema';
-import { TemaResponse, PagedResponse } from '@/api/temas/types';
+import { TemasSelectionBar } from '@/components/temas/TemasSelectionBar';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
 import { useTemas } from './hooks/use-temas';
 
 export function TemaContent() {
-  const { canInserirTema } = usePermissoes();
+  const { canInserirTema, canDeletarTema } = usePermissoes();
 
   const {
     // Dados
@@ -42,8 +42,20 @@ export function TemaContent() {
     showFilterModal,
     setShowFilterModal,
     showDeleteDialog,
-    setShowDeleteDialog,
     temaToDelete,
+
+    // Seleção
+    selectedCount,
+    allSelected,
+    someSelected,
+    isSelected,
+    toggleSelect,
+    toggleSelectAll,
+    clearSelection,
+    handleDeleteSelected,
+    closeDeleteDialog,
+    isDeletingBulk,
+    isBulkDeletePending,
 
     // Handlers
     loadTemas,
@@ -51,6 +63,7 @@ export function TemaContent() {
     handleEdit,
     handleDelete,
     confirmDelete,
+    confirmDeleteVarias,
     onTemaSave,
     handleCloseTemaModal,
     handleOpenCreateTema,
@@ -85,6 +98,15 @@ export function TemaContent() {
         className="mb-4"
       />
 
+      <TemasSelectionBar
+        selectedCount={selectedCount}
+        canDeletarTema={!!canDeletarTema}
+        onClearSelection={clearSelection}
+        onDeleteSelected={handleDeleteSelected}
+        isDeleting={isDeletingBulk}
+        className="mb-4"
+      />
+
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex-1 overflow-auto mb-6">
         <TableTema
           temas={temas}
@@ -92,6 +114,11 @@ export function TemaContent() {
           handleEdit={handleEdit}
           handleSort={handleSort}
           loading={loading && temas.length === 0}
+          allSelected={allSelected}
+          someSelected={someSelected}
+          isSelected={isSelected}
+          toggleSelect={toggleSelect}
+          toggleSelectAll={toggleSelectAll}
         />
       </div>
 
@@ -117,10 +144,19 @@ export function TemaContent() {
 
       <ConfirmationDialog
         open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
-        onConfirm={confirmDelete}
-        title="Excluir Tema"
-        description={`Tem certeza que deseja excluir o tema "${temaToDelete?.nmTema || ''}"? Esta ação não pode ser desfeita.`}
+        onOpenChange={(open) => {
+          if (!open) closeDeleteDialog();
+        }}
+        onConfirm={isBulkDeletePending ? confirmDeleteVarias : confirmDelete}
+        title={isBulkDeletePending ? 'Excluir Temas' : 'Excluir Tema'}
+        description={
+          isBulkDeletePending
+            ? `Tem certeza que deseja excluir ${selectedCount} tema(s) selecionado(s)? Esta ação não pode ser desfeita.`
+            : `Tem certeza que deseja excluir o tema "${temaToDelete?.nmTema || ''}"? Esta ação não pode ser desfeita.`
+        }
+        loading={isDeletingBulk}
+        variant="destructive"
+        confirmText="Excluir"
       />
     </div>
   );

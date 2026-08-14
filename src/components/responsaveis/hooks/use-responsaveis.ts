@@ -5,6 +5,7 @@ import { usePermissoes } from '@/context/permissoes/PermissoesContext';
 import { 
   useResponsaveisQuery, 
   useDeleteResponsavel,
+  useDeleteResponsaveis,
   useGerarSenhaResponsavel
 } from './use-responsaveis-query';
 
@@ -42,6 +43,7 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [responsavelToDelete, setResponsavelToDelete] = useState<ResponsavelResponse | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
   // Estado específico para gerar senha
   const [gerandoSenha, setGerandoSenha] = useState<number | null>(null);
@@ -92,7 +94,14 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
 
   // Mutations
   const deleteMutation = useDeleteResponsavel();
+  const deleteVariasMutation = useDeleteResponsaveis();
   const gerarSenhaMutation = useGerarSenhaResponsavel();
+
+  const responsaveis = data?.content || [];
+
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [currentPage]);
 
   // Handlers
   const handleSort = useCallback((field: keyof ResponsavelResponse) => {
@@ -115,13 +124,76 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
     setShowDeleteDialog(true);
   }, []);
 
+  const toggleSelect = useCallback((id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAll = useCallback(() => {
+    setSelectedIds((prev) => {
+      const pageIds = responsaveis.map((r) => r.idResponsavel);
+      const allSelected = pageIds.length > 0 && pageIds.every((id) => prev.has(id));
+      const next = new Set(prev);
+
+      if (allSelected) {
+        pageIds.forEach((id) => next.delete(id));
+      } else {
+        pageIds.forEach((id) => next.add(id));
+      }
+
+      return next;
+    });
+  }, [responsaveis]);
+
+  const clearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
+
+  const isSelected = useCallback((id: number) => selectedIds.has(id), [selectedIds]);
+
+  const pageIds = responsaveis.map((r) => r.idResponsavel);
+  const selectedOnPage = pageIds.filter((id) => selectedIds.has(id));
+  const allSelected = pageIds.length > 0 && selectedOnPage.length === pageIds.length;
+  const someSelected = selectedOnPage.length > 0 && selectedOnPage.length < pageIds.length;
+  const selectedCount = selectedIds.size;
+  const isBulkDeletePending = selectedCount > 0 && responsavelToDelete === null;
+
+  const handleDeleteSelected = useCallback(() => {
+    if (selectedIds.size === 0) return;
+    setResponsavelToDelete(null);
+    setShowDeleteDialog(true);
+  }, [selectedIds]);
+
+  const closeDeleteDialog = useCallback(() => {
+    setShowDeleteDialog(false);
+    setResponsavelToDelete(null);
+  }, []);
+
   const confirmDelete = useCallback(async () => {
     if (responsavelToDelete) {
       await deleteMutation.mutateAsync(responsavelToDelete.idResponsavel);
-      setShowDeleteDialog(false);
-      setResponsavelToDelete(null);
+      closeDeleteDialog();
     }
-  }, [responsavelToDelete, deleteMutation]);
+  }, [responsavelToDelete, deleteMutation, closeDeleteDialog]);
+
+  const confirmDeleteVarias = useCallback(async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+
+    try {
+      await deleteVariasMutation.mutateAsync(ids);
+      setSelectedIds(new Set());
+    } finally {
+      closeDeleteDialog();
+    }
+  }, [selectedIds, deleteVariasMutation, closeDeleteDialog]);
 
   const onResponsavelSave = useCallback(() => {
     setShowResponsavelModal(false);
@@ -209,7 +281,7 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
 
   return {
     // Dados
-    responsaveis: data?.content || [],
+    responsaveis,
     totalPages: data?.totalPages || 0,
     totalElements: data?.totalElements || 0,
 
@@ -236,8 +308,20 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
     showFilterModal,
     setShowFilterModal,
     showDeleteDialog,
-    setShowDeleteDialog,
     responsavelToDelete,
+
+    // Seleção
+    selectedCount,
+    allSelected,
+    someSelected,
+    isSelected,
+    toggleSelect,
+    toggleSelectAll,
+    clearSelection,
+    handleDeleteSelected,
+    closeDeleteDialog,
+    isDeletingBulk: deleteVariasMutation.isPending,
+    isBulkDeletePending,
 
     // Gerar Senha
     gerandoSenha,
@@ -257,6 +341,7 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
     handleEdit,
     handleDelete,
     confirmDelete,
+    confirmDeleteVarias,
     onResponsavelSave,
     handleCloseResponsavelModal,
     handleOpenCreateResponsavel,

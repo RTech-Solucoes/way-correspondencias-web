@@ -65,6 +65,13 @@ class ResponsaveisClient {
     });
   }
 
+  async deletarVarias(ids: number[]): Promise<void> {
+    return this.client.request<void>('/deletar-varias', {
+      method: 'DELETE',
+      body: JSON.stringify({ ids }),
+    });
+  }
+
   async buscarPorIdPerfil(idsPerfis: number[]): Promise<ResponsavelResponse[]> {
     const params = new URLSearchParams();
     idsPerfis.forEach(id => params.append('idsPerfis', id.toString()));
