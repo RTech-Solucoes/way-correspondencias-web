@@ -7,6 +7,7 @@ import {AreaExecutorAvancadoResponse} from '@/api/areas/types';
 import {areasClient} from '@/api/areas/client';
 import {cn} from '@/utils/utils';
 import {CheckIcon, WarningCircleIcon} from '@phosphor-icons/react';
+import {FieldHelpLabel} from '@/components/help-tooltip';
 
 interface MultiSelectAreasProps {
   selectedAreaIds: number[];
@@ -18,6 +19,8 @@ interface MultiSelectAreasProps {
   excludedAreaIds?: number[]; 
   labelRequired?: boolean;
   error?: string;
+  helpText?: string;
+  showHelp?: boolean;
 }
 
 export function MultiSelectAreas({
@@ -30,6 +33,8 @@ export function MultiSelectAreas({
   excludedAreaIds = [],
   labelRequired = false,
   error,
+  helpText,
+  showHelp,
 }: MultiSelectAreasProps) {
   const [areaExecutorAvancado, setAreaExecutorAvancado] = useState<AreaExecutorAvancadoResponse[]>([]);
   const [loading, setLoading] = useState(false);
@@ -99,14 +104,27 @@ export function MultiSelectAreas({
     return label;
   };
 
+  const labelText = label.replace(/\s*\*\s*$/, '');
+  const isRequired = labelRequired || /\*/.test(label);
+  const shouldShowHelp = Boolean(helpText) && (showHelp ?? !disabled);
+
   return (
     <div
       className={cn("space-y-4", className, disabled && "pointer-events-none")}
       aria-disabled={disabled || undefined}
     >
-      <Label
-        className={cn(disabled && 'opacity-50')}
-      >{renderLabel()}</Label>
+      {helpText ? (
+        <FieldHelpLabel
+          required={isRequired}
+          help={helpText}
+          showHelp={shouldShowHelp}
+          className={cn(disabled && 'opacity-50')}
+        >
+          {labelText}
+        </FieldHelpLabel>
+      ) : (
+        <Label className={cn(disabled && 'opacity-50')}>{renderLabel()}</Label>
+      )}
       {loading ? (
         <div className="flex items-center justify-center p-8">
           <div className="text-sm text-gray-500">Buscando áreas...</div>

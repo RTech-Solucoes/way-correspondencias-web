@@ -5,6 +5,9 @@ import { MultiSelectAreas } from '@/components/ui/multi-select-areas';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Step2Props } from '../types';
 
+const HELP_AREAS =
+  'As áreas selecionadas receberão a solicitação. Todas devem responder para o fluxo avançar.';
+
 export function Step2TemaAreas({
   formData,
   updateFormData,
@@ -49,7 +52,14 @@ export function Step2TemaAreas({
         </Select>
       </div>
 
-      <MultiSelectAreas selectedAreaIds={formData.idsAreas || []} onSelectionChange={onAreasSelectionChange} disabled={disabled} label="Áreas *" />
+      <MultiSelectAreas
+        selectedAreaIds={formData.idsAreas || []}
+        onSelectionChange={onAreasSelectionChange}
+        disabled={disabled}
+        label="Áreas *"
+        helpText={HELP_AREAS}
+        showHelp={!disabled}
+      />
     </div>
   );
 }

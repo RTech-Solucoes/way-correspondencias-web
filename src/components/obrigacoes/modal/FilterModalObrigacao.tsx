@@ -16,6 +16,10 @@ import { TipoResponse, CategoriaEnum, TipoEnum } from '@/api/tipos/types';
 import statusSolicitacaoClient, { StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
 import { useUserGestao } from '@/hooks/use-user-gestao';
 import { PERFIS_FILTRO_DEFAULT_DATA_LIMITE } from '@/api/obrigacao/types';
+import { HelpTooltip } from '@/components/help-tooltip';
+
+const HELP_FILTROS =
+  'Os filtros podem ser combinados para restringir a listagem.';
 
 interface FilterState {
   idStatusObrigacao: string;
@@ -146,7 +150,10 @@ export function FilterModalObrigacao() {
     <Dialog open={showFilterModal} onOpenChange={handleClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Filtrar Obrigações</DialogTitle>
+            <div className="inline-flex items-center gap-1.5">
+              <DialogTitle>Filtrar Obrigações</DialogTitle>
+              <HelpTooltip content={HELP_FILTROS} label="Filtrar" />
+            </div>
         </DialogHeader>
 
         <div className="py-4 space-y-6">

@@ -2,6 +2,10 @@
 
 import { DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ClockIcon } from '@phosphor-icons/react';
+import { HelpTooltip } from '@/components/help-tooltip';
+
+const HELP_STATUS =
+  'O status define as ações disponíveis, os perfis que podem atuar e se a edição é permitida.';
 
 type DetalhesSolicitacaoHeaderProps = {
   identificador: string;
@@ -29,8 +33,11 @@ export function DetalhesSolicitacaoHeader({
 
             <div className="mt-1 flex items-center justify-between">
               <div className="text-sm text-muted-foreground">{`Criado em: ${criadorLine}`}</div>
-              <span className="inline-flex items-center rounded-full bg-orange-500/10 text-orange-600 px-3 py-1 text-xs font-medium">
-                {statusText}
+              <span className="inline-flex items-center gap-1.5">
+                <span className="inline-flex items-center rounded-full bg-orange-500/10 text-orange-600 px-3 py-1 text-xs font-medium">
+                  {statusText}
+                </span>
+                <HelpTooltip content={HELP_STATUS} label="Status" />
               </span>
             </div>
 

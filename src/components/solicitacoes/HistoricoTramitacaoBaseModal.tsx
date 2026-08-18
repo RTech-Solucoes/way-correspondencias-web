@@ -7,6 +7,10 @@ import { formatDateTime, formatMinutosEmDiasHorasMinutos } from '@/utils/utils';
 import { TipoHistoricoResposta } from '@/api/correspondencia/types';
 import { perfilUtil } from '@/api/perfis/types';
 import { statusList } from '@/api/status-solicitacao/types';
+import { HelpTooltip } from '@/components/help-tooltip';
+
+const HELP_HISTORICO =
+  'Registra ações, responsável, data e hora, comentários e mudanças de status. Consulte o histórico antes de devolver, aprovar ou reprovar.';
 
 export type HistoricoBaseItem = {
   id: number | string;
@@ -62,7 +66,10 @@ export default function HistoricoTramitacaoBaseModal({
       <DialogContent className="max-w-4xl max-h-[80vh]">
         <DialogHeader>
           <div className="flex items-center justify-between">
-            <DialogTitle>{title}</DialogTitle>
+            <div className="inline-flex items-center gap-1.5">
+              <DialogTitle>{title}</DialogTitle>
+              <HelpTooltip content={HELP_HISTORICO} label="Histórico" />
+            </div>
             {headerActions}
           </div>
         </DialogHeader>

@@ -10,6 +10,10 @@ import { toast } from 'sonner';
 import obrigacaoClient from '@/api/obrigacao/client';
 import LoadingOverlay from '@/components/ui/loading-overlay';
 import { InfoImportacaoPlanilha } from './InfoImportacaoPlanilha';
+import { ActionWithHelp } from '@/components/help-tooltip';
+
+const HELP_IMPORTAR_OBRIGACOES =
+  'Indicada para cadastro em lote. O sistema processa o arquivo e valida os campos obrigatórios. Inconsistências geram mensagens de erro antes do cadastro.';
 
 interface ImportObrigacoesModalProps {
   open: boolean;
@@ -250,23 +254,28 @@ export function ImportObrigacoesModal({ open, onClose }: ImportObrigacoesModalPr
             >
               Cancelar
             </Button>
-            <Button
-              onClick={handleImport}
-              disabled={!selectedFile || loading}
-              className="min-w-[120px] bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+            <ActionWithHelp
+              help={HELP_IMPORTAR_OBRIGACOES}
+              helpLabel="Importar Obrigações"
             >
-              {loading ? (
-                <>
-                  <span className="animate-spin mr-2">⏳</span>
-                  Importando...
-                </>
-              ) : (
-                <>
-                  <UploadIcon className="h-4 w-4 mr-2" />
-                  Importar
-                </>
-              )}
-            </Button>
+              <Button
+                onClick={handleImport}
+                disabled={!selectedFile || loading}
+                className="min-w-[120px] bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+              >
+                {loading ? (
+                  <>
+                    <span className="animate-spin mr-2">⏳</span>
+                    Importando...
+                  </>
+                ) : (
+                  <>
+                    <UploadIcon className="h-4 w-4 mr-2" />
+                    Importar
+                  </>
+                )}
+              </Button>
+            </ActionWithHelp>
           </DialogFooter>
       </DialogContent>
     </Dialog>

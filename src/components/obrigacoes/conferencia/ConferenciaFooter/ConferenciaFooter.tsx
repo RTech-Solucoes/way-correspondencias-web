@@ -13,6 +13,7 @@ import { FlAprovadoTramitacaoEnum } from '@/api/tramitacoes/types';
 import { useFooterStatus, useFooterPermissoes, useFooterTooltips } from './hooks';
 import { useMemo } from 'react';
 import { perfilUtil } from '@/api/perfis/types';
+import { ActionWithHelp } from '@/components/help-tooltip';
 
 interface ConferenciaFooterProps {
   statusSolicitacao?: StatusSolicitacaoResponse | null;
@@ -45,6 +46,24 @@ interface ConferenciaFooterProps {
   onAnexarProtocoloSuccess?: () => void;
   onAnexarProtocoloClick?: () => void;
 }
+
+const HELP_EVIDENCIA =
+  'Comprova o cumprimento da obrigação. Será analisada pelo Regulatório e pode ser enviada como arquivo ou URL.';
+
+const HELP_ENVIAR_REGULATORIO =
+  'Envia a obrigação para validação do Regulatório. Após o envio, a Área não edita até a análise ou a devolução para ajustes.';
+
+const HELP_APROVAR_CONFERENCIA =
+  'Aprova a evidência e bloqueia os campos estruturais da obrigação. Comentários, anexos auxiliares e correspondência continuam disponíveis.';
+
+const HELP_SOLICITAR_AJUSTES =
+  'Devolve a obrigação para a Área. Exige comentário com a justificativa; o reenvio depende de nova evidência.';
+
+const HELP_JUSTIFICATIVA_ATRASO =
+  'Só pode ser incluída quando a obrigação estiver atrasada. O texto da justificativa é obrigatório.';
+
+const HELP_ANEXAR_CORRESPONDENCIA =
+  'Anexa o documento oficial de formalização do cumprimento. Integra o registro oficial da obrigação e continua disponível após a aprovação da conferência, mesmo com os campos estruturais bloqueados.';
 
 export function ConferenciaFooter({
   statusSolicitacao,
@@ -169,85 +188,169 @@ export function ConferenciaFooter({
     )
   }, [idPerfil, status.isStatusEmAnaliseGerenteRegulatorio, status.flExigeCienciaGerenteRegul]);
 
+  const anexarEvidenciaButton = (
+    <Button
+      type="button"
+      className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+      onClick={onAnexarEvidencia}
+      disabled={!isPermitidoAnexarEvidencia}
+      tooltip={!isPermitidoAnexarEvidencia ? tooltips.tooltipAnexarEvidencia : ''}
+    >
+      <Paperclip className="h-4 w-4" />
+      Anexar evidência de cumprimento
+    </Button>
+  );
+
+  const enviarRegulatorioButton = (
+    <Button
+      type="button"
+      className="flex items-center gap-2 rounded-full bg-blue-500 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+      onClick={onEnviarParaAnalise}
+      disabled={!permissoes.podeEnviarParaAnalise}
+      tooltip={tooltips.tooltipEnviarRegulatorio}
+    >
+      <CheckCircle2 className="h-4 w-4" />
+      Enviar para análise do regulatório
+    </Button>
+  );
+
+  const conferenciaJaAprovada =
+    !status.isStatusEmValidacaoRegulatorio || status.conferenciaAprovada;
+
+  const solicitarAjustesButton = (
+    <Button
+      type="button"
+      className="flex items-center gap-2 rounded-full bg-orange-500 px-6 py-3 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
+      onClick={onSolicitarAjustes}
+      disabled={conferenciaJaAprovada}
+      tooltip={tooltips.tooltipStatusValidacaoRegulatorio}
+    >
+      <MessageSquare className="h-4 w-4" />
+      Solicitar ajustes
+    </Button>
+  );
+
+  const aprovarConferenciaButton = (
+    <Button
+      type="button"
+      className="flex items-center gap-2 rounded-full bg-blue-500 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+      onClick={onAprovarConferencia}
+      disabled={conferenciaJaAprovada}
+      tooltip={tooltips.tooltipStatusValidacaoRegulatorio}
+    >
+      <CheckCircle2 className="h-4 w-4" />
+      Aprovar conferência
+    </Button>
+  );
+
   return (
     <footer className="fixed bottom-0 left-0 right-0 z-11 border-t border-gray-200 bg-white px-8 py-4 h-[73px]">
       <div className="ml-auto flex w-full max-w-6xl flex-wrap items-center justify-end gap-3">
-        {isAdminOrGestor && podeMostrarBotaoAnexarCorrespondencia && (
-          <Button
-            type="button"
-            className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
-            onClick={onAnexarCorrespondencia}
-            disabled={isBotaoAnexarCorrespondenciaDesabilitado}
-            tooltip={isBotaoAnexarCorrespondenciaDesabilitado ? tooltips.tooltipAnexarCorrespondencia : ''}
-          >
-            <Paperclip className="h-4 w-4" />
-            Anexar correspondência
-          </Button>
-        )}
+        {isAdminOrGestor &&
+          podeMostrarBotaoAnexarCorrespondencia &&
+          (!isBotaoAnexarCorrespondenciaDesabilitado ? (
+            <ActionWithHelp
+              help={HELP_ANEXAR_CORRESPONDENCIA}
+              helpLabel="Anexar correspondência"
+            >
+              <Button
+                type="button"
+                className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={onAnexarCorrespondencia}
+              >
+                <Paperclip className="h-4 w-4" />
+                Anexar correspondência
+              </Button>
+            </ActionWithHelp>
+          ) : (
+            <Button
+              type="button"
+              className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={onAnexarCorrespondencia}
+              disabled
+              tooltip={tooltips.tooltipAnexarCorrespondencia}
+            >
+              <Paperclip className="h-4 w-4" />
+              Anexar correspondência
+            </Button>
+          ))}
 
         {isAdminOrGestor && status.isStatusEmValidacaoRegulatorio ? (
           <>
-            {canSolicitarAjustes && (
-              <Button
-                type="button"
-                className="flex items-center gap-2 rounded-full bg-orange-500 px-6 py-3 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={onSolicitarAjustes}
-                disabled={!status.isStatusEmValidacaoRegulatorio || status.conferenciaAprovada}
-                tooltip={tooltips.tooltipStatusValidacaoRegulatorio}
-              >
-                <MessageSquare className="h-4 w-4" />
-                Solicitar ajustes
-              </Button>
-            )}
-            {canAprovarConferencia && (
-              <Button
-                type="button"
-                className="flex items-center gap-2 rounded-full bg-blue-500 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={onAprovarConferencia}
-                disabled={!status.isStatusEmValidacaoRegulatorio || status.conferenciaAprovada}
-                tooltip={tooltips.tooltipStatusValidacaoRegulatorio}
-              >
-                <CheckCircle2 className="h-4 w-4" />
-                Aprovar conferência
-              </Button>
-            )}
+            {canSolicitarAjustes &&
+              (!conferenciaJaAprovada ? (
+                <ActionWithHelp
+                  help={HELP_SOLICITAR_AJUSTES}
+                  helpLabel="Solicitar ajustes"
+                >
+                  {solicitarAjustesButton}
+                </ActionWithHelp>
+              ) : (
+                solicitarAjustesButton
+              ))}
+            {canAprovarConferencia &&
+              (!conferenciaJaAprovada ? (
+                <ActionWithHelp
+                  help={HELP_APROVAR_CONFERENCIA}
+                  helpLabel="Aprovar conferência"
+                >
+                  {aprovarConferenciaButton}
+                </ActionWithHelp>
+              ) : (
+                aprovarConferenciaButton
+              ))}
           </>
         ) : (
           <>
-            {status.isStatusAtrasada && (
-              <Button
-                type="button"
-                className="flex items-center gap-2 rounded-full bg-red-500 px-6 py-3 text-sm font-semibold text-white hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={onJustificarAtraso}
-                disabled={!isUsuarioDaAreaAtribuida}
-                tooltip={tooltips.tooltipJustificarAtraso}
-              >
-                <Clock className="h-4 w-4" />
-                Inserir Justificativa de Atraso
-              </Button>
-            )}
+            {status.isStatusAtrasada &&
+              (isUsuarioDaAreaAtribuida ? (
+                <ActionWithHelp
+                  help={HELP_JUSTIFICATIVA_ATRASO}
+                  helpLabel="Justificativa de atraso"
+                >
+                  <Button
+                    type="button"
+                    className="flex items-center gap-2 rounded-full bg-red-500 px-6 py-3 text-sm font-semibold text-white hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={onJustificarAtraso}
+                  >
+                    <Clock className="h-4 w-4" />
+                    Inserir Justificativa de Atraso
+                  </Button>
+                </ActionWithHelp>
+              ) : (
+                <Button
+                  type="button"
+                  className="flex items-center gap-2 rounded-full bg-red-500 px-6 py-3 text-sm font-semibold text-white hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={onJustificarAtraso}
+                  disabled
+                  tooltip={tooltips.tooltipJustificarAtraso}
+                >
+                  <Clock className="h-4 w-4" />
+                  Inserir Justificativa de Atraso
+                </Button>
+              ))}
             {isStatusDesabilitadoParaTramitacao && (
               <>
-                <Button
-                  type="button"
-                  className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={onAnexarEvidencia}
-                  disabled={!isPermitidoAnexarEvidencia}
-                  tooltip={!isPermitidoAnexarEvidencia ? tooltips.tooltipAnexarEvidencia : ''}
-                >
-                  <Paperclip className="h-4 w-4" />
-                  Anexar evidência de cumprimento
-                </Button>
-                <Button
-                  type="button"
-                  className="flex items-center gap-2 rounded-full bg-blue-500 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={onEnviarParaAnalise}
-                  disabled={!permissoes.podeEnviarParaAnalise}
-                  tooltip={tooltips.tooltipEnviarRegulatorio}
-                >
-                  <CheckCircle2 className="h-4 w-4" />
-                  Enviar para análise do regulatório
-                </Button>
+                {isPermitidoAnexarEvidencia ? (
+                  <ActionWithHelp
+                    help={HELP_EVIDENCIA}
+                    helpLabel="Anexar evidência de cumprimento"
+                  >
+                    {anexarEvidenciaButton}
+                  </ActionWithHelp>
+                ) : (
+                  anexarEvidenciaButton
+                )}
+                {permissoes.isPerfilPermitidoEnviarReg ? (
+                  <ActionWithHelp
+                    help={HELP_ENVIAR_REGULATORIO}
+                    helpLabel="Enviar para análise do regulatório"
+                  >
+                    {enviarRegulatorioButton}
+                  </ActionWithHelp>
+                ) : (
+                  enviarRegulatorioButton
+                )}
               </>
             )}
           </>

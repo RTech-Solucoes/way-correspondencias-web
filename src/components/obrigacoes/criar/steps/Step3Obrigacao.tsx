@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { ObrigacaoFormData } from '../ObrigacaoModal';
 import { Label } from '@radix-ui/react-label';
+import { FieldHelpLabel } from '@/components/help-tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CategoriaEnum, StatusAtivo, TipoEnum, TipoResponse } from '@/api/tipos/types';
 import tiposClient from '@/api/tipos/client';
@@ -21,6 +22,18 @@ interface Step3ObrigacaoProps {
 }
 
 type TipoFrequencia = 'unica' | 'recorrente' | null;
+
+const HELP_PERIODICIDADE =
+  'Define a repetição da obrigação. Datas e periodicidade alimentam alertas e relatórios.';
+
+const HELP_DATA_INICIO =
+  'Data em que a obrigação começa a vigorar. Datas e periodicidade alimentam alertas e relatórios.';
+
+const HELP_DATA_TERMINO =
+  'Data de encerramento do período da obrigação.';
+
+const HELP_DATA_LIMITE =
+  'Prazo de entrega ao órgão regulador. Não pode ser anterior à data de início.';
 
 export function Step3Obrigacao({ formData, updateFormData, disabled = false, onValidationChange, idStatusObrigacao }: Step3ObrigacaoProps) {
 
@@ -129,7 +142,13 @@ export function Step3Obrigacao({ formData, updateFormData, disabled = false, onV
   return (
     <div className="space-y-6">
       <div className="space-y-3">
-        <Label>Qual será a frequência da obrigação? <span className="text-red-500">*</span></Label>
+        <FieldHelpLabel
+          required
+          help={HELP_PERIODICIDADE}
+          showHelp={!disabled}
+        >
+          Qual será a frequência da obrigação?
+        </FieldHelpLabel>
         <div className="grid grid-cols-2 gap-4">
           <div
             onClick={() => !disabled && handleFrequenciaChange('unica')}
@@ -225,7 +244,14 @@ export function Step3Obrigacao({ formData, updateFormData, disabled = false, onV
             
             {tipoFrequencia === 'recorrente' && (
               <div className="space-y-2">
-                <Label htmlFor="idTipoPeriodicidade">Periodicidade <span className="text-red-500">*</span></Label>
+                <FieldHelpLabel
+                  htmlFor="idTipoPeriodicidade"
+                  required
+                  help={HELP_PERIODICIDADE}
+                  showHelp={!disabled}
+                >
+                  Periodicidade
+                </FieldHelpLabel>
                 <Select
                   value={formData.idTipoPeriodicidade?.toString() || ''}
                   onValueChange={(value) => {
@@ -251,7 +277,14 @@ export function Step3Obrigacao({ formData, updateFormData, disabled = false, onV
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2"> 
-                <Label htmlFor="dtInicio">Data de Início <span className="text-red-500">*</span></Label>
+                <FieldHelpLabel
+                  htmlFor="dtInicio"
+                  required
+                  help={HELP_DATA_INICIO}
+                  showHelp={!disabled}
+                >
+                  Data de Início
+                </FieldHelpLabel>
                 <Input
                   id="dtInicio"
                   type="date"
@@ -262,7 +295,14 @@ export function Step3Obrigacao({ formData, updateFormData, disabled = false, onV
               </div>
 
               <div className="space-y-2"> 
-                <Label htmlFor="dtTermino">Data de Término <span className="text-red-500">*</span></Label>
+                <FieldHelpLabel
+                  htmlFor="dtTermino"
+                  required
+                  help={HELP_DATA_TERMINO}
+                  showHelp={!disabled}
+                >
+                  Data de Término
+                </FieldHelpLabel>
                 <Input
                   id="dtTermino"
                   type="date"
@@ -277,7 +317,14 @@ export function Step3Obrigacao({ formData, updateFormData, disabled = false, onV
               </div>
 
               <div className="space-y-2"> 
-                <Label htmlFor="dtLimite">Data Limite <span className="text-red-500">*</span></Label>
+                <FieldHelpLabel
+                  htmlFor="dtLimite"
+                  required
+                  help={HELP_DATA_LIMITE}
+                  showHelp={!disabled && isPermitidoEditarDtLimite}
+                >
+                  Data Limite
+                </FieldHelpLabel>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>

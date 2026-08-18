@@ -9,6 +9,10 @@ import { getCriticidadeBadgeClasses } from '../../utils';
 import { ConferenciaInfoRow } from './ConferenciaInfoRow';
 import { TipoEnum } from '@/api/tipos/types';
 import { formatDateTimeBr } from '@/utils/utils';
+import { HelpTooltip } from '@/components/help-tooltip';
+
+const HELP_STATUS =
+  'O status define as ações disponíveis, os perfis que podem atuar e se a edição é permitida.';
 
 interface ConferenciaStepDadosProps {
   obrigacao: ObrigacaoDetalheResponse['obrigacao'];
@@ -127,16 +131,19 @@ export function ConferenciaStepDados({ obrigacao, statusLabel, statusStyle }: Co
             {
               label: 'Status',
               value: (
-                <Badge
-                  className="inline-flex w-fit items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold"
-                  style={{
-                    backgroundColor: statusStyle.backgroundColor,
-                    color: statusStyle.textColor,
-                  }}
-                >
-                  <span className="inline-flex h-2 w-2 rounded-full bg-current opacity-75" />
-                  {statusLabel}
-                </Badge>
+                <div className="inline-flex items-center gap-1.5">
+                  <Badge
+                    className="inline-flex w-fit items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold"
+                    style={{
+                      backgroundColor: statusStyle.backgroundColor,
+                      color: statusStyle.textColor,
+                    }}
+                  >
+                    <span className="inline-flex h-2 w-2 rounded-full bg-current opacity-75" />
+                    {statusLabel}
+                  </Badge>
+                  <HelpTooltip content={HELP_STATUS} label="Status" />
+                </div>
               ),
             },
           ]}

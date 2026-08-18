@@ -6,6 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
+import { HelpTooltip } from '@/components/help-tooltip';
+
+const HELP_JUSTIFICATIVA_ATRASO =
+  'Só pode ser incluída quando a obrigação estiver atrasada. O texto da justificativa é obrigatório.';
 
 interface JustificarAtrasoModalProps {
   open: boolean;
@@ -58,9 +62,15 @@ export function JustificarAtrasoModal({ open, onClose, onConfirm, justificativaE
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[800px]">
         <DialogHeader>
-          <DialogTitle>
-            {justificativaExistente ? 'Editar Justificativa de Atraso' : 'Justificar Atraso'}
-          </DialogTitle>
+            <div className="inline-flex items-center gap-1.5">
+              <DialogTitle>
+                {justificativaExistente ? 'Editar Justificativa de Atraso' : 'Justificar Atraso'}
+              </DialogTitle>
+              <HelpTooltip
+                content={HELP_JUSTIFICATIVA_ATRASO}
+                label="Justificativa de atraso"
+              />
+            </div>
           <DialogDescription>
             {justificativaExistente 
               ? 'Edite a justificativa do atraso desta obrigação.'

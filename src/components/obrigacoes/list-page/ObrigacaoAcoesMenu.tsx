@@ -26,6 +26,10 @@ import { usePermissoes } from "@/context/permissoes/PermissoesContext";
 import anexosClient from "@/api/anexos/client";
 import { TipoDocumentoAnexoEnum, TipoObjetoAnexoEnum } from "@/api/anexos/type";
 import { useValidarObrigacao } from "@/components/obrigacoes/conferencia/hooks/use-validar-obrigacao";
+import { HelpTooltip } from "@/components/help-tooltip";
+
+const HELP_NAO_APLICAVEL_SUSPENSA =
+  "Exige justificativa, permanece nos relatórios e interrompe os alertas.";
 
 interface ObrigacaoAcoesMenuProps {
   obrigacao: ObrigacaoResponse;
@@ -207,7 +211,16 @@ export function ObrigacaoAcoesMenu({
           <DotsThreeOutlineIcon className="h-5 w-5" weight="fill" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent
+        align="end"
+        className="w-56"
+        onInteractOutside={(event) => {
+          const target = event.target as HTMLElement | null;
+          if (target?.closest('[role="tooltip"]')) {
+            event.preventDefault();
+          }
+        }}
+      >
         {onVisualizar && canVisualizarObrigacao && (
           <DropdownMenuItem onClick={() => onVisualizar(obrigacao)}>
             <EyeIcon className="mr-2 h-4 w-4" />
@@ -352,31 +365,40 @@ export function ObrigacaoAcoesMenu({
           </TooltipProvider>
         )}
         {onNaoAplicavelSuspenso && canNaoAplicavelSuspensaObrigacao && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="w-full">
-                  <DropdownMenuItem 
-                    onClick={() => !isStatusNaoAplicavelSuspenso && !isStatusConcluido && onNaoAplicavelSuspenso(obrigacao)}
-                    disabled={isStatusNaoAplicavelSuspenso || isStatusConcluido}
-                    className={isStatusNaoAplicavelSuspenso || isStatusConcluido ? 'opacity-50 cursor-not-allowed' : ''}
-                  >
-                    <BanIcon className="mr-2 h-4 w-4" />
-                    Não Aplicável/Suspenso
-                  </DropdownMenuItem>
-                </div>
-              </TooltipTrigger>
-              {(isStatusNaoAplicavelSuspenso || isStatusConcluido) && (
-                <TooltipContent>
-                  <p>
-                    {isStatusNaoAplicavelSuspenso 
-                      ? 'Esta obrigação já está com status não aplicável/suspenso.' 
-                      : 'Não é possível alterar o status de uma obrigação concluída.'}
-                  </p>
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
+          <div className="flex items-center gap-1 pr-1">
+            {!isStatusNaoAplicavelSuspenso && !isStatusConcluido && (
+              <HelpTooltip
+                content={HELP_NAO_APLICAVEL_SUSPENSA}
+                label="Não Aplicável / Suspensa"
+                className="ml-1"
+              />
+            )}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="min-w-0 flex-1">
+                    <DropdownMenuItem 
+                      onClick={() => !isStatusNaoAplicavelSuspenso && !isStatusConcluido && onNaoAplicavelSuspenso(obrigacao)}
+                      disabled={isStatusNaoAplicavelSuspenso || isStatusConcluido}
+                      className={isStatusNaoAplicavelSuspenso || isStatusConcluido ? 'opacity-50 cursor-not-allowed' : ''}
+                    >
+                      <BanIcon className="mr-2 h-4 w-4" />
+                      Não Aplicável/Suspenso
+                    </DropdownMenuItem>
+                  </div>
+                </TooltipTrigger>
+                {(isStatusNaoAplicavelSuspenso || isStatusConcluido) && (
+                  <TooltipContent>
+                    <p>
+                      {isStatusNaoAplicavelSuspenso 
+                        ? 'Esta obrigação já está com status não aplicável/suspenso.' 
+                        : 'Não é possível alterar o status de uma obrigação concluída.'}
+                    </p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         )}
         {onExcluir && canDeletarObrigacao && (
           <>

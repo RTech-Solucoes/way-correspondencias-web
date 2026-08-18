@@ -3,10 +3,17 @@
 import { AnaliseGerenteDiretor } from '@/api/solicitacoes/types';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { FieldHelpLabel } from '@/components/help-tooltip';
 import { TextField } from '@/components/ui/text-field';
 import { Textarea } from '@/components/ui/textarea';
 import { getRows } from '@/utils/utils';
 import { Step1Props } from '../types';
+
+const HELP_APROVACAO_ESPECIAL =
+  'Gerente: a minuta passa pela validação do Gerente. Diretor: a minuta passa pela validação da Diretoria. Ambos: exige as duas validações no fluxo. Não necessita: o fluxo segue sem essas etapas extras.';
+
+const HELP_MANIFESTACAO_GERENTE =
+  'Sim: a manifestação é obrigatória. O Gerente do Regulatório deve aprovar ou reprovar com parecer. Não, apenas ciência: o Gerente do Regulatório confirma ciência do conteúdo, sem aprovação ou reprovação.';
 
 export function Step1Identificacao({ formData, updateFormData, disabled = false, onInputChange }: Step1Props) {
   return (
@@ -42,9 +49,14 @@ export function Step1Identificacao({ formData, updateFormData, disabled = false,
 
       <div className="grid grid-cols-3 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="flAnaliseGerenteDiretor" className="text-sm font-medium">
-            Exige aprovação especial? *
-          </Label>
+          <FieldHelpLabel
+            htmlFor="flAnaliseGerenteDiretor"
+            required
+            help={HELP_APROVACAO_ESPECIAL}
+            showHelp={!disabled}
+          >
+            Exige aprovação especial?
+          </FieldHelpLabel>
           <div className="flex items-center gap-4 mt-2">
             <div className="flex items-center gap-2">
               <Checkbox
@@ -100,9 +112,14 @@ export function Step1Identificacao({ formData, updateFormData, disabled = false,
 
       <div className="grid grid-cols-3 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="flExigeCienciaGerenteRegul" className="text-sm font-medium">
-            Exige manifestação do Gerente do Regulatório? *
-          </Label>
+          <FieldHelpLabel
+            htmlFor="flExigeCienciaGerenteRegul"
+            required
+            help={HELP_MANIFESTACAO_GERENTE}
+            showHelp={!disabled}
+          >
+            Exige manifestação do Gerente do Regulatório?
+          </FieldHelpLabel>
           <div className="flex items-center gap-4 mt-2">
             <div className="flex items-center gap-2">
               <Checkbox

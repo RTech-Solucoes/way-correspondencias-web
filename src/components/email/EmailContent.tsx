@@ -15,6 +15,9 @@ import {FiltrosAplicados} from '@/components/ui/applied-filters';
 import { formatDateBr } from "@/utils/utils";
 import { useEmailsQuery } from "./hooks/use-email-query";
 
+const HELP_CAIXA_ENTRADA =
+  "Somente para consulta: não é possível editar, excluir ou responder e-mails. O e-mail original permanece disponível para auditoria.";
+
 export function EmailContent() {
   const {
     selectedEmail,
@@ -140,7 +143,7 @@ export function EmailContent() {
     <div className="flex flex-col min-h-0 flex-1">
 
       <div className="flex items-center justify-between">
-        <PageTitle />
+        <PageTitle help={HELP_CAIXA_ENTRADA} helpLabel="Caixa de Entrada" />
         <div className="flex items-center space-x-2">
           <Button
             variant="ghost"

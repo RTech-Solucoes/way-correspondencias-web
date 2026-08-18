@@ -10,6 +10,10 @@ import { Button } from '@/components/ui/button';
 import { TemaResponse } from '@/api/temas/types';
 import { AreaResponse } from '@/api/areas/types';
 import { CorrespondenciaFiltroRequest } from './hooks/use-solicitacoes-filters';
+import { HelpTooltip } from '@/components/help-tooltip';
+
+const HELP_FILTROS =
+  'Os filtros podem ser combinados para restringir a listagem.';
 
 interface FilterModalProps {
   open: boolean;
@@ -52,7 +56,10 @@ export default function FilterModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Filtrar Solicitações</DialogTitle>
+            <div className="inline-flex items-center gap-1.5">
+              <DialogTitle>Filtrar Solicitações</DialogTitle>
+              <HelpTooltip content={HELP_FILTROS} label="Filtrar" />
+            </div>
         </DialogHeader>
         <div className="grid gap-4">
           <div className="grid grid-cols-2 gap-4">

@@ -9,6 +9,10 @@ import { DownloadIcon } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../ui/button';
+import { HelpTooltip } from '@/components/help-tooltip';
+
+const HELP_ANEXOS_REFERENCIA =
+  'Anexos recebidos pelo e-mail são de referência e não podem ser excluídos.';
 
 type AnexoItemShape = {
   idAnexo: number;
@@ -148,8 +152,14 @@ export default function AnexoModalTramitacao({
       {/* Anexos do E-mail */}
       <div className="rounded-md border">
         <div className="grid grid-cols-12 items-center">
-          <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground">
+          <div className="col-span-3 px-4 py-3 text-sm text-muted-foreground inline-flex items-center gap-1.5">
             Anexos do E-mail
+            {anexosData.itensEmail.length > 0 && (
+              <HelpTooltip
+                content={HELP_ANEXOS_REFERENCIA}
+                label="Anexos de referência"
+              />
+            )}
           </div>
           <div className="col-span-9 px-4 py-3">
             <AnexoItem anexos={anexosData.itensEmail} onBaixar={handleBaixarAnexo} />

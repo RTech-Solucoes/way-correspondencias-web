@@ -7,6 +7,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button } from '../ui/button';
 import ExportHistoricoPdf from './relatorios/ExportHistoricoPdf';
 import HistoricoTramitacaoBaseModal, { HistoricoBaseItem } from './HistoricoTramitacaoBaseModal';
+import { ActionWithHelp } from '@/components/help-tooltip';
+
+const HELP_HISTORICO =
+  'Registra ações, responsável, data e hora, comentários e mudanças de status. Consulte o histórico antes de devolver, aprovar ou reprovar.';
 
 interface HistoricoRespostasModalProps {
   idSolicitacao: number | null;
@@ -128,9 +132,11 @@ export function HistoricoRespostasModalButton({ idSolicitacao, showButton = true
       <div>
         <span className="text-xs text-color-p text-[#EA5600]">{quantidadeDevolutivas} devolutivas</span>
 
-        <Button type="button" variant="link" onClick={handleToggleModal}>
-          Histórico de Respostas
-        </Button>
+        <ActionWithHelp help={HELP_HISTORICO} helpLabel="Histórico">
+          <Button type="button" variant="link" onClick={handleToggleModal}>
+            Histórico de Respostas
+          </Button>
+        </ActionWithHelp>
       </div>
 
       <HistoricoRespostasModal

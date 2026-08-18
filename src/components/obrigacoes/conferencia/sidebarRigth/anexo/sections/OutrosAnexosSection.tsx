@@ -4,6 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import type { AnexoResponse } from '@/api/anexos/type';
 import { ItemAnexo } from '../ItensAnexos';
+import { HelpTooltip } from '@/components/help-tooltip';
+
+const HELP_ANEXO_AUXILIAR =
+  'Anexo auxiliar de apoio. Não substitui a evidência de cumprimento.';
 
 interface OutrosAnexosSectionProps {
   anexos: AnexoResponse[];
@@ -14,6 +18,7 @@ interface OutrosAnexosSectionProps {
   statusPermiteAnexarOutros: boolean;
   tooltipOutrosAnexos: string;
   onOpenAnexarOutrosModal: () => void;
+  showHelp?: boolean;
 }
 
 export function OutrosAnexosSection({
@@ -25,11 +30,17 @@ export function OutrosAnexosSection({
   statusPermiteAnexarOutros,
   tooltipOutrosAnexos,
   onOpenAnexarOutrosModal,
+  showHelp = false,
 }: OutrosAnexosSectionProps) {
   return (
     <div className="space-y-4 mb-5">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-semibold text-gray-900">Outros anexos</span>
+        <div className="inline-flex items-center gap-1.5">
+          <span className="text-sm font-semibold text-gray-900">Outros anexos</span>
+          {showHelp && (
+            <HelpTooltip content={HELP_ANEXO_AUXILIAR} label="Anexo auxiliar" />
+          )}
+        </div>
         <span className="text-xs font-semibold text-gray-400">{anexos.length}</span>
       </div>
 

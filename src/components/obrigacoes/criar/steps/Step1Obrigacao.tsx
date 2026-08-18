@@ -2,6 +2,7 @@
 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { FieldHelpLabel } from '@/components/help-tooltip';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ObrigacaoFormData } from '../ObrigacaoModal';
@@ -12,6 +13,12 @@ import { useEffect, useState } from 'react';
 import { solicitacoesClient } from '@/api/solicitacoes';
 import statusSolicitacaoClient, { StatusSolicitacaoResponse } from '@/api/status-solicitacao/client';
 import obrigacaoClient from '@/api/obrigacao/client';
+
+const HELP_OBRIGACAO_PRINCIPAL =
+  'Toda obrigação condicionada deve indicar a obrigação principal. Concluir a condicionada não conclui automaticamente a principal.';
+
+const HELP_STATUS =
+  'O status define as ações disponíveis, os perfis que podem atuar e se a edição é permitida.';
 
 interface Step1ObrigacaoProps {
   formData: ObrigacaoFormData;
@@ -174,7 +181,14 @@ export function Step1Obrigacao({
 
         <div className="flex flex-row w-full gap-4">
             <div className="space-y-2 w-full">
-                <Label htmlFor="idStatusSolicitacao">Status <span className="text-red-500">*</span></Label>
+                <FieldHelpLabel
+                  htmlFor="idStatusSolicitacao"
+                  help={HELP_STATUS}
+                  helpLabel="Status"
+                  required
+                >
+                  Status
+                </FieldHelpLabel>
                 <Select
                     value={formData.idStatusSolicitacao?.toString() || ''}
                     onValueChange={(value) => {
@@ -222,7 +236,15 @@ export function Step1Obrigacao({
             {isCondicionada && (
                 <div className="space-y-2 w-full">
                   <>
-                    <Label htmlFor="idObrigacaoPrincipal">Obrigação Principal <span className="text-red-500">*</span></Label>
+                    <FieldHelpLabel
+                      htmlFor="idObrigacaoPrincipal"
+                      help={HELP_OBRIGACAO_PRINCIPAL}
+                      helpLabel="Obrigação Principal"
+                      required
+                      showHelp={!disabled}
+                    >
+                      Obrigação Principal
+                    </FieldHelpLabel>
                     <Select
                       value={formData.idObrigacaoPrincipal?.toString() || 'none'}
                       onValueChange={(value) => updateFormData({ 

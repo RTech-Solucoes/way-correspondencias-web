@@ -7,6 +7,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { HelpTooltip } from '@/components/help-tooltip';
+
+const HELP_NAO_APLICAVEL_SUSPENSA =
+  'Exige justificativa, permanece nos relatórios e interrompe os alertas.';
 
 interface NaoAplicavelSuspensoModalProps {
   open: boolean;
@@ -75,9 +79,15 @@ export function NaoAplicavelSuspensoModal({ open, onClose, onConfirm, justificat
       <Dialog open={open} onOpenChange={handleClose}>
         <DialogContent className="sm:max-w-[800px]">
           <DialogHeader>
-            <DialogTitle>
-              {justificativaExistente ? 'Editar Status Não Aplicável/Suspenso' : 'Alterar Status para Não Aplicável/Suspenso'}
-            </DialogTitle>
+            <div className="inline-flex items-center gap-1.5">
+              <DialogTitle>
+                {justificativaExistente ? 'Editar Status Não Aplicável/Suspenso' : 'Alterar Status para Não Aplicável/Suspenso'}
+              </DialogTitle>
+              <HelpTooltip
+                content={HELP_NAO_APLICAVEL_SUSPENSA}
+                label="Não Aplicável / Suspensa"
+              />
+            </div>
             <DialogDescription>
               {justificativaExistente 
                 ? 'Edite a justificativa do status não aplicável/suspenso desta obrigação.'

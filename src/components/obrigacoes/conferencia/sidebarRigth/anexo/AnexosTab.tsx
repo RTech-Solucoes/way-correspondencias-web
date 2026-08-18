@@ -183,6 +183,9 @@ export function AnexosTab({
         statusPermiteAnexarOutros={permissoes.statusPermiteAnexarOutros}
         tooltipOutrosAnexos={permissoes.tooltipOutrosAnexos}
         onOpenAnexarOutrosModal={handleOpenAnexarOutrosModal}
+        showHelp={
+          permissoes.podeAnexarEvidencia && permissoes.statusPermiteAnexarEvidencia
+        }
       />
 
       {!isStatusDesabilitadoParaTramitacao && !isStatusEmValidacaoRegulatorio && (

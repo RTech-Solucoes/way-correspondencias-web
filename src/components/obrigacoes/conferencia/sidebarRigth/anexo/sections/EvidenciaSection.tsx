@@ -5,6 +5,10 @@ import { Plus } from 'lucide-react';
 import type { AnexoResponse } from '@/api/anexos/type';
 import { ItemAnexo, ItemAnexoLink } from '../ItensAnexos';
 import { EvidenceLinkInput } from './EvidenceLinkInput';
+import { HelpTooltip } from '@/components/help-tooltip';
+
+const HELP_EVIDENCIA =
+  'Comprova o cumprimento da obrigação. Será analisada pelo Regulatório e pode ser enviada como arquivo ou URL.';
 
 interface EvidenciaSectionProps {
   evidenceAnexos: AnexoResponse[];
@@ -49,11 +53,17 @@ export function EvidenciaSection({
   onToggleLinkInput,
 }: EvidenciaSectionProps) {
   const totalEvidencias = evidenceAnexos.length + evidenceLinksAnexos.length;
+  const showHelp = podeAnexarEvidencia && statusPermiteAnexarEvidencia;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-semibold text-gray-900">Evidência de cumprimento</span>
+        <div className="inline-flex items-center gap-1.5">
+          <span className="text-sm font-semibold text-gray-900">Evidência de cumprimento</span>
+          {showHelp && (
+            <HelpTooltip content={HELP_EVIDENCIA} label="Evidência de cumprimento" />
+          )}
+        </div>
         <span className="text-xs font-semibold text-gray-400">{totalEvidencias}</span>
       </div>
 

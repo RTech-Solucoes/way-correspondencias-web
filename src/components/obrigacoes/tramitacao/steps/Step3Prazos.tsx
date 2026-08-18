@@ -10,6 +10,7 @@ import { STATUS_LIST, statusList as statusListType } from '@/api/status-solicita
 import { hoursToDaysAndHours } from '@/utils/utils';
 import { Input as NextUIInput } from '@nextui-org/react';
 import { CategoriaEnum, TipoEnum } from '@/api/tipos/types';
+import { HelpTooltip } from '@/components/help-tooltip';
 
 export interface PrazosFormData {
   statusPrazos?: StatusSolicPrazoTemaForUI[];
@@ -23,6 +24,8 @@ interface Step3PrazosProps<T extends PrazosFormData> {
   defaultPrazosPorStatus?: { [key: number]: number };
   statusOcultos?: number[];
   tipoEnum?: TipoEnum;
+  helpPrazoExcepcional?: string;
+  helpPrazosPorStatus?: string;
 }
 
 function horasParaDias(horas: number): number {
@@ -58,6 +61,8 @@ export function Step3Prazos<T extends PrazosFormData>({
   defaultPrazosPorStatus = DEFAULT_PRAZOS_POR_STATUS,
   statusOcultos = DEFAULT_STATUS_OCULTOS_OBRIGACAO,
   tipoEnum = TipoEnum.OBRIGACAO,
+  helpPrazoExcepcional,
+  helpPrazosPorStatus,
 }: Step3PrazosProps<T>) {
   const [statusList, setStatusList] = useState<StatusSolicitacaoResponse[]>([]);
   const hasInitialized = useRef(false);
@@ -189,7 +194,15 @@ export function Step3Prazos<T extends PrazosFormData>({
       <div className="flex flex-col">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center w-full gap-3">
-            <h3 className="text-lg font-medium text-gray-900">Configuração de Prazos por Status</h3>
+            <h3 className="inline-flex items-center gap-1.5 text-lg font-medium text-gray-900">
+              Configuração de Prazos por Status
+              {helpPrazosPorStatus && !disabled && (
+                <HelpTooltip
+                  content={helpPrazosPorStatus}
+                  label="Configuração de Prazos por Status"
+                />
+              )}
+            </h3>
             <div className="flex items-center gap-2">
               <Checkbox
                 id="prazoExcepcional"
@@ -200,6 +213,12 @@ export function Step3Prazos<T extends PrazosFormData>({
               <Label htmlFor="prazoExcepcional" className="text-sm font-medium text-blue-600">
                 Prazo Excepcional
               </Label>
+              {helpPrazoExcepcional && !disabled && (
+                <HelpTooltip
+                  content={helpPrazoExcepcional}
+                  label="Prazo Excepcional"
+                />
+              )}
             </div>
             <h3 className="text-blue-500 font-bold ml-auto text-2xl">
               {prazoExcepcional ? `${currentPrazoTotal}h` : hoursToDaysAndHours(currentPrazoTotal)}

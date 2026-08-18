@@ -2,12 +2,19 @@
 
 import { useEffect, useState } from 'react';
 import { Label } from '@/components/ui/label';
+import { HelpTooltip } from '@/components/help-tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ObrigacaoFormData } from '../ObrigacaoModal';
 import { TemaResponse } from '@/api/temas/types';
 import { MultiSelectAreas } from '@/components/ui/multi-select-areas';
 import temasClient from '@/api/temas/client';
 import { TramitacaoFormData } from '../../tramitacao';
+
+const HELP_AREA_RESPONSAVEL =
+  'Área responsável: executa a obrigação e envia as evidências de cumprimento.';
+
+const HELP_AREA_CONDICIONANTE =
+  'Área condicionante: atua como apoio e não substitui a área responsável.';
 
 interface Step2ObrigacaoProps {
   formData: ObrigacaoFormData;
@@ -98,30 +105,40 @@ export function Step2Obrigacao({ formData, updateFormData, disabled = false }: S
 
       <div className="space-y-2">
         <div className="flex gap-2 pt-5">
-          <button
-            type="button"
-            onClick={() => setTipoAreaSelecionado('atribuida')}
-            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
-              tipoAreaSelecionado === 'atribuida'
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-            disabled={loading}
-          >
-            Área Atribuída a*
-          </button>
-          <button
-            type="button"
-            onClick={() => setTipoAreaSelecionado('condicionante')}
-            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
-              tipoAreaSelecionado === 'condicionante'
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-            disabled={loading}
-          >
-            Área Condicionante
-          </button>
+          <div className="flex flex-1 items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setTipoAreaSelecionado('atribuida')}
+              className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+                tipoAreaSelecionado === 'atribuida'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+              disabled={loading}
+            >
+              Área Atribuída a*
+            </button>
+            {!disabled && (
+              <HelpTooltip content={HELP_AREA_RESPONSAVEL} label="Área responsável" />
+            )}
+          </div>
+          <div className="flex flex-1 items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setTipoAreaSelecionado('condicionante')}
+              className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+                tipoAreaSelecionado === 'condicionante'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+              disabled={loading}
+            >
+              Área Condicionante
+            </button>
+            {!disabled && (
+              <HelpTooltip content={HELP_AREA_CONDICIONANTE} label="Área condicionante" />
+            )}
+          </div>
         </div>
       </div>
 

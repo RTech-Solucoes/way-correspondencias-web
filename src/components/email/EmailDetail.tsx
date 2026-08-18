@@ -14,6 +14,10 @@ import {areasClient} from '@/api/areas/client';
 import {emailClient} from '@/api/email/client';
 import {EmailResponse} from "@/api/email/types";
 import {getInitials} from "@/utils/utils";
+import { HelpTooltip } from "@/components/help-tooltip";
+
+const HELP_CAIXA_ENTRADA =
+  "Somente para consulta: não é possível editar, excluir ou responder e-mails. O e-mail original permanece disponível para auditoria.";
 
 interface EmailDetailProps {
   emailId: string;
@@ -159,8 +163,9 @@ export default function EmailDetail({
           >
             <ArrowLeftIcon className="h-5 w-5"/>
           </Button>
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-gray-500 inline-flex items-center gap-1.5">
             Email
+            <HelpTooltip content={HELP_CAIXA_ENTRADA} label="Caixa de Entrada" />
           </div>
         </div>
       </div>

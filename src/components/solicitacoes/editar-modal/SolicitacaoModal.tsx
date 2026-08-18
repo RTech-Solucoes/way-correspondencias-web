@@ -30,6 +30,12 @@ import { useSolicitacaoData } from './hooks/use-solicitacao-data';
 import { Step1Identificacao, Step2TemaAreas, Step5Anexos, Step6Resumo } from './steps';
 import { AnexoListItem, SolicitacaoModalProps, STEPS_CONFIG, SolicitacaoFormData, STATUS_OCULTOS_CORRESPONDENCIA } from './types';
 
+const HELP_PRAZO_EXCEPCIONAL =
+  'Prazo padrão: usa os tempos definidos para cada etapa. Prazo excepcional: permite personalizar os prazos desta solicitação.';
+
+const HELP_PRAZOS_POR_STATUS =
+  'O prazo começa na etapa de análise da Área Técnica. O atraso pode gerar o status Vencido Área Técnica.';
+
 export default function SolicitacaoModal({
   correspondencia,
   open,
@@ -627,6 +633,8 @@ export default function SolicitacaoModal({
             defaultPrazosPorStatus={DEFAULT_PRAZOS_POR_STATUS}
             statusOcultos={STATUS_OCULTOS_CORRESPONDENCIA}
             tipoEnum={TipoEnum.CORRESPONDENCIA}
+            helpPrazoExcepcional={HELP_PRAZO_EXCEPCIONAL}
+            helpPrazosPorStatus={HELP_PRAZOS_POR_STATUS}
           />
         );
       case 4:

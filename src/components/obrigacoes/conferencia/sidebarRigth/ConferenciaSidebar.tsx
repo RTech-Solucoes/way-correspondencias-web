@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, Fragment } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { CloudDownload, Send } from 'lucide-react';
@@ -22,6 +22,13 @@ import {
   useComentariosLogica, 
   useUserResponsavel 
 } from './hooks';
+import { HelpTooltip } from '@/components/help-tooltip';
+
+const HELP_COMENTARIO =
+  'Fica na linha do tempo com usuário, data e conteúdo. Não substitui evidência de cumprimento nem anexo auxiliar.';
+
+const HELP_HISTORICO =
+  'Registra ações, responsável, data e hora, comentários e mudanças de status. Consulte o histórico antes de devolver, aprovar ou reprovar.';
 
 interface ConferenciaSidebarProps {
   detalhe: ObrigacaoDetalheResponse;
@@ -185,8 +192,9 @@ export function ConferenciaSidebar({
     <aside className="fixed right-0 top-[80px] bottom-[49px] z-10 flex w-full max-w-md flex-shrink-0 flex-col">
       <div className="flex h-full flex-col overflow-hidden rborder-gray-200 bg-white shadow-sm">
         <div className="flex items-center justify-between px-6 py-5">
-          <div>
+          <div className="inline-flex items-center gap-1.5">
             <h2 className="text-lg font-semibold text-gray-900">Registros</h2>
+            <HelpTooltip content={HELP_HISTORICO} label="Histórico" />
           </div>
           <div>
             {permissoes.podeGerarRelatorio && (
@@ -210,10 +218,8 @@ export function ConferenciaSidebar({
             {[RegistroTabKey.ANEXOS, RegistroTabKey.COMENTARIOS].map((tab) => {
               const active = registroTab === tab;
               const count = tab === RegistroTabKey.ANEXOS ? anexosCount : comentariosCount;
-
-              return (
+              const tabButton = (
                 <button
-                  key={tab}
                   type="button"
                   onClick={() => setRegistroTab(tab)}
                   className={cn(
@@ -235,6 +241,17 @@ export function ConferenciaSidebar({
                   )}
                 </button>
               );
+
+              if (tab === RegistroTabKey.COMENTARIOS) {
+                return (
+                  <div key={tab} className="relative flex items-center gap-1">
+                    {tabButton}
+                    <HelpTooltip content={HELP_COMENTARIO} label="Comentário" />
+                  </div>
+                );
+              }
+
+              return <Fragment key={tab}>{tabButton}</Fragment>;
             })}
           </div>
 
@@ -290,7 +307,12 @@ export function ConferenciaSidebar({
 
           {registroTab === RegistroTabKey.COMENTARIOS && (
             <div className="bg-white px-6 py-4 border-t border-gray-100 shrink-0 mb-5">
-              <label className="mb-2 block text-sm font-semibold text-gray-900">Escreva um comentário</label>
+              <div className="mb-2 inline-flex items-center gap-1.5">
+                <label htmlFor="comentario-textarea" className="text-sm font-semibold text-gray-900">
+                  Escreva um comentário
+                </label>
+                <HelpTooltip content={HELP_COMENTARIO} label="Comentário" />
+              </div>
               
               {comentariosLogica.tramitacaoReferencia && comentariosLogica.podeResponderTramitacao && (() => {
                 const tramitacaoReferenciada = comentariosLogica.tramitacoes.find(

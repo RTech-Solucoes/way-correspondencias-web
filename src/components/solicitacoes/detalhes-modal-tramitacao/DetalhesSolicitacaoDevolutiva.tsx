@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { FieldHelpLabel } from '@/components/help-tooltip';
 import { Textarea } from '@/components/ui/textarea';
 import { PaperclipIcon, X as XIcon } from '@phosphor-icons/react';
 import { ChangeEvent } from 'react';
@@ -34,6 +35,7 @@ type DetalhesSolicitacaoDevolutivaProps = {
   // Labels
   labelStatusTextarea: string;
   labelFlAprovacao: string;
+  helpAprovacao?: string;
 
   // Flags
   isFlagVisivel: boolean;
@@ -65,6 +67,7 @@ export function DetalhesSolicitacaoDevolutiva({
   handleRemoveArquivo,
   labelStatusTextarea,
   labelFlAprovacao,
+  helpAprovacao,
   isFlagVisivel,
   diretorPermitidoDsParecer,
   enableEnviarDevolutiva,
@@ -100,9 +103,20 @@ export function DetalhesSolicitacaoDevolutiva({
       {isFlagVisivel && !diretorPermitidoDsParecer && (
         <section className="space-y-3">
           <div className="space-y-2">
-            <Label htmlFor="aprovarDevolutiva" className="text-sm font-medium">
-              {labelFlAprovacao} *
-            </Label>
+            {helpAprovacao ? (
+              <FieldHelpLabel
+                htmlFor="aprovarDevolutiva"
+                required
+                help={helpAprovacao}
+                showHelp={enableEnviarDevolutiva}
+              >
+                {labelFlAprovacao}
+              </FieldHelpLabel>
+            ) : (
+              <Label htmlFor="aprovarDevolutiva" className="text-sm font-medium">
+                {labelFlAprovacao} *
+              </Label>
+            )}
             <div className="flex items-center gap-4 mt-2">
               <div className="flex items-center gap-2">
                 <Checkbox

@@ -6,6 +6,8 @@ import { CorrespondenciaDetalheResponse } from '@/api/correspondencia/types';
 import { FlAprovadoTramitacaoEnum } from '@/api/tramitacoes/types';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter } from '@/components/ui/dialog';
+import { ActionWithHelp } from '@/components/help-tooltip';
+import { statusList } from '@/api/status-solicitacao/types';
 
 import AnexoModalTramitacao from '../AnexoModalTramitacao';
 import InformaçaoStatusEmAnaliseGerReg from '../InformaçaoStatusEmAnaliseGerReg';
@@ -33,6 +35,27 @@ type DetalhesSolicitacaoModalProps = {
   ): Promise<void> | void;
   statusLabel?: string;
 };
+
+const HELP_ENVIAR_RESPOSTA_AREA_TECNICA =
+  'A resposta deve conter a manifestação técnica e pode incluir anexos de suporte. Cada área envia uma única resposta. Após o envio, a resposta fica bloqueada para edição.';
+
+const HELP_REPROVACAO_DEVOLUTIVA =
+  'Não: a reprovação da devolutiva exige parecer e devolve a demanda à área responsável. Sim: a minuta segue para aprovação dos gerentes das áreas.';
+
+const HELP_APROVACAO_GERENCIAL =
+  'Todos os gerentes das áreas envolvidas precisam aprovar a minuta para o fluxo avançar.';
+
+const HELP_ASSINATURA_DIRETORIA =
+  'A aprovação pela Diretoria exige o upload do documento assinado e a aprovação de dois Diretores.';
+
+const HELP_CHANCELA =
+  'Encaminha a minuta para assinatura da Diretoria. A aprovação exige o upload do documento assinado e a aprovação de dois Diretores.';
+
+const HELP_PROTOCOLO_ANTT =
+  'Sim: exige anexar o protocolo ANTT. Não: exige uma justificativa.';
+
+const HELP_ARQUIVAMENTO =
+  'A solicitação arquivada permanece disponível para auditoria, mas não pode ser editada ou reativada.';
 
 export default function DetalhesSolicitacaoModal({
   open,
@@ -90,6 +113,46 @@ export default function DetalhesSolicitacaoModal({
     flAprovado: form.flAprovado,
     isExisteCienciaGerenteRegul: data.isExisteCienciaGerenteRegul,
   });
+
+  const isAnaliseAreaTecnica = data.idStatusSolicitacao === statusList.EM_ANALISE_AREA_TECNICA.id;
+  const isAprovacaoGerencial = data.idStatusSolicitacao === statusList.EM_APROVACAO.id;
+  const isChancela = data.idStatusSolicitacao === statusList.EM_CHANCELA.id;
+  const isAssinaturaDiretoria = data.idStatusSolicitacao === statusList.EM_ASSINATURA_DIRETORIA.id;
+  const isConcluido = data.idStatusSolicitacao === statusList.CONCLUIDO.id;
+  const canEnviar = !permissoes.diretorPermitidoDsParecer && !!permissoes.enableEnviarDevolutiva;
+
+  const helpAprovacao = data.isAnaliseRegulatoriaAprovarDevolutiva
+    ? HELP_REPROVACAO_DEVOLUTIVA
+    : isAprovacaoGerencial
+      ? HELP_APROVACAO_GERENCIAL
+      : isAssinaturaDiretoria
+        ? HELP_ASSINATURA_DIRETORIA
+        : isConcluido
+          ? HELP_PROTOCOLO_ANTT
+          : undefined;
+
+  const sendActionHelp = isAnaliseAreaTecnica
+    ? { help: HELP_ENVIAR_RESPOSTA_AREA_TECNICA, label: 'Enviar Resposta' }
+    : isChancela
+      ? { help: HELP_CHANCELA, label: 'Enviar para assinatura da Diretoria' }
+      : isAssinaturaDiretoria
+        ? { help: HELP_ASSINATURA_DIRETORIA, label: labels.btnEnviarDevolutivaLabel }
+        : isConcluido
+          ? { help: HELP_ARQUIVAMENTO, label: 'Arquivar Solicitação' }
+          : null;
+
+  const showSendActionHelp = canEnviar && sendActionHelp !== null;
+
+  const enviarRespostaButton = (
+    <Button
+      type="submit"
+      form="detalhes-form"
+      disabled={!permissoes.enableEnviarDevolutiva}
+      tooltip={!permissoes.enableEnviarDevolutiva ? permissoes.btnTooltip : ''}
+    >
+      {form.sending ? 'Enviando...' : labels.btnEnviarDevolutivaLabel}
+    </Button>
+  );
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -168,6 +231,7 @@ export default function DetalhesSolicitacaoModal({
             handleRemoveArquivo={form.handleRemoveArquivo}
             labelStatusTextarea={labels.labelStatusTextarea}
             labelFlAprovacao={labels.labelFlAprovacao}
+            helpAprovacao={helpAprovacao}
             isFlagVisivel={data.isFlagVisivel}
             diretorPermitidoDsParecer={permissoes.diretorPermitidoDsParecer}
             enableEnviarDevolutiva={permissoes.enableEnviarDevolutiva ?? false}
@@ -198,14 +262,16 @@ export default function DetalhesSolicitacaoModal({
           )}
 
           {!permissoes.diretorPermitidoDsParecer && (
-            <Button
-              type="submit"
-              form="detalhes-form"
-              disabled={!permissoes.enableEnviarDevolutiva}
-              tooltip={!permissoes.enableEnviarDevolutiva ? permissoes.btnTooltip : ''}
-            >
-              {form.sending ? 'Enviando...' : labels.btnEnviarDevolutivaLabel}
-            </Button>
+            showSendActionHelp && sendActionHelp ? (
+              <ActionWithHelp
+                help={sendActionHelp.help}
+                helpLabel={sendActionHelp.label}
+              >
+                {enviarRespostaButton}
+              </ActionWithHelp>
+            ) : (
+              enviarRespostaButton
+            )
           )}
         </DialogFooter>
       </DialogContent>

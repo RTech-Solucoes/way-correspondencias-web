@@ -13,6 +13,10 @@ import ExportSolicitacoesExcel from '@/components/solicitacoes/relatorios/Export
 import ExportSolicitacoesPdf from '@/components/solicitacoes/relatorios/ExportSolicitacoesPdf';
 import { SolicitacaoFilterParams } from '@/api/solicitacoes/types';
 import LoadingOverlay from '@/components/ui/loading-overlay';
+import { HelpTooltip } from '@/components/help-tooltip';
+
+const HELP_EXPORTAR =
+  'A exportação em Excel ou PDF considera os registros visíveis após a pesquisa e os filtros.';
 
 type ExportSolicitacaoMenuProps = {
   filterParams: Omit<SolicitacaoFilterParams, 'page' | 'size'>;
@@ -48,22 +52,25 @@ export default function ExportSolicitacaoMenu({ filterParams, getStatusText, cla
 
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="secondary" className={`h-10 px-4 ${className || ''}`} disabled={isLoading}>
-            <CloudArrowDownIcon className="h-4 w-4 mr-2" />
-            Exportar
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          <DropdownMenuItem onClick={() => setRunExcel(true)} disabled={isLoading}>
-            Exportar em Excel
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setRunPdf(true)} disabled={isLoading}>
-            Exportar em PDF
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <div className="inline-flex items-center gap-1.5">
+        <HelpTooltip content={HELP_EXPORTAR} label="Exportar" />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="secondary" className={`h-10 px-4 ${className || ''}`} disabled={isLoading}>
+              <CloudArrowDownIcon className="h-4 w-4 mr-2" />
+              Exportar
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem onClick={() => setRunExcel(true)} disabled={isLoading}>
+              Exportar em Excel
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setRunPdf(true)} disabled={isLoading}>
+              Exportar em PDF
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
       {isLoading && (
         <LoadingOverlay

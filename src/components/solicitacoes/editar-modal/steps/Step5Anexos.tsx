@@ -1,9 +1,13 @@
 'use client';
 
 import { Label } from '@/components/ui/label';
+import { FieldHelpLabel } from '@/components/help-tooltip';
 import AnexoComponent from '@/components/AnexoComponotent/AnexoComponent';
 import AnexoList from '@/components/AnexoComponotent/AnexoList/AnexoList';
 import { Step5Props } from '../types';
+
+const HELP_ANEXOS_REFERENCIA =
+  'Anexos recebidos pelo e-mail são de referência e não podem ser excluídos.';
 
 export function Step5Anexos({
   disabled = false,
@@ -56,7 +60,13 @@ export function Step5Anexos({
 
         {canListarAnexo && anexosTypeE && anexosTypeE.length > 0 && (
           <div>
-            <Label className="text-sm font-medium mb-2 block">Anexos do email</Label>
+            <FieldHelpLabel
+              help={HELP_ANEXOS_REFERENCIA}
+              helpLabel="Anexos de referência"
+              className="mb-2"
+            >
+              Anexos do email
+            </FieldHelpLabel>
             <AnexoList
               anexos={anexosTypeE.map(a => ({
                 idAnexo: a.idAnexo,
