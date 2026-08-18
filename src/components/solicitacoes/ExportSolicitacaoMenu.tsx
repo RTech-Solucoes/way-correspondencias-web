@@ -53,7 +53,6 @@ export default function ExportSolicitacaoMenu({ filterParams, getStatusText, cla
   return (
     <>
       <div className="inline-flex items-center gap-1.5">
-        <HelpTooltip content={HELP_EXPORTAR} label="Exportar" />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="secondary" className={`h-10 px-4 ${className || ''}`} disabled={isLoading}>
@@ -70,6 +69,7 @@ export default function ExportSolicitacaoMenu({ filterParams, getStatusText, cla
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        <HelpTooltip content={HELP_EXPORTAR} label="Exportar" />
       </div>
 
       {isLoading && (

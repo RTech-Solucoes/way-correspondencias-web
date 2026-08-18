@@ -21,8 +21,8 @@ export function ActionWithHelp({
 }: ActionWithHelpProps) {
   return (
     <div className={cn('inline-flex items-center gap-1.5', className)}>
-      <HelpTooltip content={help} label={helpLabel} side={side} />
       {children}
+      <HelpTooltip content={help} label={helpLabel} side={side} />
     </div>
   );
 }
