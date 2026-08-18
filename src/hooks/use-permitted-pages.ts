@@ -7,7 +7,9 @@ export function usePermittedPages(): PageDef[] {
 
   if (!permissoesStorage) {
     return [];
-  } else {
-    return PAGES_DEF.filter(page => permissoesStorage.includes(page.permission));
   }
+
+  return PAGES_DEF.filter(page =>
+    !page.permission || permissoesStorage.includes(page.permission)
+  );
 }

@@ -7,7 +7,8 @@ import {
   TagIcon, 
   UsersIcon,
   FileTextIcon,
-  StackIcon
+  StackIcon,
+  QuestionIcon
 } from "@phosphor-icons/react";
 import { Permissoes } from "@/constants/permissoes";
 
@@ -85,6 +86,13 @@ export const PAGES_DEF: PageDef[] = [
     icon: UsersIcon,
     permission: Permissoes.RESPONSAVEL_LISTAR,
     module: "recursos"
+  },
+
+  {
+    path: "/faq",
+    label: "Ajuda e FAQ",
+    icon: QuestionIcon,
+    module: "global"
   },
 ];
 

@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { CaretLeftIcon, CaretRightIcon, CaretDownIcon, CheckIcon } from '@phosphor-icons/react';
 import { useSidebar } from '@/context/sidebar/SidebarContext';
@@ -9,6 +8,8 @@ import { PageDef } from "@/constants/pages/pages";
 import { usePermittedPages } from "@/hooks/use-permitted-pages";
 import { MODULES_DEF } from "@/constants/pages";
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { SidebarNavItem } from '@/components/layout/SidebarNavItem';
 
 
 export function AppSidebar() {
@@ -38,6 +39,7 @@ export function AppSidebar() {
   const menuItems = allMenuItems.filter(item => item.module === selectedModule);
   
   const recursosItems = allMenuItems.filter(item => item.module === 'recursos');
+  const globalItems = allMenuItems.filter(item => item.module === 'global');
   
   const currentModule = MODULES_DEF.find(mod => mod.id === selectedModule);
   const ModuleIcon = currentModule?.icon;
@@ -101,32 +103,14 @@ export function AppSidebar() {
       </div>
 
       <nav className="p-4 space-y-2 flex-1 overflow-y-auto">
-        {menuItems.map((item) => {
-          const isActive = pathname === item.path || (pathname.startsWith(item.path + '/') && item.path !== '/');
-          const Icon = item.icon;
-
-          return (
-            <Link
-              key={item.path}
-              href={item.path}
-              className={`
-                flex items-center px-3 py-3 rounded-lg text-sm font-medium transition-colors
-                ${isActive
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                }
-              `}
-              title={isCollapsed ? item.label : undefined}
-            >
-              <Icon
-                className={`h-5 w-5 ${isActive ? 'text-blue-700' : 'text-gray-400'} ${isCollapsed ? 'mx-auto' : 'mr-3'}`}
-              />
-              {!isCollapsed && (
-                <span className="truncate">{item.label}</span>
-              )}
-            </Link>
-          );
-        })}
+        {menuItems.map((item) => (
+          <SidebarNavItem
+            key={item.path}
+            item={item}
+            pathname={pathname}
+            isCollapsed={isCollapsed}
+          />
+        ))}
 
         {!isCollapsed && recursosItems.length > 0 && (
           <div className="pt-4 pb-2">
@@ -136,32 +120,29 @@ export function AppSidebar() {
           </div>
         )}
 
-        {recursosItems.map((item) => {
-          const isActive = pathname === item.path || (pathname.startsWith(item.path + '/') && item.path !== '/');
-          const Icon = item.icon;
+        {recursosItems.map((item) => (
+          <SidebarNavItem
+            key={item.path}
+            item={item}
+            pathname={pathname}
+            isCollapsed={isCollapsed}
+          />
+        ))}
 
-          return (
-            <Link
-              key={item.path}
-              href={item.path}
-              className={`
-                flex items-center px-3 py-3 rounded-lg text-sm font-medium transition-colors
-                ${isActive
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                }
-              `}
-              title={isCollapsed ? item.label : undefined}
-            >
-              <Icon
-                className={`h-5 w-5 ${isActive ? 'text-blue-700' : 'text-gray-400'} ${isCollapsed ? 'mx-auto' : 'mr-3'}`}
+        {globalItems.length > 0 && (
+          <>
+            {!isCollapsed && <Separator className="my-3 bg-gray-200" />}
+            {isCollapsed && <div className="pt-2" />}
+            {globalItems.map((item) => (
+              <SidebarNavItem
+                key={item.path}
+                item={item}
+                pathname={pathname}
+                isCollapsed={isCollapsed}
               />
-              {!isCollapsed && (
-                <span className="truncate">{item.label}</span>
-              )}
-            </Link>
-          );
-        })}
+            ))}
+          </>
+        )}
       </nav>
 
       <div className="p-4 border-t border-gray-200">
