@@ -3,6 +3,8 @@
 import {
   ArrowsDownUpIcon,
   GearSixIcon,
+  InfoIcon,
+  LockSimpleIcon,
   PencilSimpleIcon,
   PlusIcon,
   RoadHorizonIcon,
@@ -13,7 +15,11 @@ import {
 import {
   ConfiguracaoConcessionariaResponse,
   ConcessionariaResponse,
+  estaDesativadaComRegistro,
+  isUnicaConcessionariaAtiva,
+  MENSAGEM_UNICA_CONCESSIONARIA_ATIVA,
 } from '@/api/concessionaria/types';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { Button } from '@/components/ui/button';
 import {
   StickyTable,
@@ -25,6 +31,7 @@ import {
 } from '@/components/ui/sticky-table';
 import { getStatusText, mask } from '@/utils/utils';
 import ConfiguracaoProgress from './ConfiguracaoProgress';
+import RegistroDesativacao, { formatDataHoraDesativacao } from './RegistroDesativacao';
 
 interface TableConcessionariasProps {
   concessionarias: ConcessionariaResponse[];
@@ -121,7 +128,17 @@ export default function TableConcessionarias({
               </StickyTableCell>
             </StickyTableRow>
           ) : (
-            concessionarias.map((concessionaria) => (
+            concessionarias.map((concessionaria) => {
+              const unicaAtiva = isUnicaConcessionariaAtiva(concessionaria);
+              const tooltipStatus = unicaAtiva
+                ? MENSAGEM_UNICA_CONCESSIONARIA_ATIVA
+                : concessionaria.flAtivo === 'S'
+                  ? 'Desativar concessionária (exige justificativa)'
+                  : 'Ativar concessionária';
+              // O registro só é exibido na listagem enquanto a concessionária está inativa.
+              const registroDesativacao = estaDesativadaComRegistro(concessionaria);
+
+              return (
               <StickyTableRow key={concessionaria.idConcessionaria}>
                 <StickyTableCell className="font-medium">{concessionaria.cdConcessionaria}</StickyTableCell>
                 <StickyTableCell>{concessionaria.nmConcessionaria}</StickyTableCell>
@@ -142,13 +159,61 @@ export default function TableConcessionarias({
                   />
                 </StickyTableCell>
                 <StickyTableCell>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    concessionaria.flAtivo === 'S'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-800'
-                  }`}>
-                    {getStatusText(concessionaria.flAtivo)}
-                  </span>
+                  <div className="flex flex-col items-start gap-1">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      concessionaria.flAtivo === 'S'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {getStatusText(concessionaria.flAtivo)}
+                    </span>
+
+                    {registroDesativacao ? (
+                      <HoverCard openDelay={120} closeDelay={80}>
+                        <HoverCardTrigger asChild>
+                          <button
+                            type="button"
+                            className="flex max-w-[240px] cursor-default items-center gap-1 rounded-md border border-red-100 bg-red-50/60 px-1.5 py-0.5 text-left text-xs text-red-700 transition-colors hover:border-red-200 hover:bg-red-50"
+                            aria-label="Ver motivo da desativação"
+                          >
+                            <InfoIcon className="h-3.5 w-3.5 flex-shrink-0" weight="fill" />
+                            <span className="truncate">{concessionaria.dsMotivoDesativacao}</span>
+                          </button>
+                        </HoverCardTrigger>
+                        <HoverCardContent align="start" className="w-[26rem] max-w-[90vw]">
+                          <RegistroDesativacao concessionaria={concessionaria} variant="plain" />
+                        </HoverCardContent>
+                      </HoverCard>
+                    ) : (
+                      concessionaria.flAtivo === 'N' && (
+                        <span
+                          className="text-xs text-gray-400"
+                          title="Desativada antes do registro de justificativa passar a ser obrigatório."
+                        >
+                          Sem registro de motivo
+                        </span>
+                      )
+                    )}
+
+                    {registroDesativacao && concessionaria.dtDesativacao && (
+                      <span className="max-w-[240px] truncate text-[11px] text-gray-400">
+                        {concessionaria.nmResponsavelDesativacao
+                          ? `${concessionaria.nmResponsavelDesativacao} · `
+                          : ''}
+                        {formatDataHoraDesativacao(concessionaria.dtDesativacao)}
+                      </span>
+                    )}
+
+                    {unicaAtiva && (
+                      <span
+                        className="flex items-center gap-1 text-xs text-amber-700"
+                        title={MENSAGEM_UNICA_CONCESSIONARIA_ATIVA}
+                      >
+                        <LockSimpleIcon className="h-3.5 w-3.5 flex-shrink-0" weight="fill" />
+                        Única ativa, não pode ser desativada
+                      </span>
+                    )}
+                  </div>
                 </StickyTableCell>
                 {showActions && (
                   <StickyTableCell className="w-[180px] text-right">
@@ -180,11 +245,15 @@ export default function TableConcessionarias({
                           variant="ghost"
                           size="sm"
                           onClick={() => handleToggleStatus(concessionaria)}
-                          tooltip={concessionaria.flAtivo === 'S' ? 'Desativar concessionária' : 'Ativar concessionária'}
-                          aria-label={concessionaria.flAtivo === 'S' ? 'Desativar concessionária' : 'Ativar concessionária'}
+                          disabled={unicaAtiva}
+                          tooltip={tooltipStatus}
+                          aria-label={tooltipStatus}
                         >
                           {concessionaria.flAtivo === 'S' ? (
-                            <ToggleRightIcon className="h-4 w-4 text-emerald-500" weight="bold" />
+                            <ToggleRightIcon
+                              className={`h-4 w-4 ${unicaAtiva ? 'text-gray-400' : 'text-emerald-500'}`}
+                              weight="bold"
+                            />
                           ) : (
                             <ToggleLeftIcon className="h-4 w-4 text-red-500" weight="bold" />
                           )}
@@ -194,7 +263,8 @@ export default function TableConcessionarias({
                   </StickyTableCell>
                 )}
               </StickyTableRow>
-            ))
+              );
+            })
           )}
         </StickyTableBody>
       </StickyTable>

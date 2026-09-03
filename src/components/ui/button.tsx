@@ -75,7 +75,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                 {buttonElement}
               </span>
             </TooltipTrigger>
-            <TooltipContent>
+            <TooltipContent className="max-w-xs whitespace-normal text-center">
               <p>{tooltip}</p>
             </TooltipContent>
           </Tooltip>

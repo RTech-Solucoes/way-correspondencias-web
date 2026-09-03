@@ -23,6 +23,41 @@ export interface ConcessionariaResponse {
   nrContratoAntt?: string | null;
   flAtivo: StatusAtivo;
   configuracaoCadastrada: boolean;
+  unicaAtiva?: boolean;
+  dsMotivoDesativacao?: string | null;
+  dtDesativacao?: string | null;
+  idResponsavelDesativacao?: number | null;
+  nmResponsavelDesativacao?: string | null;
+}
+
+export interface ConcessionariaDesativacaoRequest {
+  dsMotivoDesativacao: string;
+}
+
+export const MOTIVO_DESATIVACAO_MIN_LENGTH = 10;
+export const MOTIVO_DESATIVACAO_MAX_LENGTH = 500;
+
+export const MOTIVOS_DESATIVACAO_SUGERIDOS = [
+  'Contrato de concessão encerrado',
+  'Suspensão temporária das operações',
+  'Cadastro duplicado ou incorreto',
+  'Solicitação da própria concessionária',
+  'Determinação da diretoria',
+] as const;
+
+export function temRegistroDesativacao(concessionaria: ConcessionariaResponse): boolean {
+  return Boolean(concessionaria.dsMotivoDesativacao);
+}
+
+export function estaDesativadaComRegistro(concessionaria: ConcessionariaResponse): boolean {
+  return concessionaria.flAtivo === 'N' && temRegistroDesativacao(concessionaria);
+}
+
+export const MENSAGEM_UNICA_CONCESSIONARIA_ATIVA =
+  'Não é possível desativar a única concessionária ativa. É necessário manter ao menos uma concessionária ativa para que o acesso ao sistema continue disponível.';
+
+export function isUnicaConcessionariaAtiva(concessionaria: ConcessionariaResponse): boolean {
+  return concessionaria.flAtivo === 'S' && Boolean(concessionaria.unicaAtiva);
 }
 
 export interface AnoConcessaoConcessionariaResponse {
@@ -40,6 +75,7 @@ export interface ConcessionariaRequest {
   dsRodoviaTrecho?: string | null;
   nrContratoAntt?: string | null;
   flAtivo?: StatusAtivo;
+  dsMotivoDesativacao?: string | null;
 }
 
 export interface ConcessionariaCadastroCompletoRequest {

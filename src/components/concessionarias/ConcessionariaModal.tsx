@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { mask, onlyDigits, validateCNPJ } from '@/utils/utils';
+import RegistroDesativacao from './RegistroDesativacao';
 
 type CodigoAvailability = 'idle' | 'checking' | 'available' | 'unavailable';
 
@@ -379,6 +380,10 @@ export default function ConcessionariaModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {concessionaria?.flAtivo === 'N' && (
+            <RegistroDesativacao concessionaria={concessionaria} variant="danger" />
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="cdConcessionaria">

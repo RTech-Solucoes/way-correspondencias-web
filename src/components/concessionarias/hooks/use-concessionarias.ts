@@ -5,6 +5,7 @@ import {
   ConcessionariaFilterParams,
   ConcessionariaRequest,
   ConcessionariaResponse,
+  isUnicaConcessionariaAtiva,
 } from '@/api/concessionaria/types';
 import { useDebounce } from '@/hooks/use-debounce';
 import {
@@ -32,11 +33,13 @@ export function useConcessionarias(pageSize = 10) {
   const [selectedConcessionaria, setSelectedConcessionaria] = useState<ConcessionariaResponse | null>(null);
   const [concessionariaToDelete, setConcessionariaToDelete] = useState<ConcessionariaResponse | null>(null);
   const [concessionariaToToggleStatus, setConcessionariaToToggleStatus] = useState<ConcessionariaResponse | null>(null);
+  const [concessionariaToDesativar, setConcessionariaToDesativar] = useState<ConcessionariaResponse | null>(null);
   const [concessionariaToConfigure, setConcessionariaToConfigure] = useState<ConcessionariaResponse | null>(null);
   const [showConcessionariaModal, setShowConcessionariaModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showStatusDialog, setShowStatusDialog] = useState(false);
+  const [showDesativarModal, setShowDesativarModal] = useState(false);
   const [showConfiguracaoModal, setShowConfiguracaoModal] = useState(false);
   const [showConfigurarAgoraDialog, setShowConfigurarAgoraDialog] = useState(false);
   const [concessionariaRecemCriada, setConcessionariaRecemCriada] = useState<ConcessionariaResponse | null>(null);
@@ -113,13 +116,24 @@ export function useConcessionarias(pageSize = 10) {
   }, []);
 
   const handleToggleStatus = useCallback((concessionaria: ConcessionariaResponse) => {
+    if (isUnicaConcessionariaAtiva(concessionaria)) return;
+
+    if (concessionaria.flAtivo === 'S') {
+      setConcessionariaToDesativar(concessionaria);
+      setShowDesativarModal(true);
+      return;
+    }
+
     setConcessionariaToToggleStatus(concessionaria);
     setShowStatusDialog(true);
   }, []);
 
-  const confirmDelete = useCallback(async () => {
+  const confirmDelete = useCallback(async (dsMotivoDesativacao: string) => {
     if (!concessionariaToDelete) return;
-    await deleteMutation.mutateAsync(concessionariaToDelete.idConcessionaria);
+    await deleteMutation.mutateAsync({
+      id: concessionariaToDelete.idConcessionaria,
+      dsMotivoDesativacao,
+    });
     setShowDeleteDialog(false);
     setConcessionariaToDelete(null);
   }, [concessionariaToDelete, deleteMutation]);
@@ -129,11 +143,36 @@ export function useConcessionarias(pageSize = 10) {
 
     await toggleStatusMutation.mutateAsync({
       id: concessionariaToToggleStatus.idConcessionaria,
-      flAtivo: concessionariaToToggleStatus.flAtivo === 'S' ? 'N' : 'S',
+      flAtivo: 'S',
     });
     setShowStatusDialog(false);
     setConcessionariaToToggleStatus(null);
   }, [concessionariaToToggleStatus, toggleStatusMutation]);
+
+  const confirmDesativar = useCallback(async (dsMotivoDesativacao: string) => {
+    if (!concessionariaToDesativar) return;
+    if (isUnicaConcessionariaAtiva(concessionariaToDesativar)) {
+      setShowDesativarModal(false);
+      setConcessionariaToDesativar(null);
+      return;
+    }
+
+    try {
+      await toggleStatusMutation.mutateAsync({
+        id: concessionariaToDesativar.idConcessionaria,
+        flAtivo: 'N',
+        dsMotivoDesativacao,
+      });
+      setShowDesativarModal(false);
+      setConcessionariaToDesativar(null);
+    } catch {
+    }
+  }, [concessionariaToDesativar, toggleStatusMutation]);
+
+  const handleCloseDesativarModal = useCallback(() => {
+    setShowDesativarModal(false);
+    setConcessionariaToDesativar(null);
+  }, []);
 
   const validarCodigoDisponivel = useCallback(async (
     codigo: string,
@@ -246,6 +285,7 @@ export function useConcessionarias(pageSize = 10) {
     selectedConcessionaria,
     concessionariaToDelete,
     concessionariaToToggleStatus,
+    concessionariaToDesativar,
     concessionariaToConfigure,
     showConcessionariaModal,
     showFilterModal,
@@ -254,6 +294,8 @@ export function useConcessionarias(pageSize = 10) {
     setShowDeleteDialog,
     showStatusDialog,
     setShowStatusDialog,
+    showDesativarModal,
+    desativando: toggleStatusMutation.isPending,
     showConfiguracaoModal,
     showConfigurarAgoraDialog,
     concessionariaRecemCriada,
@@ -265,6 +307,8 @@ export function useConcessionarias(pageSize = 10) {
     handleToggleStatus,
     confirmDelete,
     confirmToggleStatus,
+    confirmDesativar,
+    handleCloseDesativarModal,
     confirmConfigurarAgora,
     dismissConfigurarAgora,
     promptConfigurarAgora,

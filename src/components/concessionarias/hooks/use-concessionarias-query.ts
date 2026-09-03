@@ -122,8 +122,15 @@ export function useToggleConcessionariaStatus() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, flAtivo }: { id: number; flAtivo: 'S' | 'N' }) =>
-      concessionariaClient.alterarStatus(id, flAtivo),
+    mutationFn: ({
+      id,
+      flAtivo,
+      dsMotivoDesativacao,
+    }: {
+      id: number;
+      flAtivo: 'S' | 'N';
+      dsMotivoDesativacao?: string;
+    }) => concessionariaClient.alterarStatus(id, flAtivo, dsMotivoDesativacao),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: concessionariasKeys.lists() });
       queryClient.invalidateQueries({ queryKey: concessionariasKeys.detail(variables.id) });
@@ -143,7 +150,8 @@ export function useDeleteConcessionaria() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: number) => concessionariaClient.deletar(id),
+    mutationFn: ({ id, dsMotivoDesativacao }: { id: number; dsMotivoDesativacao: string }) =>
+      concessionariaClient.deletar(id, dsMotivoDesativacao),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: concessionariasKeys.lists() });
       notifyConcessionariasUpdated();

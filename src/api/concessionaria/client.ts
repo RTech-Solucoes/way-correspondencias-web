@@ -5,6 +5,7 @@ import {
   ConfiguracaoConcessionariaRequest,
   ConfiguracaoConcessionariaResponse,
   ConcessionariaCadastroCompletoRequest,
+  ConcessionariaDesativacaoRequest,
   ConcessionariaFilterParams,
   ConcessionariaRequest,
   ConcessionariaResponse,
@@ -82,17 +83,36 @@ class ConcessionariaClient {
     });
   }
 
-  async alterarStatus(id: number, flAtivo: ConcessionariaResponse['flAtivo']): Promise<ConcessionariaResponse> {
-    const action = flAtivo === 'S' ? 'ativar' : 'desativar';
-    return this.client.request<ConcessionariaResponse>(`/${id}/${action}`, {
+  async ativar(id: number): Promise<ConcessionariaResponse> {
+    return this.client.request<ConcessionariaResponse>(`/${id}/ativar`, {
       method: 'PATCH',
       skipConcessionariaParam: true,
     });
   }
 
-  async deletar(id: number): Promise<void> {
+  async desativar(id: number, data: ConcessionariaDesativacaoRequest): Promise<ConcessionariaResponse> {
+    return this.client.request<ConcessionariaResponse>(`/${id}/desativar`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+      skipConcessionariaParam: true,
+    });
+  }
+
+  async alterarStatus(
+    id: number,
+    flAtivo: ConcessionariaResponse['flAtivo'],
+    dsMotivoDesativacao?: string,
+  ): Promise<ConcessionariaResponse> {
+    if (flAtivo === 'S') {
+      return this.ativar(id);
+    }
+    return this.desativar(id, { dsMotivoDesativacao: dsMotivoDesativacao ?? '' });
+  }
+
+  async deletar(id: number, dsMotivoDesativacao: string): Promise<void> {
     return this.client.request<void>(`/${id}`, {
       method: 'DELETE',
+      body: JSON.stringify({ dsMotivoDesativacao }),
       skipConcessionariaParam: true,
     });
   }

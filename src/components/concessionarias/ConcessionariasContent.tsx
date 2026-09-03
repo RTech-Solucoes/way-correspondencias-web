@@ -5,6 +5,8 @@ import { FiltrosAplicados } from '@/components/ui/applied-filters';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
 import { InfoIcon } from '@phosphor-icons/react';
 import ConcessionariaModal from './ConcessionariaModal';
+import DesativarConcessionariaModal from './DesativarConcessionariaModal';
+import RegistroDesativacao from './RegistroDesativacao';
 import ConfiguracaoConcessionariaModal from './ConfiguracaoConcessionariaModal';
 import ConcessionariasHeader from './ConcessionariasHeader';
 import SearchConcessionarias from './SearchConcessionarias';
@@ -34,11 +36,14 @@ export function ConcessionariasContent() {
     filtrosAplicados,
     selectedConcessionaria,
     concessionariaToToggleStatus,
+    concessionariaToDesativar,
     concessionariaToConfigure,
     concessionariaRecemCriada,
     showConcessionariaModal,
     showStatusDialog,
     setShowStatusDialog,
+    showDesativarModal,
+    desativando,
     showConfiguracaoModal,
     showConfigurarAgoraDialog,
     loadConcessionarias,
@@ -47,6 +52,8 @@ export function ConcessionariasContent() {
     handleConfigure,
     handleToggleStatus,
     confirmToggleStatus,
+    confirmDesativar,
+    handleCloseDesativarModal,
     confirmConfigurarAgora,
     dismissConfigurarAgora,
     promptConfigurarAgora,
@@ -147,15 +154,28 @@ export function ConcessionariasContent() {
         />
       )}
 
+      <DesativarConcessionariaModal
+        concessionaria={concessionariaToDesativar}
+        open={showDesativarModal}
+        saving={desativando}
+        onClose={handleCloseDesativarModal}
+        onConfirm={confirmDesativar}
+      />
+
       <ConfirmationDialog
         open={showStatusDialog}
         onOpenChange={setShowStatusDialog}
         onConfirm={confirmToggleStatus}
-        title={concessionariaToToggleStatus?.flAtivo === 'S' ? 'Desativar concessionária' : 'Ativar concessionária'}
-        description={`Deseja ${concessionariaToToggleStatus?.flAtivo === 'S' ? 'desativar' : 'ativar'} a concessionária "${concessionariaToToggleStatus?.nmConcessionaria || ''}"? A configuração será sincronizada automaticamente.`}
-        confirmText={concessionariaToToggleStatus?.flAtivo === 'S' ? 'Desativar' : 'Ativar'}
-        variant={concessionariaToToggleStatus?.flAtivo === 'S' ? 'destructive' : 'default'}
-      />
+        title="Ativar concessionária"
+        description={`Deseja ativar a concessionária "${concessionariaToToggleStatus?.nmConcessionaria || ''}"? A configuração e os vínculos dos responsáveis serão reativados automaticamente.`}
+        confirmText="Ativar"
+      >
+        <RegistroDesativacao
+          concessionaria={concessionariaToToggleStatus}
+          variant="neutral"
+          title="Motivo pelo qual foi desativada"
+        />
+      </ConfirmationDialog>
 
       {canConfigurarConcessionaria && (
         <ConfirmationDialog
