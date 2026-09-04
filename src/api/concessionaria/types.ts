@@ -15,12 +15,20 @@ export interface ConcessionariaResponse {
   idConcessionaria: number;
   cdConcessionaria: string;
   nmConcessionaria: string;
+  nmRazaoSocial?: string | null;
+  nmFantasia?: string | null;
   dsConcessionaria: string;
   nrCnpj?: string | null;
   dsTelefone?: string | null;
   sgUf?: string | null;
+  dsEndereco?: string | null;
   dsRodoviaTrecho?: string | null;
+  dsSegmentoConcessao?: string | null;
+  nrKmInicial?: number | null;
+  nrKmFinal?: number | null;
   nrContratoAntt?: string | null;
+  dtAssinaturaContrato?: string | null;
+  dtAssuncao?: string | null;
   flAtivo: StatusAtivo;
   configuracaoCadastrada: boolean;
   unicaAtiva?: boolean;
@@ -68,12 +76,20 @@ export interface AnoConcessaoConcessionariaResponse {
 export interface ConcessionariaRequest {
   cdConcessionaria: string;
   nmConcessionaria: string;
+  nmRazaoSocial?: string | null;
+  nmFantasia?: string | null;
   dsConcessionaria?: string | null;
   nrCnpj?: string | null;
   dsTelefone?: string | null;
   sgUf?: string | null;
+  dsEndereco?: string | null;
   dsRodoviaTrecho?: string | null;
+  dsSegmentoConcessao?: string | null;
+  nrKmInicial?: number | null;
+  nrKmFinal?: number | null;
   nrContratoAntt?: string | null;
+  dtAssinaturaContrato?: string | null;
+  dtAssuncao?: string | null;
   flAtivo?: StatusAtivo;
   dsMotivoDesativacao?: string | null;
 }

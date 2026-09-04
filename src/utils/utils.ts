@@ -271,10 +271,19 @@ function maskTelefoneFixo(value: string): string {
     .replace(/(\d{4})(\d{1,4})$/, "$1-$2");
 }
 
+function maskTelefone0800(value: string): string {
+  const digits = value.replace(/D/g, "").slice(0, 11);
+
+  if (digits.length <= 4) return digits;
+  if (digits.length <= 7) return `${digits.slice(0, 4)} ${digits.slice(4)}`;
+  return `${digits.slice(0, 4)} ${digits.slice(4, 7)} ${digits.slice(7)}`;
+}
+
 export const mask = {
   cpf: maskCPF,
   cnpj: maskCNPJ,
   telefoneFixo: maskTelefoneFixo,
+  telefone0800: maskTelefone0800,
 }
 
 export const validateCNPJ = (value: string): boolean => {

@@ -141,7 +141,14 @@ export default function TableConcessionarias({
               return (
               <StickyTableRow key={concessionaria.idConcessionaria}>
                 <StickyTableCell className="font-medium">{concessionaria.cdConcessionaria}</StickyTableCell>
-                <StickyTableCell>{concessionaria.nmConcessionaria}</StickyTableCell>
+                <StickyTableCell>
+                  <div className="flex flex-col">
+                    <span>{concessionaria.nmConcessionaria}</span>
+                    {concessionaria.nmFantasia && (
+                      <span className="text-xs text-gray-500">{concessionaria.nmFantasia}</span>
+                    )}
+                  </div>
+                </StickyTableCell>
                 <StickyTableCell>
                   {concessionaria.nrCnpj ? mask.cnpj(concessionaria.nrCnpj) : '-'}
                 </StickyTableCell>
