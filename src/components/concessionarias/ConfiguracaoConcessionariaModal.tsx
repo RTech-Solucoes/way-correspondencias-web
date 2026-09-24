@@ -376,14 +376,17 @@ export default function ConfiguracaoConcessionariaModal({
               <InfoIcon className="mt-0.5 h-4 w-4 flex-shrink-0" weight="fill" />
               <div className="space-y-1">
                 <p>
-                  <span className="font-medium">Observação:</span> complete as configurações
-                  (período, Outlook/Azure e SMTP). Elas têm a mesma importância do cadastro para a
-                  concessionária funcionar bem.
+                  Preencha as informações abaixo para concluir a configuração e habilitar o
+                  funcionamento da SPE no sistema.
                 </p>
                 <p>
-                  Lembre-se: cada concessionária opera de forma isolada, com suas próprias áreas,
-                  temas, responsáveis, obrigações, solicitações, caixa de entrada, observações e
-                  lembretes.
+                  Os dados informados serão utilizados nas regras operacionais e integrações
+                  necessárias, incluindo o período da concessão e as configurações de e-mail.
+                </p>
+                <p>
+                  Cada concessionária possui configurações próprias e opera de forma independente no
+                  sistema, com suas respectivas áreas, temas, responsáveis, obrigações, solicitações,
+                  caixas de entrada, observações e lembretes.
                 </p>
               </div>
             </div>
