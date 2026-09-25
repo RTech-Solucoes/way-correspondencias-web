@@ -43,6 +43,27 @@ export const perfilUtil = {
   SUPER_ADMIN: 8,
 };
 
+export const nivelAcessoPerfil: Record<number, number> = {
+  [perfilUtil.SUPER_ADMIN]: 100,
+  [perfilUtil.ADMINISTRADOR]: 90,
+  [perfilUtil.GESTOR_DO_SISTEMA]: 80,
+  [perfilUtil.VALIDADOR_ASSINANTE]: 60,
+  [perfilUtil.EXECUTOR_AVANCADO]: 50,
+  [perfilUtil.EXECUTOR]: 40,
+  [perfilUtil.EXECUTOR_RESTRITO]: 30,
+  [perfilUtil.TECNICO_SUPORTE]: 20,
+};
+
+export function getNivelAcessoPerfil(idPerfil?: number | null): number {
+  if (!idPerfil) return 0;
+  return nivelAcessoPerfil[idPerfil] ?? 0;
+}
+
+export function isElevacaoDePrivilegio(idPerfilAtual?: number | null, idPerfilNovo?: number | null): boolean {
+  if (!idPerfilNovo || idPerfilAtual === idPerfilNovo) return false;
+  return getNivelAcessoPerfil(idPerfilNovo) > getNivelAcessoPerfil(idPerfilAtual);
+}
+
 export function computeTpResponsavel(perfil: number): TipoResponsavelAnexoEnum {
 
   if (perfil === perfilUtil.ADMINISTRADOR || perfil === perfilUtil.SUPER_ADMIN || perfil === perfilUtil.GESTOR_DO_SISTEMA) {
