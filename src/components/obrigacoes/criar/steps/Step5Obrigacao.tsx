@@ -9,14 +9,16 @@ import { SolicitacaoBuscaSimpleResponse } from '@/api/solicitacoes/types';
 import solicitacoesClient from '@/api/solicitacoes/client';
 import { useEffect, useState } from 'react';
 import { TipoEnum } from '@/api/tipos/types';
+import { OrigemObrigacao, OrigemObrigacaoAviso, temInformacaoOrigem } from '@/components/obrigacoes/OrigemObrigacaoAviso';
 
 interface Step5ObrigacaoProps {
   formData?: ObrigacaoFormData;
   updateFormData?: (data: Partial<ObrigacaoFormData>) => void;
   disabled?: boolean;
+  origem?: OrigemObrigacao | null;
 }
 
-export function Step5Obrigacao({ formData, updateFormData, disabled = false }: Step5ObrigacaoProps) {
+export function Step5Obrigacao({ formData, updateFormData, disabled = false, origem = null }: Step5ObrigacaoProps) {
 
   const [solicitacoes, setSolicitacoes] = useState<SolicitacaoBuscaSimpleResponse[]>([]);
   const [buscaSolicitacao, setBuscaSolicitacao] = useState<string>('');
@@ -96,6 +98,12 @@ export function Step5Obrigacao({ formData, updateFormData, disabled = false }: S
 
   return (
     <div className="space-y-6">
+      {temInformacaoOrigem(origem) && (
+        <div className="space-y-2">
+          <Label>Informação</Label>
+          <OrigemObrigacaoAviso origem={origem} />
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col space-y-4">

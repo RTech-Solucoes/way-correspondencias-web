@@ -27,6 +27,7 @@ import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { statusList } from '@/api/status-solicitacao/types';
 import { useValidarObrigacao } from '@/components/obrigacoes/conferencia/hooks/use-validar-obrigacao';
 import { obrigacoesKeys } from '@/components/obrigacoes/hooks/use-obrigacoes-query';
+import { OrigemObrigacao, origemFromObrigacao } from '@/components/obrigacoes/OrigemObrigacaoAviso';
 
 type TabKey = 'dados' | 'temas' | 'prazos' | 'anexos' | 'vinculos';
 
@@ -137,6 +138,7 @@ export function EditarObrigacaoContent({ id, initialData }: EditarObrigacaoConte
   const [isNaoPermitidoEditar, setIsNaoPermitidoEditar] = useState(false);
   const [hasStep3ValidationErrors, setHasStep3ValidationErrors] = useState(false);
   const [idStatusObrigacao, setIdStatusObrigacao] = useState<number | null>(null);
+  const [origem, setOrigem] = useState<OrigemObrigacao | null>(null);
   const hasInitializedRef = useRef(false);
 
   useEffect(() => {
@@ -165,6 +167,7 @@ export function EditarObrigacaoContent({ id, initialData }: EditarObrigacaoConte
       setAnexosLoading(true);
       const detalhe = await obrigacaoClient.buscarDetalhePorId(parsedId);
       setFormData(mapDetalheToFormData(detalhe));
+      setOrigem(origemFromObrigacao(detalhe.obrigacao));
       setExistingAnexos(detalhe.anexos || []);
       setIdStatusObrigacao(detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao || null);
       if (detalhe?.obrigacao?.flAprovarConferencia === 'S' || detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.NAO_APLICAVEL_SUSPENSA.id) {
@@ -187,6 +190,7 @@ export function EditarObrigacaoContent({ id, initialData }: EditarObrigacaoConte
     
     if (initialData) {
       setFormData(mapDetalheToFormData(initialData));
+      setOrigem(origemFromObrigacao(initialData.obrigacao));
       setExistingAnexos(initialData.anexos || []);
       setIdStatusObrigacao(initialData?.obrigacao?.statusSolicitacao?.idStatusSolicitacao || null);
       if (initialData?.obrigacao?.flAprovarConferencia === 'S' || initialData?.obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.NAO_APLICAVEL_SUSPENSA.id) {
@@ -412,6 +416,8 @@ export function EditarObrigacaoContent({ id, initialData }: EditarObrigacaoConte
             formData={formData}
             updateFormData={updateFormData}
             disabled={isNaoPermitidoEditar}
+            recorrenciaDisabled
+            datasBloqueadas
             onValidationChange={setHasStep3ValidationErrors}
             idStatusObrigacao={idStatusObrigacao}
           />
@@ -436,6 +442,7 @@ export function EditarObrigacaoContent({ id, initialData }: EditarObrigacaoConte
             formData={formData}
             updateFormData={updateFormData}
             disabled={isNaoPermitidoEditar}
+            origem={origem}
           />
         );
       default:

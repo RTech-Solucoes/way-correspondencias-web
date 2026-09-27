@@ -93,7 +93,10 @@ export function ImportObrigacoesModal({ open, onClose }: ImportObrigacoesModalPr
       
       const response = await obrigacaoClient.importarObrigacoesExcel(selectedFile);
       
-      toast.success(`${response.mensagem}. ${response.obrigacoesImportadas} obrigação(ões) importada(s).`);
+      const resumoRecorrencias = typeof response.ocorrenciasGeradas === 'number'
+        ? ` ${response.ocorrenciasGeradas} ocorrência(s) gerada(s) por recorrência.`
+        : '';
+      toast.success(`${response.mensagem}. ${response.obrigacoesImportadas} obrigação(ões) importada(s).${resumoRecorrencias}`);
       setSelectedFile(null);
       onClose();
       loadObrigacoes();
