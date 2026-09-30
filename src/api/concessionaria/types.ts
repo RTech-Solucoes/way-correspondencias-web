@@ -45,14 +45,6 @@ export interface ConcessionariaDesativacaoRequest {
 export const MOTIVO_DESATIVACAO_MIN_LENGTH = 10;
 export const MOTIVO_DESATIVACAO_MAX_LENGTH = 500;
 
-export const MOTIVOS_DESATIVACAO_SUGERIDOS = [
-  'Contrato de concessão encerrado',
-  'Suspensão temporária das operações',
-  'Cadastro duplicado ou incorreto',
-  'Solicitação da própria concessionária',
-  'Determinação da diretoria',
-] as const;
-
 export function temRegistroDesativacao(concessionaria: ConcessionariaResponse): boolean {
   return Boolean(concessionaria.dsMotivoDesativacao);
 }

@@ -19,6 +19,8 @@ interface Step3ObrigacaoProps {
 
   recorrenciaDisabled?: boolean;
 
+  recorrenciaPendente?: boolean;
+
   datasBloqueadas?: boolean;
   onValidationChange?: (hasErrors: boolean) => void;
   idStatusObrigacao?: number | null;
@@ -29,7 +31,7 @@ type TipoFrequencia = 'unica' | 'recorrente' | null;
 const TOOLTIP_DATAS_RECORRENCIA =
   'Não é possível editar. A alteração pode impactar a recorrência: a data de início define o dia de cada ocorrência, e o intervalo até o término e a data limite é copiado para as obrigações geradas.';
 
-export function Step3Obrigacao({ formData, updateFormData, disabled = false, recorrenciaDisabled = false, datasBloqueadas = false, onValidationChange, idStatusObrigacao }: Step3ObrigacaoProps) {
+export function Step3Obrigacao({ formData, updateFormData, disabled = false, recorrenciaDisabled = false, recorrenciaPendente = false, datasBloqueadas = false, onValidationChange, idStatusObrigacao }: Step3ObrigacaoProps) {
 
   const [periodicidadesSelecionadas, setPeriodicidadesSelecionadas] = useState<TipoResponse[]>([]);
   const [tipoUnica, setTipoUnica] = useState<TipoResponse | null>(null);
@@ -142,6 +144,7 @@ export function Step3Obrigacao({ formData, updateFormData, disabled = false, rec
   const periodicidadeInicial = periodicidadeInicialRef.current;
   const recorrenciaJaSalva = recorrenciaDisabled && periodicidadeInicial != null;
   const recorrenciaBloqueada = disabled || recorrenciaJaSalva;
+  const mostrarAvisoRecorrenciaPendente = recorrenciaPendente && !recorrenciaJaSalva && !disabled;
   const eraRecorrente =
     recorrenciaJaSalva && tipoUnica != null && periodicidadeInicial !== tipoUnica.idTipo;
   const datasTravadasPorRecorrencia = datasBloqueadas && eraRecorrente && !disabled;
@@ -150,9 +153,21 @@ export function Step3Obrigacao({ formData, updateFormData, disabled = false, rec
     <div className="space-y-6">
       <div className="space-y-3">
         <Label>Qual será a frequência da obrigação? <span className="text-red-500">*</span></Label>
+        {mostrarAvisoRecorrenciaPendente && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+            <p className="font-medium">Atenção: esta escolha não poderá ser alterada</p>
+            <p className="mt-1">
+              Selecione Única ou Recorrente com cuidado. Depois que você clicar em Salvar Alterações,
+              a definição da recorrência será permanente e não poderá ser modificada. Revise sua
+              escolha antes de salvar.
+            </p>
+          </div>
+        )}
         {recorrenciaBloqueada && !disabled && (
           <p className="text-sm text-gray-500">
-            A frequência e a periodicidade são definidas no cadastro da obrigação e não podem ser alteradas.
+            A recorrência dessa obrigação foi configurada.
+            <br />
+            Como essa definição já foi salva, ela não poderá mais ser alterada.
           </p>
         )}
         <div className="grid grid-cols-2 gap-4">

@@ -93,10 +93,20 @@ export function ImportObrigacoesModal({ open, onClose }: ImportObrigacoesModalPr
       
       const response = await obrigacaoClient.importarObrigacoesExcel(selectedFile);
       
-      const resumoRecorrencias = typeof response.ocorrenciasGeradas === 'number'
+      const resumoRecorrencias = typeof response.ocorrenciasGeradas === 'number' && response.ocorrenciasGeradas > 0
         ? ` ${response.ocorrenciasGeradas} ocorrência(s) gerada(s) por recorrência.`
         : '';
-      toast.success(`${response.mensagem}. ${response.obrigacoesImportadas} obrigação(ões) importada(s).${resumoRecorrencias}`);
+      const resumoIgnoradas = typeof response.linhasIgnoradas === 'number' && response.linhasIgnoradas > 0
+        ? ` ${response.linhasIgnoradas} linha(s) ignorada(s) por não ter(em) conteúdo.`
+        : '';
+      const resumo = `${response.mensagem}. ${response.obrigacoesImportadas} obrigação(ões) importada(s).${resumoRecorrencias}${resumoIgnoradas}`;
+
+      if (response.obrigacoesImportadas > 0) {
+        toast.success(resumo);
+      } else {
+        toast.warning(resumo);
+      }
+
       setSelectedFile(null);
       onClose();
       loadObrigacoes();

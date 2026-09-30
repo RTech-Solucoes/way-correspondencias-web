@@ -9,9 +9,9 @@ export default function AvisoConfiguracaoTecnica({ novoCadastro }: { novoCadastr
       <GearSixIcon className="mt-0.5 h-4 w-4 flex-shrink-0" weight="fill" />
       <div className="space-y-1">
         <p>
-          <span className="font-medium">Configuração técnica fica separada:</span> caixa de entrada
-          (Outlook/Azure), SMTP, período da concessão e código de identificação são editados pela
-          engrenagem na listagem — este cadastro guarda só os dados administrativos e regulatórios.
+          Este cadastro reúne informações administrativas e regulatórias essenciais para o
+          funcionamento correto da SPE. Os parâmetros de funcionamento do sistema são configurados
+          na engrenagem.
         </p>
         {novoCadastro && (
           <p>

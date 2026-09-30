@@ -8,7 +8,6 @@ import { mask } from '@/utils/utils';
 import { CampoErro, SecaoFormulario } from './SecaoFormulario';
 import {
   CodigoAvailability,
-  formatTelefone,
   SecaoConcessionariaProps,
 } from './concessionaria-form';
 
@@ -158,16 +157,16 @@ export default function SecaoIdentificacao({
         <div>
           <InfoLabel
             htmlFor="dsTelefone"
-            info="Telefone gratuito de atendimento ao usuário da rodovia, no formato 0800 000 0000. Telefones fixos já cadastrados continuam válidos no formato (00) 0000-0000."
+            info="Telefone gratuito de atendimento ao usuário da rodovia, no formato 0800 000 0000, sem DDD."
           >
             Telefone 0800
           </InfoLabel>
           <Input
             id="dsTelefone"
-            value={formatTelefone(formData.dsTelefone)}
+            value={mask.telefone0800(formData.dsTelefone)}
             onChange={(event) => onChange('dsTelefone', event.target.value)}
             placeholder="0800 000 0000"
-            maxLength={14}
+            maxLength={13}
             inputMode="numeric"
             className={errors.dsTelefone ? 'border-red-500' : ''}
           />

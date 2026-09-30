@@ -10,7 +10,6 @@ import {
 } from '@phosphor-icons/react';
 import {
   ConcessionariaResponse,
-  MOTIVOS_DESATIVACAO_SUGERIDOS,
   MOTIVO_DESATIVACAO_MAX_LENGTH,
   MOTIVO_DESATIVACAO_MIN_LENGTH,
 } from '@/api/concessionaria/types';
@@ -37,9 +36,15 @@ interface DesativarConcessionariaModalProps {
 
 const IMPACTOS = [
   { icon: ProhibitIcon, text: 'Os usuários deixam de acessar os dados desta concessionária.' },
-  { icon: EnvelopeSimpleIcon, text: 'A configuração de e-mail (inbox e SMTP) é desativada junto.' },
-  { icon: UsersThreeIcon, text: 'Os vínculos dos responsáveis são desativados.' },
-  { icon: ClockCounterClockwiseIcon, text: 'Nenhum dado é excluído — tudo volta ao reativar.' },
+  {
+    icon: EnvelopeSimpleIcon,
+    text: 'As configurações de e-mail, incluindo inbox e SMTP, também são desativadas.',
+  },
+  { icon: UsersThreeIcon, text: 'Os vínculos com os responsáveis são desativados.' },
+  {
+    icon: ClockCounterClockwiseIcon,
+    text: 'Nenhum dado é excluído. Tudo volta a funcionar quando a concessionária for reativada.',
+  },
 ];
 
 export default function DesativarConcessionariaModal({
@@ -79,11 +84,6 @@ export default function DesativarConcessionariaModal({
     await onConfirm(motivoTrimmed);
   };
 
-  const aplicarSugestao = (sugestao: string) => {
-    setMotivo(sugestao);
-    setTouched(true);
-  };
-
   return (
     <Dialog open={open} onOpenChange={(next) => (!next ? handleClose() : undefined)}>
       <DialogContent className="sm:max-w-[620px]">
@@ -93,12 +93,8 @@ export default function DesativarConcessionariaModal({
             Desativar concessionária
           </DialogTitle>
           <DialogDescription>
-            Você está desativando{' '}
-            <span className="font-medium text-gray-900">
-              {concessionaria?.nmConcessionaria || ''}
-            </span>
-            {concessionaria?.cdConcessionaria ? ` (${concessionaria.cdConcessionaria})` : ''}. A
-            justificativa é obrigatória e fica registrada no cadastro.
+            A desativação é reversível. Informe uma justificativa para registrar esta ação no
+            cadastro.
           </DialogDescription>
         </DialogHeader>
 
@@ -110,7 +106,7 @@ export default function DesativarConcessionariaModal({
           />
 
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5">
-            <p className="mb-1.5 text-sm font-medium text-amber-900">O que acontece ao desativar</p>
+            <p className="mb-1.5 text-sm font-medium text-amber-900">O que acontece durante a desativação:</p>
             <ul className="space-y-1">
               {IMPACTOS.map(({ icon: Icon, text }) => (
                 <li key={text} className="flex gap-2 text-[13px] leading-snug text-amber-900">
@@ -123,33 +119,15 @@ export default function DesativarConcessionariaModal({
 
           <div className="space-y-2">
             <Label htmlFor="ds-motivo-desativacao">
-              Motivo da desativação <span className="text-red-600">*</span>
+              Informe o motivo da Desativação <span className="text-red-600">*</span>
             </Label>
-
-            <div className="flex flex-wrap gap-1.5">
-              {MOTIVOS_DESATIVACAO_SUGERIDOS.map((sugestao) => (
-                <button
-                  key={sugestao}
-                  type="button"
-                  disabled={saving}
-                  onClick={() => aplicarSugestao(sugestao)}
-                  className={`rounded-full border px-2.5 py-1 text-xs transition-colors disabled:opacity-50 ${
-                    motivoTrimmed === sugestao
-                      ? 'border-sky-300 bg-sky-100 text-sky-900'
-                      : 'border-gray-200 bg-gray-50 text-gray-600 hover:border-sky-300 hover:bg-sky-50 hover:text-sky-900'
-                  }`}
-                >
-                  {sugestao}
-                </button>
-              ))}
-            </div>
 
             <Textarea
               id="ds-motivo-desativacao"
               value={motivo}
               onChange={(event) => setMotivo(event.target.value.slice(0, MOTIVO_DESATIVACAO_MAX_LENGTH))}
               onBlur={() => setTouched(true)}
-              placeholder="Descreva o motivo da desativação. Ex.: contrato de concessão encerrado em 31/08/2026, conforme comunicado da diretoria."
+              placeholder="Descreva o motivo da desativação"
               rows={3}
               disabled={saving}
               aria-invalid={touched && !!erro}
@@ -171,9 +149,9 @@ export default function DesativarConcessionariaModal({
           <p className="flex gap-2 rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-600">
             <ClockCounterClockwiseIcon className="mt-0.5 h-4 w-4 flex-shrink-0" />
             <span>
-              Seu usuário e a data/hora da desativação serão registrados junto com este motivo,
-              substituindo qualquer registro anterior, e ficarão visíveis na listagem de
-              concessionárias.
+              Seu usuário, a data e o horário serão registrados com esta justificativa. Se já existir
+              um motivo salvo, ele será substituído. Essas informações ficarão visíveis no cadastro
+              da concessionária.
             </span>
           </p>
         </div>

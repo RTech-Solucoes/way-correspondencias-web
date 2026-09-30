@@ -165,3 +165,12 @@ export const PERFIS_FILTRO_DEFAULT_DATA_LIMITE = [
   perfilUtil.GESTOR_DO_SISTEMA,
   perfilUtil.VALIDADOR_ASSINANTE,
 ];
+
+/** Retorno do endpoint de importação de obrigações por planilha. */
+export interface ImportacaoObrigacaoResultado {
+  mensagem: string;
+  obrigacoesImportadas: number;
+  ocorrenciasGeradas?: number;
+  /** Linhas descartadas por não terem conteúdo aproveitável (só formatação, espaços ou placeholders). */
+  linhasIgnoradas?: number;
+}

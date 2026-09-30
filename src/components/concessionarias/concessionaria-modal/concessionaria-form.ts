@@ -78,11 +78,13 @@ const toOptional = (value?: string | null) => normalizeOptionalString(value) || 
 export const is0800 = (digits: string) => digits.startsWith('0800');
 
 /**
- * O padrão do cadastro é 0800, mas concessionárias antigas têm telefone fixo
- * gravado com 10 dígitos: nesse caso mantém a máscara antiga em vez de quebrar o valor.
+ * O padrão do cadastro é 0800 (sem DDD). Enquanto o número começa com 0, a máscara
+ * de telefone fixo não entra — senão "080" vira "(08) 0" antes de completar "0800".
+ * Concessionárias antigas com telefone fixo de 10 dígitos (DDD 11–99) continuam
+ * na máscara (00) 0000-0000.
  */
 export const formatTelefone = (digits: string) =>
-  is0800(digits) || digits.length > TELEFONE_FIXO_DIGITS
+  digits.startsWith('0') || digits.length > TELEFONE_FIXO_DIGITS
     ? mask.telefone0800(digits)
     : mask.telefoneFixo(digits);
 

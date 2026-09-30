@@ -417,6 +417,7 @@ export function EditarObrigacaoContent({ id, initialData }: EditarObrigacaoConte
             updateFormData={updateFormData}
             disabled={isNaoPermitidoEditar}
             recorrenciaDisabled
+            recorrenciaPendente={origem?.importadaPlanilha === true}
             datasBloqueadas
             onValidationChange={setHasStep3ValidationErrors}
             idStatusObrigacao={idStatusObrigacao}

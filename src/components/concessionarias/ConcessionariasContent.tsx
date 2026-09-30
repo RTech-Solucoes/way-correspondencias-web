@@ -185,7 +185,7 @@ export function ConcessionariasContent() {
           title="Configurar agora?"
           description={`A concessionária "${concessionariaRecemCriada?.nmConcessionaria || ''}" foi criada. Deseja configurar e-mail, SMTP e período agora?`}
           confirmText="Configurar agora"
-          cancelText="Depois"
+          cancelText="Configurar mais tarde"
         />
       )}
     </div>
