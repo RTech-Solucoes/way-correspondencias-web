@@ -1,91 +1,93 @@
-name: Deploy Way Correspondencias Web for Develop
+name: Deploy WAY web develop
 
 on:
+  push:
+    branches: [develop]
   workflow_dispatch:
+    inputs:
+      source_ref:
+        description: Commit a publicar
+        required: false
+        type: string
+      notify:
+        description: Notificar grupo
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: way-deploy-develop
+  cancel-in-progress: false
+
+env:
+  TARGET_BRANCH: develop
+  AWS_REGION: sa-east-1
+  IMAGE_NAME: way-correspondencias-web
 
 jobs:
   deploy:
-    name: Deploy
     runs-on: ubuntu-latest
-
+    timeout-minutes: 45
     steps:
-      - name: Chamar API de deploy do WEB
+      - name: Conferir ambiente
+        env:
+          WORKFLOW_BRANCH: ${{ github.ref_name }}
+          EVENT_NAME: ${{ github.event_name }}
+          SOURCE_REF: ${{ inputs.source_ref }}
+          NOTIFY: ${{ inputs.notify }}
         run: |
-          BRANCH="${GITHUB_REF#refs/heads/}"
-
-          echo "Chamando API de deploy para branch: $BRANCH"
-
-          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST https://gateway.deploy.way.rtechsolution.com.br/deploy/web/new \
-            -H "Content-Type: application/json" \
-            -d "{\"branch\": \"$BRANCH\"}")
-
-          HTTP_BODY=$(echo "$RESPONSE" | head -n1)
-          HTTP_STATUS=$(echo "$RESPONSE" | tail -n1)
-
-          echo "Status HTTP: $HTTP_STATUS"
-          echo "Body: $HTTP_BODY"
-
-          if [ "$HTTP_STATUS" -ne 200 ] || [ "$(echo "$HTTP_BODY" | jq -r '.success')" != "true" ]; then
-            echo "Erro no deploy"
-            exit 1
+          if [ "$WORKFLOW_BRANCH" = "$TARGET_BRANCH" ]; then
+            exit 0
           fi
+          if [ "$TARGET_BRANCH" = develop ] && [ "$EVENT_NAME" = workflow_dispatch ] &&
+             [ "$WORKFLOW_BRANCH" = fix/way-deploy ] && [[ "$SOURCE_REF" =~ ^[0-9a-f]{40}$ ]] &&
+             [ "$NOTIFY" = false ]; then
+            exit 0
+          fi
+          echo 'Ambiente de publicação incompatível com a branch'
+          exit 1
 
-      - name: Send success message to Google Chat
-        if: success()
-        env:
-          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
-          GIT_BRANCH: ${{ github.ref_name }}
-          WEBHOOK_URL: https://chat.googleapis.com/v1/spaces/AAQA5qsWFdQ/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=VyWYfeqljUfRTIYU-mvpjOntN4ykR2me8p6Cn_ROEPg
-        run: |
-          PAYLOAD=$(cat << EOF
-          {
-            "text": "Deploy do projeto Way Correspondencias",
-            "cards": [
-              {
-                "sections": [
-                  {
-                    "widgets": [
-                      { "keyValue": { "topLabel": "Projeto", "content": "way-correspondencias-web" } },
-                      { "keyValue": { "topLabel": "Branch", "content": "$GIT_BRANCH" } },
-                      { "keyValue": { "topLabel": "Status", "content": "SUCCESS ✅" } },
-                      { "keyValue": { "topLabel": "Mensagem", "content": "Deploy para o Way Correspondencias Web realizado com sucesso!" } },
-                      { "keyValue": { "topLabel": "Commit", "content": "$COMMIT_MESSAGE" } }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-          EOF
-          )
-          curl -s -X POST -H "Content-Type: application/json" -d "$PAYLOAD" "$WEBHOOK_URL"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_ref || github.sha }}
+          fetch-depth: 0
 
-      - name: Send failure message to Google Chat
-        if: failure()
-        env:
-          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
-          GIT_BRANCH: ${{ github.ref_name }}
-          WEBHOOK_URL: https://chat.googleapis.com/v1/spaces/AAQA5qsWFdQ/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=VyWYfeqljUfRTIYU-mvpjOntN4ykR2me8p6Cn_ROEPg
+      - name: Identificar versão
         run: |
-          PAYLOAD=$(cat << EOF
-          {
-            "text": "Deploy do projeto Way Correspondencias",
-            "cards": [
-              {
-                "sections": [
-                  {
-                    "widgets": [
-                      { "keyValue": { "topLabel": "Projeto", "content": "way-correspondencias-web" } },
-                      { "keyValue": { "topLabel": "Branch", "content": "$GIT_BRANCH" } },
-                      { "keyValue": { "topLabel": "Status", "content": "FAILED ❌" } },
-                      { "keyValue": { "topLabel": "Mensagem", "content": "Deploy para o Way Correspondencias Web falhou!" } },
-                      { "keyValue": { "topLabel": "Commit", "content": "$COMMIT_MESSAGE" } }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-          EOF
-          )
-          curl -s -X POST -H "Content-Type: application/json" -d "$PAYLOAD" "$WEBHOOK_URL"
+          SOURCE_SHA=$(git rev-parse HEAD)
+          git merge-base --is-ancestor "$SOURCE_SHA" "origin/$TARGET_BRANCH"
+          echo "SOURCE_SHA=$SOURCE_SHA" >> "$GITHUB_ENV"
+
+      - name: Publicar frontend em homologação
+        env:
+          DEPLOY_TOKEN: ${{ secrets.WAY_DEPLOY_HML_TOKEN }}
+        run: |
+          jq -n --arg branch "$TARGET_BRANCH" --arg commit "$SOURCE_SHA" '{branch:$branch,commit:$commit}' > request.json
+          for ATTEMPT in $(seq 1 80); do
+            HTTP_STATUS=$(curl --silent --show-error --connect-timeout 10 --max-time 1500 \
+              -H "Authorization: Bearer $DEPLOY_TOKEN" -H 'Content-Type: application/json' \
+              --data-binary @request.json -o response.json -w '%{http_code}' https://gateway.deploy.way.rtechsolution.com.br/deploy/web/new) || HTTP_STATUS=000
+            case "$HTTP_STATUS" in
+              200) break ;;
+              409|502|000)
+                test "$ATTEMPT" -lt 80 || exit 1
+                sleep 15
+                ;;
+              *) cat response.json; exit 1 ;;
+            esac
+          done
+          jq -e --arg commit "$SOURCE_SHA" '.success == true and .commit == $commit' response.json
+
+      - name: Notificar resultado
+        if: always() && (github.event_name != 'workflow_dispatch' || inputs.notify)
+        continue-on-error: true
+        env:
+          WEBHOOK_URL: ${{ secrets.WAY_CHAT_WEBHOOK }}
+          STATUS: ${{ job.status }}
+        run: |
+          test -n "$WEBHOOK_URL" || exit 0
+          jq -n --arg text "Deploy WAY $IMAGE_NAME ($TARGET_BRANCH): $STATUS" '{text:$text}' > notification.json
+          curl --silent --show-error --max-time 15 -H 'Content-Type: application/json' --data-binary @notification.json "$WEBHOOK_URL" >/dev/null
