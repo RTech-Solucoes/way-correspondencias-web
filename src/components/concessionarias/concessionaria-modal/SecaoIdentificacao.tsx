@@ -63,7 +63,7 @@ export default function SecaoIdentificacao({
           <InfoLabel
             htmlFor="cdConcessionaria"
             required
-            info="Identificador curto e único da concessionária dentro do sistema (sem espaços, em minúsculas). É usado nas integrações, nos filtros e na troca de concessionária. Ex.: way112, mvp. Não é o número do contrato."
+            info="Identificador curto e único da concessionária dentro do sistema (sem espaços, em minúsculas). É usado nas integrações, nos filtros e na troca de concessionária. Ex.: abc123. Não é o número do contrato."
           >
             Código
           </InfoLabel>
@@ -97,7 +97,7 @@ export default function SecaoIdentificacao({
             id="nmConcessionaria"
             value={formData.nmConcessionaria}
             onChange={(event) => onChange('nmConcessionaria', event.target.value)}
-            placeholder="Ex: Way 112"
+            placeholder="Ex: ABC 123"
             maxLength={200}
             className={errors.nmConcessionaria ? 'border-red-500' : ''}
           />
@@ -133,7 +133,7 @@ export default function SecaoIdentificacao({
             id="nmFantasia"
             value={formData.nmFantasia}
             onChange={(event) => onChange('nmFantasia', event.target.value)}
-            placeholder="Ex: Way 112"
+            placeholder="Ex: ABC123"
             maxLength={200}
             className={errors.nmFantasia ? 'border-red-500' : ''}
           />

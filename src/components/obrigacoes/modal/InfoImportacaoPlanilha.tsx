@@ -77,7 +77,7 @@ export function InfoImportacaoPlanilha() {
                       <strong className="text-gray-900">Linha 1:</strong> Título da planilha
                       <br />
                       <span className="text-xs text-gray-600 italic ml-4">
-                        (Exemplo: Cronograma Obrigações Contratuais {nomeConcessionaria || 'Way 262'} – ANO 01)
+                        (Exemplo: Cronograma Obrigações Contratuais {nomeConcessionaria || 'ABC 123'} – ANO 01)
                       </span>
                     </li>
                     <li>

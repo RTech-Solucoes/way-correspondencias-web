@@ -288,10 +288,6 @@ export function Step3Obrigacao({ formData, updateFormData, disabled = false, rec
               </div>
             )}
 
-            {datasTravadasPorRecorrencia && (
-              <p className="text-sm text-gray-500">{TOOLTIP_DATAS_RECORRENCIA}</p>
-            )}
-
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2"> 
                 <Label htmlFor="dtInicio">Data de Início <span className="text-red-500">*</span></Label>
