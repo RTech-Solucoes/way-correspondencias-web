@@ -123,5 +123,22 @@ jobs:
           STATUS: ${{ job.status }}
         run: |
           test -n "$WEBHOOK_URL" || exit 0
-          jq -n --arg text "Deploy WAY $IMAGE_NAME ($TARGET_BRANCH): $STATUS" '{text:$text}' > notification.json
-          curl --silent --show-error --max-time 15 -H 'Content-Type: application/json' --data-binary @notification.json "$WEBHOOK_URL" >/dev/null
+          if [ "$STATUS" = success ]; then
+            DISPLAY_STATUS='SUCCESS ✅'
+            MESSAGE='Fluxo de deploy concluído; versão instalada conferida.'
+          else
+            DISPLAY_STATUS='FAILED ❌'
+            MESSAGE='A execução do deploy não foi concluída.'
+          fi
+          jq -n --arg project "$IMAGE_NAME" --arg branch "$TARGET_BRANCH" \
+            --arg status "$DISPLAY_STATUS" --arg message "$MESSAGE" --arg commit "${SOURCE_SHA:-$GITHUB_SHA}" \
+            '{text:"Deploy do projeto Way Correspondencias",cards:[{sections:[{widgets:[
+              {keyValue:{topLabel:"Projeto",content:$project}},
+              {keyValue:{topLabel:"Branch",content:$branch}},
+              {keyValue:{topLabel:"Status",content:$status}},
+              {keyValue:{topLabel:"Mensagem",content:$message}},
+              {keyValue:{topLabel:"Commit",content:$commit}}
+            ]}]}]}' > notification.json
+          curl --fail-with-body --silent --show-error --max-time 15 \
+            -H 'Content-Type: application/json' --data-binary @notification.json "$WEBHOOK_URL" > notification-response.json
+          jq -e -r '.name' notification-response.json
