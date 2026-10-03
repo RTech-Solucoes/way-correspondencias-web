@@ -24,13 +24,7 @@ export default function ConfiguracaoProgress({
   const progress = getConfiguracaoProgress(configuracao);
   const isPending = !loading && progress.percent < 100;
   const isClickable = Boolean(onClick);
-  const barColor = progress.percent >= 100
-    ? 'bg-green-600'
-    : progress.percent >= 60
-      ? 'bg-blue-600'
-      : progress.percent > 0
-        ? 'bg-amber-500'
-        : 'bg-gray-300';
+  const barColor = progress.percent >= 100 ? 'bg-green-600' : 'bg-amber-500';
 
   const title = loading
     ? 'Calculando progresso da configuração'
@@ -58,7 +52,7 @@ export default function ConfiguracaoProgress({
         </span>
       ) : (
         <span className="text-[10px] text-gray-500">
-          {loading ? 'Calculando...' : `${progress.filled}/${progress.total} campos preenchidos`}
+          {loading ? 'Calculando...' : 'Configuração Concluída'}
         </span>
       )}
     </>

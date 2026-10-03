@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, ReactNode, useEffect, useRef, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { InfoIcon, WarningCircleIcon } from '@phosphor-icons/react';
 import {
   ConcessionariaResponse,
@@ -10,19 +10,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   useConfiguracaoConcessionariaQuery,
   useSaveConfiguracaoConcessionaria,
 } from './hooks/use-concessionarias-query';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { InfoLabel } from '@/components/ui/info-label';
 import { cn } from '@/utils/utils';
 import ConfiguracaoProgress from './ConfiguracaoProgress';
+import RegistroDesativacao from './RegistroDesativacao';
 import { areRequiredConfiguracaoFieldsFilled } from './configuracao-progress';
 
 interface ConfiguracaoConcessionariaModalProps {
@@ -99,59 +94,6 @@ const isValidSmtpHost = (value: string) => {
 };
 
 const isConfiguracaoField = (field: string): field is ConfiguracaoField => field in initialForm;
-
-function InfoLabel({
-  htmlFor,
-  children,
-  info,
-  required = false,
-}: {
-  htmlFor: string;
-  children: ReactNode;
-  info: string;
-  required?: boolean;
-}) {
-  const [open, setOpen] = useState(false);
-  const pointerMovedRef = useRef(false);
-
-  return (
-    <div className="flex items-center gap-1.5">
-      <Label htmlFor={htmlFor}>
-        {children}
-        {required && <span className="ml-1 text-red-500">*</span>}
-      </Label>
-      <TooltipProvider delayDuration={250}>
-        <Tooltip open={open} onOpenChange={setOpen}>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              tabIndex={-1}
-              aria-label={`Ajuda: ${String(children)}`}
-              className="inline-flex h-4 w-4 items-center justify-center rounded-full text-slate-400 hover:text-[#276EEB] focus:outline-none"
-              onFocus={(event) => event.currentTarget.blur()}
-              onPointerEnter={() => {
-                if (pointerMovedRef.current) setOpen(true);
-              }}
-              onPointerMove={() => {
-                pointerMovedRef.current = true;
-                setOpen(true);
-              }}
-              onPointerLeave={() => {
-                pointerMovedRef.current = false;
-                setOpen(false);
-              }}
-            >
-              <InfoIcon className="h-3.5 w-3.5" weight="bold" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="top" align="start" className="max-w-sm leading-relaxed">
-            {info}
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    </div>
-  );
-}
 
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
@@ -426,18 +368,25 @@ export default function ConfiguracaoConcessionariaModal({
 
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col gap-4" noValidate>
           <div className="flex-shrink-0 space-y-4">
+            {concessionaria?.flAtivo === 'N' && (
+              <RegistroDesativacao concessionaria={concessionaria} variant="danger" />
+            )}
+
             <div className="flex gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
               <InfoIcon className="mt-0.5 h-4 w-4 flex-shrink-0" weight="fill" />
               <div className="space-y-1">
                 <p>
-                  <span className="font-medium">Observação:</span> complete as configurações
-                  (período, Outlook/Azure e SMTP). Elas têm a mesma importância do cadastro para a
-                  concessionária funcionar bem.
+                  Preencha as informações abaixo para concluir a configuração e habilitar o
+                  funcionamento da SPE no sistema.
                 </p>
                 <p>
-                  Lembre-se: cada concessionária opera de forma isolada, com suas próprias áreas,
-                  temas, responsáveis, obrigações, solicitações, caixa de entrada, observações e
-                  lembretes.
+                  Os dados informados serão utilizados nas regras operacionais e integrações
+                  necessárias, incluindo o período da concessão e as configurações de e-mail.
+                </p>
+                <p>
+                  Cada concessionária possui configurações próprias e opera de forma independente no
+                  sistema, com suas respectivas áreas, temas, responsáveis, obrigações, solicitações,
+                  caixas de entrada, observações e lembretes.
                 </p>
               </div>
             </div>
