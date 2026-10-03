@@ -123,7 +123,7 @@ export function useTemas(options: UseTemasOptions = {}) {
 
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [currentPage]);
+  }, [currentPage, debouncedSearchQuery, activeFilters]);
 
   // Handlers
   const handleSort = useCallback((field: keyof TemaResponse) => {
@@ -147,6 +147,7 @@ export function useTemas(options: UseTemasOptions = {}) {
   }, []);
 
   const toggleSelect = useCallback((id: number) => {
+    if (!isMvp) return;
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -156,9 +157,10 @@ export function useTemas(options: UseTemasOptions = {}) {
       }
       return next;
     });
-  }, []);
+  }, [isMvp]);
 
   const toggleSelectAll = useCallback((temas: TemaResponse[]) => {
+    if (!isMvp) return;
     setSelectedIds((prev) => {
       const pageIds = temas.map((tema) => tema.idTema);
       const allSelected = pageIds.length > 0 && pageIds.every((id) => prev.has(id));
@@ -172,7 +174,7 @@ export function useTemas(options: UseTemasOptions = {}) {
 
       return next;
     });
-  }, []);
+  }, [isMvp]);
 
   const clearSelection = useCallback(() => {
     setSelectedIds(new Set());
@@ -181,10 +183,11 @@ export function useTemas(options: UseTemasOptions = {}) {
   const isSelected = useCallback((id: number) => selectedIds.has(id), [selectedIds]);
 
   const handleDeleteSelected = useCallback(() => {
+    if (!isMvp) return;
     if (selectedIds.size === 0) return;
     setTemaToDelete(null);
     setShowDeleteDialog(true);
-  }, [selectedIds]);
+  }, [selectedIds, isMvp]);
 
   const closeDeleteDialog = useCallback(() => {
     setShowDeleteDialog(false);
@@ -199,6 +202,7 @@ export function useTemas(options: UseTemasOptions = {}) {
   }, [temaToDelete, deleteMutation, closeDeleteDialog]);
 
   const confirmDeleteVarias = useCallback(async () => {
+    if (!isMvp) return;
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
 
@@ -208,7 +212,7 @@ export function useTemas(options: UseTemasOptions = {}) {
     } finally {
       closeDeleteDialog();
     }
-  }, [selectedIds, deleteVariasMutation, closeDeleteDialog]);
+  }, [selectedIds, deleteVariasMutation, closeDeleteDialog, isMvp]);
 
   const onTemaSave = useCallback(async (formData: TemaRequest) => {
     try {
@@ -316,7 +320,7 @@ export function useTemas(options: UseTemasOptions = {}) {
   const allSelected = pageIds.length > 0 && selectedOnPage.length === pageIds.length;
   const someSelected = selectedOnPage.length > 0 && selectedOnPage.length < pageIds.length;
   const selectedCount = selectedIds.size;
-  const isBulkDeletePending = selectedCount > 0 && temaToDelete === null;
+  const isBulkDeletePending = isMvp && selectedCount > 0 && temaToDelete === null;
 
   return {
     // Dados

@@ -1,3 +1,4 @@
+import { getLayoutClient, ClienteEnum } from '@/lib/layout/layout-client';
 import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { ObrigacaoFiltroRequest, ObrigacaoResponse, ObrigacaoResumoResponse } from '@/api/obrigacao/types';
@@ -77,6 +78,7 @@ function createInitialFilters(defaultFilters?: Partial<ObrigacaoFiltroRequest>):
 }
 
 export function useObrigacoes(options: UseObrigacoesOptions = {}) {
+  const isMvp = getLayoutClient() === ClienteEnum.RTECH;
   const { pageSize = 10, idObrigacaoFromUrl, defaultFilters } = options;
   const router = useRouter();
   
@@ -179,7 +181,7 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
 
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [currentPage]);
+  }, [currentPage, debouncedSearchQuery, filters]);
 
   // Handlers
   const handleSort = useCallback((field: string) => {
@@ -212,6 +214,7 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
   }, []);
 
   const toggleSelect = useCallback((id: number) => {
+    if (!isMvp) return;
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -221,9 +224,10 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
       }
       return next;
     });
-  }, []);
+  }, [isMvp]);
 
   const toggleSelectAll = useCallback(() => {
+    if (!isMvp) return;
     setSelectedIds((prev) => {
       const pageIds = obrigacoes.map((o) => o.idSolicitacao).filter((id): id is number => id != null);
       const allSelected = pageIds.length > 0 && pageIds.every((id) => prev.has(id));
@@ -237,7 +241,7 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
 
       return next;
     });
-  }, [obrigacoes]);
+  }, [obrigacoes, isMvp]);
 
   const clearSelection = useCallback(() => {
     setSelectedIds(new Set());
@@ -250,13 +254,14 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
   const allSelected = pageIds.length > 0 && selectedOnPage.length === pageIds.length;
   const someSelected = selectedOnPage.length > 0 && selectedOnPage.length < pageIds.length;
   const selectedCount = selectedIds.size;
-  const isBulkDeletePending = selectedCount > 0 && obrigacaoToDelete === null;
+  const isBulkDeletePending = isMvp && selectedCount > 0 && obrigacaoToDelete === null;
 
   const handleDeleteSelected = useCallback(() => {
+    if (!isMvp) return;
     if (selectedIds.size === 0) return;
     setObrigacaoToDelete(null);
     setShowDeleteDialog(true);
-  }, [selectedIds]);
+  }, [selectedIds, isMvp]);
 
   const confirmDelete = useCallback(async () => {
     if (!obrigacaoToDelete?.idSolicitacao) return;
@@ -271,6 +276,7 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
   }, [obrigacaoToDelete, deleteObrigacao]);
 
   const confirmDeleteVarias = useCallback(async () => {
+    if (!isMvp) return;
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
 
@@ -282,7 +288,7 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
     } catch (error) {
       console.error('Erro ao excluir obrigações:', error);
     }
-  }, [selectedIds, deleteVariasMutation]);
+  }, [selectedIds, deleteVariasMutation, isMvp]);
 
   const handleNaoAplicavelSuspenso = useCallback((obrigacao: ObrigacaoResponse) => {
     setObrigacaoParaNaoAplicavelSuspenso(obrigacao);

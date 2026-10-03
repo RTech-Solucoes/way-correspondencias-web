@@ -1,3 +1,4 @@
+import { getLayoutClient, ClienteEnum } from '@/lib/layout/layout-client';
 import {ArrowsDownUpIcon, BuildingIcon, PencilSimpleIcon, SpinnerIcon, TrashIcon} from "@phosphor-icons/react";
 import {
   StickyTable,
@@ -27,20 +28,21 @@ interface ITableArea {
 }
 
 export default function TableArea(props: ITableArea) {
+  const isMvp = getLayoutClient() === ClienteEnum.RTECH;
   const { canAtualizarArea, canDeletarArea } = usePermissoes()
-  const colSpan = (canAtualizarArea || canDeletarArea) ? 6 : 5;
+  const colSpan = 4 + (isMvp ? 1 : 0) + (canAtualizarArea || canDeletarArea ? 1 : 0);
 
   return (
     <div className="flex flex-1 overflow-hidden bg-white">
       <StickyTable>
         <StickyTableHeader>
           <StickyTableRow>
-            <StickyTableHead>
+            {isMvp && <StickyTableHead>
               <Checkbox
                 checked={props.allSelected ? true : props.someSelected ? 'indeterminate' : false}
                 onCheckedChange={props.toggleSelectAll}
               />
-            </StickyTableHead>
+            </StickyTableHead>}
             <StickyTableHead className="cursor-pointer" onClick={() => props.handleSort('cdArea')}>
               <div className="flex items-center">
                 Código
@@ -90,12 +92,13 @@ export default function TableArea(props: ITableArea) {
 
               return (
               <StickyTableRow key={area.idArea}>
-                <StickyTableCell>
+                {isMvp && <StickyTableCell>
                   <Checkbox
+                    disabled={areaObrigatoria}
                     checked={props.isSelected(area.idArea)}
                     onCheckedChange={() => props.toggleSelect(area.idArea)}
                   />
-                </StickyTableCell>
+                </StickyTableCell>}
                 <StickyTableCell className="font-medium">{area.cdArea}</StickyTableCell>
                 <StickyTableCell>{area.nmArea}</StickyTableCell>
                 <StickyTableCell>{area.dsArea}</StickyTableCell>

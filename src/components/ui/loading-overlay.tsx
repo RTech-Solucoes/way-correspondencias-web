@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 import { Quantum as Loading } from 'ldrs/react';
-// @ts-expect-error - react-dom types are available at runtime
 import { createPortal } from 'react-dom';
 import 'ldrs/react/Quantum.css';
 

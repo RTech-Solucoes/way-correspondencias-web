@@ -32,7 +32,7 @@ export default function TableTema(props: TableTemaProps) {
   const isMvp = getLayoutClient() === ClienteEnum.RTECH;
   const { canAtualizarTema, canDeletarTema } = usePermissoes();
 
-  const colSpan = 3 + (isMvp ? 1 : 0) + (canAtualizarTema || canDeletarTema ? 1 : 0);
+  const colSpan = 2 + (isMvp ? 2 : 0) + (canAtualizarTema || canDeletarTema ? 1 : 0);
 
   const getCriticidadeNome = (tema: TemaResponse) => {
     if (tema.tipoCriticidade?.dsTipo) return tema.tipoCriticidade.dsTipo;
@@ -48,12 +48,12 @@ export default function TableTema(props: TableTemaProps) {
       <StickyTable>
         <StickyTableHeader>
           <StickyTableRow>
-            <StickyTableHead>
+            {isMvp && <StickyTableHead>
               <Checkbox
                 checked={props.allSelected ? true : props.someSelected ? 'indeterminate' : false}
                 onCheckedChange={props.toggleSelectAll}
               />
-            </StickyTableHead>
+            </StickyTableHead>}
             <StickyTableHead className="cursor-pointer" onClick={() => props.handleSort('nmTema')}>
               <div className="flex items-center">
                 Nome
@@ -89,12 +89,12 @@ export default function TableTema(props: TableTemaProps) {
           ) : (
             props.temas.map((tema) => (
               <StickyTableRow key={tema.idTema}>
-                <StickyTableCell>
+                {isMvp && <StickyTableCell>
                   <Checkbox
                     checked={props.isSelected(tema.idTema)}
                     onCheckedChange={() => props.toggleSelect(tema.idTema)}
                   />
-                </StickyTableCell>
+                </StickyTableCell>}
                 <StickyTableCell className="font-medium">{tema.nmTema}</StickyTableCell>
                 <StickyTableCell className="max-w-xs truncate" title={tema.dsTema}>
                   {tema.dsTema || '-'}

@@ -1,3 +1,5 @@
+import { useIdResponsavelLogado } from '@/hooks/use-id-responsavel-logado';
+import { getLayoutClient, ClienteEnum } from '@/lib/layout/layout-client';
 import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import { ResponsavelResponse, PagedResponse } from '@/api/responsaveis/types';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -24,6 +26,8 @@ interface UseResponsaveisOptions {
 }
 
 export function useResponsaveis(options: UseResponsaveisOptions = {}) {
+  const idResponsavelLogado = useIdResponsavelLogado();
+  const isMvp = getLayoutClient() === ClienteEnum.RTECH;
   const { pageSize = 10 } = options;
   const size = pageSize;
 
@@ -101,7 +105,7 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
 
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [currentPage]);
+  }, [currentPage, debouncedSearchQuery, activeFilters]);
 
   // Handlers
   const handleSort = useCallback((field: keyof ResponsavelResponse) => {
@@ -125,6 +129,7 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
   }, []);
 
   const toggleSelect = useCallback((id: number) => {
+    if (!isMvp || id === idResponsavelLogado) return;
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -134,11 +139,12 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
       }
       return next;
     });
-  }, []);
+  }, [isMvp, idResponsavelLogado]);
 
   const toggleSelectAll = useCallback(() => {
+    if (!isMvp) return;
     setSelectedIds((prev) => {
-      const pageIds = responsaveis.map((r) => r.idResponsavel);
+      const pageIds = responsaveis.filter((r) => r.idResponsavel !== idResponsavelLogado).map((r) => r.idResponsavel);
       const allSelected = pageIds.length > 0 && pageIds.every((id) => prev.has(id));
       const next = new Set(prev);
 
@@ -150,7 +156,7 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
 
       return next;
     });
-  }, [responsaveis]);
+  }, [responsaveis, isMvp, idResponsavelLogado]);
 
   const clearSelection = useCallback(() => {
     setSelectedIds(new Set());
@@ -158,18 +164,19 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
 
   const isSelected = useCallback((id: number) => selectedIds.has(id), [selectedIds]);
 
-  const pageIds = responsaveis.map((r) => r.idResponsavel);
+  const pageIds = responsaveis.filter((r) => r.idResponsavel !== idResponsavelLogado).map((r) => r.idResponsavel);
   const selectedOnPage = pageIds.filter((id) => selectedIds.has(id));
   const allSelected = pageIds.length > 0 && selectedOnPage.length === pageIds.length;
   const someSelected = selectedOnPage.length > 0 && selectedOnPage.length < pageIds.length;
   const selectedCount = selectedIds.size;
-  const isBulkDeletePending = selectedCount > 0 && responsavelToDelete === null;
+  const isBulkDeletePending = isMvp && selectedCount > 0 && responsavelToDelete === null;
 
   const handleDeleteSelected = useCallback(() => {
+    if (!isMvp) return;
     if (selectedIds.size === 0) return;
     setResponsavelToDelete(null);
     setShowDeleteDialog(true);
-  }, [selectedIds]);
+  }, [selectedIds, isMvp]);
 
   const closeDeleteDialog = useCallback(() => {
     setShowDeleteDialog(false);
@@ -184,6 +191,7 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
   }, [responsavelToDelete, deleteMutation, closeDeleteDialog]);
 
   const confirmDeleteVarias = useCallback(async () => {
+    if (!isMvp) return;
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
 
@@ -193,7 +201,7 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
     } finally {
       closeDeleteDialog();
     }
-  }, [selectedIds, deleteVariasMutation, closeDeleteDialog]);
+  }, [selectedIds, deleteVariasMutation, closeDeleteDialog, isMvp]);
 
   const onResponsavelSave = useCallback(() => {
     setShowResponsavelModal(false);

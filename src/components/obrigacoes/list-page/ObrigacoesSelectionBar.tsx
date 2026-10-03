@@ -1,5 +1,6 @@
 'use client';
 
+import { getLayoutClient, ClienteEnum } from '@/lib/layout/layout-client';
 import { Button } from '@/components/ui/button';
 import { TrashIcon } from '@phosphor-icons/react';
 import { cn } from '@/utils/utils';
@@ -21,7 +22,7 @@ export function ObrigacoesSelectionBar({
   isDeleting = false,
   className,
 }: ObrigacoesSelectionBarProps) {
-  if (selectedCount === 0) return null;
+  if (getLayoutClient() !== ClienteEnum.RTECH || selectedCount === 0) return null;
 
   return (
     <div
