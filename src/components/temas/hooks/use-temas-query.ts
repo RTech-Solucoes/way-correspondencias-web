@@ -71,3 +71,22 @@ export function useDeleteTema() {
     },
   });
 }
+
+export function useDeleteTemas() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (ids: number[]) => temasClient.deletarVarias(ids),
+    onSuccess: (_data, ids) => {
+      queryClient.invalidateQueries({ queryKey: temasKeys.lists() });
+      toast.success(
+        ids.length === 1
+          ? 'Tema excluído com sucesso'
+          : 'Temas excluídos com sucesso'
+      );
+    },
+    onError: () => {
+      toast.error('Erro ao excluir temas selecionados');
+    },
+  });
+}

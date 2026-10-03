@@ -38,6 +38,25 @@ export function useDeleteResponsavel() {
   });
 }
 
+export function useDeleteResponsaveis() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (ids: number[]) => responsaveisClient.deletarVarias(ids),
+    onSuccess: (_data, ids) => {
+      queryClient.invalidateQueries({ queryKey: responsaveisKeys.lists() });
+      toast.success(
+        ids.length === 1
+          ? 'Responsável excluído com sucesso'
+          : 'Responsáveis excluídos com sucesso'
+      );
+    },
+    onError: () => {
+      toast.error('Erro ao excluir responsáveis selecionados');
+    },
+  });
+}
+
 // Hook para gerar senha
 function getGerarSenhaErrorMessage(error: Error): string {
   const message = error.message?.trim();

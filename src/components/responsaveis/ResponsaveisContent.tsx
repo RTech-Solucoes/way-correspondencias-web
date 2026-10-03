@@ -1,6 +1,5 @@
 'use client';
 
-import { PagedResponse, ResponsavelResponse } from '@/api/responsaveis/types';
 import { FiltrosAplicados } from '@/components/ui/applied-filters';
 import { usePermissoes } from "@/context/permissoes/PermissoesContext";
 import ResponsavelModal from '@/components/responsaveis/ResponsavelModal';
@@ -9,6 +8,7 @@ import ResponsaveisHeader from '@/components/responsaveis/ResponsaveisHeader';
 import ResponsaveisSearch from '@/components/responsaveis/ResponsaveisSearch';
 import ResponsaveisTable from '@/components/responsaveis/ResponsaveisTable';
 import ResponsaveisFilterDialog from '@/components/responsaveis/ResponsaveisFilterDialog';
+import { ResponsaveisSelectionBar } from '@/components/responsaveis/ResponsaveisSelectionBar';
 import { useResponsaveis } from '@/components/responsaveis/hooks/use-responsaveis';
 
 export function ResponsaveisContent() {
@@ -22,7 +22,6 @@ export function ResponsaveisContent() {
     showFilterModal,
     setShowFilterModal,
     showDeleteDialog,
-    setShowDeleteDialog,
     responsavelToDelete,
     currentPage,
     setCurrentPage,
@@ -36,6 +35,7 @@ export function ResponsaveisContent() {
     handleEdit,
     handleDelete,
     confirmDelete,
+    confirmDeleteVarias,
     onResponsavelSave,
     applyFilters,
     clearFilters,
@@ -52,9 +52,20 @@ export function ResponsaveisContent() {
     ldapEnabled,
     filtrosAplicados,
     loadResponsaveis,
+    selectedCount,
+    allSelected,
+    someSelected,
+    isSelected,
+    toggleSelect,
+    toggleSelectAll,
+    clearSelection,
+    handleDeleteSelected,
+    closeDeleteDialog,
+    isDeletingBulk,
+    isBulkDeletePending,
   } = useResponsaveis();
 
-  const { canInserirResponsavel } = usePermissoes();
+  const { canInserirResponsavel, canDeletarResponsavel } = usePermissoes();
 
   return (
     <div className="flex flex-col min-h-0 flex-1">
@@ -85,6 +96,15 @@ export function ResponsaveisContent() {
         className="mb-4"
       />
 
+      <ResponsaveisSelectionBar
+        selectedCount={selectedCount}
+        canDeletarResponsavel={!!canDeletarResponsavel}
+        onClearSelection={clearSelection}
+        onDeleteSelected={handleDeleteSelected}
+        isDeleting={isDeletingBulk}
+        className="mb-4"
+      />
+
       <ResponsaveisTable
         responsaveis={responsaveis}
         loading={loading && responsaveis.length === 0}
@@ -96,6 +116,11 @@ export function ResponsaveisContent() {
         handleGerarSenhaClick={handleGerarSenhaClick}
         gerandoSenha={gerandoSenha}
         ldapEnabled={ldapEnabled}
+        allSelected={allSelected}
+        someSelected={someSelected}
+        isSelected={isSelected}
+        toggleSelect={toggleSelect}
+        toggleSelectAll={toggleSelectAll}
       />
 
       {showFilterModal && (
@@ -120,10 +145,19 @@ export function ResponsaveisContent() {
 
       <ConfirmationDialog
         open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
-        onConfirm={confirmDelete}
-        title="Excluir Responsável"
-        description={`Tem certeza que deseja excluir o responsável "${responsavelToDelete?.nmResponsavel}"? Esta ação não pode ser desfeita.`}
+        onOpenChange={(open) => {
+          if (!open) closeDeleteDialog();
+        }}
+        onConfirm={isBulkDeletePending ? confirmDeleteVarias : confirmDelete}
+        title={isBulkDeletePending ? 'Excluir Responsáveis' : 'Excluir Responsável'}
+        description={
+          isBulkDeletePending
+            ? `Tem certeza que deseja excluir ${selectedCount} responsável(is) selecionado(s)? Esta ação não pode ser desfeita.`
+            : `Tem certeza que deseja excluir o responsável "${responsavelToDelete?.nmResponsavel}"? Esta ação não pode ser desfeita.`
+        }
+        loading={isDeletingBulk}
+        variant="destructive"
+        confirmText="Excluir"
       />
 
       <ConfirmationDialog

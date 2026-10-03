@@ -1,3 +1,4 @@
+import { getLayoutClient, ClienteEnum } from '@/lib/layout/layout-client';
 import {ArrowsDownUpIcon, BuildingIcon, PencilSimpleIcon, SpinnerIcon, TrashIcon} from "@phosphor-icons/react";
 import {
   StickyTable,
@@ -8,7 +9,8 @@ import {
   StickyTableRow
 } from "../ui/sticky-table";
 import {Button} from "../ui/button";
-import {AreaResponse} from "@/api/areas/types";
+import {Checkbox} from "../ui/checkbox";
+import {AreaResponse, isAreaObrigatoriaSistema} from "@/api/areas/types";
 import {getStatusText} from "@/utils/utils";
 import {usePermissoes} from "@/context/permissoes/PermissoesContext";
 
@@ -18,16 +20,29 @@ interface ITableArea {
   areas: AreaResponse[];
   handleEdit: (area: AreaResponse) => void;
   handleDelete: (areaId: number) => void;
+  allSelected: boolean;
+  someSelected: boolean;
+  isSelected: (id: number) => boolean;
+  toggleSelect: (id: number) => void;
+  toggleSelectAll: () => void;
 }
 
 export default function TableArea(props: ITableArea) {
+  const isMvp = getLayoutClient() === ClienteEnum.RTECH;
   const { canAtualizarArea, canDeletarArea } = usePermissoes()
+  const colSpan = 4 + (isMvp ? 1 : 0) + (canAtualizarArea || canDeletarArea ? 1 : 0);
 
   return (
     <div className="flex flex-1 overflow-hidden bg-white">
       <StickyTable>
         <StickyTableHeader>
           <StickyTableRow>
+            {isMvp && <StickyTableHead>
+              <Checkbox
+                checked={props.allSelected ? true : props.someSelected ? 'indeterminate' : false}
+                onCheckedChange={props.toggleSelectAll}
+              />
+            </StickyTableHead>}
             <StickyTableHead className="cursor-pointer" onClick={() => props.handleSort('cdArea')}>
               <div className="flex items-center">
                 Código
@@ -55,7 +70,7 @@ export default function TableArea(props: ITableArea) {
         <StickyTableBody>
           {props.loading ? (
             <StickyTableRow>
-              <StickyTableCell colSpan={5} className="text-center py-8">
+              <StickyTableCell colSpan={colSpan} className="text-center py-8">
                 <div className="flex flex-1 items-center justify-center py-8">
                   <SpinnerIcon className="h-6 w-6 animate-spin text-gray-400" />
                   <span className="ml-2 text-gray-500">Buscando áreas...</span>
@@ -64,7 +79,7 @@ export default function TableArea(props: ITableArea) {
             </StickyTableRow>
           ) : props.areas.length === 0 ? (
             <StickyTableRow>
-              <StickyTableCell colSpan={5} className="text-center py-8">
+              <StickyTableCell colSpan={colSpan} className="text-center py-8">
                 <div className="flex flex-col items-center space-y-2">
                   <BuildingIcon className="h-8 w-8 text-gray-400" />
                   <p className="text-sm text-gray-500">Nenhuma área encontrada</p>
@@ -72,8 +87,18 @@ export default function TableArea(props: ITableArea) {
               </StickyTableCell>
             </StickyTableRow>
           ) : (
-            props.areas.map((area) => (
+            props.areas.map((area) => {
+              const areaObrigatoria = isAreaObrigatoriaSistema(area.cdArea);
+
+              return (
               <StickyTableRow key={area.idArea}>
+                {isMvp && <StickyTableCell>
+                  <Checkbox
+                    disabled={areaObrigatoria}
+                    checked={props.isSelected(area.idArea)}
+                    onCheckedChange={() => props.toggleSelect(area.idArea)}
+                  />
+                </StickyTableCell>}
                 <StickyTableCell className="font-medium">{area.cdArea}</StickyTableCell>
                 <StickyTableCell>{area.nmArea}</StickyTableCell>
                 <StickyTableCell>{area.dsArea}</StickyTableCell>
@@ -85,31 +110,43 @@ export default function TableArea(props: ITableArea) {
                     {getStatusText(area.flAtivo)}
                   </span>
                 </StickyTableCell>
-                <StickyTableCell className="text-right">
-                  <div className="flex items-center justify-end space-x-2">
-                    {canAtualizarArea &&
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => props.handleEdit(area)}
-                      >
-                        <PencilSimpleIcon className="h-4 w-4" />
-                      </Button>
-                    }
-                    {canDeletarArea &&
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => props.handleDelete(area.idArea)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </Button>
-                    }
-                  </div>
-                </StickyTableCell>
+                {(canAtualizarArea || canDeletarArea) && (
+                  <StickyTableCell className="text-right">
+                    <div className="flex items-center justify-end space-x-2">
+                      {canAtualizarArea &&
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => props.handleEdit(area)}
+                        >
+                          <PencilSimpleIcon className="h-4 w-4" />
+                        </Button>
+                      }
+                      {canDeletarArea &&
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            if (areaObrigatoria) return;
+                            props.handleDelete(area.idArea);
+                          }}
+                          disabled={areaObrigatoria}
+                          tooltip={
+                            areaObrigatoria
+                              ? 'Área obrigatória do sistema. Não é possível excluir.'
+                              : 'Excluir área'
+                          }
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </Button>
+                      }
+                    </div>
+                  </StickyTableCell>
+                )}
               </StickyTableRow>
-            ))
+              );
+            })
           )}
         </StickyTableBody>
       </StickyTable>

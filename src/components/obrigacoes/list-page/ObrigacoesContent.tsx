@@ -12,6 +12,7 @@ import { ObrigacoesTable } from "@/components/obrigacoes/list-page/ObrigacoesTab
 import { ObrigacoesHeader } from "@/components/obrigacoes/list-page/ObrigacoesHeader";
 import { ObrigacoesFiltersUI } from "@/components/obrigacoes/list-page/ObrigacoesFiltersUI";
 import { ObrigacoesModals } from "@/components/obrigacoes/list-page/ObrigacoesModals";
+import { ObrigacoesSelectionBar } from "@/components/obrigacoes/list-page/ObrigacoesSelectionBar";
 
 // Hooks
 import { useObrigacoes } from "@/components/obrigacoes/hooks/use-obrigacoes";
@@ -100,6 +101,19 @@ export function ObrigacoesContent({ defaultFilters }: ObrigacoesContentProps) {
     handleEnviarArea,
     handleAnexarProtocolo,
     handleEncaminharTramitacao,
+
+    // Seleção
+    selectedCount,
+    allSelected,
+    someSelected,
+    isSelected,
+    toggleSelect,
+    toggleSelectAll,
+    clearSelection,
+    handleDeleteSelected,
+    isDeletingBulk,
+    isBulkDeletePending,
+    confirmDeleteVarias,
     
     // Helpers
     isAdminOrGestor,
@@ -145,6 +159,11 @@ export function ObrigacoesContent({ defaultFilters }: ObrigacoesContentProps) {
     setShowDeleteDialog,
     obrigacaoToDelete,
     setObrigacaoToDelete,
+    selectedCount,
+    isBulkDeletePending,
+    isDeletingBulk,
+    confirmDeleteVarias,
+    clearSelection,
     filters,
     setFilters,
     loadObrigacoes,
@@ -157,6 +176,11 @@ export function ObrigacoesContent({ defaultFilters }: ObrigacoesContentProps) {
     setShowDeleteDialog,
     obrigacaoToDelete,
     setObrigacaoToDelete,
+    selectedCount,
+    isBulkDeletePending,
+    isDeletingBulk,
+    confirmDeleteVarias,
+    clearSelection,
     filters,
     setFilters,
     loadObrigacoes,
@@ -224,6 +248,15 @@ export function ObrigacoesContent({ defaultFilters }: ObrigacoesContentProps) {
         />
       )}
 
+      <ObrigacoesSelectionBar
+        selectedCount={selectedCount}
+        canDeletarObrigacao={!!canDeletarObrigacao}
+        onClearSelection={clearSelection}
+        onDeleteSelected={handleDeleteSelected}
+        isDeleting={isDeletingBulk}
+        className="mb-4"
+      />
+
       <ObrigacoesTable 
         obrigacoes={obrigacoes}
         loading={loading && obrigacoes.length === 0}
@@ -241,6 +274,11 @@ export function ObrigacoesContent({ defaultFilters }: ObrigacoesContentProps) {
         onEnviarArea={handleEnviarArea}
         onNaoAplicavelSuspenso={handleNaoAplicavelSuspenso}
         onExcluir={handleDelete}
+        allSelected={allSelected}
+        someSelected={someSelected}
+        isSelected={isSelected}
+        toggleSelect={toggleSelect}
+        toggleSelectAll={toggleSelectAll}
       />
       </div>
     </ObrigacoesUIProvider>

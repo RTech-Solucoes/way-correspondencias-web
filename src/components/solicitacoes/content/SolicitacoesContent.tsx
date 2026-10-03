@@ -5,6 +5,7 @@ import { FiltrosAplicados } from '@/components/ui/applied-filters';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { SolicitacoesHeader } from '@/components/solicitacoes/content/SolicitacoesHeader';
 import { SolicitacoesSearch } from '@/components/solicitacoes/content/SolicitacoesSearch';
+import { SolicitacoesSelectionBar } from '@/components/solicitacoes/content/SolicitacoesSelectionBar';
 import { SolicitacoesTable } from '@/components/solicitacoes/content/SolicitacoesTable';
 import SolicitacaoModal from '@/components/solicitacoes/editar-modal/SolicitacaoModal';
 import DetalhesSolicitacaoModal from '@/components/solicitacoes/detalhes-modal-tramitacao/DetalhesSolicitacaoModal';
@@ -64,7 +65,6 @@ export function SolicitacoesContent({ defaultFilters }: SolicitacoesContentProps
 
     // Modal Delete
     showDeleteDialog,
-    setShowDeleteDialog,
     solicitacaoToDelete,
 
     // Permissões
@@ -82,6 +82,7 @@ export function SolicitacoesContent({ defaultFilters }: SolicitacoesContentProps
     handleEdit,
     handleDelete,
     confirmDelete,
+    confirmDeleteVarias,
     onSolicitacaoSave,
     handleOpenCreateSolicitacao,
     handleCloseSolicitacaoModal,
@@ -90,6 +91,19 @@ export function SolicitacoesContent({ defaultFilters }: SolicitacoesContentProps
     openDetalhes,
     handleCloseDetalhesModal,
     enviarDevolutiva,
+
+    // Seleção
+    selectedCount,
+    allSelected,
+    someSelected,
+    toggleSelect,
+    toggleSelectAll,
+    isSelected,
+    handleDeleteSelected,
+    closeDeleteDialog,
+    isDeletingBulk,
+    isBulkDeletePending,
+    clearSelection,
 
     // Status helpers
     getStatusBadgeVariant,
@@ -131,6 +145,15 @@ export function SolicitacoesContent({ defaultFilters }: SolicitacoesContentProps
           className="mb-4"
         />
 
+        <SolicitacoesSelectionBar
+          selectedCount={selectedCount}
+          canDeletarSolicitacao={!!canDeletarSolicitacao}
+          onClearSelection={clearSelection}
+          onDeleteSelected={handleDeleteSelected}
+          isDeleting={isDeletingBulk}
+          className="mb-4"
+        />
+
         <SolicitacoesTable
           solicitacoes={sortedSolicitacoes}
           loading={loading && sortedSolicitacoes.length === 0}
@@ -147,6 +170,11 @@ export function SolicitacoesContent({ defaultFilters }: SolicitacoesContentProps
           getStatusBadgeBg={getStatusBadgeBg}
           getStatusText={getStatusText}
           getJoinedNmAreas={getJoinedNmAreas}
+          allSelected={allSelected}
+          someSelected={someSelected}
+          isSelected={isSelected}
+          toggleSelect={toggleSelect}
+          toggleSelectAll={toggleSelectAll}
         />
 
         <FilterModal
@@ -195,10 +223,19 @@ export function SolicitacoesContent({ defaultFilters }: SolicitacoesContentProps
 
         <ConfirmationDialog
           open={showDeleteDialog}
-          onOpenChange={setShowDeleteDialog}
-          onConfirm={confirmDelete}
-          title="Excluir Solicitação"
-          description={`Tem certeza que deseja excluir a solicitação "${solicitacaoToDelete?.dsAssunto}"? Esta ação não pode ser desfeita.`}
+          onOpenChange={(open) => {
+            if (!open) closeDeleteDialog();
+          }}
+          onConfirm={isBulkDeletePending ? confirmDeleteVarias : confirmDelete}
+          title={isBulkDeletePending ? 'Excluir Solicitações' : 'Excluir Solicitação'}
+          description={
+            isBulkDeletePending
+              ? `Tem certeza que deseja excluir ${selectedCount} solicitação(ões) selecionada(s)? Esta ação não pode ser desfeita.`
+              : `Tem certeza que deseja excluir a solicitação "${solicitacaoToDelete?.dsAssunto}"? Esta ação não pode ser desfeita.`
+          }
+          loading={isDeletingBulk}
+          variant="destructive"
+          confirmText="Excluir"
         />
       </div>
     </Suspense>

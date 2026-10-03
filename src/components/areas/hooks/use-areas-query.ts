@@ -73,3 +73,22 @@ export function useDeleteArea() {
     },
   });
 }
+
+export function useDeleteAreas() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (ids: number[]) => areasClient.deletarVarias(ids),
+    onSuccess: (_data, ids) => {
+      queryClient.invalidateQueries({ queryKey: areasKeys.lists() });
+      toast.success(
+        ids.length === 1
+          ? 'Área excluída com sucesso'
+          : 'Áreas excluídas com sucesso'
+      );
+    },
+    onError: () => {
+      toast.error('Erro ao excluir áreas selecionadas');
+    },
+  });
+}

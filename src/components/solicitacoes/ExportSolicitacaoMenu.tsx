@@ -11,11 +11,11 @@ import {
 import { CloudArrowDownIcon } from '@phosphor-icons/react';
 import ExportSolicitacoesExcel from '@/components/solicitacoes/relatorios/ExportSolicitacoesExcel';
 import ExportSolicitacoesPdf from '@/components/solicitacoes/relatorios/ExportSolicitacoesPdf';
-import { SolicitacaoFilterParams } from '@/api/solicitacoes/types';
+import { CorrespondenciaFilterParams } from '@/api/correspondencia/types';
 import LoadingOverlay from '@/components/ui/loading-overlay';
 
 type ExportSolicitacaoMenuProps = {
-  filterParams: Omit<SolicitacaoFilterParams, 'page' | 'size'>;
+  filterParams: Omit<CorrespondenciaFilterParams, 'page' | 'size'>;
   getStatusText: (statusCode: string) => string | null;
   className?: string;
 };

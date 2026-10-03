@@ -10,6 +10,9 @@ import { MODULES_DEF } from "@/constants/pages";
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { SidebarNavItem } from '@/components/layout/SidebarNavItem';
+import { usePermissoes } from '@/context/permissoes/PermissoesContext';
+import { getLayoutClient } from '@/lib/layout/layout-client';
+import { ClienteEnum } from '@/lib/layout/layout-client.enum';
 
 
 export function AppSidebar() {
@@ -17,6 +20,8 @@ export function AppSidebar() {
   const { isCollapsed, toggleSidebar, sidebarWidth, selectedModule, setSelectedModule } = useSidebar();
   const [isModuleSelectorOpen, setIsModuleSelectorOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { canListarConcessionaria } = usePermissoes();
+  const isMvpLayout = getLayoutClient() === ClienteEnum.RTECH;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -40,6 +45,10 @@ export function AppSidebar() {
   
   const recursosItems = allMenuItems.filter(item => item.module === 'recursos');
   const globalItems = allMenuItems.filter(item => item.module === 'global');
+
+  const configuracoesItems = isMvpLayout && canListarConcessionaria
+    ? allMenuItems.filter(item => item.module === 'configuracoes')
+    : [];
   
   const currentModule = MODULES_DEF.find(mod => mod.id === selectedModule);
   const ModuleIcon = currentModule?.icon;
@@ -121,6 +130,23 @@ export function AppSidebar() {
         )}
 
         {recursosItems.map((item) => (
+          <SidebarNavItem
+            key={item.path}
+            item={item}
+            pathname={pathname}
+            isCollapsed={isCollapsed}
+          />
+        ))}
+
+        {!isCollapsed && configuracoesItems.length > 0 && (
+          <div className="pt-4 pb-2">
+            <h3 className="px-3 text-xs font-semibold uppercase tracking-wider">
+              Configurações
+            </h3>
+          </div>
+        )}
+
+        {configuracoesItems.map((item) => (
           <SidebarNavItem
             key={item.path}
             item={item}
