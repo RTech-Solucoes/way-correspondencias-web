@@ -4,7 +4,7 @@ import {twMerge} from 'tailwind-merge';
 import {StatusAtivo} from "@/utils/misc/status-ativo";
 import {ArquivoDTO, TipoResponsavelAnexoEnum} from '@/api/anexos/type';
 import { z } from "zod";
-import { cpf } from "cpf-cnpj-validator";
+import { cpf, cnpj } from "cpf-cnpj-validator";
 import dayjs from "dayjs";
 
 export function cn(...inputs: ClassValue[]) {
@@ -233,7 +233,10 @@ export const hasPermissao = (permissao: string): boolean | null => {
   } else {
     try {
       const parsed = JSON.parse(permissoesStorage);
-      return parsed?.state?.permissoes?.includes(permissao) ?? null;
+      const permissaoNormalizada = permissao.trim();
+      return parsed?.state?.permissoes?.some(
+        (item: string) => String(item).trim() === permissaoNormalizada,
+      ) ?? null;
     } catch {
       return null;
     }
@@ -249,9 +252,48 @@ function maskCPF(value: string): string {
     .replace(/(\d{3})(\d{1,2})$/, "$1-$2"); 
 }
 
+function maskCNPJ(value: string): string {
+  return value
+    .replace(/\D/g, "")
+    .slice(0, 14)
+    .replace(/(\d{2})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d)/, "$1/$2")
+    .replace(/(\d{4})(\d{1,2})$/, "$1-$2");
+}
+
+/** Telefone fixo: (00) 0000-0000 */
+function maskTelefoneFixo(value: string): string {
+  return value
+    .replace(/\D/g, "")
+    .slice(0, 10)
+    .replace(/(\d{2})(\d)/, "($1) $2")
+    .replace(/(\d{4})(\d{1,4})$/, "$1-$2");
+}
+
+function maskTelefone0800(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+
+  if (digits.length <= 4) return digits;
+  if (digits.length <= 7) return `${digits.slice(0, 4)} ${digits.slice(4)}`;
+  return `${digits.slice(0, 4)} ${digits.slice(4, 7)} ${digits.slice(7)}`;
+}
+
 export const mask = {
   cpf: maskCPF,
+  cnpj: maskCNPJ,
+  telefoneFixo: maskTelefoneFixo,
+  telefone0800: maskTelefone0800,
 }
+
+export const validateCNPJ = (value: string): boolean => {
+  const digits = value.replace(/\D/g, "");
+  if (digits.length !== 14) return false;
+  return cnpj.isValid(digits);
+};
+
+export const onlyDigits = (value: string): string => value.replace(/\D/g, "");
+
 
 const cpfSchema = z
     .string()

@@ -9,7 +9,7 @@ import {
 } from "../ui/sticky-table";
 import {Button} from "../ui/button";
 import {Checkbox} from "../ui/checkbox";
-import {AreaResponse} from "@/api/areas/types";
+import {AreaResponse, isAreaObrigatoriaSistema} from "@/api/areas/types";
 import {getStatusText} from "@/utils/utils";
 import {usePermissoes} from "@/context/permissoes/PermissoesContext";
 
@@ -85,7 +85,10 @@ export default function TableArea(props: ITableArea) {
               </StickyTableCell>
             </StickyTableRow>
           ) : (
-            props.areas.map((area) => (
+            props.areas.map((area) => {
+              const areaObrigatoria = isAreaObrigatoriaSistema(area.cdArea);
+
+              return (
               <StickyTableRow key={area.idArea}>
                 <StickyTableCell>
                   <Checkbox
@@ -120,7 +123,16 @@ export default function TableArea(props: ITableArea) {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => props.handleDelete(area.idArea)}
+                          onClick={() => {
+                            if (areaObrigatoria) return;
+                            props.handleDelete(area.idArea);
+                          }}
+                          disabled={areaObrigatoria}
+                          tooltip={
+                            areaObrigatoria
+                              ? 'Área obrigatória do sistema. Não é possível excluir.'
+                              : 'Excluir área'
+                          }
                           className="text-red-600 hover:text-red-700"
                         >
                           <TrashIcon className="h-4 w-4" />
@@ -130,7 +142,8 @@ export default function TableArea(props: ITableArea) {
                   </StickyTableCell>
                 )}
               </StickyTableRow>
-            ))
+              );
+            })
           )}
         </StickyTableBody>
       </StickyTable>

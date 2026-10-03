@@ -18,6 +18,18 @@ export enum CdAreaEnum {
   ARRECADACAO = "ARREC"
 }
 
+/** Áreas criadas automaticamente por concessionária e que não podem ser excluídas. */
+export const AREAS_OBRIGATORIAS_SISTEMA = [
+  CdAreaEnum.DIRETORIA,
+  CdAreaEnum.REGULATORIO,
+] as const;
+
+export function isAreaObrigatoriaSistema(cdArea?: string | null): boolean {
+  if (!cdArea) return false;
+  const codigo = cdArea.trim().toUpperCase();
+  return AREAS_OBRIGATORIAS_SISTEMA.some((item) => item === codigo);
+}
+
 export interface AreaResponse {
   idArea: number;
   cdArea: string;

@@ -11,7 +11,11 @@ export const usePermissoesStore = create<PermissoesStore>()(
   persist(
     (set) => ({
       permissoes: [],
-      setPermissoes: permissoes => set({ permissoes }),
+      setPermissoes: (permissoes) => set({
+        permissoes: permissoes
+          .map((permissao) => permissao.trim())
+          .filter(Boolean),
+      }),
     }),
     {
       name: 'permissoes-storage',
