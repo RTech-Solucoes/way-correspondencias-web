@@ -8,6 +8,7 @@ import {
   UsersIcon,
   FileTextIcon,
   StackIcon,
+  QuestionIcon,
   RoadHorizonIcon
 } from "@phosphor-icons/react";
 import { Permissoes } from "@/constants/permissoes";
@@ -94,6 +95,13 @@ export const PAGES_DEF: PageDef[] = [
     icon: RoadHorizonIcon,
     permission: Permissoes.CONCESSIONARIA_LISTAR,
     module: "configuracoes",
+    clients: [ClienteEnum.RTECH],
+  },
+  {
+    path: "/faq",
+    label: "Ajuda e FAQ",
+    icon: QuestionIcon,
+    module: "global",
     clients: [ClienteEnum.RTECH],
   },
 ];

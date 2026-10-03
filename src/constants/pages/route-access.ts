@@ -22,6 +22,7 @@ export const ROUTE_ACCESS_DEF: RouteAccessDef[] = [
     permission: Permissoes.CONCESSIONARIA_LISTAR,
     clients: [ClienteEnum.RTECH],
   },
+  { path: '/faq', clients: [ClienteEnum.RTECH] },
 ];
 
 export const PUBLIC_ROUTES: string[] = ['/'];

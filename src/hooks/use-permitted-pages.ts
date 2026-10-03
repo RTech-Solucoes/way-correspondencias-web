@@ -12,7 +12,7 @@ export function usePermittedPages(): PageDef[] {
   }
 
   return PAGES_DEF.filter((page) => {
-    if (!page.permission || !permissoesStorage.some((item) => item.trim() === page.permission)) {
+    if (page.permission && !permissoesStorage.some((item) => item.trim() === page.permission)) {
       return false;
     }
 
