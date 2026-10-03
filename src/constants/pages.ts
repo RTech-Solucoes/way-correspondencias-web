@@ -101,7 +101,8 @@ export const PAGES_DEF: PageDef[] = [
     path: "/faq",
     label: "Ajuda e FAQ",
     icon: QuestionIcon,
-    module: "global"
+    module: "global",
+    clients: [ClienteEnum.RTECH],
   },
 ];
 
