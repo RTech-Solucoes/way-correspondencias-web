@@ -1,3 +1,5 @@
+import { ReactNode } from "react";
+import { XIcon } from "@phosphor-icons/react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +22,8 @@ interface ConfirmationDialogProps {
   variant?: "default" | "destructive";
   closeOnConfirm?: boolean;
   loading?: boolean;
+  /** Conteúdo extra exibido entre a descrição e os botões. */
+  children?: ReactNode;
 }
 
 export function ConfirmationDialog({
@@ -33,6 +37,7 @@ export function ConfirmationDialog({
   variant = "default",
   closeOnConfirm = true,
   loading = false,
+  children,
 }: ConfirmationDialogProps) {
   const handleConfirm = async () => {
     await onConfirm();
@@ -44,10 +49,21 @@ export function ConfirmationDialog({
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
-        <AlertDialogHeader>
+        <button
+          type="button"
+          onClick={() => onOpenChange(false)}
+          disabled={loading}
+          aria-label="Fechar"
+          className="absolute right-4 top-4 rounded-sm opacity-70 outline-none transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-40"
+        >
+          <XIcon className="h-4 w-4" />
+        </button>
+
+        <AlertDialogHeader className="pr-6">
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
+        {children}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={loading}>{cancelText}</AlertDialogCancel>
           <AlertDialogAction

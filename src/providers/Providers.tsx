@@ -56,8 +56,7 @@ export default function Providers({children}: ProvidersProps) {
     };
 
     const handleConcessionariaChanged = () => {
-      console.log('[Providers] Concessionária mudou - limpando cache do React Query');
-      clearQueryCache();
+      queryClient.resetQueries();
     };
 
     window.addEventListener('authTokenRemoved', handleAuthTokenRemoved);
@@ -69,7 +68,7 @@ export default function Providers({children}: ProvidersProps) {
       window.removeEventListener('authTokenSaved', handleAuthTokenSaved);
       window.removeEventListener('concessionariaChanged', handleConcessionariaChanged);
     };
-  }, []);
+  }, [queryClient]);
 
   const providers = [
     IconProvider,

@@ -10,7 +10,7 @@ import {MultiSelectAreas} from '@/components/ui/multi-select-areas';
 import {MultiSelectConcessionarias} from '@/components/ui/multi-select-concessionarias';
 import {ResponsavelRequest, ResponsavelResponse} from '@/api/responsaveis/types';
 import {responsaveisClient} from '@/api/responsaveis/client';
-import {PerfilResponse, perfilUtil} from '@/api/perfis/types';
+import {PerfilResponse, isElevacaoDePrivilegio, getNivelAcessoPerfil} from '@/api/perfis/types';
 import {perfisClient} from '@/api/perfis/client';
 import {toast} from 'sonner';
 import {formValidator, mask} from "@/utils/utils";
@@ -58,7 +58,7 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
   const [showConcessionariaWarning, setShowConcessionariaWarning] = useState(false);
   const [pendingSubmit, setPendingSubmit] = useState<(() => void) | null>(null);
   const [submitAttempted, setSubmitAttempted] = useState(false);
-  const { idPerfil: idPerfilLogado } = useUserGestao();
+  const { idPerfil: idPerfilLogado, loading: loadingPerfilLogado } = useUserGestao();
   
   const { concessionariaSelecionada } = useConcessionaria();
 
@@ -381,6 +381,13 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
       return;
     }
 
+    const loggedInUserId = authClient.getUserIdResponsavelFromToken();
+    if (responsavel && responsavel.idResponsavel === loggedInUserId
+      && isElevacaoDePrivilegio(responsavel.idPerfil, formData.idPerfil)) {
+      toast.error('Você não pode alterar o seu próprio perfil para um nível de acesso superior. Solicite a alteração a um usuário com autorização adequada.');
+      return;
+    }
+
     const concessionariaAtualId = concessionariaSelecionada?.idConcessionaria;
     const temConcessionariasSelecionadas = selectedConcessionariaIds.length > 0;
     const incluiConcessionariaAtual = concessionariaAtualId 
@@ -408,10 +415,23 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
     onClose();
   };
 
+  const isEditandoProprioUsuario = Boolean(
+    responsavel && responsavel.idResponsavel === authClient.getUserIdResponsavelFromToken()
+  );
+
   const isPerfilRestritoParaUsuarioAtual = useCallback((idPerfil: number) => {
-    return idPerfil === perfilUtil.SUPER_ADMIN && idPerfilLogado !== perfilUtil.SUPER_ADMIN
-  }, [idPerfilLogado])
-  
+    if (getNivelAcessoPerfil(idPerfil) > getNivelAcessoPerfil(idPerfilLogado)) {
+      return true;
+    }
+
+    if (isEditandoProprioUsuario && isElevacaoDePrivilegio(responsavel?.idPerfil, idPerfil)) {
+      return true;
+    }
+
+    return false;
+  }, [idPerfilLogado, isEditandoProprioUsuario, responsavel?.idPerfil])
+
+
   return (
     <Dialog open={open} onOpenChange={(newOpen) => !newOpen && onClose()}>
       <DialogContent className="h-full flex flex-col">
@@ -496,10 +516,10 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
                   return next;
                 });
               }}
-              disabled={loadingPerfis}
+              disabled={loadingPerfis || loadingPerfilLogado}
             >
               <SelectTrigger className={displayErrors.idPerfil ? 'border-red-500 focus:ring-red-500' : ''}>
-                <SelectValue placeholder={loadingPerfis ? "Carregando perfis..." : "Selecione o perfil"} />
+                <SelectValue placeholder={loadingPerfis || loadingPerfilLogado ? "Carregando perfis..." : "Selecione o perfil"} />
               </SelectTrigger>
               <SelectContent>
                 {!loadingPerfis && perfis?.length > 0 ? (
@@ -521,6 +541,13 @@ export default function ResponsavelModal({ responsavel, open, onClose, onSave }:
             </Select>
             {displayErrors.idPerfil && (
               <p className="text-sm text-red-500">{displayErrors.idPerfil}</p>
+            )}
+            {!loadingPerfilLogado && (
+              <p className="text-xs text-gray-500">
+                {isEditandoProprioUsuario
+                  ? 'Você está editando o seu próprio cadastro. Perfis com nível de acesso superior ao seu ficam indisponíveis e devem ser concedidos por outro usuário autorizado.'
+                  : 'Você só pode atribuir perfis de nível igual ou inferior ao seu. Perfis superiores ficam indisponíveis.'}
+              </p>
             )}
           </div>
 
