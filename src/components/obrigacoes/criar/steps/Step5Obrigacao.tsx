@@ -148,7 +148,6 @@ export function Step5Obrigacao({ formData, updateFormData, disabled = false, ori
             </SelectContent>
           </Select>
         </div>
-  
         <div className="flex flex-col space-y-4">
           <Label htmlFor="dsAntt">Orgão Regulador</Label>
           <Input
