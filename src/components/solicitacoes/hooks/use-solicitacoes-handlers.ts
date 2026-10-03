@@ -1,3 +1,4 @@
+import { getLayoutClient, ClienteEnum } from '@/lib/layout/layout-client';
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
 import correspondenciaClient from '@/api/correspondencia/client';
@@ -20,6 +21,7 @@ interface UseSolicitacoesHandlersDeps {
 }
 
 export function useSolicitacoesHandlers(deps: UseSolicitacoesHandlersDeps) {
+  const isMvp = getLayoutClient() === ClienteEnum.RTECH;
   const {
     loadSolicitacoes,
     setSelectedSolicitacao,
@@ -34,6 +36,10 @@ export function useSolicitacoesHandlers(deps: UseSolicitacoesHandlersDeps) {
   // Estado de ordenação
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+  // Estado de seleção
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [isDeletingBulk, setIsDeletingBulk] = useState(false);
 
   // Handler de ordenação
   const handleSort = useCallback((field: string) => {
@@ -52,11 +58,71 @@ export function useSolicitacoesHandlers(deps: UseSolicitacoesHandlersDeps) {
     setShowSolicitacaoModal(true);
   }, [setSelectedSolicitacao, setShowSolicitacaoModal]);
 
+  // Handlers de seleção
+  const toggleSelect = useCallback((id: number) => {
+    if (!isMvp) return;
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, [isMvp]);
+
+  const toggleSelectAll = useCallback((solicitacoes: CorrespondenciaResponse[]) => {
+    if (!isMvp) return;
+    setSelectedIds((prev) => {
+      const pageIds = solicitacoes.map((s) => s.idSolicitacao);
+      const allSelected = pageIds.length > 0 && pageIds.every((id) => prev.has(id));
+      const next = new Set(prev);
+
+      if (allSelected) {
+        pageIds.forEach((id) => next.delete(id));
+      } else {
+        pageIds.forEach((id) => next.add(id));
+      }
+
+      return next;
+    });
+  }, [isMvp]);
+
+  const clearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
+
+  const isSelected = useCallback((id: number) => selectedIds.has(id), [selectedIds]);
+
+  const getPageSelectionState = useCallback((solicitacoes: CorrespondenciaResponse[]) => {
+    const pageIds = solicitacoes.map((s) => s.idSolicitacao);
+    const selectedOnPage = pageIds.filter((id) => selectedIds.has(id));
+
+    return {
+      allSelected: pageIds.length > 0 && selectedOnPage.length === pageIds.length,
+      someSelected: selectedOnPage.length > 0 && selectedOnPage.length < pageIds.length,
+      selectedCount: selectedIds.size,
+    };
+  }, [selectedIds]);
+
   // Handler de exclusão
   const handleDelete = useCallback((solicitacao: CorrespondenciaResponse) => {
     setSolicitacaoToDelete(solicitacao);
     setShowDeleteDialog(true);
   }, [setSolicitacaoToDelete, setShowDeleteDialog]);
+
+  const handleDeleteSelected = useCallback(() => {
+    if (!isMvp || selectedIds.size === 0) return;
+
+    setSolicitacaoToDelete(null);
+    setShowDeleteDialog(true);
+  }, [selectedIds, setSolicitacaoToDelete, setShowDeleteDialog, isMvp]);
+
+  const closeDeleteDialog = useCallback(() => {
+    setShowDeleteDialog(false);
+    setSolicitacaoToDelete(null);
+  }, [setShowDeleteDialog, setSolicitacaoToDelete]);
 
   const confirmDelete = useCallback(async () => {
     if (solicitacaoToDelete) {
@@ -67,11 +133,33 @@ export function useSolicitacoesHandlers(deps: UseSolicitacoesHandlersDeps) {
       } catch {
         toast.error('Erro ao excluir solicitação');
       } finally {
-        setShowDeleteDialog(false);
-        setSolicitacaoToDelete(null);
+        closeDeleteDialog();
       }
     }
-  }, [solicitacaoToDelete, loadSolicitacoes, setShowDeleteDialog, setSolicitacaoToDelete]);
+  }, [solicitacaoToDelete, loadSolicitacoes, closeDeleteDialog]);
+
+  const confirmDeleteVarias = useCallback(async () => {
+    if (!isMvp) return;
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+
+    setIsDeletingBulk(true);
+    try {
+      await correspondenciaClient.deletarVarias(ids);
+      toast.success(
+        ids.length === 1
+          ? 'Solicitação excluída com sucesso'
+          : 'Solicitações excluídas com sucesso'
+      );
+      setSelectedIds(new Set());
+      await loadSolicitacoes();
+    } catch {
+      toast.error('Erro ao excluir solicitações selecionadas');
+    } finally {
+      setIsDeletingBulk(false);
+      closeDeleteDialog();
+    }
+  }, [selectedIds, loadSolicitacoes, closeDeleteDialog, isMvp]);
 
   // Handler de enviar devolutiva
   const enviarDevolutiva = useCallback(async (
@@ -195,10 +283,23 @@ export function useSolicitacoesHandlers(deps: UseSolicitacoesHandlersDeps) {
     sortDirection,
     handleSort,
 
+    // Seleção
+    selectedIds,
+    toggleSelect,
+    toggleSelectAll,
+    clearSelection,
+    isSelected,
+    getPageSelectionState,
+    handleDeleteSelected,
+    closeDeleteDialog,
+    isDeletingBulk,
+    isBulkDeletePending: isMvp && selectedIds.size > 0 && !solicitacaoToDelete,
+
     // Handlers CRUD
     handleEdit,
     handleDelete,
     confirmDelete,
+    confirmDeleteVarias,
     enviarDevolutiva,
 
     // Status helpers
