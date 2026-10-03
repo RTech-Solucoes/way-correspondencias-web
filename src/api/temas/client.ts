@@ -21,6 +21,7 @@ class TemasClient {
       'filtro',
       'nmTema',
       'dsTema',
+      'idTipoCriticidade',
       'page',
       'size',
       'sort',

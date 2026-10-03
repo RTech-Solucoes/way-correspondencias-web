@@ -1,5 +1,6 @@
 'use client';
 
+import { getLayoutClient, ClienteEnum } from '@/lib/layout/layout-client';
 import React from 'react';
 import {
   StickyTable,
@@ -70,6 +71,7 @@ export function SolicitacoesTable({
   getStatusText,
   getJoinedNmAreas,
 }: SolicitacoesTableProps) {
+  const isMvp = getLayoutClient() === ClienteEnum.RTECH;
   const isPreAnalise = (solicitacao: CorrespondenciaResponse) => {
     return (
       solicitacao.statusSolicitacao?.nmStatus === statusList.PRE_ANALISE.label ||
@@ -83,12 +85,12 @@ export function SolicitacoesTable({
       <StickyTable>
         <StickyTableHeader>
           <StickyTableRow>
-            <StickyTableHead>
+            {isMvp && <StickyTableHead>
               <Checkbox
                 checked={allSelected ? true : someSelected ? 'indeterminate' : false}
                 onCheckedChange={toggleSelectAll}
               />
-            </StickyTableHead>
+            </StickyTableHead>}
             <StickyTableHead
               className="cursor-pointer"
               onClick={() => handleSort('cdIdentificacao')}
@@ -141,7 +143,7 @@ export function SolicitacoesTable({
             />
           ) : solicitacoes?.length === 0 ? (
             <StickyTableRow>
-              <StickyTableCell colSpan={9} className="text-center py-8">
+              <StickyTableCell colSpan={isMvp ? 9 : 8} className="text-center py-8">
                 <div className="flex flex-col items-center space-y-2">
                   <ClipboardTextIcon className="h-8 w-8 text-gray-400" />
                   <p className="text-sm text-gray-500">Nenhuma solicitação encontrada</p>
@@ -152,12 +154,12 @@ export function SolicitacoesTable({
             solicitacoes?.map((solicitacao: CorrespondenciaResponse) => (
               <React.Fragment key={solicitacao.idSolicitacao}>
                 <StickyTableRow>
-                  <StickyTableCell>
+                  {isMvp && <StickyTableCell>
                     <Checkbox
                       checked={isSelected(solicitacao.idSolicitacao)}
                       onCheckedChange={() => toggleSelect(solicitacao.idSolicitacao)}
                     />
-                  </StickyTableCell>
+                  </StickyTableCell>}
                   <StickyTableCell className="font-medium min-w-[120px]">
                     {solicitacao.cdIdentificacao}
                   </StickyTableCell>

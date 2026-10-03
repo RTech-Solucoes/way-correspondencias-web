@@ -10,12 +10,15 @@ import {
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TemaResponse } from '@/api/temas/types';
+import { TipoResponse } from '@/api/tipos/types';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
+import { getLayoutClient, ClienteEnum } from '@/lib/layout/layout-client';
 
 interface TableTemaProps {
   handleSort: (field: keyof TemaResponse) => void;
   loading: boolean;
   temas: TemaResponse[];
+  criticidades: TipoResponse[];
   handleEdit: (tema: TemaResponse) => void;
   handleDelete: (tema: TemaResponse) => void;
   allSelected: boolean;
@@ -26,9 +29,19 @@ interface TableTemaProps {
 }
 
 export default function TableTema(props: TableTemaProps) {
+  const isMvp = getLayoutClient() === ClienteEnum.RTECH;
   const { canAtualizarTema, canDeletarTema } = usePermissoes();
 
-  const colSpan = (canAtualizarTema || canDeletarTema) ? 5 : 4;
+  const colSpan = 3 + (isMvp ? 1 : 0) + (canAtualizarTema || canDeletarTema ? 1 : 0);
+
+  const getCriticidadeNome = (tema: TemaResponse) => {
+    if (tema.tipoCriticidade?.dsTipo) return tema.tipoCriticidade.dsTipo;
+
+    const id = tema.idTipoCriticidade ?? tema.tipoCriticidade?.idTipo;
+    if (!id) return '-';
+
+    return props.criticidades.find((tipo) => tipo.idTipo === id)?.dsTipo || '-';
+  };
 
   return (
     <div className="flex flex-1 overflow-hidden bg-white">
@@ -48,6 +61,7 @@ export default function TableTema(props: TableTemaProps) {
               </div>
             </StickyTableHead>
             <StickyTableHead>Descrição</StickyTableHead>
+            {isMvp && <StickyTableHead>Criticidade</StickyTableHead>}
             {(canAtualizarTema || canDeletarTema) && (
               <StickyTableHead className="text-right">Ações</StickyTableHead>
             )}
@@ -85,6 +99,9 @@ export default function TableTema(props: TableTemaProps) {
                 <StickyTableCell className="max-w-xs truncate" title={tema.dsTema}>
                   {tema.dsTema || '-'}
                 </StickyTableCell>
+                {isMvp && <StickyTableCell>
+                  {getCriticidadeNome(tema)}
+                </StickyTableCell>}
                 {(canAtualizarTema || canDeletarTema) && (
                   <StickyTableCell className="text-right">
                     <div className="flex items-center justify-end space-x-2">

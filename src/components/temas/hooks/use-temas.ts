@@ -8,15 +8,20 @@ import {
   useDeleteTema,
   useDeleteTemas,
 } from './use-temas-query';
+import tiposClient from '@/api/tipos/client';
+import { CategoriaEnum, TipoResponse } from '@/api/tipos/types';
+import { getLayoutClient, ClienteEnum } from '@/lib/layout/layout-client';
 
 interface FiltersState {
   nome: string;
   descricao: string;
+  criticidade: string;
 }
 
 const initialFilters: FiltersState = {
   nome: '',
-  descricao: ''
+  descricao: '',
+  criticidade: '',
 };
 
 interface UseTemasOptions {
@@ -24,6 +29,7 @@ interface UseTemasOptions {
 }
 
 export function useTemas(options: UseTemasOptions = {}) {
+  const isMvp = getLayoutClient() === ClienteEnum.RTECH;
   const { pageSize = 10 } = options;
   const size = pageSize;
 
@@ -36,6 +42,7 @@ export function useTemas(options: UseTemasOptions = {}) {
   // Estado de filtros
   const [filters, setFilters] = useState<FiltersState>(initialFilters);
   const [activeFilters, setActiveFilters] = useState<FiltersState>(initialFilters);
+  const [criticidades, setCriticidades] = useState<TipoResponse[]>([]);
 
   // Estado de modais
   const [selectedTema, setSelectedTema] = useState<TemaResponse | null>(null);
@@ -47,6 +54,28 @@ export function useTemas(options: UseTemasOptions = {}) {
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
+
+  useEffect(() => {
+    if (!isMvp) return;
+    let cancelado = false;
+
+    const carregarCriticidades = async () => {
+      try {
+        const tipos = await tiposClient.buscarPorCategorias([CategoriaEnum.OBRIG_CRITICIDADE]);
+        if (!cancelado) {
+          setCriticidades(tipos.filter((tipo) => tipo.nmCategoria === CategoriaEnum.OBRIG_CRITICIDADE));
+        }
+      } catch (error) {
+        console.error('Erro ao carregar criticidades:', error);
+      }
+    };
+
+    carregarCriticidades();
+
+    return () => {
+      cancelado = true;
+    };
+  }, [isMvp]);
 
   // Refs para detectar mudança de filtros (melhor prática React Query)
   const prevFiltersRef = useRef(JSON.stringify(activeFilters));
@@ -69,11 +98,12 @@ export function useTemas(options: UseTemasOptions = {}) {
       filtro: debouncedSearchQuery || undefined,
       nmTema: activeFilters.nome || undefined,
       dsTema: activeFilters.descricao || undefined,
+      idTipoCriticidade: isMvp && activeFilters.criticidade ? Number(activeFilters.criticidade) : undefined,
       page: effectivePage,
       size: size,
       sort: sortField ? `${sortField},${sortDirection === 'desc' ? 'desc' : 'asc'}` : undefined,
     };
-  }, [debouncedSearchQuery, activeFilters, currentPage, size, sortField, sortDirection]);
+  }, [debouncedSearchQuery, activeFilters, currentPage, size, sortField, sortDirection, isMvp]);
 
   // Sincroniza estado da página com a página efetiva calculada
   useEffect(() => {
@@ -265,8 +295,20 @@ export function useTemas(options: UseTemasOptions = {}) {
         setActiveFilters(newFilters);
         setFilters(newFilters);
       }
+    }] : []),
+    ...(isMvp && activeFilters.criticidade ? [{
+      key: 'criticidade',
+      label: 'Criticidade',
+      value: criticidades.find((tipo) => tipo.idTipo.toString() === activeFilters.criticidade)?.dsTipo
+        || activeFilters.criticidade,
+      color: 'orange' as const,
+      onRemove: () => {
+        const newFilters = { ...activeFilters, criticidade: '' };
+        setActiveFilters(newFilters);
+        setFilters(newFilters);
+      }
     }] : [])
-  ], [searchQuery, activeFilters]);
+  ], [searchQuery, activeFilters, criticidades, isMvp]);
 
   const temas = sortedTemas();
   const pageIds = temas.map((tema) => tema.idTema);
@@ -281,6 +323,7 @@ export function useTemas(options: UseTemasOptions = {}) {
     temas,
     totalPages: data?.totalPages || 0,
     totalElements: data?.totalElements || 0,
+    criticidades,
 
     // UI State
     loading: isLoading,
