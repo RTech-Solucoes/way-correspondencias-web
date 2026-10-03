@@ -9,6 +9,7 @@ import {
 } from './use-temas-query';
 import tiposClient from '@/api/tipos/client';
 import { CategoriaEnum, TipoResponse } from '@/api/tipos/types';
+import { getLayoutClient, ClienteEnum } from '@/lib/layout/layout-client';
 
 interface FiltersState {
   nome: string;
@@ -27,6 +28,7 @@ interface UseTemasOptions {
 }
 
 export function useTemas(options: UseTemasOptions = {}) {
+  const isMvp = getLayoutClient() === ClienteEnum.RTECH;
   const { pageSize = 10 } = options;
   const size = pageSize;
 
@@ -52,6 +54,7 @@ export function useTemas(options: UseTemasOptions = {}) {
   const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
 
   useEffect(() => {
+    if (!isMvp) return;
     let cancelado = false;
 
     const carregarCriticidades = async () => {
@@ -70,7 +73,7 @@ export function useTemas(options: UseTemasOptions = {}) {
     return () => {
       cancelado = true;
     };
-  }, []);
+  }, [isMvp]);
 
   // Refs para detectar mudança de filtros (melhor prática React Query)
   const prevFiltersRef = useRef(JSON.stringify(activeFilters));
@@ -93,12 +96,12 @@ export function useTemas(options: UseTemasOptions = {}) {
       filtro: debouncedSearchQuery || undefined,
       nmTema: activeFilters.nome || undefined,
       dsTema: activeFilters.descricao || undefined,
-      idTipoCriticidade: activeFilters.criticidade ? Number(activeFilters.criticidade) : undefined,
+      idTipoCriticidade: isMvp && activeFilters.criticidade ? Number(activeFilters.criticidade) : undefined,
       page: effectivePage,
       size: size,
       sort: sortField ? `${sortField},${sortDirection === 'desc' ? 'desc' : 'asc'}` : undefined,
     };
-  }, [debouncedSearchQuery, activeFilters, currentPage, size, sortField, sortDirection]);
+  }, [debouncedSearchQuery, activeFilters, currentPage, size, sortField, sortDirection, isMvp]);
 
   // Sincroniza estado da página com a página efetiva calculada
   useEffect(() => {
@@ -230,7 +233,7 @@ export function useTemas(options: UseTemasOptions = {}) {
         setFilters(newFilters);
       }
     }] : []),
-    ...(activeFilters.criticidade ? [{
+    ...(isMvp && activeFilters.criticidade ? [{
       key: 'criticidade',
       label: 'Criticidade',
       value: criticidades.find((tipo) => tipo.idTipo.toString() === activeFilters.criticidade)?.dsTipo
@@ -242,7 +245,7 @@ export function useTemas(options: UseTemasOptions = {}) {
         setFilters(newFilters);
       }
     }] : [])
-  ], [searchQuery, activeFilters, criticidades]);
+  ], [searchQuery, activeFilters, criticidades, isMvp]);
 
   return {
     // Dados

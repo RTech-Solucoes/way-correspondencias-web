@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { TemaResponse } from '@/api/temas/types';
 import { TipoResponse } from '@/api/tipos/types';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
+import { getLayoutClient, ClienteEnum } from '@/lib/layout/layout-client';
 
 interface TableTemaProps {
   handleSort: (field: keyof TemaResponse) => void;
@@ -22,9 +23,10 @@ interface TableTemaProps {
 }
 
 export default function TableTema(props: TableTemaProps) {
+  const isMvp = getLayoutClient() === ClienteEnum.RTECH;
   const { canAtualizarTema, canDeletarTema } = usePermissoes();
 
-  const colSpan = (canAtualizarTema || canDeletarTema) ? 5 : 4;
+  const colSpan = 2 + (isMvp ? 1 : 0) + (canAtualizarTema || canDeletarTema ? 1 : 0);
 
   const getCriticidadeNome = (tema: TemaResponse) => {
     if (tema.tipoCriticidade?.dsTipo) return tema.tipoCriticidade.dsTipo;
@@ -47,7 +49,7 @@ export default function TableTema(props: TableTemaProps) {
               </div>
             </StickyTableHead>
             <StickyTableHead>Descrição</StickyTableHead>
-            <StickyTableHead>Criticidade</StickyTableHead>
+            {isMvp && <StickyTableHead>Criticidade</StickyTableHead>}
             {(canAtualizarTema || canDeletarTema) && (
               <StickyTableHead className="text-right">Ações</StickyTableHead>
             )}
@@ -79,9 +81,9 @@ export default function TableTema(props: TableTemaProps) {
                 <StickyTableCell className="max-w-xs truncate" title={tema.dsTema}>
                   {tema.dsTema || '-'}
                 </StickyTableCell>
-                <StickyTableCell>
+                {isMvp && <StickyTableCell>
                   {getCriticidadeNome(tema)}
-                </StickyTableCell>
+                </StickyTableCell>}
                 {(canAtualizarTema || canDeletarTema) && (
                   <StickyTableCell className="text-right">
                     <div className="flex items-center justify-end space-x-2">

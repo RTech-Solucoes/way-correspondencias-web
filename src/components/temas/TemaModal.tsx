@@ -10,6 +10,7 @@ import {Textarea} from '@/components/ui/textarea';
 import {TemaRequest, TemaResponse} from '@/api/temas/types';
 import tiposClient from '@/api/tipos/client';
 import { CategoriaEnum, TipoResponse } from '@/api/tipos/types';
+import { getLayoutClient, ClienteEnum } from '@/lib/layout/layout-client';
 
 interface TemaModalProps {
   tema: TemaResponse | null;
@@ -19,6 +20,7 @@ interface TemaModalProps {
 }
 
 export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
+  const isMvp = getLayoutClient() === ClienteEnum.RTECH;
   const [nmTema, setNmTema] = useState('');
   const [dsTema, setDsTema] = useState('');
   const [nrPrazo, setNrPrazo] = useState(0);
@@ -28,7 +30,7 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !isMvp) return;
 
     let cancelado = false;
 
@@ -53,7 +55,7 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
     return () => {
       cancelado = true;
     };
-  }, [open]);
+  }, [open, isMvp]);
 
   useEffect(() => {
     if (open) {
@@ -72,18 +74,18 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
   }, [open, tema]);
 
   const isFormValid = useCallback(() => {
-    return nmTema.trim() !== '' && dsTema.trim() !== '' && idTipoCriticidade !== null;
-  }, [nmTema, dsTema, idTipoCriticidade]);
+    return nmTema.trim() !== '' && dsTema.trim() !== '' && (!isMvp || idTipoCriticidade !== null);
+  }, [nmTema, dsTema, idTipoCriticidade, isMvp]);
 
   const handleSave = () => {
-    if (!isFormValid() || idTipoCriticidade === null) return;
+    if (!isFormValid()) return;
 
     const temaRequest: TemaRequest = {
       nmTema: nmTema.trim(),
       dsTema: dsTema.trim(),
       nrPrazo: nrPrazo > 0 ? nrPrazo : undefined,
       tpPrazo: 'H',
-      idTipoCriticidade,
+      ...(isMvp && idTipoCriticidade !== null ? { idTipoCriticidade } : {}),
     };
 
     onSave(temaRequest);
@@ -112,7 +114,7 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
             </div>
           </div>
 
-          <div className="space-y-2">
+          {isMvp && <div className="space-y-2">
             <Label htmlFor="idTipoCriticidade">
               Criticidade *
             </Label>
@@ -132,7 +134,7 @@ export function TemaModal({tema, open, onClose, onSave}: TemaModalProps) {
                 ))}
               </SelectContent>
             </Select>
-          </div>
+          </div>}
 
           <div className="space-y-2">
             <Label htmlFor="dsTema">Descrição *</Label>
