@@ -26,6 +26,7 @@ interface TableTemaProps {
   isSelected: (id: number) => boolean;
   toggleSelect: (id: number) => void;
   toggleSelectAll: () => void;
+  isSelectingAll?: boolean;
 }
 
 export default function TableTema(props: TableTemaProps) {
@@ -52,6 +53,7 @@ export default function TableTema(props: TableTemaProps) {
               <Checkbox
                 checked={props.allSelected ? true : props.someSelected ? 'indeterminate' : false}
                 onCheckedChange={props.toggleSelectAll}
+                disabled={props.isSelectingAll}
               />
             </StickyTableHead>}
             <StickyTableHead className="cursor-pointer" onClick={() => props.handleSort('nmTema')}>

@@ -40,6 +40,7 @@ interface SolicitacoesTableProps {
   isSelected: (id: number) => boolean;
   toggleSelect: (id: number) => void;
   toggleSelectAll: () => void;
+  isSelectingAll?: boolean;
   handleSort: (field: string) => void;
   handleEdit: (solicitacao: CorrespondenciaResponse) => void;
   handleDelete: (solicitacao: CorrespondenciaResponse) => void;
@@ -58,6 +59,7 @@ export function SolicitacoesTable({
   isSelected,
   toggleSelect,
   toggleSelectAll,
+  isSelectingAll,
   loading,
   canAtualizarSolicitacao,
   canDeletarSolicitacao,
@@ -89,6 +91,7 @@ export function SolicitacoesTable({
               <Checkbox
                 checked={allSelected ? true : someSelected ? 'indeterminate' : false}
                 onCheckedChange={toggleSelectAll}
+                disabled={isSelectingAll}
               />
             </StickyTableHead>}
             <StickyTableHead

@@ -32,6 +32,7 @@ interface ResponsaveisTableProps {
   isSelected: (id: number) => boolean;
   toggleSelect: (id: number) => void;
   toggleSelectAll: () => void;
+  isSelectingAll?: boolean;
 }
 
 export default function ResponsaveisTable({
@@ -50,6 +51,7 @@ export default function ResponsaveisTable({
   isSelected,
   toggleSelect,
   toggleSelectAll,
+  isSelectingAll,
 }: ResponsaveisTableProps) {
   const isMvp = getLayoutClient() === ClienteEnum.RTECH;
   const { canAtualizarResponsavel, canDeletarResponsavel, canGerarSenhaResponsavel } = usePermissoes();
@@ -91,6 +93,7 @@ export default function ResponsaveisTable({
               <Checkbox
                 checked={allSelected ? true : someSelected ? 'indeterminate' : false}
                 onCheckedChange={toggleSelectAll}
+                disabled={isSelectingAll}
               />
             </StickyTableHead>}
             <StickyTableHead className="cursor-pointer" onClick={() => handleSort('nmResponsavel')}>

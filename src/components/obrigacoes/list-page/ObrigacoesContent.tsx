@@ -109,6 +109,7 @@ export function ObrigacoesContent({ defaultFilters }: ObrigacoesContentProps) {
     isSelected,
     toggleSelect,
     toggleSelectAll,
+    isSelectingAll,
     clearSelection,
     handleDeleteSelected,
     isDeletingBulk,
@@ -250,6 +251,8 @@ export function ObrigacoesContent({ defaultFilters }: ObrigacoesContentProps) {
 
       <ObrigacoesSelectionBar
         selectedCount={selectedCount}
+        isSelectingAll={isSelectingAll}
+        totalElements={totalElements}
         canDeletarObrigacao={!!canDeletarObrigacao}
         onClearSelection={clearSelection}
         onDeleteSelected={handleDeleteSelected}
@@ -279,6 +282,7 @@ export function ObrigacoesContent({ defaultFilters }: ObrigacoesContentProps) {
         isSelected={isSelected}
         toggleSelect={toggleSelect}
         toggleSelectAll={toggleSelectAll}
+        isSelectingAll={isSelectingAll}
       />
       </div>
     </ObrigacoesUIProvider>

@@ -55,6 +55,7 @@ export function AreaContent() {
     isSelected,
     toggleSelect,
     toggleSelectAll,
+    isSelectingAll,
     clearSelection,
     handleDeleteSelected,
     closeDeleteDialog,
@@ -125,6 +126,8 @@ export function AreaContent() {
 
       <AreasSelectionBar
         selectedCount={selectedCount}
+        isSelectingAll={isSelectingAll}
+        totalElements={totalElements}
         canDeletarArea={!!canDeletarArea}
         onClearSelection={clearSelection}
         onDeleteSelected={handleDeleteSelected}
@@ -144,6 +147,7 @@ export function AreaContent() {
           isSelected={isSelected}
           toggleSelect={toggleSelect}
           toggleSelectAll={toggleSelectAll}
+          isSelectingAll={isSelectingAll}
         />
       </div>
 

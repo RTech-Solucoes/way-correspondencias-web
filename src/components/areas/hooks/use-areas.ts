@@ -9,6 +9,9 @@ import {
   useDeleteArea,
   useDeleteAreas,
 } from './use-areas-query';
+import areasClient from '@/api/areas/client';
+import { coletarIdsDoFiltro } from '@/utils/selecao-em-lote';
+import { toast } from 'sonner';
 
 interface FiltersState {
   codigo: string;
@@ -50,6 +53,8 @@ export function useAreas(options: UseAreasOptions = {}) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [areaToDelete, setAreaToDelete] = useState<number | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [selecionouTodos, setSelecionouTodos] = useState(false);
+  const [isSelectingAll, setIsSelectingAll] = useState(false);
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
@@ -98,11 +103,13 @@ export function useAreas(options: UseAreasOptions = {}) {
   const deleteMutation = useDeleteArea();
   const deleteVariasMutation = useDeleteAreas();
 
-  const areas = data?.content || [];
+  const areas = useMemo(() => data?.content || [], [data?.content]);
+  const totalElements = data?.totalElements || 0;
 
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [currentPage, debouncedSearchQuery, activeFilters]);
+    setSelecionouTodos(false);
+  }, [debouncedSearchQuery, activeFilters]);
 
   // Handlers - Muito mais simples agora!
   const handleSort = useCallback((field: keyof AreaResponse) => {
@@ -131,6 +138,7 @@ export function useAreas(options: UseAreasOptions = {}) {
       const next = new Set(prev);
       if (next.has(id)) {
         next.delete(id);
+        setSelecionouTodos(false);
       } else {
         next.add(id);
       }
@@ -138,34 +146,59 @@ export function useAreas(options: UseAreasOptions = {}) {
     });
   }, [isMvp, areas]);
 
-  const toggleSelectAll = useCallback(() => {
-    if (!isMvp) return;
-    setSelectedIds((prev) => {
-      const pageIds = areas.filter((area) => !isAreaObrigatoriaSistema(area.cdArea)).map((area) => area.idArea);
-      const allSelected = pageIds.length > 0 && pageIds.every((id) => prev.has(id));
-      const next = new Set(prev);
+  const toggleSelectAll = useCallback(async () => {
+    if (!isMvp || isSelectingAll) return;
 
-      if (allSelected) {
-        pageIds.forEach((id) => next.delete(id));
-      } else {
-        pageIds.forEach((id) => next.add(id));
-      }
+    if (selecionouTodos) {
+      setSelectedIds(new Set());
+      setSelecionouTodos(false);
+      return;
+    }
 
-      return next;
-    });
-  }, [areas, isMvp]);
+    setIsSelectingAll(true);
+
+    // Feedback imediato: marca a página visível antes de ir ao servidor.
+    setSelectedIds(new Set(
+      areas.filter((area) => !isAreaObrigatoriaSistema(area.cdArea)).map((area) => area.idArea),
+    ));
+
+    try {
+      const acumular = (ids: number[]) =>
+        setSelectedIds((prev) => {
+          const next = new Set(prev);
+          ids.forEach((id) => next.add(id));
+          return next;
+        });
+
+      await coletarIdsDoFiltro({
+        total: totalElements,
+        buscarPagina: async (page, size) => {
+          const resposta = await areasClient.buscarPorFiltro({ ...queryParams, page, size });
+          return resposta.content || [];
+        },
+        obterId: (area) => area.idArea,
+        podeSelecionar: (area) => !isAreaObrigatoriaSistema(area.cdArea),
+        aoReceberIds: acumular,
+      });
+      setSelecionouTodos(true);
+    } catch (error) {
+      console.error('Erro ao selecionar todas as áreas:', error);
+      toast.error('Não foi possível selecionar todas as áreas');
+    } finally {
+      setIsSelectingAll(false);
+    }
+  }, [isMvp, isSelectingAll, selecionouTodos, totalElements, queryParams, areas]);
 
   const clearSelection = useCallback(() => {
     setSelectedIds(new Set());
+    setSelecionouTodos(false);
   }, []);
 
   const isSelected = useCallback((id: number) => selectedIds.has(id), [selectedIds]);
 
-  const pageIds = areas.filter((area) => !isAreaObrigatoriaSistema(area.cdArea)).map((area) => area.idArea);
-  const selectedOnPage = pageIds.filter((id) => selectedIds.has(id));
-  const allSelected = pageIds.length > 0 && selectedOnPage.length === pageIds.length;
-  const someSelected = selectedOnPage.length > 0 && selectedOnPage.length < pageIds.length;
   const selectedCount = selectedIds.size;
+  const allSelected = selecionouTodos && selectedCount > 0;
+  const someSelected = !allSelected && selectedCount > 0;
   const isBulkDeletePending = isMvp && selectedCount > 0 && areaToDelete === null;
 
   const handleDeleteSelected = useCallback(() => {
@@ -195,6 +228,7 @@ export function useAreas(options: UseAreasOptions = {}) {
     try {
       await deleteVariasMutation.mutateAsync(ids);
       setSelectedIds(new Set());
+      setSelecionouTodos(false);
     } finally {
       closeDeleteDialog();
     }
@@ -284,7 +318,7 @@ export function useAreas(options: UseAreasOptions = {}) {
     // Dados - Direto do React Query
     areas,
     totalPages: data?.totalPages || 0,
-    totalElements: data?.totalElements || 0,
+    totalElements,
     
     // UI State
     loading: isLoading,
@@ -320,6 +354,7 @@ export function useAreas(options: UseAreasOptions = {}) {
     handleDeleteSelected,
     closeDeleteDialog,
     isDeletingBulk: deleteVariasMutation.isPending,
+    isSelectingAll,
     isBulkDeletePending,
     
     // Handlers

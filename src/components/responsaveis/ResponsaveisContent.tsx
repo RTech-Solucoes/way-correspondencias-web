@@ -58,6 +58,7 @@ export function ResponsaveisContent() {
     isSelected,
     toggleSelect,
     toggleSelectAll,
+    isSelectingAll,
     clearSelection,
     handleDeleteSelected,
     closeDeleteDialog,
@@ -98,6 +99,8 @@ export function ResponsaveisContent() {
 
       <ResponsaveisSelectionBar
         selectedCount={selectedCount}
+        isSelectingAll={isSelectingAll}
+        totalElements={totalElements}
         canDeletarResponsavel={!!canDeletarResponsavel}
         onClearSelection={clearSelection}
         onDeleteSelected={handleDeleteSelected}
@@ -121,6 +124,7 @@ export function ResponsaveisContent() {
         isSelected={isSelected}
         toggleSelect={toggleSelect}
         toggleSelectAll={toggleSelectAll}
+        isSelectingAll={isSelectingAll}
       />
 
       {showFilterModal && (

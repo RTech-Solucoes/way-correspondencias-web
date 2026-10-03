@@ -52,6 +52,7 @@ export function TemaContent() {
     isSelected,
     toggleSelect,
     toggleSelectAll,
+    isSelectingAll,
     clearSelection,
     handleDeleteSelected,
     closeDeleteDialog,
@@ -101,6 +102,8 @@ export function TemaContent() {
 
       <TemasSelectionBar
         selectedCount={selectedCount}
+        isSelectingAll={isSelectingAll}
+        totalElements={totalElements}
         canDeletarTema={!!canDeletarTema}
         onClearSelection={clearSelection}
         onDeleteSelected={handleDeleteSelected}
@@ -121,6 +124,7 @@ export function TemaContent() {
           isSelected={isSelected}
           toggleSelect={toggleSelect}
           toggleSelectAll={toggleSelectAll}
+          isSelectingAll={isSelectingAll}
         />
       </div>
 

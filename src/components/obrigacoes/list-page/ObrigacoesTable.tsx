@@ -41,6 +41,7 @@ interface ObrigacoesTableProps {
   isSelected: (id: number) => boolean;
   toggleSelect: (id: number) => void;
   toggleSelectAll: () => void;
+  isSelectingAll?: boolean;
 }
 
 export function ObrigacoesTable({
@@ -65,6 +66,7 @@ export function ObrigacoesTable({
   isSelected,
   toggleSelect,
   toggleSelectAll,
+  isSelectingAll,
 }: ObrigacoesTableProps) {
   const isMvp = getLayoutClient() === ClienteEnum.RTECH;
   
@@ -87,6 +89,7 @@ export function ObrigacoesTable({
                 <Checkbox
                   checked={allSelected ? true : someSelected ? 'indeterminate' : false}
                   onCheckedChange={toggleSelectAll}
+                  disabled={isSelectingAll}
                 />
               </TableHead>}
               <TableHead 

@@ -2,12 +2,13 @@ import { getLayoutClient, ClienteEnum } from '@/lib/layout/layout-client';
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
 import correspondenciaClient from '@/api/correspondencia/client';
-import { CorrespondenciaDetalheResponse, CorrespondenciaResponse } from '@/api/correspondencia/types';
+import { CorrespondenciaDetalheResponse, CorrespondenciaFilterParams, CorrespondenciaResponse } from '@/api/correspondencia/types';
 import tramitacoesClient from '@/api/tramitacoes/client';
 import { ArquivoDTO } from '@/api/anexos/type';
 import { AreaSolicitacao } from '@/api/solicitacoes/types';
 import { statusList } from '@/api/status-solicitacao/types';
 import { FlAprovadoTramitacaoEnum } from '@/api/tramitacoes/types';
+import { coletarIdsDoFiltro } from '@/utils/selecao-em-lote';
 
 interface UseSolicitacoesHandlersDeps {
   loadSolicitacoes: () => Promise<void>;
@@ -18,6 +19,9 @@ interface UseSolicitacoesHandlersDeps {
   solicitacaoToDelete: CorrespondenciaResponse | null;
   detalhesCorrespondencia: CorrespondenciaDetalheResponse | null;
   setCurrentPage: (page: number) => void;
+  queryParams: CorrespondenciaFilterParams;
+  totalElements: number;
+  solicitacoesDaPagina: CorrespondenciaResponse[];
 }
 
 export function useSolicitacoesHandlers(deps: UseSolicitacoesHandlersDeps) {
@@ -31,6 +35,9 @@ export function useSolicitacoesHandlers(deps: UseSolicitacoesHandlersDeps) {
     solicitacaoToDelete,
     detalhesCorrespondencia,
     setCurrentPage,
+    queryParams,
+    totalElements,
+    solicitacoesDaPagina,
   } = deps;
 
   // Estado de ordenação
@@ -39,6 +46,8 @@ export function useSolicitacoesHandlers(deps: UseSolicitacoesHandlersDeps) {
 
   // Estado de seleção
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [selecionouTodos, setSelecionouTodos] = useState(false);
+  const [isSelectingAll, setIsSelectingAll] = useState(false);
   const [isDeletingBulk, setIsDeletingBulk] = useState(false);
 
   // Handler de ordenação
@@ -65,6 +74,7 @@ export function useSolicitacoesHandlers(deps: UseSolicitacoesHandlersDeps) {
       const next = new Set(prev);
       if (next.has(id)) {
         next.delete(id);
+        setSelecionouTodos(false);
       } else {
         next.add(id);
       }
@@ -72,39 +82,63 @@ export function useSolicitacoesHandlers(deps: UseSolicitacoesHandlersDeps) {
     });
   }, [isMvp]);
 
-  const toggleSelectAll = useCallback((solicitacoes: CorrespondenciaResponse[]) => {
-    if (!isMvp) return;
-    setSelectedIds((prev) => {
-      const pageIds = solicitacoes.map((s) => s.idSolicitacao);
-      const allSelected = pageIds.length > 0 && pageIds.every((id) => prev.has(id));
-      const next = new Set(prev);
+  const toggleSelectAll = useCallback(async () => {
+    if (!isMvp || isSelectingAll) return;
 
-      if (allSelected) {
-        pageIds.forEach((id) => next.delete(id));
-      } else {
-        pageIds.forEach((id) => next.add(id));
-      }
+    if (selecionouTodos) {
+      setSelectedIds(new Set());
+      setSelecionouTodos(false);
+      return;
+    }
 
-      return next;
-    });
-  }, [isMvp]);
+    setIsSelectingAll(true);
+
+    // Feedback imediato: marca a página visível antes de ir ao servidor.
+    setSelectedIds(new Set(solicitacoesDaPagina.map((s) => s.idSolicitacao)));
+
+    try {
+      const acumular = (ids: number[]) =>
+        setSelectedIds((prev) => {
+          const next = new Set(prev);
+          ids.forEach((id) => next.add(id));
+          return next;
+        });
+
+      await coletarIdsDoFiltro({
+        total: totalElements,
+        buscarPagina: async (page, size) => {
+          const resposta = await correspondenciaClient.buscarPorFiltro({ ...queryParams, page, size });
+          return Array.isArray(resposta) ? resposta : resposta.content || [];
+        },
+        obterId: (solicitacao) => solicitacao.idSolicitacao,
+        aoReceberIds: acumular,
+      });
+      setSelecionouTodos(true);
+    } catch (error) {
+      console.error('Erro ao selecionar todas as solicitações:', error);
+      toast.error('Não foi possível selecionar todas as solicitações');
+    } finally {
+      setIsSelectingAll(false);
+    }
+  }, [isMvp, isSelectingAll, selecionouTodos, totalElements, queryParams, solicitacoesDaPagina]);
 
   const clearSelection = useCallback(() => {
     setSelectedIds(new Set());
+    setSelecionouTodos(false);
   }, []);
 
   const isSelected = useCallback((id: number) => selectedIds.has(id), [selectedIds]);
 
-  const getPageSelectionState = useCallback((solicitacoes: CorrespondenciaResponse[]) => {
-    const pageIds = solicitacoes.map((s) => s.idSolicitacao);
-    const selectedOnPage = pageIds.filter((id) => selectedIds.has(id));
+  const getPageSelectionState = useCallback(() => {
+    const selectedCount = selectedIds.size;
+    const allSelected = selecionouTodos && selectedCount > 0;
 
     return {
-      allSelected: pageIds.length > 0 && selectedOnPage.length === pageIds.length,
-      someSelected: selectedOnPage.length > 0 && selectedOnPage.length < pageIds.length,
-      selectedCount: selectedIds.size,
+      allSelected,
+      someSelected: !allSelected && selectedCount > 0,
+      selectedCount,
     };
-  }, [selectedIds]);
+  }, [selectedIds, selecionouTodos]);
 
   // Handler de exclusão
   const handleDelete = useCallback((solicitacao: CorrespondenciaResponse) => {
@@ -152,6 +186,7 @@ export function useSolicitacoesHandlers(deps: UseSolicitacoesHandlersDeps) {
           : 'Solicitações excluídas com sucesso'
       );
       setSelectedIds(new Set());
+      setSelecionouTodos(false);
       await loadSolicitacoes();
     } catch {
       toast.error('Erro ao excluir solicitações selecionadas');
@@ -287,6 +322,7 @@ export function useSolicitacoesHandlers(deps: UseSolicitacoesHandlersDeps) {
     selectedIds,
     toggleSelect,
     toggleSelectAll,
+    isSelectingAll,
     clearSelection,
     isSelected,
     getPageSelectionState,

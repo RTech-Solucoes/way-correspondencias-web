@@ -67,6 +67,9 @@ export function useSolicitacoes(options: UseSolicitacoesOptions = {}) {
     solicitacaoToDelete: modalsHook.solicitacaoToDelete,
     detalhesCorrespondencia: modalsHook.detalhesCorrespondencia,
     setCurrentPage: filtersHook.setCurrentPage,
+    queryParams: dataHook.queryParams,
+    totalElements: dataHook.totalElements,
+    solicitacoesDaPagina: dataHook.solicitacoes,
   });
 
   // Sincronizar sortField e sortDirection
@@ -314,8 +317,8 @@ export function useSolicitacoes(options: UseSolicitacoesOptions = {}) {
   ]);
 
   const pageSelectionState = useMemo(
-    () => handlersHook.getPageSelectionState(sortedSolicitacoes),
-    [handlersHook.getPageSelectionState, sortedSolicitacoes, handlersHook.selectedIds]
+    () => handlersHook.getPageSelectionState(),
+    [handlersHook.getPageSelectionState, handlersHook.selectedIds]
   );
 
   return {
@@ -406,7 +409,8 @@ export function useSolicitacoes(options: UseSolicitacoesOptions = {}) {
     allSelected: pageSelectionState.allSelected,
     someSelected: pageSelectionState.someSelected,
     toggleSelect: handlersHook.toggleSelect,
-    toggleSelectAll: () => handlersHook.toggleSelectAll(sortedSolicitacoes),
+    toggleSelectAll: handlersHook.toggleSelectAll,
+    isSelectingAll: handlersHook.isSelectingAll,
     isSelected: handlersHook.isSelected,
     handleDeleteSelected: handlersHook.handleDeleteSelected,
     clearSelection: handlersHook.clearSelection,

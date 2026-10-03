@@ -25,6 +25,7 @@ interface ITableArea {
   isSelected: (id: number) => boolean;
   toggleSelect: (id: number) => void;
   toggleSelectAll: () => void;
+  isSelectingAll?: boolean;
 }
 
 export default function TableArea(props: ITableArea) {
@@ -41,6 +42,7 @@ export default function TableArea(props: ITableArea) {
               <Checkbox
                 checked={props.allSelected ? true : props.someSelected ? 'indeterminate' : false}
                 onCheckedChange={props.toggleSelectAll}
+                disabled={props.isSelectingAll}
               />
             </StickyTableHead>}
             <StickyTableHead className="cursor-pointer" onClick={() => props.handleSort('cdArea')}>

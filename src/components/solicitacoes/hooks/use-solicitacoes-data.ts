@@ -192,6 +192,9 @@ export function useSolicitacoesData(
     totalPages,
     totalElements,
 
+    // Filtro atual (usado para selecionar todos os registros, nao so a pagina)
+    queryParams,
+
     // Dados auxiliares
     responsaveis,
     temas,

@@ -98,6 +98,7 @@ export function SolicitacoesContent({ defaultFilters }: SolicitacoesContentProps
     someSelected,
     toggleSelect,
     toggleSelectAll,
+    isSelectingAll,
     isSelected,
     handleDeleteSelected,
     closeDeleteDialog,
@@ -147,6 +148,8 @@ export function SolicitacoesContent({ defaultFilters }: SolicitacoesContentProps
 
         <SolicitacoesSelectionBar
           selectedCount={selectedCount}
+          isSelectingAll={isSelectingAll}
+          totalElements={totalElements}
           canDeletarSolicitacao={!!canDeletarSolicitacao}
           onClearSelection={clearSelection}
           onDeleteSelected={handleDeleteSelected}
@@ -175,6 +178,7 @@ export function SolicitacoesContent({ defaultFilters }: SolicitacoesContentProps
           isSelected={isSelected}
           toggleSelect={toggleSelect}
           toggleSelectAll={toggleSelectAll}
+          isSelectingAll={isSelectingAll}
         />
 
         <FilterModal
