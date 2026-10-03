@@ -48,6 +48,25 @@ export function useDeleteObrigacao() {
   });
 }
 
+export function useDeleteObrigacoes() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (ids: number[]) => obrigacaoClient.deletarVarias(ids),
+    onSuccess: (_data, ids) => {
+      queryClient.invalidateQueries({ queryKey: obrigacoesKeys.lists() });
+      toast.success(
+        ids.length === 1
+          ? 'Obrigação excluída com sucesso'
+          : 'Obrigações excluídas com sucesso'
+      );
+    },
+    onError: () => {
+      toast.error('Erro ao excluir obrigações selecionadas');
+    },
+  });
+}
+
 export function useUpdateStatusNaoAplicavelSuspenso() {
   const queryClient = useQueryClient();
 

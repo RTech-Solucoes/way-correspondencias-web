@@ -9,7 +9,7 @@ type DetalhesSolicitacaoDescricaoProps = {
   setExpandDescricao: (value: boolean | ((prev: boolean) => boolean)) => void;
   canToggleDescricao: boolean;
   lineHeightPx: number | null;
-  descRef: RefObject<HTMLParagraphElement | null>;
+  descRef: RefObject<HTMLParagraphElement>;
   maxDescLines: number;
 };
 

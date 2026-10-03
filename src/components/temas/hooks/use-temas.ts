@@ -5,7 +5,8 @@ import {
   useTemasQuery, 
   useCreateTema, 
   useUpdateTema, 
-  useDeleteTema 
+  useDeleteTema,
+  useDeleteTemas,
 } from './use-temas-query';
 import tiposClient from '@/api/tipos/client';
 import { CategoriaEnum, TipoResponse } from '@/api/tipos/types';
@@ -49,6 +50,7 @@ export function useTemas(options: UseTemasOptions = {}) {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [temaToDelete, setTemaToDelete] = useState<TemaResponse | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
@@ -117,6 +119,11 @@ export function useTemas(options: UseTemasOptions = {}) {
   const createMutation = useCreateTema();
   const updateMutation = useUpdateTema();
   const deleteMutation = useDeleteTema();
+  const deleteVariasMutation = useDeleteTemas();
+
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [currentPage, debouncedSearchQuery, activeFilters]);
 
   // Handlers
   const handleSort = useCallback((field: keyof TemaResponse) => {
@@ -139,13 +146,73 @@ export function useTemas(options: UseTemasOptions = {}) {
     setShowDeleteDialog(true);
   }, []);
 
+  const toggleSelect = useCallback((id: number) => {
+    if (!isMvp) return;
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, [isMvp]);
+
+  const toggleSelectAll = useCallback((temas: TemaResponse[]) => {
+    if (!isMvp) return;
+    setSelectedIds((prev) => {
+      const pageIds = temas.map((tema) => tema.idTema);
+      const allSelected = pageIds.length > 0 && pageIds.every((id) => prev.has(id));
+      const next = new Set(prev);
+
+      if (allSelected) {
+        pageIds.forEach((id) => next.delete(id));
+      } else {
+        pageIds.forEach((id) => next.add(id));
+      }
+
+      return next;
+    });
+  }, [isMvp]);
+
+  const clearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
+
+  const isSelected = useCallback((id: number) => selectedIds.has(id), [selectedIds]);
+
+  const handleDeleteSelected = useCallback(() => {
+    if (!isMvp) return;
+    if (selectedIds.size === 0) return;
+    setTemaToDelete(null);
+    setShowDeleteDialog(true);
+  }, [selectedIds, isMvp]);
+
+  const closeDeleteDialog = useCallback(() => {
+    setShowDeleteDialog(false);
+    setTemaToDelete(null);
+  }, []);
+
   const confirmDelete = useCallback(async () => {
     if (temaToDelete) {
       await deleteMutation.mutateAsync(temaToDelete.idTema);
-      setShowDeleteDialog(false);
-      setTemaToDelete(null);
+      closeDeleteDialog();
     }
-  }, [temaToDelete, deleteMutation]);
+  }, [temaToDelete, deleteMutation, closeDeleteDialog]);
+
+  const confirmDeleteVarias = useCallback(async () => {
+    if (!isMvp) return;
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+
+    try {
+      await deleteVariasMutation.mutateAsync(ids);
+      setSelectedIds(new Set());
+    } finally {
+      closeDeleteDialog();
+    }
+  }, [selectedIds, deleteVariasMutation, closeDeleteDialog, isMvp]);
 
   const onTemaSave = useCallback(async (formData: TemaRequest) => {
     try {
@@ -247,9 +314,17 @@ export function useTemas(options: UseTemasOptions = {}) {
     }] : [])
   ], [searchQuery, activeFilters, criticidades, isMvp]);
 
+  const temas = sortedTemas();
+  const pageIds = temas.map((tema) => tema.idTema);
+  const selectedOnPage = pageIds.filter((id) => selectedIds.has(id));
+  const allSelected = pageIds.length > 0 && selectedOnPage.length === pageIds.length;
+  const someSelected = selectedOnPage.length > 0 && selectedOnPage.length < pageIds.length;
+  const selectedCount = selectedIds.size;
+  const isBulkDeletePending = isMvp && selectedCount > 0 && temaToDelete === null;
+
   return {
     // Dados
-    temas: sortedTemas(),
+    temas,
     totalPages: data?.totalPages || 0,
     totalElements: data?.totalElements || 0,
     criticidades,
@@ -276,8 +351,20 @@ export function useTemas(options: UseTemasOptions = {}) {
     showFilterModal,
     setShowFilterModal,
     showDeleteDialog,
-    setShowDeleteDialog,
     temaToDelete,
+
+    // Seleção
+    selectedCount,
+    allSelected,
+    someSelected,
+    isSelected,
+    toggleSelect,
+    toggleSelectAll: () => toggleSelectAll(temas),
+    clearSelection,
+    handleDeleteSelected,
+    closeDeleteDialog,
+    isDeletingBulk: deleteVariasMutation.isPending,
+    isBulkDeletePending,
 
     // Handlers
     loadTemas: refetch,
@@ -285,6 +372,7 @@ export function useTemas(options: UseTemasOptions = {}) {
     handleEdit,
     handleDelete,
     confirmDelete,
+    confirmDeleteVarias,
     onTemaSave,
     handleCloseTemaModal,
     handleOpenCreateTema,

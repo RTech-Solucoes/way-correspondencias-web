@@ -16,6 +16,11 @@ interface ObrigacoesUIContextType {
   // Estados relacionados a obrigações
   obrigacaoToDelete: ObrigacaoResponse | null;
   setObrigacaoToDelete: Dispatch<SetStateAction<ObrigacaoResponse | null>>;
+  selectedCount: number;
+  isBulkDeletePending: boolean;
+  isDeletingBulk: boolean;
+  confirmDeleteVarias: () => Promise<void>;
+  clearSelection: () => void;
   
   // Filtros
   filters: FiltersState;
