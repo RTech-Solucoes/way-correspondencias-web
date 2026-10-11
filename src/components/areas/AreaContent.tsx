@@ -12,6 +12,7 @@ import SearchArea from '@/components/areas/SearchArea';
 import TableArea from '@/components/areas/TableArea';
 import FilterModalArea from '@/components/areas/FilterModalArea';
 import PageTitle from '@/components/ui/page-title';
+import { SelectionScopeDialog } from '@/components/ui/selection-scope-dialog';
 
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
 import { useAreas } from './hooks/use-areas';
@@ -19,6 +20,7 @@ import { AreasSelectionBar } from '@/components/areas/AreasSelectionBar';
 
 export function AreaContent() {
   const { canInserirArea, canDeletarArea } = usePermissoes();
+  const [selectionDialogOpen, setSelectionDialogOpen] = React.useState(false);
   
   const {
     // Dados
@@ -54,7 +56,9 @@ export function AreaContent() {
     someSelected,
     isSelected,
     toggleSelect,
-    toggleSelectAll,
+    toggleSelectPage,
+    selectAllFiltered,
+    selecionouTodos,
     isSelectingAll,
     clearSelection,
     handleDeleteSelected,
@@ -125,6 +129,7 @@ export function AreaContent() {
       />
 
       <AreasSelectionBar
+        allFilteredSelected={selecionouTodos}
         selectedCount={selectedCount}
         isSelectingAll={isSelectingAll}
         totalElements={totalElements}
@@ -133,6 +138,20 @@ export function AreaContent() {
         onDeleteSelected={handleDeleteSelected}
         isDeleting={isDeletingBulk}
         className="mb-4"
+      />
+
+      <SelectionScopeDialog
+        open={selectionDialogOpen}
+        onOpenChange={setSelectionDialogOpen}
+        pageSelected={allSelected}
+        allFilteredSelected={selecionouTodos}
+        selectedCount={selectedCount}
+        pageItemCount={areas.length}
+        totalElements={totalElements}
+        isSelectingAll={isSelectingAll}
+        onSelectPage={toggleSelectPage}
+        onSelectAll={selectAllFiltered}
+        onClearAll={clearSelection}
       />
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex-1 overflow-auto mb-6">
@@ -146,7 +165,8 @@ export function AreaContent() {
           someSelected={someSelected}
           isSelected={isSelected}
           toggleSelect={toggleSelect}
-          toggleSelectAll={toggleSelectAll}
+          onHeaderSelection={() => setSelectionDialogOpen(true)}
+          allFilteredSelected={selecionouTodos}
           isSelectingAll={isSelectingAll}
         />
       </div>

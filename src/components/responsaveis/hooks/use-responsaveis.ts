@@ -1,3 +1,4 @@
+import { useConcessionaria } from '@/context/concessionaria/ConcessionariaContext';
 import { useIdResponsavelLogado } from '@/hooks/use-id-responsavel-logado';
 import { getLayoutClient, ClienteEnum } from '@/lib/layout/layout-client';
 import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
@@ -11,7 +12,7 @@ import {
   useGerarSenhaResponsavel
 } from './use-responsaveis-query';
 import responsaveisClient from '@/api/responsaveis/client';
-import { coletarIdsDoFiltro } from '@/utils/selecao-em-lote';
+import { coletarIdsDoFiltro, alternarSelecaoPagina } from '@/utils/selecao-em-lote';
 import { toast } from 'sonner';
 
 interface FiltersState {
@@ -149,15 +150,44 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
     });
   }, [isMvp, idResponsavelLogado]);
 
-  const toggleSelectAll = useCallback(async () => {
-    if (!isMvp || isSelectingAll) return;
+  const { concessionariaSelecionada } = useConcessionaria();
+  const selectionVersion = useRef(0);
+  const selectionScope = JSON.stringify({
+    ...queryParams, page: undefined, size: undefined,
+    concessionaria: concessionariaSelecionada?.idConcessionaria,
+  });
+  useEffect(() => {
+    selectionVersion.current++;
+    setSelectedIds(new Set());
+    setSelecionouTodos(false);
+    setIsSelectingAll(false);
+    return () => { selectionVersion.current++; };
+  }, [selectionScope]);
 
+  const pageIds = responsaveis.filter((r) => r.idResponsavel !== idResponsavelLogado).map((r) => r.idResponsavel);
+  const toggleSelectPage = useCallback(() => {
+    if (!isMvp || isSelectingAll) return;
+    setSelecionouTodos(false);
+    setSelectedIds((previous) => alternarSelecaoPagina(previous, pageIds));
+  }, [isMvp, isSelectingAll, pageIds]);
+
+  const toggleSelectAll = useCallback(() => {
+    if (!isMvp || isSelectingAll) return;
     if (selecionouTodos) {
+      selectionVersion.current++;
       setSelectedIds(new Set());
       setSelecionouTodos(false);
       return;
     }
+    toggleSelectPage();
+  }, [isMvp, isSelectingAll, selecionouTodos, toggleSelectPage]);
 
+  const selectAllFiltered = useCallback(async () => {
+    if (!isMvp || isSelectingAll) return;
+
+    if (selecionouTodos) return;
+
+    const version = ++selectionVersion.current;
     setIsSelectingAll(true);
 
     // Feedback imediato: marca a página visível antes de ir ao servidor.
@@ -170,6 +200,7 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
     try {
       const acumular = (ids: number[]) =>
         setSelectedIds((prev) => {
+          if (version !== selectionVersion.current) return prev;
           const next = new Set(prev);
           ids.forEach((id) => next.add(id));
           return next;
@@ -177,6 +208,7 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
 
       await coletarIdsDoFiltro({
         total: totalElements,
+        cancelado: () => version !== selectionVersion.current,
         buscarPagina: async (page, size) => {
           const resposta = await responsaveisClient.buscarPorFiltro({ ...queryParams, page, size });
           return resposta.content || [];
@@ -185,16 +217,22 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
         podeSelecionar: (responsavel) => responsavel.idResponsavel !== idResponsavelLogado,
         aoReceberIds: acumular,
       });
-      setSelecionouTodos(true);
+      if (version === selectionVersion.current) setSelecionouTodos(true);
     } catch (error) {
+      if (version !== selectionVersion.current) return;
+      selectionVersion.current++;
+      setSelectedIds(new Set());
+      setIsSelectingAll(false);
       console.error('Erro ao selecionar todos os responsáveis:', error);
       toast.error('Não foi possível selecionar todos os responsáveis');
     } finally {
-      setIsSelectingAll(false);
+      if (version === selectionVersion.current) setIsSelectingAll(false);
     }
   }, [isMvp, isSelectingAll, selecionouTodos, totalElements, queryParams, idResponsavelLogado, responsaveis]);
 
   const clearSelection = useCallback(() => {
+    selectionVersion.current++;
+    setIsSelectingAll(false);
     setSelectedIds(new Set());
     setSelecionouTodos(false);
   }, []);
@@ -202,8 +240,8 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
   const isSelected = useCallback((id: number) => selectedIds.has(id), [selectedIds]);
 
   const selectedCount = selectedIds.size;
-  const allSelected = selecionouTodos && selectedCount > 0;
-  const someSelected = !allSelected && selectedCount > 0;
+  const allSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.has(id));
+  const someSelected = !allSelected && pageIds.some((id) => selectedIds.has(id));
   const isBulkDeletePending = isMvp && selectedCount > 0 && responsavelToDelete === null;
 
   const handleDeleteSelected = useCallback(() => {
@@ -360,7 +398,10 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
     someSelected,
     isSelected,
     toggleSelect,
+    toggleSelectPage,
     toggleSelectAll,
+    selectAllFiltered,
+    selecionouTodos,
     clearSelection,
     handleDeleteSelected,
     closeDeleteDialog,

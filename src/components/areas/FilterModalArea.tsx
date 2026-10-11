@@ -4,11 +4,18 @@ import {Input} from "../ui/input";
 import {Button} from "../ui/button";
 import {Dispatch, SetStateAction} from "react";
 
+interface AreaFilters {
+	codigo: string;
+	nome: string;
+	descricao: string;
+	ativo: string;
+}
+
 interface IFilterModal {
 	setShowFilterModal: Dispatch<SetStateAction<boolean>>;
 	showFilterModal: boolean;
-	filters: any;
-	setFilters: Dispatch<SetStateAction<any>>;
+	filters: AreaFilters;
+	setFilters: Dispatch<SetStateAction<AreaFilters>>;
 	clearFilters: () => void;
 	applyFilters: () => void;
 }

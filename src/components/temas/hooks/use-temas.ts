@@ -1,3 +1,4 @@
+import { useConcessionaria } from '@/context/concessionaria/ConcessionariaContext';
 import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import { TemaRequest, TemaResponse, PagedResponse } from '@/api/temas/types';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -12,7 +13,7 @@ import tiposClient from '@/api/tipos/client';
 import { CategoriaEnum, TipoResponse } from '@/api/tipos/types';
 import { getLayoutClient, ClienteEnum } from '@/lib/layout/layout-client';
 import temasClient from '@/api/temas/client';
-import { coletarIdsDoFiltro } from '@/utils/selecao-em-lote';
+import { coletarIdsDoFiltro, alternarSelecaoPagina } from '@/utils/selecao-em-lote';
 import { toast } from 'sonner';
 
 interface FiltersState {
@@ -168,15 +169,44 @@ export function useTemas(options: UseTemasOptions = {}) {
     });
   }, [isMvp]);
 
-  const toggleSelectAll = useCallback(async () => {
-    if (!isMvp || isSelectingAll) return;
+  const { concessionariaSelecionada } = useConcessionaria();
+  const selectionVersion = useRef(0);
+  const selectionScope = JSON.stringify({
+    ...queryParams, page: undefined, size: undefined,
+    concessionaria: concessionariaSelecionada?.idConcessionaria,
+  });
+  useEffect(() => {
+    selectionVersion.current++;
+    setSelectedIds(new Set());
+    setSelecionouTodos(false);
+    setIsSelectingAll(false);
+    return () => { selectionVersion.current++; };
+  }, [selectionScope]);
 
+  const pageIds = (data?.content || []).map((tema) => tema.idTema);
+  const toggleSelectPage = useCallback(() => {
+    if (!isMvp || isSelectingAll) return;
+    setSelecionouTodos(false);
+    setSelectedIds((previous) => alternarSelecaoPagina(previous, pageIds));
+  }, [isMvp, isSelectingAll, pageIds]);
+
+  const toggleSelectAll = useCallback(() => {
+    if (!isMvp || isSelectingAll) return;
     if (selecionouTodos) {
+      selectionVersion.current++;
       setSelectedIds(new Set());
       setSelecionouTodos(false);
       return;
     }
+    toggleSelectPage();
+  }, [isMvp, isSelectingAll, selecionouTodos, toggleSelectPage]);
 
+  const selectAllFiltered = useCallback(async () => {
+    if (!isMvp || isSelectingAll) return;
+
+    if (selecionouTodos) return;
+
+    const version = ++selectionVersion.current;
     setIsSelectingAll(true);
 
     // Feedback imediato: marca a página visível antes de ir ao servidor.
@@ -185,6 +215,7 @@ export function useTemas(options: UseTemasOptions = {}) {
     try {
       const acumular = (ids: number[]) =>
         setSelectedIds((prev) => {
+          if (version !== selectionVersion.current) return prev;
           const next = new Set(prev);
           ids.forEach((id) => next.add(id));
           return next;
@@ -192,6 +223,7 @@ export function useTemas(options: UseTemasOptions = {}) {
 
       await coletarIdsDoFiltro({
         total: totalElements,
+        cancelado: () => version !== selectionVersion.current,
         buscarPagina: async (page, size) => {
           const resposta = await temasClient.buscarPorFiltro({ ...queryParams, page, size });
           return resposta.content || [];
@@ -199,16 +231,22 @@ export function useTemas(options: UseTemasOptions = {}) {
         obterId: (tema) => tema.idTema,
         aoReceberIds: acumular,
       });
-      setSelecionouTodos(true);
+      if (version === selectionVersion.current) setSelecionouTodos(true);
     } catch (error) {
+      if (version !== selectionVersion.current) return;
+      selectionVersion.current++;
+      setSelectedIds(new Set());
+      setIsSelectingAll(false);
       console.error('Erro ao selecionar todos os temas:', error);
       toast.error('Não foi possível selecionar todos os temas');
     } finally {
-      setIsSelectingAll(false);
+      if (version === selectionVersion.current) setIsSelectingAll(false);
     }
   }, [isMvp, isSelectingAll, selecionouTodos, totalElements, queryParams, data?.content]);
 
   const clearSelection = useCallback(() => {
+    selectionVersion.current++;
+    setIsSelectingAll(false);
     setSelectedIds(new Set());
     setSelecionouTodos(false);
   }, []);
@@ -350,8 +388,8 @@ export function useTemas(options: UseTemasOptions = {}) {
 
   const temas = sortedTemas();
   const selectedCount = selectedIds.size;
-  const allSelected = selecionouTodos && selectedCount > 0;
-  const someSelected = !allSelected && selectedCount > 0;
+  const allSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.has(id));
+  const someSelected = !allSelected && pageIds.some((id) => selectedIds.has(id));
   const isBulkDeletePending = isMvp && selectedCount > 0 && temaToDelete === null;
 
   return {
@@ -391,7 +429,10 @@ export function useTemas(options: UseTemasOptions = {}) {
     someSelected,
     isSelected,
     toggleSelect,
+    toggleSelectPage,
     toggleSelectAll,
+    selectAllFiltered,
+    selecionouTodos,
     clearSelection,
     handleDeleteSelected,
     closeDeleteDialog,

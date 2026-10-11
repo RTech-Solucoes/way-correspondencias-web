@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import { FiltrosAplicados } from '@/components/ui/applied-filters';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { SolicitacoesHeader } from '@/components/solicitacoes/content/SolicitacoesHeader';
@@ -13,12 +13,14 @@ import HistoricoRespostasModal from '@/components/solicitacoes/HistoricoResposta
 import FilterModal from '@/components/solicitacoes/FilterModal';
 import { useSolicitacoes } from '@/components/solicitacoes/hooks/use-solicitacoes';
 import { CorrespondenciaFiltroRequest } from '@/components/solicitacoes/hooks/use-solicitacoes-filters';
+import { SelectionScopeDialog } from '@/components/ui/selection-scope-dialog';
 
 interface SolicitacoesContentProps {
   defaultFilters?: Partial<CorrespondenciaFiltroRequest>;
 }
 
 export function SolicitacoesContent({ defaultFilters }: SolicitacoesContentProps) {
+  const [selectionDialogOpen, setSelectionDialogOpen] = useState(false);
   const {
     // Dados principais
     sortedSolicitacoes,
@@ -97,7 +99,9 @@ export function SolicitacoesContent({ defaultFilters }: SolicitacoesContentProps
     allSelected,
     someSelected,
     toggleSelect,
-    toggleSelectAll,
+    toggleSelectPage,
+    selectAllFiltered,
+    selecionouTodos,
     isSelectingAll,
     isSelected,
     handleDeleteSelected,
@@ -147,6 +151,7 @@ export function SolicitacoesContent({ defaultFilters }: SolicitacoesContentProps
         />
 
         <SolicitacoesSelectionBar
+          allFilteredSelected={selecionouTodos}
           selectedCount={selectedCount}
           isSelectingAll={isSelectingAll}
           totalElements={totalElements}
@@ -155,6 +160,20 @@ export function SolicitacoesContent({ defaultFilters }: SolicitacoesContentProps
           onDeleteSelected={handleDeleteSelected}
           isDeleting={isDeletingBulk}
           className="mb-4"
+        />
+
+        <SelectionScopeDialog
+          open={selectionDialogOpen}
+          onOpenChange={setSelectionDialogOpen}
+          pageSelected={allSelected}
+          allFilteredSelected={selecionouTodos}
+          selectedCount={selectedCount}
+          pageItemCount={sortedSolicitacoes.length}
+          totalElements={totalElements}
+          isSelectingAll={isSelectingAll}
+          onSelectPage={toggleSelectPage}
+          onSelectAll={selectAllFiltered}
+          onClearAll={clearSelection}
         />
 
         <SolicitacoesTable
@@ -177,7 +196,8 @@ export function SolicitacoesContent({ defaultFilters }: SolicitacoesContentProps
           someSelected={someSelected}
           isSelected={isSelected}
           toggleSelect={toggleSelect}
-          toggleSelectAll={toggleSelectAll}
+          onHeaderSelection={() => setSelectionDialogOpen(true)}
+          allFilteredSelected={selecionouTodos}
           isSelectingAll={isSelectingAll}
         />
 

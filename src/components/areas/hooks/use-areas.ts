@@ -1,3 +1,4 @@
+import { useConcessionaria } from '@/context/concessionaria/ConcessionariaContext';
 import { getLayoutClient, ClienteEnum } from '@/lib/layout/layout-client';
 import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import { AreaRequest, AreaResponse, PagedResponse, isAreaObrigatoriaSistema } from '@/api/areas/types';
@@ -10,7 +11,7 @@ import {
   useDeleteAreas,
 } from './use-areas-query';
 import areasClient from '@/api/areas/client';
-import { coletarIdsDoFiltro } from '@/utils/selecao-em-lote';
+import { coletarIdsDoFiltro, alternarSelecaoPagina } from '@/utils/selecao-em-lote';
 import { toast } from 'sonner';
 
 interface FiltersState {
@@ -146,15 +147,44 @@ export function useAreas(options: UseAreasOptions = {}) {
     });
   }, [isMvp, areas]);
 
-  const toggleSelectAll = useCallback(async () => {
-    if (!isMvp || isSelectingAll) return;
+  const { concessionariaSelecionada } = useConcessionaria();
+  const selectionVersion = useRef(0);
+  const selectionScope = JSON.stringify({
+    ...queryParams, page: undefined, size: undefined,
+    concessionaria: concessionariaSelecionada?.idConcessionaria,
+  });
+  useEffect(() => {
+    selectionVersion.current++;
+    setSelectedIds(new Set());
+    setSelecionouTodos(false);
+    setIsSelectingAll(false);
+    return () => { selectionVersion.current++; };
+  }, [selectionScope]);
 
+  const pageIds = areas.filter((area) => !isAreaObrigatoriaSistema(area.cdArea)).map((area) => area.idArea);
+  const toggleSelectPage = useCallback(() => {
+    if (!isMvp || isSelectingAll) return;
+    setSelecionouTodos(false);
+    setSelectedIds((previous) => alternarSelecaoPagina(previous, pageIds));
+  }, [isMvp, isSelectingAll, pageIds]);
+
+  const toggleSelectAll = useCallback(() => {
+    if (!isMvp || isSelectingAll) return;
     if (selecionouTodos) {
+      selectionVersion.current++;
       setSelectedIds(new Set());
       setSelecionouTodos(false);
       return;
     }
+    toggleSelectPage();
+  }, [isMvp, isSelectingAll, selecionouTodos, toggleSelectPage]);
 
+  const selectAllFiltered = useCallback(async () => {
+    if (!isMvp || isSelectingAll) return;
+
+    if (selecionouTodos) return;
+
+    const version = ++selectionVersion.current;
     setIsSelectingAll(true);
 
     // Feedback imediato: marca a página visível antes de ir ao servidor.
@@ -165,6 +195,7 @@ export function useAreas(options: UseAreasOptions = {}) {
     try {
       const acumular = (ids: number[]) =>
         setSelectedIds((prev) => {
+          if (version !== selectionVersion.current) return prev;
           const next = new Set(prev);
           ids.forEach((id) => next.add(id));
           return next;
@@ -172,6 +203,7 @@ export function useAreas(options: UseAreasOptions = {}) {
 
       await coletarIdsDoFiltro({
         total: totalElements,
+        cancelado: () => version !== selectionVersion.current,
         buscarPagina: async (page, size) => {
           const resposta = await areasClient.buscarPorFiltro({ ...queryParams, page, size });
           return resposta.content || [];
@@ -180,16 +212,22 @@ export function useAreas(options: UseAreasOptions = {}) {
         podeSelecionar: (area) => !isAreaObrigatoriaSistema(area.cdArea),
         aoReceberIds: acumular,
       });
-      setSelecionouTodos(true);
+      if (version === selectionVersion.current) setSelecionouTodos(true);
     } catch (error) {
+      if (version !== selectionVersion.current) return;
+      selectionVersion.current++;
+      setSelectedIds(new Set());
+      setIsSelectingAll(false);
       console.error('Erro ao selecionar todas as áreas:', error);
       toast.error('Não foi possível selecionar todas as áreas');
     } finally {
-      setIsSelectingAll(false);
+      if (version === selectionVersion.current) setIsSelectingAll(false);
     }
   }, [isMvp, isSelectingAll, selecionouTodos, totalElements, queryParams, areas]);
 
   const clearSelection = useCallback(() => {
+    selectionVersion.current++;
+    setIsSelectingAll(false);
     setSelectedIds(new Set());
     setSelecionouTodos(false);
   }, []);
@@ -197,8 +235,8 @@ export function useAreas(options: UseAreasOptions = {}) {
   const isSelected = useCallback((id: number) => selectedIds.has(id), [selectedIds]);
 
   const selectedCount = selectedIds.size;
-  const allSelected = selecionouTodos && selectedCount > 0;
-  const someSelected = !allSelected && selectedCount > 0;
+  const allSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.has(id));
+  const someSelected = !allSelected && pageIds.some((id) => selectedIds.has(id));
   const isBulkDeletePending = isMvp && selectedCount > 0 && areaToDelete === null;
 
   const handleDeleteSelected = useCallback(() => {
@@ -349,7 +387,10 @@ export function useAreas(options: UseAreasOptions = {}) {
     someSelected,
     isSelected,
     toggleSelect,
+    toggleSelectPage,
     toggleSelectAll,
+    selectAllFiltered,
+    selecionouTodos,
     clearSelection,
     handleDeleteSelected,
     closeDeleteDialog,

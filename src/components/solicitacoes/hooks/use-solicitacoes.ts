@@ -279,9 +279,6 @@ export function useSolicitacoes(options: UseSolicitacoesOptions = {}) {
   // Effect para carregar solicitações
   const isInitialMountRef = useRef(true);
 
-  useEffect(() => {
-    handlersHook.clearSelection();
-  }, [filtersHook.currentPage, handlersHook.clearSelection]);
 
   useEffect(() => {
     // Verifica se filtros ou busca mudaram
@@ -409,7 +406,10 @@ export function useSolicitacoes(options: UseSolicitacoesOptions = {}) {
     allSelected: pageSelectionState.allSelected,
     someSelected: pageSelectionState.someSelected,
     toggleSelect: handlersHook.toggleSelect,
+    toggleSelectPage: handlersHook.toggleSelectPage,
     toggleSelectAll: handlersHook.toggleSelectAll,
+    selectAllFiltered: handlersHook.selectAllFiltered,
+    selecionouTodos: handlersHook.selecionouTodos,
     isSelectingAll: handlersHook.isSelectingAll,
     isSelected: handlersHook.isSelected,
     handleDeleteSelected: handlersHook.handleDeleteSelected,

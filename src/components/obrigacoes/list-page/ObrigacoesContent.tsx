@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { FiltrosAplicados } from "@/components/ui/applied-filters";
 
@@ -13,6 +13,7 @@ import { ObrigacoesHeader } from "@/components/obrigacoes/list-page/ObrigacoesHe
 import { ObrigacoesFiltersUI } from "@/components/obrigacoes/list-page/ObrigacoesFiltersUI";
 import { ObrigacoesModals } from "@/components/obrigacoes/list-page/ObrigacoesModals";
 import { ObrigacoesSelectionBar } from "@/components/obrigacoes/list-page/ObrigacoesSelectionBar";
+import { SelectionScopeDialog } from "@/components/ui/selection-scope-dialog";
 
 // Hooks
 import { useObrigacoes } from "@/components/obrigacoes/hooks/use-obrigacoes";
@@ -24,6 +25,7 @@ interface ObrigacoesContentProps {
 }
 
 export function ObrigacoesContent({ defaultFilters }: ObrigacoesContentProps) {
+  const [selectionDialogOpen, setSelectionDialogOpen] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
   
@@ -108,7 +110,9 @@ export function ObrigacoesContent({ defaultFilters }: ObrigacoesContentProps) {
     someSelected,
     isSelected,
     toggleSelect,
-    toggleSelectAll,
+    toggleSelectPage,
+    selectAllFiltered,
+    selecionouTodos,
     isSelectingAll,
     clearSelection,
     handleDeleteSelected,
@@ -250,6 +254,7 @@ export function ObrigacoesContent({ defaultFilters }: ObrigacoesContentProps) {
       )}
 
       <ObrigacoesSelectionBar
+        allFilteredSelected={selecionouTodos}
         selectedCount={selectedCount}
         isSelectingAll={isSelectingAll}
         totalElements={totalElements}
@@ -258,6 +263,20 @@ export function ObrigacoesContent({ defaultFilters }: ObrigacoesContentProps) {
         onDeleteSelected={handleDeleteSelected}
         isDeleting={isDeletingBulk}
         className="mb-4"
+      />
+
+      <SelectionScopeDialog
+        open={selectionDialogOpen}
+        onOpenChange={setSelectionDialogOpen}
+        pageSelected={allSelected}
+        allFilteredSelected={selecionouTodos}
+        selectedCount={selectedCount}
+        pageItemCount={obrigacoes.length}
+        totalElements={totalElements}
+        isSelectingAll={isSelectingAll}
+        onSelectPage={toggleSelectPage}
+        onSelectAll={selectAllFiltered}
+        onClearAll={clearSelection}
       />
 
       <ObrigacoesTable 
@@ -281,7 +300,8 @@ export function ObrigacoesContent({ defaultFilters }: ObrigacoesContentProps) {
         someSelected={someSelected}
         isSelected={isSelected}
         toggleSelect={toggleSelect}
-        toggleSelectAll={toggleSelectAll}
+        onHeaderSelection={() => setSelectionDialogOpen(true)}
+        allFilteredSelected={selecionouTodos}
         isSelectingAll={isSelectingAll}
       />
       </div>
