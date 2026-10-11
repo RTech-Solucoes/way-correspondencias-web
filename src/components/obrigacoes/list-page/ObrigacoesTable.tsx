@@ -40,7 +40,8 @@ interface ObrigacoesTableProps {
   someSelected: boolean;
   isSelected: (id: number) => boolean;
   toggleSelect: (id: number) => void;
-  toggleSelectAll: () => void;
+  onHeaderSelection: () => void;
+  allFilteredSelected: boolean;
   isSelectingAll?: boolean;
 }
 
@@ -65,7 +66,8 @@ export function ObrigacoesTable({
   someSelected,
   isSelected,
   toggleSelect,
-  toggleSelectAll,
+  onHeaderSelection,
+  allFilteredSelected,
   isSelectingAll,
 }: ObrigacoesTableProps) {
   const isMvp = getLayoutClient() === ClienteEnum.RTECH;
@@ -87,8 +89,12 @@ export function ObrigacoesTable({
             <TableRow>
               {isMvp && <TableHead className="w-[40px]">
                 <Checkbox
+                  aria-label="Abrir opções de seleção"
+                  title={allFilteredSelected
+                    ? 'Todos os resultados estão selecionados. Clique para escolher como desmarcar.'
+                    : 'Clique para escolher entre selecionar a página atual ou todos os resultados.'}
                   checked={allSelected ? true : someSelected ? 'indeterminate' : false}
-                  onCheckedChange={toggleSelectAll}
+                  onCheckedChange={onHeaderSelection}
                   disabled={isSelectingAll}
                 />
               </TableHead>}
@@ -166,6 +172,7 @@ export function ObrigacoesTable({
                 <TableRow key={obrigacao.idSolicitacao}>
                   {isMvp && <TableCell>
                     <Checkbox
+                      disabled={isSelectingAll}
                       checked={isSelected(obrigacao.idSolicitacao)}
                       onCheckedChange={() => toggleSelect(obrigacao.idSolicitacao)}
                     />

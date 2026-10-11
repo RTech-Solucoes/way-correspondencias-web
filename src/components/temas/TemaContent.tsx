@@ -11,9 +11,11 @@ import FilterModalTema from '@/components/temas/FilterModalTema';
 import { TemasSelectionBar } from '@/components/temas/TemasSelectionBar';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
 import { useTemas } from './hooks/use-temas';
+import { SelectionScopeDialog } from '@/components/ui/selection-scope-dialog';
 
 export function TemaContent() {
   const { canInserirTema, canDeletarTema } = usePermissoes();
+  const [selectionDialogOpen, setSelectionDialogOpen] = React.useState(false);
 
   const {
     // Dados
@@ -51,7 +53,9 @@ export function TemaContent() {
     someSelected,
     isSelected,
     toggleSelect,
-    toggleSelectAll,
+    toggleSelectPage,
+    selectAllFiltered,
+    selecionouTodos,
     isSelectingAll,
     clearSelection,
     handleDeleteSelected,
@@ -101,6 +105,7 @@ export function TemaContent() {
       />
 
       <TemasSelectionBar
+        allFilteredSelected={selecionouTodos}
         selectedCount={selectedCount}
         isSelectingAll={isSelectingAll}
         totalElements={totalElements}
@@ -109,6 +114,20 @@ export function TemaContent() {
         onDeleteSelected={handleDeleteSelected}
         isDeleting={isDeletingBulk}
         className="mb-4"
+      />
+
+      <SelectionScopeDialog
+        open={selectionDialogOpen}
+        onOpenChange={setSelectionDialogOpen}
+        pageSelected={allSelected}
+        allFilteredSelected={selecionouTodos}
+        selectedCount={selectedCount}
+        pageItemCount={temas.length}
+        totalElements={totalElements}
+        isSelectingAll={isSelectingAll}
+        onSelectPage={toggleSelectPage}
+        onSelectAll={selectAllFiltered}
+        onClearAll={clearSelection}
       />
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex-1 overflow-auto mb-6">
@@ -123,7 +142,8 @@ export function TemaContent() {
           someSelected={someSelected}
           isSelected={isSelected}
           toggleSelect={toggleSelect}
-          toggleSelectAll={toggleSelectAll}
+          onHeaderSelection={() => setSelectionDialogOpen(true)}
+          allFilteredSelected={selecionouTodos}
           isSelectingAll={isSelectingAll}
         />
       </div>

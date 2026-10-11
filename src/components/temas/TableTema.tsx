@@ -25,7 +25,8 @@ interface TableTemaProps {
   someSelected: boolean;
   isSelected: (id: number) => boolean;
   toggleSelect: (id: number) => void;
-  toggleSelectAll: () => void;
+  onHeaderSelection: () => void;
+  allFilteredSelected: boolean;
   isSelectingAll?: boolean;
 }
 
@@ -51,8 +52,12 @@ export default function TableTema(props: TableTemaProps) {
           <StickyTableRow>
             {isMvp && <StickyTableHead>
               <Checkbox
+                aria-label="Abrir opções de seleção"
+                title={props.allFilteredSelected
+                  ? 'Todos os resultados estão selecionados. Clique para escolher como desmarcar.'
+                  : 'Clique para escolher entre selecionar a página atual ou todos os resultados.'}
                 checked={props.allSelected ? true : props.someSelected ? 'indeterminate' : false}
-                onCheckedChange={props.toggleSelectAll}
+                onCheckedChange={props.onHeaderSelection}
                 disabled={props.isSelectingAll}
               />
             </StickyTableHead>}
@@ -93,6 +98,7 @@ export default function TableTema(props: TableTemaProps) {
               <StickyTableRow key={tema.idTema}>
                 {isMvp && <StickyTableCell>
                   <Checkbox
+                    disabled={props.isSelectingAll}
                     checked={props.isSelected(tema.idTema)}
                     onCheckedChange={() => props.toggleSelect(tema.idTema)}
                   />

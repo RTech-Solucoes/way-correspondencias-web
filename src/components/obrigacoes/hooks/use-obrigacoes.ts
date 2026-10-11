@@ -1,9 +1,10 @@
+import { useConcessionaria } from '@/context/concessionaria/ConcessionariaContext';
 import { getLayoutClient, ClienteEnum } from '@/lib/layout/layout-client';
 import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { ObrigacaoFiltroRequest, ObrigacaoResponse, ObrigacaoResumoResponse } from '@/api/obrigacao/types';
 import obrigacaoClient from '@/api/obrigacao/client';
-import { coletarIdsDoFiltro } from '@/utils/selecao-em-lote';
+import { coletarIdsDoFiltro, alternarSelecaoPagina } from '@/utils/selecao-em-lote';
 import { useDebounce } from '@/hooks/use-debounce';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
 import { useUserGestao } from '@/hooks/use-user-gestao';
@@ -231,15 +232,44 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
     });
   }, [isMvp]);
 
-  const toggleSelectAll = useCallback(async () => {
-    if (!isMvp || isSelectingAll) return;
+  const { concessionariaSelecionada } = useConcessionaria();
+  const selectionVersion = useRef(0);
+  const selectionScope = JSON.stringify({
+    ...queryParams, page: undefined, size: undefined,
+    concessionaria: concessionariaSelecionada?.idConcessionaria,
+  });
+  useEffect(() => {
+    selectionVersion.current++;
+    setSelectedIds(new Set());
+    setSelecionouTodos(false);
+    setIsSelectingAll(false);
+    return () => { selectionVersion.current++; };
+  }, [selectionScope]);
 
+  const pageIds = obrigacoes.map((o) => o.idSolicitacao).filter((id): id is number => id != null);
+  const toggleSelectPage = useCallback(() => {
+    if (!isMvp || isSelectingAll) return;
+    setSelecionouTodos(false);
+    setSelectedIds((previous) => alternarSelecaoPagina(previous, pageIds));
+  }, [isMvp, isSelectingAll, pageIds]);
+
+  const toggleSelectAll = useCallback(() => {
+    if (!isMvp || isSelectingAll) return;
     if (selecionouTodos) {
+      selectionVersion.current++;
       setSelectedIds(new Set());
       setSelecionouTodos(false);
       return;
     }
+    toggleSelectPage();
+  }, [isMvp, isSelectingAll, selecionouTodos, toggleSelectPage]);
 
+  const selectAllFiltered = useCallback(async () => {
+    if (!isMvp || isSelectingAll) return;
+
+    if (selecionouTodos) return;
+
+    const version = ++selectionVersion.current;
     setIsSelectingAll(true);
 
     // Feedback imediato: marca a página visível antes de ir ao servidor.
@@ -251,6 +281,7 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
     try {
       const acumular = (ids: number[]) =>
         setSelectedIds((prev) => {
+          if (version !== selectionVersion.current) return prev;
           const next = new Set(prev);
           ids.forEach((id) => next.add(id));
           return next;
@@ -258,6 +289,7 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
 
       await coletarIdsDoFiltro({
         total: totalElements,
+        cancelado: () => version !== selectionVersion.current,
         buscarPagina: async (page, size) => {
           const resposta = await obrigacaoClient.buscarLista({ ...queryParams, page, size });
           return resposta.content || [];
@@ -265,16 +297,22 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
         obterId: (obrigacao) => obrigacao.idSolicitacao,
         aoReceberIds: acumular,
       });
-      setSelecionouTodos(true);
+      if (version === selectionVersion.current) setSelecionouTodos(true);
     } catch (error) {
+      if (version !== selectionVersion.current) return;
+      selectionVersion.current++;
+      setSelectedIds(new Set());
+      setIsSelectingAll(false);
       console.error('Erro ao selecionar todas as obrigações:', error);
       toast.error('Não foi possível selecionar todas as obrigações');
     } finally {
-      setIsSelectingAll(false);
+      if (version === selectionVersion.current) setIsSelectingAll(false);
     }
   }, [isMvp, isSelectingAll, selecionouTodos, totalElements, queryParams, obrigacoes]);
 
   const clearSelection = useCallback(() => {
+    selectionVersion.current++;
+    setIsSelectingAll(false);
     setSelectedIds(new Set());
     setSelecionouTodos(false);
   }, []);
@@ -282,8 +320,8 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
   const isSelected = useCallback((id: number) => selectedIds.has(id), [selectedIds]);
 
   const selectedCount = selectedIds.size;
-  const allSelected = selecionouTodos && selectedCount > 0;
-  const someSelected = !allSelected && selectedCount > 0;
+  const allSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.has(id));
+  const someSelected = !allSelected && pageIds.some((id) => selectedIds.has(id));
   const isBulkDeletePending = isMvp && selectedCount > 0 && obrigacaoToDelete === null;
 
   const handleDeleteSelected = useCallback(() => {
@@ -448,7 +486,10 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
     someSelected,
     isSelected,
     toggleSelect,
+    toggleSelectPage,
     toggleSelectAll,
+    selectAllFiltered,
+    selecionouTodos,
     clearSelection,
     handleDeleteSelected,
     isDeletingBulk: deleteVariasMutation.isPending,

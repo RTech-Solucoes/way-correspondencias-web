@@ -39,7 +39,8 @@ interface SolicitacoesTableProps {
   someSelected: boolean;
   isSelected: (id: number) => boolean;
   toggleSelect: (id: number) => void;
-  toggleSelectAll: () => void;
+  onHeaderSelection: () => void;
+  allFilteredSelected: boolean;
   isSelectingAll?: boolean;
   handleSort: (field: string) => void;
   handleEdit: (solicitacao: CorrespondenciaResponse) => void;
@@ -58,7 +59,8 @@ export function SolicitacoesTable({
   someSelected,
   isSelected,
   toggleSelect,
-  toggleSelectAll,
+  onHeaderSelection,
+  allFilteredSelected,
   isSelectingAll,
   loading,
   canAtualizarSolicitacao,
@@ -89,8 +91,12 @@ export function SolicitacoesTable({
           <StickyTableRow>
             {isMvp && <StickyTableHead>
               <Checkbox
+                aria-label="Abrir opções de seleção"
+                title={allFilteredSelected
+                  ? 'Todos os resultados estão selecionados. Clique para escolher como desmarcar.'
+                  : 'Clique para escolher entre selecionar a página atual ou todos os resultados.'}
                 checked={allSelected ? true : someSelected ? 'indeterminate' : false}
-                onCheckedChange={toggleSelectAll}
+                onCheckedChange={onHeaderSelection}
                 disabled={isSelectingAll}
               />
             </StickyTableHead>}
@@ -159,6 +165,7 @@ export function SolicitacoesTable({
                 <StickyTableRow>
                   {isMvp && <StickyTableCell>
                     <Checkbox
+                      disabled={isSelectingAll}
                       checked={isSelected(solicitacao.idSolicitacao)}
                       onCheckedChange={() => toggleSelect(solicitacao.idSolicitacao)}
                     />

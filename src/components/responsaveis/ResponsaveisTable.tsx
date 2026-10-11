@@ -31,7 +31,8 @@ interface ResponsaveisTableProps {
   someSelected: boolean;
   isSelected: (id: number) => boolean;
   toggleSelect: (id: number) => void;
-  toggleSelectAll: () => void;
+  onHeaderSelection: () => void;
+  allFilteredSelected: boolean;
   isSelectingAll?: boolean;
 }
 
@@ -50,7 +51,8 @@ export default function ResponsaveisTable({
   someSelected,
   isSelected,
   toggleSelect,
-  toggleSelectAll,
+  onHeaderSelection,
+  allFilteredSelected,
   isSelectingAll,
 }: ResponsaveisTableProps) {
   const isMvp = getLayoutClient() === ClienteEnum.RTECH;
@@ -91,8 +93,12 @@ export default function ResponsaveisTable({
           <StickyTableRow>
             {isMvp && <StickyTableHead>
               <Checkbox
+                aria-label="Abrir opções de seleção"
+                title={allFilteredSelected
+                  ? 'Todos os resultados estão selecionados. Clique para escolher como desmarcar.'
+                  : 'Clique para escolher entre selecionar a página atual ou todos os resultados.'}
                 checked={allSelected ? true : someSelected ? 'indeterminate' : false}
-                onCheckedChange={toggleSelectAll}
+                onCheckedChange={onHeaderSelection}
                 disabled={isSelectingAll}
               />
             </StickyTableHead>}
@@ -169,7 +175,7 @@ export default function ResponsaveisTable({
                 <StickyTableRow key={responsavel.idResponsavel}>
                   {isMvp && <StickyTableCell>
                     <Checkbox
-                      disabled={isUsuarioLogado}
+                      disabled={isUsuarioLogado || isSelectingAll}
                       checked={isSelected(responsavel.idResponsavel)}
                       onCheckedChange={() => toggleSelect(responsavel.idResponsavel)}
                     />
