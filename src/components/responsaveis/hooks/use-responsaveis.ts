@@ -1,5 +1,4 @@
 import { useIdResponsavelLogado } from '@/hooks/use-id-responsavel-logado';
-import { getLayoutClient, ClienteEnum } from '@/lib/layout/layout-client';
 import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import { ResponsavelResponse, PagedResponse } from '@/api/responsaveis/types';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -30,7 +29,6 @@ interface UseResponsaveisOptions {
 
 export function useResponsaveis(options: UseResponsaveisOptions = {}) {
   const idResponsavelLogado = useIdResponsavelLogado();
-  const isMvp = getLayoutClient() === ClienteEnum.RTECH;
   const { pageSize = 10 } = options;
   const size = pageSize;
 
@@ -73,14 +71,14 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
     const currentFiltersStr = JSON.stringify(activeFilters);
     const filtersChanged = prevFiltersRef.current !== currentFiltersStr;
     const searchChanged = prevSearchRef.current !== debouncedSearchQuery;
-    
+
     // Página efetiva: 0 se filtros mudaram, senão usa currentPage
     const effectivePage = (filtersChanged || searchChanged) ? 0 : currentPage;
-    
+
     // Atualiza refs para próxima comparação
     prevFiltersRef.current = currentFiltersStr;
     prevSearchRef.current = debouncedSearchQuery;
-    
+
     return {
       filtro: debouncedSearchQuery || undefined,
       nmUsuarioLogin: activeFilters.usuario || undefined,
@@ -136,7 +134,7 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
   }, []);
 
   const toggleSelect = useCallback((id: number) => {
-    if (!isMvp || id === idResponsavelLogado) return;
+    if (id === idResponsavelLogado) return;
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -147,10 +145,10 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
       }
       return next;
     });
-  }, [isMvp, idResponsavelLogado]);
+  }, [idResponsavelLogado]);
 
   const toggleSelectAll = useCallback(async () => {
-    if (!isMvp || isSelectingAll) return;
+    if (isSelectingAll) return;
 
     if (selecionouTodos) {
       setSelectedIds(new Set());
@@ -192,7 +190,7 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
     } finally {
       setIsSelectingAll(false);
     }
-  }, [isMvp, isSelectingAll, selecionouTodos, totalElements, queryParams, idResponsavelLogado, responsaveis]);
+  }, [isSelectingAll, selecionouTodos, totalElements, queryParams, idResponsavelLogado, responsaveis]);
 
   const clearSelection = useCallback(() => {
     setSelectedIds(new Set());
@@ -204,14 +202,13 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
   const selectedCount = selectedIds.size;
   const allSelected = selecionouTodos && selectedCount > 0;
   const someSelected = !allSelected && selectedCount > 0;
-  const isBulkDeletePending = isMvp && selectedCount > 0 && responsavelToDelete === null;
+  const isBulkDeletePending = selectedCount > 0 && responsavelToDelete === null;
 
   const handleDeleteSelected = useCallback(() => {
-    if (!isMvp) return;
     if (selectedIds.size === 0) return;
     setResponsavelToDelete(null);
     setShowDeleteDialog(true);
-  }, [selectedIds, isMvp]);
+  }, [selectedIds]);
 
   const closeDeleteDialog = useCallback(() => {
     setShowDeleteDialog(false);
@@ -226,7 +223,6 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
   }, [responsavelToDelete, deleteMutation, closeDeleteDialog]);
 
   const confirmDeleteVarias = useCallback(async () => {
-    if (!isMvp) return;
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
 
@@ -237,7 +233,7 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
     } finally {
       closeDeleteDialog();
     }
-  }, [selectedIds, deleteVariasMutation, closeDeleteDialog, isMvp]);
+  }, [selectedIds, deleteVariasMutation, closeDeleteDialog]);
 
   const onResponsavelSave = useCallback(() => {
     setShowResponsavelModal(false);

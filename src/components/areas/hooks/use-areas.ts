@@ -1,4 +1,3 @@
-import { getLayoutClient, ClienteEnum } from '@/lib/layout/layout-client';
 import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import { AreaRequest, AreaResponse, PagedResponse, isAreaObrigatoriaSistema } from '@/api/areas/types';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -32,7 +31,6 @@ interface UseAreasOptions {
 }
 
 export function useAreas(options: UseAreasOptions = {}) {
-  const isMvp = getLayoutClient() === ClienteEnum.RTECH;
   const { pageSize = 10 } = options;
   const size = pageSize;
 
@@ -68,14 +66,14 @@ export function useAreas(options: UseAreasOptions = {}) {
     const currentFiltersStr = JSON.stringify(activeFilters);
     const filtersChanged = prevFiltersRef.current !== currentFiltersStr;
     const searchChanged = prevSearchRef.current !== debouncedSearchQuery;
-    
+
     // Página efetiva: 0 se filtros mudaram, senão usa currentPage
     const effectivePage = (filtersChanged || searchChanged) ? 0 : currentPage;
-    
+
     // Atualiza refs para próxima comparação
     prevFiltersRef.current = currentFiltersStr;
     prevSearchRef.current = debouncedSearchQuery;
-    
+
     return {
       filtro: debouncedSearchQuery || undefined,
       cdArea: activeFilters.codigo || undefined,
@@ -133,7 +131,7 @@ export function useAreas(options: UseAreasOptions = {}) {
   }, []);
 
   const toggleSelect = useCallback((id: number) => {
-    if (!isMvp || !areas.some((area) => area.idArea === id && !isAreaObrigatoriaSistema(area.cdArea))) return;
+    if (!areas.some((area) => area.idArea === id && !isAreaObrigatoriaSistema(area.cdArea))) return;
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -144,10 +142,10 @@ export function useAreas(options: UseAreasOptions = {}) {
       }
       return next;
     });
-  }, [isMvp, areas]);
+  }, [areas]);
 
   const toggleSelectAll = useCallback(async () => {
-    if (!isMvp || isSelectingAll) return;
+    if (isSelectingAll) return;
 
     if (selecionouTodos) {
       setSelectedIds(new Set());
@@ -187,7 +185,7 @@ export function useAreas(options: UseAreasOptions = {}) {
     } finally {
       setIsSelectingAll(false);
     }
-  }, [isMvp, isSelectingAll, selecionouTodos, totalElements, queryParams, areas]);
+  }, [isSelectingAll, selecionouTodos, totalElements, queryParams, areas]);
 
   const clearSelection = useCallback(() => {
     setSelectedIds(new Set());
@@ -199,14 +197,13 @@ export function useAreas(options: UseAreasOptions = {}) {
   const selectedCount = selectedIds.size;
   const allSelected = selecionouTodos && selectedCount > 0;
   const someSelected = !allSelected && selectedCount > 0;
-  const isBulkDeletePending = isMvp && selectedCount > 0 && areaToDelete === null;
+  const isBulkDeletePending = selectedCount > 0 && areaToDelete === null;
 
   const handleDeleteSelected = useCallback(() => {
-    if (!isMvp) return;
     if (selectedIds.size === 0) return;
     setAreaToDelete(null);
     setShowDeleteDialog(true);
-  }, [selectedIds, isMvp]);
+  }, [selectedIds]);
 
   const closeDeleteDialog = useCallback(() => {
     setShowDeleteDialog(false);
@@ -221,7 +218,6 @@ export function useAreas(options: UseAreasOptions = {}) {
   }, [areaToDelete, deleteMutation, closeDeleteDialog]);
 
   const confirmDeleteVarias = useCallback(async () => {
-    if (!isMvp) return;
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
 
@@ -232,7 +228,7 @@ export function useAreas(options: UseAreasOptions = {}) {
     } finally {
       closeDeleteDialog();
     }
-  }, [selectedIds, deleteVariasMutation, closeDeleteDialog, isMvp]);
+  }, [selectedIds, deleteVariasMutation, closeDeleteDialog]);
 
   const onAreaSave = useCallback(async (formData: AreaRequest) => {
     try {
@@ -319,14 +315,14 @@ export function useAreas(options: UseAreasOptions = {}) {
     areas,
     totalPages: data?.totalPages || 0,
     totalElements,
-    
+
     // UI State
     loading: isLoading,
     searchQuery,
     setSearchQuery,
     currentPage,
     setCurrentPage,
-    
+
     // Filtros
     filters,
     setFilters,
@@ -335,14 +331,14 @@ export function useAreas(options: UseAreasOptions = {}) {
     filtrosAplicados,
     applyFilters,
     clearFilters,
-    
+
     // Modais
     selectedArea,
     showAreaModal,
     showFilterModal,
     setShowFilterModal,
     showDeleteDialog,
-    
+
     // Seleção
     selectedCount,
     allSelected,
@@ -356,7 +352,7 @@ export function useAreas(options: UseAreasOptions = {}) {
     isDeletingBulk: deleteVariasMutation.isPending,
     isSelectingAll,
     isBulkDeletePending,
-    
+
     // Handlers
     loadAreas: refetch, // Expõe refetch como loadAreas para compatibilidade
     handleSort,

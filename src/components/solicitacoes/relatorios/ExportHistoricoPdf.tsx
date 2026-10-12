@@ -8,7 +8,7 @@ import { CorrespondenciaResumoResponse } from '@/api/correspondencia/types';
 import { perfilUtil } from '@/api/perfis/types';
 import { statusList } from '@/api/status-solicitacao/types';
 import { toast } from 'sonner';
-import { getLayoutClient, getLabelTitle, getLogoPath } from '@/lib/layout/layout-client';
+import { SOFTWARE_NAME, LOGO_PATH } from '@/lib/branding';
 import LoadingOverlay from '@/components/ui/loading-overlay';
 
 interface ExportHistoricoPdfProps {
@@ -48,7 +48,7 @@ const ArrowRight = () => (
     <Polyline points="8 4 16 12 8 20" fill="none" stroke="#4b5563" strokeWidth={2} />
     </Svg>
     );
-    
+
 const getAreasLabel = (nmAreas: string): string => {
     return nmAreas
         .split(',')
@@ -66,21 +66,18 @@ const getParecerLabel = (idPerfil?: number | null) => {
     }
     return 'PARECER';
   };
-    
+
 const nowStr = useMemo(() => new Date().toLocaleString('pt-BR'), []);
-  const layoutClient = getLayoutClient();
-  const labelTitle = getLabelTitle(layoutClient);
-  const logoPath = getLogoPath(layoutClient);
 
 return (
     <Document>
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
           {/* eslint-disable-next-line jsx-a11y/alt-text */}
-          <Image src={logoPath} style={styles.logo} />
+          <Image src={LOGO_PATH} style={styles.logo} />
           <View style={styles.titleWrap}>
             <Text style={[styles.title, { fontWeight: 800 }]}>Histórico de Respostas</Text>
-            <Text style={styles.subtitle}>{labelTitle}</Text>
+            <Text style={styles.subtitle}>{SOFTWARE_NAME}</Text>
             <Text style={styles.subtitle}>Data de exportação: {nowStr}</Text>
             <Text style={styles.subtitle}>Total de Respostas: {historico.length}</Text>
           </View>
@@ -154,7 +151,7 @@ return (
         </View>
 
         <View style={styles.footer} fixed>
-          <Text>{labelTitle}</Text>
+          <Text>{SOFTWARE_NAME}</Text>
           <Text render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}` } />
         </View>
       </Page>

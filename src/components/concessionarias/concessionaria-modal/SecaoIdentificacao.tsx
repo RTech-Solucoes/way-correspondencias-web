@@ -72,7 +72,7 @@ export default function SecaoIdentificacao({
             value={formData.cdConcessionaria}
             onChange={(event) => onChange('cdConcessionaria', event.target.value)}
             onBlur={onCodigoBlur}
-            placeholder="Ex: mvp"
+            placeholder="Ex: abc"
             className={
               errors.cdConcessionaria
                 ? 'border-red-500'

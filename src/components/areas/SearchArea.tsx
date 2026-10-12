@@ -2,8 +2,6 @@ import {FunnelSimpleIcon, MagnifyingGlassIcon, XIcon, PlusIcon} from "@phosphor-
 import {Dispatch, SetStateAction} from "react";
 import {Button} from "../ui/button";
 import {Input} from "../ui/input";
-import { getLayoutClient } from "@/lib/layout/layout-client";
-import { ClienteEnum } from "@/lib/layout/layout-client.enum";
 
 interface ISearchArea {
     setSearchQuery: Dispatch<SetStateAction<string>>;
@@ -16,7 +14,7 @@ interface ISearchArea {
 }
 
 export default function SearchArea(props: ISearchArea) {
-    const podeCriarArea = getLayoutClient() === ClienteEnum.RTECH && Boolean(props.canInserirArea);
+    const podeCriarArea = Boolean(props.canInserirArea);
 
     return (
         <div className="flex items-center space-x-4">

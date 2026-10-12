@@ -1,12 +1,14 @@
 {
-  "name": "way",
+  "name": "software-regulatorio",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint src middleware.ts",
+    "test": "node --test tests/*.test.cjs",
+    "typecheck": "tsc --noEmit --incremental false"
   },
   "dependencies": {
     "@nextui-org/react": "^2.6.11",

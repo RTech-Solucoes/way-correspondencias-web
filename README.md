@@ -1,10 +1,10 @@
-# Sistema de Gestão de Correspondências
+# Software Regulatório
 
 Sistema web completo para gerenciamento de correspondências, solicitações, emails e tramitações desenvolvido com Next.js 15 e TypeScript. O sistema permite gerenciar todo o fluxo de trabalho de correspondências entre concessionárias e órgãos reguladores.
 
 ## 📋 Sobre o Projeto
 
-Este é uma plataforma de gestão de correspondências que facilita o controle e acompanhamento de solicitações, emails, tramitações e responsáveis. O sistema oferece funcionalidades completas de gestão, relatórios em PDF e Excel, controle de prazos, e muito mais. O sistema suporta múltiplos clientes com branding personalizado.
+Este é uma plataforma de gestão de correspondências que facilita o controle e acompanhamento de solicitações, emails, tramitações e responsáveis. O sistema oferece funcionalidades completas de gestão, relatórios em PDF e Excel, controle de prazos, e muito mais. Esta branch oferece uma identidade única e todas as funcionalidades, conforme as permissões do usuário.
 
 ### Características Principais
 
@@ -51,7 +51,7 @@ Este é uma plataforma de gestão de correspondências que facilita o controle e
 1. **Clone o repositório**
    ```bash
    git clone <url-do-repositorio>
-   cd way-correspondencias-web
+   cd software-regulatorio
    ```
 
 2. **Instale as dependências**
@@ -74,9 +74,6 @@ Este é uma plataforma de gestão de correspondências que facilita o controle e
    ```bash
    # URL base da API (REST)
    NEXT_PUBLIC_API_URL=http://localhost:8080/api
-
-   # Tema/branding: "way" (Way Brasil) ou "mvp" (RTech / testes)
-   NEXT_PUBLIC_LAYOUT_CLIENT=way
 
    # Integração LDAP: "true" ou "false" (deve estar alinhado ao backend)
    NEXT_PUBLIC_LDAP_ENABLED=false
@@ -103,6 +100,10 @@ Este é uma plataforma de gestão de correspondências que facilita o controle e
 | `bun build` | Gera build otimizado de produção |
 | `bun start` | Executa o projeto em modo de produção |
 | `bun lint` | Executa o ESLint para verificar qualidade do código |
+| `npm test` | Executa testes de regressão de acesso, menus, seleção em lote e identidade |
+| `npm run typecheck` | Verifica TypeScript sem gerar arquivos |
+
+Consulte [o registro da refatoração](docs/refatoracao-software-regulatorio.md) para o escopo preservado, recursos visuais, verificações e migração dos identificadores de infraestrutura.
 
 ## 🏗️ Estrutura do Projeto
 
@@ -170,7 +171,7 @@ src/
 │   └── ...
 │
 └── utils/                        # Funções utilitárias
-    ├── layout-client.ts         # Helpers para layout do cliente
+    ├── ...                     # Utilitários compartilhados
     ├── utils.ts                 # Utilitários gerais
     └── FormattDate.ts           # Formatação de datas
 ```
@@ -179,7 +180,7 @@ src/
 
 O sistema utiliza autenticação baseada em **JWT (JSON Web Tokens)**:
 
-- Tokens armazenados no `localStorage`
+- Tokens armazenados em cookies
 - Renovação automática de tokens
 - Proteção de rotas com `AuthGuard`
 - Sistema de permissões granular por perfil
@@ -249,7 +250,7 @@ Sistema completo de gestão de solicitações com:
 - Relatório completo de solicitações
 - Layout otimizado para impressão
 - Colunas ajustadas automaticamente
-- Logo e branding dinâmicos por cliente
+- Identidade do Software Regulatório compartilhada com a interface
 
 #### Exportação Excel
 - Tabela formatada
@@ -263,62 +264,16 @@ Sistema completo de gestão de solicitações com:
 - Multi-seleção em formulários
 - Context global para gerenciamento
 
-## 🎨 Personalização por Cliente
+## Identidade e configuração
 
-O sistema suporta múltiplos clientes com branding personalizado:
+O nome e os caminhos dos recursos visuais estão em src/lib/branding.ts. A interface, a aba do navegador e os relatórios usam a mesma identidade. Não há seleção de cliente ou configuração de layout por ambiente.
 
-### Variável de Ambiente
-```bash
-NEXT_PUBLIC_LAYOUT_CLIENT=way  # ou "mvp"
-```
+Logo, favicon e fundo de login usam as imagens já existentes em public/images/mvp/. O logo permanece em PNG para compatibilidade com o renderizador PDF.
 
-### Assets por Cliente
-Os assets (logos, backgrounds, favicons) são organizados em:
-- `public/images/way/` - Assets do cliente Way Brasil
-- `public/images/mvp/` - Assets do cliente RTech
+A seleção de concessionária é uma regra de escopo de dados da API, preservada junto com seus cookies, parâmetros, permissões e associações. Ela não seleciona uma identidade visual.
 
-### Funcionalidades
-- Logo dinâmico no header e login
-- Background personalizado na tela de login
-- Favicon específico por cliente
-- Títulos e labels customizados
+### Configuração LDAP
 
-## 📋 Roteiro de Implantação (Novo Cliente)
-
-### 2.1 Variáveis de Ambiente
-
-| Variável | Descrição |
-|----------|-----------|
-| `NEXT_PUBLIC_LAYOUT_CLIENT` | Identificador do cliente (ex: `nome_novo_cliente`) |
-| `NEXT_PUBLIC_API_URL` | DNS/URL do back-end |
-| `NEXT_PUBLIC_LDAP_ENABLED` | Habilita/desabilita integração LDAP (`"true"` ou `"false"`) |
-
-**Exemplo de configuração:**
-```bash
-NEXT_PUBLIC_LAYOUT_CLIENT=way
-NEXT_PUBLIC_API_URL=http://localhost:8080/api
-NEXT_PUBLIC_LDAP_ENABLED=false
-```
-
-### 2.2 Alterações no Código
-
-#### Configurar layout do cliente
-
-Editar o arquivo `src/lib/layout/layout-client.enum.ts` e adicionar um novo objeto JSON com os textos e imagens personalizados do cliente.
-
-#### Adicionar assets do cliente
-
-Criar a pasta `public/images/nome_novo_cliente/` e adicionar os arquivos de imagem.
-
-**Assets obrigatórios:**
-
-| Arquivo | Descrição |
-|---------|-----------|
-| `logo.png` | Logotipo principal do cliente |
-| `favicon.ico` | Ícone da aba do navegador |
-| `login-bg.png` | Imagem de fundo da tela de login |
-
-### 2.3 Configuração LDAP
 
 A variável `NEXT_PUBLIC_LDAP_ENABLED` controla a integração com LDAP. Use os valores literais `"true"` ou `"false"` (string), alinhados ao backend:
 
@@ -334,7 +289,7 @@ Quando habilitado (`"true"`):
 - Requer a permissão `RESPONSAVEL_GERAR_SENHA` para usar a funcionalidade
 - O usuário logado não pode gerar senha para si mesmo
 
-### 2.4 Envio de senha por e-mail
+### Envio de senha por e-mail
 
 O responsável com perfil **Admin** possui a opção de enviar a senha do usuário por e-mail através do botão "Gerar Senha" no menu de ações dos responsáveis.
 
@@ -343,14 +298,9 @@ O responsável com perfil **Admin** possui a opção de enviar a senha do usuár
 - Permissão `RESPONSAVEL_GERAR_SENHA`
 - Endpoint: `POST /responsaveis/{id}/gerar-senha`
 
-### 2.5 Senha padrão para Admin (Seed – quando NÃO for LDAP)
+### Credenciais iniciais
 
-Quando o sistema **não** está configurado com LDAP, a senha padrão para o usuário Admin é:
-
-- **Senha padrão:** `Rtech1234`
-- **Hash (bcrypt):** `$10$acPyxdXF7pqD0Ul27hrAbeyPf4yH0CfvqkpjWkaVmsO17yUp9UZ6C`
-
-> **Nota:** Esta senha é usada apenas durante a configuração inicial ou quando LDAP está desabilitado. Em produção com LDAP, as senhas são gerenciadas pelo servidor LDAP.
+Solicite as credenciais ao administrador do backend. Esta refatoração não altera senhas, autenticação nem a configuração LDAP.
 
 ## 🔧 Configuração de Desenvolvimento
 
@@ -361,7 +311,6 @@ Use `.env.local` na raiz (ver passos em **Instalação e Configuração**). Resu
 | Variável | Obrigatória | Descrição |
 |----------|-------------|-----------|
 | `NEXT_PUBLIC_API_URL` | Sim | URL base da API |
-| `NEXT_PUBLIC_LAYOUT_CLIENT` | Sim | `way` ou `mvp` |
 | `NEXT_PUBLIC_LDAP_ENABLED` | Recomendada | `true` ou `false` |
 
 ### Estrutura da API
@@ -425,8 +374,8 @@ bun start
 O projeto inclui um `Dockerfile` para containerização:
 
 ```bash
-docker build -t way-correspondencias-web .
-docker run -p 3000:3000 way-correspondencias-web
+docker build -t software-regulatorio .
+docker run -p 3000:3000 software-regulatorio
 ```
 
 ## 🔄 CI/CD Pipeline
@@ -443,8 +392,6 @@ Configure as seguintes variáveis de ambiente na pipeline:
 # URL da API backend (produção/staging)
 NEXT_PUBLIC_API_URL=https://api.exemplo.com/api
 
-# Layout do cliente (way ou mvp)
-NEXT_PUBLIC_LAYOUT_CLIENT=way
 
 NEXT_PUBLIC_LDAP_ENABLED=false
 
@@ -476,7 +423,6 @@ NODE_ENV=production
 ```yaml
 env:
   NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
-  NEXT_PUBLIC_LAYOUT_CLIENT: ${{ secrets.NEXT_PUBLIC_LAYOUT_CLIENT }}
   NEXT_PUBLIC_LDAP_ENABLED: ${{ secrets.NEXT_PUBLIC_LDAP_ENABLED }}
   NODE_ENV: production
 ```
@@ -518,12 +464,6 @@ Após configurar as variáveis:
 ## 📄 Licença
 
 Este projeto é privado e proprietário.
-
-## 👥 Equipe
-
-Desenvolvido pela equipe RTech Solution.
-
-> **Nota:** Este sistema suporta múltiplos clientes. Todas as referências a nomes de clientes, logos e branding são configuráveis através do sistema de layout em `src/lib/layout/layout-client.enum.ts`.
 
 ---
 

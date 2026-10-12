@@ -10,7 +10,6 @@ import {
 } from './use-temas-query';
 import tiposClient from '@/api/tipos/client';
 import { CategoriaEnum, TipoResponse } from '@/api/tipos/types';
-import { getLayoutClient, ClienteEnum } from '@/lib/layout/layout-client';
 import temasClient from '@/api/temas/client';
 import { coletarIdsDoFiltro } from '@/utils/selecao-em-lote';
 import { toast } from 'sonner';
@@ -32,7 +31,6 @@ interface UseTemasOptions {
 }
 
 export function useTemas(options: UseTemasOptions = {}) {
-  const isMvp = getLayoutClient() === ClienteEnum.RTECH;
   const { pageSize = 10 } = options;
   const size = pageSize;
 
@@ -61,7 +59,6 @@ export function useTemas(options: UseTemasOptions = {}) {
   const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
 
   useEffect(() => {
-    if (!isMvp) return;
     let cancelado = false;
 
     const carregarCriticidades = async () => {
@@ -80,7 +77,7 @@ export function useTemas(options: UseTemasOptions = {}) {
     return () => {
       cancelado = true;
     };
-  }, [isMvp]);
+  }, []);
 
   // Refs para detectar mudança de filtros (melhor prática React Query)
   const prevFiltersRef = useRef(JSON.stringify(activeFilters));
@@ -91,24 +88,24 @@ export function useTemas(options: UseTemasOptions = {}) {
     const currentFiltersStr = JSON.stringify(activeFilters);
     const filtersChanged = prevFiltersRef.current !== currentFiltersStr;
     const searchChanged = prevSearchRef.current !== debouncedSearchQuery;
-    
+
     // Página efetiva: 0 se filtros mudaram, senão usa currentPage
     const effectivePage = (filtersChanged || searchChanged) ? 0 : currentPage;
-    
+
     // Atualiza refs para próxima comparação
     prevFiltersRef.current = currentFiltersStr;
     prevSearchRef.current = debouncedSearchQuery;
-    
+
     return {
       filtro: debouncedSearchQuery || undefined,
       nmTema: activeFilters.nome || undefined,
       dsTema: activeFilters.descricao || undefined,
-      idTipoCriticidade: isMvp && activeFilters.criticidade ? Number(activeFilters.criticidade) : undefined,
+      idTipoCriticidade: activeFilters.criticidade ? Number(activeFilters.criticidade) : undefined,
       page: effectivePage,
       size: size,
       sort: sortField ? `${sortField},${sortDirection === 'desc' ? 'desc' : 'asc'}` : undefined,
     };
-  }, [debouncedSearchQuery, activeFilters, currentPage, size, sortField, sortDirection, isMvp]);
+  }, [debouncedSearchQuery, activeFilters, currentPage, size, sortField, sortDirection]);
 
   // Sincroniza estado da página com a página efetiva calculada
   useEffect(() => {
@@ -155,7 +152,6 @@ export function useTemas(options: UseTemasOptions = {}) {
   }, []);
 
   const toggleSelect = useCallback((id: number) => {
-    if (!isMvp) return;
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -166,10 +162,10 @@ export function useTemas(options: UseTemasOptions = {}) {
       }
       return next;
     });
-  }, [isMvp]);
+  }, []);
 
   const toggleSelectAll = useCallback(async () => {
-    if (!isMvp || isSelectingAll) return;
+    if (isSelectingAll) return;
 
     if (selecionouTodos) {
       setSelectedIds(new Set());
@@ -206,7 +202,7 @@ export function useTemas(options: UseTemasOptions = {}) {
     } finally {
       setIsSelectingAll(false);
     }
-  }, [isMvp, isSelectingAll, selecionouTodos, totalElements, queryParams, data?.content]);
+  }, [isSelectingAll, selecionouTodos, totalElements, queryParams, data?.content]);
 
   const clearSelection = useCallback(() => {
     setSelectedIds(new Set());
@@ -216,11 +212,10 @@ export function useTemas(options: UseTemasOptions = {}) {
   const isSelected = useCallback((id: number) => selectedIds.has(id), [selectedIds]);
 
   const handleDeleteSelected = useCallback(() => {
-    if (!isMvp) return;
     if (selectedIds.size === 0) return;
     setTemaToDelete(null);
     setShowDeleteDialog(true);
-  }, [selectedIds, isMvp]);
+  }, [selectedIds]);
 
   const closeDeleteDialog = useCallback(() => {
     setShowDeleteDialog(false);
@@ -235,7 +230,6 @@ export function useTemas(options: UseTemasOptions = {}) {
   }, [temaToDelete, deleteMutation, closeDeleteDialog]);
 
   const confirmDeleteVarias = useCallback(async () => {
-    if (!isMvp) return;
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
 
@@ -246,7 +240,7 @@ export function useTemas(options: UseTemasOptions = {}) {
     } finally {
       closeDeleteDialog();
     }
-  }, [selectedIds, deleteVariasMutation, closeDeleteDialog, isMvp]);
+  }, [selectedIds, deleteVariasMutation, closeDeleteDialog]);
 
   const onTemaSave = useCallback(async (formData: TemaRequest) => {
     try {
@@ -334,7 +328,7 @@ export function useTemas(options: UseTemasOptions = {}) {
         setFilters(newFilters);
       }
     }] : []),
-    ...(isMvp && activeFilters.criticidade ? [{
+    ...(activeFilters.criticidade ? [{
       key: 'criticidade',
       label: 'Criticidade',
       value: criticidades.find((tipo) => tipo.idTipo.toString() === activeFilters.criticidade)?.dsTipo
@@ -346,13 +340,13 @@ export function useTemas(options: UseTemasOptions = {}) {
         setFilters(newFilters);
       }
     }] : [])
-  ], [searchQuery, activeFilters, criticidades, isMvp]);
+  ], [searchQuery, activeFilters, criticidades]);
 
   const temas = sortedTemas();
   const selectedCount = selectedIds.size;
   const allSelected = selecionouTodos && selectedCount > 0;
   const someSelected = !allSelected && selectedCount > 0;
-  const isBulkDeletePending = isMvp && selectedCount > 0 && temaToDelete === null;
+  const isBulkDeletePending = selectedCount > 0 && temaToDelete === null;
 
   return {
     // Dados

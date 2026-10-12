@@ -3,10 +3,8 @@ import { NextResponse } from 'next/server';
 import {
   PUBLIC_ROUTES,
   canAccessRoute,
-  findRouteAccess,
   parsePermissoesCookie,
 } from '@/constants/pages/route-access';
-import { getClienteAtual } from '@/lib/layout/layout-client.enum';
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -22,18 +20,14 @@ export function middleware(request: NextRequest) {
   }
 
   if (!isPublicRoute && authToken) {
-    const layoutClient = getClienteAtual();
-    const route = findRouteAccess(pathname);
     const permissoes = parsePermissoesCookie(
       request.cookies.get('permissoes-storage')?.value,
     );
 
-    const blockedByClient =
-      !!route?.clients?.length && !route.clients.includes(layoutClient);
     const blockedByPermission =
-      permissoes.length > 0 && !canAccessRoute(pathname, permissoes, layoutClient);
+      permissoes.length > 0 && !canAccessRoute(pathname, permissoes);
 
-    if (blockedByClient || blockedByPermission) {
+    if (blockedByPermission) {
       const notFoundUrl = request.nextUrl.clone();
       notFoundUrl.pathname = '/nao-encontrado';
       return NextResponse.rewrite(notFoundUrl);

@@ -12,7 +12,6 @@ import {
   RoadHorizonIcon
 } from "@phosphor-icons/react";
 import { Permissoes } from "@/constants/permissoes";
-import { ClienteEnum } from "@/lib/layout/layout-client.enum";
 
 export const MODULES_DEF: ModuleDef[] = [
   {
@@ -50,7 +49,7 @@ export const PAGES_DEF: PageDef[] = [
     permission: Permissoes.EMAIL_LISTAR,
     module: "correspondencias"
   },
-  
+
   // Módulo: Gestão de Obrigações
   {
     path: "/dashboard-obrigacoes",
@@ -66,7 +65,7 @@ export const PAGES_DEF: PageDef[] = [
     permission: Permissoes.SOLICITACAO_LISTAR,
     module: "obrigacoes"
   },
-  
+
   // Módulo: Gestão de Recursos
   {
     path: "/areas",
@@ -95,14 +94,12 @@ export const PAGES_DEF: PageDef[] = [
     icon: RoadHorizonIcon,
     permission: Permissoes.CONCESSIONARIA_LISTAR,
     module: "configuracoes",
-    clients: [ClienteEnum.RTECH],
   },
   {
     path: "/faq",
     label: "Ajuda e FAQ",
     icon: QuestionIcon,
     module: "global",
-    clients: [ClienteEnum.RTECH],
   },
 ];
 

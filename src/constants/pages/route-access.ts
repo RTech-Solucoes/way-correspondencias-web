@@ -1,10 +1,8 @@
 import { Permissoes } from '@/constants/permissoes';
-import { ClienteEnum, getClienteAtual } from '@/lib/layout/layout-client.enum';
 
 export type RouteAccessDef = {
   path: string;
   permission?: Permissoes;
-  clients?: ClienteEnum[];
 };
 
 /** Definições leves para checagem de acesso (middleware / AuthGuard). */
@@ -20,9 +18,8 @@ export const ROUTE_ACCESS_DEF: RouteAccessDef[] = [
   {
     path: '/concessionarias',
     permission: Permissoes.CONCESSIONARIA_LISTAR,
-    clients: [ClienteEnum.RTECH],
   },
-  { path: '/faq', clients: [ClienteEnum.RTECH] },
+  { path: '/faq' },
 ];
 
 export const PUBLIC_ROUTES: string[] = ['/'];
@@ -63,14 +60,9 @@ export function parsePermissoesCookie(raw?: string | null): string[] {
 export function canAccessRoute(
   pathname: string,
   permissoes: string[],
-  layoutClient: ClienteEnum = getClienteAtual(),
 ): boolean {
   const route = findRouteAccess(pathname);
   if (!route) return true;
-
-  if (route.clients?.length && !route.clients.includes(layoutClient)) {
-    return false;
-  }
 
   if (route.permission && !permissoes.some((item) => item === route.permission)) {
     return false;

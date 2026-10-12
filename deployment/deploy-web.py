@@ -1,8 +1,14 @@
 import hashlib,json,os,pathlib,re,signal,subprocess,sys,time,urllib.request
 
-ROOT=pathlib.Path('/home/rtech/way-correspondencias-web');BASE=pathlib.Path('/home/rtech/way-deploys')
-ENV={**os.environ,'PATH':'/home/rtech/.nvm/versions/node/v20.19.0/bin:'+os.environ['PATH'],'NODE_OPTIONS':'--max-old-space-size=2560','HOME':'/home/rtech','PM2_HOME':'/home/rtech/.pm2'}
-NAME='way-web-dev';LOG=BASE/'web-build.log';LOG.touch(mode=0o600,exist_ok=True);LOG.chmod(0o600)
+# Configure caminhos e processo no ambiente de implantação, sem identidade de cliente.
+ROOT=pathlib.Path(os.environ['FRONTEND_REPOSITORY_DIR']).resolve()
+BASE=pathlib.Path(os.environ['FRONTEND_DEPLOY_DIR']).resolve()
+ENV={**os.environ,'NODE_OPTIONS':os.environ.get('NODE_OPTIONS','--max-old-space-size=2560')}
+if os.environ.get('FRONTEND_NODE_BIN'):ENV['PATH']=os.environ['FRONTEND_NODE_BIN']+os.pathsep+os.environ['PATH']
+NAME=os.environ.get('FRONTEND_PROCESS_NAME','software-regulatorio-dev')
+SOURCE_BRANCH=os.environ.get('FRONTEND_SOURCE_BRANCH','mvp_develop')
+RELEASE_MARKER=os.environ.get('FRONTEND_RELEASE_MARKER','software-regulatorio-release.json')
+LOG=BASE/'web-build.log';LOG.touch(mode=0o600,exist_ok=True);LOG.chmod(0o600)
 PREPARE_DEADLINE=time.monotonic()+600
 ACTIVE_PROCESS=None
 
@@ -96,8 +102,8 @@ if len(sys.argv)>1 and sys.argv[1]=='--rollback':
 
 commit=sys.argv[1]
 if not re.fullmatch('[0-9a-f]{40}',commit):raise SystemExit('Versão inválida')
-release=BASE/'web-releases'/commit;marker=release/'way-release.json'
-run(['git','fetch','origin','develop'],ROOT,preparing=True);run(['git','merge-base','--is-ancestor',commit,'origin/develop'],ROOT,preparing=True)
+release=BASE/'web-releases'/commit;marker=release/RELEASE_MARKER
+run(['git','fetch','origin',SOURCE_BRANCH],ROOT,preparing=True);run(['git','merge-base','--is-ancestor',commit,'origin/'+SOURCE_BRANCH],ROOT,preparing=True)
 if not marker.exists():
     release.parent.mkdir(mode=0o700,exist_ok=True)
     if not release.exists():run(['git','worktree','add','--detach',str(release),commit],ROOT,preparing=True)

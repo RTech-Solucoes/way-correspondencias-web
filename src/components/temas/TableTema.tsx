@@ -12,7 +12,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { TemaResponse } from '@/api/temas/types';
 import { TipoResponse } from '@/api/tipos/types';
 import { usePermissoes } from '@/context/permissoes/PermissoesContext';
-import { getLayoutClient, ClienteEnum } from '@/lib/layout/layout-client';
 
 interface TableTemaProps {
   handleSort: (field: keyof TemaResponse) => void;
@@ -30,10 +29,9 @@ interface TableTemaProps {
 }
 
 export default function TableTema(props: TableTemaProps) {
-  const isMvp = getLayoutClient() === ClienteEnum.RTECH;
   const { canAtualizarTema, canDeletarTema } = usePermissoes();
 
-  const colSpan = 2 + (isMvp ? 2 : 0) + (canAtualizarTema || canDeletarTema ? 1 : 0);
+  const colSpan = 2 + 2 + (canAtualizarTema || canDeletarTema ? 1 : 0);
 
   const getCriticidadeNome = (tema: TemaResponse) => {
     if (tema.tipoCriticidade?.dsTipo) return tema.tipoCriticidade.dsTipo;
@@ -49,13 +47,13 @@ export default function TableTema(props: TableTemaProps) {
       <StickyTable>
         <StickyTableHeader>
           <StickyTableRow>
-            {isMvp && <StickyTableHead>
+            <StickyTableHead>
               <Checkbox
                 checked={props.allSelected ? true : props.someSelected ? 'indeterminate' : false}
                 onCheckedChange={props.toggleSelectAll}
                 disabled={props.isSelectingAll}
               />
-            </StickyTableHead>}
+            </StickyTableHead>
             <StickyTableHead className="cursor-pointer" onClick={() => props.handleSort('nmTema')}>
               <div className="flex items-center">
                 Nome
@@ -63,7 +61,7 @@ export default function TableTema(props: TableTemaProps) {
               </div>
             </StickyTableHead>
             <StickyTableHead>Descrição</StickyTableHead>
-            {isMvp && <StickyTableHead>Criticidade</StickyTableHead>}
+            <StickyTableHead>Criticidade</StickyTableHead>
             {(canAtualizarTema || canDeletarTema) && (
               <StickyTableHead className="text-right">Ações</StickyTableHead>
             )}
@@ -91,19 +89,19 @@ export default function TableTema(props: TableTemaProps) {
           ) : (
             props.temas.map((tema) => (
               <StickyTableRow key={tema.idTema}>
-                {isMvp && <StickyTableCell>
+                <StickyTableCell>
                   <Checkbox
                     checked={props.isSelected(tema.idTema)}
                     onCheckedChange={() => props.toggleSelect(tema.idTema)}
                   />
-                </StickyTableCell>}
+                </StickyTableCell>
                 <StickyTableCell className="font-medium">{tema.nmTema}</StickyTableCell>
                 <StickyTableCell className="max-w-xs truncate" title={tema.dsTema}>
                   {tema.dsTema || '-'}
                 </StickyTableCell>
-                {isMvp && <StickyTableCell>
+                <StickyTableCell>
                   {getCriticidadeNome(tema)}
-                </StickyTableCell>}
+                </StickyTableCell>
                 {(canAtualizarTema || canDeletarTema) && (
                   <StickyTableCell className="text-right">
                     <div className="flex items-center justify-end space-x-2">

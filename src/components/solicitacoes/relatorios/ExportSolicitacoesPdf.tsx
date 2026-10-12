@@ -5,7 +5,7 @@ import { Document, Page, StyleSheet, Text, View, pdf, Image } from '@react-pdf/r
 import { toast } from 'sonner';
 import { PagedResponse, } from '@/api/solicitacoes/types';
 import { formatDateTimeBr, formatDateTimeBrCompactExport } from '@/utils/utils';
-import { getLayoutClient, getLabelTitle, getLogoPath } from '@/lib/layout/layout-client';
+import { SOFTWARE_NAME, LOGO_PATH } from '@/lib/branding';
 import correspondenciaClient from '@/api/correspondencia/client';
 import { CorrespondenciaFilterParams, CorrespondenciaResponse } from '@/api/correspondencia/types';
 
@@ -40,19 +40,16 @@ const styles = StyleSheet.create({
 	c10: { width: '6.5%', fontSize: 8 }, // Data Conclusão Tramitação
 	c11: { width: '6.5%' }, // Atendido dentro do prazo
 });
-  
+
 function SolicitacoesPdfDoc({ data, getStatusText }: { data: CorrespondenciaResponse[]; getStatusText: (code: string) => string | null }) {
 	const nowStr = useMemo(() => new Date().toLocaleString('pt-BR'), []);
-	const layoutClient = getLayoutClient();
-	const labelTitle = getLabelTitle(layoutClient);
-	const logoPath = getLogoPath(layoutClient);
-	
+
 	return (
 		<Document>
 			<Page size="A4" orientation="landscape" style={styles.page}>
 				<View style={styles.header}>
 					{/* eslint-disable-next-line jsx-a11y/alt-text */}
-					<Image src={logoPath} style={styles.logo} />
+					<Image src={LOGO_PATH} style={styles.logo} />
 					<View>
 						<Text style={styles.title}>Relatório de Solicitações</Text>
 						<Text style={styles.subtitle}>Data de exportação: {nowStr}</Text>
@@ -81,17 +78,17 @@ function SolicitacoesPdfDoc({ data, getStatusText }: { data: CorrespondenciaResp
 							.join(', ');
 						const tema = s.nmTema || s.tema?.nmTema || '';
 						const status = s.statusSolicitacao?.nmStatus || getStatusText(s.statusCodigo?.toString() || '') || '';
-						
+
 						const aprovacaoGerente = s.flExigeCienciaGerenteRegul === 'N' ? 'Não, apenas ciência' :
 							(s.flExigeCienciaGerenteRegul === 'S' ? 'Sim' : '-');
-						
+
 						let atendidoDentroDoPrazo = '-';
 						if (s.dtConclusaoTramitacao && s.dtPrazoLimite) {
 							const dtConclusao = new Date(s.dtConclusaoTramitacao);
 							const dtPrazoLimite = new Date(s.dtPrazoLimite);
 							atendidoDentroDoPrazo = dtConclusao <= dtPrazoLimite ? 'Sim' : 'Não';
 						}
-						
+
 						return (
 							<View key={idx} style={styles.row}>
 								<Text style={[styles.cell, styles.c1]} wrap={false}>{s.cdIdentificacao || ''}</Text>
@@ -112,7 +109,7 @@ function SolicitacoesPdfDoc({ data, getStatusText }: { data: CorrespondenciaResp
 
 				{/* Footer with page numbers */}
 				<View style={styles.footer} fixed>
-					<Text>{labelTitle}</Text>
+					<Text>{SOFTWARE_NAME}</Text>
 					<Text render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}` } />
 				</View>
 			</Page>

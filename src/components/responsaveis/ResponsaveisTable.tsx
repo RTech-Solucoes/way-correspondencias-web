@@ -1,4 +1,3 @@
-import { getLayoutClient, ClienteEnum } from '@/lib/layout/layout-client';
 import { ArrowsDownUpIcon, LockIcon, PencilSimpleIcon, SpinnerIcon, TrashIcon, UsersIcon } from '@phosphor-icons/react';
 import {
   StickyTable,
@@ -53,10 +52,9 @@ export default function ResponsaveisTable({
   toggleSelectAll,
   isSelectingAll,
 }: ResponsaveisTableProps) {
-  const isMvp = getLayoutClient() === ClienteEnum.RTECH;
   const { canAtualizarResponsavel, canDeletarResponsavel, canGerarSenhaResponsavel } = usePermissoes();
   const { isAdminOrGestor } = useUserGestao();
-  
+
   const idResponsavelLogado = useIdResponsavelLogado();
 
   const sortedResponsaveis = () => {
@@ -80,7 +78,7 @@ export default function ResponsaveisTable({
   };
 
   const showActions = canDeletarResponsavel || canAtualizarResponsavel || (ldapEnabled && canGerarSenhaResponsavel);
-  let colSpan = (isMvp ? 1 : 0) + 7; // checkbox + nome, usuário, email, perfil, áreas, cargo, status
+  let colSpan = 1 + 7; // checkbox + nome, usuário, email, perfil, áreas, cargo, status
   if (isAdminOrGestor) colSpan += 1;
   if (showActions) colSpan += 1;
 
@@ -89,13 +87,13 @@ export default function ResponsaveisTable({
       <StickyTable>
         <StickyTableHeader>
           <StickyTableRow>
-            {isMvp && <StickyTableHead>
+            <StickyTableHead>
               <Checkbox
                 checked={allSelected ? true : someSelected ? 'indeterminate' : false}
                 onCheckedChange={toggleSelectAll}
                 disabled={isSelectingAll}
               />
-            </StickyTableHead>}
+            </StickyTableHead>
             <StickyTableHead className="cursor-pointer" onClick={() => handleSort('nmResponsavel')}>
               <div className="flex items-center">
                 Nome
@@ -167,13 +165,13 @@ export default function ResponsaveisTable({
 
               return (
                 <StickyTableRow key={responsavel.idResponsavel}>
-                  {isMvp && <StickyTableCell>
+                  <StickyTableCell>
                     <Checkbox
                       disabled={isUsuarioLogado}
                       checked={isSelected(responsavel.idResponsavel)}
                       onCheckedChange={() => toggleSelect(responsavel.idResponsavel)}
                     />
-                  </StickyTableCell>}
+                  </StickyTableCell>
                   <StickyTableCell className="font-medium">{responsavel.nmResponsavel}</StickyTableCell>
                   <StickyTableCell>{responsavel.nmUsuarioLogin}</StickyTableCell>
                   <StickyTableCell>{responsavel.dsEmail}</StickyTableCell>

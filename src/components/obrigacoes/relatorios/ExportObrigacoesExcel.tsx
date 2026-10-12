@@ -7,13 +7,12 @@ import obrigacaoClient, { PaginatedResponse } from '@/api/obrigacao/client';
 import { formatDateTimeBrCompactExport, formatDateBr, formatDateTimeBr } from '@/utils/utils';
 import { TipoEnum } from '@/api/tipos/types';
 import LoadingOverlay from '@/components/ui/loading-overlay';
-import { getLayoutClient, getLabelTitle } from '@/lib/layout/layout-client';
 
 // Função auxiliar para buscar o comentário mais recente de uma obrigação
 async function buscarComentarioMaisRecente(idSolicitacao: number): Promise<string> {
   try {
     const detalhe = await obrigacaoClient.buscarDetalhePorId(idSolicitacao);
-    
+
     const comentarios: Array<{
       texto: string;
       data: string;
@@ -80,7 +79,7 @@ export default function ExportObrigacoesExcel({ filterParams, getStatusText, isA
 
   const exportarExcel = useCallback(async () => {
     try {
-      
+
       setExporting(true);
 
       const response = await obrigacaoClient.buscarLista({
@@ -130,7 +129,7 @@ export default function ExportObrigacoesExcel({ filterParams, getStatusText, isA
           comentariosMap.set(o.idSolicitacao, comentario);
         }
       });
-      
+
       await Promise.all(comentariosPromises);
 
       const rows = lista.map((o) => {
@@ -140,15 +139,15 @@ export default function ExportObrigacoesExcel({ filterParams, getStatusText, isA
         const classificacao = o.tipoClassificacao?.dsTipo || '';
         const periodicidade = o.tipoPeriodicidade?.dsTipo || '';
         const enviadoParaAreas = o.flEnviandoArea === 'S' ? 'Sim' : 'Não';
-        
+
         // Obrigação Principal - mostrar ID quando for condicionada
         const obrigacaoPrincipal = o.obrigacaoPrincipal?.idSolicitacao 
           ? o.obrigacaoPrincipal.cdIdentificacao || o.obrigacaoPrincipal.idSolicitacao.toString()
           : '';
-        
+
         // Comentário Mais Recente
         const comentarioMaisRecente = o.idSolicitacao ? comentariosMap.get(o.idSolicitacao) || '' : '';
-        
+
         // Justificativa de Atraso
         const justificativaAtraso = o.dsJustificativaAtraso || '';
         const dtJustificativaAtraso = o.dtJustificativaAtraso ? formatDateBr(o.dtJustificativaAtraso) : '';
@@ -178,7 +177,7 @@ export default function ExportObrigacoesExcel({ filterParams, getStatusText, isA
           escapeCell(dtJustificativaAtraso),
           escapeCell(responsavelJustifAtraso)
         ];
-        
+
         return row;
       });
 
@@ -186,7 +185,7 @@ export default function ExportObrigacoesExcel({ filterParams, getStatusText, isA
         `<thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>` +
         `<tbody>${rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody>`
       }</table></body></html>`;
-      
+
       const blob = new Blob([`\ufeff${tableHtml}`], { type: 'application/vnd.ms-excel;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');

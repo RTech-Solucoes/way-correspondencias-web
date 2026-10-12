@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "way",
+      "name": "software-regulatorio",
       "dependencies": {
         "@nextui-org/react": "^2.6.11",
         "@nextui-org/system": "^2.4.6",

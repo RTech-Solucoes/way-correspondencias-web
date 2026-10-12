@@ -1,6 +1,5 @@
 'use client';
 
-import { getLayoutClient, ClienteEnum } from '@/lib/layout/layout-client';
 import { 
   Table, 
   TableBody, 
@@ -68,8 +67,6 @@ export function ObrigacoesTable({
   toggleSelectAll,
   isSelectingAll,
 }: ObrigacoesTableProps) {
-  const isMvp = getLayoutClient() === ClienteEnum.RTECH;
-  
   function getProgressEndDate(obrigacao: ObrigacaoResponse) {
     if (isAdminOrGestor) {
       return obrigacao.dtLimite || null;
@@ -77,7 +74,7 @@ export function ObrigacoesTable({
     return obrigacao.dtTermino || null;
   }
 
-  const colSpan = (isAdminOrGestor ? 10 : 8) + (isMvp ? 1 : 0);
+  const colSpan = (isAdminOrGestor ? 10 : 8) + 1;
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
@@ -85,13 +82,13 @@ export function ObrigacoesTable({
         <Table>
           <TableHeader>
             <TableRow>
-              {isMvp && <TableHead className="w-[40px]">
+              <TableHead className="w-[40px]">
                 <Checkbox
                   checked={allSelected ? true : someSelected ? 'indeterminate' : false}
                   onCheckedChange={toggleSelectAll}
                   disabled={isSelectingAll}
                 />
-              </TableHead>}
+              </TableHead>
               <TableHead 
                 className="min-w-[200px] cursor-pointer"
                 onClick={() => handleSort('cdIdentificacao')}
@@ -164,12 +161,12 @@ export function ObrigacoesTable({
             ) : (
               obrigacoes.map((obrigacao) => (
                 <TableRow key={obrigacao.idSolicitacao}>
-                  {isMvp && <TableCell>
+                  <TableCell>
                     <Checkbox
                       checked={isSelected(obrigacao.idSolicitacao)}
                       onCheckedChange={() => toggleSelect(obrigacao.idSolicitacao)}
                     />
-                  </TableCell>}
+                  </TableCell>
                   <TableCell className="font-medium min-w-[200px]">{obrigacao.cdIdentificacao || '-'}</TableCell>
                   <TableCell className="min-w-[250px]">
                     <div className="line-clamp-4" title={obrigacao.dsTarefa || undefined}>

@@ -6,26 +6,21 @@ import Providers from "@/providers/Providers";
 import AuthGuard from "@/providers/AuthGuard";
 import ConditionalLayout from "@/components/layout/ConditionalLayout";
 import {Toaster} from "sonner";
-import { getLayoutClient, getLabelTitle, getFaviconPath, getNomeSistema } from "@/lib/layout/layout-client";
+import { SOFTWARE_NAME, FAVICON_PATH } from '@/lib/branding';
 
 const defaultFont = DefaultFont({
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
   subsets: ['latin'],
   variable: '--font-default'
 });
-
-const layoutClient = getLayoutClient();
-const labelTitle = getLabelTitle(layoutClient);
-const nomeSistema = getNomeSistema(layoutClient);
-const faviconPath = getFaviconPath(layoutClient);
-
 export const metadata: Metadata = {
-  title: `${labelTitle} - ${nomeSistema}`,
-  description: `${nomeSistema} de tramitações ${labelTitle}`,
+  title: SOFTWARE_NAME,
+  applicationName: SOFTWARE_NAME,
+  description: 'Software Regulatório — gestão de obrigações, correspondências e tramitações.',
   icons: {
-    icon: faviconPath,
-    shortcut: faviconPath,
-    apple: faviconPath,
+    icon: FAVICON_PATH,
+    shortcut: FAVICON_PATH,
+    apple: FAVICON_PATH,
   },
 };
 
@@ -36,7 +31,7 @@ export default function RootLayout({
 }) {
 
   return (
-    <html lang="en">
+    <html lang="pt-BR">
       <body className={`${defaultFont.className} ${defaultFont.variable} relative`}>
         <AuthGuard>
           <Providers>

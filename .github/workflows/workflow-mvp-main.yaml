@@ -1,4 +1,4 @@
-name: Deploy Correspondencias Web for Production
+name: Deploy Software Regulatório for Production
 
 on:
   push:
@@ -8,6 +8,7 @@ on:
 env:
   IMAGE_NAME: correspondencias-web
   CONTAINER_NAME: correspondencias-web-prd
+  DEPLOY_BRANCH: main
 
 jobs:
   build:
@@ -37,9 +38,8 @@ jobs:
         id: docker
         run: |
           IMAGE_REPO=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-west-2.amazonaws.com/$IMAGE_NAME
-          BRANCH_NAME=$(echo "${GITHUB_REF#refs/heads/}" | tr '/' '-')
           SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
-          IMAGE_TAG="${BRANCH_NAME}_${SHORT_SHA}"
+          IMAGE_TAG="${DEPLOY_BRANCH}_${SHORT_SHA}"
 
           echo "IMAGE_REPO=$IMAGE_REPO"
           echo "IMAGE_TAG=$IMAGE_TAG"
@@ -53,7 +53,7 @@ jobs:
         run: |
           IMAGE="${{ env.IMAGE_FULL }}"
           CONTAINER="${{ env.CONTAINER_NAME }}"
-          BRANCH=$(echo "${GITHUB_REF#refs/heads/}" | tr '/' '-')
+          BRANCH="${{ env.DEPLOY_BRANCH }}"
 
           echo "Chamando API de deploy para imagem: $IMAGE, container: $CONTAINER, branch: $BRANCH"
 
@@ -83,16 +83,16 @@ jobs:
         run: |
           PAYLOAD=$(cat << EOF
           {
-            "text": "Deploy do projeto Correspondencias",
+            "text": "Deploy do Software Regulatório",
             "cards": [
               {
                 "sections": [
                   {
                     "widgets": [
-                      { "keyValue": { "topLabel": "Projeto", "content": "correspondencias-web" } },
+                      { "keyValue": { "topLabel": "Projeto", "content": "Software Regulatório" } },
                       { "keyValue": { "topLabel": "Branch", "content": "$GIT_BRANCH" } },
                       { "keyValue": { "topLabel": "Status", "content": "SUCCESS ✅" } },
-                      { "keyValue": { "topLabel": "Mensagem", "content": "Deploy para o Correspondencias Web realizado com sucesso!" } },
+                      { "keyValue": { "topLabel": "Mensagem", "content": "Deploy do Software Regulatório realizado com sucesso!" } },
                       { "keyValue": { "topLabel": "Commit", "content": "$COMMIT_MESSAGE" } }
                     ]
                   }
@@ -113,16 +113,16 @@ jobs:
         run: |
           PAYLOAD=$(cat << EOF
           {
-            "text": "Deploy do projeto Correspondencias",
+            "text": "Deploy do Software Regulatório",
             "cards": [
               {
                 "sections": [
                   {
                     "widgets": [
-                      { "keyValue": { "topLabel": "Projeto", "content": "correspondencias-web" } },
+                      { "keyValue": { "topLabel": "Projeto", "content": "Software Regulatório" } },
                       { "keyValue": { "topLabel": "Branch", "content": "$GIT_BRANCH" } },
                       { "keyValue": { "topLabel": "Status", "content": "FAILED ❌" } },
-                      { "keyValue": { "topLabel": "Mensagem", "content": "Deploy para o Correspondencias Web falhou!" } },
+                      { "keyValue": { "topLabel": "Mensagem", "content": "Deploy do Software Regulatório falhou!" } },
                       { "keyValue": { "topLabel": "Commit", "content": "$COMMIT_MESSAGE" } }
                     ]
                   }

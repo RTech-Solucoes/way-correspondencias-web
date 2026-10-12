@@ -12,7 +12,7 @@ import { AnexoResponse } from '@/api/anexos/type';
 import statusSolicitacaoClient from '@/api/status-solicitacao/client';
 import { statusList } from '@/api/status-solicitacao/types';
 import LoadingOverlay from '@/components/ui/loading-overlay';
-import { getLayoutClient, getLabelTitle, getLogoPath } from '@/lib/layout/layout-client';
+import { SOFTWARE_NAME, LOGO_PATH } from '@/lib/branding';
 
 interface ExportHistoricoObrigacaoPdfProps {
   detalhe: ObrigacaoDetalheResponse;
@@ -65,25 +65,22 @@ interface HistoricoItem {
 
 function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDetalheResponse; statusMap: Map<number, string> }) {
   const nowStr = useMemo(() => new Date().toLocaleString('pt-BR'), []);
-  const layoutClient = getLayoutClient();
-  const labelTitle = getLabelTitle(layoutClient);
-  const logoPath = getLogoPath(layoutClient);
 
   const obrigacao = detalhe.obrigacao;
   const areaAtribuida = obrigacao.areas?.find((area) => area.tipoArea?.cdTipo === TipoEnum.ATRIBUIDA);
   const areasCondicionantes = obrigacao.areas?.filter((area) => area.tipoArea?.cdTipo === TipoEnum.CONDICIONANTE) ?? [];
-  
+
   // Prioridade: área atribuída > área condicionante > primeira área do responsável
   const getAreaComentario = (parecer: SolicitacaoParecerResponse): string => {
     const areasResponsavel = parecer.responsavel?.areas || [];
-    
+
     let area = 'Regulatório';
     if (areasResponsavel.length > 0) {
       if (areasResponsavel.length > 1 && areaAtribuida) {
         const areaAtribuidaEncontrada = areasResponsavel.find(
           (respArea) => respArea.area?.idArea === areaAtribuida.idArea
         );
-        
+
         if (areaAtribuidaEncontrada) {
           area = areaAtribuida.nmArea;
         } else {
@@ -93,10 +90,10 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
         area = areasResponsavel[0]?.area?.nmArea || 'Regulatório';
       }
     }
-    
+
     return area;
   };
-  
+
   const historicoItems: HistoricoItem[] = useMemo(() => {
     const items: HistoricoItem[] = [];
 
@@ -117,9 +114,9 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
 
     detalhe.solicitacaoParecer?.forEach(parecer => {
       if (!parecer || !parecer.idSolicitacaoParecer) return;
-      
+
       const dataParecer = parecer.dtCriacao;
-      
+
       if (parecer.dsDarecer) {
         items.push({
           tipo: 'parecer',
@@ -162,9 +159,9 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
 
     detalhe.anexos?.forEach(anexo => {
       if (!anexo || !anexo.tpDocumento) return;
-      
+
       const tipo = anexo.tpDocumento as TipoDocumentoAnexoEnum;
-      
+
       if (tipo === TipoDocumentoAnexoEnum.E || tipo === TipoDocumentoAnexoEnum.L) {
         grupos[TipoDocumentoAnexoEnum.E].push(anexo);
       } else if (grupos[tipo]) {
@@ -211,10 +208,10 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
           {/* eslint-disable-next-line jsx-a11y/alt-text */}
-          <Image src={logoPath} style={styles.logo} />
+          <Image src={LOGO_PATH} style={styles.logo} />
           <View style={styles.titleWrap}>
             <Text style={[styles.title, { fontWeight: 800 }]}>Histórico da Obrigação</Text>
-            <Text style={styles.subtitle}>{labelTitle}</Text>
+            <Text style={styles.subtitle}>{SOFTWARE_NAME}</Text>
             <Text style={styles.subtitle}>Data de exportação: {nowStr}</Text>
           </View>
         </View>
@@ -298,20 +295,20 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
         <Text style={[styles.sectionTitle, { marginTop: 12 }]}>Histórico de Movimentações e Comentários</Text>
         {(() => {
           const itemsParaExibir = historicoItems.filter(item => item.tipo === 'parecer' || item.tipo === 'tramitacao');
-          
+
           if (itemsParaExibir.length === 0) {
             return <Text style={styles.emptyMessage}>Nenhum comentário registrado até o momento.</Text>;
           }
-          
+
           return (() => {
           const pareceresMap = new Map(
             detalhe.solicitacaoParecer?.map(p => [p.idSolicitacaoParecer, p]) || []
           );
-          
+
           const tramitacoesMap = new Map(
             detalhe.tramitacoes?.map(t => [t.tramitacao.idTramitacao, t.tramitacao])
           );
-                    
+
           // Mapa para identificar menções @username nos comentários
           const nomesResponsaveisMap = new Map<string, string>();
           detalhe.solicitacaoParecer?.forEach(p => {
@@ -327,41 +324,41 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
               nomesResponsaveisMap.set(nomeLower, responsavel.nmResponsavel.trim());
             }
           });
-          
+
           // Processa texto identificando menções @username e destacando em roxo
           const processarMensagem = (texto: string): (string | { type: 'mention'; name: string; isValid: boolean })[] => {
             const parts: (string | { type: 'mention'; name: string; isValid: boolean })[] = [];
-            
+
             if (!texto) {
               parts.push('');
               return parts;
             }
-            
+
             let posicao = 0;
-            
+
             while (posicao < texto.length) {
               const indiceArroba = texto.indexOf('@', posicao);
-              
+
               if (indiceArroba === -1) {
                 if (posicao < texto.length) {
                   parts.push(texto.substring(posicao));
                 }
                 break;
               }
-              
+
               if (indiceArroba > posicao) {
                 parts.push(texto.substring(posicao, indiceArroba));
               }
-              
+
               let nomeEncontrado: string | null = null;
               let nomeValido = false;
               let nomeOriginal: string | null = null;
-              
+
               const textoRestante = texto.substring(indiceArroba + 1);
-              
+
               const nomesOrdenados = Array.from(nomesResponsaveisMap.entries())
                 .sort((a, b) => b[0].length - a[0].length);
-              
+
               for (const [nomeLower, nomeOriginalMap] of nomesOrdenados) {
                 const textoRestanteLower = textoRestante.toLowerCase();
                 if (textoRestanteLower.startsWith(nomeLower)) {
@@ -375,7 +372,7 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
                   }
                 }
               }
-              
+
               if (nomeEncontrado && nomeValido && nomeOriginal) {
                 parts.push({ type: 'mention', name: nomeOriginal, isValid: true });
               } else {
@@ -391,14 +388,14 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
                 }
               }
             }
-            
+
             if (parts.length === 0) {
               parts.push(texto);
             }
-            
+
             return parts;
           };
-          
+
           return itemsParaExibir.map((item, index) => {
             if (item.tipo === 'tramitacao' && item.tramitacao) {
               const tramitacao = item.tramitacao;
@@ -407,7 +404,7 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
               const areaTramitacao = tramitacao.areaOrigem?.nmArea || 'Regulatório';
               const tramitacaoReferenciada = tramitacao.tramitacaoRef || (tramitacao.idTramitacaoRef ? (tramitacoesMap.get(tramitacao.idTramitacaoRef) || null) : null);
               const parts = processarMensagem(tramitacao.dsObservacao || '');
-              
+
               return (
                 <View key={`tramitacao-${tramitacao.idTramitacao}-${index}`} style={styles.item} wrap={false}>
                   {tramitacaoReferenciada && (
@@ -425,7 +422,7 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
                     <Text style={styles.pill}>{areaTramitacao.toUpperCase()}</Text>
                     <Text style={styles.small}>{dataFormatada}</Text>
                   </View>
-                  
+
                   {tramitacao.dsObservacao && (
                     <>
                       <Text style={[styles.smallBold, { marginTop: 4, marginBottom: 2 }]}>
@@ -473,7 +470,7 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
                         statusList.EM_APROVACAO.id,
                         statusList.EM_ANALISE_GERENTE_REGULATORIO.id,
                       ];
-                      
+
                       if (idStatus && statusComFlAprovado.includes(idStatus) && tramitacao.flAprovado) {
                         const flAprovadoTexto = tramitacao.flAprovado === 'S' ? 'Sim' : tramitacao.flAprovado === 'N' ? 'Não' : tramitacao.flAprovado;
                         return (
@@ -493,15 +490,15 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
               const parecer = item.parecer;
               const dataFormatada = item.data ? formatDateTimeBr(item.data) : '—';
               const areaComentario = getAreaComentario(parecer);
-              
+
               // Regra: priorizar referência de tramitação sobre referência de comentário
               let comentarioReferenciado: SolicitacaoParecerResponse | null = null;
               let tramitacaoReferenciada: SolTramitacaoResponse | null = null;
-              
+
               if (parecer.idTramitacao) {
                 tramitacaoReferenciada = tramitacoesMap.get(parecer.idTramitacao) || null;
               }
-              
+
               if (!tramitacaoReferenciada) {
                 if (parecer.solicitacaoParecerReferen) {
                   if (Array.isArray(parecer.solicitacaoParecerReferen) && parecer.solicitacaoParecerReferen.length > 0) {
@@ -513,15 +510,15 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
                     }
                   }
                 }
-                
+
                 if (!comentarioReferenciado && parecer.idSolicitacaoParecerReferen) {
                   comentarioReferenciado = pareceresMap.get(parecer.idSolicitacaoParecerReferen) || null;
                 }
               }
-              
+
               const mensagem = parecer.dsDarecer || '';
               const parts = processarMensagem(mensagem);
-              
+
               return (
                 <View key={`parecer-${parecer.idSolicitacaoParecer}-${index}`} style={styles.item} wrap={false}>
                   {tramitacaoReferenciada ? (
@@ -543,12 +540,12 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
                       </Text>
                     </View>
                   ) : null}
-                  
+
                   <View style={styles.itemHeader}>
                     <Text style={styles.pill}>{areaComentario.toUpperCase()}</Text>
                     <Text style={styles.small}>{dataFormatada}</Text>
                   </View>
-                  
+
                   <Text style={[styles.small, { marginTop: 4, marginBottom: 4 }]}>
                     {parts.map((part, idx) => {
                       if (typeof part === 'object' && 'type' in part && part.type === 'mention') {
@@ -569,7 +566,7 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
                       return <Text key={idx}>{String(part)}</Text>;
                     })}
                   </Text>
-                  
+
                   <View style={{ marginTop: 4 }}>
                     <Text style={styles.small}>
                       <Text style={styles.smallBold}>Responsável:</Text> {parecer.responsavel?.nmResponsavel || '—'}
@@ -644,7 +641,7 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
           const secoes = ordemTipos.map(tipo => {
             const anexos = anexosPorTipo[tipo] || [];
             const nomeTipo = getNomeTipoDocumento(tipo);
-            
+
             return (
               <View key={`tipo-${tipo}`} wrap={false}>
                 <Text style={styles.subsectionTitle}>{nomeTipo}</Text>
@@ -667,11 +664,11 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
                     .filter(anexo => anexo && anexo.idAnexo)
                     .map((anexo, index) => {
                       if (!anexo) return null;
-                      
+
                       const dataFormatada = anexo.dtCriacao ? formatDateTimeBr(anexo.dtCriacao) : '—';
                       const tipoArquivo = getTipoArquivo(anexo);
                       const isLink = anexo.tpDocumento === TipoDocumentoAnexoEnum.L;
-                      
+
                       return (
                         <View key={`anexo-${anexo.idAnexo}-${index}`} style={styles.anexoItem} wrap={false}>
                           {!isLink && anexo.nmArquivo && (
@@ -705,7 +702,7 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
           });
 
           const temAnexos = ordemTipos.some(tipo => (anexosPorTipo[tipo] || []).length > 0);
-          
+
           if (!temAnexos) {
             return (
               <Text style={styles.emptyMessage}>Não há anexos registrados para esta obrigação.</Text>
@@ -716,7 +713,7 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
         })()}
 
         <View style={styles.footer} fixed>
-          <Text>{labelTitle}</Text>
+          <Text>{SOFTWARE_NAME}</Text>
           <Text render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}`} />
         </View>
       </Page>

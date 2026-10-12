@@ -14,7 +14,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import ProfileButton from './ProfileButton';
 import { HeaderHelpButton } from './HeaderHelpButton';
-import { getLayoutClient, getLogoPath } from '@/lib/layout/layout-client';
+import { LOGO_PATH, SOFTWARE_NAME } from '@/lib/branding';
 
 
 interface AppHeaderProps {
@@ -32,7 +32,7 @@ export function AppHeader({
 }: AppHeaderProps) {
   const router = useRouter();
   const { concessionariaSelecionada, concessionarias, loading: loadingConcessionaria, setConcessionariaSelecionada } = useConcessionaria();
-  
+
   const user: User = {
     name: userName || "Usuário",
     username: userLogin || "user@email.com",
@@ -80,9 +80,6 @@ const [pendenteCountState] = useState<SolicitacaoCountResponse>({ quantidadeCorr
     refetchOnReconnect: true,
     refetchOnMount: 'always',
   });
-  
-const layoutClient = getLayoutClient();
-const logoPath = getLogoPath(layoutClient);
 
   const countData = pendenteCountData ?? pendenteCountState;
   const qtdSolicitacaoPendente = countData.quantidadeCorrespondencias + countData.quantidadeObrigacoes;
@@ -92,8 +89,8 @@ const logoPath = getLogoPath(layoutClient);
       <div className="flex items-center justify-between h-[82px] px-6">
         <div className="flex items-center gap-6">
           <Image
-            src={logoPath}
-            alt="Logo"
+            src={LOGO_PATH}
+            alt={SOFTWARE_NAME}
             width={120}
             height={40}
             className="h-8 w-auto"
@@ -211,4 +208,4 @@ const logoPath = getLogoPath(layoutClient);
       </div>
     </header>
   );
-} 
+}

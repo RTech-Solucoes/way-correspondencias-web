@@ -1,4 +1,3 @@
-import { getLayoutClient, ClienteEnum } from '@/lib/layout/layout-client';
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
 import correspondenciaClient from '@/api/correspondencia/client';
@@ -25,7 +24,6 @@ interface UseSolicitacoesHandlersDeps {
 }
 
 export function useSolicitacoesHandlers(deps: UseSolicitacoesHandlersDeps) {
-  const isMvp = getLayoutClient() === ClienteEnum.RTECH;
   const {
     loadSolicitacoes,
     setSelectedSolicitacao,
@@ -69,7 +67,6 @@ export function useSolicitacoesHandlers(deps: UseSolicitacoesHandlersDeps) {
 
   // Handlers de seleção
   const toggleSelect = useCallback((id: number) => {
-    if (!isMvp) return;
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -80,10 +77,10 @@ export function useSolicitacoesHandlers(deps: UseSolicitacoesHandlersDeps) {
       }
       return next;
     });
-  }, [isMvp]);
+  }, []);
 
   const toggleSelectAll = useCallback(async () => {
-    if (!isMvp || isSelectingAll) return;
+    if (isSelectingAll) return;
 
     if (selecionouTodos) {
       setSelectedIds(new Set());
@@ -120,7 +117,7 @@ export function useSolicitacoesHandlers(deps: UseSolicitacoesHandlersDeps) {
     } finally {
       setIsSelectingAll(false);
     }
-  }, [isMvp, isSelectingAll, selecionouTodos, totalElements, queryParams, solicitacoesDaPagina]);
+  }, [isSelectingAll, selecionouTodos, totalElements, queryParams, solicitacoesDaPagina]);
 
   const clearSelection = useCallback(() => {
     setSelectedIds(new Set());
@@ -147,11 +144,11 @@ export function useSolicitacoesHandlers(deps: UseSolicitacoesHandlersDeps) {
   }, [setSolicitacaoToDelete, setShowDeleteDialog]);
 
   const handleDeleteSelected = useCallback(() => {
-    if (!isMvp || selectedIds.size === 0) return;
+    if (selectedIds.size === 0) return;
 
     setSolicitacaoToDelete(null);
     setShowDeleteDialog(true);
-  }, [selectedIds, setSolicitacaoToDelete, setShowDeleteDialog, isMvp]);
+  }, [selectedIds, setSolicitacaoToDelete, setShowDeleteDialog]);
 
   const closeDeleteDialog = useCallback(() => {
     setShowDeleteDialog(false);
@@ -173,7 +170,6 @@ export function useSolicitacoesHandlers(deps: UseSolicitacoesHandlersDeps) {
   }, [solicitacaoToDelete, loadSolicitacoes, closeDeleteDialog]);
 
   const confirmDeleteVarias = useCallback(async () => {
-    if (!isMvp) return;
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
 
@@ -194,7 +190,7 @@ export function useSolicitacoesHandlers(deps: UseSolicitacoesHandlersDeps) {
       setIsDeletingBulk(false);
       closeDeleteDialog();
     }
-  }, [selectedIds, loadSolicitacoes, closeDeleteDialog, isMvp]);
+  }, [selectedIds, loadSolicitacoes, closeDeleteDialog]);
 
   // Handler de enviar devolutiva
   const enviarDevolutiva = useCallback(async (
@@ -329,7 +325,7 @@ export function useSolicitacoesHandlers(deps: UseSolicitacoesHandlersDeps) {
     handleDeleteSelected,
     closeDeleteDialog,
     isDeletingBulk,
-    isBulkDeletePending: isMvp && selectedIds.size > 0 && !solicitacaoToDelete,
+    isBulkDeletePending: selectedIds.size > 0 && !solicitacaoToDelete,
 
     // Handlers CRUD
     handleEdit,

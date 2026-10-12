@@ -6,7 +6,6 @@ import { Quantum as Loading } from 'ldrs/react';
 import 'ldrs/react/Quantum.css';
 import { PUBLIC_ROUTES } from '@/constants/pages';
 import { canAccessRoute, parsePermissoesCookie } from '@/constants/pages/route-access';
-import { getLayoutClient } from '@/lib/layout/layout-client';
 import authClient from '@/api/auth/client';
 import { toast } from 'sonner';
 import { getCookie, removeCookie } from '@/utils/cookies';
@@ -94,14 +93,14 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
         if (isPublicRoute) {
           const firstRoute =
             FIRST_ROUTES.find((route) =>
-              canAccessRoute(route, permissoes, getLayoutClient()),
+              canAccessRoute(route, permissoes),
             ) || '/dashboard-correspondencia';
           router.replace(firstRoute);
           finish(false);
           return;
         }
 
-        if (!canAccessRoute(pathname, permissoes, getLayoutClient())) {
+        if (!canAccessRoute(pathname, permissoes)) {
           finish(true);
           return;
         }

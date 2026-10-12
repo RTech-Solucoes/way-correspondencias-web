@@ -8,13 +8,13 @@ import { ObrigacaoFiltroRequest, ObrigacaoResponse } from '@/api/obrigacao/types
 import { formatDateBr, formatDateTimeBr, formatDateTimeBrCompactExport } from '@/utils/utils';
 import { TipoEnum } from '@/api/tipos/types';
 import LoadingOverlay from '@/components/ui/loading-overlay';
-import { getLayoutClient, getLabelTitle, getLogoPath } from '@/lib/layout/layout-client';
+import { SOFTWARE_NAME, LOGO_PATH } from '@/lib/branding';
 
 // Função auxiliar para buscar o comentário mais recente de uma obrigação
 async function buscarComentarioMaisRecente(idSolicitacao: number): Promise<string> {
   try {
     const detalhe = await obrigacaoClient.buscarDetalhePorId(idSolicitacao);
-    
+
     const comentarios: Array<{
       texto: string;
       data: string;
@@ -105,19 +105,16 @@ const styles = StyleSheet.create({
 
 function ObrigacoesPdfDoc({ data, getStatusText, isAdminOrGestor, comentariosMap }: { data: ObrigacaoResponse[]; getStatusText: (code: string) => string | null; isAdminOrGestor: boolean; comentariosMap: Map<number, string> }) {
 	const nowStr = useMemo(() => new Date().toLocaleString('pt-BR'), []);
-	const layoutClient = getLayoutClient();
-	const labelTitle = getLabelTitle(layoutClient);
-	const logoPath = getLogoPath(layoutClient);
-	
+
 	return (
 		<Document>
 			<Page size="A4" orientation="landscape" style={styles.page}>
 				<View style={styles.header}>
 					{/* eslint-disable-next-line jsx-a11y/alt-text */}
-					<Image src={logoPath} style={styles.logo} />
+					<Image src={LOGO_PATH} style={styles.logo} />
 					<View>
 						<Text style={styles.title}>Relatório de Obrigações Contratuais</Text>
-						<Text style={styles.subtitle}>{labelTitle}</Text>
+						<Text style={styles.subtitle}>{SOFTWARE_NAME}</Text>
 						<Text style={styles.subtitle}>Data de exportação: {nowStr}</Text>
 						<Text style={styles.subtitle}>Total de registros: {data.length}</Text>
 					</View>
@@ -146,17 +143,17 @@ function ObrigacoesPdfDoc({ data, getStatusText, isAdminOrGestor, comentariosMap
 						const status = o.statusSolicitacao?.nmStatus || getStatusText(o.statusSolicitacao?.idStatusSolicitacao?.toString() || '') || '';
 						const classificacao = o.tipoClassificacao?.dsTipo || '';
 						const periodicidade = o.tipoPeriodicidade?.dsTipo || '';
-						
+
 						// Obrigação Principal - mostrar ID quando for condicionada
 						const obrigacaoPrincipal = o.obrigacaoPrincipal?.idSolicitacao 
 							? o.obrigacaoPrincipal.cdIdentificacao || o.obrigacaoPrincipal.idSolicitacao.toString()
 							: '';
-						
+
 						// Comentário Mais Recente
 						const comentarioMaisRecente = o.idSolicitacao ? comentariosMap.get(o.idSolicitacao) || '' : '';
-						
+
 						const enviadoParaAreas = o.flEnviandoArea === 'S' ? 'Sim' : 'Não';
-						
+
 						return (
 							<View key={idx} style={styles.row}>
 								<Text style={[styles.cell, styles.c1]} wrap>{o.cdIdentificacao || ''}</Text>
@@ -180,7 +177,7 @@ function ObrigacoesPdfDoc({ data, getStatusText, isAdminOrGestor, comentariosMap
 
 				{/* Footer with page numbers */}
 				<View style={styles.footer} fixed>
-					<Text>{labelTitle}</Text>
+					<Text>{SOFTWARE_NAME}</Text>
 					<Text render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}` } />
 				</View>
 			</Page>
@@ -207,7 +204,7 @@ export default function ExportObrigacoesPdf({ filterParams, getStatusText, isAdm
 			const lista = (response && typeof response === 'object' && 'content' in response)
 				? (response as PaginatedResponse<ObrigacaoResponse>).content ?? []
 				: (response as ObrigacaoResponse[]) ?? [];
-			
+
 			// Buscar comentários mais recentes para todas as obrigações em paralelo
 			const comentarios = new Map<number, string>();
 			const comentariosPromises = lista.map(async (o) => {
@@ -216,9 +213,9 @@ export default function ExportObrigacoesPdf({ filterParams, getStatusText, isAdm
 					comentarios.set(o.idSolicitacao, comentario);
 				}
 			});
-			
+
 			await Promise.all(comentariosPromises);
-			
+
 			setData(lista);
 			setComentariosMap(comentarios);
 			setFileName(`obrigacoes_export_${formatDateTimeBrCompactExport()}.pdf`);

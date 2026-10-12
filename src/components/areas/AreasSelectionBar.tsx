@@ -1,6 +1,5 @@
 'use client';
 
-import { getLayoutClient, ClienteEnum } from '@/lib/layout/layout-client';
 import { Button } from '@/components/ui/button';
 import { SpinnerIcon, TrashIcon } from '@phosphor-icons/react';
 import { cn } from '@/utils/utils';
@@ -26,7 +25,7 @@ export function AreasSelectionBar({
   totalElements,
   className,
 }: AreasSelectionBarProps) {
-  if (getLayoutClient() !== ClienteEnum.RTECH || selectedCount === 0) return null;
+  if (selectedCount === 0) return null;
 
   return (
     <div

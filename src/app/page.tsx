@@ -4,7 +4,7 @@ import authClient from '@/api/auth/client';
 import concessionariaClient from '@/api/concessionaria/client';
 import { Button } from '@/components/ui/button';
 import { TextField } from '@/components/ui/text-field';
-import { getBackgroundLoginPath, getLabelTitle, getLogoPath, getNomeSistema } from "@/lib/layout/layout-client";
+import { LOGIN_BACKGROUND_PATH, SOFTWARE_NAME, LOGO_PATH } from '@/lib/branding';
 import { useSetPermissoes } from '@/stores/permissoes-store';
 import { getCookie, removeCookie } from '@/utils/cookies';
 import { cn } from '@/utils/utils';
@@ -64,15 +64,15 @@ export default function LoginPage() {
 
         const decoded = jwtDecode<TokenPayload>(token);
         setPermissoes(decoded.permissoes || []);
-        
+
         const idsConcessionarias = authClient.getIdsConcessionariasFromToken();
-        
+
         if (!idsConcessionarias || idsConcessionarias.length === 0) {
           removeCookie('authToken');
           removeCookie('tokenType');
           removeCookie('userName');
           removeCookie('permissoes-storage');
-          
+
           toast.error("Seu usuário não possui concessionárias associadas. Entre em contato com o administrador do sistema.", { id: 'login' });
           setIsLoading(false);
           return;
@@ -80,13 +80,13 @@ export default function LoginPage() {
 
         try {
           const concessionariasDoResponsavel = await concessionariaClient.buscarPorIdResponsavelLogado();
-          
+
           if (!concessionariasDoResponsavel || concessionariasDoResponsavel.length === 0) {
             removeCookie('authToken');
             removeCookie('tokenType');
             removeCookie('userName');
             removeCookie('permissoes-storage');
-            
+
             toast.error("Você foi deslogado pois não possui concessionária associada ao seu usuário. Entre em contato com o administrador do sistema.", { id: 'login' });
             setIsLoading(false);
             return;
@@ -97,7 +97,7 @@ export default function LoginPage() {
             removeCookie('tokenType');
             removeCookie('userName');
             removeCookie('permissoes-storage');
-            
+
             toast.error("Você foi deslogado pois não possui concessionária associada ao seu usuário. Entre em contato com o administrador do sistema.", { id: 'login' });
             setIsLoading(false);
             return;
@@ -105,7 +105,7 @@ export default function LoginPage() {
         }
 
         toast.success('Login realizado com sucesso!', { id: 'login' });
-        
+
         await new Promise(resolve => setTimeout(resolve, 100));
         router.push('/dashboard-correspondencia');
       } catch (error) {
@@ -123,17 +123,17 @@ export default function LoginPage() {
       <form onSubmit={handleSubmit} className="flex flex-col w-[45%] max-md:w-full gap-12 p-8 max-[1024px]:p-2 rounded-4xl max-[1460px]:w-[40%] min-[1440px]:max-w-[30%] justify-center mb-32">
         <div>
           <Image
-            src={getLogoPath()}
-            alt="Logo"
-            width={400}
-            height={221}
-            className="h-auto max-w-1/5 mx-auto"
+            src={LOGO_PATH}
+            alt={SOFTWARE_NAME}
+            width={480}
+            height={160}
+            className="h-auto w-60 max-w-full mx-auto"
           />
         </div>
 
         <div className="flex flex-col justify-center items-center gap-8 w-full ">
           <div className="flex gap-6 items-center">
-            <h2 className="text-[#101A2D] font-semibold text-2xl text-center">{getNomeSistema()} <span className="text-[#276EEB]">{getLabelTitle()}</span></h2>
+            <h2 className="text-[#101A2D] font-semibold text-2xl text-center">{SOFTWARE_NAME}</h2>
           </div>
 
           <div className="flex flex-col gap-6 w-full">
@@ -185,8 +185,8 @@ export default function LoginPage() {
 
       <div className="relative w-[55%] h-[90vh] m-auto rounded-4xl overflow-hidden max-[1460px]:w-[60%] hidden md:block">
         <Image
-          src={getBackgroundLoginPath()}
-          alt="Rodovia"
+          src={LOGIN_BACKGROUND_PATH}
+          alt=""
           fill
           className="object-center"
           priority

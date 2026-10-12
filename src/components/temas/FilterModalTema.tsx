@@ -4,7 +4,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TipoResponse } from '@/api/tipos/types';
-import { getLayoutClient, ClienteEnum } from '@/lib/layout/layout-client';
 
 interface FiltersState {
   nome: string;
@@ -31,7 +30,6 @@ export default function FilterModalTema({
   setShowFilterModal,
   criticidades,
 }: FilterModalTemaProps) {
-  const isMvp = getLayoutClient() === ClienteEnum.RTECH;
   return (
     <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
       <DialogContent>
@@ -57,7 +55,7 @@ export default function FilterModalTema({
               placeholder="Filtrar por descrição"
             />
           </div>
-          {isMvp && <div>
+          <div>
             <Label htmlFor="criticidade">Criticidade</Label>
             <Select
               value={filters.criticidade || undefined}
@@ -75,7 +73,7 @@ export default function FilterModalTema({
                 ))}
               </SelectContent>
             </Select>
-          </div>}
+          </div>
         </div>
         <div className="flex justify-end space-x-2 pt-4">
           <Button variant="outline" onClick={clearFilters}>

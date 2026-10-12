@@ -1,4 +1,3 @@
-import { getLayoutClient, ClienteEnum } from '@/lib/layout/layout-client';
 import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { ObrigacaoFiltroRequest, ObrigacaoResponse, ObrigacaoResumoResponse } from '@/api/obrigacao/types';
@@ -79,10 +78,9 @@ function createInitialFilters(defaultFilters?: Partial<ObrigacaoFiltroRequest>):
 }
 
 export function useObrigacoes(options: UseObrigacoesOptions = {}) {
-  const isMvp = getLayoutClient() === ClienteEnum.RTECH;
   const { pageSize = 10, idObrigacaoFromUrl, defaultFilters } = options;
   const router = useRouter();
-  
+
   // Permissões
   const permissions = usePermissoes();
   const { idPerfil } = useUserGestao();
@@ -106,7 +104,7 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [selecionouTodos, setSelecionouTodos] = useState(false);
   const [isSelectingAll, setIsSelectingAll] = useState(false);
-  
+
   // Modais específicos de obrigações
   const [showImportModal, setShowImportModal] = useState(false);
   const [showAnexarProtocoloModal, setShowAnexarProtocoloModal] = useState(false);
@@ -218,7 +216,6 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
   }, []);
 
   const toggleSelect = useCallback((id: number) => {
-    if (!isMvp) return;
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -229,10 +226,10 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
       }
       return next;
     });
-  }, [isMvp]);
+  }, []);
 
   const toggleSelectAll = useCallback(async () => {
-    if (!isMvp || isSelectingAll) return;
+    if (isSelectingAll) return;
 
     if (selecionouTodos) {
       setSelectedIds(new Set());
@@ -272,7 +269,7 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
     } finally {
       setIsSelectingAll(false);
     }
-  }, [isMvp, isSelectingAll, selecionouTodos, totalElements, queryParams, obrigacoes]);
+  }, [isSelectingAll, selecionouTodos, totalElements, queryParams, obrigacoes]);
 
   const clearSelection = useCallback(() => {
     setSelectedIds(new Set());
@@ -284,14 +281,13 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
   const selectedCount = selectedIds.size;
   const allSelected = selecionouTodos && selectedCount > 0;
   const someSelected = !allSelected && selectedCount > 0;
-  const isBulkDeletePending = isMvp && selectedCount > 0 && obrigacaoToDelete === null;
+  const isBulkDeletePending = selectedCount > 0 && obrigacaoToDelete === null;
 
   const handleDeleteSelected = useCallback(() => {
-    if (!isMvp) return;
     if (selectedIds.size === 0) return;
     setObrigacaoToDelete(null);
     setShowDeleteDialog(true);
-  }, [selectedIds, isMvp]);
+  }, [selectedIds]);
 
   const confirmDelete = useCallback(async () => {
     if (!obrigacaoToDelete?.idSolicitacao) return;
@@ -306,7 +302,6 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
   }, [obrigacaoToDelete, deleteObrigacao]);
 
   const confirmDeleteVarias = useCallback(async () => {
-    if (!isMvp) return;
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
 
@@ -319,7 +314,7 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
     } catch (error) {
       console.error('Erro ao excluir obrigações:', error);
     }
-  }, [selectedIds, deleteVariasMutation, isMvp]);
+  }, [selectedIds, deleteVariasMutation]);
 
   const handleNaoAplicavelSuspenso = useCallback((obrigacao: ObrigacaoResponse) => {
     setObrigacaoParaNaoAplicavelSuspenso(obrigacao);
@@ -347,7 +342,7 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
 
   const handleEnviarArea = useCallback(async (obrigacao: ObrigacaoResponse) => {
     if (!obrigacao.idSolicitacao) return;
-    
+
     try {
       const { isValid, errors } = await validar(obrigacao.idSolicitacao);
 
@@ -366,7 +361,7 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
 
   const handleAnexarProtocolo = useCallback(async (obrigacao: ObrigacaoResponse) => {
     if (!obrigacao.idSolicitacao) return;
-    
+
     try {
       const response = await obrigacaoClient.buscarObrigacoesCondicionadas(obrigacao.idSolicitacao);
       const condicionadas = response.obrigacoesCondicionadas || [];
@@ -419,17 +414,17 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
     totalPages,
     totalElements,
     loading: isLoading,
-    
+
     // UI State
     searchQuery,
     setSearchQuery,
     currentPage,
     setCurrentPage,
-    
+
     // Filtros
     filters,
     setFilters,
-    
+
     // Modais principais
     selectedObrigacao,
     setSelectedObrigacao,
@@ -455,7 +450,7 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
     isSelectingAll,
     isBulkDeletePending,
     confirmDeleteVarias,
-    
+
     // Modais específicos
     showImportModal,
     setShowImportModal,
@@ -479,18 +474,18 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
     setShowConfirmTramitacao,
     obrigacaoParaConfirmarTramitacao,
     setObrigacaoParaConfirmarTramitacao,
-    
+
     // Permissões
     canInserirObrigacao: !!permissions.canInserirObrigacao,
     canDeletarObrigacao: !!permissions.canDeletarObrigacao,
     canConcluirObrigacao: !!permissions.canConcluirObrigacao,
     canEnviarAreasObrigacao: !!permissions.canEnviarAreasObrigacao,
     canNaoAplicavelSuspensaObrigacao: !!permissions.canNaoAplicavelSuspensaObrigacao,
-    
+
     // Ordenação
     sortField,
     sortDirection,
-    
+
     // Handlers
     loadObrigacoes,
     handleSort,
@@ -503,7 +498,7 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
     handleEnviarArea,
     handleAnexarProtocolo,
     handleEncaminharTramitacao,
-    
+
     // Helpers
     isAdminOrGestor,
     getStatusText,
