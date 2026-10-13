@@ -12,6 +12,7 @@ import {
     ObrigacaoCalendarioResponse,
     ObrigacaoCalendarioMesCountResponse,
     ObrigacaoStep1Request,
+    ImportacaoObrigacaoResultado,
 } from './types';
 
 export interface PaginatedResponse<T> {
@@ -52,6 +53,13 @@ export class ObrigacaoClient {
     async deletar(id: number): Promise<void> {
         return this.client.request<void>(`/${id}`, {
             method: 'DELETE',
+        });
+    }
+
+    async deletarVarias(ids: number[]): Promise<void> {
+        return this.client.request<void>('/deletar-varias', {
+            method: 'DELETE',
+            body: JSON.stringify({ ids }),
         });
     }
 
@@ -102,11 +110,11 @@ export class ObrigacaoClient {
         });
     }
 
-    async importarObrigacoesExcel(file: File): Promise<{ mensagem: string; obrigacoesImportadas: number }> {
+    async importarObrigacoesExcel(file: File): Promise<ImportacaoObrigacaoResultado> {
         const formData = new FormData();
         formData.append('file', file);
 
-        return this.client.request<{ mensagem: string; obrigacoesImportadas: number }>('/importar-excel', {
+        return this.client.request<ImportacaoObrigacaoResultado>('/importar-excel', {
             method: 'POST',
             body: formData,
         });

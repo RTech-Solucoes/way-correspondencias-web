@@ -1,12 +1,14 @@
+import { getLayoutClient, ClienteEnum } from '@/lib/layout/layout-client';
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
 import correspondenciaClient from '@/api/correspondencia/client';
-import { CorrespondenciaDetalheResponse, CorrespondenciaResponse } from '@/api/correspondencia/types';
+import { CorrespondenciaDetalheResponse, CorrespondenciaFilterParams, CorrespondenciaResponse } from '@/api/correspondencia/types';
 import tramitacoesClient from '@/api/tramitacoes/client';
 import { ArquivoDTO } from '@/api/anexos/type';
 import { AreaSolicitacao } from '@/api/solicitacoes/types';
 import { statusList } from '@/api/status-solicitacao/types';
 import { FlAprovadoTramitacaoEnum } from '@/api/tramitacoes/types';
+import { coletarIdsDoFiltro } from '@/utils/selecao-em-lote';
 
 interface UseSolicitacoesHandlersDeps {
   loadSolicitacoes: () => Promise<void>;
@@ -17,9 +19,13 @@ interface UseSolicitacoesHandlersDeps {
   solicitacaoToDelete: CorrespondenciaResponse | null;
   detalhesCorrespondencia: CorrespondenciaDetalheResponse | null;
   setCurrentPage: (page: number) => void;
+  queryParams: CorrespondenciaFilterParams;
+  totalElements: number;
+  solicitacoesDaPagina: CorrespondenciaResponse[];
 }
 
 export function useSolicitacoesHandlers(deps: UseSolicitacoesHandlersDeps) {
+  const isMvp = getLayoutClient() === ClienteEnum.RTECH;
   const {
     loadSolicitacoes,
     setSelectedSolicitacao,
@@ -29,11 +35,20 @@ export function useSolicitacoesHandlers(deps: UseSolicitacoesHandlersDeps) {
     solicitacaoToDelete,
     detalhesCorrespondencia,
     setCurrentPage,
+    queryParams,
+    totalElements,
+    solicitacoesDaPagina,
   } = deps;
 
   // Estado de ordenação
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+  // Estado de seleção
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [selecionouTodos, setSelecionouTodos] = useState(false);
+  const [isSelectingAll, setIsSelectingAll] = useState(false);
+  const [isDeletingBulk, setIsDeletingBulk] = useState(false);
 
   // Handler de ordenação
   const handleSort = useCallback((field: string) => {
@@ -52,11 +67,96 @@ export function useSolicitacoesHandlers(deps: UseSolicitacoesHandlersDeps) {
     setShowSolicitacaoModal(true);
   }, [setSelectedSolicitacao, setShowSolicitacaoModal]);
 
+  // Handlers de seleção
+  const toggleSelect = useCallback((id: number) => {
+    if (!isMvp) return;
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+        setSelecionouTodos(false);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, [isMvp]);
+
+  const toggleSelectAll = useCallback(async () => {
+    if (!isMvp || isSelectingAll) return;
+
+    if (selecionouTodos) {
+      setSelectedIds(new Set());
+      setSelecionouTodos(false);
+      return;
+    }
+
+    setIsSelectingAll(true);
+
+    // Feedback imediato: marca a página visível antes de ir ao servidor.
+    setSelectedIds(new Set(solicitacoesDaPagina.map((s) => s.idSolicitacao)));
+
+    try {
+      const acumular = (ids: number[]) =>
+        setSelectedIds((prev) => {
+          const next = new Set(prev);
+          ids.forEach((id) => next.add(id));
+          return next;
+        });
+
+      await coletarIdsDoFiltro({
+        total: totalElements,
+        buscarPagina: async (page, size) => {
+          const resposta = await correspondenciaClient.buscarPorFiltro({ ...queryParams, page, size });
+          return Array.isArray(resposta) ? resposta : resposta.content || [];
+        },
+        obterId: (solicitacao) => solicitacao.idSolicitacao,
+        aoReceberIds: acumular,
+      });
+      setSelecionouTodos(true);
+    } catch (error) {
+      console.error('Erro ao selecionar todas as solicitações:', error);
+      toast.error('Não foi possível selecionar todas as solicitações');
+    } finally {
+      setIsSelectingAll(false);
+    }
+  }, [isMvp, isSelectingAll, selecionouTodos, totalElements, queryParams, solicitacoesDaPagina]);
+
+  const clearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+    setSelecionouTodos(false);
+  }, []);
+
+  const isSelected = useCallback((id: number) => selectedIds.has(id), [selectedIds]);
+
+  const getPageSelectionState = useCallback(() => {
+    const selectedCount = selectedIds.size;
+    const allSelected = selecionouTodos && selectedCount > 0;
+
+    return {
+      allSelected,
+      someSelected: !allSelected && selectedCount > 0,
+      selectedCount,
+    };
+  }, [selectedIds, selecionouTodos]);
+
   // Handler de exclusão
   const handleDelete = useCallback((solicitacao: CorrespondenciaResponse) => {
     setSolicitacaoToDelete(solicitacao);
     setShowDeleteDialog(true);
   }, [setSolicitacaoToDelete, setShowDeleteDialog]);
+
+  const handleDeleteSelected = useCallback(() => {
+    if (!isMvp || selectedIds.size === 0) return;
+
+    setSolicitacaoToDelete(null);
+    setShowDeleteDialog(true);
+  }, [selectedIds, setSolicitacaoToDelete, setShowDeleteDialog, isMvp]);
+
+  const closeDeleteDialog = useCallback(() => {
+    setShowDeleteDialog(false);
+    setSolicitacaoToDelete(null);
+  }, [setShowDeleteDialog, setSolicitacaoToDelete]);
 
   const confirmDelete = useCallback(async () => {
     if (solicitacaoToDelete) {
@@ -67,11 +167,34 @@ export function useSolicitacoesHandlers(deps: UseSolicitacoesHandlersDeps) {
       } catch {
         toast.error('Erro ao excluir solicitação');
       } finally {
-        setShowDeleteDialog(false);
-        setSolicitacaoToDelete(null);
+        closeDeleteDialog();
       }
     }
-  }, [solicitacaoToDelete, loadSolicitacoes, setShowDeleteDialog, setSolicitacaoToDelete]);
+  }, [solicitacaoToDelete, loadSolicitacoes, closeDeleteDialog]);
+
+  const confirmDeleteVarias = useCallback(async () => {
+    if (!isMvp) return;
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+
+    setIsDeletingBulk(true);
+    try {
+      await correspondenciaClient.deletarVarias(ids);
+      toast.success(
+        ids.length === 1
+          ? 'Solicitação excluída com sucesso'
+          : 'Solicitações excluídas com sucesso'
+      );
+      setSelectedIds(new Set());
+      setSelecionouTodos(false);
+      await loadSolicitacoes();
+    } catch {
+      toast.error('Erro ao excluir solicitações selecionadas');
+    } finally {
+      setIsDeletingBulk(false);
+      closeDeleteDialog();
+    }
+  }, [selectedIds, loadSolicitacoes, closeDeleteDialog, isMvp]);
 
   // Handler de enviar devolutiva
   const enviarDevolutiva = useCallback(async (
@@ -195,10 +318,24 @@ export function useSolicitacoesHandlers(deps: UseSolicitacoesHandlersDeps) {
     sortDirection,
     handleSort,
 
+    // Seleção
+    selectedIds,
+    toggleSelect,
+    toggleSelectAll,
+    isSelectingAll,
+    clearSelection,
+    isSelected,
+    getPageSelectionState,
+    handleDeleteSelected,
+    closeDeleteDialog,
+    isDeletingBulk,
+    isBulkDeletePending: isMvp && selectedIds.size > 0 && !solicitacaoToDelete,
+
     // Handlers CRUD
     handleEdit,
     handleDelete,
     confirmDelete,
+    confirmDeleteVarias,
     enviarDevolutiva,
 
     // Status helpers

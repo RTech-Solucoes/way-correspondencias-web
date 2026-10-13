@@ -38,5 +38,6 @@ export function getNomeSistema(clienteId?: ClienteEnum): string {
   return config.nomeSistema || 'Software Regulatório';
 }
 
-export type { ClienteEnum, ClienteConfig } from './layout-client.enum';
+export { ClienteEnum } from './layout-client.enum';
+export type { ClienteConfig } from './layout-client.enum';
 

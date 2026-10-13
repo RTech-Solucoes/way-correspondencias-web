@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { ObrigacaoFormData } from '../ObrigacaoModal';
 import { Label } from '@radix-ui/react-label';
@@ -16,13 +16,22 @@ interface Step3ObrigacaoProps {
   formData: ObrigacaoFormData;
   updateFormData: (data: Partial<ObrigacaoFormData>) => void;
   disabled?: boolean;
+
+  recorrenciaDisabled?: boolean;
+
+  recorrenciaPendente?: boolean;
+
+  datasBloqueadas?: boolean;
   onValidationChange?: (hasErrors: boolean) => void;
   idStatusObrigacao?: number | null;
 }
 
 type TipoFrequencia = 'unica' | 'recorrente' | null;
 
-export function Step3Obrigacao({ formData, updateFormData, disabled = false, onValidationChange, idStatusObrigacao }: Step3ObrigacaoProps) {
+const TOOLTIP_DATAS_RECORRENCIA =
+  'Não é possível editar. A alteração pode impactar a recorrência: a data de início define o dia de cada ocorrência, e o intervalo até o término e a data limite é copiado para as obrigações geradas.';
+
+export function Step3Obrigacao({ formData, updateFormData, disabled = false, recorrenciaDisabled = false, recorrenciaPendente = false, datasBloqueadas = false, onValidationChange, idStatusObrigacao }: Step3ObrigacaoProps) {
 
   const [periodicidadesSelecionadas, setPeriodicidadesSelecionadas] = useState<TipoResponse[]>([]);
   const [tipoUnica, setTipoUnica] = useState<TipoResponse | null>(null);
@@ -126,21 +135,52 @@ export function Step3Obrigacao({ formData, updateFormData, disabled = false, onV
     return [statusList.NAO_INICIADO.id, statusList.PENDENTE.id].includes(idStatusObrigacao);
   }, [idStatusObrigacao]);
 
+  // Considera só a periodicidade que já veio salva. Escolher Única/Recorrente agora
+  // não pode travar os campos no meio do preenchimento.
+  const periodicidadeInicialRef = useRef<number | null | undefined>(undefined);
+  if (periodicidadeInicialRef.current === undefined) {
+    periodicidadeInicialRef.current = formData.idTipoPeriodicidade ?? null;
+  }
+  const periodicidadeInicial = periodicidadeInicialRef.current;
+  const recorrenciaJaSalva = recorrenciaDisabled && periodicidadeInicial != null;
+  const recorrenciaBloqueada = disabled || recorrenciaJaSalva;
+  const mostrarAvisoRecorrenciaPendente = recorrenciaPendente && !recorrenciaJaSalva && !disabled;
+  const eraRecorrente =
+    recorrenciaJaSalva && tipoUnica != null && periodicidadeInicial !== tipoUnica.idTipo;
+  const datasTravadasPorRecorrencia = datasBloqueadas && eraRecorrente && !disabled;
+
   return (
     <div className="space-y-6">
       <div className="space-y-3">
         <Label>Qual será a frequência da obrigação? <span className="text-red-500">*</span></Label>
+        {mostrarAvisoRecorrenciaPendente && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+            <p className="font-medium">Atenção: esta escolha não poderá ser alterada</p>
+            <p className="mt-1">
+              Selecione Única ou Recorrente com cuidado. Depois que você clicar em Salvar Alterações,
+              a definição da recorrência será permanente e não poderá ser modificada. Revise sua
+              escolha antes de salvar.
+            </p>
+          </div>
+        )}
+        {recorrenciaBloqueada && !disabled && (
+          <p className="text-sm text-gray-500">
+            A recorrência dessa obrigação foi configurada.
+            <br />
+            Como essa definição já foi salva, ela não poderá mais ser alterada.
+          </p>
+        )}
         <div className="grid grid-cols-2 gap-4">
           <div
-            onClick={() => !disabled && handleFrequenciaChange('unica')}
+            onClick={() => !recorrenciaBloqueada && handleFrequenciaChange('unica')}
             className={`
               border-2 rounded-lg p-4 transition-all
-              ${disabled 
-                ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-50' 
+              ${recorrenciaBloqueada
+                ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-50'
                 : 'cursor-pointer border-gray-200 hover:border-gray-300'
               }
-              ${!disabled && tipoFrequencia === 'unica' 
-                ? 'border-blue-500 bg-blue-50' 
+              ${tipoFrequencia === 'unica'
+                ? 'border-blue-500 bg-blue-50'
                 : ''
               }
             `}
@@ -170,15 +210,15 @@ export function Step3Obrigacao({ formData, updateFormData, disabled = false, onV
           </div>
 
           <div
-            onClick={() => !disabled && handleFrequenciaChange('recorrente')}
+            onClick={() => !recorrenciaBloqueada && handleFrequenciaChange('recorrente')}
             className={`
               border-2 rounded-lg p-4 transition-all
-              ${disabled 
-                ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-50' 
+              ${recorrenciaBloqueada
+                ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-50'
                 : 'cursor-pointer border-gray-200 hover:border-gray-300'
               }
-              ${!disabled && tipoFrequencia === 'recorrente' 
-                ? 'border-blue-500 bg-blue-50' 
+              ${tipoFrequencia === 'recorrente'
+                ? 'border-blue-500 bg-blue-50'
                 : ''
               }
             `}
@@ -209,8 +249,7 @@ export function Step3Obrigacao({ formData, updateFormData, disabled = false, onV
         </div>
       </div>
 
-        {tipoFrequencia && (
-          <div className="space-y-4">
+        <div className="space-y-4">
             <div className="flex items-center justify-between">
               <Label className="text-base font-semibold">Defina os prazos</Label>
               <div className="flex items-center gap-2">
@@ -233,7 +272,7 @@ export function Step3Obrigacao({ formData, updateFormData, disabled = false, onV
                       idTipoPeriodicidade: parseInt(value)
                     });
                   }}
-                  disabled={disabled || loadingTipos}
+                  disabled={recorrenciaBloqueada || loadingTipos}
                 >
                   <SelectTrigger id="idTipoPeriodicidade">
                     <SelectValue placeholder={loadingTipos ? 'Carregando...' : 'Selecione'} />
@@ -252,24 +291,24 @@ export function Step3Obrigacao({ formData, updateFormData, disabled = false, onV
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2"> 
                 <Label htmlFor="dtInicio">Data de Início <span className="text-red-500">*</span></Label>
-                <Input
+                <CampoDataComTooltip
                   id="dtInicio"
-                  type="date"
                   value={formData.dtInicio || ''}
-                  onChange={(e) => updateFormData({ dtInicio: e.target.value })}
-                  disabled={disabled}
+                  onChange={(value) => updateFormData({ dtInicio: value })}
+                  disabled={disabled || datasTravadasPorRecorrencia}
+                  tooltip={datasTravadasPorRecorrencia ? TOOLTIP_DATAS_RECORRENCIA : null}
                 />
               </div>
 
               <div className="space-y-2"> 
                 <Label htmlFor="dtTermino">Data de Término <span className="text-red-500">*</span></Label>
-                <Input
+                <CampoDataComTooltip
                   id="dtTermino"
-                  type="date"
                   value={formData.dtTermino || ''}
-                  onChange={(e) => updateFormData({ dtTermino: e.target.value })}
+                  onChange={(value) => updateFormData({ dtTermino: value })}
+                  disabled={disabled || datasTravadasPorRecorrencia}
                   className={erroDataTermino ? 'border-red-500' : ''}
-                  disabled={disabled}
+                  tooltip={datasTravadasPorRecorrencia ? TOOLTIP_DATAS_RECORRENCIA : null}
                 />
                 {erroDataTermino && (
                   <p className="text-sm text-red-500 mt-1">{erroDataTermino}</p>
@@ -278,35 +317,69 @@ export function Step3Obrigacao({ formData, updateFormData, disabled = false, onV
 
               <div className="space-y-2"> 
                 <Label htmlFor="dtLimite">Data Limite <span className="text-red-500">*</span></Label>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div>
-                        <Input
-                          id="dtLimite"
-                          type="date"
-                          disabled={disabled || !isPermitidoEditarDtLimite}
-                          value={formData.dtLimite || ''}
-                          onChange={(e) => updateFormData({ dtLimite: e.target.value })}
-                          className={erroDataLimite ? 'border-red-500' : ''}
-                        />
-                      </div>
-                    </TooltipTrigger>
-                    {!isPermitidoEditarDtLimite && (
-                      <TooltipContent>
-                        <p>A data limite só pode ser alterada quando o status for &quot;Não Iniciado&quot; ou &quot;Pendente&quot;</p>
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-                </TooltipProvider>
+                <CampoDataComTooltip
+                  id="dtLimite"
+                  value={formData.dtLimite || ''}
+                  onChange={(value) => updateFormData({ dtLimite: value })}
+                  disabled={disabled || datasTravadasPorRecorrencia || !isPermitidoEditarDtLimite}
+                  className={erroDataLimite ? 'border-red-500' : ''}
+                  tooltip={
+                    datasTravadasPorRecorrencia
+                      ? TOOLTIP_DATAS_RECORRENCIA
+                      : !isPermitidoEditarDtLimite
+                        ? 'A data limite só pode ser alterada quando o status for "Não Iniciado" ou "Pendente".'
+                        : null
+                  }
+                />
                 {erroDataLimite && (
                   <p className="text-sm text-red-500 mt-1">{erroDataLimite}</p>
                 )}
               </div>
             </div>
           </div>
-        )}
     </div>
+  );
+}
+
+function CampoDataComTooltip({
+  id,
+  value,
+  onChange,
+  disabled,
+  className,
+  tooltip,
+}: {
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+  disabled: boolean;
+  className?: string;
+  tooltip: string | null;
+}) {
+  const input = (
+    <Input
+      id={id}
+      type="date"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      disabled={disabled}
+      className={className}
+    />
+  );
+
+  if (!tooltip) return input;
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div>{input}</div>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p className="max-w-xs">{tooltip}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 

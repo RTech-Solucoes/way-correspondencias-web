@@ -5,17 +5,26 @@ import {
   useTemasQuery, 
   useCreateTema, 
   useUpdateTema, 
-  useDeleteTema 
+  useDeleteTema,
+  useDeleteTemas,
 } from './use-temas-query';
+import tiposClient from '@/api/tipos/client';
+import { CategoriaEnum, TipoResponse } from '@/api/tipos/types';
+import { getLayoutClient, ClienteEnum } from '@/lib/layout/layout-client';
+import temasClient from '@/api/temas/client';
+import { coletarIdsDoFiltro } from '@/utils/selecao-em-lote';
+import { toast } from 'sonner';
 
 interface FiltersState {
   nome: string;
   descricao: string;
+  criticidade: string;
 }
 
 const initialFilters: FiltersState = {
   nome: '',
-  descricao: ''
+  descricao: '',
+  criticidade: '',
 };
 
 interface UseTemasOptions {
@@ -23,6 +32,7 @@ interface UseTemasOptions {
 }
 
 export function useTemas(options: UseTemasOptions = {}) {
+  const isMvp = getLayoutClient() === ClienteEnum.RTECH;
   const { pageSize = 10 } = options;
   const size = pageSize;
 
@@ -35,6 +45,7 @@ export function useTemas(options: UseTemasOptions = {}) {
   // Estado de filtros
   const [filters, setFilters] = useState<FiltersState>(initialFilters);
   const [activeFilters, setActiveFilters] = useState<FiltersState>(initialFilters);
+  const [criticidades, setCriticidades] = useState<TipoResponse[]>([]);
 
   // Estado de modais
   const [selectedTema, setSelectedTema] = useState<TemaResponse | null>(null);
@@ -42,9 +53,34 @@ export function useTemas(options: UseTemasOptions = {}) {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [temaToDelete, setTemaToDelete] = useState<TemaResponse | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [selecionouTodos, setSelecionouTodos] = useState(false);
+  const [isSelectingAll, setIsSelectingAll] = useState(false);
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
+
+  useEffect(() => {
+    if (!isMvp) return;
+    let cancelado = false;
+
+    const carregarCriticidades = async () => {
+      try {
+        const tipos = await tiposClient.buscarPorCategorias([CategoriaEnum.OBRIG_CRITICIDADE]);
+        if (!cancelado) {
+          setCriticidades(tipos.filter((tipo) => tipo.nmCategoria === CategoriaEnum.OBRIG_CRITICIDADE));
+        }
+      } catch (error) {
+        console.error('Erro ao carregar criticidades:', error);
+      }
+    };
+
+    carregarCriticidades();
+
+    return () => {
+      cancelado = true;
+    };
+  }, [isMvp]);
 
   // Refs para detectar mudança de filtros (melhor prática React Query)
   const prevFiltersRef = useRef(JSON.stringify(activeFilters));
@@ -67,11 +103,12 @@ export function useTemas(options: UseTemasOptions = {}) {
       filtro: debouncedSearchQuery || undefined,
       nmTema: activeFilters.nome || undefined,
       dsTema: activeFilters.descricao || undefined,
+      idTipoCriticidade: isMvp && activeFilters.criticidade ? Number(activeFilters.criticidade) : undefined,
       page: effectivePage,
       size: size,
       sort: sortField ? `${sortField},${sortDirection === 'desc' ? 'desc' : 'asc'}` : undefined,
     };
-  }, [debouncedSearchQuery, activeFilters, currentPage, size, sortField, sortDirection]);
+  }, [debouncedSearchQuery, activeFilters, currentPage, size, sortField, sortDirection, isMvp]);
 
   // Sincroniza estado da página com a página efetiva calculada
   useEffect(() => {
@@ -87,6 +124,14 @@ export function useTemas(options: UseTemasOptions = {}) {
   const createMutation = useCreateTema();
   const updateMutation = useUpdateTema();
   const deleteMutation = useDeleteTema();
+  const deleteVariasMutation = useDeleteTemas();
+
+  const totalElements = data?.totalElements || 0;
+
+  useEffect(() => {
+    setSelectedIds(new Set());
+    setSelecionouTodos(false);
+  }, [debouncedSearchQuery, activeFilters]);
 
   // Handlers
   const handleSort = useCallback((field: keyof TemaResponse) => {
@@ -109,13 +154,99 @@ export function useTemas(options: UseTemasOptions = {}) {
     setShowDeleteDialog(true);
   }, []);
 
+  const toggleSelect = useCallback((id: number) => {
+    if (!isMvp) return;
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+        setSelecionouTodos(false);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, [isMvp]);
+
+  const toggleSelectAll = useCallback(async () => {
+    if (!isMvp || isSelectingAll) return;
+
+    if (selecionouTodos) {
+      setSelectedIds(new Set());
+      setSelecionouTodos(false);
+      return;
+    }
+
+    setIsSelectingAll(true);
+
+    // Feedback imediato: marca a página visível antes de ir ao servidor.
+    setSelectedIds(new Set((data?.content || []).map((tema) => tema.idTema)));
+
+    try {
+      const acumular = (ids: number[]) =>
+        setSelectedIds((prev) => {
+          const next = new Set(prev);
+          ids.forEach((id) => next.add(id));
+          return next;
+        });
+
+      await coletarIdsDoFiltro({
+        total: totalElements,
+        buscarPagina: async (page, size) => {
+          const resposta = await temasClient.buscarPorFiltro({ ...queryParams, page, size });
+          return resposta.content || [];
+        },
+        obterId: (tema) => tema.idTema,
+        aoReceberIds: acumular,
+      });
+      setSelecionouTodos(true);
+    } catch (error) {
+      console.error('Erro ao selecionar todos os temas:', error);
+      toast.error('Não foi possível selecionar todos os temas');
+    } finally {
+      setIsSelectingAll(false);
+    }
+  }, [isMvp, isSelectingAll, selecionouTodos, totalElements, queryParams, data?.content]);
+
+  const clearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+    setSelecionouTodos(false);
+  }, []);
+
+  const isSelected = useCallback((id: number) => selectedIds.has(id), [selectedIds]);
+
+  const handleDeleteSelected = useCallback(() => {
+    if (!isMvp) return;
+    if (selectedIds.size === 0) return;
+    setTemaToDelete(null);
+    setShowDeleteDialog(true);
+  }, [selectedIds, isMvp]);
+
+  const closeDeleteDialog = useCallback(() => {
+    setShowDeleteDialog(false);
+    setTemaToDelete(null);
+  }, []);
+
   const confirmDelete = useCallback(async () => {
     if (temaToDelete) {
       await deleteMutation.mutateAsync(temaToDelete.idTema);
-      setShowDeleteDialog(false);
-      setTemaToDelete(null);
+      closeDeleteDialog();
     }
-  }, [temaToDelete, deleteMutation]);
+  }, [temaToDelete, deleteMutation, closeDeleteDialog]);
+
+  const confirmDeleteVarias = useCallback(async () => {
+    if (!isMvp) return;
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+
+    try {
+      await deleteVariasMutation.mutateAsync(ids);
+      setSelectedIds(new Set());
+      setSelecionouTodos(false);
+    } finally {
+      closeDeleteDialog();
+    }
+  }, [selectedIds, deleteVariasMutation, closeDeleteDialog, isMvp]);
 
   const onTemaSave = useCallback(async (formData: TemaRequest) => {
     try {
@@ -202,14 +333,33 @@ export function useTemas(options: UseTemasOptions = {}) {
         setActiveFilters(newFilters);
         setFilters(newFilters);
       }
+    }] : []),
+    ...(isMvp && activeFilters.criticidade ? [{
+      key: 'criticidade',
+      label: 'Criticidade',
+      value: criticidades.find((tipo) => tipo.idTipo.toString() === activeFilters.criticidade)?.dsTipo
+        || activeFilters.criticidade,
+      color: 'orange' as const,
+      onRemove: () => {
+        const newFilters = { ...activeFilters, criticidade: '' };
+        setActiveFilters(newFilters);
+        setFilters(newFilters);
+      }
     }] : [])
-  ], [searchQuery, activeFilters]);
+  ], [searchQuery, activeFilters, criticidades, isMvp]);
+
+  const temas = sortedTemas();
+  const selectedCount = selectedIds.size;
+  const allSelected = selecionouTodos && selectedCount > 0;
+  const someSelected = !allSelected && selectedCount > 0;
+  const isBulkDeletePending = isMvp && selectedCount > 0 && temaToDelete === null;
 
   return {
     // Dados
-    temas: sortedTemas(),
+    temas,
     totalPages: data?.totalPages || 0,
-    totalElements: data?.totalElements || 0,
+    totalElements,
+    criticidades,
 
     // UI State
     loading: isLoading,
@@ -233,8 +383,21 @@ export function useTemas(options: UseTemasOptions = {}) {
     showFilterModal,
     setShowFilterModal,
     showDeleteDialog,
-    setShowDeleteDialog,
     temaToDelete,
+
+    // Seleção
+    selectedCount,
+    allSelected,
+    someSelected,
+    isSelected,
+    toggleSelect,
+    toggleSelectAll,
+    clearSelection,
+    handleDeleteSelected,
+    closeDeleteDialog,
+    isDeletingBulk: deleteVariasMutation.isPending,
+    isSelectingAll,
+    isBulkDeletePending,
 
     // Handlers
     loadTemas: refetch,
@@ -242,6 +405,7 @@ export function useTemas(options: UseTemasOptions = {}) {
     handleEdit,
     handleDelete,
     confirmDelete,
+    confirmDeleteVarias,
     onTemaSave,
     handleCloseTemaModal,
     handleOpenCreateTema,

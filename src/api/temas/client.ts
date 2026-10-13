@@ -21,6 +21,7 @@ class TemasClient {
       'filtro',
       'nmTema',
       'dsTema',
+      'idTipoCriticidade',
       'page',
       'size',
       'sort',
@@ -50,6 +51,13 @@ class TemasClient {
   async deletar(id: number): Promise<void> {
     return this.client.request<void>(`/${id}`, {
       method: 'DELETE',
+    });
+  }
+
+  async deletarVarias(ids: number[]): Promise<void> {
+    return this.client.request<void>('/deletar-varias', {
+      method: 'DELETE',
+      body: JSON.stringify({ ids }),
     });
   }
 }

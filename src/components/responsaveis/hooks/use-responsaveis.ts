@@ -1,3 +1,5 @@
+import { useIdResponsavelLogado } from '@/hooks/use-id-responsavel-logado';
+import { getLayoutClient, ClienteEnum } from '@/lib/layout/layout-client';
 import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import { ResponsavelResponse, PagedResponse } from '@/api/responsaveis/types';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -5,8 +7,12 @@ import { usePermissoes } from '@/context/permissoes/PermissoesContext';
 import { 
   useResponsaveisQuery, 
   useDeleteResponsavel,
+  useDeleteResponsaveis,
   useGerarSenhaResponsavel
 } from './use-responsaveis-query';
+import responsaveisClient from '@/api/responsaveis/client';
+import { coletarIdsDoFiltro } from '@/utils/selecao-em-lote';
+import { toast } from 'sonner';
 
 interface FiltersState {
   usuario: string;
@@ -23,6 +29,8 @@ interface UseResponsaveisOptions {
 }
 
 export function useResponsaveis(options: UseResponsaveisOptions = {}) {
+  const idResponsavelLogado = useIdResponsavelLogado();
+  const isMvp = getLayoutClient() === ClienteEnum.RTECH;
   const { pageSize = 10 } = options;
   const size = pageSize;
 
@@ -42,6 +50,9 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [responsavelToDelete, setResponsavelToDelete] = useState<ResponsavelResponse | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [selecionouTodos, setSelecionouTodos] = useState(false);
+  const [isSelectingAll, setIsSelectingAll] = useState(false);
 
   // Estado específico para gerar senha
   const [gerandoSenha, setGerandoSenha] = useState<number | null>(null);
@@ -92,7 +103,16 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
 
   // Mutations
   const deleteMutation = useDeleteResponsavel();
+  const deleteVariasMutation = useDeleteResponsaveis();
   const gerarSenhaMutation = useGerarSenhaResponsavel();
+
+  const responsaveis = useMemo(() => data?.content || [], [data?.content]);
+  const totalElements = data?.totalElements || 0;
+
+  useEffect(() => {
+    setSelectedIds(new Set());
+    setSelecionouTodos(false);
+  }, [debouncedSearchQuery, activeFilters]);
 
   // Handlers
   const handleSort = useCallback((field: keyof ResponsavelResponse) => {
@@ -115,13 +135,109 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
     setShowDeleteDialog(true);
   }, []);
 
+  const toggleSelect = useCallback((id: number) => {
+    if (!isMvp || id === idResponsavelLogado) return;
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+        setSelecionouTodos(false);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, [isMvp, idResponsavelLogado]);
+
+  const toggleSelectAll = useCallback(async () => {
+    if (!isMvp || isSelectingAll) return;
+
+    if (selecionouTodos) {
+      setSelectedIds(new Set());
+      setSelecionouTodos(false);
+      return;
+    }
+
+    setIsSelectingAll(true);
+
+    // Feedback imediato: marca a página visível antes de ir ao servidor.
+    setSelectedIds(new Set(
+      responsaveis
+        .filter((r) => r.idResponsavel !== idResponsavelLogado)
+        .map((r) => r.idResponsavel),
+    ));
+
+    try {
+      const acumular = (ids: number[]) =>
+        setSelectedIds((prev) => {
+          const next = new Set(prev);
+          ids.forEach((id) => next.add(id));
+          return next;
+        });
+
+      await coletarIdsDoFiltro({
+        total: totalElements,
+        buscarPagina: async (page, size) => {
+          const resposta = await responsaveisClient.buscarPorFiltro({ ...queryParams, page, size });
+          return resposta.content || [];
+        },
+        obterId: (responsavel) => responsavel.idResponsavel,
+        podeSelecionar: (responsavel) => responsavel.idResponsavel !== idResponsavelLogado,
+        aoReceberIds: acumular,
+      });
+      setSelecionouTodos(true);
+    } catch (error) {
+      console.error('Erro ao selecionar todos os responsáveis:', error);
+      toast.error('Não foi possível selecionar todos os responsáveis');
+    } finally {
+      setIsSelectingAll(false);
+    }
+  }, [isMvp, isSelectingAll, selecionouTodos, totalElements, queryParams, idResponsavelLogado, responsaveis]);
+
+  const clearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+    setSelecionouTodos(false);
+  }, []);
+
+  const isSelected = useCallback((id: number) => selectedIds.has(id), [selectedIds]);
+
+  const selectedCount = selectedIds.size;
+  const allSelected = selecionouTodos && selectedCount > 0;
+  const someSelected = !allSelected && selectedCount > 0;
+  const isBulkDeletePending = isMvp && selectedCount > 0 && responsavelToDelete === null;
+
+  const handleDeleteSelected = useCallback(() => {
+    if (!isMvp) return;
+    if (selectedIds.size === 0) return;
+    setResponsavelToDelete(null);
+    setShowDeleteDialog(true);
+  }, [selectedIds, isMvp]);
+
+  const closeDeleteDialog = useCallback(() => {
+    setShowDeleteDialog(false);
+    setResponsavelToDelete(null);
+  }, []);
+
   const confirmDelete = useCallback(async () => {
     if (responsavelToDelete) {
       await deleteMutation.mutateAsync(responsavelToDelete.idResponsavel);
-      setShowDeleteDialog(false);
-      setResponsavelToDelete(null);
+      closeDeleteDialog();
     }
-  }, [responsavelToDelete, deleteMutation]);
+  }, [responsavelToDelete, deleteMutation, closeDeleteDialog]);
+
+  const confirmDeleteVarias = useCallback(async () => {
+    if (!isMvp) return;
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+
+    try {
+      await deleteVariasMutation.mutateAsync(ids);
+      setSelectedIds(new Set());
+      setSelecionouTodos(false);
+    } finally {
+      closeDeleteDialog();
+    }
+  }, [selectedIds, deleteVariasMutation, closeDeleteDialog, isMvp]);
 
   const onResponsavelSave = useCallback(() => {
     setShowResponsavelModal(false);
@@ -209,9 +325,9 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
 
   return {
     // Dados
-    responsaveis: data?.content || [],
+    responsaveis,
     totalPages: data?.totalPages || 0,
-    totalElements: data?.totalElements || 0,
+    totalElements,
 
     // UI State
     loading: isLoading,
@@ -236,8 +352,21 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
     showFilterModal,
     setShowFilterModal,
     showDeleteDialog,
-    setShowDeleteDialog,
     responsavelToDelete,
+
+    // Seleção
+    selectedCount,
+    allSelected,
+    someSelected,
+    isSelected,
+    toggleSelect,
+    toggleSelectAll,
+    clearSelection,
+    handleDeleteSelected,
+    closeDeleteDialog,
+    isDeletingBulk: deleteVariasMutation.isPending,
+    isSelectingAll,
+    isBulkDeletePending,
 
     // Gerar Senha
     gerandoSenha,
@@ -257,6 +386,7 @@ export function useResponsaveis(options: UseResponsaveisOptions = {}) {
     handleEdit,
     handleDelete,
     confirmDelete,
+    confirmDeleteVarias,
     onResponsavelSave,
     handleCloseResponsavelModal,
     handleOpenCreateResponsavel,

@@ -1,5 +1,6 @@
 import { Icon } from "@phosphor-icons/react";
 import { Permissoes } from "@/constants/permissoes";
+import { ClienteEnum } from "@/lib/layout/layout-client.enum";
 
 export interface PageDef {
   path: string;
@@ -7,6 +8,7 @@ export interface PageDef {
   icon: Icon;
   permission?: Permissoes;
   module: string;
+  clients?: ClienteEnum[];
 }
 
 export interface ModuleDef {

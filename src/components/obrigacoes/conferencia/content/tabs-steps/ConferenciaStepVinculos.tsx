@@ -5,6 +5,7 @@ import { Loader2, ExternalLink } from 'lucide-react';
 import type { ObrigacaoDetalheResponse, ObrigacaoResumoResponse } from '@/api/obrigacao/types';
 import obrigacaoClient from '@/api/obrigacao/client';
 import { ConferenciaInfoRow } from './ConferenciaInfoRow';
+import { OrigemObrigacaoAviso, origemFromObrigacao, temInformacaoOrigem } from '@/components/obrigacoes/OrigemObrigacaoAviso';
 import type { ReactNode } from 'react';
 
 interface ConferenciaStepVinculosProps {
@@ -79,6 +80,8 @@ export function ConferenciaStepVinculos({ obrigacao }: ConferenciaStepVinculosPr
     window.open(`/solicitacoes?idSolicitacao=${idSolicitacao}`, '_blank', 'noopener,noreferrer');
   };
 
+  const origem = origemFromObrigacao(obrigacao);
+
   return (
     <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white">
       <div className="px-8 py-6">
@@ -86,6 +89,12 @@ export function ConferenciaStepVinculos({ obrigacao }: ConferenciaStepVinculosPr
         <p className="text-sm text-gray-500">Relacionamentos da obrigação com outros registros.</p>
       </div>
       <div className="divide-y divide-gray-100">
+        {temInformacaoOrigem(origem) && (
+          <ConferenciaInfoRow
+            label="Informação"
+            value={<OrigemObrigacaoAviso origem={origem} />}
+          />
+        )}
         <InfoGridRow
           items={[
             {

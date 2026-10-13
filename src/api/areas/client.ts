@@ -60,6 +60,13 @@ class AreasClient {
     });
   }
 
+  async deletarVarias(ids: number[]): Promise<void> {
+    return this.client.request<void>('/deletar-varias', {
+      method: 'DELETE',
+      body: JSON.stringify({ ids }),
+    });
+  }
+
   async buscarPorExecutorAvancado(): Promise<AreaExecutorAvancadoResponse[]> {
     return this.client.request<AreaExecutorAvancadoResponse[]>(`/executor-avancado`, {
       method: 'GET',

@@ -26,6 +26,11 @@ export interface PermissoesContextProps {
   canAtualizarResponsavel: boolean | null
   canDeletarResponsavel: boolean | null
   canGerarSenhaResponsavel: boolean | null
+  canListarConcessionaria: boolean | null
+  canInserirConcessionaria: boolean | null
+  canAtualizarConcessionaria: boolean | null
+  canDeletarConcessionaria: boolean | null
+  canConfigurarConcessionaria: boolean
   canListarSolicitacao: boolean | null
   canInserirSolicitacao: boolean | null
   canAtualizarSolicitacao: boolean | null
@@ -70,6 +75,17 @@ export const PermissoesProvider = ({ children }: { children: ReactNode }) => {
   const canAtualizarResponsavel = useHasPermissao(Permissoes.RESPONSAVEL_ATUALIZAR)
   const canDeletarResponsavel = useHasPermissao(Permissoes.RESPONSAVEL_DELETAR)
   const canGerarSenhaResponsavel = useHasPermissao(Permissoes.RESPONSAVEL_GERAR_SENHA)
+  const canListarConcessionaria = useHasPermissao(Permissoes.CONCESSIONARIA_LISTAR)
+  const canInserirConcessionaria = useHasPermissao(Permissoes.CONCESSIONARIA_INSERIR)
+  const canAtualizarConcessionaria = useHasPermissao(Permissoes.CONCESSIONARIA_ATUALIZAR)
+  const canDeletarConcessionaria = useHasPermissao(Permissoes.CONCESSIONARIA_DELETAR)
+  const canInserirConfiguracaoConcessionaria = useHasPermissao(Permissoes.CONFIGURACAO_CONCESSIONARIA_INSERIR)
+  const canAtualizarConfiguracaoConcessionaria = useHasPermissao(Permissoes.CONFIGURACAO_CONCESSIONARIA_ATUALIZAR)
+  const canConfigurarConcessionaria = Boolean(
+    canInserirConfiguracaoConcessionaria ||
+    canAtualizarConfiguracaoConcessionaria ||
+    canAtualizarConcessionaria
+  )
   const canListarSolicitacao = useHasPermissao(Permissoes.SOLICITACAO_LISTAR)
   const canInserirSolicitacao = useHasPermissao(Permissoes.SOLICITACAO_INSERIR)
   const canAtualizarSolicitacao = useHasPermissao(Permissoes.SOLICITACAO_ATUALIZAR)
@@ -113,6 +129,11 @@ export const PermissoesProvider = ({ children }: { children: ReactNode }) => {
         canAtualizarResponsavel,
         canDeletarResponsavel,
         canGerarSenhaResponsavel,
+        canListarConcessionaria,
+        canInserirConcessionaria,
+        canAtualizarConcessionaria,
+        canDeletarConcessionaria,
+        canConfigurarConcessionaria,
         canListarSolicitacao,
         canInserirSolicitacao,
         canAtualizarSolicitacao,

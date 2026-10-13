@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import ProfileButton from './ProfileButton';
+import { HeaderHelpButton } from './HeaderHelpButton';
 import { getLayoutClient, getLogoPath } from '@/lib/layout/layout-client';
 
 
@@ -165,6 +166,9 @@ const logoPath = getLogoPath(layoutClient);
         </div>
 
         <div className="flex items-center">
+          <div className="mr-1">
+            <HeaderHelpButton />
+          </div>
           <div className="relative mr-4" ref={notifRef}>
             <button
               type="button"

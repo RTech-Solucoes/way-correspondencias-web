@@ -49,7 +49,7 @@ export function useDetalhesSolicitacaoData({
   const [expandDescricao, setExpandDescricao] = useState(false);
   const [canToggleDescricao, setCanToggleDescricao] = useState(false);
   const [lineHeightPx, setLineHeightPx] = useState<number | null>(null);
-  const descRef = useRef<HTMLParagraphElement | null>(null);
+  const descRef = useRef<HTMLParagraphElement>(null);
 
   const correspond = correspondencia as CorrespondenciaDetalheResponse;
 

@@ -5,7 +5,8 @@ export function useHasPermissao(permissao: string): boolean | null {
 
   if (!permissoesStorage) {
     return null;
-  } else {
-    return permissoesStorage?.includes(permissao) ?? null;
   }
+
+  const permissaoNormalizada = permissao.trim();
+  return permissoesStorage.some((item) => item.trim() === permissaoNormalizada);
 }

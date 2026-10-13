@@ -67,6 +67,9 @@ export function useSolicitacoes(options: UseSolicitacoesOptions = {}) {
     solicitacaoToDelete: modalsHook.solicitacaoToDelete,
     detalhesCorrespondencia: modalsHook.detalhesCorrespondencia,
     setCurrentPage: filtersHook.setCurrentPage,
+    queryParams: dataHook.queryParams,
+    totalElements: dataHook.totalElements,
+    solicitacoesDaPagina: dataHook.solicitacoes,
   });
 
   // Sincronizar sortField e sortDirection
@@ -277,6 +280,10 @@ export function useSolicitacoes(options: UseSolicitacoesOptions = {}) {
   const isInitialMountRef = useRef(true);
 
   useEffect(() => {
+    handlersHook.clearSelection();
+  }, [filtersHook.currentPage, handlersHook.clearSelection]);
+
+  useEffect(() => {
     // Verifica se filtros ou busca mudaram
     const currentFiltersStr = JSON.stringify(filtersHook.activeFilters);
     const filtersChanged = prevActiveFiltersRef.current !== currentFiltersStr;
@@ -308,6 +315,11 @@ export function useSolicitacoes(options: UseSolicitacoesOptions = {}) {
     dataHook.debouncedSearchQuery, 
     handlersHook.sortField
   ]);
+
+  const pageSelectionState = useMemo(
+    () => handlersHook.getPageSelectionState(),
+    [handlersHook.getPageSelectionState, handlersHook.selectedIds]
+  );
 
   return {
     // Dados principais
@@ -378,6 +390,10 @@ export function useSolicitacoes(options: UseSolicitacoesOptions = {}) {
     handleEdit: handlersHook.handleEdit,
     handleDelete: handlersHook.handleDelete,
     confirmDelete: handlersHook.confirmDelete,
+    confirmDeleteVarias: handlersHook.confirmDeleteVarias,
+    closeDeleteDialog: handlersHook.closeDeleteDialog,
+    isDeletingBulk: handlersHook.isDeletingBulk,
+    isBulkDeletePending: handlersHook.isBulkDeletePending,
     onSolicitacaoSave: modalsHook.onSolicitacaoSave,
     handleOpenCreateSolicitacao: modalsHook.handleOpenCreateSolicitacao,
     handleCloseSolicitacaoModal: modalsHook.handleCloseSolicitacaoModal,
@@ -386,6 +402,18 @@ export function useSolicitacoes(options: UseSolicitacoesOptions = {}) {
     openDetalhes: modalsHook.openDetalhes,
     handleCloseDetalhesModal: modalsHook.handleCloseDetalhesModal,
     enviarDevolutiva: handlersHook.enviarDevolutiva,
+
+    // Seleção
+    selectedIds: handlersHook.selectedIds,
+    selectedCount: pageSelectionState.selectedCount,
+    allSelected: pageSelectionState.allSelected,
+    someSelected: pageSelectionState.someSelected,
+    toggleSelect: handlersHook.toggleSelect,
+    toggleSelectAll: handlersHook.toggleSelectAll,
+    isSelectingAll: handlersHook.isSelectingAll,
+    isSelected: handlersHook.isSelected,
+    handleDeleteSelected: handlersHook.handleDeleteSelected,
+    clearSelection: handlersHook.clearSelection,
 
     // Status helpers
     getStatusBadgeVariant: handlersHook.getStatusBadgeVariant,
