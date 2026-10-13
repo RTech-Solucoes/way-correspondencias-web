@@ -193,4 +193,5 @@ export default function AreaModal({area, open, onClose, onSave}: AreaModalProps)
       </DialogContent>
     </Dialog>
   );
+  
 }
