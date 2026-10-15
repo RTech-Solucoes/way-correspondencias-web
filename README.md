@@ -2,6 +2,12 @@
 
 Sistema web completo para gerenciamento de correspondências, solicitações, emails e tramitações desenvolvido com Next.js 15 e TypeScript. O sistema permite gerenciar todo o fluxo de trabalho de correspondências entre concessionárias e órgãos reguladores.
 
+## Publicar o MVP
+
+O MVP usa o mesmo frontend, com build próprio para Cloudflare Workers Free.
+Os ambientes de demonstração e desenvolvimento têm configurações separadas.
+O procedimento está em [deployment/cloudflare/README.md](deployment/cloudflare/README.md).
+
 ## 📋 Sobre o Projeto
 
 Este é uma plataforma de gestão de correspondências que facilita o controle e acompanhamento de solicitações, emails, tramitações e responsáveis. O sistema oferece funcionalidades completas de gestão, relatórios em PDF e Excel, controle de prazos, e muito mais. O sistema suporta múltiplos clientes com branding personalizado.

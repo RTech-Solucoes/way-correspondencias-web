@@ -20,6 +20,15 @@ Requer Node.js 22 ou superior e Yarn 1.22.22. Execute na raiz da aplicação:
 
 Use `dev` no lugar de `prd` para gerar o ambiente de desenvolvimento. A preparação copia a fonte atual para um diretório temporário novo e escreve o caminho na saída padrão. Não instala dependências nem publica recursos.
 
+Para publicar, entre no diretório gerado, confira a conta com `yarn wrangler whoami`
+e execute `yarn wrangler deploy --config wrangler.jsonc`. A conta RTech tem ID
+`3ca9471dadca9766b3dc5de098577052`. O `wrangler.jsonc` fixa a conta, o Worker e
+o domínio do ambiente escolhido. O acesso à conta precisa permitir essa publicação.
+
+O domínio deve abrir a tela de login. Depois de entrar, confira o dashboard e
+abra uma correspondência com anexo. O primeiro acesso à API pode levar alguns
+minutos enquanto a instância Render Free retoma a execução.
+
 O build usa configuração pública própria do MVP e um lockfile separado. Alterações em `src/`, `public/` e nas configurações da aplicação entram na próxima preparação. Alterações de dependências exigem revisar e atualizar o `yarn.lock` deste diretório antes de repetir a instalação congelada.
 
 O manifesto `.mvp-source-manifest.json` registra os arquivos copiados e seus hashes. O build bloqueia requisições externas, exceto o download das fontes Google.
