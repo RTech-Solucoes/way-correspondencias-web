@@ -15,6 +15,6 @@ usam variáveis e placeholders.
 
 ## 15/10/2026 · Avisos de produção
 
-Toda publicação avisa o grupo. O resultado do envio aparece em um job próprio.
-Os cartões mantêm projeto, branch, status, mensagem e commit, com os indicadores
-de sucesso e falha.
+Toda publicação em produção na WAY avisa o grupo. O resultado do envio aparece
+em um job próprio. Os cartões mantêm projeto, branch, status, mensagem e commit,
+com os indicadores de sucesso e falha.

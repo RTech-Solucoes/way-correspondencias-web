@@ -460,7 +460,7 @@ docker run -p 3000:3000 way-correspondencias-web
 | WAY, produção frontend | `Deploy WAY web main`, em `.github/workflows/workflow-way-main.yaml` | Manual, em `main`, com `source_ref` aprovado |
 | WAY, produção API | `Deploy WAY api main`, no repositório `way-correspondencias-api` | Manual, em `main`, antes do frontend |
 | MVP, produção | `Deploy Correspondencias Web for Production`, em `.github/workflows/workflow-mvp-main.yaml` | Push em `main` |
-| MVP, desenvolvimento | `Deploy Correspondencias Web for Develop`, em `.github/workflows/workflow-mvp-develop.yaml` | Push em `develop` |
+| MVP, desenvolvimento | `Deploy Correspondencias Web for Develop`, em `.github/workflows/workflow-mvp-develop.yaml` | Push em `develop` ou execução manual, com a branch selecionada |
 
 
 ### MVP na Cloudflare
