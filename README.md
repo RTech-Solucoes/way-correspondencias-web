@@ -424,7 +424,7 @@ O sistema espera uma API REST com os seguintes endpoints:
 
 ## Build local e Docker
 
-Os comandos desta seção geram ou iniciam a aplicação localmente. Não publicam uma versão nos servidores WAY.
+Comandos para gerar o build e executar a aplicação localmente.
 
 ### Gerar o build localmente
 
@@ -459,7 +459,7 @@ docker run -p 3000:3000 way-correspondencias-web
 
 ### Configuração do fluxo WAY
 
-A publicação usa o ECR da conta nova em `sa-east-1` e o gateway de deploy. Não exige que o operador entre no console AWS nem conecte uma VPN local para disparar o workflow. O gateway mantém a conexão com a infraestrutura do cliente. Para abrir o portal, é necessário acesso à rede e ao DNS da WAY.
+A publicação usa o Amazon ECR em `sa-east-1` e o gateway de deploy da WAY.
 
 Os secrets já referenciados pelo workflow são:
 
@@ -469,23 +469,9 @@ Os secrets já referenciados pelo workflow são:
 | `WAY_ECR_ACCOUNT_ID` | Identificação e conferência da conta AWS |
 | `WAY_DEPLOY_PRD_TOKEN` | Autenticação do pedido ao gateway de produção |
 | `ENV_FILE_WAY_PRD` | Conteúdo do `.env` usado no build do frontend |
-| `WAY_CHAT_WEBHOOK` | Aviso ao grupo quando `notify` estiver habilitado |
+| `WAY_CHAT_WEBHOOK` | Destino dos avisos de publicação |
 
 As variáveis `NEXT_PUBLIC_*` do frontend são compiladas na imagem. Alterar apenas o ambiente do container não muda o endereço da API presente no JavaScript. O workflow preserva uma imagem já existente para o mesmo SHA. Uma mudança de configuração de build precisa de uma imagem nova, identificada e conferida antes da instalação.
-
-### Antes e depois da publicação
-
-- Confirme os dois commits aprovados e o impacto das migrações. Não publique toda a `develop` por conveniência.
-- Execute a API e aguarde sua conferência antes de iniciar o frontend. Os repositórios não impõem essa ordem automaticamente.
-- O workflow só conclui a instalação quando o gateway informa sucesso e o digest instalado coincide com o digest publicado no ECR.
-- Depois, valide a aplicação no cliente. Saúde HTTP e workflow verde não substituem a conferência dos fluxos afetados.
-- O retorno do container anterior não desfaz migrações, permissões ou dados do banco. A recuperação do banco deve estar definida antes de publicar mudanças que dependam dela.
-
-### Se uma execução falhar
-
-Confira primeiro o nome do workflow e o ambiente. Uma falha em **Deploy Correspondencias Web for Production** pertence ao MVP, não ao deploy WAY. Reexecutar esse job não publica no cliente.
-
-Registre o link da execução WAY, o SHA solicitado, a etapa que falhou e a imagem ou digest informado. Se a comunicação cair depois do pedido ao gateway, confira a versão instalada antes de tentar novamente. Não altere secrets nem exponha credenciais para contornar uma falha de outro canal.
 
 ## 📝 Convenções de Código
 
