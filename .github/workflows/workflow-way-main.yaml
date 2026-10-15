@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
     inputs:
       source_ref:
-        description: Commit a publicar
-        required: false
+        description: SHA completo da versão aprovada (40 caracteres)
+        required: true
         type: string
       notify:
         description: Notificar grupo
@@ -37,6 +37,10 @@ jobs:
           SOURCE_REF: ${{ inputs.source_ref }}
           NOTIFY: ${{ inputs.notify }}
         run: |
+          if ! [[ "$SOURCE_REF" =~ ^[0-9a-f]{40}$ ]]; then
+            echo 'Informe o SHA completo de 40 caracteres da versão aprovada'
+            exit 1
+          fi
           if [ "$WORKFLOW_BRANCH" = "$TARGET_BRANCH" ]; then
             exit 0
           fi
@@ -50,7 +54,7 @@ jobs:
 
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.source_ref || github.sha }}
+          ref: ${{ inputs.source_ref }}
           fetch-depth: 0
 
       - name: Identificar versão

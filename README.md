@@ -2,6 +2,49 @@
 
 Sistema web completo para gerenciamento de correspondências, solicitações, emails e tramitações desenvolvido com Next.js 15 e TypeScript. O sistema permite gerenciar todo o fluxo de trabalho de correspondências entre concessionárias e órgãos reguladores.
 
+## Publicar na WAY
+
+A produção WAY é publicada manualmente pelo GitHub Actions. Push ou merge em
+`main` aciona o MVP legado e não publica no ambiente do cliente.
+
+| Componente | Workflow de produção | Repositório |
+| --- | --- | --- |
+| API | [Deploy WAY api main](https://github.com/RTech-Solucoes/way-correspondencias-api/actions/workflows/workflow-way-main.yaml) | `way-correspondencias-api` |
+| Frontend | [Deploy WAY web main](https://github.com/RTech-Solucoes/way-correspondencias-web/actions/workflows/workflow-way-main.yaml) | `way-correspondencias-web` |
+
+1. Confirme a janela e os dois commits aprovados. API e frontend têm SHAs próprios.
+2. Abra **Deploy WAY api main → Run workflow**. Selecione `main` e informe em
+   `source_ref` o SHA completo de 40 caracteres aprovado para a API.
+3. Aguarde **Publicar e confirmar imagem instalada** concluir com sucesso.
+   Confira a versão e as verificações previstas para o pacote.
+4. Execute **Deploy WAY web main** no outro repositório, em `main`, com o SHA
+   completo aprovado para o frontend.
+5. Confira as duas execuções e valide login e os fluxos alterados no cliente.
+   `notify` controla o aviso ao grupo e vem habilitado por padrão.
+
+Quem publica precisa de permissão de escrita nos repositórios. O GitHub usa os
+secrets configurados e o gateway mantém a conexão com a WAY. Disparar o workflow
+independe de console AWS, VPN local, SSH ou IP fixo no computador do operador.
+Para abrir o portal do cliente, é necessário acesso à rede e ao DNS da WAY.
+
+Uma imagem enviada ao ECR ainda não comprova instalação. O workflow confere o
+digest instalado e a saúde da aplicação. O commit aprovado em `source_ref` pode
+ser anterior ao último commit de `main`, e não deve ser substituído por uma
+branch ou por toda a `develop` por conveniência.
+
+### Como interpretar os indicadores
+
+- **Deploy WAY** registra a publicação no cliente.
+- **Deploy Correspondencias ... for Production/Develop** é o MVP legado.
+  Qualquer push em `main` ou `develop`, inclusive de documentação, pode acioná-lo.
+- **Production/Preview da Vercel** representa outra integração de hospedagem.
+  Seu resultado não mede a instalação nos servidores WAY.
+- A autoria do commit e o usuário que executou a publicação são registros distintos.
+
+Se aparecer `The security token included in the request is invalid`, confira
+primeiro o workflow. Os fluxos MVP ainda apontam à AWS antiga. Reexecutá-los ou
+trocar seus secrets pelas chaves WAY não publica no cliente.
+
 ## 📋 Sobre o Projeto
 
 Este é uma plataforma de gestão de correspondências que facilita o controle e acompanhamento de solicitações, emails, tramitações e responsáveis. O sistema oferece funcionalidades completas de gestão, relatórios em PDF e Excel, controle de prazos, e muito mais. O sistema suporta múltiplos clientes com branding personalizado.
@@ -20,8 +63,8 @@ Este é uma plataforma de gestão de correspondências que facilita o controle e
 ## 🚀 Tecnologias Utilizadas
 
 ### Frontend
-- **Next.js 15.4.6** - Framework React para aplicações full-stack com App Router
-- **React 19.1.1** - Biblioteca JavaScript para construção de interfaces
+- **Next.js 15.4.11** - Framework React para aplicações full-stack com App Router
+- **React 19.1.8** - Biblioteca JavaScript para construção de interfaces
 - **TypeScript 5.6.2** - Superset JavaScript com tipagem estática
 - **Tailwind CSS 4** - Framework CSS utility-first
 - **Radix UI** - Componentes UI acessíveis e customizáveis
@@ -42,7 +85,7 @@ Este é uma plataforma de gestão de correspondências que facilita o controle e
 
 ### Pré-requisitos
 
-- **Node.js** 18+ ou **Bun** (recomendado)
+- **Node.js 20** para reproduzir o build Docker de publicação. Bun pode ser usado no desenvolvimento local.
 - **npm**, **yarn** ou **bun** como gerenciador de pacotes
 - **API backend** em execução e acessível (por padrão `http://localhost:8080/api`; ajuste `NEXT_PUBLIC_API_URL` se for outro host/porta)
 
@@ -343,14 +386,9 @@ O responsável com perfil **Admin** possui a opção de enviar a senha do usuár
 - Permissão `RESPONSAVEL_GERAR_SENHA`
 - Endpoint: `POST /responsaveis/{id}/gerar-senha`
 
-### 2.5 Senha padrão para Admin (Seed – quando NÃO for LDAP)
+### 2.5 Primeiro acesso sem LDAP
 
-Quando o sistema **não** está configurado com LDAP, a senha padrão para o usuário Admin é:
-
-- **Senha padrão:** `Rtech1234`
-- **Hash (bcrypt):** `$10$acPyxdXF7pqD0Ul27hrAbeyPf4yH0CfvqkpjWkaVmsO17yUp9UZ6C`
-
-> **Nota:** Esta senha é usada apenas durante a configuração inicial ou quando LDAP está desabilitado. Em produção com LDAP, as senhas são gerenciadas pelo servidor LDAP.
+Para uso sem LDAP, configure o primeiro acesso no backend e compartilhe a credencial pelo canal restrito da equipe. Senhas iniciais e hashes não pertencem ao README. Na produção WAY com LDAP, o acesso utiliza as contas do diretório do cliente.
 
 ## 🔧 Configuração de Desenvolvimento
 
@@ -406,15 +444,17 @@ O sistema espera uma API REST com os seguintes endpoints:
 - Loading Overlay
 - Multi-select (Áreas, Concessionárias)
 
-## 🚀 Deploy
+## Build local e Docker
 
-### Build de Produção
+Os comandos desta seção geram ou iniciam a aplicação localmente. Não publicam uma versão nos servidores WAY.
+
+### Gerar o build localmente
 
 ```bash
 bun build
 ```
 
-### Executar em Produção
+### Executar o build localmente
 
 ```bash
 bun start
@@ -429,67 +469,46 @@ docker build -t way-correspondencias-web .
 docker run -p 3000:3000 way-correspondencias-web
 ```
 
-## 🔄 CI/CD Pipeline
+## Canais de publicação
 
-### Ativar Pipeline com Variáveis de Ambiente
+| Destino | Workflow | Como inicia |
+| --- | --- | --- |
+| WAY, produção frontend | `Deploy WAY web main`, em `.github/workflows/workflow-way-main.yaml` | Manual, em `main`, com `source_ref` aprovado |
+| WAY, produção API | `Deploy WAY api main`, no repositório `way-correspondencias-api` | Manual, em `main`, antes do frontend |
+| MVP, produção | `Deploy Correspondencias Web for Production`, em `.github/workflows/workflow-mvp-main.yaml` | Push em `main` |
+| MVP, desenvolvimento | `Deploy Correspondencias Web for Develop`, em `.github/workflows/workflow-mvp-develop.yaml` | Push em `develop` |
 
-Para ativar a pipeline de CI/CD, é necessário configurar as variáveis de ambiente no sistema de pipeline (GitHub Actions, GitLab CI, Azure DevOps, etc.).
+Os checks e previews herdados da Vercel são independentes da instalação nos servidores WAY. O resultado dessa integração ou de um workflow do MVP não confirma a publicação no cliente.
 
-#### Variáveis de Ambiente Obrigatórias
+### Configuração do fluxo WAY
 
-Configure as seguintes variáveis de ambiente na pipeline:
+A publicação usa o ECR da conta nova em `sa-east-1` e o gateway de deploy. Não exige que o operador entre no console AWS nem conecte uma VPN local para disparar o workflow. O gateway mantém a conexão com a infraestrutura do cliente. Para abrir o portal, é necessário acesso à rede e ao DNS da WAY.
 
-```bash
-# URL da API backend (produção/staging)
-NEXT_PUBLIC_API_URL=https://api.exemplo.com/api
+Os secrets já referenciados pelo workflow são:
 
-# Layout do cliente (way ou mvp)
-NEXT_PUBLIC_LAYOUT_CLIENT=way
+| Secret | Uso |
+| --- | --- |
+| `WAY_ECR_ACCESS_KEY_ID` e `WAY_ECR_SECRET_ACCESS_KEY` | Autenticação da publicação de imagens |
+| `WAY_ECR_ACCOUNT_ID` | Identificação e conferência da conta AWS |
+| `WAY_DEPLOY_PRD_TOKEN` | Autenticação do pedido ao gateway de produção |
+| `ENV_FILE_WAY_PRD` | Conteúdo do `.env` usado no build do frontend |
+| `WAY_CHAT_WEBHOOK` | Aviso ao grupo quando `notify` estiver habilitado |
 
-NEXT_PUBLIC_LDAP_ENABLED=false
+As variáveis `NEXT_PUBLIC_*` do frontend são compiladas na imagem. Alterar apenas o ambiente do container não muda o endereço da API presente no JavaScript. O workflow preserva uma imagem já existente para o mesmo SHA. Uma mudança de configuração de build precisa de uma imagem nova, identificada e conferida antes da instalação.
 
-# Variáveis adicionais (se necessário)
-NODE_ENV=production
-```
+### Antes e depois da publicação
 
-#### Passos para Ativar a Pipeline
+- Confirme os dois commits aprovados e o impacto das migrações. Não publique toda a `develop` por conveniência.
+- Execute a API e aguarde sua conferência antes de iniciar o frontend. Os repositórios não impõem essa ordem automaticamente.
+- O workflow só conclui a instalação quando o gateway informa sucesso e o digest instalado coincide com o digest publicado no ECR.
+- Depois, valide a aplicação no cliente. Saúde HTTP e workflow verde não substituem a conferência dos fluxos afetados.
+- O retorno do container anterior não desfaz migrações, permissões ou dados do banco. A recuperação do banco deve estar definida antes de publicar mudanças que dependam dela.
 
-1. **Acesse as configurações da Pipeline**
-   - No GitHub Actions: Settings → Secrets and variables → Actions
-   - No GitLab CI: Settings → CI/CD → Variables
-   - No Azure DevOps: Pipelines → Library → Variable groups
+### Se uma execução falhar
 
-2. **Adicione as variáveis de ambiente**
-   - Adicione cada variável como uma variável secreta ou de ambiente
-   - Certifique-se de que os valores estão corretos para o ambiente de destino
+Confira primeiro o nome do workflow e o ambiente. Uma falha em **Deploy Correspondencias Web for Production** pertence ao MVP, não ao deploy WAY. Reexecutar esse job não publica no cliente.
 
-3. **Atualize o arquivo de pipeline** (se necessário)
-   - Verifique se o arquivo `.github/workflows/*.yml` ou similar está configurado
-   - Garanta que as variáveis estão sendo passadas corretamente para o build
-
-4. **Execute a Pipeline**
-   - Faça push para a branch configurada (geralmente `main`)
-   - Ou dispare manualmente a pipeline através da interface
-
-#### Exemplo de Configuração no GitHub Actions
-
-```yaml
-env:
-  NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
-  NEXT_PUBLIC_LAYOUT_CLIENT: ${{ secrets.NEXT_PUBLIC_LAYOUT_CLIENT }}
-  NEXT_PUBLIC_LDAP_ENABLED: ${{ secrets.NEXT_PUBLIC_LDAP_ENABLED }}
-  NODE_ENV: production
-```
-
-#### Verificação
-
-Após configurar as variáveis:
-1. Execute a pipeline
-2. Verifique os logs do build
-3. Confirme que as variáveis estão sendo carregadas corretamente
-4. Valide o deploy em ambiente de staging/produção
-
-> **Importante:** Nunca commite valores de produção diretamente no código. Sempre use variáveis de ambiente ou secrets do sistema de CI/CD.
+Registre o link da execução WAY, o SHA solicitado, a etapa que falhou e a imagem ou digest informado. Se a comunicação cair depois do pedido ao gateway, confira a versão instalada antes de tentar novamente. Não altere secrets nem exponha credenciais para contornar uma falha de outro canal.
 
 ## 📝 Convenções de Código
 
