@@ -3,6 +3,10 @@ name: Deploy Correspondencias Web for Develop
   push:
     branches:
       - develop
+  workflow_dispatch: {}
+concurrency:
+  group: mvp-web-dev
+  cancel-in-progress: false
 permissions:
   contents: read
 env:
@@ -94,7 +98,7 @@ jobs:
       - name: Send success message to Google Chat
         if: success()
         env:
-          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message || github.sha }}
           GIT_BRANCH: ${{ github.ref_name }}
           WEBHOOK_URL: ${{ secrets.MVP_CHAT_WEBHOOK }}
         run: |
@@ -155,7 +159,7 @@ jobs:
       - name: Send failure message to Google Chat
         if: failure() && steps.verify.outcome != 'success'
         env:
-          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message || github.sha }}
           GIT_BRANCH: ${{ github.ref_name }}
           WEBHOOK_URL: ${{ secrets.MVP_CHAT_WEBHOOK }}
         run: |
