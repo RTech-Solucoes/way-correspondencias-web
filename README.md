@@ -444,6 +444,11 @@ próprios em [`deployment/cloudflare/`](deployment/cloudflare/README.md).
 Os workflows preparam a fonte atual e conferem `X-App-Revision` após a publicação.
 O build da WAY mantém seu `package.json`, Dockerfile e configuração originais.
 
+| Ambiente MVP | Workflow | Como inicia |
+| --- | --- | --- |
+| Produção | `.github/workflows/workflow-mvp-main.yaml` | Push em `main` |
+| Desenvolvimento | `.github/workflows/workflow-mvp-develop.yaml` | Push em `develop` ou execução manual, com a branch selecionada |
+
 ### Ativar Pipeline com Variáveis de Ambiente
 
 Para ativar a pipeline de CI/CD, é necessário configurar as variáveis de ambiente no sistema de pipeline (GitHub Actions, GitLab CI, Azure DevOps, etc.).

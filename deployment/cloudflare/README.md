@@ -10,6 +10,8 @@ Requer Node.js 22 ou superior e Yarn 1.22.22. Execute na raiz da aplicação:
 ```bash
 (
   set -eu
+  GITHUB_SHA="$(git rev-parse HEAD)"
+  export GITHUB_SHA
   MVP_WEB_DIR="$(node deployment/cloudflare/prepare.mjs prd)"
   cd "$MVP_WEB_DIR"
   yarn install --frozen-lockfile --ignore-scripts --non-interactive
@@ -20,7 +22,7 @@ Requer Node.js 22 ou superior e Yarn 1.22.22. Execute na raiz da aplicação:
 
 Use `dev` no lugar de `prd` para gerar o ambiente de desenvolvimento. A preparação copia a fonte atual para um diretório temporário novo e escreve o caminho na saída padrão. Não instala dependências nem publica recursos.
 
-Para publicar, entre no diretório gerado, confira a conta com `yarn wrangler whoami`
+Para publicar, entre no diretório gerado, confira a conta com `yarn wrangler whoami --json`
 e execute `yarn wrangler deploy --config wrangler.jsonc`. A conta RTech tem ID
 `3ca9471dadca9766b3dc5de098577052`. O `wrangler.jsonc` fixa a conta, o Worker e
 o domínio do ambiente escolhido. O acesso à conta precisa permitir essa publicação.
