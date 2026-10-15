@@ -23,6 +23,12 @@ todos. O cartão apresenta projeto, branch, status, mensagem e commit. O campo
 Commit abre a execução no GitHub. O aviso é obrigatório, e o resultado do envio
 aparece nesse job.
 
+## Publicar o MVP
+
+O MVP usa o mesmo frontend, com build próprio para Cloudflare Workers Free.
+Os ambientes de demonstração e desenvolvimento têm configurações separadas.
+O procedimento está em [deployment/cloudflare/README.md](deployment/cloudflare/README.md).
+
 ## 📋 Sobre o Projeto
 
 Este é uma plataforma de gestão de correspondências que facilita o controle e acompanhamento de solicitações, emails, tramitações e responsáveis. O sistema oferece funcionalidades completas de gestão, relatórios em PDF e Excel, controle de prazos, e muito mais. O sistema suporta múltiplos clientes com branding personalizado.
