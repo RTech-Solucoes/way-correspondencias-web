@@ -457,6 +457,13 @@ docker run -p 3000:3000 way-correspondencias-web
 | MVP, desenvolvimento | `Deploy Correspondencias Web for Develop`, em `.github/workflows/workflow-mvp-develop.yaml` | Push em `develop` |
 
 
+### MVP na Cloudflare
+
+O frontend MVP usa OpenNext e Cloudflare Workers, com configuração e lockfile
+próprios em [`deployment/cloudflare/`](deployment/cloudflare/README.md).
+Os workflows preparam a fonte atual e conferem `X-App-Revision` após a publicação.
+O build da WAY mantém seu `package.json`, Dockerfile e configuração originais.
+
 ### Configuração do fluxo WAY
 
 A publicação usa o Amazon ECR em `sa-east-1` e o gateway de deploy da WAY.
