@@ -4,48 +4,24 @@ Sistema web completo para gerenciamento de correspondências, solicitações, em
 
 ## Publicar na WAY
 
-Toda publicação em produção avisa o grupo **PROJETOS - WAY 262**, com menção a todos, resultado, SHA solicitado, responsável e link da execução. O envio não possui opção de desligamento. O job `deploy` informa o resultado da publicação. O job `notify` informa separadamente se o aviso chegou ao Chat. Se apenas `notify` falhar, conferir `deploy` antes de repetir a publicação.
+A publicação em produção é manual, pelo GitHub Actions, com a branch `main` e o
+SHA completo da versão aprovada em `source_ref`.
 
-A produção WAY é publicada manualmente pelo GitHub Actions. Push ou merge em
-`main` aciona o MVP legado e não publica no ambiente do cliente.
+| Ordem | Workflow |
+| --- | --- |
+| 1. API | [Deploy WAY api main](https://github.com/RTech-Solucoes/way-correspondencias-api/actions/workflows/workflow-way-main.yaml) |
+| 2. Frontend | [Deploy WAY web main](https://github.com/RTech-Solucoes/way-correspondencias-web/actions/workflows/workflow-way-main.yaml) |
 
-| Componente | Workflow de produção | Repositório |
-| --- | --- | --- |
-| API | [Deploy WAY api main](https://github.com/RTech-Solucoes/way-correspondencias-api/actions/workflows/workflow-way-main.yaml) | `way-correspondencias-api` |
-| Frontend | [Deploy WAY web main](https://github.com/RTech-Solucoes/way-correspondencias-web/actions/workflows/workflow-way-main.yaml) | `way-correspondencias-web` |
+1. Confirme a janela e os commits aprovados para API e frontend.
+2. Execute o workflow da API, informando seu SHA de 40 caracteres.
+3. Aguarde o job `deploy` confirmar a instalação.
+4. Execute o workflow do frontend com o SHA aprovado para ele.
+5. Confira as duas execuções e valide o login e o fluxo alterado no sistema.
 
-1. Confirme a janela e os dois commits aprovados. API e frontend têm SHAs próprios.
-2. Abra **Deploy WAY api main → Run workflow**. Selecione `main` e informe em
-   `source_ref` o SHA completo de 40 caracteres aprovado para a API.
-3. Aguarde **Publicar e confirmar imagem instalada** concluir com sucesso.
-   Confira a versão e as verificações previstas para o pacote.
-4. Execute **Deploy WAY web main** no outro repositório, em `main`, com o SHA
-   completo aprovado para o frontend.
-5. Confira as duas execuções e valide login e os fluxos alterados no cliente.
-   `notify` controla o aviso ao grupo e vem habilitado por padrão.
-
-Quem publica precisa de permissão de escrita nos repositórios. O GitHub usa os
-secrets configurados e o gateway mantém a conexão com a WAY. Disparar o workflow
-independe de console AWS, VPN local, SSH ou IP fixo no computador do operador.
-Para abrir o portal do cliente, é necessário acesso à rede e ao DNS da WAY.
-
-Uma imagem enviada ao ECR ainda não comprova instalação. O workflow confere o
-digest instalado e a saúde da aplicação. O commit aprovado em `source_ref` pode
-ser anterior ao último commit de `main`, e não deve ser substituído por uma
-branch ou por toda a `develop` por conveniência.
-
-### Como interpretar os indicadores
-
-- **Deploy WAY** registra a publicação no cliente.
-- **Deploy Correspondencias ... for Production/Develop** é o MVP legado.
-  Qualquer push em `main` ou `develop`, inclusive de documentação, pode acioná-lo.
-- **Production/Preview da Vercel** representa outra integração de hospedagem.
-  Seu resultado não mede a instalação nos servidores WAY.
-- A autoria do commit e o usuário que executou a publicação são registros distintos.
-
-Se aparecer `The security token included in the request is invalid`, confira
-primeiro o workflow. Os fluxos MVP ainda apontam à AWS antiga. Reexecutá-los ou
-trocar seus secrets pelas chaves WAY não publica no cliente.
+O job `notify` envia o resultado ao grupo **PROJETOS - WAY 262**, com menção a
+todos. O cartão apresenta projeto, branch, status, mensagem e commit. O campo
+Commit abre a execução no GitHub. O aviso é obrigatório, e o resultado do envio
+aparece nesse job.
 
 ## 📋 Sobre o Projeto
 
@@ -480,7 +456,6 @@ docker run -p 3000:3000 way-correspondencias-web
 | MVP, produção | `Deploy Correspondencias Web for Production`, em `.github/workflows/workflow-mvp-main.yaml` | Push em `main` |
 | MVP, desenvolvimento | `Deploy Correspondencias Web for Develop`, em `.github/workflows/workflow-mvp-develop.yaml` | Push em `develop` |
 
-Os checks e previews herdados da Vercel são independentes da instalação nos servidores WAY. O resultado dessa integração ou de um workflow do MVP não confirma a publicação no cliente.
 
 ### Configuração do fluxo WAY
 

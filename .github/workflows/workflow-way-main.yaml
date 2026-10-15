@@ -120,7 +120,6 @@ jobs:
           WEBHOOK_URL: ${{ secrets.WAY_CHAT_WEBHOOK }}
           DEPLOY_RESULT: ${{ needs.deploy.result }}
           SOURCE_REF: ${{ inputs.source_ref }}
-          OPERATOR: ${{ github.actor }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           if [ -z "$WEBHOOK_URL" ]; then
@@ -133,11 +132,11 @@ jobs:
           esac
           case "$DEPLOY_RESULT" in
             success)
-              STATUS='Sucesso ✅'
-              MESSAGE='Versão instalada e digest conferidos no servidor.'
+              STATUS='SUCCESS ✅'
+              MESSAGE='Deploy concluído e versão instalada conferida.'
               ;;
             failure)
-              STATUS='Falha ❌'
+              STATUS='FAILED ❌'
               MESSAGE='Não foi possível confirmar a conclusão da publicação. Consulte a execução.'
               ;;
             cancelled)
@@ -150,10 +149,16 @@ jobs:
               ;;
             *) echo '::error::Resultado de publicação desconhecido.'; exit 1 ;;
           esac
-          jq -n --arg project "$IMAGE_NAME" --arg status "$STATUS" \
-            --arg message "$MESSAGE" --arg commit "$SOURCE_REF" \
-            --arg operator "$OPERATOR" --arg run "$RUN_URL" \
-            '{text:("<users/all>\nPublicação WAY · produção\n\nComponente: "+$project+"\nResultado: "+$status+"\n"+$message+"\nVersão solicitada: "+$commit+"\nResponsável: "+$operator+"\nExecução: "+$run)}' > notification.json
+          jq -n --arg project "$IMAGE_NAME" --arg branch "$TARGET_BRANCH" \
+            --arg status "$STATUS" --arg message "$MESSAGE" --arg commit "$SOURCE_REF" \
+            --arg run "$RUN_URL" \
+            '{text:"<users/all>\nDeploy do projeto Way Correspondencias",cards:[{sections:[{widgets:[
+              {keyValue:{topLabel:"Projeto",content:$project}},
+              {keyValue:{topLabel:"Branch",content:$branch}},
+              {keyValue:{topLabel:"Status",content:$status}},
+              {keyValue:{topLabel:"Mensagem",content:$message}},
+              {keyValue:{topLabel:"Commit",content:$commit,onClick:{openLink:{url:$run}}}}
+            ]}]}]}' > notification.json
           if ! curl --fail-with-body --silent --show-error --connect-timeout 10 --max-time 20 \
             -H 'Content-Type: application/json' --data-binary @notification.json \
             "$WEBHOOK_URL" -o notification-response.json; then
