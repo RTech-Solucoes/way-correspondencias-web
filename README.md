@@ -2,6 +2,12 @@
 
 Sistema web completo para gerenciamento de correspondências, solicitações, emails e tramitações desenvolvido com Next.js 15 e TypeScript. O sistema permite gerenciar todo o fluxo de trabalho de correspondências entre concessionárias e órgãos reguladores.
 
+## Publicar o MVP
+
+O MVP usa o mesmo frontend, com build próprio para Cloudflare Workers Free.
+Os ambientes de demonstração e desenvolvimento têm configurações separadas.
+O procedimento está em [deployment/cloudflare/README.md](deployment/cloudflare/README.md).
+
 ## 📋 Sobre o Projeto
 
 Este é uma plataforma de gestão de correspondências que facilita o controle e acompanhamento de solicitações, emails, tramitações e responsáveis. O sistema oferece funcionalidades completas de gestão, relatórios em PDF e Excel, controle de prazos, e muito mais. O sistema suporta múltiplos clientes com branding personalizado.
@@ -430,6 +436,18 @@ docker run -p 3000:3000 way-correspondencias-web
 ```
 
 ## 🔄 CI/CD Pipeline
+
+### MVP na Cloudflare
+
+O frontend MVP usa OpenNext e Cloudflare Workers, com configuração e lockfile
+próprios em [`deployment/cloudflare/`](deployment/cloudflare/README.md).
+Os workflows preparam a fonte atual e conferem `X-App-Revision` após a publicação.
+O build da WAY mantém seu `package.json`, Dockerfile e configuração originais.
+
+| Ambiente MVP | Workflow | Como inicia |
+| --- | --- | --- |
+| Produção | `.github/workflows/workflow-mvp-main.yaml` | Push em `main` |
+| Desenvolvimento | `.github/workflows/workflow-mvp-develop.yaml` | Push em `develop` ou execução manual, com a branch selecionada |
 
 ### Ativar Pipeline com Variáveis de Ambiente
 
