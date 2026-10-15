@@ -431,6 +431,13 @@ docker run -p 3000:3000 way-correspondencias-web
 
 ## 🔄 CI/CD Pipeline
 
+### MVP na Cloudflare
+
+O frontend MVP usa OpenNext e Cloudflare Workers, com configuração e lockfile
+próprios em [`deployment/cloudflare/`](deployment/cloudflare/README.md).
+Os workflows preparam a fonte atual e conferem `X-App-Revision` após a publicação.
+O build da WAY mantém seu `package.json`, Dockerfile e configuração originais.
+
 ### Ativar Pipeline com Variáveis de Ambiente
 
 Para ativar a pipeline de CI/CD, é necessário configurar as variáveis de ambiente no sistema de pipeline (GitHub Actions, GitLab CI, Azure DevOps, etc.).
