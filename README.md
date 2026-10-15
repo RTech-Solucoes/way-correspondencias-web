@@ -4,6 +4,8 @@ Sistema web completo para gerenciamento de correspondências, solicitações, em
 
 ## Publicar na WAY
 
+Toda publicação em produção avisa o grupo **PROJETOS - WAY 262**, com menção a todos, resultado, SHA solicitado, responsável e link da execução. O envio não possui opção de desligamento. O job `deploy` informa o resultado da publicação. O job `notify` informa separadamente se o aviso chegou ao Chat. Se apenas `notify` falhar, conferir `deploy` antes de repetir a publicação.
+
 A produção WAY é publicada manualmente pelo GitHub Actions. Push ou merge em
 `main` aciona o MVP legado e não publica no ambiente do cliente.
 

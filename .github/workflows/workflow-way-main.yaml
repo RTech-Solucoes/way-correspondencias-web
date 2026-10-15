@@ -7,11 +7,6 @@ on:
         description: SHA completo da versão aprovada (40 caracteres)
         required: true
         type: string
-      notify:
-        description: Notificar grupo
-        required: false
-        type: boolean
-        default: true
 
 permissions:
   contents: read
@@ -35,18 +30,12 @@ jobs:
           WORKFLOW_BRANCH: ${{ github.ref_name }}
           EVENT_NAME: ${{ github.event_name }}
           SOURCE_REF: ${{ inputs.source_ref }}
-          NOTIFY: ${{ inputs.notify }}
         run: |
           if ! [[ "$SOURCE_REF" =~ ^[0-9a-f]{40}$ ]]; then
             echo 'Informe o SHA completo de 40 caracteres da versão aprovada'
             exit 1
           fi
           if [ "$WORKFLOW_BRANCH" = "$TARGET_BRANCH" ]; then
-            exit 0
-          fi
-          if [ "$TARGET_BRANCH" = develop ] && [ "$EVENT_NAME" = workflow_dispatch ] &&
-             [ "$WORKFLOW_BRANCH" = fix/way-deploy ] && [[ "$SOURCE_REF" =~ ^[0-9a-f]{40}$ ]] &&
-             [ "$NOTIFY" = false ]; then
             exit 0
           fi
           echo 'Ambiente de publicação incompatível com a branch'
@@ -119,30 +108,58 @@ jobs:
           done
           jq -e --arg digest "$IMAGE_DIGEST" '.success == true and .digest == $digest' response.json
 
-      - name: Notificar resultado
-        if: always() && (github.event_name != 'workflow_dispatch' || inputs.notify)
-        continue-on-error: true
+  notify:
+    name: Avisar grupo WAY
+    needs: deploy
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Enviar e confirmar aviso no Google Chat
         env:
           WEBHOOK_URL: ${{ secrets.WAY_CHAT_WEBHOOK }}
-          STATUS: ${{ job.status }}
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
+          SOURCE_REF: ${{ inputs.source_ref }}
+          OPERATOR: ${{ github.actor }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          test -n "$WEBHOOK_URL" || exit 0
-          if [ "$STATUS" = success ]; then
-            DISPLAY_STATUS='SUCCESS ✅'
-            MESSAGE='Fluxo de deploy concluído; versão instalada conferida.'
-          else
-            DISPLAY_STATUS='FAILED ❌'
-            MESSAGE='A execução do deploy não foi concluída.'
+          if [ -z "$WEBHOOK_URL" ]; then
+            echo '::error::WAY_CHAT_WEBHOOK ausente. O grupo não foi notificado.'
+            exit 1
           fi
-          jq -n --arg project "$IMAGE_NAME" --arg branch "$TARGET_BRANCH" \
-            --arg status "$DISPLAY_STATUS" --arg message "$MESSAGE" --arg commit "${SOURCE_SHA:-$GITHUB_SHA}" \
-            '{text:"Deploy do projeto Way Correspondencias",cards:[{sections:[{widgets:[
-              {keyValue:{topLabel:"Projeto",content:$project}},
-              {keyValue:{topLabel:"Branch",content:$branch}},
-              {keyValue:{topLabel:"Status",content:$status}},
-              {keyValue:{topLabel:"Mensagem",content:$message}},
-              {keyValue:{topLabel:"Commit",content:$commit}}
-            ]}]}]}' > notification.json
-          curl --fail-with-body --silent --show-error --max-time 15 \
-            -H 'Content-Type: application/json' --data-binary @notification.json "$WEBHOOK_URL" > notification-response.json
-          jq -e -r '.name' notification-response.json
+          case "$WEBHOOK_URL" in
+            https://chat.googleapis.com/v1/spaces/AAQA5qsWFdQ/messages\?*) ;;
+            *) echo '::error::O webhook não corresponde ao grupo PROJETOS - WAY 262.'; exit 1 ;;
+          esac
+          case "$DEPLOY_RESULT" in
+            success)
+              STATUS='Sucesso'
+              MESSAGE='Versão instalada e digest conferidos no servidor.'
+              ;;
+            failure)
+              STATUS='Falha'
+              MESSAGE='Não foi possível confirmar a conclusão da publicação. Consulte a execução.'
+              ;;
+            cancelled)
+              STATUS='Cancelado'
+              MESSAGE='Execução cancelada. Confira o estado da aplicação antes de repetir.'
+              ;;
+            skipped)
+              STATUS='Não executado'
+              MESSAGE='A publicação não foi executada.'
+              ;;
+            *) echo '::error::Resultado de publicação desconhecido.'; exit 1 ;;
+          esac
+          jq -n --arg project "$IMAGE_NAME" --arg status "$STATUS" \
+            --arg message "$MESSAGE" --arg commit "$SOURCE_REF" \
+            --arg operator "$OPERATOR" --arg run "$RUN_URL" \
+            '{text:("<users/all>\nPublicação WAY · produção\n\nComponente: "+$project+"\nResultado: "+$status+"\n"+$message+"\nVersão solicitada: "+$commit+"\nResponsável: "+$operator+"\nExecução: "+$run)}' > notification.json
+          if ! curl --fail-with-body --silent --show-error --connect-timeout 10 --max-time 20 \
+            -H 'Content-Type: application/json' --data-binary @notification.json \
+            "$WEBHOOK_URL" -o notification-response.json; then
+            echo '::error::Falha ao avisar o grupo. Consulte o job deploy para o resultado da publicação.'
+            exit 1
+          fi
+          jq -e '.name | startswith("spaces/AAQA5qsWFdQ/messages/")' notification-response.json > /dev/null
+          MESSAGE_NAME=$(jq -r '.name' notification-response.json)
+          printf 'Aviso confirmado em PROJETOS - WAY 262: `%s`\n' "$MESSAGE_NAME" >> "$GITHUB_STEP_SUMMARY"
