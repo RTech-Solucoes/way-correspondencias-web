@@ -133,11 +133,11 @@ jobs:
           esac
           case "$DEPLOY_RESULT" in
             success)
-              STATUS='Sucesso'
+              STATUS='Sucesso ✅'
               MESSAGE='Versão instalada e digest conferidos no servidor.'
               ;;
             failure)
-              STATUS='Falha'
+              STATUS='Falha ❌'
               MESSAGE='Não foi possível confirmar a conclusão da publicação. Consulte a execução.'
               ;;
             cancelled)
