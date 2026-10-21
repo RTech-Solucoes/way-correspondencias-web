@@ -7,6 +7,7 @@ import { cn } from '@/utils/utils';
 
 interface SolicitacoesSelectionBarProps {
   selectedCount: number;
+  allFilteredSelected: boolean;
   canDeletarSolicitacao: boolean;
   onClearSelection: () => void;
   onDeleteSelected: () => void;
@@ -18,6 +19,7 @@ interface SolicitacoesSelectionBarProps {
 
 export function SolicitacoesSelectionBar({
   selectedCount,
+  allFilteredSelected,
   canDeletarSolicitacao,
   onClearSelection,
   onDeleteSelected,
@@ -26,27 +28,37 @@ export function SolicitacoesSelectionBar({
   totalElements,
   className,
 }: SolicitacoesSelectionBarProps) {
-  if (getLayoutClient() !== ClienteEnum.RTECH || selectedCount === 0) return null;
+  if (getLayoutClient() !== ClienteEnum.RTECH || (selectedCount === 0 && !isSelectingAll)) return null;
 
   return (
     <div
       className={cn(
-        'bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 flex items-center justify-between',
+        'bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 flex flex-wrap gap-3 items-center justify-between',
         className
       )}
     >
       <span className="text-sm font-medium text-blue-900 flex items-center gap-2">
         {isSelectingAll && <SpinnerIcon className="h-4 w-4 animate-spin" />}
         {isSelectingAll
-          ? `Selecionando todos os itens... ${selectedCount}${totalElements ? ` de ${totalElements}` : ''}`
-          : `${selectedCount} ${selectedCount === 1 ? 'item selecionado' : 'itens selecionados'}`}
+          ? `Selecionando todos os resultados... ${selectedCount}${totalElements ? ` de ${totalElements}` : ''}`
+          : allFilteredSelected
+            ? `Todos os ${totalElements ?? selectedCount} resultados estão selecionados`
+            : selectedCount === 0
+              ? 'Nenhum item selecionado. Escolha a página ou todos os resultados.'
+              : `${selectedCount} ${selectedCount === 1 ? 'item selecionado' : 'itens selecionados'} em uma ou mais páginas`}
       </span>
-      <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" onClick={onClearSelection} disabled={isDeleting || isSelectingAll}>
-          Limpar seleção
+      <div className="flex items-center gap-2 flex-wrap">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onClearSelection}
+          disabled={isDeleting || isSelectingAll || selectedCount === 0}
+          title="Desmarcar todos os itens selecionados, inclusive em outras páginas"
+        >
+          Desmarcar todos
         </Button>
         {canDeletarSolicitacao && (
-          <Button variant="destructive" size="sm" onClick={onDeleteSelected} disabled={isDeleting || isSelectingAll}>
+          <Button variant="destructive" size="sm" onClick={onDeleteSelected} disabled={selectedCount === 0 || isDeleting || isSelectingAll}>
             <TrashIcon className="h-4 w-4 mr-2" />
             {isDeleting ? 'Excluindo...' : 'Excluir selecionados'}
           </Button>

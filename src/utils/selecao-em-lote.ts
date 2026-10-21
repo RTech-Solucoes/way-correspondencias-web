@@ -9,6 +9,7 @@ const BLOCOS_SIMULTANEOS = 4;
 interface ColetarIdsDoFiltroParams<T> {
   /** Total de registros que atendem ao filtro atual (totalElements da listagem). */
   total: number;
+  cancelado?: () => boolean;
   /** Carrega uma página do filtro atual. */
   buscarPagina: (page: number, size: number) => Promise<T[]>;
   obterId: (item: T) => number | null | undefined;
@@ -23,11 +24,11 @@ interface ColetarIdsDoFiltroParams<T> {
 
 /**
  * Percorre todas as páginas do filtro atual e devolve os ids selecionáveis.
- * Usado pelo checkbox do cabeçalho das tabelas, que seleciona o resultado
- * inteiro da busca — e não apenas a página visível.
+ * Usado pela ação explícita de selecionar todos os resultados filtrados.
  */
 export async function coletarIdsDoFiltro<T>({
   total,
+  cancelado,
   buscarPagina,
   obterId,
   podeSelecionar,
@@ -47,10 +48,12 @@ export async function coletarIdsDoFiltro<T>({
 
   const consumir = async () => {
     while (true) {
+      if (cancelado?.()) return;
       const bloco = proximoBloco++;
       if (bloco >= totalBlocos) return;
 
       const ids = extrairIds(await buscarPagina(bloco, TAMANHO_BLOCO));
+      if (cancelado?.()) return;
       coletados.push(...ids);
       aoReceberIds?.(ids);
     }
@@ -61,4 +64,12 @@ export async function coletarIdsDoFiltro<T>({
   );
 
   return coletados;
+}
+
+/** Alterna somente os IDs visíveis e preserva seleções de outras páginas. */
+export function alternarSelecaoPagina(previous: Set<number>, pageIds: number[]): Set<number> {
+  const next = new Set(previous);
+  const remove = pageIds.length > 0 && pageIds.every((id) => next.has(id));
+  pageIds.forEach((id) => remove ? next.delete(id) : next.add(id));
+  return next;
 }

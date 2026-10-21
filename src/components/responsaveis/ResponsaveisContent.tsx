@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { FiltrosAplicados } from '@/components/ui/applied-filters';
 import { usePermissoes } from "@/context/permissoes/PermissoesContext";
 import ResponsavelModal from '@/components/responsaveis/ResponsavelModal';
@@ -10,8 +11,10 @@ import ResponsaveisTable from '@/components/responsaveis/ResponsaveisTable';
 import ResponsaveisFilterDialog from '@/components/responsaveis/ResponsaveisFilterDialog';
 import { ResponsaveisSelectionBar } from '@/components/responsaveis/ResponsaveisSelectionBar';
 import { useResponsaveis } from '@/components/responsaveis/hooks/use-responsaveis';
+import { SelectionScopeDialog } from '@/components/ui/selection-scope-dialog';
 
 export function ResponsaveisContent() {
+  const [selectionDialogOpen, setSelectionDialogOpen] = useState(false);
   const {
     responsaveis,
     loading,
@@ -57,7 +60,9 @@ export function ResponsaveisContent() {
     someSelected,
     isSelected,
     toggleSelect,
-    toggleSelectAll,
+    toggleSelectPage,
+    selectAllFiltered,
+    selecionouTodos,
     isSelectingAll,
     clearSelection,
     handleDeleteSelected,
@@ -98,6 +103,7 @@ export function ResponsaveisContent() {
       />
 
       <ResponsaveisSelectionBar
+        allFilteredSelected={selecionouTodos}
         selectedCount={selectedCount}
         isSelectingAll={isSelectingAll}
         totalElements={totalElements}
@@ -106,6 +112,20 @@ export function ResponsaveisContent() {
         onDeleteSelected={handleDeleteSelected}
         isDeleting={isDeletingBulk}
         className="mb-4"
+      />
+
+      <SelectionScopeDialog
+        open={selectionDialogOpen}
+        onOpenChange={setSelectionDialogOpen}
+        pageSelected={allSelected}
+        allFilteredSelected={selecionouTodos}
+        selectedCount={selectedCount}
+        pageItemCount={responsaveis.length}
+        totalElements={totalElements}
+        isSelectingAll={isSelectingAll}
+        onSelectPage={toggleSelectPage}
+        onSelectAll={selectAllFiltered}
+        onClearAll={clearSelection}
       />
 
       <ResponsaveisTable
@@ -123,7 +143,8 @@ export function ResponsaveisContent() {
         someSelected={someSelected}
         isSelected={isSelected}
         toggleSelect={toggleSelect}
-        toggleSelectAll={toggleSelectAll}
+        onHeaderSelection={() => setSelectionDialogOpen(true)}
+        allFilteredSelected={selecionouTodos}
         isSelectingAll={isSelectingAll}
       />
 
