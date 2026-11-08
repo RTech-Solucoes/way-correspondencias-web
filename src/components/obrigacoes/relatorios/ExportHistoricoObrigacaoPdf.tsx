@@ -3,7 +3,12 @@
 import { Document, Image, Page, StyleSheet, Text, View, pdf } from '@react-pdf/renderer';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatDateTimeBrCompactExport, formatDateBr, formatDateTimeBr } from '@/utils/utils';
-import { ObrigacaoDetalheResponse } from '@/api/obrigacao/types';
+import { ObrigacaoConclusaoResponse, ObrigacaoDetalheResponse } from '@/api/obrigacao/types';
+import {
+  TITULO_CONCLUSAO_HISTORICO,
+  getDetalhesConclusaoHistorico,
+  getResumoConclusaoHistorico,
+} from '@/components/obrigacoes/conclusao/conclusao-historico';
 import { TipoEnum } from '@/api/tipos/types';
 import { TipoDocumentoAnexoEnum } from '@/api/anexos/type';
 import { TramitacaoResponse as SolTramitacaoResponse } from '@/api/solicitacoes/types';
@@ -13,6 +18,7 @@ import statusSolicitacaoClient from '@/api/status-solicitacao/client';
 import { statusList } from '@/api/status-solicitacao/types';
 import LoadingOverlay from '@/components/ui/loading-overlay';
 import { SOFTWARE_NAME, LOGO_PATH } from '@/lib/branding';
+import { getObrigacaoStatusDisplay } from '@/components/obrigacoes/list-page/status';
 
 interface ExportHistoricoObrigacaoPdfProps {
   detalhe: ObrigacaoDetalheResponse;
@@ -55,8 +61,9 @@ const styles = StyleSheet.create({
 
 
 interface HistoricoItem {
-  tipo: 'tramitacao' | 'parecer' | 'anexo';
+  tipo: 'tramitacao' | 'parecer' | 'anexo' | 'conclusao';
   data: string;
+  conclusao?: ObrigacaoConclusaoResponse;
   tramitacao?: SolTramitacaoResponse;
   anexosTramitacao?: AnexoResponse[];
   parecer?: SolicitacaoParecerResponse;
@@ -96,6 +103,10 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
 
   const historicoItems: HistoricoItem[] = useMemo(() => {
     const items: HistoricoItem[] = [];
+
+    if (detalhe.conclusao) {
+      items.push({ tipo: 'conclusao', data: detalhe.conclusao.dtAcao, conclusao: detalhe.conclusao });
+    }
 
     detalhe.tramitacoes?.forEach(t => {
       const { tramitacao, anexos } = t;
@@ -269,15 +280,39 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
           <View style={styles.row}>
             <Text style={styles.colLabelBold}>Data de Conclusão:</Text>
             <Text style={styles.colValue}>
-              {obrigacao.dtConclusaoTramitacao 
-                ? formatDateTimeBr(obrigacao.dtConclusaoTramitacao) 
-                : '—'}
+              {detalhe.conclusao
+                ? formatDateBr(detalhe.conclusao.dtConclusao)
+                : obrigacao.dtConclusaoTramitacao
+                  ? formatDateTimeBr(obrigacao.dtConclusaoTramitacao)
+                  : '—'}
             </Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.colLabelBold}>Status Atual:</Text>
-            <Text style={styles.colValue}>{obrigacao.statusSolicitacao?.nmStatus || '—'}</Text>
+            <Text style={styles.colValue}>{getObrigacaoStatusDisplay(obrigacao, detalhe.conclusao).label}</Text>
           </View>
+          {detalhe.conclusao && (
+            <>
+              <View style={styles.row}>
+                <Text style={styles.colLabelBold}>Fluxo de Conclusão:</Text>
+                <Text style={styles.colValue}>{detalhe.conclusao.dsFluxoConclusao} (sem tramitação pelas áreas)</Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.colLabelBold}>Data Limite Original:</Text>
+                <Text style={styles.colValue}>
+                  {detalhe.conclusao.dtLimiteOriginal ? formatDateBr(detalhe.conclusao.dtLimiteOriginal) : '—'}
+                </Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.colLabelBold}>Concluída por:</Text>
+                <Text style={styles.colValue}>{detalhe.conclusao.nmResponsavel || '—'}</Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.colLabelBold}>Conclusão registrada em:</Text>
+                <Text style={styles.colValue}>{formatDateTimeBr(detalhe.conclusao.dtAcao)}</Text>
+              </View>
+            </>
+          )}
           <View style={styles.row}>
             <Text style={styles.colLabelBold}>Responsável Técnico:</Text>
             <Text style={styles.colValue}>{obrigacao.responsavelTecnico?.nmResponsavel || '—'}</Text>
@@ -294,8 +329,8 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
 
         <Text style={[styles.sectionTitle, { marginTop: 12 }]}>Histórico de Movimentações e Comentários</Text>
         {(() => {
-          const itemsParaExibir = historicoItems.filter(item => item.tipo === 'parecer' || item.tipo === 'tramitacao');
-
+          const itemsParaExibir = historicoItems.filter(item => item.tipo === 'parecer' || item.tipo === 'tramitacao' || item.tipo === 'conclusao');
+          
           if (itemsParaExibir.length === 0) {
             return <Text style={styles.emptyMessage}>Nenhum comentário registrado até o momento.</Text>;
           }
@@ -397,6 +432,30 @@ function HistoricoObrigacaoPdfDoc({ detalhe, statusMap }: { detalhe: ObrigacaoDe
           };
 
           return itemsParaExibir.map((item, index) => {
+            if (item.tipo === 'conclusao' && item.conclusao) {
+              return (
+                <View key={`conclusao-${item.conclusao.idObrigacaoConclusao}`} style={styles.item} wrap={false}>
+                  <View style={styles.itemHeader}>
+                    <Text style={styles.pill}>{TITULO_CONCLUSAO_HISTORICO.toUpperCase()}</Text>
+                    <Text style={styles.small}>{formatDateTimeBr(item.conclusao.dtAcao)}</Text>
+                  </View>
+                  <Text style={[styles.small, { marginTop: 4, marginBottom: 4 }]}>
+                    {getResumoConclusaoHistorico(item.conclusao)}
+                  </Text>
+                  <View style={{ marginTop: 4 }}>
+                    <Text style={styles.small}>
+                      <Text style={styles.smallBold}>Responsável:</Text> {item.conclusao.nmResponsavel || '—'}
+                    </Text>
+                    {getDetalhesConclusaoHistorico(item.conclusao).map(({ rotulo, valor }) => (
+                      <Text key={rotulo} style={styles.small}>
+                        <Text style={styles.smallBold}>{rotulo}:</Text> {valor}
+                      </Text>
+                    ))}
+                  </View>
+                </View>
+              );
+            }
+
             if (item.tipo === 'tramitacao' && item.tramitacao) {
               const tramitacao = item.tramitacao;
               const responsavelTramitacao = tramitacao.tramitacaoAcao?.[0]?.responsavelArea?.responsavel;

@@ -8,7 +8,7 @@ import { ConferenciaStepAnexos } from './tabs-steps/ConferenciaStepAnexos';
 import { ConferenciaStepVinculos } from './tabs-steps/ConferenciaStepVinculos';
 import { ObrigacaoDetalheResponse } from '@/api/obrigacao/types';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
-import { getObrigacaoStatusStyle } from '@/components/obrigacoes/list-page/status';
+import { getObrigacaoStatusDisplay } from '@/components/obrigacoes/list-page/status';
 import { TipoEnum } from '@/api/tipos/types';
 import { AnexoResponse } from '@/api/anexos/type';
 
@@ -32,6 +32,7 @@ interface ConferenciaTabsProps {
   onTabChange: (tab: TabKey) => void;
   obrigacao: ObrigacaoDetalheResponse['obrigacao'];
   anexos: ObrigacaoDetalheResponse['anexos'];
+  conclusao?: ObrigacaoDetalheResponse['conclusao'];
   downloadingId: number | null;
   onDownloadAnexo: (anexo: AnexoResponse) => void;
   userResponsavel?: ResponsavelResponse | null;
@@ -42,6 +43,7 @@ export function ConferenciaTabs({
   onTabChange,
   obrigacao,
   anexos,
+  conclusao,
   downloadingId,
   onDownloadAnexo,
   userResponsavel,
@@ -49,12 +51,7 @@ export function ConferenciaTabs({
   const areaAtribuida = obrigacao?.areas?.find((area) => area.tipoArea?.cdTipo === TipoEnum.ATRIBUIDA);
   const areasCondicionantes = obrigacao?.areas?.filter((area) => area.tipoArea?.cdTipo === TipoEnum.CONDICIONANTE) ?? [];
 
-  const statusLabel = obrigacao?.statusSolicitacao?.nmStatus ?? '-';
-
-  const statusStyle = getObrigacaoStatusStyle(
-    obrigacao?.statusSolicitacao?.idStatusSolicitacao,
-    obrigacao?.statusSolicitacao?.nmStatus,
-  );
+  const { label: statusLabel, style: statusStyle } = getObrigacaoStatusDisplay(obrigacao, conclusao);
 
   return (
     <div className="flex flex-1 flex-col gap-6">
@@ -101,6 +98,7 @@ export function ConferenciaTabs({
               obrigacao={obrigacao}
               statusLabel={statusLabel}
               statusStyle={statusStyle}
+              conclusao={conclusao}
             />
           </TabsContent>
 

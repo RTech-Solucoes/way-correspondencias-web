@@ -78,7 +78,6 @@ export function ConferenciaSidebar({
     detalhe,
     idPerfil,
     isDaAreaAtribuida: permissoes.isDaAreaAtribuida,
-    statusPermitidoParaTramitar: permissoes.statusPermitidoParaTramitar,
     areasCondicionantes: permissoes.areasCondicionantes.map(a => ({ idArea: a.idArea, nmArea: a.nmArea })),
     userResponsavel,
     arquivosTramitacaoPendentes,

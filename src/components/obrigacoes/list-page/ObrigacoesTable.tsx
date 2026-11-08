@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowsDownUpIcon } from "@phosphor-icons/react";
 import { ObrigacaoResponse } from "@/api/obrigacao/types";
-import { getObrigacaoStatusStyle } from "@/components/obrigacoes/list-page/status";
+import { getObrigacaoStatusDisplay } from "@/components/obrigacoes/list-page/status";
 import { formatDateBr } from "@/utils/utils";
 import { TipoEnum } from "@/api/tipos/types";
 import TimeProgress from "@/components/ui/time-progress";
@@ -31,6 +31,7 @@ interface ObrigacoesTableProps {
   onVisualizar: (obrigacao: ObrigacaoResponse) => void;
   onEditar: (obrigacao: ObrigacaoResponse) => void;
   onAnexarProtocolo: (obrigacao: ObrigacaoResponse) => void;
+  onRegistrarConclusao: (obrigacao: ObrigacaoResponse) => void;
   onEncaminharTramitacao: (obrigacao: ObrigacaoResponse) => void;
   onEnviarArea: (obrigacao: ObrigacaoResponse) => void;
   onNaoAplicavelSuspenso: (obrigacao: ObrigacaoResponse) => void;
@@ -56,6 +57,7 @@ export function ObrigacoesTable({
   onVisualizar,
   onEditar,
   onAnexarProtocolo,
+  onRegistrarConclusao,
   onEncaminharTramitacao,
   onEnviarArea,
   onNaoAplicavelSuspenso,
@@ -176,10 +178,7 @@ export function ObrigacoesTable({
                   <TableCell className="min-w-[150px]">{obrigacao.tema?.nmTema || '-'}</TableCell>
                   <TableCell className="min-w-[150px]">
                     {(() => {
-                      const statusStyle = getObrigacaoStatusStyle(
-                        obrigacao.statusSolicitacao?.idStatusSolicitacao?.toString(),
-                        obrigacao.statusSolicitacao?.nmStatus
-                      );
+                      const { label, style: statusStyle } = getObrigacaoStatusDisplay(obrigacao);
                       return (
                         <Badge
                           className="whitespace-nowrap truncate"
@@ -189,7 +188,7 @@ export function ObrigacoesTable({
                             color: statusStyle.textColor,
                           }}
                         >
-                          {obrigacao.statusSolicitacao?.nmStatus || '-'}
+                          {label}
                         </Badge>
                       );
                     })()}
@@ -263,6 +262,7 @@ export function ObrigacoesTable({
                         onVisualizar={() => onVisualizar(obrigacao)}
                         onEditar={canInserirObrigacao ? () => onEditar(obrigacao) : undefined}
                         onAnexarProtocolo={canConcluirObrigacao ? () => onAnexarProtocolo(obrigacao) : undefined}
+                        onRegistrarConclusao={() => onRegistrarConclusao(obrigacao)}
                         onEncaminharTramitacao={() => onEncaminharTramitacao(obrigacao)}
                         onEnviarArea={canEnviarAreasObrigacao ? () => onEnviarArea(obrigacao) : undefined}
                         onNaoAplicavelSuspenso={canNaoAplicavelSuspensaObrigacao ? () => onNaoAplicavelSuspenso(obrigacao) : undefined}

@@ -7,10 +7,9 @@ import { SolicitacaoParecerResponse } from '@/api/solicitacao-parecer/types';
 import { responsaveisClient } from '@/api/responsaveis/client';
 import { ResponsavelResponse } from '@/api/responsaveis/types';
 import tramitacoesClient from '@/api/tramitacoes/client';
-import { TramitacaoRequest } from '@/api/tramitacoes/types';
 import { TramitacaoResponse as SolTramitacaoResponse, TramitacaoComAnexosResponse } from '@/api/solicitacoes/types';
 import { perfilUtil } from '@/api/perfis/types';
-import type { ObrigacaoDetalheResponse } from '@/api/obrigacao/types';
+import type { ObrigacaoConclusaoResponse, ObrigacaoDetalheResponse } from '@/api/obrigacao/types';
 import type { ArquivoDTO } from '@/api/anexos/type';
 import { statusList } from '@/api/status-solicitacao/types';
 import { useIdResponsavelLogado } from '@/hooks/use-id-responsavel-logado';
@@ -19,7 +18,6 @@ interface UseComentariosLogicaParams {
   detalhe: ObrigacaoDetalheResponse;
   idPerfil?: number | null;
   isDaAreaAtribuida: boolean;
-  statusPermitidoParaTramitar: boolean;
   areasCondicionantes: Array<{ idArea: number; nmArea: string }>;
   userResponsavel: ResponsavelResponse | null;
   arquivosTramitacaoPendentes?: ArquivoDTO[];
@@ -32,7 +30,6 @@ export function useComentariosLogica({
   detalhe,
   idPerfil,
   isDaAreaAtribuida,
-  statusPermitidoParaTramitar,
   areasCondicionantes,
   userResponsavel,
   arquivosTramitacaoPendentes = [],
@@ -159,14 +156,24 @@ export function useComentariosLogica({
     carregarDados();
   }, [detalhe?.obrigacao?.idSolicitacao, detalhe?.solicitacaoParecer, detalhe?.tramitacoes]);
 
-  // Comentários unificados (pareceres + tramitações)
+  // Comentários unificados (pareceres + tramitações + conclusão administrativa)
+  const conclusaoAdministrativa = detalhe?.conclusao ?? null;
   const comentariosUnificados = useMemo(() => {
     const items: Array<{
-      tipo: 'parecer' | 'tramitacao';
+      tipo: 'parecer' | 'tramitacao' | 'conclusao';
       data: string;
       parecer?: SolicitacaoParecerResponse;
       tramitacao?: SolTramitacaoResponse;
+      conclusao?: ObrigacaoConclusaoResponse;
     }> = [];
+
+    if (conclusaoAdministrativa) {
+      items.push({
+        tipo: 'conclusao',
+        data: conclusaoAdministrativa.dtAcao,
+        conclusao: conclusaoAdministrativa,
+      });
+    }
 
     const textosPareceres = new Set(
       solicitacaoPareceres.map(p => (p.dsDarecer || '').trim().toLowerCase())
@@ -206,7 +213,7 @@ export function useComentariosLogica({
       if (isNaN(dataB)) return -1;
       return dataB - dataA;
     });
-  }, [solicitacaoPareceres, tramitacoes]);
+  }, [solicitacaoPareceres, tramitacoes, conclusaoAdministrativa]);
 
   // Verificar se pode responder tramitação
   const podeResponderTramitacao = useMemo(() => {
@@ -340,33 +347,6 @@ export function useComentariosLogica({
       if (isDaAreaAtribuida) {
         if (podeResponderTramitacao) {
           const idStatusAtual = detalhe.obrigacao.statusSolicitacao.idStatusSolicitacao;
-          const tramitacaoExistente = tramitacoes.find(
-            t => t.tramitacao?.solicitacao?.statusSolicitacao?.idStatusSolicitacao === idStatusAtual &&
-                 t.tramitacao?.dsObservacao === textoCompleto.trim()
-          );
-
-          const podeCriarTramitacao = statusPermitidoParaTramitar && !tramitacaoExistente;
-          
-          if (podeCriarTramitacao) {
-            const tramitacaoRequest: TramitacaoRequest = {
-              idSolicitacao: detalhe.obrigacao.idSolicitacao,
-              dsObservacao: textoCompleto.trim(),
-              idResponsavel: userResponsavel?.idResponsavel,
-              arquivos: arquivosTramitacaoPendentes,
-              idTramitacaoRef: tramitacaoReferencia ?? undefined,
-              idSolicitacaoParecerRef: parecerReferencia ?? parecerReferenciaViaTramitacao ?? undefined,
-            };
-
-            await tramitacoesClient.tramitarViaFluxo(tramitacaoRequest);
-                   
-            onClearArquivosTramitacao?.();
-            
-            if (onRefreshAnexos) {
-              await onRefreshAnexos();
-            }
-            toast.success('Comentário de área atribuída salvo com sucesso.');
-            return;
-          }
 
           if (idStatusAtual === statusList.ATRASADA.id) {
             const parecerRequest: {
@@ -390,7 +370,7 @@ export function useComentariosLogica({
             }
 
             await solicitacaoParecerClient.criar(parecerRequest);
-            
+
             toast.success('Comentário de área atribuída salvo com sucessooooo.');
             if (onRefreshAnexos) {
               await onRefreshAnexos();
@@ -481,17 +461,13 @@ export function useComentariosLogica({
   }, [
     comentarioTexto, 
     parecerReferencia,
-    parecerReferenciaViaTramitacao, 
-    tramitacaoReferencia, 
-    detalhe?.obrigacao?.idSolicitacao, 
-    detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao, 
-    isDaAreaAtribuida, 
-    userResponsavel, 
-    tramitacoes, 
-    podeResponderTramitacao, 
-    onRefreshAnexos, 
-    statusPermitidoParaTramitar, 
-    arquivosTramitacaoPendentes, 
+    tramitacaoReferencia,
+    detalhe?.obrigacao?.idSolicitacao,
+    detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao,
+    isDaAreaAtribuida,
+    podeResponderTramitacao,
+    onRefreshAnexos,
+    arquivosTramitacaoPendentes,
     onClearArquivosTramitacao,
   ]);
 

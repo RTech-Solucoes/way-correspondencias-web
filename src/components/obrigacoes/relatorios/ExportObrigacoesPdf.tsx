@@ -9,6 +9,7 @@ import { formatDateBr, formatDateTimeBr, formatDateTimeBrCompactExport } from '@
 import { TipoEnum } from '@/api/tipos/types';
 import LoadingOverlay from '@/components/ui/loading-overlay';
 import { SOFTWARE_NAME, LOGO_PATH } from '@/lib/branding';
+import { CONCLUIDA_EM_ATRASO_LABEL, isObrigacaoConcluidaEmAtraso } from '@/components/obrigacoes/list-page/status';
 
 // Função auxiliar para buscar o comentário mais recente de uma obrigação
 async function buscarComentarioMaisRecente(idSolicitacao: number): Promise<string> {
@@ -140,7 +141,9 @@ function ObrigacoesPdfDoc({ data, getStatusText, isAdminOrGestor, comentariosMap
 					{data.map((o, idx) => {
 						const areaAtribuida = o.areas?.find(a => a.tipoArea?.cdTipo === TipoEnum.ATRIBUIDA)?.nmArea || '';
 						const tema = o.tema?.nmTema || '';
-						const status = o.statusSolicitacao?.nmStatus || getStatusText(o.statusSolicitacao?.idStatusSolicitacao?.toString() || '') || '';
+						const status = isObrigacaoConcluidaEmAtraso(o)
+							? CONCLUIDA_EM_ATRASO_LABEL
+							: o.statusSolicitacao?.nmStatus || getStatusText(o.statusSolicitacao?.idStatusSolicitacao?.toString() || '') || '';
 						const classificacao = o.tipoClassificacao?.dsTipo || '';
 						const periodicidade = o.tipoPeriodicidade?.dsTipo || '';
 

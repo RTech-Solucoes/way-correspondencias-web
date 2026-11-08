@@ -5,6 +5,7 @@ import { FilterModalObrigacao } from "@/components/obrigacoes/modal/FilterModalO
 import { DeleteObrigacaoDialog } from "@/components/obrigacoes/modal/DeleteObrigacaoDialog";
 import { ImportObrigacoesModal } from "@/components/obrigacoes/modal/ImportObrigacoesModal";
 import { AnexarProtocoloModal } from "@/components/obrigacoes/modal/AnexarProtocoloModal";
+import { RegistrarConclusaoModal } from "@/components/obrigacoes/conclusao/RegistrarConclusaoModal";
 import { ObrigacoesCondicionadasModal } from "@/components/obrigacoes/modal/ObrigacoesCondicionadasModal";
 import { NaoAplicavelSuspensoModal } from "@/components/obrigacoes/conferencia/modal/NaoAplicavelSuspensoModal";
 import { TramitacaoObrigacaoModal } from "@/components/obrigacoes/tramitacao";
@@ -40,6 +41,8 @@ interface ObrigacoesModalsProps {
   setShowConfirmTramitacao: (show: boolean) => void;
   obrigacaoParaConfirmarTramitacao: ObrigacaoResponse | null;
   setObrigacaoParaConfirmarTramitacao: (obrigacao: ObrigacaoResponse | null) => void;
+  obrigacaoParaConclusao: ObrigacaoResponse | null;
+  setObrigacaoParaConclusao: (obrigacao: ObrigacaoResponse | null) => void;
 }
 
 export function ObrigacoesModals({
@@ -68,6 +71,8 @@ export function ObrigacoesModals({
   setShowConfirmTramitacao,
   obrigacaoParaConfirmarTramitacao,
   setObrigacaoParaConfirmarTramitacao,
+  obrigacaoParaConclusao,
+  setObrigacaoParaConclusao,
 }: ObrigacoesModalsProps) {
   return (
     <>
@@ -92,7 +97,16 @@ export function ObrigacoesModals({
           }}
         />
       )}
-      
+
+      {obrigacaoParaConclusao && (
+        <RegistrarConclusaoModal
+          open
+          obrigacao={obrigacaoParaConclusao}
+          onClose={() => setObrigacaoParaConclusao(null)}
+          onSuccess={loadObrigacoes}
+        />
+      )}
+
       <ObrigacoesCondicionadasModal
         open={showObrigacoesCondicionadasModal}
         onClose={() => {

@@ -49,6 +49,7 @@ export interface PermissoesContextProps {
   canSolicitarAjustesObrigacao: boolean | null
   canTramitarObrigacao: boolean | null
   canNaoAplicavelSuspensaObrigacao: boolean | null
+  canConclusaoAdministrativaObrigacao: boolean | null
 }
 
 const PermissoesContext = createContext<PermissoesContextProps>({} as PermissoesContextProps);
@@ -104,6 +105,7 @@ export const PermissoesProvider = ({ children }: { children: ReactNode }) => {
   const canSolicitarAjustesObrigacao = useHasPermissao(Permissoes.OBRIGACAO_SOLICITAR_AJUSTES)
   const canTramitarObrigacao = useHasPermissao(Permissoes.OBRIGACAO_TRAMITAR)
   const canNaoAplicavelSuspensaObrigacao = useHasPermissao(Permissoes.OBRIGACAO_NAO_APLICAVEL_SUSPENSA)
+  const canConclusaoAdministrativaObrigacao = useHasPermissao(Permissoes.OBRIGACAO_CONCLUSAO_ADMINISTRATIVA)
 
   return (
     <PermissoesContext.Provider
@@ -151,7 +153,8 @@ export const PermissoesProvider = ({ children }: { children: ReactNode }) => {
         canConcluirObrigacao,
         canSolicitarAjustesObrigacao,
         canTramitarObrigacao,
-        canNaoAplicavelSuspensaObrigacao
+        canNaoAplicavelSuspensaObrigacao,
+        canConclusaoAdministrativaObrigacao
       }}
     >
       {children}

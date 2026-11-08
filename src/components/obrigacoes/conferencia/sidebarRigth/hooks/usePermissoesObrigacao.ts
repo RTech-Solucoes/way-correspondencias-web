@@ -185,16 +185,6 @@ export function usePermissoesObrigacao({
     isStatusEmAssinaturaDiretoria
   ]);
 
-  // Status permitido para tramitar
-  const statusPermitidoParaTramitar = useMemo(() => {
-    const idStatus = detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao;
-    if (!idStatus) return false;
-    return [
-      statusList.NAO_INICIADO.id,
-      statusList.PENDENTE.id,  
-    ].includes(idStatus);
-  }, [detalhe?.obrigacao?.statusSolicitacao?.idStatusSolicitacao]);
-
   // Tooltip para enviar comentário
   const tooltipPerfilPermitidoPorStatus = useMemo(() => {
     if (isValidadorAssinanteDiretoria && isDaAreaAtribuida && !isStatusEmAssinaturaDiretoria) {
@@ -281,7 +271,6 @@ export function usePermissoesObrigacao({
     // Permissões
     podeGerarRelatorio,
     isPerfilPermitidoPorStatus,
-    statusPermitidoParaTramitar,
     // Tooltips
     tooltipPerfilPermitidoPorStatus,
   };

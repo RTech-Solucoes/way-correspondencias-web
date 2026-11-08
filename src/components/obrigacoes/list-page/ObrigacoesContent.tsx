@@ -82,7 +82,9 @@ export function ObrigacoesContent({ defaultFilters }: ObrigacoesContentProps) {
     setShowConfirmTramitacao,
     obrigacaoParaConfirmarTramitacao,
     setObrigacaoParaConfirmarTramitacao,
-    
+    obrigacaoParaConclusao,
+    setObrigacaoParaConclusao,
+
     // Permissões
     canInserirObrigacao,
     canDeletarObrigacao,
@@ -100,6 +102,7 @@ export function ObrigacoesContent({ defaultFilters }: ObrigacoesContentProps) {
     handleConfirmNaoAplicavelSuspenso,
     handleEnviarArea,
     handleAnexarProtocolo,
+    handleRegistrarConclusao,
     handleEncaminharTramitacao,
 
     // Seleção
@@ -216,6 +219,8 @@ export function ObrigacoesContent({ defaultFilters }: ObrigacoesContentProps) {
         setShowConfirmTramitacao={setShowConfirmTramitacao}
         obrigacaoParaConfirmarTramitacao={obrigacaoParaConfirmarTramitacao}
         setObrigacaoParaConfirmarTramitacao={setObrigacaoParaConfirmarTramitacao}
+        obrigacaoParaConclusao={obrigacaoParaConclusao}
+        setObrigacaoParaConclusao={setObrigacaoParaConclusao}
       />
 
       <ObrigacoesHeader 
@@ -273,6 +278,7 @@ export function ObrigacoesContent({ defaultFilters }: ObrigacoesContentProps) {
         onVisualizar={handleVisualize}
         onEditar={handleEdit}
         onAnexarProtocolo={handleAnexarProtocolo}
+        onRegistrarConclusao={handleRegistrarConclusao}
         onEncaminharTramitacao={handleEncaminharTramitacao}
         onEnviarArea={handleEnviarArea}
         onNaoAplicavelSuspenso={handleNaoAplicavelSuspenso}

@@ -9,12 +9,15 @@ import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { AreaSolicitacao, TramitacaoComAnexosResponse, TramitacaoResponse as SolTramitacaoResponse } from '@/api/solicitacoes/types';
 import { CardComentario } from './CardComentario';
 import { CardTramitacao } from './CardTramitacao';
+import { CardConclusaoAdministrativa } from './CardConclusaoAdministrativa';
+import type { ObrigacaoConclusaoResponse } from '@/api/obrigacao/types';
 
 interface ComentarioUnificado {
-  tipo: 'parecer' | 'tramitacao';
+  tipo: 'parecer' | 'tramitacao' | 'conclusao';
   data: string;
   parecer?: SolicitacaoParecerResponse;
   tramitacao?: SolTramitacaoResponse;
+  conclusao?: ObrigacaoConclusaoResponse;
 }
 
 interface ComentariosTabProps {
@@ -31,7 +34,7 @@ interface ComentariosTabProps {
   areaAtribuida?: AreaSolicitacao | null;
 }
 
-export function ComentariosTab({ 
+export function ComentariosTab({
   solicitacaoPareceres,
   tramitacoes = [],
   comentariosUnificados,
@@ -141,6 +144,15 @@ export function ComentariosTab({
             );
             
             return comentariosUnificados.map((item, index) => {
+              if (item.tipo === 'conclusao' && item.conclusao) {
+                return (
+                  <CardConclusaoAdministrativa
+                    key={`conclusao-${item.conclusao.idObrigacaoConclusao}`}
+                    conclusao={item.conclusao}
+                  />
+                );
+              }
+
               if (item.tipo === 'tramitacao' && item.tramitacao) {
                 const tramitacao = item.tramitacao;
                 const dataFormatada = item.data 
