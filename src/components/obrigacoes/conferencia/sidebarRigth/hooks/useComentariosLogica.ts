@@ -13,6 +13,7 @@ import type { ObrigacaoConclusaoResponse, ObrigacaoDetalheResponse } from '@/api
 import type { ArquivoDTO } from '@/api/anexos/type';
 import { statusList } from '@/api/status-solicitacao/types';
 import { useIdResponsavelLogado } from '@/hooks/use-id-responsavel-logado';
+import { useNotificarMencoes } from '@/components/obrigacoes/mencoes/use-mencoes';
 
 interface UseComentariosLogicaParams {
   detalhe: ObrigacaoDetalheResponse;
@@ -53,6 +54,7 @@ export function useComentariosLogica({
   const [parecerTramitacaoMap, setParecerTramitacaoMap] = useState<Map<number, number>>(new Map());
 
   const idResponsavelLogado = useIdResponsavelLogado();
+  const notificarMencoes = useNotificarMencoes(detalhe?.obrigacao?.idSolicitacao);
 
   // Atualizar estados quando detalhe mudar
   useEffect(() => {
@@ -370,6 +372,7 @@ export function useComentariosLogica({
             }
 
             await solicitacaoParecerClient.criar(parecerRequest);
+            await notificarMencoes(textoCompleto);
 
             toast.success('Comentário de área atribuída salvo com sucessooooo.');
             if (onRefreshAnexos) {
@@ -402,6 +405,7 @@ export function useComentariosLogica({
         }
 
         await solicitacaoParecerClient.criar(parecerRequest);
+        await notificarMencoes(textoCompleto);
         onClearArquivosTramitacao?.();
 
         if (onRefreshAnexos) {
@@ -435,6 +439,7 @@ export function useComentariosLogica({
         }
 
         await solicitacaoParecerClient.criar(requestData);
+        await notificarMencoes(textoCompleto);
         onClearArquivosTramitacao?.();
 
         if (onRefreshAnexos) {
@@ -469,6 +474,7 @@ export function useComentariosLogica({
     onRefreshAnexos,
     arquivosTramitacaoPendentes,
     onClearArquivosTramitacao,
+    notificarMencoes,
   ]);
 
   // Função para resetar comentário
