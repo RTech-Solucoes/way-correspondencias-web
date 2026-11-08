@@ -8,6 +8,7 @@ import { ObrigacaoFiltroRequest, ObrigacaoResponse } from '@/api/obrigacao/types
 import { formatDateBr, formatDateTimeBr, formatDateTimeBrCompactExport } from '@/utils/utils';
 import { TipoEnum } from '@/api/tipos/types';
 import LoadingOverlay from '@/components/ui/loading-overlay';
+import { CONCLUIDA_EM_ATRASO_LABEL, isObrigacaoConcluidaEmAtraso } from '@/components/obrigacoes/list-page/status';
 import { getLayoutClient, getLabelTitle, getLogoPath } from '@/lib/layout/layout-client';
 
 // Função auxiliar para buscar o comentário mais recente de uma obrigação
@@ -143,7 +144,9 @@ function ObrigacoesPdfDoc({ data, getStatusText, isAdminOrGestor, comentariosMap
 					{data.map((o, idx) => {
 						const areaAtribuida = o.areas?.find(a => a.tipoArea?.cdTipo === TipoEnum.ATRIBUIDA)?.nmArea || '';
 						const tema = o.tema?.nmTema || '';
-						const status = o.statusSolicitacao?.nmStatus || getStatusText(o.statusSolicitacao?.idStatusSolicitacao?.toString() || '') || '';
+						const status = isObrigacaoConcluidaEmAtraso(o)
+							? CONCLUIDA_EM_ATRASO_LABEL
+							: o.statusSolicitacao?.nmStatus || getStatusText(o.statusSolicitacao?.idStatusSolicitacao?.toString() || '') || '';
 						const classificacao = o.tipoClassificacao?.dsTipo || '';
 						const periodicidade = o.tipoPeriodicidade?.dsTipo || '';
 						

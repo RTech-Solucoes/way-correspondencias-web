@@ -14,6 +14,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import ProfileButton from './ProfileButton';
 import { HeaderHelpButton } from './HeaderHelpButton';
+import { NotificacoesMencoes } from './NotificacoesMencoes';
+import { useMencoesNaoLidas } from '@/components/obrigacoes/mencoes/use-mencoes';
 import { getLayoutClient, getLogoPath } from '@/lib/layout/layout-client';
 
 
@@ -86,6 +88,9 @@ const logoPath = getLogoPath(layoutClient);
 
   const countData = pendenteCountData ?? pendenteCountState;
   const qtdSolicitacaoPendente = countData.quantidadeCorrespondencias + countData.quantidadeObrigacoes;
+  const { data: mencoesNaoLidas } = useMencoesNaoLidas(idConcessionaria);
+  const qtdMencoes = mencoesNaoLidas?.total ?? 0;
+  const qtdNotificacoes = qtdSolicitacaoPendente + qtdMencoes;
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm">
@@ -177,9 +182,9 @@ const logoPath = getLogoPath(layoutClient);
               aria-label="Notificações"
             >
               <BellIcon className="h-6 w-6 text-gray-700" />
-                {qtdSolicitacaoPendente > 0 && (
+                {qtdNotificacoes > 0 && (
                   <span className="absolute -top-1 -right-1 inline-flex items-center justify-center rounded-full bg-red-600 text-white text-[10px] font-semibold h-5 min-w-[20px] px-1">
-                    {qtdSolicitacaoPendente}
+                    {qtdNotificacoes}
                   </span>
               )}
             </button>
@@ -200,6 +205,13 @@ const logoPath = getLogoPath(layoutClient);
                     <div>Nenhuma solicitação pendente</div>
                   )}
                 </div>
+                {mencoesNaoLidas && qtdMencoes > 0 && (
+                  <NotificacoesMencoes
+                    idConcessionaria={idConcessionaria}
+                    mencoes={mencoesNaoLidas}
+                    onNavegar={() => setIsPanelOpen(false)}
+                  />
+                )}
               </div>
             )}
           </div>

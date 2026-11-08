@@ -7,6 +7,7 @@ import obrigacaoClient, { PaginatedResponse } from '@/api/obrigacao/client';
 import { formatDateTimeBrCompactExport, formatDateBr, formatDateTimeBr } from '@/utils/utils';
 import { TipoEnum } from '@/api/tipos/types';
 import LoadingOverlay from '@/components/ui/loading-overlay';
+import { CONCLUIDA_EM_ATRASO_LABEL, isObrigacaoConcluidaEmAtraso } from '@/components/obrigacoes/list-page/status';
 import { getLayoutClient, getLabelTitle } from '@/lib/layout/layout-client';
 
 // Função auxiliar para buscar o comentário mais recente de uma obrigação
@@ -136,7 +137,9 @@ export default function ExportObrigacoesExcel({ filterParams, getStatusText, isA
       const rows = lista.map((o) => {
         const areaAtribuida = o.areas?.find(a => a.tipoArea?.cdTipo === TipoEnum.ATRIBUIDA)?.nmArea || '';
         const tema = o.tema?.nmTema || '';
-        const status = o.statusSolicitacao?.nmStatus || getStatusText(o.statusSolicitacao?.idStatusSolicitacao?.toString() || '') || '';
+        const status = isObrigacaoConcluidaEmAtraso(o)
+          ? CONCLUIDA_EM_ATRASO_LABEL
+          : o.statusSolicitacao?.nmStatus || getStatusText(o.statusSolicitacao?.idStatusSolicitacao?.toString() || '') || '';
         const classificacao = o.tipoClassificacao?.dsTipo || '';
         const periodicidade = o.tipoPeriodicidade?.dsTipo || '';
         const enviadoParaAreas = o.flEnviandoArea === 'S' ? 'Sim' : 'Não';

@@ -15,10 +15,12 @@ import {
   TrashIcon,
   PencilSimpleIcon,
   PaperPlaneRightIcon,
+  CheckCircleIcon,
 } from "@phosphor-icons/react";
 import { ObrigacaoResponse } from "@/api/obrigacao/types";
 import { BriefcaseIcon, FileTextIcon, BanIcon } from "lucide-react";
 import { statusList } from "@/api/status-solicitacao/types";
+import { isObrigacaoConcluidaAdministrativamente } from "@/components/obrigacoes/list-page/status";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useUserGestao } from "@/hooks/use-user-gestao";
 import { perfilUtil } from "@/api/perfis/types";
@@ -27,11 +29,14 @@ import anexosClient from "@/api/anexos/client";
 import { TipoDocumentoAnexoEnum, TipoObjetoAnexoEnum } from "@/api/anexos/type";
 import { useValidarObrigacao } from "@/components/obrigacoes/conferencia/hooks/use-validar-obrigacao";
 
+const MSG_OBRIGACAO_CONCLUIDA_SEM_ENVIO = 'Esta obrigação foi concluída pelo fluxo administrativo e não pode ser enviada para a área.';
+
 interface ObrigacaoAcoesMenuProps {
   obrigacao: ObrigacaoResponse;
   onVisualizar?: (obrigacao: ObrigacaoResponse) => void;
   onEditar?: (obrigacao: ObrigacaoResponse) => void;
   onAnexarProtocolo?: (obrigacao: ObrigacaoResponse) => void;
+  onRegistrarConclusao?: (obrigacao: ObrigacaoResponse) => void;
   onEncaminharTramitacao?: (obrigacao: ObrigacaoResponse) => void;
   onEnviarArea?: (obrigacao: ObrigacaoResponse) => void;
   onNaoAplicavelSuspenso?: (obrigacao: ObrigacaoResponse) => void;
@@ -43,6 +48,7 @@ export function ObrigacaoAcoesMenu({
   onVisualizar,
   onEditar,
   onAnexarProtocolo,
+  onRegistrarConclusao,
   onEncaminharTramitacao,
   onEnviarArea,
   onNaoAplicavelSuspenso,
@@ -64,11 +70,14 @@ export function ObrigacaoAcoesMenu({
     canEnviarAreasObrigacao,
     canNaoAplicavelSuspensaObrigacao,
     canVisualizarObrigacao,
-    canTramitarObrigacao
+    canTramitarObrigacao,
+    canConclusaoAdministrativaObrigacao
   } = usePermissoes();
   
   
   const isStatusConcluido = obrigacao.statusSolicitacao?.idStatusSolicitacao === statusList.CONCLUIDO.id;
+  // Travas extras valem só para a conclusão administrativa; os demais fluxos seguem como antes.
+  const isConclusaoAdministrativa = isObrigacaoConcluidaAdministrativamente(obrigacao);
 
   const isStatusNaoAplicavelSuspenso = useMemo(() => {
     return obrigacao.statusSolicitacao?.idStatusSolicitacao === statusList.NAO_APLICAVEL_SUSPENSA.id;
@@ -90,9 +99,10 @@ export function ObrigacaoAcoesMenu({
       idStatus === statusList.PENDENTE.id ||
       idStatus === statusList.EM_ANDAMENTO.id ||
       idStatus === statusList.ATRASADA.id ||
-      idStatus === statusList.NAO_APLICAVEL_SUSPENSA.id
+      idStatus === statusList.NAO_APLICAVEL_SUSPENSA.id ||
+      isConclusaoAdministrativa
     );
-  }, [obrigacao.statusSolicitacao]);
+  }, [obrigacao.statusSolicitacao, isConclusaoAdministrativa]);
 
   const conferenciaAprovada = useMemo(() => {
     return obrigacao.flAprovarConferencia === 'S';
@@ -183,10 +193,13 @@ export function ObrigacaoAcoesMenu({
     }
     return '';
   }, [isStatusConcluido, isStatusEmValidacao, isStatusAprovacaoTramitacao, isAdminOrGestor, isExisteAnexoCorrespondencia]);
-  const isNaoPermitidoEditar = conferenciaAprovada || isStatusNaoAplicavelSuspenso;
-  const podeEnviarParaArea = !jaEnviadoParaArea && !temCamposObrigatoriosFaltando;
+  const isNaoPermitidoEditar = conferenciaAprovada || isStatusNaoAplicavelSuspenso || isConclusaoAdministrativa;
+  const podeEnviarParaArea = !jaEnviadoParaArea && !isConclusaoAdministrativa && !temCamposObrigatoriosFaltando;
 
   const tooltipEnviarAreaMemo = useMemo(() => {
+    if (isConclusaoAdministrativa) {
+      return MSG_OBRIGACAO_CONCLUIDA_SEM_ENVIO;
+    }
     if (jaEnviadoParaArea) {
       return 'Obrigação já enviada para área';
     }
@@ -194,7 +207,7 @@ export function ObrigacaoAcoesMenu({
       return 'É necessário preencher todos os campos\n obrigatórios antes de enviar para as áreas';
     }
     return tooltipEnviarArea || '';
-  }, [jaEnviadoParaArea, temCamposObrigatoriosFaltando, tooltipEnviarArea]);
+  }, [isConclusaoAdministrativa, jaEnviadoParaArea, temCamposObrigatoriosFaltando, tooltipEnviarArea]);
 
   return (
     <DropdownMenu>
@@ -232,9 +245,11 @@ export function ObrigacaoAcoesMenu({
               {isNaoPermitidoEditar && (
                 <TooltipContent>
                   <p>
-                    {isStatusNaoAplicavelSuspenso 
-                      ? 'Não é possível editar uma obrigação com status "Não Aplicável/Suspensa".' 
-                      : 'A conferência já foi aprovada. Não é possível editar a obrigação.'}
+                    {isConclusaoAdministrativa
+                      ? 'Não é possível editar uma obrigação concluída pelo fluxo administrativo.'
+                      : isStatusNaoAplicavelSuspenso
+                        ? 'Não é possível editar uma obrigação com status "Não Aplicável/Suspensa".'
+                        : 'A conferência já foi aprovada. Não é possível editar a obrigação.'}
                   </p>
                 </TooltipContent>
               )}
@@ -259,6 +274,29 @@ export function ObrigacaoAcoesMenu({
               {!podeAnexarProtocolo && tooltipAnexarProtocolo && (
                 <TooltipContent>
                   <p>{tooltipAnexarProtocolo}</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+        )}
+        {onRegistrarConclusao && canConclusaoAdministrativaObrigacao && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="w-full">
+                  <DropdownMenuItem
+                    onClick={() => !isStatusConcluido && onRegistrarConclusao(obrigacao)}
+                    disabled={isStatusConcluido}
+                    className={isStatusConcluido ? 'opacity-50 cursor-not-allowed' : ''}
+                  >
+                    <CheckCircleIcon className="mr-2 h-4 w-4" />
+                    Registrar conclusão
+                  </DropdownMenuItem>
+                </div>
+              </TooltipTrigger>
+              {isStatusConcluido && (
+                <TooltipContent>
+                  <p>Esta obrigação já está concluída e não pode ser concluída novamente.</p>
                 </TooltipContent>
               )}
             </Tooltip>
@@ -295,7 +333,9 @@ export function ObrigacaoAcoesMenu({
                   className="w-full"
                   onMouseEnter={async (e) => {
                     e.stopPropagation();
-                    if (jaEnviadoParaArea) {
+                    if (isConclusaoAdministrativa) {
+                      setTooltipEnviarArea(MSG_OBRIGACAO_CONCLUIDA_SEM_ENVIO);
+                    } else if (jaEnviadoParaArea) {
                       setTooltipEnviarArea('Obrigação já enviada para área');
                     } else if (!podeEnviarParaArea && !validandoRef.current) {
                       validandoRef.current = true;
@@ -321,7 +361,7 @@ export function ObrigacaoAcoesMenu({
                     onClick={async () => {
                       if (podeEnviarParaArea) {
                         onEnviarArea(obrigacao);
-                      } else if (!jaEnviadoParaArea && !validandoRef.current) {
+                      } else if (!jaEnviadoParaArea && !isConclusaoAdministrativa && !validandoRef.current) {
                         validandoRef.current = true;
                         try {
                           const { isValid, errors } = await validar(obrigacao.idSolicitacao);

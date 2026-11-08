@@ -88,12 +88,22 @@ export function useEnviarParaArea() {
 
   return useMutation({
     mutationFn: (id: number) => obrigacaoClient.atualizarFlEnviandoArea(id),
-    onSuccess: (response) => {
+    onSuccess: (response, id) => {
       queryClient.invalidateQueries({ queryKey: obrigacoesKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: obrigacoesKeys.detail(id) });
       toast.success(response.mensagem);
     },
-    onError: () => {
-      toast.error('Erro ao enviar obrigação para área. Tente novamente.');
+    onError: (error: Error & { status?: number }) => {
+      // 409: a obrigação já havia sido enviada (ex.: outro usuário enviou antes). Atualiza a lista
+      // para refletir o estado real e bloquear um novo envio.
+      if (error?.status === 409) {
+        queryClient.invalidateQueries({ queryKey: obrigacoesKeys.lists() });
+        toast.error(error.message || 'Esta obrigação já foi enviada para a área.');
+        return;
+      }
+      // Erros de negócio (4xx) trazem a mensagem da API, ex.: responsável sem área vinculada
+      const isErroNegocio = !!error?.status && error.status >= 400 && error.status < 500 && error.status !== 401;
+      toast.error(isErroNegocio && error.message ? error.message : 'Erro ao enviar obrigação para área. Tente novamente.');
     },
   });
 }

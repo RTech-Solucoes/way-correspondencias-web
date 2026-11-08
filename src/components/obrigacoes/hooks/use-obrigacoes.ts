@@ -119,6 +119,7 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
   const [obrigacaoParaTramitacao, setObrigacaoParaTramitacao] = useState<ObrigacaoResponse | null>(null);
   const [showConfirmTramitacao, setShowConfirmTramitacao] = useState(false);
   const [obrigacaoParaConfirmarTramitacao, setObrigacaoParaConfirmarTramitacao] = useState<ObrigacaoResponse | null>(null);
+  const [obrigacaoParaConclusao, setObrigacaoParaConclusao] = useState<ObrigacaoResponse | null>(null);
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
@@ -345,11 +346,16 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
     }
   }, [obrigacaoParaNaoAplicavelSuspenso, updateStatusNaoAplicavel]);
 
+  // Evita envio duplicado da mesma obrigação enquanto a validação/envio ainda está em andamento
+  const enviandoParaAreaRef = useRef<Set<number>>(new Set());
+
   const handleEnviarArea = useCallback(async (obrigacao: ObrigacaoResponse) => {
-    if (!obrigacao.idSolicitacao) return;
-    
+    const id = obrigacao.idSolicitacao;
+    if (!id || enviandoParaAreaRef.current.has(id)) return;
+
+    enviandoParaAreaRef.current.add(id);
     try {
-      const { isValid, errors } = await validar(obrigacao.idSolicitacao);
+      const { isValid, errors } = await validar(id);
 
       if (!isValid) {
         mostrarValidacaoObrigacaoToast(errors, {
@@ -358,9 +364,11 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
         return;
       }
 
-      await enviarParaArea(obrigacao.idSolicitacao);
+      await enviarParaArea(id);
     } catch (error) {
       console.error('Erro ao enviar obrigação para área:', error);
+    } finally {
+      enviandoParaAreaRef.current.delete(id);
     }
   }, [validar, enviarParaArea]);
 
@@ -396,6 +404,15 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
       setObrigacaoParaTramitacao(obrigacao);
       setShowTramitacaoModal(true);
     }
+  }, []);
+
+  const handleRegistrarConclusao = useCallback((obrigacao: ObrigacaoResponse) => {
+    if (!obrigacao.idSolicitacao) return;
+    if (obrigacao.statusSolicitacao?.idStatusSolicitacao === statusList.CONCLUIDO.id) {
+      toast.warning('Esta obrigação já está concluída e não pode ser concluída novamente.');
+      return;
+    }
+    setObrigacaoParaConclusao(obrigacao);
   }, []);
 
   // Helpers
@@ -479,6 +496,8 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
     setShowConfirmTramitacao,
     obrigacaoParaConfirmarTramitacao,
     setObrigacaoParaConfirmarTramitacao,
+    obrigacaoParaConclusao,
+    setObrigacaoParaConclusao,
     
     // Permissões
     canInserirObrigacao: !!permissions.canInserirObrigacao,
@@ -502,6 +521,7 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
     handleConfirmNaoAplicavelSuspenso,
     handleEnviarArea,
     handleAnexarProtocolo,
+    handleRegistrarConclusao,
     handleEncaminharTramitacao,
     
     // Helpers

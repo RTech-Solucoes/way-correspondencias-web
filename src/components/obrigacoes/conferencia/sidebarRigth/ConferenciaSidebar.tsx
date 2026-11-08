@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { MencaoTextarea } from '@/components/obrigacoes/mencoes/MencaoTextarea';
 import { CloudDownload, Send } from 'lucide-react';
 import { cn } from '@/utils/utils';
 import type { ObrigacaoDetalheResponse } from '@/api/obrigacao/types';
@@ -78,7 +78,6 @@ export function ConferenciaSidebar({
     detalhe,
     idPerfil,
     isDaAreaAtribuida: permissoes.isDaAreaAtribuida,
-    statusPermitidoParaTramitar: permissoes.statusPermitidoParaTramitar,
     areasCondicionantes: permissoes.areasCondicionantes.map(a => ({ idArea: a.idArea, nmArea: a.nmArea })),
     userResponsavel,
     arquivosTramitacaoPendentes,
@@ -273,6 +272,7 @@ export function ConferenciaSidebar({
               />
             ) : (
               <ComentariosTab
+                idObrigacao={detalhe?.obrigacao?.idSolicitacao || 0}
                 solicitacaoPareceres={comentariosLogica.solicitacaoPareceres}
                 tramitacoes={comentariosLogica.tramitacoes}
                 comentariosUnificados={comentariosLogica.comentariosUnificados}
@@ -318,13 +318,14 @@ export function ConferenciaSidebar({
               })()}
               
               <div className="relative flex items-end gap-2">
-                <Textarea
+                <MencaoTextarea
                   id="comentario-textarea"
-                  placeholder="Escreva aqui..."
+                  idObrigacao={detalhe?.obrigacao?.idSolicitacao || 0}
+                  placeholder="Escreva aqui... Use @ para mencionar alguém"
                   value={comentariosLogica.comentarioTexto}
-                  onChange={(e) => {
-                    comentariosLogica.setComentarioTexto(e.target.value);
-                    if (!e.target.value.includes('@')) {
+                  onValueChange={(texto) => {
+                    comentariosLogica.setComentarioTexto(texto);
+                    if (!texto.includes('@')) {
                       if (comentariosLogica.parecerReferencia) {
                         comentariosLogica.setParecerReferencia(null);
                       }

@@ -9,15 +9,20 @@ import { ResponsavelResponse } from '@/api/responsaveis/types';
 import { AreaSolicitacao, TramitacaoComAnexosResponse, TramitacaoResponse as SolTramitacaoResponse } from '@/api/solicitacoes/types';
 import { CardComentario } from './CardComentario';
 import { CardTramitacao } from './CardTramitacao';
+import { CardConclusaoAdministrativa } from './CardConclusaoAdministrativa';
+import { useMencionaveis } from '@/components/obrigacoes/mencoes/use-mencoes';
+import type { ObrigacaoConclusaoResponse } from '@/api/obrigacao/types';
 
 interface ComentarioUnificado {
-  tipo: 'parecer' | 'tramitacao';
+  tipo: 'parecer' | 'tramitacao' | 'conclusao';
   data: string;
   parecer?: SolicitacaoParecerResponse;
   tramitacao?: SolTramitacaoResponse;
+  conclusao?: ObrigacaoConclusaoResponse;
 }
 
 interface ComentariosTabProps {
+  idObrigacao: number;
   solicitacaoPareceres: SolicitacaoParecerResponse[];
   tramitacoes?: TramitacaoComAnexosResponse[];
   comentariosUnificados: ComentarioUnificado[];
@@ -31,7 +36,8 @@ interface ComentariosTabProps {
   areaAtribuida?: AreaSolicitacao | null;
 }
 
-export function ComentariosTab({ 
+export function ComentariosTab({
+  idObrigacao,
   solicitacaoPareceres,
   tramitacoes = [],
   comentariosUnificados,
@@ -46,6 +52,10 @@ export function ComentariosTab({
 }: ComentariosTabProps) {
   const [parecerParaDeletar, setParecerParaDeletar] = useState<number | null>(null);
   const comentariosCount = comentariosUnificados.length;
+  const possuiMencao = comentariosUnificados.some((item) =>
+    (item.parecer?.dsDarecer ?? item.tramitacao?.dsObservacao ?? '').includes('@')
+  );
+  const { data: mencionaveis = [] } = useMencionaveis(idObrigacao, possuiMencao);
 
   const determinarArea = useCallback((
     idResponsavel: number | undefined,
@@ -125,7 +135,8 @@ export function ComentariosTab({
         <div className="space-y-4 pb-4">
           {(() => {
             const nomesResponsaveisMap = new Map<string, string>();
-            responsaveis.forEach(resp => {
+            // Mencionáveis incluem quem não é listado na concessionária, como Super Admins.
+            [...responsaveis, ...mencionaveis].forEach(resp => {
               if (resp.nmResponsavel) {
                 const nomeLower = resp.nmResponsavel.trim().toLowerCase();
                 nomesResponsaveisMap.set(nomeLower, resp.nmResponsavel.trim());
@@ -141,6 +152,15 @@ export function ComentariosTab({
             );
             
             return comentariosUnificados.map((item, index) => {
+              if (item.tipo === 'conclusao' && item.conclusao) {
+                return (
+                  <CardConclusaoAdministrativa
+                    key={`conclusao-${item.conclusao.idObrigacaoConclusao}`}
+                    conclusao={item.conclusao}
+                  />
+                );
+              }
+
               if (item.tipo === 'tramitacao' && item.tramitacao) {
                 const tramitacao = item.tramitacao;
                 const dataFormatada = item.data 

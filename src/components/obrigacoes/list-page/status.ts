@@ -125,3 +125,57 @@ export const getObrigacaoStatusStyle = (
 
   return DEFAULT_STYLE;
 };
+export const CONCLUIDA_EM_ATRASO_LABEL = 'Concluída em atraso';
+
+const CONCLUIDA_EM_ATRASO_STYLE: ObrigacaoStatusStyle = {
+  variant: 'outline',
+  backgroundColor: '#b45309',
+  textColor: '#ffffff',
+};
+
+/** Campos mínimos para determinar como o status de uma obrigação deve ser apresentado. */
+export interface ObrigacaoStatusSource {
+  statusSolicitacao?: { idStatusSolicitacao?: number | null; nmStatus?: string | null } | null;
+  /** Preenchido pela API apenas quando a obrigação foi concluída pelo fluxo administrativo. */
+  concluidaEmAtraso?: boolean | null;
+}
+
+export const isObrigacaoConcluida = (obrigacao?: ObrigacaoStatusSource | null): boolean =>
+  obrigacao?.statusSolicitacao?.idStatusSolicitacao === statusList.CONCLUIDO.id;
+
+/**
+ * Concluída pelo fluxo administrativo ("Registrar conclusão"). Obrigações concluídas pela tramitação
+ * ou importadas como concluídas não entram aqui e mantêm o comportamento de sempre.
+ */
+export const isObrigacaoConcluidaAdministrativamente = (obrigacao?: ObrigacaoStatusSource | null): boolean =>
+  isObrigacaoConcluida(obrigacao) && obrigacao?.concluidaEmAtraso != null;
+
+/**
+ * Concluída em atraso: classificação gravada na auditoria da conclusão administrativa
+ * (data efetiva posterior à data limite original no momento da conclusão).
+ */
+export const isObrigacaoConcluidaEmAtraso = (obrigacao?: ObrigacaoStatusSource | null): boolean =>
+  isObrigacaoConcluidaAdministrativamente(obrigacao) && obrigacao?.concluidaEmAtraso === true;
+
+/**
+ * Rótulo e cor do status da obrigação, já considerando "Concluída em atraso".
+ * `conclusao` (detalhe da obrigação) tem prioridade quando informado.
+ */
+export const getObrigacaoStatusDisplay = (
+  obrigacao?: ObrigacaoStatusSource | null,
+  conclusao?: { concluidaEmAtraso: boolean } | null,
+): { label: string; style: ObrigacaoStatusStyle } => {
+  const emAtraso = isObrigacaoConcluida(obrigacao) && conclusao
+    ? conclusao.concluidaEmAtraso
+    : isObrigacaoConcluidaEmAtraso(obrigacao);
+  if (emAtraso) {
+    return { label: CONCLUIDA_EM_ATRASO_LABEL, style: CONCLUIDA_EM_ATRASO_STYLE };
+  }
+  return {
+    label: obrigacao?.statusSolicitacao?.nmStatus || '-',
+    style: getObrigacaoStatusStyle(
+      obrigacao?.statusSolicitacao?.idStatusSolicitacao?.toString(),
+      obrigacao?.statusSolicitacao?.nmStatus,
+    ),
+  };
+};

@@ -9,11 +9,13 @@ import { getCriticidadeBadgeClasses } from '../../utils';
 import { ConferenciaInfoRow } from './ConferenciaInfoRow';
 import { TipoEnum } from '@/api/tipos/types';
 import { formatDateTimeBr } from '@/utils/utils';
+import { ConclusaoAdministrativaInfo } from '@/components/obrigacoes/conclusao/ConclusaoAdministrativaInfo';
 
 interface ConferenciaStepDadosProps {
   obrigacao: ObrigacaoDetalheResponse['obrigacao'];
   statusLabel: string;
   statusStyle: ObrigacaoStatusStyle;
+  conclusao?: ObrigacaoDetalheResponse['conclusao'];
 }
 
 interface InfoGridItem {
@@ -51,7 +53,7 @@ const ObrigacaoCard = ({
   </button>
 );
 
-export function ConferenciaStepDados({ obrigacao, statusLabel, statusStyle }: ConferenciaStepDadosProps) {
+export function ConferenciaStepDados({ obrigacao, statusLabel, statusStyle, conclusao }: ConferenciaStepDadosProps) {
   return (
     <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white">
       <div className="border-b border-gray-100 px-8 py-5">
@@ -68,6 +70,7 @@ export function ConferenciaStepDados({ obrigacao, statusLabel, statusStyle }: Co
       </div>
 
       <div className="divide-y divide-gray-100">
+        {conclusao && <ConclusaoAdministrativaInfo conclusao={conclusao} />}
         <div className="px-8 py-6">
           <div className="flex flex-col gap-2">
             <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">Tarefa</span>

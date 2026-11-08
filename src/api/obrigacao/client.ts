@@ -13,6 +13,8 @@ import {
     ObrigacaoCalendarioMesCountResponse,
     ObrigacaoStep1Request,
     ImportacaoObrigacaoResultado,
+    ConclusaoAdministrativaRequest,
+    ObrigacaoConclusaoResponse,
 } from './types';
 
 export interface PaginatedResponse<T> {
@@ -132,9 +134,18 @@ export class ObrigacaoClient {
         });
     }
 
-    async atualizarFlEnviandoArea(id: number): Promise<{ mensagem: string; flEnviandoArea: string }> {
-        return this.client.request<{ mensagem: string; flEnviandoArea: string }>(`/${id}/enviando-area`, {
+    /** Envia a obrigação para a área. Se estiver "Não iniciado" ou "Pendente", o status passa para "Em andamento". */
+    async atualizarFlEnviandoArea(id: number): Promise<{ mensagem: string; flEnviandoArea: string; idStatusSolicitacao: number }> {
+        return this.client.request<{ mensagem: string; flEnviandoArea: string; idStatusSolicitacao: number }>(`/${id}/enviando-area`, {
             method: 'PUT',
+        });
+    }
+
+    /** Registra a conclusão da obrigação pelo Administrador, sem iniciar tramitação pelas áreas. */
+    async registrarConclusaoAdministrativa(id: number, data: ConclusaoAdministrativaRequest): Promise<ObrigacaoConclusaoResponse> {
+        return this.client.request<ObrigacaoConclusaoResponse>(`/${id}/conclusao-administrativa`, {
+            method: 'POST',
+            body: JSON.stringify(data),
         });
     }
 

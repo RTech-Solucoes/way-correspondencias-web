@@ -58,6 +58,8 @@ export interface ObrigacaoResponse extends Omit<SolicitacaoResponse, 'tema'> {
   responsavelNaoAplicavelSusp?: ResponsavelResponse | null;
   solicitacaoPrazos: SolicitacaoPrazoResponse[];
   solicitacoesAssinantes: SolicitacaoAssinanteResponse[];
+  /** Só vem preenchido quando a obrigação foi concluída pelo fluxo administrativo. */
+  concluidaEmAtraso?: boolean | null;
 }
 
 export interface ObrigacaoRequest {
@@ -103,6 +105,47 @@ export interface ObrigacaoDetalheResponse {
   tramitacoes: TramitacaoComAnexosResponse[];
   solicitacoesAssinantes?: SolicitacaoAssinanteResponse[];
   solicitacaoPrazos?: SolicitacaoPrazoResponse[];
+  /** Registro de auditoria da conclusão administrativa, quando houver. */
+  conclusao?: ObrigacaoConclusaoResponse | null;
+}
+
+/** Arquivo enviado na conclusão administrativa (conteúdo em Base64). */
+export interface ArquivoConclusaoRequest {
+  nomeArquivo: string;
+  tipoConteudo?: string | null;
+  conteudoArquivo: string;
+}
+
+/** Conclusão de obrigação pelo Administrador, sem tramitação pelas áreas. Só o protocolo é obrigatório. */
+export interface ConclusaoAdministrativaRequest {
+  /** Data efetiva da conclusão (yyyy-MM-dd). */
+  dtConclusao: string;
+  protocolos: ArquivoConclusaoRequest[];
+  evidencias?: ArquivoConclusaoRequest[];
+  correspondencias?: ArquivoConclusaoRequest[];
+  outrosAnexos?: ArquivoConclusaoRequest[];
+  dsObservacao?: string | null;
+  nrProcesso?: string | null;
+  nrSei?: string | null;
+}
+
+/** Log de auditoria da conclusão de uma obrigação. */
+export interface ObrigacaoConclusaoResponse {
+  idObrigacaoConclusao: number;
+  idObrigacao: number;
+  tpFluxoConclusao: string;
+  dsFluxoConclusao: string;
+  dtConclusao: string;
+  dtLimiteOriginal?: string | null;
+  dtAcao: string;
+  concluidaEmAtraso: boolean;
+  idResponsavel?: number | null;
+  nmResponsavel?: string | null;
+  idStatusAnterior?: number | null;
+  nmStatusAnterior?: string | null;
+  nrProcesso?: string | null;
+  nrSei?: string | null;
+  dsObservacao?: string | null;
 }
 
 export interface ObrigacaoFiltroRequest {

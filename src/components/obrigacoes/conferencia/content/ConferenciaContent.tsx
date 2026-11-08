@@ -206,6 +206,7 @@ export function ConferenciaContent({ id, initialData }: ConferenciaContentProps)
             onTabChange={setActiveTab}
             obrigacao={obrigacao}
             anexos={anexos}
+            conclusao={detalhe?.conclusao}
             downloadingId={downloading}
             onDownloadAnexo={handleDownloadAnexo}
             userResponsavel={userResponsavel}
