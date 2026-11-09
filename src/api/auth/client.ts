@@ -14,6 +14,7 @@ class AuthClient {
     const response = await this.client.request<LoginResponse>('/login', {
       method: 'POST',
       body: JSON.stringify(data),
+      signal: AbortSignal.timeout(390_000),
     });
 
     if (response.accessToken) {

@@ -48,6 +48,10 @@ export default function LoginPage() {
 
     if (!hasErrors) {
       setIsLoading(true);
+      const connectionNotice = window.setTimeout(() => {
+        toast.loading('Conectando ao serviço. Aguarde um momento.', { id: 'login' });
+      }, 8_000);
+
       try {
         await authClient.login({
           username: username.trim(),
@@ -79,7 +83,9 @@ export default function LoginPage() {
         }
 
         try {
-          const concessionariasDoResponsavel = await concessionariaClient.buscarPorIdResponsavelLogado();
+          const concessionariasDoResponsavel = await concessionariaClient.buscarPorIdResponsavelLogado(
+            AbortSignal.timeout(15_000),
+          );
           
           if (!concessionariasDoResponsavel || concessionariasDoResponsavel.length === 0) {
             removeCookie('authToken');
@@ -109,10 +115,13 @@ export default function LoginPage() {
         await new Promise(resolve => setTimeout(resolve, 100));
         router.push('/dashboard-correspondencia');
       } catch (error) {
-        console.error(error);
-        toast.error('Usuário ou senha inválidos', { id: 'login' });
-        setIsLoading(false);
+        const status = error instanceof Error && 'status' in error ? error.status : undefined;
+        let message = 'Não foi possível conectar ao serviço. Tente novamente em instantes.';
+        if (status === 401) message = 'Usuário ou senha inválidos';
+        if (status === 429) message = 'Serviço temporariamente indisponível. Aguarde um pouco e tente novamente.';
+        toast.error(message, { id: 'login' });
       } finally {
+        window.clearTimeout(connectionNotice);
         setIsLoading(false);
       }
     }

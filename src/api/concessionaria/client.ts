@@ -25,9 +25,10 @@ class ConcessionariaClient {
     });
   }
 
-  async buscarPorIdResponsavelLogado(): Promise<ConcessionariaResponse[]> {
+  async buscarPorIdResponsavelLogado(signal?: AbortSignal): Promise<ConcessionariaResponse[]> {
     return this.client.request<ConcessionariaResponse[]>('/responsavel', {
       method: 'GET',
+      signal,
       skipConcessionariaParam: true
     });
   }

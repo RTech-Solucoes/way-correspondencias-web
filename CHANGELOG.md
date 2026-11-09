@@ -1,5 +1,10 @@
 # Histórico de alterações
 
+## 09/11/2026 · Login
+
+A tela informa quando a conexão está demorando, encerra a espera no prazo
+e distingue falha de serviço de credenciais recusadas.
+
 ## 09/11/2026 · Build do MVP de teste
 
 Atualiza o OpenNext para 1.20.13 e usa pnpm no build Cloudflare de teste.
