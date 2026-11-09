@@ -28,6 +28,7 @@ import { usePermissoes } from "@/context/permissoes/PermissoesContext";
 import anexosClient from "@/api/anexos/client";
 import { TipoDocumentoAnexoEnum, TipoObjetoAnexoEnum } from "@/api/anexos/type";
 import { useValidarObrigacao } from "@/components/obrigacoes/conferencia/hooks/use-validar-obrigacao";
+import { useObrigacoesCondicionadasQuery } from "@/components/obrigacoes/hooks/use-obrigacoes-query";
 
 const MSG_OBRIGACAO_CONCLUIDA_SEM_ENVIO = 'Esta obrigação foi concluída pelo fluxo administrativo e não pode ser enviada para a área.';
 
@@ -82,6 +83,45 @@ export function ObrigacaoAcoesMenu({
   const isStatusNaoAplicavelSuspenso = useMemo(() => {
     return obrigacao.statusSolicitacao?.idStatusSolicitacao === statusList.NAO_APLICAVEL_SUSPENSA.id;
   }, [obrigacao.statusSolicitacao]);
+
+  // Condicionadas são consultadas só quando o menu abre, e sempre atualizadas (uma condicionada
+  // pode ter sido concluída há pouco). Se a consulta falhar, não trava: o clique verifica de novo.
+  const [menuAberto, setMenuAberto] = useState(false);
+  const deveVerificarCondicionadas = menuAberto
+    && !!onRegistrarConclusao
+    && !!canConclusaoAdministrativaObrigacao
+    && !isStatusConcluido
+    && !isStatusNaoAplicavelSuspenso;
+  const {
+    data: condicionadasResponse,
+    isFetching: verificandoCondicionadas,
+  } = useObrigacoesCondicionadasQuery(obrigacao.idSolicitacao, {
+    enabled: deveVerificarCondicionadas,
+    staleTime: 0,
+  });
+  const qtdCondicionadasPendentes = useMemo(() => (
+    condicionadasResponse?.obrigacoesCondicionadas ?? []
+  ).filter((cond) => cond.statusSolicitacao?.idStatusSolicitacao !== statusList.CONCLUIDO.id).length, [condicionadasResponse]);
+
+  const tooltipRegistrarConclusao = useMemo(() => {
+    if (isStatusConcluido) {
+      return 'Esta obrigação já está concluída e não pode ser concluída novamente.';
+    }
+    if (isStatusNaoAplicavelSuspenso) {
+      return 'Obrigações com status Não Aplicável/Suspensa não podem ser concluídas.';
+    }
+    if (verificandoCondicionadas) {
+      return 'Verificando obrigações condicionadas...';
+    }
+    if (qtdCondicionadasPendentes > 0) {
+      const descricao = qtdCondicionadasPendentes === 1
+        ? 'existe 1 obrigação condicionada pendente'
+        : `existem ${qtdCondicionadasPendentes} obrigações condicionadas pendentes`;
+      return `Não é possível concluir a obrigação enquanto ${descricao}.\nTodas as condicionadas precisam estar com status Concluído.`;
+    }
+    return '';
+  }, [isStatusConcluido, isStatusNaoAplicavelSuspenso, verificandoCondicionadas, qtdCondicionadasPendentes]);
+  const podeRegistrarConclusao = !tooltipRegistrarConclusao;
 
   const isStatusEmValidacao = useMemo(() => {
     return obrigacao.statusSolicitacao?.idStatusSolicitacao === statusList.EM_VALIDACAO_REGULATORIO.id;
@@ -210,7 +250,7 @@ export function ObrigacaoAcoesMenu({
   }, [isConclusaoAdministrativa, jaEnviadoParaArea, temCamposObrigatoriosFaltando, tooltipEnviarArea]);
 
   return (
-    <DropdownMenu>
+    <DropdownMenu onOpenChange={setMenuAberto}>
       <DropdownMenuTrigger asChild>
         <Button 
           variant="ghost" 
@@ -285,18 +325,18 @@ export function ObrigacaoAcoesMenu({
               <TooltipTrigger asChild>
                 <div className="w-full">
                   <DropdownMenuItem
-                    onClick={() => !isStatusConcluido && onRegistrarConclusao(obrigacao)}
-                    disabled={isStatusConcluido}
-                    className={isStatusConcluido ? 'opacity-50 cursor-not-allowed' : ''}
+                    onClick={() => podeRegistrarConclusao && onRegistrarConclusao(obrigacao)}
+                    disabled={!podeRegistrarConclusao}
+                    className={!podeRegistrarConclusao ? 'opacity-50 cursor-not-allowed' : ''}
                   >
                     <CheckCircleIcon className="mr-2 h-4 w-4" />
                     Registrar conclusão
                   </DropdownMenuItem>
                 </div>
               </TooltipTrigger>
-              {isStatusConcluido && (
+              {!podeRegistrarConclusao && (
                 <TooltipContent>
-                  <p>Esta obrigação já está concluída e não pode ser concluída novamente.</p>
+                  <p style={{ whiteSpace: 'pre-line' }}>{tooltipRegistrarConclusao}</p>
                 </TooltipContent>
               )}
             </Tooltip>
