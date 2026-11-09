@@ -29,9 +29,11 @@ jobs:
         with:
           node-version: '22'
           package-manager-cache: false
-      - name: Configurar Yarn
-        run: |
-          npm install --global yarn@1.22.22
+      - name: Configurar pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 11.9.0
+          run_install: 'false'
       - name: Preparar build isolado do MVP
         id: prepare
         env:
@@ -44,7 +46,7 @@ jobs:
       - name: Instalar dependências do MVP
         working-directory: ${{ steps.prepare.outputs.directory }}
         run: |
-          yarn install --frozen-lockfile --ignore-scripts
+          pnpm install --frozen-lockfile --ignore-scripts
       - name: Conferir conta Cloudflare
         working-directory: ${{ steps.prepare.outputs.directory }}
         env:
@@ -52,25 +54,25 @@ jobs:
         run: |
           set -euo pipefail
           test -n "$CLOUDFLARE_API_TOKEN"
-          yarn --silent wrangler whoami --json > "$RUNNER_TEMP/mvp-cloudflare-identity.json"
+          pnpm exec wrangler whoami --json > "$RUNNER_TEMP/mvp-cloudflare-identity.json"
           jq -e --arg account "$CLOUDFLARE_ACCOUNT_ID" \
             '.loggedIn == true and any(.accounts[]; .id == $account)' \
             "$RUNNER_TEMP/mvp-cloudflare-identity.json" > /dev/null
       - name: Compilar frontend para Cloudflare
         working-directory: ${{ steps.prepare.outputs.directory }}
         run: |
-          yarn cf:build
+          pnpm run cf:build
       - name: Validar publicação Cloudflare
         working-directory: ${{ steps.prepare.outputs.directory }}
         run: |
-          yarn wrangler deploy --config wrangler.jsonc --dry-run
+          pnpm exec wrangler deploy --config wrangler.jsonc --dry-run
       - name: Publicar frontend na Cloudflare
         id: deploy
         working-directory: ${{ steps.prepare.outputs.directory }}
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.MVP_CLOUDFLARE_API_TOKEN }}
         run: |
-          yarn wrangler deploy --config wrangler.jsonc
+          pnpm exec wrangler deploy --config wrangler.jsonc
       - name: Confirmar frontend e versão publicada
         id: verify
         timeout-minutes: 13

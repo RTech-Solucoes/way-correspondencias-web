@@ -8,9 +8,9 @@ const overlayDirectory = path.dirname(fileURLToPath(import.meta.url));
 const sourceDirectory = path.resolve(overlayDirectory, '../..');
 const versions = {
   next: '15.5.28',
-  openNext: '1.20.12',
+  openNext: '1.20.13',
   wrangler: '4.151.0',
-  yarn: '1.22.22',
+  pnpm: '11.9.0',
 };
 const environments = {
   prd: {
@@ -153,10 +153,10 @@ async function main() {
       wrangler: versions.wrangler,
     },
     engines: { ...sourcePackage.engines, node: '>=22' },
-    packageManager: `yarn@${versions.yarn}`,
+    packageManager: `pnpm@${versions.pnpm}`,
   };
   await writeFile(path.join(targetDirectory, 'package.json'), `${JSON.stringify(targetPackage, null, 2)}\n`, { flag: 'wx' });
-  for (const name of ['yarn.lock', 'open-next.config.ts', 'build-guard.cjs']) {
+  for (const name of ['pnpm-lock.yaml', 'open-next.config.ts', 'build-guard.cjs']) {
     await copyFile(path.join(overlayDirectory, name), path.join(targetDirectory, name));
   }
   await writeFile(path.join(targetDirectory, '.env'), [
