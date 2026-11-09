@@ -9,6 +9,7 @@ import { usePermissoes } from '@/context/permissoes/PermissoesContext';
 import { useUserGestao } from '@/hooks/use-user-gestao';
 import { useValidarObrigacao } from '@/components/obrigacoes/conferencia/hooks/use-validar-obrigacao';
 import { mostrarValidacaoObrigacaoToast } from '@/components/obrigacoes/criar/ValidarObrigacaoToast';
+import { getMensagemSucessoEnvioArea } from '@/components/obrigacoes/modal/envio-area';
 import { perfilUtil } from '@/api/perfis/types';
 import { statusList, STATUS_LIST } from '@/api/status-solicitacao/types';
 import { toast } from 'sonner';
@@ -120,6 +121,8 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
   const [showConfirmTramitacao, setShowConfirmTramitacao] = useState(false);
   const [obrigacaoParaConfirmarTramitacao, setObrigacaoParaConfirmarTramitacao] = useState<ObrigacaoResponse | null>(null);
   const [obrigacaoParaConclusao, setObrigacaoParaConclusao] = useState<ObrigacaoResponse | null>(null);
+  const [obrigacaoParaEnviarArea, setObrigacaoParaEnviarArea] = useState<ObrigacaoResponse | null>(null);
+  const [enviandoParaArea, setEnviandoParaArea] = useState(false);
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
@@ -349,6 +352,7 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
   // Evita envio duplicado da mesma obrigação enquanto a validação/envio ainda está em andamento
   const enviandoParaAreaRef = useRef<Set<number>>(new Set());
 
+  // Valida os campos obrigatórios e abre a confirmação, que explica o que acontece com o status.
   const handleEnviarArea = useCallback(async (obrigacao: ObrigacaoResponse) => {
     const id = obrigacao.idSolicitacao;
     if (!id || enviandoParaAreaRef.current.has(id)) return;
@@ -364,19 +368,49 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
         return;
       }
 
-      await enviarParaArea(id);
+      setObrigacaoParaEnviarArea(obrigacao);
     } catch (error) {
-      console.error('Erro ao enviar obrigação para área:', error);
+      console.error('Erro ao validar obrigação para envio à área:', error);
     } finally {
       enviandoParaAreaRef.current.delete(id);
     }
-  }, [validar, enviarParaArea]);
+  }, [validar]);
 
-  const handleAnexarProtocolo = useCallback(async (obrigacao: ObrigacaoResponse) => {
-    if (!obrigacao.idSolicitacao) return;
-    
+  const confirmarEnvioParaArea = useCallback(async () => {
+    const obrigacao = obrigacaoParaEnviarArea;
+    const id = obrigacao?.idSolicitacao;
+    if (!obrigacao || !id || enviandoParaAreaRef.current.has(id)) return;
+
+    enviandoParaAreaRef.current.add(id);
+    setEnviandoParaArea(true);
     try {
-      const response = await obrigacaoClient.buscarObrigacoesCondicionadas(obrigacao.idSolicitacao);
+      const response = await enviarParaArea(id);
+      toast.success(getMensagemSucessoEnvioArea(
+        obrigacao.statusSolicitacao?.idStatusSolicitacao,
+        response?.idStatusSolicitacao,
+      ));
+      setObrigacaoParaEnviarArea(null);
+    } catch (error) {
+      // A mensagem de erro já é exibida pela mutation. Se já tinha sido enviada (409), fecha a confirmação.
+      if ((error as { status?: number })?.status === 409) {
+        setObrigacaoParaEnviarArea(null);
+      }
+      console.error('Erro ao enviar obrigação para área:', error);
+    } finally {
+      enviandoParaAreaRef.current.delete(id);
+      setEnviandoParaArea(false);
+    }
+  }, [obrigacaoParaEnviarArea, enviarParaArea]);
+
+  const cancelarEnvioParaArea = useCallback(() => {
+    setObrigacaoParaEnviarArea(null);
+  }, []);
+
+  // A obrigação principal só pode ser concluída com todas as condicionadas concluídas.
+  // Retorna true quando a conclusão pode seguir; caso contrário já mostrou o bloqueio.
+  const liberarConclusaoSemCondicionadasPendentes = useCallback(async (idObrigacao: number) => {
+    try {
+      const response = await obrigacaoClient.buscarObrigacoesCondicionadas(idObrigacao);
       const condicionadas = response.obrigacoesCondicionadas || [];
       const condicionadasPendentes = condicionadas.filter(
         (cond) => cond.statusSolicitacao?.idStatusSolicitacao !== statusList.CONCLUIDO.id
@@ -385,15 +419,24 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
       if (condicionadasPendentes.length > 0) {
         setObrigacoesCondicionadas(condicionadasPendentes);
         setShowObrigacoesCondicionadasModal(true);
-      } else {
-        setObrigacaoParaProtocolo(obrigacao);
-        setShowAnexarProtocoloModal(true);
+        return false;
       }
+      return true;
     } catch (error) {
       console.error('Erro ao verificar obrigações condicionadas:', error);
       toast.error('Erro ao verificar obrigações condicionadas. Tente novamente.');
+      return false;
     }
   }, []);
+
+  const handleAnexarProtocolo = useCallback(async (obrigacao: ObrigacaoResponse) => {
+    if (!obrigacao.idSolicitacao) return;
+
+    if (await liberarConclusaoSemCondicionadasPendentes(obrigacao.idSolicitacao)) {
+      setObrigacaoParaProtocolo(obrigacao);
+      setShowAnexarProtocoloModal(true);
+    }
+  }, [liberarConclusaoSemCondicionadasPendentes]);
 
   const handleEncaminharTramitacao = useCallback((obrigacao: ObrigacaoResponse) => {
     const isEmValidacao = obrigacao.statusSolicitacao?.idStatusSolicitacao === statusList.EM_VALIDACAO_REGULATORIO.id;                          
@@ -406,14 +449,21 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
     }
   }, []);
 
-  const handleRegistrarConclusao = useCallback((obrigacao: ObrigacaoResponse) => {
+  const handleRegistrarConclusao = useCallback(async (obrigacao: ObrigacaoResponse) => {
     if (!obrigacao.idSolicitacao) return;
     if (obrigacao.statusSolicitacao?.idStatusSolicitacao === statusList.CONCLUIDO.id) {
       toast.warning('Esta obrigação já está concluída e não pode ser concluída novamente.');
       return;
     }
-    setObrigacaoParaConclusao(obrigacao);
-  }, []);
+    if (obrigacao.statusSolicitacao?.idStatusSolicitacao === statusList.NAO_APLICAVEL_SUSPENSA.id) {
+      toast.warning('Obrigações com status Não Aplicável/Suspensa não podem ser concluídas.');
+      return;
+    }
+
+    if (await liberarConclusaoSemCondicionadasPendentes(obrigacao.idSolicitacao)) {
+      setObrigacaoParaConclusao(obrigacao);
+    }
+  }, [liberarConclusaoSemCondicionadasPendentes]);
 
   // Helpers
   const isAdminOrGestor = useMemo(() => {
@@ -498,7 +548,11 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
     setObrigacaoParaConfirmarTramitacao,
     obrigacaoParaConclusao,
     setObrigacaoParaConclusao,
-    
+    obrigacaoParaEnviarArea,
+    enviandoParaArea,
+    confirmarEnvioParaArea,
+    cancelarEnvioParaArea,
+
     // Permissões
     canInserirObrigacao: !!permissions.canInserirObrigacao,
     canDeletarObrigacao: !!permissions.canDeletarObrigacao,

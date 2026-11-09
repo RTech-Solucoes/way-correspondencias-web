@@ -7,6 +7,7 @@ import { ImportObrigacoesModal } from "@/components/obrigacoes/modal/ImportObrig
 import { AnexarProtocoloModal } from "@/components/obrigacoes/modal/AnexarProtocoloModal";
 import { RegistrarConclusaoModal } from "@/components/obrigacoes/conclusao/RegistrarConclusaoModal";
 import { ObrigacoesCondicionadasModal } from "@/components/obrigacoes/modal/ObrigacoesCondicionadasModal";
+import { EnviarParaAreaDialog } from "@/components/obrigacoes/modal/EnviarParaAreaDialog";
 import { NaoAplicavelSuspensoModal } from "@/components/obrigacoes/conferencia/modal/NaoAplicavelSuspensoModal";
 import { TramitacaoObrigacaoModal } from "@/components/obrigacoes/tramitacao";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
@@ -43,6 +44,10 @@ interface ObrigacoesModalsProps {
   setObrigacaoParaConfirmarTramitacao: (obrigacao: ObrigacaoResponse | null) => void;
   obrigacaoParaConclusao: ObrigacaoResponse | null;
   setObrigacaoParaConclusao: (obrigacao: ObrigacaoResponse | null) => void;
+  obrigacaoParaEnviarArea: ObrigacaoResponse | null;
+  enviandoParaArea: boolean;
+  confirmarEnvioParaArea: () => void | Promise<void>;
+  cancelarEnvioParaArea: () => void;
 }
 
 export function ObrigacoesModals({
@@ -73,6 +78,10 @@ export function ObrigacoesModals({
   setObrigacaoParaConfirmarTramitacao,
   obrigacaoParaConclusao,
   setObrigacaoParaConclusao,
+  obrigacaoParaEnviarArea,
+  enviandoParaArea,
+  confirmarEnvioParaArea,
+  cancelarEnvioParaArea,
 }: ObrigacoesModalsProps) {
   return (
     <>
@@ -97,6 +106,13 @@ export function ObrigacoesModals({
           }}
         />
       )}
+
+      <EnviarParaAreaDialog
+        obrigacao={obrigacaoParaEnviarArea}
+        enviando={enviandoParaArea}
+        onConfirm={confirmarEnvioParaArea}
+        onCancel={cancelarEnvioParaArea}
+      />
 
       {obrigacaoParaConclusao && (
         <RegistrarConclusaoModal

@@ -84,6 +84,10 @@ export function ObrigacoesContent({ defaultFilters }: ObrigacoesContentProps) {
     setObrigacaoParaConfirmarTramitacao,
     obrigacaoParaConclusao,
     setObrigacaoParaConclusao,
+    obrigacaoParaEnviarArea,
+    enviandoParaArea,
+    confirmarEnvioParaArea,
+    cancelarEnvioParaArea,
 
     // Permissões
     canInserirObrigacao,
@@ -221,6 +225,10 @@ export function ObrigacoesContent({ defaultFilters }: ObrigacoesContentProps) {
         setObrigacaoParaConfirmarTramitacao={setObrigacaoParaConfirmarTramitacao}
         obrigacaoParaConclusao={obrigacaoParaConclusao}
         setObrigacaoParaConclusao={setObrigacaoParaConclusao}
+        obrigacaoParaEnviarArea={obrigacaoParaEnviarArea}
+        enviandoParaArea={enviandoParaArea}
+        confirmarEnvioParaArea={confirmarEnvioParaArea}
+        cancelarEnvioParaArea={cancelarEnvioParaArea}
       />
 
       <ObrigacoesHeader 

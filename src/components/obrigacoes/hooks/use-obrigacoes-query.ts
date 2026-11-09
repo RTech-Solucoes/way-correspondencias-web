@@ -24,12 +24,16 @@ export function useObrigacoesQuery(params: ObrigacaoFiltroRequest) {
   });
 }
 
-export function useObrigacoesCondicionadasQuery(idObrigacao: number) {
+export function useObrigacoesCondicionadasQuery(
+  idObrigacao: number,
+  options: { enabled?: boolean; staleTime?: number } = {},
+) {
+  const { enabled = true, staleTime = 1000 * 60 * 2 } = options;
   return useQuery({
     queryKey: obrigacoesKeys.condicionadas(idObrigacao),
     queryFn: () => obrigacaoClient.buscarObrigacoesCondicionadas(idObrigacao),
-    staleTime: 1000 * 60 * 2,
-    enabled: !!idObrigacao,
+    staleTime,
+    enabled: !!idObrigacao && enabled,
   });
 }
 
@@ -88,10 +92,10 @@ export function useEnviarParaArea() {
 
   return useMutation({
     mutationFn: (id: number) => obrigacaoClient.atualizarFlEnviandoArea(id),
-    onSuccess: (response, id) => {
+    // A mensagem de sucesso fica com quem chama, pois depende do status antes do envio.
+    onSuccess: (_response, id) => {
       queryClient.invalidateQueries({ queryKey: obrigacoesKeys.lists() });
       queryClient.invalidateQueries({ queryKey: obrigacoesKeys.detail(id) });
-      toast.success(response.mensagem);
     },
     onError: (error: Error & { status?: number }) => {
       // 409: a obrigação já havia sido enviada (ex.: outro usuário enviou antes). Atualiza a lista

@@ -36,7 +36,7 @@ export function ObrigacoesCondicionadasModal({
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
           <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
             <p className="text-sm text-orange-800 font-medium text-center">
-              Não é possível anexar protocolo para concluir a obrigação enquanto existirem obrigações condicionadas pendentes.
+              Não é possível concluir a obrigação enquanto existirem obrigações condicionadas pendentes.
               Só é possível concluir após todas essas condicionadas estiverem com status de Concluído.
             </p>
           </div>
