@@ -352,7 +352,8 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
   // Evita envio duplicado da mesma obrigação enquanto a validação/envio ainda está em andamento
   const enviandoParaAreaRef = useRef<Set<number>>(new Set());
 
-  // Valida os campos obrigatórios e abre a confirmação, que explica o que acontece com o status.
+  // Valida os campos obrigatórios. No MVP abre a confirmação, que explica o que acontece com o
+  // status; no WAY envia direto, sem confirmação nem texto sobre o status.
   const handleEnviarArea = useCallback(async (obrigacao: ObrigacaoResponse) => {
     const id = obrigacao.idSolicitacao;
     if (!id || enviandoParaAreaRef.current.has(id)) return;
@@ -368,13 +369,20 @@ export function useObrigacoes(options: UseObrigacoesOptions = {}) {
         return;
       }
 
-      setObrigacaoParaEnviarArea(obrigacao);
+      if (isMvp) {
+        setObrigacaoParaEnviarArea(obrigacao);
+        return;
+      }
+
+      await enviarParaArea(id);
+      toast.success('Obrigação enviada para a área com sucesso.');
     } catch (error) {
-      console.error('Erro ao validar obrigação para envio à área:', error);
+      // Erros do envio já são exibidos pela mutation.
+      console.error('Erro ao enviar obrigação para área:', error);
     } finally {
       enviandoParaAreaRef.current.delete(id);
     }
-  }, [validar]);
+  }, [validar, isMvp, enviarParaArea]);
 
   const confirmarEnvioParaArea = useCallback(async () => {
     const obrigacao = obrigacaoParaEnviarArea;

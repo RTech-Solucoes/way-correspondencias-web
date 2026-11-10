@@ -265,7 +265,8 @@ export function ObrigacoesTable({
                         onVisualizar={() => onVisualizar(obrigacao)}
                         onEditar={canInserirObrigacao ? () => onEditar(obrigacao) : undefined}
                         onAnexarProtocolo={canConcluirObrigacao ? () => onAnexarProtocolo(obrigacao) : undefined}
-                        onRegistrarConclusao={() => onRegistrarConclusao(obrigacao)}
+                        // Registrar conclusão (conclusão administrativa) existe só no MVP; no WAY a opção fica oculta.
+                        onRegistrarConclusao={isMvp ? () => onRegistrarConclusao(obrigacao) : undefined}
                         onEncaminharTramitacao={() => onEncaminharTramitacao(obrigacao)}
                         onEnviarArea={canEnviarAreasObrigacao ? () => onEnviarArea(obrigacao) : undefined}
                         onNaoAplicavelSuspenso={canNaoAplicavelSuspensaObrigacao ? () => onNaoAplicavelSuspenso(obrigacao) : undefined}
